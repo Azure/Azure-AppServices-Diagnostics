@@ -19,10 +19,19 @@
 [Rr]eleases/
 x64/
 x86/
+build/
 bld/
 [Bb]in/
 [Oo]bj/
-[Ll]og/
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+*.swp
+*.*~
+project.lock.json
+.DS_Store
+*.pyc
 
 # Visual Studio 2015 cache/options directory
 .vs/
@@ -232,13 +241,6 @@ FakesAssemblies/
 # GhostDoc plugin setting file
 *.GhostDoc.xml
 
-# Node.js Tools for Visual Studio
-.ntvs_analysis.dat
-node_modules/
-
-# Typescript v1 declaration files
-typings/
-
 # Visual Studio 6 build log
 *.plg
 
@@ -286,3 +288,29 @@ __pycache__/
 *.btm.cs
 *.odx.cs
 *.xsd.cs
+
+
+# Node.js Tools for Visual Studio
+.ntvs_analysis.dat
+node_modules/
+packages
+
+# Typescript v1 declaration files
+typings/
+
+# Other Package manager components
+jspm_packages
+bower_components
+
+# VS Code
+.vscode/
+
+# App Specific files
+**/app/**/*.js
+**/app/**/*.map
+
+# Build Location
+wwwroot/
+build/
+dist/
+aot/

@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.6.1" />
+    <PackageReference Include="xunit" Version="2.3.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\Diagnostics.CompilerHost\Diagnostics.CompilerHost.csproj" />
+    <ProjectReference Include="..\src\Diagnostics.DataProviders\Diagnostics.DataProviders.csproj" />
+    <ProjectReference Include="..\src\Diagnostics.ModelsAndUtils\Diagnostics.ModelsAndUtils.csproj" />
+    <ProjectReference Include="..\src\Diagnostics.RuntimeHost\Diagnostics.RuntimeHost.csproj" />
+    <ProjectReference Include="..\src\Diagnostics.Scripts\Diagnostics.Scripts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="RuntimeHostTests\" />
+    <Folder Include="TestData\" />
+  </ItemGroup>
+
+  <Target Name="AfterBuildScript" AfterTargets="Build">
+    <Copy SourceFiles="..\data\templates\Detector_KustoQuery.csx" DestinationFolder="$(OutputPath)\templates" ContinueOnError="true" />
+  </Target>
+  
+</Project>
