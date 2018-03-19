@@ -9,8 +9,6 @@ namespace Diagnostics.RuntimeHost.Utilities
     {
         internal const int WatcherDefaultPollingIntervalInSeconds = 5 * 60;
 
-        internal const string ApiLoggerKey = "API_LOGGER";
-
         // These Configurations probably should be in Data Providers
 
         public static TimeSpan KustoDataRetentionPeriod = TimeSpan.FromDays(-30);

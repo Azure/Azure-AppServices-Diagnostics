@@ -13,7 +13,7 @@ namespace Diagnostics.ModelsAndUtils
         public string EndTime;
 
         public string TimeGrain;
-        
+
         public OperationContext(SiteResource resource, string startTimeStr, string endTimeStr, string timeGrain = "5")
         {
             Resource = resource;

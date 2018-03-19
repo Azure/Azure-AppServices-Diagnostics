@@ -34,7 +34,6 @@ namespace Diagnostics.CompilerHost
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseCompilerRequestMiddleware();
             app.UseMvc();
         }
     }
