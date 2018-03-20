@@ -9,5 +9,6 @@ namespace Diagnostics.DataProviders
     public class DataSourcesConfiguration
     {
         public KustoDataProviderConfiguration KustoConfiguration { get; set; }
+        public SupportObserverDataProviderConfiguration SupportObserverConfiguration { get; set; }
     }
 }

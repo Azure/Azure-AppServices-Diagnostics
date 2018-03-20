@@ -11,10 +11,12 @@ namespace Diagnostics.DataProviders
         private OperationDataCache _cache = new OperationDataCache();
 
         public KustoDataProvider Kusto;
+        public SupportObserverDataProvider Observer;
 
         public DataProviders(DataSourcesConfiguration configuration)
         {
             Kusto = new KustoDataProvider(_cache, configuration.KustoConfiguration);
+            Observer = new SupportObserverDataProvider(_cache, configuration.SupportObserverConfiguration);
         }
     }
 }
