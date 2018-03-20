@@ -13,7 +13,7 @@ namespace Diagnostics.Logger
         #region Compile Host Events (ID Range : 1000 - 1999)
 
         [Event(1000, Level = EventLevel.Informational, Channel = EventChannel.Admin)]
-        public void LogCompilerHostStartup(string Message)
+        public void LogCompilerHostMessage(string Message)
         {
             WriteDiagnosticsEvent(1000, Message);
         }
@@ -46,7 +46,7 @@ namespace Diagnostics.Logger
         #region Runtime Host Events (ID Range : 2000 - 2999)
 
         [Event(2000, Level = EventLevel.Informational, Channel = EventChannel.Admin)]
-        public void LogRuntimeHostStartup(string Message)
+        public void LogRuntimeHostMessage(string Message)
         {
             WriteDiagnosticsEvent(2000, Message);
         }
@@ -80,6 +80,28 @@ namespace Diagnostics.Logger
                 StartTime,
                 EndTime);
         }
+
+        #region SourceWatcher Events (ID Range : 2500 - 2599)
+
+        [Event(2500, Level = EventLevel.Informational, Channel = EventChannel.Admin)]
+        public void LogSourceWatcherMessage(string Source, string Message)
+        {
+            WriteDiagnosticsEvent(2500, Source, Message);
+        }
+
+        [Event(2501, Level = EventLevel.Warning, Channel = EventChannel.Admin)]
+        public void LogSourceWatcherWarning(string Source, string Message)
+        {
+            WriteDiagnosticsEvent(2501, Source, Message);
+        }
+
+        [Event(2502, Level = EventLevel.Error, Channel = EventChannel.Admin)]
+        public void LogSourceWatcherException(string Source, string Message, string ExceptionType, string ExceptionDetails)
+        {
+            WriteDiagnosticsEvent(2502, Source, Message, ExceptionType, ExceptionDetails);
+        }
+
+        #endregion
 
         #endregion
 

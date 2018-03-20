@@ -16,26 +16,23 @@ using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
-    public class GitHubWatcher : ISourceWatcher
+    public class GitHubWatcher : SourceWatcherBase
     {
         private Task _firstTimeCompletionTask;
-        private IHostingEnvironment _env;
-        private IConfiguration _config;
-        private ICache<string, EntityInvoker> _invokerCache;
         private IGithubClient _githubClient;
         private string _rootContentApiPath;
-        private string _lastModifiedMarkerName;
-        private string _deleteMarkerName;
-        private string _cacheIdFileName;
-        
+        private readonly string _lastModifiedMarkerName;
+        private readonly string _deleteMarkerName;
+        private readonly string _cacheIdFileName;
+
         private string _destinationCsxPath;
         private int _pollingIntervalInSeconds;
 
+        protected override Task FirstTimeCompletionTask => _firstTimeCompletionTask;
+
         public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, ICache<string, EntityInvoker> invokerCache, IGithubClient githubClient)
+            : base(env, configuration, invokerCache, "GithubWatcher")
         {
-            _env = env;
-            _config = configuration;
-            _invokerCache = invokerCache;
             _githubClient = githubClient;
 
             _lastModifiedMarkerName = "_lastModified.marker";
@@ -45,25 +42,32 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             Start();
         }
 
-        public void Start()
+        public override void Start()
         {
             _firstTimeCompletionTask = StartWatcherInternal();
             StartPollingForChanges();
         }
 
-        public Task WaitForFirstCompletion() => _firstTimeCompletionTask;
-
         private async Task StartWatcherInternal()
         {
             try
             {
+                LogMessage("SourceWatcher : Start");
                 DirectoryInfo destDirInfo = new DirectoryInfo(_destinationCsxPath);
                 string destLastModifiedMarker = await FileHelper.GetFileContentAsync(destDirInfo.FullName, _lastModifiedMarkerName);
                 HttpResponseMessage response = await _githubClient.Get(_rootContentApiPath, etag: destLastModifiedMarker);
+                LogMessage($"Http call to repository root path completed. Status Code : {response.StatusCode.ToString()}");
 
                 if (response.StatusCode >= HttpStatusCode.NotFound)
                 {
-                    // TODO: log fatal error
+                    string errorContent = string.Empty;
+                    try
+                    {
+                        errorContent = await response.Content.ReadAsStringAsync();
+                    }
+                    catch (Exception) { }
+
+                    LogException($"Unexpected resonse from repository root path. Response : {errorContent}", null);
                     return;
                 }
 
@@ -74,7 +78,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                      * Make Sure this entity is loaded in Invoker cache for runtime.
                      * This codepath will be mostly used when the process restarts or machine reboot (and no changes are done in scripts source).
                      */
-
+                    LogMessage($"Checking if any invoker present locally needs to be added in cache");
                     foreach (DirectoryInfo subDir in destDirInfo.EnumerateDirectories())
                     {
                         await AddInvokerToCacheIfNeeded(subDir);
@@ -83,6 +87,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     return;
                 }
 
+                LogMessage("Syncing local directories with github changes");
                 string githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
                 GithubEntry[] githubDirectories = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
 
@@ -93,6 +98,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     DirectoryInfo subDir = new DirectoryInfo(Path.Combine(destDirInfo.FullName, gitHubDir.Name));
                     if (!subDir.Exists)
                     {
+                        LogMessage($"Folder : {subDir.Name} present in github but not on local disk. Creating it...");
                         subDir.Create();
                     }
 
@@ -105,6 +111,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                         continue;
                     }
 
+                    LogMessage($"Deteced changes in Github Folder : {gitHubDir.Name}. Syncing it locally ...");
+
                     await DownloadContentAndUpdateInvokerCache(gitHubDir, subDir);
                     await FileHelper.WriteToFileAsync(subDir.FullName, _lastModifiedMarkerName, gitHubDir.Sha);
                 }
@@ -113,12 +121,16 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
                 await FileHelper.WriteToFileAsync(destDirInfo.FullName, _lastModifiedMarkerName, githubRootContentETag);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // TODO : Log and consume the exception
+                LogException(ex.Message, ex);
+            }
+            finally
+            {
+                LogMessage("SourceWatcher : End");
             }
         }
-        
+
         private async void StartPollingForChanges()
         {
             await _firstTimeCompletionTask;
@@ -130,28 +142,44 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
             } while (true);
         }
-        
+
         private async Task AddInvokerToCacheIfNeeded(DirectoryInfo subDir)
         {
             string cacheId = await FileHelper.GetFileContentAsync(subDir.FullName, _cacheIdFileName);
             if (string.IsNullOrWhiteSpace(cacheId) || !_invokerCache.TryGetValue(cacheId, out EntityInvoker invoker))
             {
+                LogMessage($"Folder : {subDir.FullName} missing in invoker cache.");
                 FileInfo mostRecentAssembly = GetMostRecentFileByExtension(subDir, ".dll");
                 FileInfo csxScriptFile = GetMostRecentFileByExtension(subDir, ".csx");
                 FileInfo deleteMarkerFile = new FileInfo(Path.Combine(subDir.FullName, _deleteMarkerName));
 
-                if (mostRecentAssembly != default(FileInfo) && csxScriptFile != default(FileInfo) && !deleteMarkerFile.Exists)
+                if (mostRecentAssembly == default(FileInfo) || csxScriptFile == default(FileInfo))
                 {
-                    string scriptText = await FileHelper.GetFileContentAsync(csxScriptFile.FullName);
-                    Assembly asm = Assembly.LoadFrom(mostRecentAssembly.FullName);
-                    invoker = new EntityInvoker(new EntityMetadata(scriptText));
-                    invoker.InitializeEntryPoint(asm);
+                    LogWarning($"No Assembly file (.dll) or Csx File found (.csx). Skipping cache update");
+                    return;
+                }
 
-                    if (invoker.EntryPointDefinitionAttribute != null)
-                    {
-                        _invokerCache.AddOrUpdate(invoker.EntryPointDefinitionAttribute.Id, invoker);
-                        await FileHelper.WriteToFileAsync(subDir.FullName, _cacheIdFileName, invoker.EntryPointDefinitionAttribute.Id);
-                    }
+                if (deleteMarkerFile.Exists)
+                {
+                    LogMessage("Folder marked for deletion. Skipping cache update");
+                    return;
+                }
+
+                string scriptText = await FileHelper.GetFileContentAsync(csxScriptFile.FullName);
+                LogMessage($"Loading assembly : {mostRecentAssembly.FullName}");
+                Assembly asm = Assembly.LoadFrom(mostRecentAssembly.FullName);
+                invoker = new EntityInvoker(new EntityMetadata(scriptText));
+                invoker.InitializeEntryPoint(asm);
+
+                if (invoker.EntryPointDefinitionAttribute != null)
+                {
+                    LogMessage($"Updating cache with  new invoker with id : {invoker.EntryPointDefinitionAttribute.Id}");
+                    _invokerCache.AddOrUpdate(invoker.EntryPointDefinitionAttribute.Id, invoker);
+                    await FileHelper.WriteToFileAsync(subDir.FullName, _cacheIdFileName, invoker.EntryPointDefinitionAttribute.Id);
+                }
+                else
+                {
+                    LogWarning("Missing Entry Point Definition attribute. skipping cache update");
                 }
             }
         }
@@ -167,11 +195,12 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             HttpResponseMessage response = await _githubClient.Get(parentGithubEntry.Url);
             if (!response.IsSuccessStatusCode)
             {
+                LogException($"GET Failed. Url : {parentGithubEntry.Url}, StatusCode : {response.StatusCode.ToString()}", null);
                 return;
             }
 
             GithubEntry[] githubFiles = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
-            
+
             foreach (GithubEntry githubFile in githubFiles)
             {
                 string fileExtension = githubFile.Name.Split(new char[] { '.' }).LastOrDefault();
@@ -191,28 +220,38 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     // Use Guids for Assembly and PDB Names to ensure uniqueness.
                     downloadFilePath = Path.Combine(destDir.FullName, $"{assemblyName}.{fileExtension.ToLower()}");
                 }
-                
+
+                LogMessage($"Begin downloading File : {githubFile.Name} and saving it as : {downloadFilePath}");
                 await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
             }
 
             string scriptText = await FileHelper.GetFileContentAsync(csxFilePath);
-            asm = Assembly.LoadFrom(Path.Combine(destDir.FullName, $"{assemblyName}.dll"));
+
+            string assemblyPath = Path.Combine(destDir.FullName, $"{assemblyName}.dll");
+            LogMessage($"Loading assembly : {assemblyPath}");
+            asm = Assembly.LoadFrom(assemblyPath);
 
             EntityInvoker newInvoker = new EntityInvoker(new EntityMetadata(scriptText));
             newInvoker.InitializeEntryPoint(asm);
 
             // Remove the Old Invoker from Cache
             lastCacheId = await FileHelper.GetFileContentAsync(cacheIdFilePath);
-            if(!string.IsNullOrWhiteSpace(lastCacheId) && _invokerCache.TryRemoveValue(lastCacheId, out EntityInvoker oldInvoker))
+            if (!string.IsNullOrWhiteSpace(lastCacheId) && _invokerCache.TryRemoveValue(lastCacheId, out EntityInvoker oldInvoker))
             {
+                LogMessage($"Removing old invoker with id : {oldInvoker.EntryPointDefinitionAttribute.Id} from Cache");
                 oldInvoker.Dispose();
             }
 
             // Add new invoker to Cache and update Cache Id File
             if (newInvoker.EntryPointDefinitionAttribute != null)
             {
+                LogMessage($"Updating cache with  new invoker with id : {newInvoker.EntryPointDefinitionAttribute.Id}");
                 _invokerCache.AddOrUpdate(newInvoker.EntryPointDefinitionAttribute.Id, newInvoker);
                 await FileHelper.WriteToFileAsync(cacheIdFilePath, newInvoker.EntryPointDefinitionAttribute.Id);
+            }
+            else
+            {
+                LogWarning("Missing Entry Point Definition attribute. skipping cache update");
             }
         }
 
@@ -220,14 +259,16 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         {
             if (!destDirInfo.Exists) return;
 
-            foreach(DirectoryInfo subDir in destDirInfo.EnumerateDirectories())
+            LogMessage("Checking for deleted folders in github");
+            foreach (DirectoryInfo subDir in destDirInfo.EnumerateDirectories())
             {
                 bool dirExistsInGithub = githubDirectories.Any(p => p.Name.Equals(subDir.Name));
                 if (!dirExistsInGithub)
                 {
+                    LogMessage($"Folder : {subDir.Name} not present in github. Marking for deletion");
                     // remove the entry from cache and mark the folder for deletion.s
                     string cacheId = await FileHelper.GetFileContentAsync(subDir.FullName, _cacheIdFileName);
-                    if(!string.IsNullOrWhiteSpace(cacheId) && _invokerCache.TryRemoveValue(cacheId, out EntityInvoker invoker))
+                    if (!string.IsNullOrWhiteSpace(cacheId) && _invokerCache.TryRemoveValue(cacheId, out EntityInvoker invoker))
                     {
                         invoker.Dispose();
                     }
@@ -237,7 +278,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             }
         }
 
-        private string GetHeaderValue(HttpResponseMessage responseMsg,  string headerName)
+        private string GetHeaderValue(HttpResponseMessage responseMsg, string headerName)
         {
             if (responseMsg.Headers.TryGetValues(headerName, out IEnumerable<string> values))
             {
@@ -250,9 +291,9 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         private FileInfo GetMostRecentFileByExtension(DirectoryInfo dir, string extension)
         {
             return dir.GetFiles().Where(p => (!string.IsNullOrWhiteSpace(p.Extension) && p.Extension.Equals(extension, StringComparison.OrdinalIgnoreCase)))
-                .OrderByDescending(f=>f.LastWriteTimeUtc).FirstOrDefault();
+                .OrderByDescending(f => f.LastWriteTimeUtc).FirstOrDefault();
         }
-        
+
         private void LoadConfigurations()
         {
             _rootContentApiPath = $@"https://api.github.com/repos/{_githubClient.UserName}/{_githubClient.RepoName}/contents?ref={_githubClient.Branch}";
@@ -268,7 +309,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 pollingIntervalvalue = (_config[$"SourceWatcher:{RegistryConstants.PollingIntervalInSecondsKey}"]).ToString();
             }
 
-            if(!int.TryParse(pollingIntervalvalue, out _pollingIntervalInSeconds))
+            if (!int.TryParse(pollingIntervalvalue, out _pollingIntervalInSeconds))
             {
                 _pollingIntervalInSeconds = HostConstants.WatcherDefaultPollingIntervalInSeconds;
             }
