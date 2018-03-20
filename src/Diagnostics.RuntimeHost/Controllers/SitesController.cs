@@ -15,6 +15,7 @@ using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -63,7 +64,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest(errorMessage);
             }
 
-            string requestId = this.Request.Headers[HeaderConstants.RequestIdHeaderName];
+            this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
 
             EntityMetadata metaData = new EntityMetadata(script);
             var dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
@@ -76,7 +77,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             };
 
             Assembly tempAsm = null;
-            var compilerResponse = await _compilerHostClient.GetCompilationResponse(script, requestId ?? string.Empty);
+            var compilerResponse = await _compilerHostClient.GetCompilationResponse(script, requestIds.FirstOrDefault() ?? string.Empty);
 
             queryRes.CompilationOutput = compilerResponse;
 
