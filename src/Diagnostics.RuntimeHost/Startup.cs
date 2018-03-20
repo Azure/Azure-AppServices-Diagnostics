@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders;
+using Diagnostics.RuntimeHost.Middleware;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.Scripts;
@@ -54,6 +55,7 @@ namespace Diagnostics.RuntimeHost
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseDiagnosticsRequestMiddleware();
             app.UseMvc();
         }
     }

@@ -1,4 +1,5 @@
-﻿using Diagnostics.RuntimeHost.Utilities;
+﻿using Diagnostics.Logger;
+using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Hosting;
@@ -26,7 +27,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         private string _lastModifiedMarkerName;
         private string _deleteMarkerName;
         private string _cacheIdFileName;
-        private string _etagHeaderName;
         
         private string _destinationCsxPath;
         private int _pollingIntervalInSeconds;
@@ -41,7 +41,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             _lastModifiedMarkerName = "_lastModified.marker";
             _deleteMarkerName = "_delete.marker";
             _cacheIdFileName = "cacheId.txt";
-            _etagHeaderName = "ETag";
             LoadConfigurations();
             Start();
         }
@@ -84,7 +83,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     return;
                 }
 
-                string githubRootContentETag = GetHeaderValue(response, _etagHeaderName).Replace("W/", string.Empty);
+                string githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
                 GithubEntry[] githubDirectories = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
 
                 foreach (GithubEntry gitHubDir in githubDirectories)
