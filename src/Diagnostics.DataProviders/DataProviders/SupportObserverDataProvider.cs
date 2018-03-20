@@ -20,7 +20,7 @@ namespace Diagnostics.DataProviders
         {
             _configuration = configuration;
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("https://support-bay-api.azurewebsites.net/observer");
+            _httpClient.BaseAddress = new Uri("https://support-bay-api.azurewebsites.net/observer/");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
@@ -71,7 +71,7 @@ namespace Diagnostics.DataProviders
 
         public async Task<IEnumerable<string>> GetSiteHostNames(string siteName)
         {
-            var response = await GetObserverResource($"/sites/{siteName}/hostnames?api-version=2.0");
+            var response = await GetObserverResource($"sites/{siteName}/hostnames?api-version=2.0");
             var hostnames = response.Split(new char[] { ',' });
             return hostnames;
         }
