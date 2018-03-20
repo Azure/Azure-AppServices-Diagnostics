@@ -76,7 +76,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             };
 
             Assembly tempAsm = null;
-            var compilerResponse = await _compilerHostClient.GetCompilationResponse(script, requestId);
+            var compilerResponse = await _compilerHostClient.GetCompilationResponse(script, requestId ?? string.Empty);
 
             queryRes.CompilationOutput = compilerResponse;
 
