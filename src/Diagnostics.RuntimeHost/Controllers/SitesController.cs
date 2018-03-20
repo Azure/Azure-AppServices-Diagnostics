@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
@@ -62,6 +63,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest(errorMessage);
             }
 
+            string requestId = this.Request.Headers[HeaderConstants.RequestIdHeaderName];
+
             EntityMetadata metaData = new EntityMetadata(script);
             var dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
             SiteResource resource = await _resourceService.GetSite(subscriptionId, resourceGroupName, siteName, hostNames, stampName, startTimeUtc, endTimeUtc);
@@ -73,7 +76,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             };
 
             Assembly tempAsm = null;
-            var compilerResponse = await _compilerHostClient.GetCompilationResponse(script);
+            var compilerResponse = await _compilerHostClient.GetCompilationResponse(script, requestId);
 
             queryRes.CompilationOutput = compilerResponse;
 
