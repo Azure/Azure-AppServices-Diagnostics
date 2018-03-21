@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Diagnostics.DataProviders\Diagnostics.DataProviders.csproj" />
+    <ProjectReference Include="..\Diagnostics.Logger\Diagnostics.Logger.csproj" />
     <ProjectReference Include="..\Diagnostics.ModelsAndUtils\Diagnostics.ModelsAndUtils.csproj" />
     <ProjectReference Include="..\Diagnostics.Scripts\Diagnostics.Scripts.csproj" />
   </ItemGroup>
