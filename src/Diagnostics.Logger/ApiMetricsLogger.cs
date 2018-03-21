@@ -2,7 +2,9 @@
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Diagnostics.Logger
 {
@@ -25,9 +27,9 @@ namespace Diagnostics.Logger
 
         private void StartMetricCapture(HttpContext context)
         {
-            if (context.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values))
+            if (context.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values) && values != default(StringValues) && values.Any())
             {
-                _requestId = values.ToString();
+                _requestId = values.First().ToString();
             }
 
             _startTime = DateTime.UtcNow;
@@ -46,64 +48,31 @@ namespace Diagnostics.Logger
                     return;
                 }
 
-                var parts = httpContext.Request.Path.ToString().ToLowerInvariant().Split('?')[0].Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-                var cursor = ((IEnumerable<string>)parts).GetEnumerator();
-                while (cursor.MoveNext())
+                Regex webAppRegEx = new Regex("(.*)subscriptions/(.*)/resourcegroups/(.*)/providers/microsoft.web/sites/(.*)/diagnostics/(.*)");
+                Regex hostingEnvRegEx = new Regex("(.*)subscriptions/(.*)/resourcegroups/(.*)/providers/microsoft.web/hostingenvironments/(.*)/diagnostics/(.*)");
+
+                string addressPath = httpContext.Request.Path.ToString().ToLower();
+                Match webAppMatch = webAppRegEx.Match(addressPath);
+
+                if (webAppMatch.Success)
                 {
-                    if (String.Equals(cursor.Current, "subscriptions", StringComparison.OrdinalIgnoreCase))
-                    {
-                        break;
-                    }
-                }
-
-                if (!cursor.MoveNext())
-                {
-                    return;
-                }
-
-                _subscriptionId = cursor.Current;
-
-                if (!cursor.MoveNext())
-                {
-                    return;
-                }
-
-                if (String.Equals(cursor.Current, "resourceGroups", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (!cursor.MoveNext())
-                    {
-                        return;
-                    }
-
-                    _resourceGroupName = cursor.Current;
-
-                    if (!cursor.MoveNext() || !String.Equals(cursor.Current, "providers", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return;
-                    }
-                    if (!cursor.MoveNext() || !String.Equals(cursor.Current, "Microsoft.Web", StringComparison.OrdinalIgnoreCase))
-                    {
-                        return;
-                    }
-                }
-
-                if (cursor.MoveNext() && String.Equals(cursor.Current, "sites", StringComparison.OrdinalIgnoreCase) || String.Equals(cursor.Current, "hostingEnvironments", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (!cursor.MoveNext())
-                    {
-                        return;
-                    }
-
-                    _resourceName = cursor.Current;
+                    _subscriptionId = webAppMatch.Groups[2].Value;
+                    _resourceGroupName = webAppMatch.Groups[3].Value;
+                    _resourceName = webAppMatch.Groups[4].Value;
                 }
                 else
                 {
-                    return;
+                    Match hostingEnvMatch = hostingEnvRegEx.Match(addressPath);
+                    if (hostingEnvMatch.Success)
+                    {
+                        _subscriptionId = hostingEnvMatch.Groups[2].Value;
+                        _resourceGroupName = hostingEnvMatch.Groups[3].Value;
+                        _resourceName = hostingEnvMatch.Groups[4].Value;
+                    }
                 }
             }
-            catch
+            catch (Exception)
             {
-                // ignore error
             }
         }
 

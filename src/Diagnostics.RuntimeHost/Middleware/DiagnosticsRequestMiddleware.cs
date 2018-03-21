@@ -78,8 +78,14 @@ namespace Diagnostics.RuntimeHost.Middleware
             }
             catch (Exception logEx)
             {
+                string requestId = string.Empty;
+                if (context.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values) && values != default(StringValues) && values.Any())
+                {
+                    requestId = values.First().ToString();
+                }
+
                 DiagnosticsETWProvider.Instance.LogRuntimeHostUnhandledException(
-                    string.Empty,
+                    requestId,
                     "LogException_DiagnosticsRequestMiddleware",
                     string.Empty,
                     string.Empty,

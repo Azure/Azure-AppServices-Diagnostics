@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Diagnostics.Logger;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 
 namespace Diagnostics.CompilerHost.Middleware
 {
@@ -76,8 +77,14 @@ namespace Diagnostics.CompilerHost.Middleware
             }
             catch (Exception logEx)
             {
+                string requestId = string.Empty;
+                if (context.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values) && values != default(StringValues) && values.Any())
+                {
+                    requestId = values.First().ToString();
+                }
+
                 DiagnosticsETWProvider.Instance.LogCompilerHostUnhandledException(
-                    string.Empty,
+                    requestId,
                     "LogException_CompilerRequestMiddleware",
                     logEx.GetType().ToString(),
                     logEx.ToString());
