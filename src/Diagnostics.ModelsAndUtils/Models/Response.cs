@@ -29,26 +29,4 @@ namespace Diagnostics.ModelsAndUtils
             RenderingProperties = new Rendering();
         }
     }
-
-    public class Rendering
-    {
-        public GraphType Type { get; set; }
-
-        public Rendering()
-        {
-            Type = GraphType.TimeSeries;
-        }
-
-        public Rendering(GraphType type)
-        {
-            Type = type;
-        }
-    }
-
-    public enum GraphType
-    {
-        NoGraph = 0,
-        Table,
-        TimeSeries
-    }
 }
