@@ -4,7 +4,9 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Models;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.DataProviders
@@ -49,14 +51,20 @@ namespace Diagnostics.DataProviders
             throw new NotImplementedException();
         }
 
-        public Task<JObject> GetRuntimeSiteSlotMap(string siteName)
+        public async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
         {
-            throw new NotImplementedException();
+            var response = await GetObserverResource($"sites/{siteName}/runtimesiteslotmap");
+            var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(response);
+            var slotTimeRange = new Dictionary<string, List<RuntimeSitenameTimeRange>>(slotTimeRangeCaseSensitiveDictionary, StringComparer.CurrentCultureIgnoreCase);
+            return slotTimeRange;
         }
 
-        public Task<JObject> GetRuntimeSiteSlotMap(string stampName, string siteName)
+        public async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
         {
-            throw new NotImplementedException();
+            var response = await GetObserverResource($"stamp/{stampName}/sites/{siteName}/runtimesiteslotmap");
+            var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(response);
+            var slotTimeRange = new Dictionary<string, List<RuntimeSitenameTimeRange>>(slotTimeRangeCaseSensitiveDictionary, StringComparer.CurrentCultureIgnoreCase);
+            return slotTimeRange;
         }
 
         public Task<IEnumerable<Dictionary<string, string>>> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName)
@@ -72,7 +80,7 @@ namespace Diagnostics.DataProviders
         public async Task<IEnumerable<string>> GetSiteHostNames(string siteName)
         {
             var response = await GetObserverResource($"sites/{siteName}/hostnames?api-version=2.0");
-            var hostnames = response.Split(new char[] { ',' });
+            var hostnames = response.Remove(0, 1).Remove(response.Length - 2, 1).Split(new char[] { ',' });
             return hostnames;
         }
 
@@ -104,6 +112,18 @@ namespace Diagnostics.DataProviders
         public Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<dynamic> GetSite(string siteName)
+        {
+            var response = await GetObserverResource($"sites/{siteName}");
+            var siteObject = JsonConvert.DeserializeObject(response);
+            return siteObject;
+        }
+
+        public async Task<dynamic> GetSite(string stampName, string siteName)
+        {
+            return await GetSite(siteName);
         }
 
         private async Task<string> GetObserverResource(string url)

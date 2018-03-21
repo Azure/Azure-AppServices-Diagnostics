@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Diagnostics.ModelsAndUtils.Models;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,6 +9,8 @@ namespace Diagnostics.DataProviders
 {
     public interface ISupportObserverDataProvider
     {
+        Task<dynamic> GetSite(string siteName);
+        Task<dynamic> GetSite(string stampName, string siteName);
         Task<IEnumerable<string>> GetSiteHostNames(string siteName);
         Task<string> GetSiteResourceGroupName(string siteName);
         Task<IEnumerable<Dictionary<string, string>>> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName);
@@ -23,7 +26,7 @@ namespace Diagnostics.DataProviders
         Task<JObject> GetAdminSitesBySiteName(string stampName, string siteName);
         Task<JObject> GetAdminSitesByHostName(string stampName, string[] hostNames);
         Task<string> GetStorageVolumeForSite(string stampName, string siteName);
-        Task<JObject> GetRuntimeSiteSlotMap(string siteName);
-        Task<JObject> GetRuntimeSiteSlotMap(string stampName, string siteName);
+        Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName);
+        Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
     }
 }
