@@ -77,13 +77,6 @@ namespace Diagnostics.DataProviders
             throw new NotImplementedException();
         }
 
-        public async Task<IEnumerable<string>> GetSiteHostNames(string siteName)
-        {
-            var response = await GetObserverResource($"sites/{siteName}/hostnames?api-version=2.0");
-            var hostnames = response.Remove(0, 1).Remove(response.Length - 2, 1).Split(new char[] { ',' });
-            return hostnames;
-        }
-
         public Task<string> GetSiteResourceGroupName(string siteName)
         {
             throw new NotImplementedException();
