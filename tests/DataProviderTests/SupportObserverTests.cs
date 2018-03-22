@@ -19,13 +19,6 @@ namespace Diagnostics.Tests.DataProviderTests
         }
 
         [Fact]
-        public void GetHostnamesTest()
-        {
-            var hostnames = _dataProvider.GetSiteHostNames("realforsikring").Result;
-            Assert.Equal(3, hostnames.Count());
-        }
-
-        [Fact]
         public void GetRuntimeSlotMap()
         {
             var runtimeSlotMap = _dataProvider.GetRuntimeSiteSlotMap("waws-prod-bn1-71717c45", "thor-api").Result;

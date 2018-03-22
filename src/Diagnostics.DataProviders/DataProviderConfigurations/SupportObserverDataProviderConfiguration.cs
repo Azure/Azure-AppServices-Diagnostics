@@ -23,6 +23,15 @@ namespace Diagnostics.DataProviders
         [ConfigurationName("AppKey")]
         public string AppKey { get; set; }
 
+        [ConfigurationName("IsProdConfigured", DefaultValue = true)]
+        public bool IsProdConfigured { get; set; }
+
+        [ConfigurationName("IsTestConfigured", DefaultValue = false)]
+        public bool IsTestConfigured { get; set; }
+
+        [ConfigurationName("IsMockConfigured", DefaultValue = false)]
+        public bool IsMockConfigured { get; set; }
+
         /// <summary>
         /// Uri for SupportObserverResourceAAD app
         /// </summary>
