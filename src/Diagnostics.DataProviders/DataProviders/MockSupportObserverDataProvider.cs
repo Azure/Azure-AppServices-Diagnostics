@@ -44,12 +44,35 @@ namespace Diagnostics.DataProviders
 
         public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
         {
-            throw new NotImplementedException();
+            return GetRuntimeSiteSlotMap(null, siteName);
         }
 
         public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrWhiteSpace(siteName))
+            {
+                throw new ArgumentNullException("siteName");
+            }
+
+            if (string.IsNullOrWhiteSpace(stampName))
+            {
+                throw new ArgumentNullException("stampName");
+            }
+
+            var mock = new Dictionary<string, List<RuntimeSitenameTimeRange>>();
+
+            switch (siteName.ToLower())
+            {
+                case "thor-api":
+                    mock.Add("production", new List<RuntimeSitenameTimeRange> { new RuntimeSitenameTimeRange { RuntimeSitename = "thor-api", StartTime = DateTime.UtcNow.AddDays(-5), EndTime = DateTime.UtcNow } });
+                    mock.Add("staging", new List<RuntimeSitenameTimeRange> { new RuntimeSitenameTimeRange { RuntimeSitename = "thor-api__a88nf", StartTime = DateTime.UtcNow.AddDays(-5), EndTime = DateTime.UtcNow } });
+                    mock.Add("testing", new List<RuntimeSitenameTimeRange> { new RuntimeSitenameTimeRange { RuntimeSitename = "thor-api__v85ae", StartTime = DateTime.UtcNow.AddDays(-5), EndTime = DateTime.UtcNow } });
+                    break;
+                default:
+                    break;
+            }
+
+            return Task.FromResult(mock);
         }
 
         public Task<IEnumerable<Dictionary<string, string>>> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName)

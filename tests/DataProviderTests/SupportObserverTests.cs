@@ -1,6 +1,11 @@
 ﻿using Diagnostics.DataProviders;
+using Diagnostics.ModelsAndUtils;
+using Diagnostics.Scripts;
+using Diagnostics.Scripts.Models;
+using Diagnostics.Tests.Helpers;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Xunit;
@@ -9,27 +14,38 @@ namespace Diagnostics.Tests.DataProviderTests
 {
     public class SupportObserverTests
     {
-        private SupportObserverDataProvider _dataProvider;
         public SupportObserverTests()
         {
-            //setup
-            var configurationFactory = new MockDataProviderConfigurationFactory();
-            var configuration = configurationFactory.LoadConfigurations();
-            _dataProvider = new SupportObserverDataProvider(null, configuration.SupportObserverConfiguration);
         }
 
         [Fact]
-        public void GetRuntimeSlotMap()
+        public async void E2E_Test_RuntimeSlotMapData()
         {
-            var runtimeSlotMap = _dataProvider.GetRuntimeSiteSlotMap("waws-prod-bn1-71717c45", "thor-api").Result;
-            Assert.True(runtimeSlotMap.ContainsKey("Production"));
-        }
+            EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
+            //read a sample csx file from local directory
+            metadata.ScriptText = await File.ReadAllTextAsync("GetRuntimeSiteSlotMapData.csx");
 
-        [Fact]
-        public void GetSiteObject()
-        {
-            var siteObject = _dataProvider.GetSite("thor-api").Result;
-            Assert.Equal(siteObject.SiteName, "thor-api");
+            var configFactory = new MockDataProviderConfigurationFactory();
+            var config = configFactory.LoadConfigurations();
+
+            var dataProviders = new DataProviders.DataProviders(config);
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+
+                var siteResource = new SiteResource
+                {
+                    SiteName = "thor-api",
+                    Stamp = "waws-prod-bn1-71717c45"
+                };
+                var operationContext = new OperationContext(siteResource, null, null);
+                var response = new Response();
+
+                Response result = (Response)await invoker.Invoke(new object[] { dataProviders, operationContext, response });
+
+                Assert.Equal("thor-api__a88nf", result.Dataset.First().Table.Rows[1][1]);
+            }
         }
     }
 }
