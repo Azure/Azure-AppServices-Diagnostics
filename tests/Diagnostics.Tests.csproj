@@ -30,6 +30,6 @@
     <Copy SourceFiles="..\data\templates\Detector_KustoQuery.csx" DestinationFolder="$(OutputPath)\templates" ContinueOnError="true" />
   </Target>
 
-  <Import Project="..\Diagnostics.Samples\Diagnostics.Samples.projitems" Label="Shared" />
+  <Import Project="..\data\samples\Diagnostics.Samples\Diagnostics.Samples.projitems" Label="Shared" />
   
 </Project>
