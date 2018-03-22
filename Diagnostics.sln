@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2010
+VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{0F59F43E-D06C-4A0F-8D38-9538BA58FC6A}"
 EndProject
@@ -23,7 +23,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{C0537983-2503-4D70-B831-27614DB29F81}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{1923DCF1-54EE-40DA-AE0C-DE10647D3928}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Diagnostics.Samples", "Diagnostics.Samples\Diagnostics.Samples.shproj", "{99368F78-83B7-46D4-B49B-F26FE165F53C}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Diagnostics.Samples\Diagnostics.Samples.projitems*{99368f78-83b7-46d4-b49b-f26fe165f53c}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
@@ -116,6 +123,7 @@ Global
 		{0080F318-4A06-40E3-BCA6-5C61978CBFE6} = {0F59F43E-D06C-4A0F-8D38-9538BA58FC6A}
 		{F23F3EDA-2CD2-4F7B-B605-13DF4A8A632F} = {0F59F43E-D06C-4A0F-8D38-9538BA58FC6A}
 		{CFD34079-6A40-4938-8840-4325B504ACFA} = {C0537983-2503-4D70-B831-27614DB29F81}
+		{99368F78-83B7-46D4-B49B-F26FE165F53C} = {1923DCF1-54EE-40DA-AE0C-DE10647D3928}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B4A19BFB-9A33-49E2-98AD-955E9472EFAD}
