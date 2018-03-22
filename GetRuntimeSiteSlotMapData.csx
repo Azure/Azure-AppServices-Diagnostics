@@ -29,3 +29,4 @@ public async static Task<Response> Run(DataProviders dp, OperationContext cxt, R
     res.Dataset.Add(diagnosticData);
 
     return res;
+}
