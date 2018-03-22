@@ -8,6 +8,7 @@ namespace Diagnostics.RuntimeHost.Utilities
     internal class HostConstants
     {
         internal const int WatcherDefaultPollingIntervalInSeconds = 5 * 60;
+        internal const string ApiLoggerKey = "API_LOGGER";
 
         // These Configurations probably should be in Data Providers
 

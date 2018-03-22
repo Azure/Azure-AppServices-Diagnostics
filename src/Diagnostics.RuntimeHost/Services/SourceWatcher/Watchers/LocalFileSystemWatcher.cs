@@ -12,65 +12,68 @@ using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
-    public class LocalFileSystemWatcher : ISourceWatcher
+    public class LocalFileSystemWatcher : SourceWatcherBase
     {
-        private Task _firstTimeCompletionTask;
-        private IHostingEnvironment _env;
-        private IConfiguration _config;
-        private ICache<string, EntityInvoker> _invokerCache;
         private string _localScriptsPath;
+        private Task _firstTimeCompletionTask;
+
+        protected override Task FirstTimeCompletionTask => _firstTimeCompletionTask;
 
         public LocalFileSystemWatcher(IHostingEnvironment env, IConfiguration configuration, ICache<string, EntityInvoker> invokerCache)
+            : base(env, configuration, invokerCache, "LocalFileSystemWatcher")
         {
-            _env = env;
-            _config = configuration;
-            _invokerCache = invokerCache;
             LoadConfigurations();
             Start();
         }
-
-        public LocalFileSystemWatcher(string localScriptsSourcePath, ICache<string, EntityInvoker> invokerCache)
-        {
-            _localScriptsPath = localScriptsSourcePath;
-            _invokerCache = invokerCache;
-            Start();
-        }
-
-        public void Start()
+        
+        public override void Start()
         {
             _firstTimeCompletionTask = StartWatcherInternal();
         }
         
-        public Task WaitForFirstCompletion() => _firstTimeCompletionTask;
-
         private async Task StartWatcherInternal()
         {
-            DirectoryInfo srcDirectoryInfo = new DirectoryInfo(_localScriptsPath);
-            foreach (DirectoryInfo srcSubDirInfo in srcDirectoryInfo.GetDirectories())
+            try
             {
-                var files = srcSubDirInfo.GetFiles().OrderByDescending(p => p.LastWriteTimeUtc);
-                var csxFile = files.FirstOrDefault(p => p.Extension.Equals(".csx", StringComparison.OrdinalIgnoreCase));
-                var asmFile = files.FirstOrDefault(p => p.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase));
+                LogMessage("SourceWatcher : Start");
 
-                string scriptText = string.Empty;
-                if(csxFile != default(FileInfo))
+                DirectoryInfo srcDirectoryInfo = new DirectoryInfo(_localScriptsPath);
+                foreach (DirectoryInfo srcSubDirInfo in srcDirectoryInfo.GetDirectories())
                 {
-                    scriptText = await File.ReadAllTextAsync(csxFile.FullName);
+                    LogMessage($"Scanning in folder : {srcSubDirInfo.FullName}");
+                    var files = srcSubDirInfo.GetFiles().OrderByDescending(p => p.LastWriteTimeUtc);
+                    var csxFile = files.FirstOrDefault(p => p.Extension.Equals(".csx", StringComparison.OrdinalIgnoreCase));
+                    var asmFile = files.FirstOrDefault(p => p.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase));
+
+                    string scriptText = string.Empty;
+                    if (csxFile != default(FileInfo))
+                    {
+                        scriptText = await File.ReadAllTextAsync(csxFile.FullName);
+                    }
+
+                    EntityMetadata scriptMetadata = new EntityMetadata(scriptText);
+                    EntityInvoker invoker = new EntityInvoker(scriptMetadata);
+
+                    if (asmFile == default(FileInfo))
+                    {
+                        LogWarning($"No Assembly file (.dll). Skipping cache update");
+                        continue;
+                    }
+
+                    LogMessage($"Loading assembly : {asmFile.FullName}");
+                    Assembly asm = Assembly.LoadFrom(asmFile.FullName);
+                    invoker.InitializeEntryPoint(asm);
+                    LogMessage($"Updating cache with  new invoker with id : {invoker.EntryPointDefinitionAttribute.Id}");
+                    _invokerCache.AddOrUpdate(invoker.EntryPointDefinitionAttribute.Id, invoker);
                 }
-
-                EntityMetadata scriptMetadata = new EntityMetadata(scriptText);
-                EntityInvoker invoker = new EntityInvoker(scriptMetadata);
-
-                if(asmFile == default(FileInfo))
-                {
-                    // TODO : Log Error of missing dll
-                    continue;
-                }
-
-                Assembly asm = Assembly.LoadFrom(asmFile.FullName);
-                invoker.InitializeEntryPoint(asm);
-
-                _invokerCache.AddOrUpdate(invoker.EntryPointDefinitionAttribute.Id, invoker);
+            }
+            catch (Exception ex)
+            {
+                LogException(ex.Message, ex);
+            }
+            finally
+            {
+                LogMessage("SourceWatcher : End");
             }
         }
         

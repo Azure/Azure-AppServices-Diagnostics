@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
@@ -14,6 +15,7 @@ using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -62,6 +64,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest(errorMessage);
             }
 
+            this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
+
             EntityMetadata metaData = new EntityMetadata(script);
             var dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
             SiteResource resource = await _resourceService.GetSite(subscriptionId, resourceGroupName, siteName, hostNames, stampName, startTimeUtc, endTimeUtc);
@@ -73,7 +77,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             };
 
             Assembly tempAsm = null;
-            var compilerResponse = await _compilerHostClient.GetCompilationResponse(script);
+            var compilerResponse = await _compilerHostClient.GetCompilationResponse(script, requestIds.FirstOrDefault() ?? string.Empty);
 
             queryRes.CompilationOutput = compilerResponse;
 

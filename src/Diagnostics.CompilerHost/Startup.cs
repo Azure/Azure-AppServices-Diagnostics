@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Diagnostics.CompilerHost.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -34,6 +35,7 @@ namespace Diagnostics.CompilerHost
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseCompilerRequestMiddleware();
             app.UseMvc();
         }
     }
