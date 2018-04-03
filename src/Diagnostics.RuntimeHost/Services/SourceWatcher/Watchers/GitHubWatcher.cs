@@ -95,7 +95,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 {
                     if (!gitHubDir.Type.Equals("dir", StringComparison.OrdinalIgnoreCase)) continue;
 
-                    DirectoryInfo subDir = new DirectoryInfo(Path.Combine(destDirInfo.FullName, gitHubDir.Name));
+                    DirectoryInfo subDir = new DirectoryInfo(Path.Combine(destDirInfo.FullName, gitHubDir.Name.ToLower()));
                     if (!subDir.Exists)
                     {
                         LogMessage($"Folder : {subDir.Name} present in github but not on local disk. Creating it...");
@@ -111,10 +111,19 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                         continue;
                     }
 
-                    LogMessage($"Deteced changes in Github Folder : {gitHubDir.Name}. Syncing it locally ...");
+                    LogMessage($"Deteced changes in Github Folder : {gitHubDir.Name.ToLower()}. Syncing it locally ...");
 
-                    await DownloadContentAndUpdateInvokerCache(gitHubDir, subDir);
-                    await FileHelper.WriteToFileAsync(subDir.FullName, _lastModifiedMarkerName, gitHubDir.Sha);
+                    try
+                    {
+                        // Specifically catching exceptions for downloading and loading assembilies for every detector.
+                        await DownloadContentAndUpdateInvokerCache(gitHubDir, subDir);
+                        await FileHelper.WriteToFileAsync(subDir.FullName, _lastModifiedMarkerName, gitHubDir.Sha);
+                    }
+                    catch(Exception downloadEx)
+                    {
+                        LogException(downloadEx.Message, downloadEx);
+                    }
+                    
                 }
 
                 await SyncLocalDirForDeletedEntriesInGitHub(githubDirectories, destDirInfo);
@@ -210,7 +219,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     continue;
                 }
 
-                string downloadFilePath = Path.Combine(destDir.FullName, githubFile.Name);
+                string downloadFilePath = Path.Combine(destDir.FullName, githubFile.Name.ToLower());
                 if (fileExtension.ToLower().Equals("csx"))
                 {
                     csxFilePath = downloadFilePath;
@@ -221,7 +230,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     downloadFilePath = Path.Combine(destDir.FullName, $"{assemblyName}.{fileExtension.ToLower()}");
                 }
 
-                LogMessage($"Begin downloading File : {githubFile.Name} and saving it as : {downloadFilePath}");
+                LogMessage($"Begin downloading File : {githubFile.Name.ToLower()} and saving it as : {downloadFilePath}");
                 await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
             }
 
@@ -262,7 +271,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             LogMessage("Checking for deleted folders in github");
             foreach (DirectoryInfo subDir in destDirInfo.EnumerateDirectories())
             {
-                bool dirExistsInGithub = githubDirectories.Any(p => p.Name.Equals(subDir.Name));
+                bool dirExistsInGithub = githubDirectories.Any(p => p.Name.Equals(subDir.Name, StringComparison.OrdinalIgnoreCase));
                 if (!dirExistsInGithub)
                 {
                     LogMessage($"Folder : {subDir.Name} not present in github. Marking for deletion");
