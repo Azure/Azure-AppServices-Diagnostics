@@ -154,42 +154,49 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         private async Task AddInvokerToCacheIfNeeded(DirectoryInfo subDir)
         {
-            string cacheId = await FileHelper.GetFileContentAsync(subDir.FullName, _cacheIdFileName);
-            if (string.IsNullOrWhiteSpace(cacheId) || !_invokerCache.TryGetValue(cacheId, out EntityInvoker invoker))
+            try
             {
-                LogMessage($"Folder : {subDir.FullName} missing in invoker cache.");
-                FileInfo mostRecentAssembly = GetMostRecentFileByExtension(subDir, ".dll");
-                FileInfo csxScriptFile = GetMostRecentFileByExtension(subDir, ".csx");
-                FileInfo deleteMarkerFile = new FileInfo(Path.Combine(subDir.FullName, _deleteMarkerName));
-
-                if (mostRecentAssembly == default(FileInfo) || csxScriptFile == default(FileInfo))
+                string cacheId = await FileHelper.GetFileContentAsync(subDir.FullName, _cacheIdFileName);
+                if (string.IsNullOrWhiteSpace(cacheId) || !_invokerCache.TryGetValue(cacheId, out EntityInvoker invoker))
                 {
-                    LogWarning($"No Assembly file (.dll) or Csx File found (.csx). Skipping cache update");
-                    return;
-                }
+                    LogMessage($"Folder : {subDir.FullName} missing in invoker cache.");
+                    FileInfo mostRecentAssembly = GetMostRecentFileByExtension(subDir, ".dll");
+                    FileInfo csxScriptFile = GetMostRecentFileByExtension(subDir, ".csx");
+                    FileInfo deleteMarkerFile = new FileInfo(Path.Combine(subDir.FullName, _deleteMarkerName));
 
-                if (deleteMarkerFile.Exists)
-                {
-                    LogMessage("Folder marked for deletion. Skipping cache update");
-                    return;
-                }
+                    if (mostRecentAssembly == default(FileInfo) || csxScriptFile == default(FileInfo))
+                    {
+                        LogWarning($"No Assembly file (.dll) or Csx File found (.csx). Skipping cache update");
+                        return;
+                    }
 
-                string scriptText = await FileHelper.GetFileContentAsync(csxScriptFile.FullName);
-                LogMessage($"Loading assembly : {mostRecentAssembly.FullName}");
-                Assembly asm = Assembly.LoadFrom(mostRecentAssembly.FullName);
-                invoker = new EntityInvoker(new EntityMetadata(scriptText));
-                invoker.InitializeEntryPoint(asm);
+                    if (deleteMarkerFile.Exists)
+                    {
+                        LogMessage("Folder marked for deletion. Skipping cache update");
+                        return;
+                    }
 
-                if (invoker.EntryPointDefinitionAttribute != null)
-                {
-                    LogMessage($"Updating cache with  new invoker with id : {invoker.EntryPointDefinitionAttribute.Id}");
-                    _invokerCache.AddOrUpdate(invoker.EntryPointDefinitionAttribute.Id, invoker);
-                    await FileHelper.WriteToFileAsync(subDir.FullName, _cacheIdFileName, invoker.EntryPointDefinitionAttribute.Id);
+                    string scriptText = await FileHelper.GetFileContentAsync(csxScriptFile.FullName);
+                    LogMessage($"Loading assembly : {mostRecentAssembly.FullName}");
+                    Assembly asm = Assembly.LoadFrom(mostRecentAssembly.FullName);
+                    invoker = new EntityInvoker(new EntityMetadata(scriptText));
+                    invoker.InitializeEntryPoint(asm);
+
+                    if (invoker.EntryPointDefinitionAttribute != null)
+                    {
+                        LogMessage($"Updating cache with  new invoker with id : {invoker.EntryPointDefinitionAttribute.Id}");
+                        _invokerCache.AddOrUpdate(invoker.EntryPointDefinitionAttribute.Id, invoker);
+                        await FileHelper.WriteToFileAsync(subDir.FullName, _cacheIdFileName, invoker.EntryPointDefinitionAttribute.Id);
+                    }
+                    else
+                    {
+                        LogWarning("Missing Entry Point Definition attribute. skipping cache update");
+                    }
                 }
-                else
-                {
-                    LogWarning("Missing Entry Point Definition attribute. skipping cache update");
-                }
+            }
+            catch(Exception ex)
+            {
+                LogException(ex.Message, ex);
             }
         }
 
