@@ -103,7 +103,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName)
         {
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
-            IEnumerable<Definition> entityDefinitions = _invokerCache.GetAll().Select(p => p.EntryPointDefinitionAttribute);
+            IEnumerable<Response> entityDefinitions = _invokerCache.GetAll().Select(p => new Response { Metadata = p.EntryPointDefinitionAttribute });
             return Ok(entityDefinitions);
         }
 
