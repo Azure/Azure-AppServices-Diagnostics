@@ -6,7 +6,7 @@ namespace Diagnostics.ModelsAndUtils
 {
     public class Rendering
     {
-        public RenderingType RenderingType { get; set; }
+        public RenderingType Type { get; set; }
 
         public string Title { get; set; }
 
@@ -14,12 +14,12 @@ namespace Diagnostics.ModelsAndUtils
 
         public Rendering()
         {
-            RenderingType = RenderingType.TimeSeries;
+            Type = RenderingType.TimeSeries;
         }
 
         public Rendering(RenderingType type)
         {
-            RenderingType = type;
+            Type = type;
         }
     }
 
