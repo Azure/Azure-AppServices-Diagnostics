@@ -80,7 +80,10 @@ namespace Diagnostics.ModelsAndUtils
         Table,
         TimeSeries,
         TimeSeriesPerInstance,
-        PieChart
+        PieChart,
+        DataSummary,
+        Email,
+        Insights
     }
 
     public enum TimeSeriesType
