@@ -1,4 +1,6 @@
 ﻿using Diagnostics.ModelsAndUtils;
+using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;

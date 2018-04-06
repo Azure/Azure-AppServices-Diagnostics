@@ -3,16 +3,33 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Diagnostics.ModelsAndUtils
+namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
+    /// <summary>
+    /// Class representing Insight
+    /// </summary>
     public class Insight
     {
+        /// <summary>
+        /// Enum reprensenting insight level.
+        /// </summary>
         public InsightStatus Status;
 
+        /// <summary>
+        /// Insight Message.
+        /// </summary>
         public string Message;
 
+        /// <summary>
+        /// Insights body.
+        /// </summary>
         public Dictionary<string, string> Body;
 
+        /// <summary>
+        /// Creates an instance of Insight class.
+        /// </summary>
+        /// <param name="status">Enum reprensenting insight level.</param>
+        /// <param name="message">Insight Message.</param>
         public Insight(InsightStatus status, string message)
         {
             this.Status = status;
@@ -20,6 +37,12 @@ namespace Diagnostics.ModelsAndUtils
             this.Body = new Dictionary<string, string>();
         }
 
+        /// <summary>
+        /// Creates an instance of Insight class.
+        /// </summary>
+        /// <param name="status">Enum reprensenting insight level.</param>
+        /// <param name="message">Insight Message.</param>
+        /// <param name="body">Insights Body.</param>
         public Insight(InsightStatus status, string message, Dictionary<string, string> body)
         {
             this.Status = status;
@@ -28,6 +51,9 @@ namespace Diagnostics.ModelsAndUtils
         }
     }
 
+    /// <summary>
+    /// InsightStatus Enum
+    /// </summary>
     public enum InsightStatus
     {
         Critical,
@@ -36,8 +62,25 @@ namespace Diagnostics.ModelsAndUtils
         Success
     }
 
-    public static class ResponseInsightsExtension
+    public static partial class ResponseInsightsExtension
     {
+        /// <summary>
+        /// Adds a list of insights to response
+        /// </summary>
+        /// <param name="response">Response object</param>
+        /// <param name="insights">List of Insights</param>
+        /// <example> 
+        /// This sample shows how to use <see cref="AddInsights"/> method.
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        ///     Insight firstInsight = new Insight(InsightStatus.Critical, "insight1 title");
+        ///     Insight secondInsight = new Insight(InsightStatus.Warning, "insight2 title");
+        ///     
+        ///     res.AddInsights(new List<![CDATA[<Insight>]]>(){ firstInsight, secondInsight });
+        /// }
+        /// </code>
+        /// </example>
         public static void AddInsights(this Response response, List<Insight> insights)
         {
             if (insights == null || !insights.Any()) return;
@@ -88,6 +131,22 @@ namespace Diagnostics.ModelsAndUtils
             });
         }
 
+        /// <summary>
+        /// Adds a single insight to response
+        /// </summary>
+        /// <param name="response">Response object</param>
+        /// <param name="insight">Insight</param>
+        /// <example> 
+        /// This sample shows how to use <see cref="AddInsight"/> method.
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        ///     Insight insight = new Insight(InsightStatus.Critical, "insight1 title");
+        ///     
+        ///     res.AddInsight(insight);
+        /// }
+        /// </code>
+        /// </example>
         public static void AddInsight(this Response response, Insight insight)
         {
             if (insight == null) return;
@@ -95,6 +154,21 @@ namespace Diagnostics.ModelsAndUtils
             AddInsights(response, new List<Insight>() { insight });
         }
 
+        /// <summary>
+        /// Adds a single insight to response
+        /// </summary>
+        /// <param name="response">Response object.</param>
+        /// <param name="status">Enum reprensenting insight level.</param>
+        /// <param name="message">Insight Message.</param>
+        /// <param name="body">Insights Body.</param>
+        /// <example> 
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        ///     res.AddInsight(InsightStatus.Critical, "insight1 title");
+        /// }
+        /// </code>
+        /// </example>
         public static void AddInsight(this Response response, InsightStatus status, string message, Dictionary<string, string> body = null)
         {
             AddInsight(response, new Insight(status, message, body));

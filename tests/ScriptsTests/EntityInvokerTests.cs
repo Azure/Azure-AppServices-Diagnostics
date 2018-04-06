@@ -1,4 +1,6 @@
 ﻿using Diagnostics.ModelsAndUtils;
+using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Tests.Helpers;

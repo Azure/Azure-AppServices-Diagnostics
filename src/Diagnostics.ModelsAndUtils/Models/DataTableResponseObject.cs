@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Diagnostics.ModelsAndUtils
+namespace Diagnostics.ModelsAndUtils.Models
 {
     public class DataTableResponseObjectCollection
     {

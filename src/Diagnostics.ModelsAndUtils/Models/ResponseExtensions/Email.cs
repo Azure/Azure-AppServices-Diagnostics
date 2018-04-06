@@ -2,12 +2,22 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Diagnostics.ModelsAndUtils
+namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
+    /// <summary>
+    /// Class representing Email Content
+    /// </summary>
     public class Email
     {
+        /// <summary>
+        /// Content
+        /// </summary>
         public string Content;
 
+        /// <summary>
+        /// Creates an instance of Email class.
+        /// </summary>
+        /// <param name="content">Content</param>
         public Email(string content)
         {
             Content = content ?? string.Empty;
@@ -16,6 +26,21 @@ namespace Diagnostics.ModelsAndUtils
 
     public static class ResponseEmailExtension
     {
+        /// <summary>
+        /// Adds a email content to the response
+        /// </summary>
+        /// <param name="response">Response object</param>
+        /// <param name="email">Email object</param>
+        /// <example> 
+        /// This sample shows how to use <see cref="AddEmail"/> method.
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        ///     Email email = new Email("email content");
+        ///     res.AddEmail(email);
+        /// }
+        /// </code>
+        /// </example>
         public static void AddEmail(this Response response, Email email)
         {
             if (email == null || string.IsNullOrWhiteSpace(email.Content)) return;
@@ -39,6 +64,21 @@ namespace Diagnostics.ModelsAndUtils
             });
         }
 
+        /// <summary>
+        /// Adds a email content to the response
+        /// </summary>
+        /// <param name="response">Response object</param>
+        /// <param name="content">Email content</param>
+        /// <example> 
+        /// This sample shows how to use <see cref="AddEmail"/> method.
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        ///     string emailContentInHtml = "<![CDATA[<b>Test</b>]]>";
+        ///     res.AddEmail(emailContentInHtml);
+        /// }
+        /// </code>
+        /// </example>
         public static void AddEmail(this Response response, string content)
         {
             AddEmail(response, new Email(content));
