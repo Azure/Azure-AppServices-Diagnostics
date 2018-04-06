@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.DataProviders
@@ -63,10 +64,10 @@ namespace Diagnostics.DataProviders
 
             switch (siteName.ToLower())
             {
-                case "thor-api":
-                    mock.Add("production", new List<RuntimeSitenameTimeRange> { new RuntimeSitenameTimeRange { RuntimeSitename = "thor-api", StartTime = DateTime.UtcNow.AddDays(-5), EndTime = DateTime.UtcNow } });
-                    mock.Add("staging", new List<RuntimeSitenameTimeRange> { new RuntimeSitenameTimeRange { RuntimeSitename = "thor-api__a88nf", StartTime = DateTime.UtcNow.AddDays(-5), EndTime = DateTime.UtcNow } });
-                    mock.Add("testing", new List<RuntimeSitenameTimeRange> { new RuntimeSitenameTimeRange { RuntimeSitename = "thor-api__v85ae", StartTime = DateTime.UtcNow.AddDays(-5), EndTime = DateTime.UtcNow } });
+                case "my-api":
+                    mock.Add("production", new List<RuntimeSitenameTimeRange> { new RuntimeSitenameTimeRange { RuntimeSitename = "my-api;", StartTime = DateTime.UtcNow.AddDays(-5), EndTime = DateTime.UtcNow } });
+                    mock.Add("staging", new List<RuntimeSitenameTimeRange> { new RuntimeSitenameTimeRange { RuntimeSitename = "my-api__a88nf", StartTime = DateTime.UtcNow.AddDays(-5), EndTime = DateTime.UtcNow } });
+                    mock.Add("testing", new List<RuntimeSitenameTimeRange> { new RuntimeSitenameTimeRange { RuntimeSitename = "my-api__v85ae", StartTime = DateTime.UtcNow.AddDays(-5), EndTime = DateTime.UtcNow } });
                     break;
                 default:
                     break;
@@ -85,14 +86,38 @@ namespace Diagnostics.DataProviders
             throw new NotImplementedException();
         }
 
-        public Task<dynamic> GetSite(string siteName)
+        public async Task<dynamic> GetSite(string siteName)
         {
-            throw new NotImplementedException();
+            return await GetSiteInternal();
         }
 
-        public Task<dynamic> GetSite(string stampName, string siteName)
+        public async Task<dynamic> GetSite(string stampName, string siteName)
         {
-            throw new NotImplementedException();
+            return await GetSiteInternal();
+        }
+
+        private Task<dynamic> GetSiteInternal()
+        {
+            var siteData = @"
+[
+  {
+    ""sku"": ""Premium"",
+    ""backups"": [
+      {
+        ""id"": 1,
+        ""name"": ""my-api;_201611282122147173"",
+        ""blob_name"": ""my-api;_201611282122147173.zip"",
+        ""status"": 1,
+        ""created_time"": ""2016-11-28T21: 22: 16.2544605"",
+        ""started_time_stamp"": ""2016-11-28T21: 22: 19.2148232"",
+        ""finished_time_stamp"": ""2016-11-28T21: 33: 40.5215806"",
+        ""log"": ""Thewebsite+databasesizeexceedsthe10GBlimitforbackups.Yourcontentsizeis10GB."",
+        ""correlation_id"": ""f786719b-6d62-4993-b94e-d862dc9c2070""
+      }
+    ]
+  }
+]";
+            return Task.FromResult(JsonConvert.DeserializeObject(siteData));
         }
 
         public Task<string> GetSiteResourceGroupName(string siteName)

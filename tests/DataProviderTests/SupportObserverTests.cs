@@ -36,7 +36,7 @@ namespace Diagnostics.Tests.DataProviderTests
 
                 var siteResource = new SiteResource
                 {
-                    SiteName = "thor-api",
+                    SiteName = "my-api",
                     Stamp = "waws-prod-bn1-71717c45"
                 };
                 var operationContext = new OperationContext(siteResource, null, null);
@@ -44,7 +44,7 @@ namespace Diagnostics.Tests.DataProviderTests
 
                 Response result = (Response)await invoker.Invoke(new object[] { dataProviders, operationContext, response });
 
-                Assert.Equal("thor-api__a88nf", result.Dataset.First().Table.Rows[1][1]);
+                Assert.Equal("my-api__a88nf", result.Dataset.First().Table.Rows[1][1]);
             }
         }
 
@@ -66,8 +66,12 @@ namespace Diagnostics.Tests.DataProviderTests
 
                 var siteResource = new SiteResource
                 {
-                    SiteName = "thor-api",
-                    Stamp = "waws-prod-bn1-71717c45"
+                    SiteName = "my-api",
+                    Stamp = "waws-prod-bn1-71717c45",
+                    TenantIdList = new List<string>()
+                    {
+                        Guid.NewGuid().ToString()
+                    }
                 };
 
                 var operationContext = new OperationContext(siteResource, null, null);
