@@ -88,7 +88,7 @@ namespace Diagnostics.DataProviders
 
         public async Task<dynamic> GetSite(string siteName)
         {
-            return await GetSiteInternal();
+            throw new NotImplementedException();
         }
 
         public async Task<dynamic> GetSite(string stampName, string siteName)

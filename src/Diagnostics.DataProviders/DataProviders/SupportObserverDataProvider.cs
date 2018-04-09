@@ -63,7 +63,7 @@ namespace Diagnostics.DataProviders
 
         private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, string.IsNullOrEmpty(stampName) ? $"/sites/{siteName}/runtimesiteslotmap" : $"stamp/{stampName}/sites/{siteName}/runtimesiteslotmap");
+            var request = new HttpRequestMessage(HttpMethod.Get, string.IsNullOrWhiteSpace(stampName) ? $"/sites/{siteName}/runtimesiteslotmap" : $"stamp/{stampName}/sites/{siteName}/runtimesiteslotmap");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await GetAccessToken(_configuration.RuntimeSiteSlotMapResourceUri));
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -141,8 +141,14 @@ namespace Diagnostics.DataProviders
         {
             if (_authContext == null)
             {
-                _aadCredentials = new ClientCredential(_configuration.ClientId, _configuration.AppKey);
-                _authContext = new AuthenticationContext("https://login.microsoftonline.com/microsoft.onmicrosoft.com", TokenCache.DefaultShared);
+                lock (_authContext)
+                {
+                    if (_authContext == null)
+                    {
+                        _aadCredentials = new ClientCredential(_configuration.ClientId, _configuration.AppKey);
+                        _authContext = new AuthenticationContext("https://login.microsoftonline.com/microsoft.onmicrosoft.com", TokenCache.DefaultShared);
+                    }
+                }
             }
 
             var authResult = await _authContext.AcquireTokenAsync(resourceId ?? _configuration.ResourceId, _aadCredentials);

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Diagnostics.Tests.DataProviderTests
@@ -49,7 +50,7 @@ namespace Diagnostics.Tests.DataProviderTests
         }
 
         [Fact]
-        public async System.Threading.Tasks.Task E2E_Test_WAWSObserverAsync()
+        public async Task E2E_Test_WAWSObserverAsync()
         {
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
