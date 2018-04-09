@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 
@@ -38,79 +39,73 @@ namespace Diagnostics.ModelsAndUtils
 
     public static class ResponseInsightsExtension
     {
-        public static void AddInsights(this Response response, List<Insight> insights)
+        public static DiagnosticData AddInsights(this Response response, List<Insight> insights, string title = null, string description = null)
         {
-            if (insights == null || !insights.Any()) return;
+            if (insights == null || !insights.Any()) return null;
 
-            List<DataTableResponseColumn> columns = PrepareColumnDefinitions();
-            List<string[]> rows = new List<string[]>();
+            DataTable table = new DataTable();
+
+            table.Columns.AddRange(new DataColumn[]
+            {
+                new DataColumn("Status", typeof(string)),
+                new DataColumn("Message", typeof(string)),
+                new DataColumn("Data.Name", typeof(string)),
+                new DataColumn("Data.Value", typeof(string))
+            });
 
             insights.ForEach(insight =>
             {
                 if (insight.Body == null || !insight.Body.Keys.Any())
                 {
-                    List<string> dataRow = new List<string>
+                    table.Rows.Add(new string[]
                     {
                         insight.Status.ToString(),
                         insight.Message,
                         string.Empty,
                         string.Empty
-                    };
-                    rows.Add(dataRow.ToArray());
+                    });
                 }
                 else
                 {
                     foreach (KeyValuePair<string, string> entry in insight.Body)
                     {
-                        List<string> dataRow = new List<string>
+                        table.Rows.Add(new string[]
                         {
                             insight.Status.ToString(),
                             insight.Message,
                             entry.Key,
                             entry.Value
-                        };
+                        });
 
-                        rows.Add(dataRow.ToArray());
                     }
                 }
             });
 
-            DataTableResponseObject table = new DataTableResponseObject()
-            {
-                Columns = columns,
-                Rows = rows.ToArray()
-            };
-
-            response.Dataset.Add(new DiagnosticData()
+            var diagnosticData = new DiagnosticData()
             {
                 Table = table,
                 RenderingProperties = new Rendering(RenderingType.Insights)
-            });
+                {
+                    Title = title,
+                    Description = description
+                }
+            };
+
+            response.Dataset.Add(diagnosticData);
+
+            return diagnosticData;
         }
 
-        public static void AddInsight(this Response response, Insight insight)
+        public static DiagnosticData AddInsight(this Response response, Insight insight)
         {
-            if (insight == null) return;
+            if (insight == null) return null;
 
-            AddInsights(response, new List<Insight>() { insight });
+            return AddInsights(response, new List<Insight>() { insight });
         }
 
         public static void AddInsight(this Response response, InsightStatus status, string message, Dictionary<string, string> body = null)
         {
             AddInsight(response, new Insight(status, message, body));
-        }
-
-        private static List<DataTableResponseColumn> PrepareColumnDefinitions()
-        {
-            List<DataTableResponseColumn> columnDefinitions = new List<DataTableResponseColumn>
-            {
-                new DataTableResponseColumn() { ColumnName = "Status" },
-                new DataTableResponseColumn() { ColumnName = "Message" },
-                new DataTableResponseColumn() { ColumnName = "Data.Name" },
-                new DataTableResponseColumn() { ColumnName = "Data.Value" }
-            };
-
-            return columnDefinitions;
         }
     }
 }

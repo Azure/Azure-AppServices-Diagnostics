@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 
 namespace Diagnostics.ModelsAndUtils
@@ -16,42 +17,37 @@ namespace Diagnostics.ModelsAndUtils
 
     public static class ResponseEmailExtension
     {
-        public static void AddEmail(this Response response, Email email)
+        public static DiagnosticData AddEmail(this Response response, Email email)
         {
-            if (email == null || string.IsNullOrWhiteSpace(email.Content)) return;
+            if (email == null || string.IsNullOrWhiteSpace(email.Content)) return null;
 
-            List<DataTableResponseColumn> columns = PrepareColumnDefinitions();
-            List<string[]> rows = new List<string[]>
+            DataTable table = new DataTable("Data Summary");
+
+            table.Columns.AddRange(new DataColumn[]
             {
-                new List<string>() { email.Content }.ToArray()
-            };
+                new DataColumn("Content", typeof(string))
+            });
 
-            DataTableResponseObject table = new DataTableResponseObject()
+
+            table.Rows.Add(new string[]
             {
-                Columns = columns,
-                Rows = rows.ToArray()
-            };
+                email.Content
+            });
 
-            response.Dataset.Add(new DiagnosticData()
+            var diagnosticData = new DiagnosticData()
             {
                 Table = table,
                 RenderingProperties = new Rendering(RenderingType.Email)
-            });
-        }
-
-        public static void AddEmail(this Response response, string content)
-        {
-            AddEmail(response, new Email(content));
-        }
-
-        private static List<DataTableResponseColumn> PrepareColumnDefinitions()
-        {
-            List<DataTableResponseColumn> columnDefinitions = new List<DataTableResponseColumn>
-            {
-                new DataTableResponseColumn() { ColumnName = "Content" }
             };
 
-            return columnDefinitions;
+            response.Dataset.Add(diagnosticData);
+
+            return diagnosticData;
+        }
+
+        public static DiagnosticData AddEmail(this Response response, string content)
+        {
+            return AddEmail(response, new Email(content));
         }
     }
 }

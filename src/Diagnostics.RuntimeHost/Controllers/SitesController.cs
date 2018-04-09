@@ -71,9 +71,9 @@ namespace Diagnostics.RuntimeHost.Controllers
             SiteResource resource = await _resourceService.GetSite(subscriptionId, resourceGroupName, siteName, hostNames, stampName, startTimeUtc, endTimeUtc);
             OperationContext cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
 
-            QueryResponse<Response> queryRes = new QueryResponse<Response>
+            QueryResponse<DiagnosticApiResponse> queryRes = new QueryResponse<DiagnosticApiResponse>
             {
-                InvocationOutput = new Response()
+                InvocationOutput = new DiagnosticApiResponse()
             };
 
             Assembly tempAsm = null;
@@ -104,7 +104,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName)
         {
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
-            IEnumerable<Response> entityDefinitions = _invokerCache.GetAll().Select(p => new DiagnosticApiResponse { Metadata = p.EntryPointDefinitionAttribute });
+            IEnumerable<DiagnosticApiResponse> entityDefinitions = _invokerCache.GetAll().Select(p => new DiagnosticApiResponse { Metadata = p.EntryPointDefinitionAttribute });
             return Ok(entityDefinitions);
         }
 

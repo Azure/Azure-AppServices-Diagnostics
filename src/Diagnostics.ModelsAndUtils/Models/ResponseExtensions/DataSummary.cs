@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 
@@ -30,49 +31,45 @@ namespace Diagnostics.ModelsAndUtils
 
     public static class ResponseDataSummaryExtension
     {
-        public static void AddDataSummary(this Response response, List<DataSummary> dataSummaryPoints)
+        public static DiagnosticData AddDataSummary(this Response response, List<DataSummary> dataSummaryPoints, string title = null, string description = null)
         {
             if(dataSummaryPoints == null || !dataSummaryPoints.Any())
             {
-                return;
+                return null;
             }
 
-            List<DataTableResponseColumn> columns = PrepareColumnDefinitions();
-            List<string[]> rows = new List<string[]>();
+            DataTable table = new DataTable("Data Summary");
+
+            table.Columns.AddRange(new DataColumn[]
+            {
+                new DataColumn("Name", typeof(string)),
+                new DataColumn("Value", typeof(string)),
+                new DataColumn("Color", typeof(string))
+            });
 
             dataSummaryPoints.ForEach(item =>
             {
-                rows.Add(new List<string>()
+                table.Rows.Add(new string[]
                 {
                     item.Name,
                     item.Value,
                     item.Color
-                }.ToArray());
+                });
             });
 
-            DataTableResponseObject table = new DataTableResponseObject()
-            {
-                Columns = columns,
-                Rows = rows.ToArray()
-            };
-
-            response.Dataset.Add(new DiagnosticData()
+            var summaryData = new DiagnosticData()
             {
                 Table = table,
                 RenderingProperties = new Rendering(RenderingType.DataSummary)
-            });
-        }
-
-        private static List<DataTableResponseColumn> PrepareColumnDefinitions()
-        {
-            List<DataTableResponseColumn> columnDefinitions = new List<DataTableResponseColumn>
-            {
-                new DataTableResponseColumn() { ColumnName = "Name" },
-                new DataTableResponseColumn() { ColumnName = "Value" },
-                new DataTableResponseColumn() { ColumnName = "Color" }
+                {
+                    Title = title,
+                    Description = description
+                }
             };
 
-            return columnDefinitions;
+            response.Dataset.Add(summaryData);
+
+            return summaryData;
         }
     }
 }

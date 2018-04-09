@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Text;
 
 namespace Diagnostics.ModelsAndUtils
@@ -42,8 +43,13 @@ namespace Diagnostics.ModelsAndUtils
             return new DiagnosticApiResponse()
             {
                 Metadata = response.Metadata,
-                Dataset = DatatableU
-            }
+                Dataset = response.Dataset.Select(dataSet =>
+                    new DiagnosticDataApiResponse()
+                    {
+                        RenderingProperties = dataSet.RenderingProperties,
+                        Table = DataTableUtility.GetDataTableResponseObject(dataSet.Table)
+                    }).ToList()
+            };
         }
 
         public DiagnosticApiResponse()
