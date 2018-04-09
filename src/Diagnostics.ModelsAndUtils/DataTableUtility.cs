@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
-namespace Diagnostics.DataProviders
+namespace Diagnostics.ModelsAndUtils
 {
     public static class DataTableUtility
     {

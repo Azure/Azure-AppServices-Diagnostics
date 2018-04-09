@@ -44,7 +44,7 @@ namespace Diagnostics.DataProviders
             _configuration = configuration;
         }
 
-        public async Task<DataTableResponseObject> ExecuteQueryAsync(string query, string stampName, string requestId = null, string operationName = null)
+        public async Task<DataTable> ExecuteQueryAsync(string query, string stampName, string requestId = null, string operationName = null)
         {
             string appserviceRegion = ParseRegionFromStamp(stampName);
 
@@ -78,7 +78,7 @@ namespace Diagnostics.DataProviders
 
             DataTableResponseObjectCollection dataSet = JsonConvert.DeserializeObject<DataTableResponseObjectCollection>(content);
 
-            return dataSet.Tables.FirstOrDefault();
+            return DataTableUtility.GetDataTable(dataSet.Tables.FirstOrDefault());
         }
 
         private static string ParseRegionFromStamp(string stampName)

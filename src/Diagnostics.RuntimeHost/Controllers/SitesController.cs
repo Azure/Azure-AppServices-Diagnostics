@@ -92,7 +92,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 {
                     invoker.InitializeEntryPoint(tempAsm);
                     queryRes.InvocationOutput.Metadata = invoker.EntryPointDefinitionAttribute;
-                    queryRes.InvocationOutput = (Response)await invoker.Invoke(new object[] { dataProviders, cxt, queryRes.InvocationOutput });
+                    var invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, cxt, queryRes.InvocationOutput });
+                    queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse);
                 }
             }
 
@@ -103,7 +104,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName)
         {
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
-            IEnumerable<Response> entityDefinitions = _invokerCache.GetAll().Select(p => new Response { Metadata = p.EntryPointDefinitionAttribute });
+            IEnumerable<Response> entityDefinitions = _invokerCache.GetAll().Select(p => new DiagnosticApiResponse { Metadata = p.EntryPointDefinitionAttribute });
             return Ok(entityDefinitions);
         }
 
@@ -134,7 +135,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 Metadata = invoker.EntryPointDefinitionAttribute
             };
 
-            res = (Response)await invoker.Invoke(new object[] { dataProviders, cxt, res });
+            var response = (Response)await invoker.Invoke(new object[] { dataProviders, cxt, res });
+            var apiResponse = DiagnosticApiResponse.FromCsxResponse(response);
 
             return Ok(res);
         }
