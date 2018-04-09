@@ -18,7 +18,8 @@ namespace Diagnostics.DataProviders
                 {
                     case "gettenantidforstamp":
                         return await GetFakeTenantIdResults();
-
+                    case "getlatestdeployment":
+                        return await GetLatestDeployment();
                     default:
                         return await GetTestA();
                 }
@@ -67,6 +68,20 @@ namespace Diagnostics.DataProviders
             res.Columns = new List<DataTableResponseColumn>(new[] { testColumn });
             
             return Task.FromResult(res);
+        }
+
+        private Task<DataTableResponseObject> GetLatestDeployment()
+        {
+            var resp = new DataTableResponseObject();
+            resp.Columns = new List<DataTableResponseColumn>()
+            {
+                new DataTableResponseColumn(){ ColumnName = "LatestDeployment", ColumnType = "datetime", DataType = "datetime" }
+            };
+
+            resp.Rows = new string[1][];
+            resp.Rows[0] = new String[1] { DateTime.UtcNow.ToString("o")  };
+
+            return Task.FromResult(resp);
         }
     }
 }

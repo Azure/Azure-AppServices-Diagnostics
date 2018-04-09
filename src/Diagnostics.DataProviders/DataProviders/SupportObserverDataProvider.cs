@@ -22,7 +22,7 @@ namespace Diagnostics.DataProviders
         {
             _configuration = configuration;
             _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("https://support-bay-api.azurewebsites.net/observer/");
+            _httpClient.BaseAddress = new Uri("https://wawsobserver-prod.azurewebsites.net/api/");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
@@ -53,16 +53,22 @@ namespace Diagnostics.DataProviders
 
         public async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
         {
-            var response = await GetObserverResource($"sites/{siteName}/runtimesiteslotmap");
-            var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(response);
-            var slotTimeRange = new Dictionary<string, List<RuntimeSitenameTimeRange>>(slotTimeRangeCaseSensitiveDictionary, StringComparer.CurrentCultureIgnoreCase);
-            return slotTimeRange;
+            return await GetRuntimeSiteSlotMap(null, siteName);
         }
 
         public async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
         {
-            var response = await GetObserverResource($"stamp/{stampName}/sites/{siteName}/runtimesiteslotmap");
-            var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(response);
+            return await GetRuntimeSiteSlotMapInternal(stampName, siteName);
+        }
+
+        private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, string.IsNullOrWhiteSpace(stampName) ? $"/sites/{siteName}/runtimesiteslotmap" : $"stamp/{stampName}/sites/{siteName}/runtimesiteslotmap");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await GetAccessToken(_configuration.RuntimeSiteSlotMapResourceUri));
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            var result = await response.Content.ReadAsStringAsync();
+            var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);
             var slotTimeRange = new Dictionary<string, List<RuntimeSitenameTimeRange>>(slotTimeRangeCaseSensitiveDictionary, StringComparer.CurrentCultureIgnoreCase);
             return slotTimeRange;
         }
@@ -116,28 +122,36 @@ namespace Diagnostics.DataProviders
 
         public async Task<dynamic> GetSite(string stampName, string siteName)
         {
-            return await GetSite(siteName);
+            var response = await GetObserverResource($"stamps/{stampName}/sites/{siteName}");
+            var siteObject = JsonConvert.DeserializeObject(response);
+            return siteObject;
         }
 
-        private async Task<string> GetObserverResource(string url)
+        private async Task<string> GetObserverResource(string url, string resourceId = null)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await GetAccessToken());
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await GetAccessToken(resourceId));
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadAsStringAsync();
             return result;
         }
 
-        private async Task<string> GetAccessToken()
+        private async Task<string> GetAccessToken(string resourceId = null)
         {
             if (_authContext == null)
             {
-                _aadCredentials = new ClientCredential(_configuration.ClientId, _configuration.AppKey);
-                _authContext = new AuthenticationContext("https://login.microsoftonline.com/microsoft.onmicrosoft.com", TokenCache.DefaultShared);
+                lock (_authContext)
+                {
+                    if (_authContext == null)
+                    {
+                        _aadCredentials = new ClientCredential(_configuration.ClientId, _configuration.AppKey);
+                        _authContext = new AuthenticationContext("https://login.microsoftonline.com/microsoft.onmicrosoft.com", TokenCache.DefaultShared);
+                    }
+                }
             }
 
-            var authResult = await _authContext.AcquireTokenAsync(_configuration.ResourceUri, _aadCredentials);
+            var authResult = await _authContext.AcquireTokenAsync(resourceId ?? _configuration.ResourceId, _aadCredentials);
             return authResult.AccessToken;
         }
     }
