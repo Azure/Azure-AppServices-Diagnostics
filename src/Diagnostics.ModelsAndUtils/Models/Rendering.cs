@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Diagnostics.ModelsAndUtils
+namespace Diagnostics.ModelsAndUtils.Models
 {
     public class Rendering
     {
@@ -73,19 +73,49 @@ namespace Diagnostics.ModelsAndUtils
 
         public string SelectedInstance { get; set; }
     }
-
+    
     public enum RenderingType
     {
+        /// <summary>
+        /// No Graph
+        /// </summary>
         NoGraph = 0,
+
+        /// <summary>
+        /// Data rendered as Table
+        /// </summary>
         Table,
+
+        /// <summary>
+        /// Data rendered as Time Series. <seealso cref="TimeSeriesType"/>
+        /// </summary>
         TimeSeries,
+
+        /// <summary>
+        /// Data rendered as Time Series for every instance.
+        /// </summary>
         TimeSeriesPerInstance,
+
+        /// <summary>
+        /// Data rendered as Pie Chart
+        /// </summary>
         PieChart,
+
+        /// <summary>
+        /// Data rendered as Summary Points with Title and Value.
+        /// </summary>
         DataSummary,
+
+        /// <summary>
+        /// Data rendered as Email.
+        /// </summary>
         Email,
         Insights
     }
 
+    /// <summary>
+    /// Defines Type of Time Series
+    /// </summary>
     public enum TimeSeriesType
     {
         LineGraph = 0,

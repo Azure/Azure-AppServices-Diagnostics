@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
 
-namespace Diagnostics.ModelsAndUtils
+namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 {
     public class ScriptHelper
     {
@@ -24,6 +24,9 @@ namespace Diagnostics.ModelsAndUtils
                 "System.Threading.Tasks",
                 "Diagnostics.DataProviders",
                 "Diagnostics.ModelsAndUtils",
+                "Diagnostics.ModelsAndUtils.Models",
+                "Diagnostics.ModelsAndUtils.ScriptUtilities",
+                "Diagnostics.ModelsAndUtils.Models.ResponseExtensions",
                 "Newtonsoft.Json"
             );
     }
