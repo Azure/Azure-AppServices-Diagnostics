@@ -4,14 +4,26 @@ using System.Data;
 using System.Linq;
 using System.Text;
 
-namespace Diagnostics.ModelsAndUtils
+namespace Diagnostics.ModelsAndUtils.Models
 {
+    /// <summary>
+    /// Response Object
+    /// </summary>
     public class Response
     {
+        /// <summary>
+        /// Metadata of detector.
+        /// </summary>
         public Definition Metadata { get; set; }
 
+        /// <summary>
+        /// List of DiagnosticData, each of which has specific rendering type and data.
+        /// </summary>
         public List<DiagnosticData> Dataset { get; set; }
 
+        /// <summary>
+        /// Creates an instance of Response
+        /// </summary>
         public Response()
         {
             Metadata = new Definition();
@@ -23,6 +35,9 @@ namespace Diagnostics.ModelsAndUtils
     {
         public DataTable Table { get; set; }
 
+        /// <summary>
+        /// Rendering Properties for the Diagnostics Data
+        /// </summary>
         public Rendering RenderingProperties { get; set; }
 
         public DiagnosticData()

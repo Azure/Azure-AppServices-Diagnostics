@@ -33,9 +33,14 @@ namespace Diagnostics.DataProviders
         public bool IsMockConfigured { get; set; }
 
         /// <summary>
-        /// Uri for SupportObserverResourceAAD app
+        /// ResourceId for WAWSObserver AAD app
         /// </summary>
-        public string ResourceUri { get { return "https://microsoft.onmicrosoft.com/SupportObserverResourceApp"; } }
+        public string ResourceId { get { return "d1abfd91-e19c-426e-802f-a6c55421a5ef"; } }
+        /// <summary>
+        /// Uri for SupportObserverResourceAAD app. 
+        /// We are only hitting this API to access runtime site slot map data
+        /// </summary>
+        public string RuntimeSiteSlotMapResourceUri { get { return "https://microsoft.onmicrosoft.com/SupportObserverResourceApp"; } }
 
         public void PostInitialize()
         {

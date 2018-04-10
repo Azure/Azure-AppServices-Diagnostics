@@ -1,4 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils;
+using Diagnostics.ModelsAndUtils.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -17,7 +18,8 @@ namespace Diagnostics.DataProviders
                 {
                     case "gettenantidforstamp":
                         return await GetFakeTenantIdResults();
-
+                    case "getlatestdeployment":
+                        return await GetLatestDeployment();
                     default:
                         return await GetTestA();
                 }
@@ -55,6 +57,20 @@ namespace Diagnostics.DataProviders
             {
                 new DataColumn("TestColumn", typeof(string))
             });
+
+            return Task.FromResult(table);
+        }
+
+        private Task<DataTable> GetLatestDeployment()
+        {
+            DataTable table = new DataTable();
+
+            table.Columns.AddRange(new DataColumn[]
+            {
+                new DataColumn("LatestDeployment", typeof(DateTime))
+            });
+
+            table.Rows.Add(new object[] { DateTime.UtcNow });
 
             return Task.FromResult(table);
         }

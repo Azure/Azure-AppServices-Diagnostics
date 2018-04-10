@@ -1,4 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils;
+using Diagnostics.ModelsAndUtils.Models;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

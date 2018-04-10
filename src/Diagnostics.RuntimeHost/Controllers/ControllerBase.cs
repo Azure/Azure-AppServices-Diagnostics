@@ -1,4 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils;
+using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
