@@ -24,6 +24,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
                 "System.Threading.Tasks",
                 "Diagnostics.DataProviders",
                 "Diagnostics.ModelsAndUtils",
+                "Diagnostics.ModelsAndUtils.Attributes",
                 "Diagnostics.ModelsAndUtils.Models",
                 "Diagnostics.ModelsAndUtils.ScriptUtilities",
                 "Diagnostics.ModelsAndUtils.Models.ResponseExtensions",

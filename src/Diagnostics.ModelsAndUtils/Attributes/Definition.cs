@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace Diagnostics.ModelsAndUtils.Models
+namespace Diagnostics.ModelsAndUtils.Attributes
 {
     /// <summary>
     /// Defines the properties of a detector definition
