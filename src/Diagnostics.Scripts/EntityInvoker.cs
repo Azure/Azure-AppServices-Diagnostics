@@ -1,4 +1,5 @@
-﻿using Diagnostics.ModelsAndUtils.Models;
+﻿using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.Scripts.CompilationService;
 using Diagnostics.Scripts.CompilationService.Interfaces;
 using Diagnostics.Scripts.Models;
