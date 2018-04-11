@@ -7,6 +7,7 @@ using Diagnostics.Scripts.Models;
 using Diagnostics.Tests.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -81,7 +82,19 @@ namespace Diagnostics.Tests.DataProviderTests
 
                 var response = new Response();
 
-                Response result = (Response)await invoker.Invoke(new object[] { dataProviders, operationContext, response });
+                try
+                {
+                    Response result = (Response)await invoker.Invoke(new object[] { dataProviders, operationContext, response });
+                }
+                catch (ScriptCompilationException ex)
+                {
+                    foreach(var output in ex.CompilationOutput)
+                    {
+                        Trace.WriteLine(output);
+                    }
+                }
+
+                
             }
         }
     }

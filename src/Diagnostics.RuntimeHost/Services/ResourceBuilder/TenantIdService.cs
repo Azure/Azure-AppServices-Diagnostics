@@ -56,8 +56,7 @@ namespace Diagnostics.RuntimeHost.Services
                 .Replace("{EndTime}", endTimeStr)
                 .Replace("{StampName}", stamp);
             
-            DataTableResponseObject response = await _dataProviders.Kusto.ExecuteQuery(query, stamp, requestId, "GetTenantIdForStamp");
-            DataTable tenantIdTable = DataTableUtility.GetDataTable(response);
+            DataTable tenantIdTable = await _dataProviders.Kusto.ExecuteQuery(query, stamp, requestId, "GetTenantIdForStamp");
 
             if (tenantIdTable != null && tenantIdTable.Rows.Count > 0)
             {

@@ -1,6 +1,8 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Linq;
 using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Models
@@ -32,7 +34,7 @@ namespace Diagnostics.ModelsAndUtils.Models
 
     public class DiagnosticData
     {
-        public DataTableResponseObject Table { get; set; }
+        public DataTable Table { get; set; }
 
         /// <summary>
         /// Rendering Properties for the Diagnostics Data
@@ -40,6 +42,46 @@ namespace Diagnostics.ModelsAndUtils.Models
         public Rendering RenderingProperties { get; set; }
 
         public DiagnosticData()
+        {
+            Table = new DataTable();
+            RenderingProperties = new Rendering();
+        }
+    }
+
+    public class DiagnosticApiResponse
+    {
+        public Definition Metadata { get; set; }
+
+        public List<DiagnosticDataApiResponse> Dataset { get; set; }
+
+        public static DiagnosticApiResponse FromCsxResponse(Response response)
+        {
+            return new DiagnosticApiResponse()
+            {
+                Metadata = response.Metadata,
+                Dataset = response.Dataset.Select(dataSet =>
+                    new DiagnosticDataApiResponse()
+                    {
+                        RenderingProperties = dataSet.RenderingProperties,
+                        Table = dataSet.Table.ToDataTableResponseObject()
+                    }).ToList()
+            };
+        }
+
+        public DiagnosticApiResponse()
+        {
+            Metadata = new Definition();
+            Dataset = new List<DiagnosticDataApiResponse>();
+        }
+    }
+
+    public class DiagnosticDataApiResponse
+    {
+        public DataTableResponseObject Table { get; set; }
+
+        public Rendering RenderingProperties { get; set; }
+
+        public DiagnosticDataApiResponse()
         {
             Table = new DataTableResponseObject();
             RenderingProperties = new Rendering();

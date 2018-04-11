@@ -3,6 +3,7 @@ using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using Xunit;
@@ -17,14 +18,20 @@ namespace Diagnostics.Tests.ModelTests
             Insight insight = new Insight(InsightStatus.Critical, "some test message");
             Response res = new Response();
 
-            res.AddInsight(insight);
+            var returnedInsight = res.AddInsight(insight);
 
             Assert.NotEmpty(res.Dataset);
-            Assert.Equal<RenderingType>(RenderingType.Insights, res.Dataset.FirstOrDefault().RenderingProperties.Type);
-            res.Dataset.FirstOrDefault().Table.Rows.ToList().ForEach(item =>
+
+            var insightFromDataSet = res.Dataset.FirstOrDefault();
+
+            Assert.Equal(returnedInsight, insightFromDataSet);
+
+            Assert.Equal<RenderingType>(RenderingType.Insights, insightFromDataSet.RenderingProperties.Type);
+
+            foreach(DataRow row in insightFromDataSet.Table.Rows)
             {
-                Assert.Equal(4, item.Count());
-            });
+                Assert.Equal(4, row.ItemArray.Count());
+            }
         }
         
         [Fact]
@@ -37,10 +44,11 @@ namespace Diagnostics.Tests.ModelTests
 
             Assert.NotEmpty(res.Dataset);
             Assert.Equal<RenderingType>(RenderingType.Email, res.Dataset.FirstOrDefault().RenderingProperties.Type);
-            res.Dataset.FirstOrDefault().Table.Rows.ToList().ForEach(item =>
+
+            foreach (DataRow row in res.Dataset.FirstOrDefault().Table.Rows)
             {
-                Assert.Single(item);
-            });
+                Assert.Single(row.ItemArray);
+            }
         }
 
         [Fact]
@@ -56,10 +64,11 @@ namespace Diagnostics.Tests.ModelTests
 
             Assert.NotEmpty(res.Dataset);
             Assert.Equal<RenderingType>(RenderingType.DataSummary, res.Dataset.FirstOrDefault().RenderingProperties.Type);
-            res.Dataset.FirstOrDefault().Table.Rows.ToList().ForEach(item =>
+
+            foreach (DataRow row in res.Dataset.FirstOrDefault().Table.Rows)
             {
-                Assert.Equal(3, item.Count());
-            });
+                Assert.Equal(3, row.ItemArray.Count());
+            }
         }
     }
 }
