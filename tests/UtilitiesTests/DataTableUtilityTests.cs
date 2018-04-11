@@ -1,4 +1,4 @@
-﻿using Diagnostics.ModelsAndUtils;
+﻿using Diagnostics.ModelsAndUtils.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -22,7 +22,7 @@ namespace Diagnostics.Tests
 
             table.Rows.Add(new object[] { "Sample String", DateTime.Now, 32 });
 
-            var convertedTable = DataTableUtility.GetDataTableResponseObject(table);
+            var convertedTable = table.ToDataTableResponseObject();
 
             var columns = convertedTable.Columns.ToArray();
 
@@ -51,9 +51,9 @@ namespace Diagnostics.Tests
 
             table.Rows.Add(new object[] { "Sample String", dateTime, 32 });
 
-            var dataTableResponseObject = DataTableUtility.GetDataTableResponseObject(table);
+            var dataTableResponseObject = table.ToDataTableResponseObject();
 
-            var dataTableConvertedBack = DataTableUtility.GetDataTable(dataTableResponseObject);
+            var dataTableConvertedBack = dataTableResponseObject.ToDataTable();
 
             for(int i = 0; i < table.Columns.Count; i++)
             {

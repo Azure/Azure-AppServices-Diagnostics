@@ -62,7 +62,7 @@ namespace Diagnostics.ModelsAndUtils.Models
                     new DiagnosticDataApiResponse()
                     {
                         RenderingProperties = dataSet.RenderingProperties,
-                        Table = DataTableUtility.GetDataTableResponseObject(dataSet.Table)
+                        Table = dataSet.Table.ToDataTableResponseObject()
                     }).ToList()
             };
         }
