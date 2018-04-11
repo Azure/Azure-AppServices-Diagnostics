@@ -17,6 +17,7 @@ namespace Diagnostics.DataProviders
         private static AuthenticationContext _authContext;
         private static ClientCredential _aadCredentials;
         private readonly HttpClient _httpClient;
+        private object _lockObject = new object();
 
         public SupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration) : base(cache)
         {
@@ -141,7 +142,7 @@ namespace Diagnostics.DataProviders
         {
             if (_authContext == null)
             {
-                lock (_authContext)
+                lock (_lockObject)
                 {
                     if (_authContext == null)
                     {
