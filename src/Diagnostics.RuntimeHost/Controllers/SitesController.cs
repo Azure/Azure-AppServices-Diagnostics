@@ -93,8 +93,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
                 {
                     invoker.InitializeEntryPoint(tempAsm);
-                    queryRes.InvocationOutput.Metadata = invoker.EntryPointDefinitionAttribute;
-                    var invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, cxt, queryRes.InvocationOutput });
+                    var responseInput = new Response() { Metadata = invoker.EntryPointDefinitionAttribute };
+                    var invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, cxt, responseInput });
                     queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse);
                 }
             }
@@ -140,7 +140,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             var response = (Response)await invoker.Invoke(new object[] { dataProviders, cxt, res });
             var apiResponse = DiagnosticApiResponse.FromCsxResponse(response);
 
-            return Ok(res);
+            return Ok(apiResponse);
         }
     }
 }
