@@ -10,7 +10,7 @@ namespace Diagnostics.DataProviders
 {
     class MockKustoClient: IKustoClient
     {
-        public async Task<DataTableResponseObject> ExecuteQueryAsync(string query, string stampName, string requestId = null, string operationName = null)
+        public async Task<DataTable> ExecuteQueryAsync(string query, string stampName, string requestId = null, string operationName = null)
         {
             if (!string.IsNullOrWhiteSpace(operationName))
             {
@@ -31,57 +31,48 @@ namespace Diagnostics.DataProviders
                     return await GetTestA();
             }
 
-            return new DataTableResponseObject();
+            return new DataTable();
         }
 
-        private Task<DataTableResponseObject> GetFakeTenantIdResults()
+        private Task<DataTable> GetFakeTenantIdResults()
         {
-            var tenantColumn = new DataTableResponseColumn();
-            tenantColumn.ColumnName = "Tenant";
-            tenantColumn.ColumnType = "string";
-            tenantColumn.DataType = "String";
+            DataTable table = new DataTable();
 
-            var publicHostColumn = new DataTableResponseColumn();
-            publicHostColumn.ColumnName = "PublicHost";
-            publicHostColumn.ColumnType = "string";
-            publicHostColumn.DataType = "String";
-
-            var res = new DataTableResponseObject
+            table.Columns.AddRange(new DataColumn[]
             {
-                Columns = new List<DataTableResponseColumn>(new[] { tenantColumn, publicHostColumn })
-            };
+                new DataColumn("Tenant", typeof(string)),
+                new DataColumn("PublicHost", typeof(string))
+            });
 
-            res.Rows = new string[1][];
-            res.Rows[0] = new string[2] { Guid.NewGuid().ToString(), "fakestamp.cloudapp.net" };
-            
-            return Task.FromResult(res);
+            table.Rows.Add(new string[2] { Guid.NewGuid().ToString(), "fakestamp.cloudapp.net" });
+
+            return Task.FromResult(table);
         }
 
-        private Task<DataTableResponseObject> GetTestA()
+        private Task<DataTable> GetTestA()
         {
-            var testColumn = new DataTableResponseColumn();
-            testColumn.ColumnName = "TestColumn";
-            testColumn.ColumnType = "System.string";
-            testColumn.DataType = "string";
-            
-            var res = new DataTableResponseObject();
-            res.Columns = new List<DataTableResponseColumn>(new[] { testColumn });
-            
-            return Task.FromResult(res);
-        }
+            DataTable table = new DataTable();
 
-        private Task<DataTableResponseObject> GetLatestDeployment()
-        {
-            var resp = new DataTableResponseObject();
-            resp.Columns = new List<DataTableResponseColumn>()
+            table.Columns.AddRange(new DataColumn[]
             {
-                new DataTableResponseColumn(){ ColumnName = "LatestDeployment", ColumnType = "datetime", DataType = "datetime" }
-            };
+                new DataColumn("TestColumn", typeof(string))
+            });
 
-            resp.Rows = new string[1][];
-            resp.Rows[0] = new String[1] { DateTime.UtcNow.ToString("o")  };
+            return Task.FromResult(table);
+        }
 
-            return Task.FromResult(resp);
+        private Task<DataTable> GetLatestDeployment()
+        {
+            DataTable table = new DataTable();
+
+            table.Columns.AddRange(new DataColumn[]
+            {
+                new DataColumn("LatestDeployment", typeof(DateTime))
+            });
+
+            table.Rows.Add(new object[] { DateTime.UtcNow });
+
+            return Task.FromResult(table);
         }
     }
 }

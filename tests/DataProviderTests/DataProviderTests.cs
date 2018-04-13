@@ -37,7 +37,7 @@ namespace Diagnostics.Tests.DataProviderTests
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
                 await invoker.InitializeEntryPointAsync();
-                DataTableResponseObject result = (DataTableResponseObject)await invoker.Invoke(new object[] { dataProviders });
+                DataTable result = (DataTable)await invoker.Invoke(new object[] { dataProviders });
 
                 Assert.NotNull(result);
             }
@@ -74,7 +74,7 @@ namespace Diagnostics.Tests.DataProviderTests
                 default:
                     return @"
                        
-                        public async static Task<DataTableResponseObject> Run(DataProviders dataProviders) {
+                        public async static Task<DataTable> Run(DataProviders dataProviders) {
 
                             var dt = await dataProviders.Kusto.ExecuteQuery(""TestA"", string.Empty);
                             return dt;

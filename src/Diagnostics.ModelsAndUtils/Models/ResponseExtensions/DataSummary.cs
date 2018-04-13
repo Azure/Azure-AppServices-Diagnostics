@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 
@@ -58,6 +59,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         /// <param name="response">Response object</param>
         /// <param name="dataSummaryPoints">List of DataSummary points</param>
+        /// <param name="title">Title of summary</param>
+        /// <param name="description">Description of Summary</param>
         /// <example> 
         /// This sample shows how to use <see cref="AddDataSummary"/> method.
         /// <code>
@@ -66,53 +69,49 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///     DataSummary ds1 = new DataSummary("Title1", "40");
         ///     DataSummary ds2 = new DataSummary("Title2", "60", "red");
         ///     
-        ///     res.AddDataSummary(new List<![CDATA[<DataSummary>]]>(){ ds1, ds2 });
+        ///     res.AddDataSummary(new List<![CDATA[<DataSummary>]]>(){ ds1, ds2 }, "Summary Title", "This is an optional summary description");
         /// }
         /// </code>
         /// </example>
-        public static void AddDataSummary(this Response response, List<DataSummary> dataSummaryPoints)
+        public static DiagnosticData AddDataSummary(this Response response, List<DataSummary> dataSummaryPoints, string title = null, string description = null)
         {
             if(dataSummaryPoints == null || !dataSummaryPoints.Any())
             {
-                return;
+                return null;
             }
 
-            List<DataTableResponseColumn> columns = PrepareColumnDefinitions();
-            List<string[]> rows = new List<string[]>();
+            DataTable table = new DataTable("Data Summary");
+
+            table.Columns.AddRange(new DataColumn[]
+            {
+                new DataColumn("Name", typeof(string)),
+                new DataColumn("Value", typeof(string)),
+                new DataColumn("Color", typeof(string))
+            });
 
             dataSummaryPoints.ForEach(item =>
             {
-                rows.Add(new List<string>()
+                table.Rows.Add(new string[]
                 {
                     item.Name,
                     item.Value,
                     item.Color
-                }.ToArray());
+                });
             });
 
-            DataTableResponseObject table = new DataTableResponseObject()
-            {
-                Columns = columns,
-                Rows = rows.ToArray()
-            };
-
-            response.Dataset.Add(new DiagnosticData()
+            var summaryData = new DiagnosticData()
             {
                 Table = table,
                 RenderingProperties = new Rendering(RenderingType.DataSummary)
-            });
-        }
-
-        private static List<DataTableResponseColumn> PrepareColumnDefinitions()
-        {
-            List<DataTableResponseColumn> columnDefinitions = new List<DataTableResponseColumn>
-            {
-                new DataTableResponseColumn() { ColumnName = "Name" },
-                new DataTableResponseColumn() { ColumnName = "Value" },
-                new DataTableResponseColumn() { ColumnName = "Color" }
+                {
+                    Title = title,
+                    Description = description
+                }
             };
 
-            return columnDefinitions;
+            response.Dataset.Add(summaryData);
+
+            return summaryData;
         }
     }
 }
