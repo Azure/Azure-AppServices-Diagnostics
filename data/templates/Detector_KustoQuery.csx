@@ -7,6 +7,7 @@ private static string GetQuery(OperationContext cxt)
 }
 
 [Definition(Id = "<YOUR_DETECTOR_ID>", Name = "", Description = "")]
+[AppFilter(AppType.WebApp, PlatformType = PlatformType.Windows, StackType = StackType.All)]
 public async static Task<Response> Run(DataProviders dp, OperationContext cxt, Response res)
 {
     res.Dataset.Add(new DiagnosticData()

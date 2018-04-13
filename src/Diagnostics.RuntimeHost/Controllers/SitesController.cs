@@ -1,16 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using Diagnostics.DataProviders;
-using Diagnostics.Logger;
-using Diagnostics.ModelsAndUtils;
+﻿using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
+using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
@@ -18,8 +9,12 @@ using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -101,16 +96,16 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(queryRes);
         }
 
-        [HttpGet(UriElements.Detectors)]
-        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName)
+        [HttpPost(UriElements.Detectors)]
+        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData site)
         {
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
             IEnumerable<Response> entityDefinitions = _invokerCache.GetAll().Select(p => new Response { Metadata = p.EntryPointDefinitionAttribute });
             return Ok(entityDefinitions);
         }
 
-        [HttpGet(UriElements.Detectors + UriElements.DetectorResource)]
-        public async Task<IActionResult> GetDetectorResource(string subscriptionId, string resourceGroupName, string siteName, string detectorId, string[] hostNames, string stampName, string startTime = null, string endTime = null, string timeGrain = null)
+        [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
+        public async Task<IActionResult> GetDetectorResource(string subscriptionId, string resourceGroupName, string siteName, string detectorId, string[] hostNames, string stampName, [FromBody] DiagnosticSiteData site, string startTime = null, string endTime = null, string timeGrain = null)
         {
             if (!VerifyQueryParams(hostNames, stampName, out string verficationOutput))
             {

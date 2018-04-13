@@ -4,8 +4,8 @@ using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Attributes
 {
-    public class Author: Attribute
+    public interface IResourceFilter
     {
-        public string[] Authors { get; set; }
+        ResourceType ResourceType { get; set; }
     }
 }

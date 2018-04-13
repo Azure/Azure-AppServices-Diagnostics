@@ -47,6 +47,24 @@ namespace Diagnostics.Tests.ScriptsTests
         }
 
         [Fact]
+        public async void EntityInvoker_TestResourceFilterAttributeResolution()
+        {
+            Definition definitonAttribute = new Definition()
+            {
+                Id = "TestId"
+            };
+
+            EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute.Id);
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+                Assert.Equal<Definition>(definitonAttribute, invoker.EntryPointDefinitionAttribute);
+            }
+        }
+
+        [Fact]
         public async void EntityInvoker_TestGetAssemblyBytes()
         {
             Definition definitonAttribute = new Definition()
