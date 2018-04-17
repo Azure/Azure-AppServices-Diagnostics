@@ -11,27 +11,21 @@ using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Services
 {
-    public interface ITenantIdService
+    public interface IStampService
     {
         Task<List<string>> GetTenantIdForStamp(string stamp, DateTime startTime, DateTime endTime, string requestId = null);
     }
 
-    public class TenantIdService : ITenantIdService
+    public class StampService : IStampService
     {
         private ConcurrentDictionary<string, List<string>> _tenantCache;
-        private string _queryTemplate;
         private IDataSourcesConfigurationService _dataSourcesConfigService;
         private DataProviders.DataProviders _dataProviders; 
 
-        public TenantIdService(IDataSourcesConfigurationService dataSourcesConfigService)
+        public StampService(IDataSourcesConfigurationService dataSourcesConfigService)
         {
             _dataSourcesConfigService = dataSourcesConfigService;
             _tenantCache = new ConcurrentDictionary<string, List<string>>();
-            _queryTemplate =
-            @"RoleInstanceHeartbeat
-              | where TIMESTAMP >= datetime({StartTime}) and TIMESTAMP <= datetime({EndTime}) and PublicHost startswith ""{StampName}""
-              | summarize by Tenant, PublicHost";
-
             _dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
         }
 
@@ -39,9 +33,9 @@ namespace Diagnostics.RuntimeHost.Services
         {
             if (string.IsNullOrWhiteSpace(stamp))
             {
-                throw new ArgumentNullException("stamp cannot be null.");
+                throw new ArgumentNullException("stamp");
             }
-
+            
             if (_tenantCache.TryGetValue(stamp.ToLower(), out List<string> tenantIds))
             {
                 return tenantIds;
@@ -51,10 +45,10 @@ namespace Diagnostics.RuntimeHost.Services
             string startTimeStr = DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(HostConstants.KustoTimeFormat);
             string endTimeStr = DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(HostConstants.KustoTimeFormat);
 
-            var query = _queryTemplate
-                .Replace("{StartTime}", startTimeStr)
-                .Replace("{EndTime}", endTimeStr)
-                .Replace("{StampName}", stamp);
+            string query =
+                $@"RoleInstanceHeartbeat
+                | where TIMESTAMP >= datetime({startTimeStr}) and TIMESTAMP <= datetime({endTimeStr}) and PublicHost startswith ""{stamp}""
+                | summarize by Tenant, PublicHost";
             
             DataTable tenantIdTable = await _dataProviders.Kusto.ExecuteQuery(query, stamp, requestId, "GetTenantIdForStamp");
 

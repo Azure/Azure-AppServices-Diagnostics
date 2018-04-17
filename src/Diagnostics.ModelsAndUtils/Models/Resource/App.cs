@@ -40,15 +40,39 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public string ScmSiteHostname { get; set; }
 
+        /// <summary>
+        /// Hostnames associated with the app.
+        /// </summary>
         public IEnumerable<string> Hostnames { get; set; }
 
         /// <summary>
-        /// Primary Stamp where application is deployed.
+        /// Primary Stamp where app is deployed.
         /// </summary>
         public HostingEnvironment Stamp { get; set; }
 
-        public App() : base()
+        public App(string subscriptionId, string resourceGroup, string appName) : base()
         {
+            this.SubscriptionId = subscriptionId;
+            this.ResourceGroup = resourceGroup;
+            this.Name = appName;
+        }
+
+        // <summary>
+        /// Determines whether the app resource is applicable after filtering.
+        /// </summary>
+        /// <param name="filter">App Resource Filter</param>
+        /// <returns>True, if app resource passes the filter. False otherwise</returns>
+        public bool IsApplicable(IResourceFilter filter)
+        {
+            if(filter is AppFilter appFilter)
+            {
+                return ((appFilter.AppType & this.AppType) > 0) &&
+                    ((appFilter.PlatformType & this.PlatformType) > 0) &&
+                    ((appFilter.StackType & this.StackType) > 0) &&
+                    ((appFilter.StampType & this.StampType) > 0);
+            }
+
+            return false;
         }
     }
 }

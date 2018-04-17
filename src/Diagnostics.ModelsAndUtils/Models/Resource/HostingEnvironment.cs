@@ -69,5 +69,24 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// List of Tenant Ids for this environment.
         /// </summary>
         public IEnumerable<string> TenantIdList;
+
+        public HostingEnvironment(string subscriptionId, string resourceGroup, string name)
+        {
+            this.SubscriptionId = subscriptionId;
+            this.ResourceGroup = resourceGroup;
+            this.Name = name;
+            this.TenantIdList = new List<string>();
+        }
+
+        public bool IsApplicable(IResourceFilter filter)
+        {
+            if(filter is HostingEnvironmentFilter envFilter)
+            {
+                return ((envFilter.PlatformType & this.PlatformType) > 0) &&
+                    ((envFilter.HostingEnvironmentType & this.HostingEnvironmentType) > 0);
+            }
+
+            return false;
+        }
     }
 }

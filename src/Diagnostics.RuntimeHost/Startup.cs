@@ -33,9 +33,9 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IDataSourcesConfigurationService, DataSourcesConfigurationService>();
             services.AddSingleton<ICompilerHostClient, CompilerHostClient>();
             services.AddSingleton<ISourceWatcherService, SourceWatcherService>();
-            services.AddSingleton<ICache<string, EntityInvoker>, InvokerCacheService>();
-            services.AddSingleton<ITenantIdService, TenantIdService>();
-            services.AddSingleton<IResourceService, ResourceService>();
+            services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
+            services.AddSingleton<ISiteService, SiteService>();
+            services.AddSingleton<IStampService, StampService>();
 
             // TODO : Not sure what's the right place for the following code piece.
             #region Custom Start up Code

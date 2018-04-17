@@ -44,6 +44,9 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         WebApp = 1,
         FunctionApp = 2,
         ApiApp = 4,
+        MobileApp = 8,
+        LogicApp = 16,
+        GatewayApp = 32,
         All = 255
     }
 
@@ -60,11 +63,15 @@ namespace Diagnostics.ModelsAndUtils.Attributes
 
     public enum StackType
     {
+        None = 0,
         AspNet = 1,
         NetCore = 2,
         Php = 4,
-        Node = 8,
-        Java = 16,
+        Python = 8,
+        Node = 16,
+        Java = 32,
+        Static = 64,
+        Other = 128,
         All = 255
     }
 

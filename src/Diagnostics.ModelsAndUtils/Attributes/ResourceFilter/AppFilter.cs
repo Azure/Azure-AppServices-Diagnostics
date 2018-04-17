@@ -29,7 +29,7 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// </summary>
         public StampType StampType;
 
-        public AppFilter() : base(ResourceType.App)
+        public AppFilter(bool internalOnly = true) : base(ResourceType.App, internalOnly)
         {
             this.AppType = AppType.WebApp;
             this.PlatformType = PlatformType.Windows;

@@ -28,39 +28,24 @@ namespace Diagnostics.Tests.ScriptsTests
             }
         }
 
-        [Fact]
-        public async void EntityInvoker_TestDefinitionAttributeResolution()
+        [Theory]
+        [InlineData(ResourceType.App, typeof(AppFilter))]
+        [InlineData(ResourceType.HostingEnvironment, typeof(HostingEnvironmentFilter))]
+        public async void EntityInvoker_TestAttributeResolution(ResourceType resType, Type filterType)
         {
             Definition definitonAttribute = new Definition()
             {
                 Id = "TestId"
             };
-
+            
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
-            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute.Id);
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute.Id, resType);
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
                 await invoker.InitializeEntryPointAsync();
                 Assert.Equal<Definition>(definitonAttribute, invoker.EntryPointDefinitionAttribute);
-            }
-        }
-
-        [Fact]
-        public async void EntityInvoker_TestResourceFilterAttributeResolution()
-        {
-            Definition definitonAttribute = new Definition()
-            {
-                Id = "TestId"
-            };
-
-            EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
-            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute.Id);
-
-            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
-            {
-                await invoker.InitializeEntryPointAsync();
-                Assert.Equal<Definition>(definitonAttribute, invoker.EntryPointDefinitionAttribute);
+                Assert.Equal(filterType, invoker.ResourceFilter.GetType());
             }
         }
 
@@ -169,8 +154,6 @@ namespace Diagnostics.Tests.ScriptsTests
                 Assert.NotEmpty(ex.CompilationOutput);
             }
         }
-
-        
 
         [Fact]
         public async void EntityInvoker_TestSaveAssemblyToInvalidPath()

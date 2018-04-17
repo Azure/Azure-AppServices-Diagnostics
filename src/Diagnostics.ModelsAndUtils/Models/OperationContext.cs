@@ -26,23 +26,29 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string EndTime { get; private set; }
 
         /// <summary>
-        /// sets to true when detector is called from external source (Azure portal, CLI ...)
-        /// sets to false when detexctor is called from internal source (Applens ..)
+        /// sets to false when detector is called from external source (Azure portal, CLI ...)
+        /// sets to true when detexctor is called from internal source (Applens ..)
         /// </summary>
-        public bool IsExternalCall { get; private set; }
+        public bool IsInternalCall { get; private set; }
+
+        /// <summary>
+        /// Request Id
+        /// </summary>
+        public string RequestId { get; private set; }
 
         /// <summary>
         /// TimeGrain in minutes for aggregating data.
         /// </summary>
         public string TimeGrain { get; private set; }
 
-        public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isExternalCall, string timeGrain = "5")
+        public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, string timeGrain = "5")
         {
             Resource = resource;
             StartTime = startTimeStr;
             EndTime = endTimeStr;
-            IsExternalCall = isExternalCall;
+            IsInternalCall = isInternalCall;
             TimeGrain = timeGrain;
+            RequestId = requestId;
         }
     }
 }

@@ -19,7 +19,7 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// </summary>
         public HostingEnvironmentType HostingEnvironmentType;
         
-        public HostingEnvironmentFilter(): base(ResourceType.HostingEnvironment)
+        public HostingEnvironmentFilter(bool internalOnly = true): base(ResourceType.HostingEnvironment, internalOnly)
         {
             this.PlatformType = PlatformType.Windows;
             this.HostingEnvironmentType = HostingEnvironmentType.All;
