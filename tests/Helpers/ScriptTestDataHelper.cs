@@ -57,10 +57,14 @@ namespace Diagnostics.Tests.Helpers
 
         public static async Task<string> GetDetectorScript(string id, ResourceType resourceType = ResourceType.App, string kustoTableName = "MockTable", string queryPart = "take 1")
         {
-            string kustoTemplate = await File.ReadAllTextAsync(@"templates/Detector_WebApp.csx");
+            string kustoTemplate = string.Empty;
             if(resourceType == ResourceType.HostingEnvironment)
             {
                 kustoTemplate = await File.ReadAllTextAsync(@"templates/Detector_HostingEnvironment.csx");
+            }
+            else
+            {
+                kustoTemplate = await File.ReadAllTextAsync(@"templates/Detector_WebApp.csx");
             }
 
             return kustoTemplate.Replace("<YOUR_DETECTOR_ID>", id)
