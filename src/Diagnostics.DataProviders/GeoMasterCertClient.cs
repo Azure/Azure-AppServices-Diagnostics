@@ -15,22 +15,21 @@ namespace Diagnostics.DataProviders
         private X509Certificate2 _geoMasterCertificate = null;
 
         public HttpClient Client { get; }
-        private Uri _baseUri;
+        public Uri BaseUri { get; }
 
         public GeoMasterCertClient(GeoMasterDataProviderConfiguration configuration)
         {
-            var handler = new HttpClientHandler();
-            
-            ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
+            var handler = new HttpClientHandler();                       
 
             if (_geoMasterCertificate == null)
             {
-                _geoMasterCertificate = GetCertificate(configuration.GeoCertThumbprint);
+                _geoMasterCertificate = GetCertificate(configuration.GeoRegionCertThumbprint);
             }
             
             if (_geoMasterCertificate != null)
             {
                 handler.ClientCertificates.Add(_geoMasterCertificate);
+                handler.ServerCertificateCustomValidationCallback = delegate { return true; };
             }
 
             var geoEndpoint = new UriBuilder(configuration.GeoEndpointAddress)
@@ -38,14 +37,14 @@ namespace Diagnostics.DataProviders
                 Port = GeoMasterCsmApiPort
             };
 
-            _baseUri = geoEndpoint.Uri;
+            BaseUri = geoEndpoint.Uri;
 
-            Client = new HttpClient(handler)
-            {
-                BaseAddress = _baseUri
-            };
-
+            Client = new HttpClient(handler);
+            Client.DefaultRequestHeaders.Accept.Clear();
             Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            Client.DefaultRequestHeaders.Add("User-Agent", "appservice-diagnostics");
+            Client.Timeout = TimeSpan.FromSeconds(30);
+            Client.BaseAddress = BaseUri;
         }
 
         private X509Certificate2 GetCertificate(string thumbprint)

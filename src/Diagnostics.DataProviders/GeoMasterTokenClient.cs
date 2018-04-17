@@ -11,21 +11,21 @@ namespace Diagnostics.DataProviders
     {
         private const string CsmEndpointUrl = "https://management.azure.com/";
         public HttpClient Client { get; }
-        private Uri _baseUri{ get; }
+        public Uri BaseUri { get; }
 
         public GeoMasterTokenClient(GeoMasterDataProviderConfiguration configuration)
         {
             var handler = new HttpClientHandler();
-            _baseUri = new Uri(CsmEndpointUrl);
+            BaseUri = new Uri(CsmEndpointUrl);
 
             Client = new HttpClient(handler)
             {
-                BaseAddress = _baseUri
+                BaseAddress = BaseUri
             };
 
             Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", configuration.Token);
-            Client.BaseAddress = _baseUri;
+            Client.BaseAddress = BaseUri;
         }
     }
 }

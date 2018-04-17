@@ -8,5 +8,6 @@ namespace Diagnostics.DataProviders
     interface IGeoMasterClient
     {
         HttpClient Client { get; }
+        Uri BaseUri { get; }
     }
 }

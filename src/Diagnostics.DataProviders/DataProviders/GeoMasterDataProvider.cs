@@ -24,7 +24,7 @@ namespace Diagnostics.DataProviders
         private IGeoMasterClient InitClient()
         {
             IGeoMasterClient geoMasterClient;
-            bool onDiagRole = !string.IsNullOrWhiteSpace(_configuration.GeoCertThumbprint);
+            bool onDiagRole = !string.IsNullOrWhiteSpace(_configuration.GeoRegionCertThumbprint);
             if (onDiagRole)
             {
                 geoMasterClient = new GeoMasterCertClient(_configuration);
@@ -53,12 +53,24 @@ namespace Diagnostics.DataProviders
             return appSettings;
         }
 
-        public async Task<IDictionary<string, dynamic>> GetStickySlotSettingNames(string subscriptionId, string resourceGroupName, string name)
+        public async Task<IDictionary<string, string[]>> GetStickySlotSettingNames(string subscriptionId, string resourceGroupName, string name)
         {
             string path = SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name);
             path = path + "/config/slotConfigNames";
-            var geoMasterResponse = await HttpGet<GeoMasterResponse>(path);
-            return geoMasterResponse.Properties;
+            GeoMasterResponse geoMasterResponse = null;
+            geoMasterResponse = await HttpGet<GeoMasterResponse>(path);
+            Dictionary<string, string[]> stickyToSlotSettings = new Dictionary<string, string[]>();
+            foreach (var item in geoMasterResponse.Properties)
+            {
+                var val = new string[0];
+                if (item.Value != null && item.Value is Newtonsoft.Json.Linq.JArray)
+                {
+                    var jArray = (Newtonsoft.Json.Linq.JArray)item.Value;
+                    val = jArray.ToObject<string[]>();
+                }
+                stickyToSlotSettings.Add(item.Key, val);
+            }
+            return stickyToSlotSettings;
         }
 
 
@@ -66,7 +78,7 @@ namespace Diagnostics.DataProviders
 
         protected async Task<R> HttpGet<R>(string path, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var query = queryString = SitePathUtility.CsmAnnotateQueryString(queryString, apiVersion);
+            var query = SitePathUtility.CsmAnnotateQueryString(queryString, apiVersion);
             var response = new HttpResponseMessage();
 
             try
@@ -89,8 +101,9 @@ namespace Diagnostics.DataProviders
             {
                 return (await response.Content.ReadAsStringAsync()).CastTo<R>();
             }
-
-            return await response.Content.ReadAsAsync<R>();
+            string responseContent = await response.Content.ReadAsStringAsync();
+            R value = JsonConvert.DeserializeObject<R>(responseContent);
+            return value;
         }
         
         protected async Task<R> HttpPost<R, T>(string path, T content = default(T) , string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
@@ -119,7 +132,10 @@ namespace Diagnostics.DataProviders
             {
                 return (await response.Content.ReadAsStringAsync()).CastTo<R>();
             }
-            return await response.Content.ReadAsAsync<R>();
+           
+            string responseContent = await response.Content.ReadAsStringAsync();
+            R value = JsonConvert.DeserializeObject<R>(responseContent);
+            return value;
         }
         
         #endregion
