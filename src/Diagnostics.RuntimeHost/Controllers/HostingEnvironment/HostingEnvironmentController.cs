@@ -61,7 +61,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             HostingEnvironment ase = await GetHostingEnvironment(subscriptionId, resourceGroupName, hostingEnvironmentName, postBody, startTimeUtc, endTimeUtc);
             OperationContext<HostingEnvironment> cxt = PrepareContext<HostingEnvironment>(ase, startTimeUtc, endTimeUtc);
             
-            return Ok(base.ListDetectors(cxt));
+            return Ok(await base.ListDetectors(cxt));
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]

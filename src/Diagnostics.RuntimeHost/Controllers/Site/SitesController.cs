@@ -58,7 +58,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
             OperationContext<App> cxt = PrepareContext<App>(app, startTimeUtc, endTimeUtc);
-            return Ok(base.ListDetectors(cxt));
+            return Ok(await base.ListDetectors(cxt));
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
