@@ -24,14 +24,14 @@ namespace Diagnostics.DataProviders
         private IGeoMasterClient InitClient()
         {
             IGeoMasterClient geoMasterClient;
-            bool onDiagRole = !string.IsNullOrWhiteSpace(_configuration.GeoRegionCertThumbprint);
+            bool onDiagRole = !string.IsNullOrWhiteSpace(_configuration.GeoCertThumbprint);
             if (onDiagRole)
             {
                 geoMasterClient = new GeoMasterCertClient(_configuration);
             }
             else
             {
-                geoMasterClient = new GeoMasterTokenClient(_configuration);
+                geoMasterClient = new ArmClient(_configuration);
             }
             return geoMasterClient;
         }

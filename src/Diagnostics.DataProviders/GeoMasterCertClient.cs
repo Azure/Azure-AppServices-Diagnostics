@@ -23,7 +23,7 @@ namespace Diagnostics.DataProviders
 
             if (_geoMasterCertificate == null)
             {
-                _geoMasterCertificate = GetCertificate(configuration.GeoRegionCertThumbprint);
+                _geoMasterCertificate = GetCertificate(configuration.GeoCertThumbprint);
             }
             
             if (_geoMasterCertificate != null)

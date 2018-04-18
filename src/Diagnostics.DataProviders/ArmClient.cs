@@ -7,13 +7,13 @@ using System.Text;
 
 namespace Diagnostics.DataProviders
 {
-    class GeoMasterTokenClient : IGeoMasterClient
+    class ArmClient : IGeoMasterClient
     {
         private const string CsmEndpointUrl = "https://management.azure.com/";
         public HttpClient Client { get; }
         public Uri BaseUri { get; }
 
-        public GeoMasterTokenClient(GeoMasterDataProviderConfiguration configuration)
+        public ArmClient(GeoMasterDataProviderConfiguration configuration)
         {
             var handler = new HttpClientHandler();
             BaseUri = new Uri(CsmEndpointUrl);

@@ -24,20 +24,6 @@ namespace Diagnostics.DataProviders
         public const string ResourceRoot =
                 "subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/" + ResourceProviderName;
     }
-    public class DataSourceCancelledException : Exception
-    {
-        public DataSourceCancelledException() : base()
-        {
-        }
-
-        public DataSourceCancelledException(string message) : base(message)
-        {
-        }
-
-        public DataSourceCancelledException(string message, Exception inner) : base(message, inner)
-        {
-        }
-    }
 
     public static class SitePathUtility
     {
@@ -45,7 +31,7 @@ namespace Diagnostics.DataProviders
         {
             var path = GetResourceRootPath(subscriptionId, resourceGroupName) + "/" + GeoMasterConstants.SitesResource;
 
-            if (name != null)
+            if (!string.IsNullOrWhiteSpace(name) )
             {
                 SiteNameParser.ParseSiteWithSlotName(name, out string siteName, out string slotName);
 

@@ -16,8 +16,8 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// GeomasterCertThumbprint
         /// </summary>
-        [ConfigurationName("GeoRegionCertThumbprint")]
-        public string GeoRegionCertThumbprint { get; set; }
+        [ConfigurationName("GeoCertThumbprint")]
+        public string GeoCertThumbprint { get; set; }
 
         /// <summary>
         /// GeomasterEndpoint
