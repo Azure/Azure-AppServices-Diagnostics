@@ -27,7 +27,7 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// </summary>
         [DataMember]
         public string Description { get; set; }
-
+        
         public bool Equals(Definition other)
         {
             return Id == other.Id;

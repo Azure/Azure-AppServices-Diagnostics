@@ -23,6 +23,7 @@ namespace Diagnostics.Scripts
         private ImmutableArray<Diagnostic> _diagnostics;
         private MethodInfo _entryPointMethodInfo;
         private Definition _entryPointDefinitionAttribute;
+        private IResourceFilter _resourceFilter;
 
         public bool IsCompilationSuccessful { get; private set; }
 
@@ -31,6 +32,8 @@ namespace Diagnostics.Scripts
         public EntityMetadata EntityMetadata => _entityMetaData;
 
         public Definition EntryPointDefinitionAttribute => _entryPointDefinitionAttribute;
+
+        public IResourceFilter ResourceFilter => _resourceFilter;
 
         public EntityInvoker(EntityMetadata entityMetadata)
         {
@@ -82,9 +85,8 @@ namespace Diagnostics.Scripts
                 }
                 catch(Exception ex)
                 {
-                    if(ex is ScriptCompilationException)
+                    if (ex is ScriptCompilationException scriptEx)
                     {
-                        var scriptEx = (ScriptCompilationException)ex;
                         IsCompilationSuccessful = false;
 
                         if (scriptEx.CompilationOutput.Any())
@@ -125,9 +127,8 @@ namespace Diagnostics.Scripts
             }
             catch (Exception ex)
             {
-                if (ex is ScriptCompilationException)
+                if (ex is ScriptCompilationException scriptEx)
                 {
-                    var scriptEx = (ScriptCompilationException)ex;
                     IsCompilationSuccessful = false;
 
                     if (scriptEx.CompilationOutput.Any())
@@ -198,12 +199,13 @@ namespace Diagnostics.Scripts
 
         private void InitializeAttributes()
         {
-            if(_entryPointMethodInfo == null)
+            if (_entryPointMethodInfo == null)
             {
                 return;
             }
 
             _entryPointDefinitionAttribute = _entryPointMethodInfo.GetCustomAttribute<Definition>();
+            _resourceFilter = _entryPointMethodInfo.GetCustomAttribute<ResourceFilterBase>();
         }
 
         private ScriptOptions GetScriptOptions(ImmutableArray<string> frameworkReferences)

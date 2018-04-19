@@ -13,7 +13,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
     {
         protected IHostingEnvironment _env;
         protected IConfiguration _config;
-        protected ICache<string, EntityInvoker> _invokerCache;
+        protected IInvokerCacheService _invokerCache;
         protected string _eventSource;
 
         protected abstract Task FirstTimeCompletionTask { get; }
@@ -22,7 +22,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         public Task WaitForFirstCompletion() => FirstTimeCompletionTask;
 
-        public SourceWatcherBase(IHostingEnvironment env, IConfiguration configuration, ICache<string, EntityInvoker> invokerCache, string eventSource)
+        public SourceWatcherBase(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, string eventSource)
         {
             _env = env;
             _config = configuration;

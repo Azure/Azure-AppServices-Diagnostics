@@ -20,6 +20,8 @@ namespace Diagnostics.RuntimeHost.Utilities
 
         public const string KustoTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
+        public const string FakeStampForAnalyticsCluster = "waws-prod-blu-000";
+
         #region Time Grain Constants
 
         internal static List<Tuple<TimeSpan, TimeSpan, bool>> TimeGrainOptions = new List<Tuple<TimeSpan, TimeSpan, bool>>
