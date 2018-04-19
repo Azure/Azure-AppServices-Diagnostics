@@ -30,7 +30,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         protected override Task FirstTimeCompletionTask => _firstTimeCompletionTask;
 
-        public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, ICache<string, EntityInvoker> invokerCache, IGithubClient githubClient)
+        public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGithubClient githubClient)
             : base(env, configuration, invokerCache, "GithubWatcher")
         {
             _githubClient = githubClient;

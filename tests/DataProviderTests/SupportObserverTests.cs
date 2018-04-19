@@ -38,12 +38,12 @@ namespace Diagnostics.Tests.DataProviderTests
             {
                 await invoker.InitializeEntryPointAsync();
 
-                var siteResource = new SiteResource
+                var appResource = new App(string.Empty, string.Empty, "my-api")
                 {
-                    SiteName = "my-api",
-                    Stamp = "waws-prod-bn1-71717c45"
+                    Stamp = new HostingEnvironment(string.Empty, string.Empty, "waws-prod-bn1-71717c45")
                 };
-                var operationContext = new OperationContext(siteResource, null, null);
+
+                var operationContext = new OperationContext<App>(appResource, string.Empty, string.Empty, true, string.Empty);
                 var response = new Response();
 
                 Response result = (Response)await invoker.Invoke(new object[] { dataProviders, operationContext, response });
@@ -68,17 +68,17 @@ namespace Diagnostics.Tests.DataProviderTests
             {
                 await invoker.InitializeEntryPointAsync();
 
-                var siteResource = new SiteResource
+                var appResource = new App(string.Empty, string.Empty, "my-api")
                 {
-                    SiteName = "my-api",
-                    Stamp = "waws-prod-bn1-71717c45",
-                    TenantIdList = new List<string>()
-                    {
-                        Guid.NewGuid().ToString()
-                    }
+                    Stamp = new HostingEnvironment(string.Empty, string.Empty, "waws-prod-bn1-71717c45")
                 };
 
-                var operationContext = new OperationContext(siteResource, null, null);
+                appResource.Stamp.TenantIdList = new List<string>()
+                {
+                    Guid.NewGuid().ToString()
+                };
+
+                var operationContext = new OperationContext<App>(appResource, null, null, true, null);
 
                 var response = new Response();
 

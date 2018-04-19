@@ -16,7 +16,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         public ISourceWatcher Watcher => _watcher;
 
-        public SourceWatcherService(IHostingEnvironment env, IConfiguration configuration, ICache<string, EntityInvoker> invokerCacheService)
+        public SourceWatcherService(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCacheService)
         {
             SourceWatcherType watcherType;
 

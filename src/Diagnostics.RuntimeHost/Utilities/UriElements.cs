@@ -14,6 +14,8 @@ namespace Diagnostics.RuntimeHost.Utilities
 
         public const string ResourceRoot = "subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/" + WebResourceProviderName;
         public const string SitesResource = ResourceRoot + "/sites/{siteName}";
+        public const string HostingEnvironmentResource = ResourceRoot + "/hostingEnvironments/{hostingEnvironmentName}";
+
         public const string Diagnostics = "/diagnostics";
 
         public const string Query = "query";
