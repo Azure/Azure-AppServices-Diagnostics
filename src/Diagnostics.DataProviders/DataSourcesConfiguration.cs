@@ -10,5 +10,6 @@ namespace Diagnostics.DataProviders
     {
         public KustoDataProviderConfiguration KustoConfiguration { get; set; }
         public SupportObserverDataProviderConfiguration SupportObserverConfiguration { get; set; }
+        public GeoMasterDataProviderConfiguration GeoMasterConfiguration  { get; set; }
     }
 }

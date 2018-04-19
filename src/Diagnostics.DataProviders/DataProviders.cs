@@ -12,11 +12,13 @@ namespace Diagnostics.DataProviders
 
         public KustoDataProvider Kusto;
         public ISupportObserverDataProvider Observer;
+        public GeoMasterDataProvider GeoMaster;
 
         public DataProviders(DataSourcesConfiguration configuration)
         {
             Kusto = new KustoDataProvider(_cache, configuration.KustoConfiguration);
             Observer = SupportObserverDataProviderFactory.GetDataProvider(_cache, configuration);
+            GeoMaster = new GeoMasterDataProvider(_cache, configuration.GeoMasterConfiguration);
         }
     }
 }
