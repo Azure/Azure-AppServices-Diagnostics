@@ -18,6 +18,7 @@ namespace Diagnostics.DataProviders
         private static ClientCredential _aadCredentials;
         private readonly HttpClient _httpClient;
         private object _lockObject = new object();
+        private List<string> _routeTemplates;
 
         public SupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration) : base(cache)
         {
@@ -25,6 +26,7 @@ namespace Diagnostics.DataProviders
             _httpClient = new HttpClient();
             _httpClient.BaseAddress = new Uri("https://wawsobserver-prod.azurewebsites.net/api/");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _routeTemplates = new List<string>();
         }
 
         public Task<JObject> GetAdminSitesByHostName(string stampName, string[] hostNames)
@@ -128,6 +130,47 @@ namespace Diagnostics.DataProviders
             return siteObject;
         }
 
+        public async Task<dynamic> GetResource(string observerUrl)
+        {
+            Uri uri;
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(observerUrl))
+                {
+                    throw new ArgumentNullException("observerUrl");
+                }
+
+
+
+                uri = new Uri(observerUrl);
+
+                if (!uri.Host.Equals("wawsobserver.azurewebsites.windows.net", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    throw new FormatException($"{observerUrl} is not for an Observer call. Please use a URL that points to Observer. Eg., https://wawsobserver.azurewebsites.windows.net/Sites/mySite");
+                }
+
+            }catch (UriFormatException ex)
+            {
+                string exceptionMessage = null;
+
+                if (ex.Message.Contains("The URI is empty"))
+                {
+                    exceptionMessage = "ObserverUrl is empty. Please pass a non empty string for observerUrl";
+                }
+
+                exceptionMessage = "ObserverUrl is badly formatted. Please use correct format eg., https://wawsobserver.azurewebsites.windows.net/Sites/mySite";
+
+                throw new FormatException(exceptionMessage);
+            }
+
+            //take a substring to remove forward-slash from start of PathAndQuery
+            var response = await GetObserverResource(uri.PathAndQuery.Substring(1));
+
+            var jObjectResponse = JsonConvert.DeserializeObject(response);
+            return jObjectResponse;
+        }
+
         private async Task<string> GetObserverResource(string url, string resourceId = null)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
@@ -154,6 +197,35 @@ namespace Diagnostics.DataProviders
 
             var authResult = await _authContext.AcquireTokenAsync(resourceId ?? _configuration.ResourceId, _aadCredentials);
             return authResult.AccessToken;
+        }
+
+        private void FillObserverRouteTemplates()
+        {
+            if (_routeTemplates == null)
+            {
+                _routeTemplates = new List<string>
+                {
+                    "api/sites/{siteName}",
+                    "api/stamps/{stampName}/sites/{siteName}",
+                    "api/deletedsites/{siteName}",
+                    "api/stamps/{stampName}/sites/deleted/{siteName}",
+                    "api/webspaces/{webspaceGeoId}",
+                    "api/subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}",
+                    "api/subscriptions/{subscriptionName}",
+                    "api/subscriptions/id/{subscriptionId}",
+                    "api/stamps/{stampName}/subscriptions/{subscriptionName}",
+                    "api/stamps/{stampName}",
+                    "api/certificates/{thumbprint}",
+                    "api/subscriptions/{subscriptionName}/certificates",
+                    "api/domains/{domainName}",
+                    "api/subscriptions/{subscriptionName}/domains",
+                    "api/certificateorders/{certificateOrderName}",
+                    "api/subscriptions/{subscriptionName}/certificateorders",
+                    "api/minienvironments/{environmentName}",
+                    "api/stamps/{stampName}/storagevolumes/{volumeName}",
+                    "api/stamps/{stampName}/serverfarms/id/{serverFarmId}",
+                };
+            }
         }
     }
 }

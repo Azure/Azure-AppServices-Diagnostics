@@ -27,5 +27,6 @@ namespace Diagnostics.DataProviders
         Task<string> GetStorageVolumeForSite(string stampName, string siteName);
         Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName);
         Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
+        Task<dynamic> GetResource(string wawsObserverUrl);
     }
 }
