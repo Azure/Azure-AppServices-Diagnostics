@@ -120,7 +120,7 @@ namespace Diagnostics.Tests.DataProviderTests
                 var data3 = await dataProviders.Observer.GetResource("/not-a-route/hawfor-site/not-resource");
             }catch(FormatException ex)
             {
-                Assert.Contains("Please use correct format", ex.Message);
+                Assert.Contains("Please use a URL that points to Observer", ex.Message);
             }
             
             await Assert.ThrowsAsync<ArgumentNullException>(async() => await dataProviders.Observer.GetResource(null));

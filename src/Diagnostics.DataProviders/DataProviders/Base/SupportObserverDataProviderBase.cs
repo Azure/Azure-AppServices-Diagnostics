@@ -55,6 +55,12 @@ namespace Diagnostics.DataProviders
                     exceptionMessage = "ObserverUrl is empty. Please pass a non empty string for observerUrl";
                 }
 
+                //fix for travis ci
+                if (!observerUrl.StartsWith("https://wawsobserver.azurewebsites.windows.net") || !observerUrl.StartsWith("http://wawsobserver.azurewebsites.windows.net"))
+                {
+                    throw new FormatException($"{observerUrl} is not for an Observer call. Please use a URL that points to Observer. Eg., https://wawsobserver.azurewebsites.windows.net/Sites/mySite");
+                }
+
                 exceptionMessage = "ObserverUrl is badly formatted. Please use correct format eg., https://wawsobserver.azurewebsites.windows.net/Sites/mySite";
 
                 throw new FormatException(exceptionMessage);
