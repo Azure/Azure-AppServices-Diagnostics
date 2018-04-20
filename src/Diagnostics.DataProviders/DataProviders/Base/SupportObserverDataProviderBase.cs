@@ -15,10 +15,7 @@ namespace Diagnostics.DataProviders
     public abstract class SupportObserverDataProviderBase : DiagnosticDataProvider, ISupportObserverDataProvider
     {
         private readonly SupportObserverDataProviderConfiguration _configuration;
-        private static AuthenticationContext _authContext;
-        private static ClientCredential _aadCredentials;
         private readonly HttpClient _httpClient;
-        private object _lockObject = new object();
         private List<string> _routeTemplates;
 
         public SupportObserverDataProviderBase(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration) : base(cache)
@@ -89,7 +86,7 @@ namespace Diagnostics.DataProviders
         protected async Task<string> GetObserverResource(string url, string resourceId = null)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await GetAccessToken(resourceId));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _configuration.GetAccessToken(resourceId));
             var cancelToken = new CancellationToken();
             var response = await _httpClient.SendAsync(request, cancelToken);
             response.EnsureSuccessStatusCode();
@@ -115,24 +112,6 @@ namespace Diagnostics.DataProviders
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName);
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
         public abstract HttpClient GetObserverClient();
-
-        protected async Task<string> GetAccessToken(string resourceId = null)
-        {
-            if (_authContext == null)
-            {
-                lock (_lockObject)
-                {
-                    if (_authContext == null)
-                    {
-                        _aadCredentials = new ClientCredential(_configuration.ClientId, _configuration.AppKey);
-                        _authContext = new AuthenticationContext("https://login.microsoftonline.com/microsoft.onmicrosoft.com", TokenCache.DefaultShared);
-                    }
-                }
-            }
-
-            var authResult = await _authContext.AcquireTokenAsync(resourceId ?? _configuration.ResourceId, _aadCredentials);
-            return authResult.AccessToken;
-        }
 
         private void FillObserverRouteTemplates()
         {
