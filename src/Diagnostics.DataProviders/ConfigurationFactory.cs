@@ -63,10 +63,6 @@ namespace Diagnostics.DataProviders
             {
                 return "Mock";
             }
-            else if (prefix == "SupportObserver" && (name == "IsProdConfigured" || name == "IsTestConfigured"))
-            {
-                return "false";
-            }
             else if (prefix == "SupportObserver" && name == "IsMockConfigured")
             {
                 return "true";

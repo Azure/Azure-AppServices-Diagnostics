@@ -28,12 +28,6 @@ namespace Diagnostics.DataProviders
         [ConfigurationName("AppKey")]
         public string AppKey { get; set; }
 
-        [ConfigurationName("IsProdConfigured", DefaultValue = true)]
-        public bool IsProdConfigured { get; set; }
-
-        [ConfigurationName("IsTestConfigured", DefaultValue = false)]
-        public bool IsTestConfigured { get; set; }
-
         [ConfigurationName("IsMockConfigured", DefaultValue = false)]
         public bool IsMockConfigured { get; set; }
 
@@ -52,23 +46,21 @@ namespace Diagnostics.DataProviders
         /// </summary>
         internal async Task<string> GetAccessToken(string resourceId = null)
         {
-            if (IsProdConfigured)
+            if (IsMockConfigured)
             {
-                if (_authContext == null)
+                return "abcdBearerToken";
+            }
+
+            if (_authContext == null)
+            {
+                lock (_lockObject)
                 {
-                    lock (_lockObject)
+                    if (_authContext == null)
                     {
-                        if (_authContext == null)
-                        {
-                            _aadCredentials = new ClientCredential(ClientId, AppKey);
-                            _authContext = new AuthenticationContext("https://login.microsoftonline.com/microsoft.onmicrosoft.com", TokenCache.DefaultShared);
-                        }
+                        _aadCredentials = new ClientCredential(ClientId, AppKey);
+                        _authContext = new AuthenticationContext("https://login.microsoftonline.com/microsoft.onmicrosoft.com", TokenCache.DefaultShared);
                     }
                 }
-            }
-            else
-            {
-                return await Task.FromResult("abcdtoken");
             }
 
             var authResult = await _authContext.AcquireTokenAsync(resourceId ?? ResourceId, _aadCredentials);
