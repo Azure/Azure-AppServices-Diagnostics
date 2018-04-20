@@ -25,6 +25,8 @@ namespace Diagnostics.DataProviders
         {
             _configuration = configuration;
             _httpClient = GetObserverClient();
+            _httpClient.BaseAddress = new Uri("https://wawsobserver-prod.azurewebsites.net/api/");
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             FillObserverRouteTemplates();
         }
 
@@ -84,7 +86,7 @@ namespace Diagnostics.DataProviders
             return jObjectResponse;
         }
 
-        private async Task<string> GetObserverResource(string url, string resourceId = null)
+        protected async Task<string> GetObserverResource(string url, string resourceId = null)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await GetAccessToken(resourceId));
@@ -114,7 +116,7 @@ namespace Diagnostics.DataProviders
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
         public abstract HttpClient GetObserverClient();
 
-        private async Task<string> GetAccessToken(string resourceId = null)
+        protected async Task<string> GetAccessToken(string resourceId = null)
         {
             if (_authContext == null)
             {
