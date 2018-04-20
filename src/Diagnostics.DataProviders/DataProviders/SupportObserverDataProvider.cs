@@ -14,12 +14,7 @@ namespace Diagnostics.DataProviders
 {
     public class SupportObserverDataProvider : SupportObserverDataProviderBase
     {
-        private readonly SupportObserverDataProviderConfiguration _configuration;
-        private static AuthenticationContext _authContext;
-        private static ClientCredential _aadCredentials;
-        private readonly HttpClient _httpClient;
         private object _lockObject = new object();
-        private List<string> _routeTemplates;
 
         public SupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration) : base(cache, configuration)
         {
@@ -64,7 +59,7 @@ namespace Diagnostics.DataProviders
         {
             var request = new HttpRequestMessage(HttpMethod.Get, string.IsNullOrWhiteSpace(stampName) ? $"/sites/{siteName}/runtimesiteslotmap" : $"stamp/{stampName}/sites/{siteName}/runtimesiteslotmap");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _configuration.GetAccessToken(_configuration.RuntimeSiteSlotMapResourceUri));
-            var response = await _httpClient.SendAsync(request);
+            var response = await GetObserverClient().SendAsync(request);
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadAsStringAsync();
             var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);

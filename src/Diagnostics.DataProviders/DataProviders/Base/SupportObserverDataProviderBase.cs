@@ -14,7 +14,7 @@ namespace Diagnostics.DataProviders
 {
     public abstract class SupportObserverDataProviderBase : DiagnosticDataProvider, ISupportObserverDataProvider
     {
-        private readonly SupportObserverDataProviderConfiguration _configuration;
+        protected readonly SupportObserverDataProviderConfiguration _configuration;
         private readonly HttpClient _httpClient;
         private List<string> _routeTemplates;
 
