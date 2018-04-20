@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
@@ -11,44 +14,19 @@ namespace Diagnostics.DataProviders
     /// <summary>
     /// Use this class for testing purposes
     /// </summary>
-    public class MockSupportObserverDataProvider : DiagnosticDataProvider, ISupportObserverDataProvider
+    public class MockSupportObserverDataProvider : SupportObserverDataProviderBase
     {
-        public MockSupportObserverDataProvider(OperationDataCache cache) : base(cache)
+        public MockSupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration) : base(cache, configuration)
         {
 
         }
 
-        public Task<JObject> GetAdminSitesByHostName(string stampName, string[] hostNames)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<JObject> GetAdminSitesBySiteName(string stampName, string siteName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<object>> GetAppServiceEnvironmentDeployments(string hostingEnvironmentName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<JObject> GetAppServiceEnvironmentDetails(string hostingEnvironmentName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<Dictionary<string, string>>> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
+        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
         {
             return GetRuntimeSiteSlotMap(null, siteName);
         }
 
-        public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
+        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
         {
             if (string.IsNullOrWhiteSpace(siteName))
             {
@@ -76,22 +54,12 @@ namespace Diagnostics.DataProviders
             return Task.FromResult(mock);
         }
 
-        public Task<IEnumerable<Dictionary<string, string>>> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override async Task<dynamic> GetSite(string siteName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetServerFarmWebspaceName(string subscriptionId, string serverFarm)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<dynamic> GetSite(string siteName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<dynamic> GetSite(string stampName, string siteName)
+        public override async Task<dynamic> GetSite(string stampName, string siteName)
         {
             return await GetSiteInternal();
         }
@@ -120,34 +88,109 @@ namespace Diagnostics.DataProviders
             return Task.FromResult(JsonConvert.DeserializeObject(siteData));
         }
 
-        public Task<string> GetSiteResourceGroupName(string siteName)
+        public override Task<string> GetSiteResourceGroupName(string siteName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<Dictionary<string, string>>> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override Task<IEnumerable<Dictionary<string, string>>> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<Dictionary<string, string>>> GetSitesInServerFarm(string subscriptionId, string serverFarmName)
+        public override Task<IEnumerable<Dictionary<string, string>>> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetSiteWebSpaceName(string subscriptionId, string siteName)
+        public override Task<IEnumerable<Dictionary<string, string>>> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetStorageVolumeForSite(string stampName, string siteName)
+        public override Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName)
+        public override Task<string> GetServerFarmWebspaceName(string subscriptionId, string serverFarm)
         {
             throw new NotImplementedException();
+        }
+
+        public override Task<string> GetSiteWebSpaceName(string subscriptionId, string siteName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<IEnumerable<Dictionary<string, string>>> GetSitesInServerFarm(string subscriptionId, string serverFarmName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<JObject> GetAppServiceEnvironmentDetails(string hostingEnvironmentName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<IEnumerable<object>> GetAppServiceEnvironmentDeployments(string hostingEnvironmentName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<JObject> GetAdminSitesBySiteName(string stampName, string siteName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<JObject> GetAdminSitesByHostName(string stampName, string[] hostNames)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<string> GetStorageVolumeForSite(string stampName, string siteName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override HttpClient GetObserverClient()
+        {
+            return new MockHttpClient();
+        }
+
+        private class MockHttpClient : HttpClient
+        {
+            public MockHttpClient()
+            {
+                BaseAddress = new Uri("https://mock-wawsobserver-prod.azurewebsites.net/api/");
+                DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            }
+
+            public override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken token)
+            {
+                var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK);
+                response.Content = new StringContent(MockJsonResponse(request.RequestUri.OriginalString));
+                return Task.FromResult(response);
+            }
+
+            private string MockJsonResponse(string pathAndQuery)
+            {
+                switch (pathAndQuery)
+                {
+                    case "stamps/stamp123/sites/site123":
+                        return "{\"stamp\":\"stamp123\",\"siteName\":\"site123\"}";
+                    case "certificates/123456789":
+                        return "{\"type\":\"IPSSL\"}";
+                    case "subscriptions/1111-2222-3333-4444-5555/domains":
+                        return "[{\"name\":\"foo_bar.com\"},{\"name\":\"foo_bar.net\"}]";
+                    case "minienvironments/my-ase":
+                        return "{\"hostingEnvironmentType\":\"ASEv2\"}";
+                    case "stamps/waws-prod-mock1-001/storagevolumes/volume-19":
+                        return "{\"name\":\"volume-19\"}";
+                    default:
+                        return null;
+                }
+            }
         }
     }
 }

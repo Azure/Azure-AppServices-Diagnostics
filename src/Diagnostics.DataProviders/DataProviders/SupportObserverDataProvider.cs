@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -11,53 +12,45 @@ using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.DataProviders
 {
-    public class SupportObserverDataProvider : DiagnosticDataProvider, ISupportObserverDataProvider
+    public class SupportObserverDataProvider : SupportObserverDataProviderBase
     {
-        private readonly SupportObserverDataProviderConfiguration _configuration;
-        private static AuthenticationContext _authContext;
-        private static ClientCredential _aadCredentials;
-        private readonly HttpClient _httpClient;
         private object _lockObject = new object();
 
-        public SupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration) : base(cache)
+        public SupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration) : base(cache, configuration)
         {
-            _configuration = configuration;
-            _httpClient = new HttpClient();
-            _httpClient.BaseAddress = new Uri("https://wawsobserver-prod.azurewebsites.net/api/");
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        public Task<JObject> GetAdminSitesByHostName(string stampName, string[] hostNames)
+        public override Task<JObject> GetAdminSitesByHostName(string stampName, string[] hostNames)
         {
             throw new NotImplementedException();
         }
 
-        public Task<JObject> GetAdminSitesBySiteName(string stampName, string siteName)
+        public override Task<JObject> GetAdminSitesBySiteName(string stampName, string siteName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<object>> GetAppServiceEnvironmentDeployments(string hostingEnvironmentName)
+        public override Task<IEnumerable<object>> GetAppServiceEnvironmentDeployments(string hostingEnvironmentName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<JObject> GetAppServiceEnvironmentDetails(string hostingEnvironmentName)
+        public override Task<JObject> GetAppServiceEnvironmentDetails(string hostingEnvironmentName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<Dictionary<string, string>>> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override Task<IEnumerable<Dictionary<string, string>>> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
+        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
         {
             return await GetRuntimeSiteSlotMap(null, siteName);
         }
 
-        public async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
+        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
         {
             return await GetRuntimeSiteSlotMapInternal(stampName, siteName);
         }
@@ -65,8 +58,8 @@ namespace Diagnostics.DataProviders
         private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, string.IsNullOrWhiteSpace(stampName) ? $"/sites/{siteName}/runtimesiteslotmap" : $"stamp/{stampName}/sites/{siteName}/runtimesiteslotmap");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await GetAccessToken(_configuration.RuntimeSiteSlotMapResourceUri));
-            var response = await _httpClient.SendAsync(request);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _configuration.GetAccessToken(_configuration.RuntimeSiteSlotMapResourceUri));
+            var response = await GetObserverClient().SendAsync(request);
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadAsStringAsync();
             var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);
@@ -74,86 +67,63 @@ namespace Diagnostics.DataProviders
             return slotTimeRange;
         }
 
-        public Task<IEnumerable<Dictionary<string, string>>> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override Task<IEnumerable<Dictionary<string, string>>> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetServerFarmWebspaceName(string subscriptionId, string serverFarm)
+        public override Task<string> GetServerFarmWebspaceName(string subscriptionId, string serverFarm)
         {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetSiteResourceGroupName(string siteName)
+        public override Task<string> GetSiteResourceGroupName(string siteName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<Dictionary<string, string>>> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override Task<IEnumerable<Dictionary<string, string>>> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<Dictionary<string, string>>> GetSitesInServerFarm(string subscriptionId, string serverFarmName)
+        public override Task<IEnumerable<Dictionary<string, string>>> GetSitesInServerFarm(string subscriptionId, string serverFarmName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetSiteWebSpaceName(string subscriptionId, string siteName)
+        public override Task<string> GetSiteWebSpaceName(string subscriptionId, string siteName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetStorageVolumeForSite(string stampName, string siteName)
+        public override Task<string> GetStorageVolumeForSite(string stampName, string siteName)
         {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName)
+        public override Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<dynamic> GetSite(string siteName)
+        public override async Task<dynamic> GetSite(string siteName)
         {
             var response = await GetObserverResource($"sites/{siteName}");
             var siteObject = JsonConvert.DeserializeObject(response);
             return siteObject;
         }
 
-        public async Task<dynamic> GetSite(string stampName, string siteName)
+        public override async Task<dynamic> GetSite(string stampName, string siteName)
         {
             var response = await GetObserverResource($"stamps/{stampName}/sites/{siteName}");
             var siteObject = JsonConvert.DeserializeObject(response);
             return siteObject;
         }
 
-        private async Task<string> GetObserverResource(string url, string resourceId = null)
+        public override HttpClient GetObserverClient()
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await GetAccessToken(resourceId));
-            var response = await _httpClient.SendAsync(request);
-            response.EnsureSuccessStatusCode();
-            var result = await response.Content.ReadAsStringAsync();
-            return result;
-        }
-
-        private async Task<string> GetAccessToken(string resourceId = null)
-        {
-            if (_authContext == null)
-            {
-                lock (_lockObject)
-                {
-                    if (_authContext == null)
-                    {
-                        _aadCredentials = new ClientCredential(_configuration.ClientId, _configuration.AppKey);
-                        _authContext = new AuthenticationContext("https://login.microsoftonline.com/microsoft.onmicrosoft.com", TokenCache.DefaultShared);
-                    }
-                }
-            }
-
-            var authResult = await _authContext.AcquireTokenAsync(resourceId ?? _configuration.ResourceId, _aadCredentials);
-            return authResult.AccessToken;
+            return new HttpClient();
         }
     }
 }

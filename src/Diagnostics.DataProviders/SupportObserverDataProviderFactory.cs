@@ -10,7 +10,7 @@ namespace Diagnostics.DataProviders
         {
             if (configuration.SupportObserverConfiguration.IsMockConfigured)
             {
-                return new MockSupportObserverDataProvider(cache);
+                return new MockSupportObserverDataProvider(cache, configuration.SupportObserverConfiguration);
             }
             else
             {

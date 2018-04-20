@@ -97,5 +97,58 @@ namespace Diagnostics.Tests.DataProviderTests
                 
             }
         }
+
+        [Fact]
+        public async void TestBadObserverUrl()
+        {
+            var configFactory = new MockDataProviderConfigurationFactory();
+            var config = configFactory.LoadConfigurations();
+            var dataProviders = new DataProviders.DataProviders(config);
+
+            try
+            {
+                var data = await dataProviders.Observer.GetResource("https://not-wawsobserver.azurewebsites.windows.net/Sites/thor-api");
+            }catch(Exception ex)
+            {
+                Assert.Contains("Please use a URL that points to Observer", ex.Message);
+            }
+
+            await Assert.ThrowsAsync<FormatException>(async() => await dataProviders.Observer.GetResource("/sites/hawfor-site"));
+
+            try
+            {
+                var data3 = await dataProviders.Observer.GetResource("/not-a-route/hawfor-site/not-resource");
+            }catch(FormatException ex)
+            {
+                Assert.Contains("Please use a URL that points to Observer", ex.Message);
+            }
+            
+            await Assert.ThrowsAsync<ArgumentNullException>(async() => await dataProviders.Observer.GetResource(null));
+        }
+
+        [Fact]
+        public async void TestRouteMatchLogic()
+        {
+            var configFactory = new MockDataProviderConfigurationFactory();
+            var config = configFactory.LoadConfigurations();
+            var dataProviders = new DataProviders.DataProviders(config);
+
+            //basic test
+            var site123Data = await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/stamps/stamp123/sites/site123");
+
+            //basic test with different resource
+            var certData = await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/certificates/123456789");
+
+            //test where parameter value is middle of url and not end of url
+            var domainData = await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/subscriptions/1111-2222-3333-4444-5555/domains");
+
+            //test with multiple parameter values
+            var storageVolumeData = await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/stamps/waws-prod-mock1-001/storagevolumes/volume-19");
+
+            Assert.Equal("site123", (string)site123Data.siteName);
+            Assert.Equal("IPSSL", (string)certData.type);
+            Assert.Equal("foo_bar.com", (string)domainData[0].name);
+            Assert.Equal("volume-19", (string)storageVolumeData.name);
+        }
     }
 }
