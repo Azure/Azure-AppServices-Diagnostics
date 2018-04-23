@@ -164,7 +164,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             string stampName = !string.IsNullOrWhiteSpace(hostingEnv.InternalName) ? hostingEnv.InternalName : hostingEnv.Name;
-            hostingEnv.TenantIdList = await this._stampService.GetTenantIdForStamp(stampName, startTime, endTime, requestId);
+
+            var result = await this._stampService.GetTenantIdForStamp(stampName, startTime, endTime, requestId);
+            hostingEnv.TenantIdList = result.Item1;
+            hostingEnv.PlatformType = result.Item2;
+
             return hostingEnv;
         }
     }

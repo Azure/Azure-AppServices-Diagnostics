@@ -17,6 +17,8 @@ namespace Diagnostics.DataProviders
                 switch (operationName.ToLower())
                 {
                     case "gettenantidforstamp":
+                    case "gettenantidforstamp-windows":
+                    case "gettenantidforstamp-linux":
                         return await GetFakeTenantIdResults();
                     case "getlatestdeployment":
                         return await GetLatestDeployment();
