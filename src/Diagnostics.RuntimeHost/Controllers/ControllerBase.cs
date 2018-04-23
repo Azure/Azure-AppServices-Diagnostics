@@ -126,11 +126,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(queryRes);
         }
 
-        protected async Task<HostingEnvironment> GetHostingEnvironment(string subscriptionId, string resoourceGroup, string name, DiagnosticStampData stampPostBody, DateTime startTime, DateTime endTime)
+        protected async Task<HostingEnvironment> GetHostingEnvironment(string subscriptionId, string resourceGroup, string name, DiagnosticStampData stampPostBody, DateTime startTime, DateTime endTime)
         {
             if (stampPostBody == null)
             {
-                throw new ArgumentNullException("stampPostBody");
+                return new HostingEnvironment(subscriptionId, resourceGroup, name);
             }
 
             string requestId = string.Empty;
@@ -139,7 +139,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 requestId = requestIds.FirstOrDefault() ?? string.Empty;
             }
 
-            HostingEnvironment hostingEnv = new HostingEnvironment(subscriptionId, resoourceGroup, name)
+            HostingEnvironment hostingEnv = new HostingEnvironment(subscriptionId, resourceGroup, name)
             {
                 InternalName = stampPostBody.InternalName,
                 ServiceAddress = stampPostBody.ServiceAddress,
