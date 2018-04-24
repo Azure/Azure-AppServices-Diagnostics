@@ -16,11 +16,10 @@ namespace Diagnostics.DataProviders
             {
                 switch (operationName.ToLower())
                 {
-                    case "gettenantidforstamp":
-                    case "gettenantidforstamp-windows":
-                    case "gettenantidforstamp-linux":
+                    case KustoOperations.GetTenantIdForWindows:
+                    case KustoOperations.GetTenantIdForLinux:
                         return await GetFakeTenantIdResults();
-                    case "getlatestdeployment":
+                    case KustoOperations.GetLatestDeployment:
                         return await GetLatestDeployment();
                     default:
                         return await GetTestA();

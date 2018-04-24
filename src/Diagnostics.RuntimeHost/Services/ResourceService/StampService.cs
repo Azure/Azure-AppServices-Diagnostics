@@ -48,8 +48,8 @@ namespace Diagnostics.RuntimeHost.Services
             string windowsQuery = GetTenantIdQuery(stamp, startTime, endTime, PlatformType.Windows);
             string linuxQuery = GetTenantIdQuery(stamp, startTime, endTime, PlatformType.Linux);
 
-            var windowsTask = _dataProviders.Kusto.ExecuteQuery(windowsQuery, stamp, requestId, "GetTenantIdForStamp-Windows");
-            var linuxTask = _dataProviders.Kusto.ExecuteQuery(linuxQuery, stamp, requestId, "GetTenantIdForStamp-Linux");
+            var windowsTask = _dataProviders.Kusto.ExecuteQuery(windowsQuery, stamp, requestId, KustoOperations.GetTenantIdForWindows);
+            var linuxTask = _dataProviders.Kusto.ExecuteQuery(linuxQuery, stamp, requestId, KustoOperations.GetTenantIdForLinux);
 
             windowsTenantIds = GetTenantIdsFromTable(await windowsTask);
             linuxTenantIds = GetTenantIdsFromTable(await linuxTask);

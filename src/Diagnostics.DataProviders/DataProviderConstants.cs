@@ -44,4 +44,11 @@ namespace Diagnostics.DataProviders
 
         #endregion
     }
+
+    public class KustoOperations
+    {
+        public const string GetTenantIdForWindows = "gettenantidforstamp-windows";
+        public const string GetTenantIdForLinux = "gettenantidforstamp-linux";
+        public const string GetLatestDeployment = "getlatestdeployment";
+    }
 }
