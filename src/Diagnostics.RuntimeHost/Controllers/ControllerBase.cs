@@ -1,4 +1,5 @@
-﻿using Diagnostics.Logger;
+﻿using Diagnostics.DataProviders;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
@@ -49,8 +50,8 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             return new OperationContext<TResource>(
                 resource,
-                DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(HostConstants.KustoTimeFormat),
-                DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(HostConstants.KustoTimeFormat),
+                DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(DataProviderConstants.KustoTimeFormat),
+                DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(DataProviderConstants.KustoTimeFormat),
                 isInternalRequest,
                 requestIds.FirstOrDefault()
             );

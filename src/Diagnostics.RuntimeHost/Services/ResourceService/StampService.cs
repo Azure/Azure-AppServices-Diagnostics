@@ -84,8 +84,8 @@ namespace Diagnostics.RuntimeHost.Services
 
         private string GetTenantIdQuery(string stamp, DateTime startTime, DateTime endTime, PlatformType type)
         {
-            string startTimeStr = DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(HostConstants.KustoTimeFormat);
-            string endTimeStr = DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(HostConstants.KustoTimeFormat);
+            string startTimeStr = DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(DataProviderConstants.KustoTimeFormat);
+            string endTimeStr = DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(DataProviderConstants.KustoTimeFormat);
             string tableName = "RoleInstanceHeartbeat";
             if (type == PlatformType.Linux)
             {

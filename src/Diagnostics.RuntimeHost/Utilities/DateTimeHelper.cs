@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Diagnostics.DataProviders;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace Diagnostics.RuntimeHost.Utilities
 
             result = PrepareStartEndTimeUtc(startTime, endTime, out startTimeUtc, out endTimeUtc, out errorMessage);
 
-            var defaultTimeGrainOption = HostConstants.TimeGrainOptions.FirstOrDefault(t => t.Item3);
+            var defaultTimeGrainOption = DataProviderConstants.TimeGrainOptions.FirstOrDefault(t => t.Item3);
             timeGrainTimeSpan = defaultTimeGrainOption.Item1;
 
             if (!string.IsNullOrEmpty(timeGrain))
@@ -32,7 +33,7 @@ namespace Diagnostics.RuntimeHost.Utilities
                 }
                 else
                 {
-                    selectedTimeGrainOption = HostConstants.TimeGrainOptions.FirstOrDefault(t => t.Item1.Equals(parsedTimeGrain));
+                    selectedTimeGrainOption = DataProviderConstants.TimeGrainOptions.FirstOrDefault(t => t.Item1.Equals(parsedTimeGrain));
                     if (selectedTimeGrainOption == null)
                     {
                         result = false;
@@ -110,9 +111,9 @@ namespace Diagnostics.RuntimeHost.Utilities
                 return false;
             }
 
-            if (startTimeUtc < DateTime.UtcNow.Add(HostConstants.KustoDataRetentionPeriod))
+            if (startTimeUtc < DateTime.UtcNow.Add(DataProviderConstants.KustoDataRetentionPeriod))
             {
-                errorMessage = $"Invalid Start Time. Start Time cannot be earlier than {Math.Abs(HostConstants.KustoDataRetentionPeriod.Days)} days.";
+                errorMessage = $"Invalid Start Time. Start Time cannot be earlier than {Math.Abs(DataProviderConstants.KustoDataRetentionPeriod.Days)} days.";
                 return false;
             }
 
