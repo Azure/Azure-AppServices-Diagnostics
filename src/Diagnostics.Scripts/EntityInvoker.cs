@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis.Scripting;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -82,6 +83,7 @@ namespace Diagnostics.Scripts
                     _entryPointMethodInfo = methodSignature.GetMethod(assembly);
 
                     InitializeAttributes();
+                    Validate();
                 }
                 catch(Exception ex)
                 {
@@ -101,7 +103,7 @@ namespace Diagnostics.Scripts
                 }
             }
         }
-
+        
         /// <summary>
         /// Initializes the entry point from already loaded assembly.
         /// </summary>
@@ -224,6 +226,27 @@ namespace Diagnostics.Scripts
             }
 
             return scriptOptions;
+        }
+        
+        private void Validate()
+        {
+            if(this._entryPointDefinitionAttribute != null)
+            {
+                string id = this._entryPointDefinitionAttribute.Id;
+                if (string.IsNullOrWhiteSpace(id))
+                {
+                    throw new ScriptCompilationException("Id cannot be empty in Definition attribute");
+                }
+
+                List<char> invalidChars = Path.GetInvalidFileNameChars().ToList();
+                invalidChars.ForEach(x =>
+                {
+                    if (id.Contains(x))
+                    {
+                        throw new ScriptCompilationException($"Id(in Definition attribute) cannot contain illegal character : {x}");
+                    }
+                });
+            }
         }
 
         internal static object GetTaskResult(Task task)
