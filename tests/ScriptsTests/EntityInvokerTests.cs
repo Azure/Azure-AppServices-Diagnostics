@@ -177,5 +177,21 @@ namespace Diagnostics.Tests.ScriptsTests
                 });
             }
         }
+
+        [Theory]
+        [InlineData("")]
+        public async void EntityInvoker_InvalidDetectorId(string idValue)
+        {
+            EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(idValue, ResourceType.App);
+            
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+
+                Assert.False(invoker.IsCompilationSuccessful);
+                Assert.NotEmpty(invoker.CompilationOutput);
+            }
+        }
     }
 }
