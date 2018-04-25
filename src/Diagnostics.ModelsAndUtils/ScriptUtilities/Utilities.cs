@@ -11,7 +11,8 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         /// <summary>
         /// Creates a kusto query part with time filters
         /// </summary>
-        /// <param name="cxt"><see cref="OperationContext{TResource}"/></param>
+        /// <param name="startTime">start time</param>
+        /// <param name="endTime">end time</param>
         /// <param name="timeColumnName">Name of the Time Column</param>
         /// <returns>Kusto time filter query part</returns>
         /// <example> 
@@ -19,7 +20,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         /// <code>
         /// public string GetKustoQuery(<![CDATA[OperationContext<App> cxt]]>)
         /// {
-        ///     string timeFilterQueryPart = Utilities.TimeFilterQuery(cxt);
+        ///     string timeFilterQueryPart = Utilities.TimeFilterQuery(cxt.StartTime, cxt.EndTime);
         ///     return $"SomeTableName | where {timeFilterQueryPart}";
         /// }
         /// </code>
@@ -33,13 +34,13 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         /// <summary>
         /// Creates a kusto query part for Tenant filters. This is a recommended way to use Tenant filters as this takes care of mega-stamps also.
         /// </summary>
-        /// <param name="cxt"><see cref="OperationContext{TResource}"/></param>
+        /// <param name="resource">Resource Object</param>
         /// <returns>Kusto tenant filter query part</returns>
         /// <example>
         /// <code>
         /// public string GetKustoQuery(<![CDATA[OperationContext<App> cxt]]>)
         /// {
-        ///     string tenantFilterQueryPart = Utilities.TenantFilterQuery(cxt);
+        ///     string tenantFilterQueryPart = Utilities.TenantFilterQuery(cxt.Resource);
         ///     return $"SomeTableName | where {tenantFilterQueryPart}";
         /// }
         /// </code>
@@ -63,14 +64,16 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         /// <summary>
         /// Creates a kusto query part for Time and Tenant filter together.
         /// </summary>
-        /// <param name="cxt"><see cref="OperationContext{TResource}"/></param>
+        /// <param name="startTime">Start Time</param>
+        /// <param name="endTime">EndTime</param>
+        /// <param name="resource">Resource</param>
         /// <param name="timeColumnName">Name of the Time Column</param>
         /// <returns>Kusto query part</returns>
         /// <example>
         /// <code>
         /// public string GetKustoQuery(<![CDATA[OperationContext<App> cxt]]>)
         /// {
-        ///     string queryPart = Utilities.TimeAndTenantFilterQuery(cxt);
+        ///     string queryPart = Utilities.TimeAndTenantFilterQuery(cxt.StartTime, cxt.EndTime, cxt.Resource);
         ///     return $"SomeTableName | where {queryPart}";
         /// }
         /// </code>
@@ -84,14 +87,14 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         /// <summary>
         /// Creates kusto query part to cover hostnames. Takes care for wildcard hostnames also.
         /// </summary>
-        /// <param name="cxt"><see cref="OperationContext{App}"/></param>
+        /// <param name="hostnames">List of hostnames</param>
         /// <param name="hostNameColumn">Hostname column name</param>
         /// <returns>Kusto query part.</returns>
         /// <example>
         /// <code>
         /// public string GetKustoQuery(<![CDATA[OperationContext<App> cxt]]>)
         /// {
-        ///     string queryPart = Utilities.TimeAndTenantFilterQuery(cxt);
+        ///     string queryPart = Utilities.TimeAndTenantFilterQuery(cxt.Resource.Hostnames);
         ///     return $"SomeTableName | where {queryPart}";
         /// }
         /// </code>
