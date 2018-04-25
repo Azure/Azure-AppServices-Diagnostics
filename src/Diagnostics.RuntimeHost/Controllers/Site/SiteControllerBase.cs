@@ -25,7 +25,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected async Task<App> GetAppResource(string subscriptionId, string resourceGroup, string appName, DiagnosticSiteData postBody, DateTime startTime, DateTime endTime)
         {
             string requestId = string.Empty;
-            if(this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds))
+            if (this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds))
             {
                 requestId = requestIds.FirstOrDefault() ?? string.Empty;
             }
@@ -33,12 +33,12 @@ namespace Diagnostics.RuntimeHost.Controllers
             App app = new App(subscriptionId, resourceGroup, appName)
             {
                 DefaultHostName = postBody.DefaultHostName,
-                Hostnames = postBody.HostNames.Select(p => p.Name),
+                Hostnames = postBody.HostNames != null ? postBody.HostNames.Select(p => p.Name) : new List<string>(),
                 WebSpace = postBody.WebSpace,
                 ScmSiteHostname = postBody.ScmSiteHostname,
-                Stamp = await GetHostingEnvironment(subscriptionId, resourceGroup, postBody.Stamp.Name, postBody.Stamp, startTime, endTime),
+                Stamp = await GetHostingEnvironment(postBody.Stamp.Subscription, postBody.Stamp.ResourceGroup, postBody.Stamp != null ? postBody.Stamp.Name : string.Empty, postBody.Stamp, startTime, endTime),
                 AppType = GetApplicationType(postBody.Kind),
-                PlatformType = (postBody.Kind.ToLower().Contains("linux")) ? PlatformType.Linux : PlatformType.Windows,
+                PlatformType = (!string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Kind.ToLower().Contains("linux")) ? PlatformType.Linux : PlatformType.Windows,
                 StackType = await this._siteService.GetApplicationStack(subscriptionId, resourceGroup, appName, requestId)
             };
 

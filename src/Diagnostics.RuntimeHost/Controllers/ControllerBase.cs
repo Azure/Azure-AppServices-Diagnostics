@@ -1,4 +1,5 @@
-﻿using Diagnostics.Logger;
+﻿using Diagnostics.DataProviders;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
@@ -49,8 +50,8 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             return new OperationContext<TResource>(
                 resource,
-                DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(HostConstants.KustoTimeFormat),
-                DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(HostConstants.KustoTimeFormat),
+                DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(DataProviderConstants.KustoTimeFormat),
+                DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(DataProviderConstants.KustoTimeFormat),
                 isInternalRequest,
                 requestIds.FirstOrDefault()
             );
@@ -126,11 +127,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(queryRes);
         }
 
-        protected async Task<HostingEnvironment> GetHostingEnvironment(string subscriptionId, string resoourceGroup, string name, DiagnosticStampData stampPostBody, DateTime startTime, DateTime endTime)
+        protected async Task<HostingEnvironment> GetHostingEnvironment(string subscriptionId, string resourceGroup, string name, DiagnosticStampData stampPostBody, DateTime startTime, DateTime endTime)
         {
             if (stampPostBody == null)
             {
-                throw new ArgumentNullException("stampPostBody");
+                return new HostingEnvironment(subscriptionId, resourceGroup, name);
             }
 
             string requestId = string.Empty;
@@ -139,7 +140,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 requestId = requestIds.FirstOrDefault() ?? string.Empty;
             }
 
-            HostingEnvironment hostingEnv = new HostingEnvironment(subscriptionId, resoourceGroup, name)
+            HostingEnvironment hostingEnv = new HostingEnvironment(subscriptionId, resourceGroup, name)
             {
                 InternalName = stampPostBody.InternalName,
                 ServiceAddress = stampPostBody.ServiceAddress,
@@ -164,7 +165,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             string stampName = !string.IsNullOrWhiteSpace(hostingEnv.InternalName) ? hostingEnv.InternalName : hostingEnv.Name;
-            hostingEnv.TenantIdList = await this._stampService.GetTenantIdForStamp(stampName, startTime, endTime, requestId);
+
+            var result = await this._stampService.GetTenantIdForStamp(stampName, startTime, endTime, requestId);
+            hostingEnv.TenantIdList = result.Item1;
+            hostingEnv.PlatformType = result.Item2;
+
             return hostingEnv;
         }
     }

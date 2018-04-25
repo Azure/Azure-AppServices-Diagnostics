@@ -73,7 +73,7 @@ namespace Diagnostics.DataProviders
 
             request.Content = new StringContent(JsonConvert.SerializeObject(requestPayload), Encoding.UTF8, "application/json");
 
-            CancellationTokenSource tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(Constants.DefaultTimeoutInSeconds));
+            CancellationTokenSource tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
             HttpResponseMessage responseMsg = await _httpClient.SendAsync(request, tokenSource.Token);
             string content = await responseMsg.Content.ReadAsStringAsync();
 

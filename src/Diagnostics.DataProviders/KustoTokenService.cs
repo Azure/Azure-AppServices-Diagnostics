@@ -27,7 +27,7 @@ namespace Diagnostics.DataProviders
         public void Initialize(KustoDataProviderConfiguration configuration)
         {
             _configuration = configuration;
-            _authContext = new AuthenticationContext(Constants.MicrosoftTenantAuthorityUrl);
+            _authContext = new AuthenticationContext(DataProviderConstants.MicrosoftTenantAuthorityUrl);
             _clientCredential = new ClientCredential(_configuration.ClientId, _configuration.AppKey);
             _tokenAcquiredAtleastOnce = false;
             StartTokenRefresh();
@@ -37,12 +37,12 @@ namespace Diagnostics.DataProviders
         {
             while (true)
             {
-                _acquireTokenTask = _authContext.AcquireTokenAsync(Constants.DefaultKustoEndpoint, _clientCredential);
+                _acquireTokenTask = _authContext.AcquireTokenAsync(DataProviderConstants.DefaultKustoEndpoint, _clientCredential);
                 AuthenticationResult authResult = await _acquireTokenTask;
                 _authorizationToken = GetAuthTokenFromAuthenticationResult(authResult);
                 _tokenAcquiredAtleastOnce = true;
 
-                await Task.Delay(Constants.TokenRefreshIntervalInMs);
+                await Task.Delay(DataProviderConstants.TokenRefreshIntervalInMs);
             }
         }
 
@@ -61,18 +61,5 @@ namespace Diagnostics.DataProviders
 
             return _authorizationToken;
         }
-    }
-
-    public class Constants
-    {
-        public const string MicrosoftTenantAuthorityUrl = "https://login.windows.net/microsoft.com";
-
-        public const int TokenRefreshIntervalInMs = 15 * 60 * 1000;
-
-        public const string DefaultKustoEndpoint = "https://wawswus.kusto.windows.net";
-
-        public const string WebHostingRegistryPath = @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\IIS Extensions\Web Hosting Framework";
-
-        public const int DefaultTimeoutInSeconds = 60;
     }
 }

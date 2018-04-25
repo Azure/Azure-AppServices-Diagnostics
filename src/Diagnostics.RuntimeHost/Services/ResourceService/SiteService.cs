@@ -1,4 +1,5 @@
-﻿using Diagnostics.ModelsAndUtils.Attributes;
+﻿using Diagnostics.DataProviders;
+using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.RuntimeHost.Utilities;
 using System;
 using System.Collections.Generic;
@@ -37,7 +38,7 @@ namespace Diagnostics.RuntimeHost.Services
                 | top 1 by pdate desc
                 | project sitestack";
 
-            DataTable stackTable = await _dataProviders.Kusto.ExecuteQuery(queryTemplate, HostConstants.FakeStampForAnalyticsCluster, requestId, "GetApplicationStack");
+            DataTable stackTable = await _dataProviders.Kusto.ExecuteQuery(queryTemplate, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, "GetApplicationStack");
             
             if(stackTable == null || stackTable.Rows == null || stackTable.Rows.Count == 0)
             {
