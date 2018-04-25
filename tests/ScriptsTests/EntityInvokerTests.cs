@@ -180,7 +180,6 @@ namespace Diagnostics.Tests.ScriptsTests
 
         [Theory]
         [InlineData("")]
-        [InlineData("<someId>")]
         public async void EntityInvoker_InvalidDetectorId(string idValue)
         {
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
