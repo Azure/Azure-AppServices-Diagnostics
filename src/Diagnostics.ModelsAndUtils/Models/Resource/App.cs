@@ -57,7 +57,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             this.Name = appName;
         }
 
-        // <summary>
+        /// <summary>
         /// Determines whether the app resource is applicable after filtering.
         /// </summary>
         /// <param name="filter">App Resource Filter</param>
