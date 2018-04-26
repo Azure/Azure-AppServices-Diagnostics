@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Diagnostics.ModelsAndUtils.Models
+﻿namespace Diagnostics.DataProviders
 {
-    public class VnetParameters
+    internal class VnetParameters
     {
         /// <summary>
         /// Required inputs to validate a VNET
@@ -29,4 +25,5 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public string VnetSubnetName { get; set; }
     }
+
 }

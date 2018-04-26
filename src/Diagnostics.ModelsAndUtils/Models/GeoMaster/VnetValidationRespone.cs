@@ -19,7 +19,7 @@ namespace Diagnostics.ModelsAndUtils.Models
     /// <summary>
     /// A class that describes the reason for a validation failure.
     /// </summary>
-    public class VnetValidationFailureDetails
+    public class VnetValidationRespone
     {
         /// <summary>
         /// A flag describing whether or not validation failed.
