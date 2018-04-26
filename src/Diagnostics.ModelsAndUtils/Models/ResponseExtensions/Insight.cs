@@ -6,10 +6,8 @@ using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
-    /// <summary>
-    /// Class representing Insight
-    /// </summary>
-    public class Insight
+
+    public class InsightBase
     {
         /// <summary>
         /// Enum reprensenting insight level.
@@ -21,6 +19,20 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public string Message;
 
+        public InsightBase(InsightStatus status, string message)
+        {
+            this.Status = status;
+            this.Message = message ?? string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Class representing Insight
+    /// </summary>
+    public class Insight: InsightBase
+    {
+        
+
         /// <summary>
         /// Insights body.
         /// </summary>
@@ -31,10 +43,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
-        public Insight(InsightStatus status, string message)
+        public Insight(InsightStatus status, string message): base(status, message)
         {
-            this.Status = status;
-            this.Message = message ?? string.Empty;
             this.Body = new Dictionary<string, string>();
         }
 
@@ -44,10 +54,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
         /// <param name="body">Insights Body.</param>
-        public Insight(InsightStatus status, string message, Dictionary<string, string> body)
+        public Insight(InsightStatus status, string message, Dictionary<string, string> body): base(status, message)
         {
-            this.Status = status;
-            this.Message = message ?? string.Empty;
             this.Body = body;
         }
     }

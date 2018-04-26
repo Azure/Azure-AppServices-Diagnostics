@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -57,6 +58,8 @@ namespace Diagnostics.ModelsAndUtils.Models
 
     public class TimeSeriesPerInstanceRendering : Rendering
     {
+        public int DefaultValue { get; set; }
+
         public TimeSeriesType GraphType { get; set; }
 
         public string TimestampColumnName { get; set; }
@@ -72,6 +75,27 @@ namespace Diagnostics.ModelsAndUtils.Models
         public IEnumerable<string> CounterNameFilter { get; set; }
 
         public string SelectedInstance { get; set; }
+
+        public TimeSeriesPerInstanceRendering()
+        {
+            DefaultValue = 0;
+            GraphType = TimeSeriesType.LineGraph;
+        }
+    }
+
+    public class DynamicInsightRendering : Rendering
+    {
+        public InsightStatus Status { get; set; }
+
+        public Rendering InnerRendering { get; set; }
+
+        public Boolean Expanded { get; set; }
+
+        public DynamicInsightRendering()
+        {
+            Expanded = true;
+            Type = RenderingType.DynamicInsight;
+        }
     }
     
     public enum RenderingType
@@ -110,7 +134,16 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// Data rendered as Email.
         /// </summary>
         Email,
-        Insights
+
+        /// <summary>
+        /// Data rendered as a basic insight
+        /// </summary>
+        Insights,
+
+        /// <summary>
+        /// Data rendered as a basic insight
+        /// </summary>
+        DynamicInsight
     }
 
     /// <summary>
