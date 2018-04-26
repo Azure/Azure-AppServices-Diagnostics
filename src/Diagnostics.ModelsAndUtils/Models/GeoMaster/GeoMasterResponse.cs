@@ -14,4 +14,9 @@ namespace Diagnostics.ModelsAndUtils.Models
         public IDictionary<string, dynamic> Properties { get; set; }
     }
 
+    public class GeoMasterResponseValue
+    {
+        public GeoMasterResponse[] Value;
+    }
+
 }

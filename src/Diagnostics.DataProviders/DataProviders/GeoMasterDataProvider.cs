@@ -73,6 +73,27 @@ namespace Diagnostics.DataProviders
             return stickyToSlotSettings;
         }
 
+        public async Task<VnetValidationFailureDetails> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var path = string.Format(@"subscriptions/{0}/providers/Microsoft.Web/verifyHostingEnvironmentVnet", subscriptionId);
+            var vnetParameters = new VnetParameters { VnetResourceGroup = vnetResourceGroup, VnetName = vnetName, VnetSubnetName = vnetSubnetName };
+            var result = await HttpPost<VnetValidationFailureDetails, VnetParameters>(path, vnetParameters, "", GeoMasterConstants.March2016Version, cancellationToken);
+            return result;
+        }
+
+        public async Task<List<IDictionary<string, dynamic>>> GetDeployments(string subscriptionId, string resourceGroupName, string name)
+        {
+            string path = SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name);
+            path = path + "/deployments";
+            GeoMasterResponseValue geoMasterResponse = null;
+            geoMasterResponse = await HttpGet<GeoMasterResponseValue>(path);
+            var deployments = new List<IDictionary<string, dynamic>> ();
+            foreach (var deployment in geoMasterResponse.Value)
+            {
+                deployments.Add(deployment.Properties);
+            }
+            return deployments;
+        }       
 
         #region HttpMethods
 
