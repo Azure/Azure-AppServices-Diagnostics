@@ -38,8 +38,7 @@ namespace Diagnostics.DataProviders
         
         public async Task<IDictionary<string,string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name)
         {
-            string path = SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name);
-            path = path + "/config/appsettings/list";
+            string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}/config/appsettings/list";
             var geoMasterResponse = await HttpPost<GeoMasterResponse, string>(path);
             var properties = geoMasterResponse.Properties;
             Dictionary<string, string> appSettings = new Dictionary<string, string>();
@@ -73,6 +72,26 @@ namespace Diagnostics.DataProviders
             return stickyToSlotSettings;
         }
 
+        public async Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
+        {            
+            var path = string.Format(@"subscriptions/{0}/providers/Microsoft.Web/verifyHostingEnvironmentVnet", subscriptionId);
+            var vnetParameters = new VnetParameters { VnetResourceGroup = vnetResourceGroup, VnetName = vnetName, VnetSubnetName = vnetSubnetName };
+            var result = await HttpPost<VnetValidationRespone, VnetParameters>(path, vnetParameters, "", GeoMasterConstants.March2016Version, cancellationToken);
+            return result;
+        }
+
+        public async Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name)
+        {
+            string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}/deployments";
+            GeoMasterResponseValue geoMasterResponse = null;
+            geoMasterResponse = await HttpGet<GeoMasterResponseValue>(path);
+            var deployments = new List<IDictionary<string, dynamic>> ();
+            foreach (var deployment in geoMasterResponse.Value)
+            {
+                deployments.Add(deployment.Properties);
+            }
+            return deployments;
+        }       
 
         #region HttpMethods
 

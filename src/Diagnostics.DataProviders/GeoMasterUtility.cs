@@ -10,6 +10,7 @@ namespace Diagnostics.DataProviders
     public class GeoMasterConstants
     {
         public const string August2016Version = "2016-08-01";
+        public const string March2016Version = "2016-03-01";
         public const string ProductionSlot = "Production";
         public const string SlotNameTemplateParameter = "/{slot}";
         public const string SlotsResource = "/slots";
