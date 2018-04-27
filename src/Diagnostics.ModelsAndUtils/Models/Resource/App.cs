@@ -68,7 +68,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             {
                 return ((appFilter.AppType & this.AppType) > 0) &&
                     ((appFilter.PlatformType & this.PlatformType) > 0) &&
-                    ((this.StackType != StackType.None) && (appFilter.StackType & this.StackType) > 0) &&
+                    ((this.StackType == StackType.None) || (appFilter.StackType & this.StackType) > 0) &&
                     ((appFilter.StampType & this.StampType) > 0);
             }
 
