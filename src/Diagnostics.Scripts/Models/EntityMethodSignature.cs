@@ -51,7 +51,17 @@ namespace Diagnostics.Scripts.Models
             //    .FirstOrDefault(t => string.Compare(t.FullName, ParentTypeName, StringComparison.Ordinal) == 0)
             //    ?.GetMethod(MethodName);
 
-            return assembly.DefinedTypes.FirstOrDefault(t => t.DeclaringType == null)?.GetMethod(MethodName);
+            //return assembly.DefinedTypes.FirstOrDefault(t => t.DeclaringType == null)?.GetMethod(MethodName);
+
+            foreach(var type in assembly.DefinedTypes.Where(t => t.DeclaringType == null))
+            {
+                var method = type.GetMethod(MethodName);
+                if(method != null)
+                {
+                    return method;
+                }
+            }
+            return null;
         }
     }
 }

@@ -43,6 +43,8 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public TimeSeriesType GraphType { get; set; }
 
+        public dynamic GraphOptions { get; set; }
+
         public string TimestampColumnName { get; set; }
 
         public string RoleInstanceColumnName { get; set; }
@@ -61,6 +63,8 @@ namespace Diagnostics.ModelsAndUtils.Models
         public int DefaultValue { get; set; }
 
         public TimeSeriesType GraphType { get; set; }
+
+        public dynamic GraphOptions { get; set; }
 
         public string TimestampColumnName { get; set; }
 
@@ -141,7 +145,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         Insights,
 
         /// <summary>
-        /// Data rendered as a basic insight
+        /// Data rendered as a dynamic insight. You can put any other rendering type inside this one.
         /// </summary>
         DynamicInsight
     }

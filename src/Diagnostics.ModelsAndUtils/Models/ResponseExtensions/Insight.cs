@@ -7,7 +7,10 @@ using System.Text;
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
 
-    public class InsightBase
+    /// <summary>
+    /// Class representing Insight
+    /// </summary>
+    public class Insight
     {
         /// <summary>
         /// Enum reprensenting insight level.
@@ -19,32 +22,25 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public string Message;
 
-        public InsightBase(InsightStatus status, string message)
-        {
-            this.Status = status;
-            this.Message = message ?? string.Empty;
-        }
-    }
-
-    /// <summary>
-    /// Class representing Insight
-    /// </summary>
-    public class Insight: InsightBase
-    {
-        
-
         /// <summary>
         /// Insights body.
         /// </summary>
         public Dictionary<string, string> Body;
 
         /// <summary>
+        /// Whether insight is expanded to begin with
+        /// </summary>
+        public bool IsExpanded;
+
+        /// <summary>
         /// Creates an instance of Insight class.
         /// </summary>
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
-        public Insight(InsightStatus status, string message): base(status, message)
+        public Insight(InsightStatus status, string message)
         {
+            this.Status = status;
+            this.Message = message ?? string.Empty;
             this.Body = new Dictionary<string, string>();
         }
 
@@ -54,9 +50,22 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
         /// <param name="body">Insights Body.</param>
-        public Insight(InsightStatus status, string message, Dictionary<string, string> body): base(status, message)
+        public Insight(InsightStatus status, string message, Dictionary<string, string> body)
         {
+            this.Status = status;
+            this.Message = message ?? string.Empty;
             this.Body = body;
+        }
+
+        /// <summary>
+        /// Creates an instance of Insight class.
+        /// </summary>
+        /// <param name="status">Enum reprensenting insight level.</param>
+        /// <param name="message">Insight Message.</param>
+        /// <param name="body">Insights Body.</param>
+        public Insight(InsightStatus status, string message, Dictionary<string, string> body, bool isExpanded) : this(status, message, body)
+        {
+            this.IsExpanded = isExpanded;
         }
     }
 

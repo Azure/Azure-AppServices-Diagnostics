@@ -7,12 +7,31 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     /// <summary>
     /// Class representing Dynamic Insight
     /// </summary>
-    public class DynamicInsight : InsightBase
+    public class DynamicInsight
     {
+        /// <summary>
+        /// Enum reprensenting insight level.
+        /// </summary>
+        public InsightStatus Status;
+
+        /// <summary>
+        /// Insight Message.
+        /// </summary>
+        public string Message;
+
+        /// <summary>
+        /// Description to accompany data in body
+        /// </summary>
         public string Description { get; set; }
 
+        /// <summary>
+        /// whether Insight is expanded
+        /// </summary>
         public bool Expanded { get; set; }
 
+        /// <summary>
+        /// Diagnostic data to render in body
+        /// </summary>
         public DiagnosticData InnerDiagnosticData { get; set; }
 
         /// <summary>
@@ -20,8 +39,10 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
-        public DynamicInsight(InsightStatus status, string message) : base(status, message)
+        public DynamicInsight(InsightStatus status, string message)
         {
+            this.Status = status;
+            this.Message = message ?? string.Empty;
             this.Expanded = true;
             this.Description = string.Empty;
             this.InnerDiagnosticData = new DiagnosticData();
@@ -35,7 +56,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="data">Diagnostic Data to be displayed in the insight</param>
         /// <param name="expanded">Whether insight is expanded to begin with</param>
         /// <param name="description">Description to accompany data in insight</param>
-        public DynamicInsight(InsightStatus status, string message, DiagnosticData data, bool expanded = true, string description = "") : base(status, message)
+        public DynamicInsight(InsightStatus status, string message, DiagnosticData data, bool expanded = true, string description = "") : this(status, message)
         {
             this.Expanded = expanded;
             this.Description = description;
@@ -57,9 +78,14 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
-        ///     Insight insight = new Insight(InsightStatus.Critical, "insight1 title");
+        ///     var diagnosticData = new DiagnosticData {
+        ///         Table = table //This is where you would execute kusto query
+        ///         RenderingProperties = new TimeSeriesRendering()
+        ///     }
+        /// 
+        ///     Insight insight = new DynamicInsight(InsightStatus.Critical, "This insight will expand to show a graph", diagnosticData);
         ///     
-        ///     res.AddInsight(insight);
+        ///     res.AddDynamicInsight(insight);
         /// }
         /// </code>
         /// </example>
