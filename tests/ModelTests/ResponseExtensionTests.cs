@@ -28,12 +28,12 @@ namespace Diagnostics.Tests.ModelTests
 
             Assert.Equal<RenderingType>(RenderingType.Insights, insightFromDataSet.RenderingProperties.Type);
 
-            foreach(DataRow row in insightFromDataSet.Table.Rows)
+            foreach (DataRow row in insightFromDataSet.Table.Rows)
             {
                 Assert.Equal(4, row.ItemArray.Count());
             }
         }
-        
+
         [Fact]
         public void TestAddEmailExtension()
         {
@@ -69,6 +69,28 @@ namespace Diagnostics.Tests.ModelTests
             {
                 Assert.Equal(3, row.ItemArray.Count());
             }
+        }
+
+        [Fact]
+        public void TestGraphOptions()
+        {
+            var diagnosticData = new DiagnosticData()
+            {
+                Table = null,
+                RenderingProperties = new TimeSeriesPerInstanceRendering()
+                {
+                    GraphOptions = new
+                    {
+                        forceY = new int[] { 0, 100 },
+                        yAxis = new
+                        {
+                            axisLabel = "This is a label"
+                        }
+                    }
+                }
+            };
+
+            Assert.Equal(((TimeSeriesPerInstanceRendering)diagnosticData.RenderingProperties).GraphOptions.yAxis.axisLabel, "This is a label");
         }
     }
 }

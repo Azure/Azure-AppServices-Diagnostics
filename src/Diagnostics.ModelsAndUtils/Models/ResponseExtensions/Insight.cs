@@ -6,6 +6,7 @@ using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
+
     /// <summary>
     /// Class representing Insight
     /// </summary>
@@ -25,6 +26,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// Insights body.
         /// </summary>
         public Dictionary<string, string> Body;
+
+        /// <summary>
+        /// Whether insight is expanded to begin with
+        /// </summary>
+        public bool IsExpanded;
 
         /// <summary>
         /// Creates an instance of Insight class.
@@ -49,6 +55,17 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             this.Status = status;
             this.Message = message ?? string.Empty;
             this.Body = body;
+        }
+
+        /// <summary>
+        /// Creates an instance of Insight class.
+        /// </summary>
+        /// <param name="status">Enum reprensenting insight level.</param>
+        /// <param name="message">Insight Message.</param>
+        /// <param name="body">Insights Body.</param>
+        public Insight(InsightStatus status, string message, Dictionary<string, string> body, bool isExpanded) : this(status, message, body)
+        {
+            this.IsExpanded = isExpanded;
         }
     }
 
