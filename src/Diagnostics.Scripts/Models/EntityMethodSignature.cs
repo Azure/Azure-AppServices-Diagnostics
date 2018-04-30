@@ -47,6 +47,8 @@ namespace Diagnostics.Scripts.Models
                 throw new ArgumentNullException(nameof(assembly));
             }
 
+            //TODO: Remove comments when we are sure we are choosing the correct type
+
             //return assembly.DefinedTypes
             //    .FirstOrDefault(t => string.Compare(t.FullName, ParentTypeName, StringComparison.Ordinal) == 0)
             //    ?.GetMethod(MethodName);
