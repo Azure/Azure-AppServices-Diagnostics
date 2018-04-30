@@ -5,7 +5,8 @@ using System.Text;
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
     /// <summary>
-    /// Class representing Dynamic Insight
+    /// Class representing Dynamic Insight. This is an insight that has any rendering type inside of it.
+    /// For example, this will allow you to show a graph or table inside an insight
     /// </summary>
     public class DynamicInsight
     {
