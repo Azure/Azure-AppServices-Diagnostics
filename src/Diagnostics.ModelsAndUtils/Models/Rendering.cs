@@ -24,6 +24,17 @@ namespace Diagnostics.ModelsAndUtils.Models
         }
     }
 
+    public class DetectorRendering : Rendering
+    {
+        public IEnumerable<string> DetectorIds { get; set; }
+
+        public string MessageIfCritical { get; set; }
+
+        public DetectorRendering() : base(RenderingType.Detector)
+        {
+        }
+    }
+
     public class TableRendering : Rendering
     {
         public IEnumerable<string> DisplayColumnNames { get; set; }
@@ -80,7 +91,7 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public string SelectedInstance { get; set; }
 
-        public TimeSeriesPerInstanceRendering()
+        public TimeSeriesPerInstanceRendering(): base(RenderingType.TimeSeriesPerInstance)
         {
             DefaultValue = 0;
             GraphType = TimeSeriesType.LineGraph;
@@ -95,10 +106,9 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public Boolean Expanded { get; set; }
 
-        public DynamicInsightRendering()
+        public DynamicInsightRendering(): base(RenderingType.DynamicInsight)
         {
             Expanded = true;
-            Type = RenderingType.DynamicInsight;
         }
     }
     
@@ -147,7 +157,17 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data rendered as a dynamic insight. You can put any other rendering type inside this one.
         /// </summary>
-        DynamicInsight
+        DynamicInsight,
+
+        /// <summary>
+        /// Data rendered as a markdown document. Just a single string.
+        /// </summary>
+        Markdown,
+
+        /// <summary>
+        /// This will pass the definition of a detector that will be rendered in the view
+        /// </summary>
+        Detector
     }
 
     /// <summary>
