@@ -24,13 +24,13 @@ namespace Diagnostics.ModelsAndUtils.Models
         }
     }
 
-    public class DetectorRendering : Rendering
+    public class DetectorCollectionRendering : Rendering
     {
         public IEnumerable<string> DetectorIds { get; set; }
 
         public string MessageIfCritical { get; set; }
 
-        public DetectorRendering() : base(RenderingType.Detector)
+        public DetectorCollectionRendering() : base(RenderingType.Detector)
         {
         }
     }
