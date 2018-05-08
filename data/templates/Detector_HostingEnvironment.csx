@@ -7,7 +7,7 @@ private static string GetQuery(OperationContext<HostingEnvironment> cxt)
 }
 
 [HostingEnvironmentFilter(HostingEnvironmentType = HostingEnvironmentType.All, PlatformType = PlatformType.Windows)]
-[Definition(Id = "<YOUR_DETECTOR_ID>", Name = "", Description = "")]
+[Definition(Id = "<YOUR_DETECTOR_ID>", Name = "", Author = "<YOUR_ALIAS>", Description = "")]
 public async static Task<Response> Run(DataProviders dp, OperationContext<HostingEnvironment> cxt, Response res)
 {
     res.Dataset.Add(new DiagnosticData()

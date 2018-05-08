@@ -246,6 +246,11 @@ namespace Diagnostics.Scripts
                         throw new ScriptCompilationException($"Id(in Definition attribute) cannot contain illegal character : {x}");
                     }
                 });
+
+                if (string.IsNullOrWhiteSpace(this._entryPointDefinitionAttribute.Name))
+                {
+                    throw new ScriptCompilationException("Name cannot be empty in Definition attribute");
+                }
             }
         }
 

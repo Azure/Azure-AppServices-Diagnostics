@@ -1,7 +1,7 @@
 private static string OPERATION_NAME = "<YOUR_OPERATION_NAME>";  // eg:- Update, Delete, Swap etc.
 
 [AppFilter(AppType = AppType.All, PlatformType = PlatformType.Windows | PlatformType.Linux, StackType = StackType.All)]
-[Definition(Id = "<YOUR_DETECTOR_ID>", Name = "<YOUR_DETECTOR_NAME>", Description = "Checks for all management operation of a given type and finds out how many of them succeeded, failed and prints out details of the failed operations")]
+[Definition(Id = "<YOUR_DETECTOR_ID>", Name = "<YOUR_DETECTOR_NAME>", Author = "<YOUR_ALIAS>", Description = "Checks for all management operation of a given type and finds out how many of them succeeded, failed and prints out details of the failed operations")]
 public async static Task<Response> Run(DataProviders dp, OperationContext<App> cxt, Response res)
 {
     var tblOperations = await dp.Kusto.ExecuteQuery(GetManagementOperations(cxt, OPERATION_NAME), cxt.Resource.Stamp.Name);
