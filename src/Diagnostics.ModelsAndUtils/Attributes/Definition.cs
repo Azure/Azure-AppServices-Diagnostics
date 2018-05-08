@@ -27,6 +27,12 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// </summary>
         [DataMember]
         public string Description { get; set; }
+
+        /// <summary>
+        /// Author of the detector.
+        /// </summary>
+        [DataMember]
+        public string Author { get; set; }
         
         public bool Equals(Definition other)
         {
