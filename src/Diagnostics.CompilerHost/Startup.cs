@@ -26,7 +26,7 @@ namespace Diagnostics.CompilerHost
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
-            var result = CSharpScript.EvaluateAsync<int>("1 + 2").Result;
+            CustomStartup();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -39,6 +39,12 @@ namespace Diagnostics.CompilerHost
 
             app.UseCompilerRequestMiddleware();
             app.UseMvc();
+        }
+
+        private void CustomStartup()
+        {
+            // Execute a basic script to load roslyn successfully.
+            var result = CSharpScript.EvaluateAsync<int>("1 + 2").Result;
         }
     }
 }
