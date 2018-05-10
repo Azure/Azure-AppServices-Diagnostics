@@ -75,7 +75,7 @@ namespace Diagnostics.RuntimeHost.Services
                 }
             });
 
-            return filteredList;
+            return filteredList.OrderBy(p => p.EntryPointDefinitionAttribute.Name);
         }
 
         public EntityInvoker GetInvoker<TResource>(string detectorId, OperationContext<TResource> context)

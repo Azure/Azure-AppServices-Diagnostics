@@ -64,7 +64,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
 
             return _invokerCache.GetInvokerList<TResource>(context)
-                .Select(p => new DiagnosticApiResponse { Metadata = p.EntryPointDefinitionAttribute });
+                .Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.IsInternalCall) });
         }
 
         protected async Task<IActionResult> GetDetector<TResource>(string detectorId, OperationContext<TResource> context)
@@ -81,7 +81,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             Response res = new Response
             {
-                Metadata = invoker.EntryPointDefinitionAttribute
+                Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, context.IsInternalCall)
             };
 
             var response = (Response)await invoker.Invoke(new object[] { dataProviders, context, res });
@@ -120,7 +120,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
                 {
                     invoker.InitializeEntryPoint(tempAsm);
-                    var responseInput = new Response() { Metadata = invoker.EntryPointDefinitionAttribute };
+                    var responseInput = new Response() { Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, context.IsInternalCall) };
                     var invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, context, responseInput });
                     invocationResponse.UpdateDetectorStatusFromInsights();
                     queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse);
@@ -174,6 +174,12 @@ namespace Diagnostics.RuntimeHost.Controllers
             hostingEnv.PlatformType = result.Item2;
 
             return hostingEnv;
+        }
+
+        private Definition RemovePIIFromDefinition(Definition definition, bool isInternal)
+        {
+            if (!isInternal) definition.Author = string.Empty;
+            return definition;
         }
     }
 }
