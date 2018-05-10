@@ -81,6 +81,29 @@ namespace Diagnostics.Logger
                 EndTime);
         }
 
+        [Event(2003, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRetryAttemptMessage)]
+        public void LogRetryAttemptMessage(string RequestId, string Source, string Message)
+        {
+            WriteDiagnosticsEvent(2003,
+                RequestId,
+                Source,
+                Message);
+        }
+
+        [Event(2004, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRetryAttemptSummary)]
+        public void LogRetryAttemptSummary(string RequestId, string Source, string Message, long LatencyInMilliseconds, string StartTime, string EndTime, string ExceptionType, string ExceptionDetails)
+        {
+            WriteDiagnosticsEvent(2004,
+                RequestId,
+                Source,
+                Message,
+                LatencyInMilliseconds,
+                StartTime,
+                EndTime,
+                ExceptionType,
+                ExceptionDetails);
+        }
+
         #endregion
 
         #region SourceWatcher Events (ID Range : 2500 - 2599)
@@ -117,6 +140,12 @@ namespace Diagnostics.Logger
         public void LogCompilerHostClientException(string RequestId, string Source, string Message, string ExceptionType, string ExceptionDetails)
         {
             WriteDiagnosticsEvent(2601, Source, Message, ExceptionType, ExceptionDetails);
+        }
+
+        [Event(2602, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogCompilerHostClientWarning)]
+        public void LogCompilerHostClientWarning(string RequestId, string Source, string Message, string ExceptionType, string ExceptionDetails)
+        {
+            WriteDiagnosticsEvent(2602, Source, Message, ExceptionType, ExceptionDetails);
         }
 
         #endregion

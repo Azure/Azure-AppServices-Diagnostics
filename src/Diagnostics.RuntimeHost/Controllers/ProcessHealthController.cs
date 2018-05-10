@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +13,13 @@ namespace Diagnostics.RuntimeHost.Controllers
     public class ProcessHealthController : Controller
     {
         private ISourceWatcherService _sourceWatcherService;
+        private ICompilerHostClient _compilerHostClient;
 
-        public ProcessHealthController(ISourceWatcherService sourceWatcherService)
+        public ProcessHealthController(ISourceWatcherService sourceWatcherService, ICompilerHostClient compilerHostClient)
         {
-            // This dependency is injected for source watcher service to start.
+            // These dependencies are injected for the services to start.
             _sourceWatcherService = sourceWatcherService;
+            _compilerHostClient = compilerHostClient;
         }
 
         [HttpGet(UriElements.HealthPing)]
