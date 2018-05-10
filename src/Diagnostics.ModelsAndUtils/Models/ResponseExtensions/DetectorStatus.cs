@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Linq;
 using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
@@ -21,13 +23,48 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// }
         /// </code>
         /// </example>
-        public static void SetDetectorStatus(this Response response, DetectorStatus health, string message = null)
+        public static void SetDetectorStatus(this Response response, DetectorStatus status, string message = null)
         {
             response.Status = new Status()
             {
-                StatusId = health,
+                StatusId = status,
                 Message = message
             };
+        }
+
+        public static void UpdateDetectorStatusFromInsights(this Response response)
+        {
+
+            if (response.Status != null)
+            {
+                return;
+            }
+            
+            var status = response.Dataset
+                .Where(set => set.RenderingProperties.Type == RenderingType.Insights || set.RenderingProperties.Type == RenderingType.DynamicInsight)
+                .Select(set =>
+                {
+                    if (set.RenderingProperties.Type == RenderingType.DynamicInsight)
+                    {
+                        return (int)((DynamicInsightRendering)set.RenderingProperties).Status;
+                    }
+                    else
+                    {
+                        int lowestStatus = (int)InsightStatus.None;
+                        foreach (DataRow row in set.Table.Rows)
+                        {
+                            var insightStatusInt = (int)Enum.Parse(typeof(InsightStatus), row["Status"].ToString());
+                            if (lowestStatus > insightStatusInt)
+                            {
+                                lowestStatus = insightStatusInt;
+                            }
+                        }
+                        return lowestStatus;
+                    }
+                    
+                }).OrderBy(st => st).FirstOrDefault();
+
+            response.Status = new Status() { StatusId = (DetectorStatus)status };
         }
     }
 }

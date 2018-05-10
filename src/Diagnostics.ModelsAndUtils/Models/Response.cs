@@ -33,7 +33,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public Response()
         {
-            Status = new Status();
+            Status = null;
             Metadata = new Definition();
             Dataset = new List<DiagnosticData>();
         }
@@ -56,14 +56,9 @@ namespace Diagnostics.ModelsAndUtils.Models
     public enum DetectorStatus
     {
         /// <summary>
-        /// No status, this is the default
+        /// The detector analyzed the data and determined there is a critical problem or error
         /// </summary>
-        None = 0,
-
-        /// <summary>
-        /// The detector analyzed the data and determined there was no issue
-        /// </summary>
-        Healthy,
+        Critical = 0,
 
         /// <summary>
         /// The detector analyzed the data and determined there is a warning
@@ -71,14 +66,19 @@ namespace Diagnostics.ModelsAndUtils.Models
         Warning,
 
         /// <summary>
-        /// The detector analyzed the data and determined there is a critical problem or error
+        /// The detector analyzed the data and determined there was no issue
         /// </summary>
-        Critical,
+        Healthy,
 
         /// <summary>
         /// The detector is merely informational
         /// </summary>
-        Info
+        Info,        
+
+        /// <summary>
+        /// No status, this is the default
+        /// </summary>
+        None
     }
 
     public class DiagnosticData
