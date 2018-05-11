@@ -4,6 +4,7 @@ using Diagnostics.ModelsAndUtils;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
@@ -84,6 +85,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             };
 
             var response = (Response)await invoker.Invoke(new object[] { dataProviders, context, res });
+            response.UpdateDetectorStatusFromInsights();
             var apiResponse = DiagnosticApiResponse.FromCsxResponse(response);
 
             return Ok(apiResponse);
@@ -120,6 +122,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     invoker.InitializeEntryPoint(tempAsm);
                     var responseInput = new Response() { Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, context.IsInternalCall) };
                     var invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, context, responseInput });
+                    invocationResponse.UpdateDetectorStatusFromInsights();
                     queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse);
                 }
             }
