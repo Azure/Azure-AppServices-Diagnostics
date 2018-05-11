@@ -69,13 +69,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     {
 
         /// <summary>
-        /// Adds a single insight to response
+        /// Adds a single dynamic insight to response
         /// </summary>
         /// <param name="response">Response object</param>
-        /// <param name="insight">Insight</param>
-        /// <returns>Diagnostic Data object that represents insights</returns>
+        /// <param name="insight">Dynamic Insight</param>
+        /// <returns>Diagnostic Data object that represents dynamic insight</returns>
         /// <example> 
-        /// This sample shows how to use <see cref="AddInsight"/> method.
+        /// This sample shows how to use <see cref="AddDynamicInsight"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
@@ -84,7 +84,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///         RenderingProperties = new TimeSeriesRendering()
         ///     }
         /// 
-        ///     Insight insight = new DynamicInsight(InsightStatus.Critical, "This insight will expand to show a graph", diagnosticData);
+        ///     DynamicInsight insight = new DynamicInsight(InsightStatus.Critical, "This insight will expand to show a graph", diagnosticData);
         ///     
         ///     res.AddDynamicInsight(insight);
         /// }

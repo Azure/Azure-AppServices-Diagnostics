@@ -1,5 +1,4 @@
 ﻿using Diagnostics.Logger;
-using Diagnostics.ModelsAndUtils;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Hosting;
@@ -69,11 +68,13 @@ namespace Diagnostics.RuntimeHost.Services
         public async Task<CompilerResponse> GetCompilationResponse(string script, string requestId = "")
         {
             DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(requestId, _eventSource, "Get Compilation : Waiting on semaphore ...");
-            await _semaphoreObject.WaitAsync();
 
+            await _semaphoreObject.WaitAsync();
             DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(requestId, _eventSource, "Get Compilation : Entered critical section ...");
+
             try
             {
+                // If for any reason, compiler host is not running due to failures in process monitor, launch it before making a call.
                 if (!_isComplierHostRunning)
                 {
                     await LaunchCompilerHostProcess(requestId);
@@ -108,7 +109,7 @@ namespace Diagnostics.RuntimeHost.Services
             }
         }
 
-        private async Task LaunchCompilerHostProcess(string requestId = "")
+        private async Task LaunchCompilerHostProcess(string requestId)
         {
             var proc = new Process
             {
@@ -123,12 +124,10 @@ namespace Diagnostics.RuntimeHost.Services
                 }
             };
 
-            DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(requestId, _eventSource, $"Launching Compiler Host Process. Running \"{proc.StartInfo.FileName} {proc.StartInfo.Arguments}\"");
+            DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(requestId ?? string.Empty, _eventSource, $"Launching Compiler Host Process. Running \"{proc.StartInfo.FileName} {proc.StartInfo.Arguments}\"");
 
             proc.Start();
-
-            // TODO : Remove artificial wait after putting a ping api in compiler host
-            await Task.Delay(5000);
+            await WaitForCompilerHostToBeReady(requestId);
 
             if (!proc.HasExited)
             {
@@ -141,6 +140,33 @@ namespace Diagnostics.RuntimeHost.Services
                 string standardOutput = await proc.StandardOutput.ReadToEndAsync();
                 DiagnosticsETWProvider.Instance.LogCompilerHostClientException(requestId, _eventSource, $"Failed to start Compiler Host Process. Standard Output : {standardOutput}", string.Empty, string.Empty);
             }
+        }
+        
+        private async Task WaitForCompilerHostToBeReady(string requestId)
+        {
+            await RetryHelper.RetryAsync(() => CheckForHealthPing(requestId), _eventSource, requestId, 5, 1000);
+        }
+
+        private async Task<bool> CheckForHealthPing(string requestId)
+        {
+            HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, $"{_compilerHostUrl}/api/compilerhost/healthping");
+
+            if (!string.IsNullOrWhiteSpace(requestId))
+            {
+                requestMessage.Headers.Add(HeaderConstants.RequestIdHeaderName, requestId);
+            }
+
+            HttpResponseMessage responseMessage = await _httpClient.SendAsync(requestMessage);
+
+            if (!responseMessage.IsSuccessStatusCode)
+            {
+                string errorResponse = await responseMessage.Content.ReadAsStringAsync();
+                HttpRequestException ex = new HttpRequestException($"Status Code : {responseMessage.StatusCode}, Content : {errorResponse}");
+                DiagnosticsETWProvider.Instance.LogCompilerHostClientWarning(requestId, _eventSource, "Compiler host health ping failed", ex.GetType().ToString(), ex.ToString());
+                throw ex;
+            }
+
+            return true;
         }
 
         private async void StartProcessMonitor()
@@ -162,22 +188,25 @@ namespace Diagnostics.RuntimeHost.Services
                             DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(string.Empty, _eventSource, $"Compiler Host memory Threshold reached. Pid : {proc.Id} Process Working Set(bytes) : {proc.WorkingSet64}, Threshold Memory(bytes) : {_processMemoryThresholdInMB * 1024 * 1024}");
                             try
                             {
-                                DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(string.Empty, _eventSource, "Stop Compiler Host : Waiting on semaphore ...");
+                                DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(string.Empty, _eventSource, "Restart Compiler Host : Waiting on semaphore ...");
 
                                 await _semaphoreObject.WaitAsync();
 
-                                DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(string.Empty, _eventSource, "Stop Compiler Host : Entered critical section ...");
+                                DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(string.Empty, _eventSource, "Restart Compiler Host : Entered critical section ...");
 
                                 DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(string.Empty, _eventSource, $"killing dotnet process with id : {proc.Id}");
                                 proc.Kill();
                                 proc.WaitForExit();
                                 _processId = -1;
                                 _isComplierHostRunning = false;
+
+                                // Re-launch Compiler host for it be always running.
+                                await LaunchCompilerHostProcess(string.Empty);
                             }
                             finally
                             {
                                 _semaphoreObject.Release();
-                                DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(string.Empty, _eventSource, "Stop Compiler Host : semaphore released.");
+                                DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(string.Empty, _eventSource, "Restart Compiler Host : semaphore released.");
                             }
                         }
                     }
@@ -185,6 +214,21 @@ namespace Diagnostics.RuntimeHost.Services
                     {
                         _processId = -1;
                         _isComplierHostRunning = false;
+
+                        // Launch Compiler Host if not running.
+                        try
+                        {
+                            DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(string.Empty, _eventSource, "Start Compiler Host : Waiting on semaphore ...");
+                            await _semaphoreObject.WaitAsync();
+                            DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(string.Empty, _eventSource, $"Start Compiler Host : Entered critical section ...");
+                            await LaunchCompilerHostProcess(string.Empty);
+                        }
+                        finally
+                        {
+                            _semaphoreObject.Release();
+                            DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(string.Empty, _eventSource, "Start Compiler Host : semaphore released.");
+                        }
+
                     }
 
                     await Task.Delay(_pollingIntervalInSeconds * 1000);

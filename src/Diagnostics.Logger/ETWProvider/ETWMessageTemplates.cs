@@ -19,6 +19,8 @@ namespace Diagnostics.Logger
         public const string LogRuntimeHostMessage = "Runtime Host Message : {0}";
         public const string LogRuntimeHostUnhandledException = "Runtime Host Unhandled Exception : {3}";
         public const string LogRuntimeHostAPISummary = "Runtime Host API Response Code : {3}";
+        public const string LogRetryAttemptSummary = "Retry Attempt Summary";
+        public const string LogRetryAttemptMessage = "Retry Attempt Message";
 
         #endregion
 
@@ -34,6 +36,7 @@ namespace Diagnostics.Logger
 
         public const string LogCompilerHostClientMessage = "Compiler Host Client Message : {2}";
         public const string LogCompilerHostClientException = "Compiler Host Client Exception : {4}";
+        public const string LogCompilerHostClientWarning = "Compiler Host Client Warnings";
 
         #endregion
     }
