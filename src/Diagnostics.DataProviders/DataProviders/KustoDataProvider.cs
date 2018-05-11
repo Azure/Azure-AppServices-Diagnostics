@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Diagnostics.DataProviders
 {
-    public class KustoDataProvider: DiagnosticDataProvider, IDiagnosticDataProvider
+    public class KustoDataProvider: DiagnosticDataProvider, IDiagnosticDataProvider, IKustoDataProvider
     {
         private KustoDataProviderConfiguration _configuration;
         private IKustoClient _kustoClient;

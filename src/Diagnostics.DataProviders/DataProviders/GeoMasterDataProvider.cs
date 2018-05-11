@@ -10,7 +10,7 @@ using Diagnostics.ModelsAndUtils.Models;
 namespace Diagnostics.DataProviders
 {
 
-    public class GeoMasterDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider
+    public class GeoMasterDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IGeoMasterDataProvider
     {
         private readonly IGeoMasterClient _geoMasterClient;
         private GeoMasterDataProviderConfiguration _configuration;
