@@ -76,8 +76,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     {
         Critical,
         Warning,
+        Success,
         Info,
-        Success
+        None
     }
 
     public static partial class ResponseInsightsExtension
