@@ -15,6 +15,12 @@ namespace Diagnostics.CompilerHost.Controllers
     [Route("api/[controller]")]
     public class CompilerHostController : Controller
     {
+        [HttpGet("healthping")]
+        public IActionResult HealthPing()
+        {
+            return Ok("Server is up and running.");
+        }
+
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]JToken jsonBody)
         {
