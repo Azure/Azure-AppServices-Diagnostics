@@ -39,5 +39,11 @@ namespace Diagnostics.Logger
         public const string LogCompilerHostClientWarning = "Compiler Host Client Warnings";
 
         #endregion
+
+        #region Data Provider Event Message Templates
+        public const string LogDataProviderMessage = "Data Provider Informational Details. Source : {1} Message : {2}";
+        public const string LogDataProviderException = "An exception occurred in Source : {1}. ExceptionType : {5} ExceptionDetails : {6}";
+        public const string LogDataProviderOperationSummary = "Data Provider Operation. Source : {1} StartTime : {2} EndTime : {3} LatencyInMilliseconds : {4}";
+        #endregion
     }
 }
