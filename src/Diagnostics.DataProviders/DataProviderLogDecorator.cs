@@ -31,30 +31,56 @@ namespace Diagnostics.DataProviders
 
         public Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
         {
-            throw new NotImplementedException();
+            return _kustoDataProvider.ExecuteQuery(query, stampName, requestId, operationName);
         }
 
         public Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name)
         {
-            throw new NotImplementedException();
+            return _geomasterDataProvider.GetAppDeployments(subscriptionId, resourceGroupName, name);
         }
 
         public Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name)
         {
-            throw new NotImplementedException();
+            return _geomasterDataProvider.GetAppSettings(subscriptionId, resourceGroupName, name);
         }
 
         public Task<IDictionary<string, string[]>> GetStickySlotSettingNames(string subscriptionId, string resourceGroupName, string name)
         {
-            throw new NotImplementedException();
+            return _geomasterDataProvider.GetStickySlotSettingNames(subscriptionId, resourceGroupName, name);
         }
 
         public Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
         {
-            throw new NotImplementedException();
+            return _geomasterDataProvider.VerifyHostingEnvironmentVnet(subscriptionId, vnetResourceGroup, vnetName, vnetSubnetName, cancellationToken);
         }
 
-        private Task<T> Run<T>(object arg1, object arg2, object arg3, object arg4, object arg5)
+        private Task<T> MakeDependencyCall<T>(string dataProviderOperation, Task<T> dataProviderTask)
+        {
+            Exception dataProviderException = null;
+            try
+            {
+
+            }catch(Exception ex)
+            {
+                dataProviderException = ex;
+            }
+            finally
+            {
+                
+                if (dataProviderException == null)
+                {
+
+                }
+                else
+                {
+
+                }
+            }
+
+            return null;
+        }
+
+        private Task<T> Run<T>(Func<object, T> dataProvider)
         {
             return null;
         }
