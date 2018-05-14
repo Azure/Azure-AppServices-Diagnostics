@@ -2,13 +2,10 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.DataProviders
 {
@@ -102,19 +99,6 @@ namespace Diagnostics.DataProviders
 
         public abstract Task<dynamic> GetSite(string siteName);
         public abstract Task<dynamic> GetSite(string stampName, string siteName);
-        public abstract Task<string> GetSiteResourceGroupName(string siteName);
-        public abstract Task<IEnumerable<Dictionary<string, string>>> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName);
-        public abstract Task<IEnumerable<Dictionary<string, string>>> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName);
-        public abstract Task<IEnumerable<Dictionary<string, string>>> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName);
-        public abstract Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName);
-        public abstract Task<string> GetServerFarmWebspaceName(string subscriptionId, string serverFarm);
-        public abstract Task<string> GetSiteWebSpaceName(string subscriptionId, string siteName);
-        public abstract Task<IEnumerable<Dictionary<string, string>>> GetSitesInServerFarm(string subscriptionId, string serverFarmName);
-        public abstract Task<JObject> GetAppServiceEnvironmentDetails(string hostingEnvironmentName);
-        public abstract Task<IEnumerable<object>> GetAppServiceEnvironmentDeployments(string hostingEnvironmentName);
-        public abstract Task<JObject> GetAdminSitesBySiteName(string stampName, string siteName);
-        public abstract Task<JObject> GetAdminSitesByHostName(string stampName, string[] hostNames);
-        public abstract Task<string> GetStorageVolumeForSite(string stampName, string siteName);
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName);
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
         public abstract HttpClient GetObserverClient();
