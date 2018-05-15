@@ -97,7 +97,7 @@ namespace Diagnostics.DataProviders
                 endTime = DateTime.UtcNow;
                 var latencyMilliseconds = Convert.ToInt64((endTime - startTime).TotalMilliseconds);
 
-                if (dataProviderException == null)
+                if (dataProviderException != null)
                 {
                     DiagnosticsETWProvider.Instance.LogDataProviderException(requestId ?? "", dataProviderOperation, 
                         startTime.ToString("HH:mm:ss.fff"), endTime.ToString("HH:mm:ss.fff"), 
