@@ -25,7 +25,7 @@ namespace Diagnostics.Scripts
         private MethodInfo _entryPointMethodInfo;
         private Definition _entryPointDefinitionAttribute;
         private IResourceFilter _resourceFilter;
-
+        
         public bool IsCompilationSuccessful { get; private set; }
 
         public IEnumerable<string> CompilationOutput { get; private set; }
@@ -207,6 +207,11 @@ namespace Diagnostics.Scripts
             }
 
             _entryPointDefinitionAttribute = _entryPointMethodInfo.GetCustomAttribute<Definition>();
+            if (_entryPointDefinitionAttribute != null)
+            {
+                _entryPointDefinitionAttribute.SupportTopicList = _entryPointMethodInfo.GetCustomAttributes<SupportTopic>();
+            }
+
             _resourceFilter = _entryPointMethodInfo.GetCustomAttribute<ResourceFilterBase>();
         }
 
@@ -251,6 +256,26 @@ namespace Diagnostics.Scripts
                 {
                     throw new ScriptCompilationException("Name cannot be empty in Definition attribute");
                 }
+                
+                // Validate Empty author
+                if (string.IsNullOrWhiteSpace(this._entryPointDefinitionAttribute.Author))
+                {
+                    this.CompilationOutput.Concat(new List<string>() { "Warning : Author not specified in Definition attribute" });
+                }
+
+                // Validate Support Topic Attributes
+                this._entryPointDefinitionAttribute.SupportTopicList.ToList().ForEach(item =>
+                {
+                    if (string.IsNullOrWhiteSpace(item.Id))
+                    {
+                        throw new ScriptCompilationException("Missing Id from Support Topic Attribute");
+                    }
+
+                    if (string.IsNullOrWhiteSpace(item.PesId))
+                    {
+                        throw new ScriptCompilationException("Missing PesId from Support Topic Attribute");
+                    }
+                });
             }
         }
 

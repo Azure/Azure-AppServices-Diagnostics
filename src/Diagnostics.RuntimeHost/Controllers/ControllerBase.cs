@@ -120,6 +120,10 @@ namespace Diagnostics.RuntimeHost.Controllers
                 using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
                 {
                     invoker.InitializeEntryPoint(tempAsm);
+                    
+                    // Verify Detector with other detectors in the system in case of conflicts
+                    if (!VerifyEntity(invoker, queryRes)) return Ok(queryRes);
+
                     var responseInput = new Response() { Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, context.IsInternalCall) };
                     var invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, context, responseInput });
                     invocationResponse.UpdateDetectorStatusFromInsights();
@@ -128,6 +132,30 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             return Ok(queryRes);
+        }
+
+        private bool VerifyEntity(EntityInvoker invoker, QueryResponse<DiagnosticApiResponse> queryRes)
+        {
+            List<EntityInvoker> allDetectors = this._invokerCache.GetAll().ToList();
+
+            foreach(var topicId in invoker.EntryPointDefinitionAttribute.SupportTopicList)
+            {
+                var existingDetector = allDetectors.FirstOrDefault(p => p.EntryPointDefinitionAttribute.SupportTopicList.Contains(topicId));
+                if(existingDetector != default(EntityInvoker))
+                {
+                    // There exists a detector which has same support topic id.
+                    queryRes.CompilationOutput.CompilationSucceeded = false;
+                    queryRes.CompilationOutput.CompilationOutput.Concat(new List<string>()
+                    {
+                        $"Error : There is already a detector(id : {existingDetector.EntryPointDefinitionAttribute.Id}, name : {existingDetector.EntryPointDefinitionAttribute.Name})" +
+                        $" that uses the SupportTopic (id : {topicId.Id}, pesId : {topicId.PesId}). System can't have two detectors for same support topic id. Consider merging these two detectors."
+                    });
+
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         protected async Task<HostingEnvironment> GetHostingEnvironment(string subscriptionId, string resourceGroup, string name, DiagnosticStampData stampPostBody, DateTime startTime, DateTime endTime)

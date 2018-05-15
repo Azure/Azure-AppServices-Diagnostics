@@ -55,7 +55,7 @@ namespace Diagnostics.Tests.Helpers
             }
         }
 
-        public static async Task<string> GetDetectorScript(string id, ResourceType resourceType = ResourceType.App, string kustoTableName = "MockTable", string queryPart = "take 1")
+        public static async Task<string> GetDetectorScript(Definition def, ResourceType resourceType = ResourceType.App, string kustoTableName = "MockTable", string queryPart = "take 1")
         {
             string kustoTemplate = string.Empty;
             if(resourceType == ResourceType.HostingEnvironment)
@@ -67,9 +67,22 @@ namespace Diagnostics.Tests.Helpers
                 kustoTemplate = await File.ReadAllTextAsync(@"templates/Detector_WebApp.csx");
             }
 
-            return kustoTemplate.Replace("<YOUR_DETECTOR_ID>", id)
+            return kustoTemplate.Replace("<YOUR_DETECTOR_ID>", def.Id)
                 .Replace("<YOUR_TABLE_NAME>", kustoTableName)
                 .Replace("<YOUR_QUERY>", queryPart);
+        }
+
+        public static async Task<string> GetDetectorScriptWithMultipleSupportTopics(Definition def, SupportTopic topic1, SupportTopic topic2)
+        {
+            string template = await File.ReadAllTextAsync(@"TestData/TestDetectorWithSupportTopic.csx");
+
+            return template.Replace("<YOUR_DETECTOR_ID>", def.Id)
+                .Replace("<YOUR_DETECTOR_NAME>", def.Name)
+                .Replace("<YOUR_ALIAS>", def.Author)
+                .Replace("<SUPPORT_TOPIC_ID_1>", topic1.Id.ToString())
+                .Replace("<SUPPORT_TOPIC_ID_2>", topic2.Id.ToString())
+                .Replace("<PES_ID_1>", topic1.PesId.ToString())
+                .Replace("<PES_ID_2>", topic2.PesId.ToString());
         }
     }
 }

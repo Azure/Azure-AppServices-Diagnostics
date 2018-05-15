@@ -33,6 +33,12 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// </summary>
         [DataMember]
         public string Author { get; set; }
+
+        /// <summary>
+        /// List of Support Topics for which this detector is enabled.
+        /// </summary>
+        [DataMember]
+        public IEnumerable<SupportTopic> SupportTopicList { get; set; }
         
         public bool Equals(Definition other)
         {

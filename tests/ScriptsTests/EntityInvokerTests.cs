@@ -31,7 +31,7 @@ namespace Diagnostics.Tests.ScriptsTests
         [Theory]
         [InlineData(ResourceType.App, typeof(AppFilter))]
         [InlineData(ResourceType.HostingEnvironment, typeof(HostingEnvironmentFilter))]
-        public async void EntityInvoker_TestAttributeResolution(ResourceType resType, Type filterType)
+        public async void EntityInvoker_TestResourceAttributeResolution(ResourceType resType, Type filterType)
         {
             Definition definitonAttribute = new Definition()
             {
@@ -39,13 +39,64 @@ namespace Diagnostics.Tests.ScriptsTests
             };
             
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
-            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute.Id, resType);
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute, resType);
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
                 await invoker.InitializeEntryPointAsync();
                 Assert.Equal<Definition>(definitonAttribute, invoker.EntryPointDefinitionAttribute);
                 Assert.Equal(filterType, invoker.ResourceFilter.GetType());
+            }
+        }
+
+        [Fact]
+        public async void EntityInvoker_TestSupportTopicAttributeResolution()
+        {
+            Definition definitonAttribute = new Definition()
+            {
+                Id = "TestId",
+                Name = "Test",
+                Author = "User"
+            };
+
+            SupportTopic topic1 = new SupportTopic() { Id = "1234", PesId = "14878" };
+            SupportTopic topic2 = new SupportTopic() { Id = "5678", PesId = "14878" };
+
+            EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScriptWithMultipleSupportTopics(definitonAttribute, topic1, topic2);
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+
+                Assert.True(invoker.IsCompilationSuccessful);
+                Assert.Contains<SupportTopic>(topic1, invoker.EntryPointDefinitionAttribute.SupportTopicList);
+                Assert.Contains<SupportTopic>(topic2, invoker.EntryPointDefinitionAttribute.SupportTopicList);
+            }
+        }
+
+        [Fact]
+        public async void EntityInvoker_InvalidSupportTopicId()
+        {
+            Definition definitonAttribute = new Definition()
+            {
+                Id = "TestId",
+                Name = "Test",
+                Author = "User"
+            };
+
+            SupportTopic topic1 = new SupportTopic() { Id = "", PesId = "14878" };
+            SupportTopic topic2 = new SupportTopic() { Id = "5678", PesId = "14878" };
+
+            EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScriptWithMultipleSupportTopics(definitonAttribute, topic1, topic2);
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+
+                Assert.False(invoker.IsCompilationSuccessful);
+                Assert.NotEmpty(invoker.CompilationOutput);
             }
         }
 
@@ -58,7 +109,7 @@ namespace Diagnostics.Tests.ScriptsTests
             };
 
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
-            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute.Id);
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute);
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -83,7 +134,7 @@ namespace Diagnostics.Tests.ScriptsTests
 
             string assemblyPath = $@"{Directory.GetCurrentDirectory()}\{Guid.NewGuid().ToString()}";
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
-            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute.Id);
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute);
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -106,7 +157,7 @@ namespace Diagnostics.Tests.ScriptsTests
 
             string assemblyPath = $@"{Directory.GetCurrentDirectory()}/{Guid.NewGuid().ToString()}";
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
-            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute.Id);
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute);
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -165,7 +216,7 @@ namespace Diagnostics.Tests.ScriptsTests
 
             string assemblyPath = string.Empty;
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
-            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute.Id);
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute);
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -182,8 +233,9 @@ namespace Diagnostics.Tests.ScriptsTests
         [InlineData("")]
         public async void EntityInvoker_InvalidDetectorId(string idValue)
         {
+            Definition def = new Definition() { Id = idValue };
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
-            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(idValue, ResourceType.App);
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(def, ResourceType.App);
             
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
