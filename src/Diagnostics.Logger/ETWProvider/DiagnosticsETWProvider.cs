@@ -152,12 +152,12 @@ namespace Diagnostics.Logger
 
         #region Data Provider Events (ID Range : 3000 - 3999)
         [Event(3000, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDataProviderMessage)]
-        public void LogDataProviderMessage(string RequestId, string Source, string message)
+        public void LogDataProviderMessage(string RequestId, string Source, string Message)
         {
             WriteDiagnosticsEvent(3000,
                 RequestId,
                 Source,
-                message);
+                Message);
         }
 
         [Event(3001, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDataProviderException)]

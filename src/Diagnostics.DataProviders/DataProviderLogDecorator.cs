@@ -87,7 +87,8 @@ namespace Diagnostics.DataProviders
             try
             {
                 return await dataProviderTask;
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 dataProviderException = ex;
                 throw;
