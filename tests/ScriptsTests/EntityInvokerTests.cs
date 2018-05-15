@@ -63,7 +63,7 @@ namespace Diagnostics.Tests.ScriptsTests
             SupportTopic topic2 = new SupportTopic() { Id = "5678", PesId = "14878" };
 
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
-            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScriptWithMultipleSupportTopics(definitonAttribute, topic1, topic2);
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScriptWithMultipleSupportTopics(definitonAttribute, false, topic1, topic2);
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -75,8 +75,11 @@ namespace Diagnostics.Tests.ScriptsTests
             }
         }
 
-        [Fact]
-        public async void EntityInvoker_InvalidSupportTopicId()
+        [Theory]
+        [InlineData("", "14878", false)]
+        [InlineData("1234", "", false)]
+        [InlineData("1234", "14878", true)]
+        public async void EntityInvoker_InvalidSupportTopicId(string supportTopicId, string pesId, bool isInternal)
         {
             Definition definitonAttribute = new Definition()
             {
@@ -85,11 +88,11 @@ namespace Diagnostics.Tests.ScriptsTests
                 Author = "User"
             };
 
-            SupportTopic topic1 = new SupportTopic() { Id = "", PesId = "14878" };
+            SupportTopic topic1 = new SupportTopic() { Id = supportTopicId, PesId = pesId };
             SupportTopic topic2 = new SupportTopic() { Id = "5678", PesId = "14878" };
 
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
-            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScriptWithMultipleSupportTopics(definitonAttribute, topic1, topic2);
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScriptWithMultipleSupportTopics(definitonAttribute, isInternal, topic1, topic2);
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {

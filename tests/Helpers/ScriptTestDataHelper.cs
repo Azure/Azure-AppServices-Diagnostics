@@ -72,7 +72,7 @@ namespace Diagnostics.Tests.Helpers
                 .Replace("<YOUR_QUERY>", queryPart);
         }
 
-        public static async Task<string> GetDetectorScriptWithMultipleSupportTopics(Definition def, SupportTopic topic1, SupportTopic topic2)
+        public static async Task<string> GetDetectorScriptWithMultipleSupportTopics(Definition def, bool isInternal, SupportTopic topic1, SupportTopic topic2)
         {
             string template = await File.ReadAllTextAsync(@"TestData/TestDetectorWithSupportTopic.csx");
 
@@ -82,7 +82,8 @@ namespace Diagnostics.Tests.Helpers
                 .Replace("<SUPPORT_TOPIC_ID_1>", topic1.Id.ToString())
                 .Replace("<SUPPORT_TOPIC_ID_2>", topic2.Id.ToString())
                 .Replace("<PES_ID_1>", topic1.PesId.ToString())
-                .Replace("<PES_ID_2>", topic2.PesId.ToString());
+                .Replace("<PES_ID_2>", topic2.PesId.ToString())
+                .Replace("\"<INTERNAL_FLAG>\"", isInternal ? "true" : "false");
         }
     }
 }

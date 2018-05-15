@@ -8,7 +8,7 @@
 
 [SupportTopic(Id = "<SUPPORT_TOPIC_ID_1>", PesId = "<PES_ID_1>")]
 [SupportTopic(Id = "<SUPPORT_TOPIC_ID_2>", PesId = "<PES_ID_2>")]
-[AppFilter(AppType = AppType.WebApp, PlatformType = PlatformType.Windows, StackType = StackType.All)]
+[AppFilter(AppType = AppType.WebApp, PlatformType = PlatformType.Windows, StackType = StackType.All, InternalOnly = "<INTERNAL_FLAG>")]
 [Definition(Id = "<YOUR_DETECTOR_ID>", Name = "<YOUR_DETECTOR_NAME>", Author = "<YOUR_ALIAS>", Description = "")]
 public async static Task<Response> Run(DataProviders dp, OperationContext<App> cxt, Response res)
 {
