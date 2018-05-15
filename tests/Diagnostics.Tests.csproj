@@ -23,12 +23,17 @@
 
   <ItemGroup>
     <Folder Include="RuntimeHostTests\" />
-    <Folder Include="TestData\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="TestData\TestDetectorWithSupportTopic.csx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <Target Name="AfterBuildScript" AfterTargets="Build">
     <Copy SourceFiles="..\data\templates\Detector_WebApp.csx" DestinationFolder="$(OutputPath)\templates" ContinueOnError="true" />
-	<Copy SourceFiles="..\data\templates\Detector_HostingEnvironment.csx" DestinationFolder="$(OutputPath)\templates" ContinueOnError="true" />
+    <Copy SourceFiles="..\data\templates\Detector_HostingEnvironment.csx" DestinationFolder="$(OutputPath)\templates" ContinueOnError="true" />
   </Target>
 
   <Import Project="..\data\samples\Diagnostics.Samples\Diagnostics.Samples.projitems" Label="Shared" />
