@@ -264,18 +264,26 @@ namespace Diagnostics.Scripts
                 }
 
                 // Validate Support Topic Attributes
-                this._entryPointDefinitionAttribute.SupportTopicList.ToList().ForEach(item =>
+                if(this._entryPointDefinitionAttribute.SupportTopicList != null)
                 {
-                    if (string.IsNullOrWhiteSpace(item.Id))
+                    this._entryPointDefinitionAttribute.SupportTopicList.ToList().ForEach(item =>
                     {
-                        throw new ScriptCompilationException("Missing Id from Support Topic Attribute");
-                    }
+                        if (string.IsNullOrWhiteSpace(item.Id))
+                        {
+                            throw new ScriptCompilationException("Missing Id from Support Topic Attribute");
+                        }
 
-                    if (string.IsNullOrWhiteSpace(item.PesId))
+                        if (string.IsNullOrWhiteSpace(item.PesId))
+                        {
+                            throw new ScriptCompilationException("Missing PesId from Support Topic Attribute");
+                        }
+                    });
+
+                    if (this._resourceFilter.InternalOnly && this._entryPointDefinitionAttribute.SupportTopicList.Any())
                     {
-                        throw new ScriptCompilationException("Missing PesId from Support Topic Attribute");
+                        throw new ScriptCompilationException("Detector is marked internal and SupportTopic is specified. This attribute will have no affect until the detector is made public.");
                     }
-                });
+                }
             }
         }
 
