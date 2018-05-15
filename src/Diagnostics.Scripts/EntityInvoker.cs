@@ -25,7 +25,7 @@ namespace Diagnostics.Scripts
         private MethodInfo _entryPointMethodInfo;
         private Definition _entryPointDefinitionAttribute;
         private IResourceFilter _resourceFilter;
-
+        
         public bool IsCompilationSuccessful { get; private set; }
 
         public IEnumerable<string> CompilationOutput { get; private set; }
@@ -207,6 +207,11 @@ namespace Diagnostics.Scripts
             }
 
             _entryPointDefinitionAttribute = _entryPointMethodInfo.GetCustomAttribute<Definition>();
+            if (_entryPointDefinitionAttribute != null)
+            {
+                _entryPointDefinitionAttribute.SupportTopicList = _entryPointMethodInfo.GetCustomAttributes<SupportTopic>();
+            }
+
             _resourceFilter = _entryPointMethodInfo.GetCustomAttribute<ResourceFilterBase>();
         }
 
@@ -238,6 +243,17 @@ namespace Diagnostics.Scripts
                     throw new ScriptCompilationException("Id cannot be empty in Definition attribute");
                 }
 
+                if (string.IsNullOrWhiteSpace(this._entryPointDefinitionAttribute.Name))
+                {
+                    throw new ScriptCompilationException("Name cannot be empty in Definition attribute");
+                }
+
+                // Validate empty author
+                if (string.IsNullOrWhiteSpace(this._entryPointDefinitionAttribute.Author))
+                {
+                    throw new ScriptCompilationException("Author not specified in Definition attribute");
+                }
+
                 List<char> invalidChars = Path.GetInvalidFileNameChars().ToList();
                 invalidChars.ForEach(x =>
                 {
@@ -245,11 +261,33 @@ namespace Diagnostics.Scripts
                     {
                         throw new ScriptCompilationException($"Id(in Definition attribute) cannot contain illegal character : {x}");
                     }
+
+                    if (this._entryPointDefinitionAttribute.Author.Contains(x))
+                    {
+                        throw new ScriptCompilationException($"Author(in Definition attribute) cannot contain illegal character : {x}");
+                    }
                 });
 
-                if (string.IsNullOrWhiteSpace(this._entryPointDefinitionAttribute.Name))
+                // Validate Support Topic Attributes
+                if(this._entryPointDefinitionAttribute.SupportTopicList != null)
                 {
-                    throw new ScriptCompilationException("Name cannot be empty in Definition attribute");
+                    this._entryPointDefinitionAttribute.SupportTopicList.ToList().ForEach(item =>
+                    {
+                        if (string.IsNullOrWhiteSpace(item.Id))
+                        {
+                            throw new ScriptCompilationException("Missing Id from Support Topic Attribute");
+                        }
+
+                        if (string.IsNullOrWhiteSpace(item.PesId))
+                        {
+                            throw new ScriptCompilationException("Missing PesId from Support Topic Attribute");
+                        }
+                    });
+
+                    if (this._resourceFilter.InternalOnly && this._entryPointDefinitionAttribute.SupportTopicList.Any())
+                    {
+                        throw new ScriptCompilationException("Detector is marked internal and SupportTopic is specified. This attribute will have no affect until the detector is made public.");
+                    }
                 }
             }
         }
