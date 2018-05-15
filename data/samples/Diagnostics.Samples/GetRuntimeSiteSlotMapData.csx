@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 [AppFilter]
-[Definition(Id = "GetRuntimeSiteSlotMapData", Name = "Runtime SiteName History", Description = "This represents the history of runtime site names.")]
+[Definition(Id = "GetRuntimeSiteSlotMapData", Name = "Runtime SiteName History", Author = "test", Description = "This represents the history of runtime site names.")]
 public async static Task<Response> Run(DataProviders dp, OperationContext<App> cxt, Response res)
 {
     var runtimeSiteSlotMap = await dp.Observer.GetRuntimeSiteSlotMap(cxt.Resource.Stamp.Name, cxt.Resource.Name);

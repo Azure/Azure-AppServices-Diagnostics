@@ -243,6 +243,17 @@ namespace Diagnostics.Scripts
                     throw new ScriptCompilationException("Id cannot be empty in Definition attribute");
                 }
 
+                if (string.IsNullOrWhiteSpace(this._entryPointDefinitionAttribute.Name))
+                {
+                    throw new ScriptCompilationException("Name cannot be empty in Definition attribute");
+                }
+
+                // Validate empty author
+                if (string.IsNullOrWhiteSpace(this._entryPointDefinitionAttribute.Author))
+                {
+                    throw new ScriptCompilationException("Author not specified in Definition attribute");
+                }
+
                 List<char> invalidChars = Path.GetInvalidFileNameChars().ToList();
                 invalidChars.ForEach(x =>
                 {
@@ -250,18 +261,12 @@ namespace Diagnostics.Scripts
                     {
                         throw new ScriptCompilationException($"Id(in Definition attribute) cannot contain illegal character : {x}");
                     }
-                });
 
-                if (string.IsNullOrWhiteSpace(this._entryPointDefinitionAttribute.Name))
-                {
-                    throw new ScriptCompilationException("Name cannot be empty in Definition attribute");
-                }
-                
-                // Validate Empty author
-                if (string.IsNullOrWhiteSpace(this._entryPointDefinitionAttribute.Author))
-                {
-                    this.CompilationOutput.Concat(new List<string>() { "Warning : Author not specified in Definition attribute" });
-                }
+                    if (this._entryPointDefinitionAttribute.Author.Contains(x))
+                    {
+                        throw new ScriptCompilationException($"Author(in Definition attribute) cannot contain illegal character : {x}");
+                    }
+                });
 
                 // Validate Support Topic Attributes
                 if(this._entryPointDefinitionAttribute.SupportTopicList != null)
