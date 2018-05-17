@@ -138,10 +138,11 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             List<EntityInvoker> allDetectors = this._invokerCache.GetAll().ToList();
 
-            foreach(var topicId in invoker.EntryPointDefinitionAttribute.SupportTopicList)
+            foreach (var topicId in invoker.EntryPointDefinitionAttribute.SupportTopicList)
             {
-                var existingDetector = allDetectors.FirstOrDefault(p => p.EntryPointDefinitionAttribute.SupportTopicList.Contains(topicId));
-                if(existingDetector != default(EntityInvoker))
+                var existingDetector = allDetectors.FirstOrDefault(p =>
+                (!p.EntryPointDefinitionAttribute.Id.Equals(invoker.EntryPointDefinitionAttribute.Id, StringComparison.OrdinalIgnoreCase) && p.EntryPointDefinitionAttribute.SupportTopicList.Contains(topicId)));
+                if (existingDetector != default(EntityInvoker))
                 {
                     // There exists a detector which has same support topic id.
                     queryRes.CompilationOutput.CompilationSucceeded = false;
