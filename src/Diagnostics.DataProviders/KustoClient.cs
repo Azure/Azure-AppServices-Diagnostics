@@ -79,7 +79,7 @@ namespace Diagnostics.DataProviders
 
             DataTableResponseObjectCollection dataSet = JsonConvert.DeserializeObject<DataTableResponseObjectCollection>(content);
 
-            if (dataSet.Tables == null)
+            if (dataSet == null || dataSet.Tables == null)
             {
                 return new DataTable();
             }
