@@ -79,7 +79,14 @@ namespace Diagnostics.DataProviders
 
             DataTableResponseObjectCollection dataSet = JsonConvert.DeserializeObject<DataTableResponseObjectCollection>(content);
 
-            return dataSet.Tables.FirstOrDefault().ToDataTable();
+            if (dataSet == null || dataSet.Tables == null)
+            {
+                return new DataTable();
+            }
+            else
+            {
+                return dataSet.Tables.FirstOrDefault().ToDataTable();
+            }
         }
 
         private static string ParseRegionFromStamp(string stampName)
