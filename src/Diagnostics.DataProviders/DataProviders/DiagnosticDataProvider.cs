@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
 
 namespace Diagnostics.DataProviders
-{    
+{
     public class DiagnosticDataProvider
     {
         private OperationDataCache _cache;
 
         public DiagnosticDataProvider(OperationDataCache cache)
         {
-            _cache = cache;            
+            _cache = cache;
         }
 
         protected Task<T> GetOrAddFromCache<T>(string key, Func<string, CacheMember> addFunction)
