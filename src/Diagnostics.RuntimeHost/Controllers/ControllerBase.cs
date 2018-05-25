@@ -86,8 +86,14 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             var response = (Response)await invoker.Invoke(new object[] { dataProviders, context, res });
 
-            var dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
+            List<DataProviderMetadata> dataProvidersMetadata = null;
             response.UpdateDetectorStatusFromInsights();
+
+            if (context.IsInternalCall)
+            {
+                dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
+            }
+            
             var apiResponse = DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata);
 
             return Ok(apiResponse);
