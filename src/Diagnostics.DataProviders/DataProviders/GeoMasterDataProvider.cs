@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using Diagnostics.ModelsAndUtils.Models;
+using Newtonsoft.Json;
 
 namespace Diagnostics.DataProviders
 {
@@ -15,6 +16,8 @@ namespace Diagnostics.DataProviders
         private readonly IGeoMasterClient _geoMasterClient;
         private GeoMasterDataProviderConfiguration _configuration;
         
+        private string[] SensitiveAppSettingsEndingWith = new string[] { "CONNECTIONSTRING", "_SECRET", "_KEY", "_ID", "_CONTENTSHARE", "TOKEN_STORE", "TOKEN" };
+
         public GeoMasterDataProvider(OperationDataCache cache, GeoMasterDataProviderConfiguration configuration) : base(cache)
         {
             _configuration = configuration;
@@ -35,7 +38,29 @@ namespace Diagnostics.DataProviders
             }
             return geoMasterClient;
         }
-        
+
+        /// <summary>
+        /// Gets all the APP SETTINGS for the Web App that start with WEBSITE_ filtering out
+        /// the sensitive settings like connectionstrings, tokens, secrets, keys, content shares etc.
+        /// </summary>
+        /// <param name="subscriptionId">subscriptionId for the Web App</param>
+        /// <param name="resourceGroupName">The Resource group that the Web App is part of</param>
+        /// <param name="name">The name of the Web App</param>
+        /// <returns>A dictionary of AppSetting Keys and values</returns>
+        /// <example>
+        /// This sample shows how to call the <see cref="GetAppSettings"/> method in a detector
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        ///     
+        ///     var appSettings = await dp.GeoMaster.GetAppSettings(cxt.Resource.SubscriptionId, cxt.Resource.ResourceGroup, cxt.Resource.Name);
+        ///     foreach(var key in appSettings.Keys)
+        ///     {
+        ///         // do something with the appSettingValue
+        ///         string appSettingValue = appSettings[key];
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
         public async Task<IDictionary<string,string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name)
         {
             string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}/config/appsettings/list";
@@ -46,12 +71,36 @@ namespace Diagnostics.DataProviders
             {
                 if (item.Key.StartsWith("WEBSITE_"))
                 {
-                    appSettings.Add(item.Key, item.Value);
+                    if (!SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x)))
+                    {
+                        appSettings.Add(item.Key, item.Value);
+                    }
                 }
             }
             return appSettings;
         }
 
+        /// <summary>
+        /// Gets all App Settings that are marked sticky to the slot for this site\slot
+        /// </summary>
+        /// <param name="subscriptionId"></param>
+        /// <param name="resourceGroupName"></param>
+        /// <param name="name"></param>
+        /// <returns>A dictionary of Settings that are marked sticky to the slot</returns>
+        /// <example>
+        /// This sample shows how to call the <see cref="GetStickySlotSettingNames"/> method in a detector
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        ///     var stickySettings = await dp.GeoMaster.GetStickySlotSettingNames(cxt.Resource.SubscriptionId, cxt.Resource.ResourceGroup, cxt.Resource.Name);
+        ///     foreach(var key in stickySettings.Keys)
+        ///     {
+        ///         // do something with the stickyslot value
+        ///         string[] settings = stickySettings[key];
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
         public async Task<IDictionary<string, string[]>> GetStickySlotSettingNames(string subscriptionId, string resourceGroupName, string name)
         {
             string path = SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name);
@@ -72,6 +121,36 @@ namespace Diagnostics.DataProviders
             return stickyToSlotSettings;
         }
 
+        /// <summary>
+        /// Gets the results of running the VnetVerifier tool for the hosting environment
+        /// </summary>
+        /// <param name="subscriptionId"></param>
+        /// <param name="vnetResourceGroup"></param>
+        /// <param name="vnetName"></param>
+        /// <param name="vnetSubnetName"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <example>
+        /// This sample shows how you can call this function to get the NSG rules that failed or succeeded
+        /// for this App Service environment
+        /// <code>
+        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        ///     
+        ///     //Get VNET information from observer
+        ///     var hostingEnvironmentData = await dp.Observer.GetResource($"https://wawsobserver.azurewebsites.windows.net/minienvironments/{cxt.Resource.InternalName}");
+        ///     var vnetName = (string)hostingEnvironmentData.vnet_name;
+        ///     var vnetSubnetName = (string)hostingEnvironmentData.vnet_subnet_name;
+        ///     var vnetResourceGroup = (string)hostingEnvironmentData.vnet_resource_group;
+        ///           
+        ///     var vnetVerifierResults = await dp.GeoMaster.VerifyHostingEnvironmentVnet(cxt.Resource.SubscriptionId, vnetResourceGroup, vnetName, vnetSubnetName);
+        ///     foreach(var failedTest in vnetVerifierResults.FailedTests)
+        ///     {
+        ///         var testName = failedTest.TestName
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
         public async Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
         {            
             var path = string.Format(@"subscriptions/{0}/providers/Microsoft.Web/verifyHostingEnvironmentVnet", subscriptionId);
@@ -80,18 +159,95 @@ namespace Diagnostics.DataProviders
             return result;
         }
 
+        /// <summary>
+        /// Gets a dictionary of all the deployments that were triggered for this Web App. The Key of the dictionary 
+        /// is the deployment Id
+        /// </summary>
+        /// <param name="subscriptionId"></param>
+        /// <param name="resourceGroupName"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        /// <example>
+        /// The below example shows how you call call GetAppDeployments to find out details about the deployment
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        ///     var deployments = await dp.GeoMaster.GetAppDeployments(cxt.Resource.SubscriptionId, cxt.Resource.ResourceGroup, cxt.Resource.Name);
+        ///     foreach(var deployment in deployments)
+        ///     {
+        ///         string deploymentId = deployment["id"].ToString();
+        ///         var message = "DeploymentId = " +  deploymentId;
+        ///         
+        ///         // Or, you can get a list of all the deployment properties by going to 
+        ///         // https://resources.azure.com and  clicking Create button for the deployments node e.g.
+        ///         string deployer = deployment["deployer"].ToString();
+        ///         
+        ///         // or just loop through all the keys
+        ///         foreach(string key in deployment.Keys)
+        ///         {
+        ///             var deploymentinfo = $" {key} = {deployment[key]}";
+        ///         }
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
         public async Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name)
         {
             string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}/deployments";
-            GeoMasterResponseValue geoMasterResponse = null;
-            geoMasterResponse = await HttpGet<GeoMasterResponseValue>(path);
+            GeoMasterResponseArray geoMasterResponse = null;
+            geoMasterResponse = await HttpGet<GeoMasterResponseArray>(path);
             var deployments = new List<IDictionary<string, dynamic>> ();
             foreach (var deployment in geoMasterResponse.Value)
             {
                 deployments.Add(deployment.Properties);
             }
             return deployments;
-        }       
+        }
+
+        /// <summary>
+        /// All the ARM or GeoMaster operations that are allowed over HTTP GET can be called via this method by passing the path. 
+        /// To get a list of all the HTTP GET based ARM operations, check out a WebApp on https://resources.azure.com
+        /// It should be noted that the response of the ARM operation is of 3 types 
+        /// 1) Response contains a Value[] array 
+        /// 2) Response contains a Properties{} object
+        /// 3) Reponse contains a Value[] array which has a properties object
+        /// 
+        /// To invoke the right route, pass the right class to the method call i.e. GeoMasterResponse or GeoMasterResponseArray or GeoMasterResponseDynamicArray
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="subscriptionId"></param>
+        /// <param name="resourceGroupName"></param>
+        /// <param name="name"></param>
+        /// <param name="path">The path to the API route (for e.g. usages, recommendations)</param>
+        /// <example>
+        /// The below shows how to make this method call to invoke the different types of operations
+        /// <code>
+        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        /// 
+        ///     var geoMasterResponse = await await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponse>]]>(cxt.Resource.SubscriptionId, cxt.Resource.ResourceGroup, cxt.Resource.Name, "sourcecontrols/web");
+        ///     var repoUrl =  geoMasterResponse.Properties["repoUrl"];
+        ///     var branch = geoMasterResponse.Properties["branch"];
+        ///     var provisioningState = geoMasterResponse.Properties["provisioningState"];
+        ///             
+        ///     var geoMasterResponseValue = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponseDynamicArray>]]>(cxt.Resource.SubscriptionId, cxt.Resource.ResourceGroup, cxt.Resource.Name, "usages");
+        ///     foreach(var val in geoMasterResponseValue.value)
+        ///     {
+        ///         var unit = val.unit;
+        ///         var name = val.name.value;
+        ///         var localizedValue = val.name.localizedValue;
+        ///         var currentValue = val.currentValue;
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
+        public async Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path)
+        {
+            path = path.StartsWith("/") ? path.Substring(1): path;
+            path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}/{path}";
+            var geoMasterResponse = await HttpGet<T>(path);
+            return geoMasterResponse;
+        }
 
         #region HttpMethods
 
