@@ -43,16 +43,20 @@ namespace Diagnostics.DataProviders
         /// Gets all the APP SETTINGS for the Web App that start with WEBSITE_ filtering out
         /// the sensitive settings like connectionstrings, tokens, secrets, keys, content shares etc.
         /// </summary>
-        /// <param name="subscriptionId">subscriptionId for the Web App</param>
-        /// <param name="resourceGroupName">The Resource group that the Web App is part of</param>
-        /// <param name="name">The name of the Web App</param>
+        /// <param name="subscriptionId">Subscription Id for the resource</param>
+        /// <param name="resourceGroupName">The resource group that the resource is part of </param>
+        /// <param name="name">Name of the resource</param>
         /// <returns>A dictionary of AppSetting Keys and values</returns>
         /// <example>
+        /// <code>
         /// This sample shows how to call the <see cref="GetAppSettings"/> method in a detector
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
+        ///     var subId = cxt.Resource.SubscriptionId;
+        ///     var rg = cxt.Resource.ResourceGroup;
+        ///     var name = cxt.Resource.Name;
         ///     
-        ///     var appSettings = await dp.GeoMaster.GetAppSettings(cxt.Resource.SubscriptionId, cxt.Resource.ResourceGroup, cxt.Resource.Name);
+        ///     var appSettings = await dp.GeoMaster.GetAppSettings(subId, rg, name);
         ///     foreach(var key in appSettings.Keys)
         ///     {
         ///         // do something with the appSettingValue
@@ -92,7 +96,11 @@ namespace Diagnostics.DataProviders
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
-        ///     var stickySettings = await dp.GeoMaster.GetStickySlotSettingNames(cxt.Resource.SubscriptionId, cxt.Resource.ResourceGroup, cxt.Resource.Name);
+        ///     var subId = cxt.Resource.SubscriptionId;
+        ///     var rg = cxt.Resource.ResourceGroup;
+        ///     var name = cxt.Resource.Name;
+        ///     
+        ///     var stickySettings = await dp.GeoMaster.GetStickySlotSettingNames(subId, rg, name);
         ///     foreach(var key in stickySettings.Keys)
         ///     {
         ///         // do something with the stickyslot value
@@ -124,11 +132,11 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// Gets the results of running the VnetVerifier tool for the hosting environment
         /// </summary>
-        /// <param name="subscriptionId"></param>
-        /// <param name="vnetResourceGroup"></param>
-        /// <param name="vnetName"></param>
-        /// <param name="vnetSubnetName"></param>
-        /// <param name="cancellationToken"></param>
+        /// <param name="subscriptionId">Subscription Id for the resource</param>
+        /// <param name="vnetResourceGroup">The resource group in which the VNet is a part of</param>
+        /// <param name="vnetName">Name of the VNET</param>
+        /// <param name="vnetSubnetName">Subnet name of the VNET</param>
+        /// <param name="cancellationToken">(Optional)</param>
         /// <returns></returns>
         /// <example>
         /// This sample shows how you can call this function to get the NSG rules that failed or succeeded
@@ -138,13 +146,21 @@ namespace Diagnostics.DataProviders
         /// {
         ///     
         ///     //Get VNET information from observer
-        ///     var hostingEnvironmentData = await dp.Observer.GetResource($"https://wawsobserver.azurewebsites.windows.net/minienvironments/{cxt.Resource.InternalName}");
+        ///     var name = cxt.Resource.InternalName;
+        ///     var url = $"https://wawsobserver.azurewebsites.windows.net/minienvironments/{name}"
+        ///     
+        ///     var hostingEnvironmentData = await dp.Observer.GetResource(url);
         ///     var vnetName = (string)hostingEnvironmentData.vnet_name;
-        ///     var vnetSubnetName = (string)hostingEnvironmentData.vnet_subnet_name;
-        ///     var vnetResourceGroup = (string)hostingEnvironmentData.vnet_resource_group;
-        ///           
-        ///     var vnetVerifierResults = await dp.GeoMaster.VerifyHostingEnvironmentVnet(cxt.Resource.SubscriptionId, vnetResourceGroup, vnetName, vnetSubnetName);
-        ///     foreach(var failedTest in vnetVerifierResults.FailedTests)
+        ///     var subnet = (string)hostingEnvironmentData.vnet_subnet_name;
+        ///     var vnetRg = (string)hostingEnvironmentData.vnet_resource_group;        
+        ///     var subId = cxt.Resource.SubscriptionId;
+        ///     
+        ///     var results = await dp.GeoMaster.VerifyHostingEnvironmentVnet(subId, 
+        ///                   vnetRg, 
+        ///                   vnetName, 
+        ///                   subnet);
+        ///                   
+        ///     foreach(var failedTest in results.FailedTests)
         ///     {
         ///         var testName = failedTest.TestName
         ///     }
@@ -160,26 +176,30 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
-        /// Gets a dictionary of all the deployments that were triggered for this Web App. The Key of the dictionary 
-        /// is the deployment Id
+        /// Gets a dictionary of all the deployments that were triggered for this Web App. The key of this dictionary 
+        /// is the DeploymentId
         /// </summary>
-        /// <param name="subscriptionId"></param>
-        /// <param name="resourceGroupName"></param>
-        /// <param name="name"></param>
+        /// <param name="subscriptionId">Subscription Id for the resource</param>
+        /// <param name="resourceGroupName">The resource group that the resource is part of </param>
+        /// <param name="name">Name of the resource</param>
         /// <returns></returns>
         /// <example>
-        /// The below example shows how you call call GetAppDeployments to find out details about the deployment
+        /// The below example shows how you call <see cref="GetAppDeployments"/> to find out details about the deployments that were triggered for this App.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
-        ///     var deployments = await dp.GeoMaster.GetAppDeployments(cxt.Resource.SubscriptionId, cxt.Resource.ResourceGroup, cxt.Resource.Name);
+        ///     var subId = cxt.Resource.SubscriptionId;
+        ///     var rg = cxt.Resource.ResourceGroup;
+        ///     var name = cxt.Resource.Name;
+        ///     
+        ///     var deployments = await dp.GeoMaster.GetAppDeployments(subId, rg, name);
         ///     foreach(var deployment in deployments)
         ///     {
         ///         string deploymentId = deployment["id"].ToString();
         ///         var message = "DeploymentId = " +  deploymentId;
         ///         
-        ///         // Or, you can get a list of all the deployment properties by going to 
-        ///         // https://resources.azure.com and  clicking Create button for the deployments node e.g.
+        ///         // get a specific property like this (Hint - View all properties 
+        ///         // at https://resources.azure.com)
         ///         string deployer = deployment["deployer"].ToString();
         ///         
         ///         // or just loop through all the keys
@@ -208,16 +228,16 @@ namespace Diagnostics.DataProviders
         /// All the ARM or GeoMaster operations that are allowed over HTTP GET can be called via this method by passing the path. 
         /// To get a list of all the HTTP GET based ARM operations, check out a WebApp on https://resources.azure.com
         /// It should be noted that the response of the ARM operation is of 3 types 
-        /// 1) Response contains a Value[] array 
-        /// 2) Response contains a Properties{} object
-        /// 3) Reponse contains a Value[] array which has a properties object
+        /// 1) Response contains a Properties{} object.
+        /// 2) Reponse contains a Value[] array which has a properties object.
+        /// 3) Response contains a Value[] array that has no properties object. 
         /// 
         /// To invoke the right route, pass the right class to the method call i.e. GeoMasterResponse or GeoMasterResponseArray or GeoMasterResponseDynamicArray
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="subscriptionId"></param>
-        /// <param name="resourceGroupName"></param>
-        /// <param name="name"></param>
+        /// <param name="subscriptionId">Subscription Id for the resource</param>
+        /// <param name="resourceGroupName">The resource group that the resource is part of </param>
+        /// <param name="name">Name of the resource</param>
         /// <param name="path">The path to the API route (for e.g. usages, recommendations)</param>
         /// <example>
         /// The below shows how to make this method call to invoke the different types of operations
@@ -225,13 +245,25 @@ namespace Diagnostics.DataProviders
         ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
         /// 
-        ///     var geoMasterResponse = await await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponse>]]>(cxt.Resource.SubscriptionId, cxt.Resource.ResourceGroup, cxt.Resource.Name, "sourcecontrols/web");
-        ///     var repoUrl =  geoMasterResponse.Properties["repoUrl"];
-        ///     var branch = geoMasterResponse.Properties["branch"];
-        ///     var provisioningState = geoMasterResponse.Properties["provisioningState"];
+        ///     var subId = cxt.Resource.SubscriptionId;
+        ///     var rg = cxt.Resource.ResourceGroup;
+        ///     var name = cxt.Resource.Name;
+        ///     
+        ///     var resp = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponse>]]>(subId, 
+        ///                rg, 
+        ///                name, 
+        ///                "sourcecontrols/web");
+        ///     
+        ///     var repoUrl =  resp.Properties["repoUrl"];
+        ///     var branch = resp.Properties["branch"];
+        ///     var provisioningState = resp.Properties["provisioningState"];
         ///             
-        ///     var geoMasterResponseValue = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponseDynamicArray>]]>(cxt.Resource.SubscriptionId, cxt.Resource.ResourceGroup, cxt.Resource.Name, "usages");
-        ///     foreach(var val in geoMasterResponseValue.value)
+        ///     var respVal = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponseDynamicArray>]]>(subId, 
+        ///                   rg, 
+        ///                   name, 
+        ///                   "usages");
+        ///     
+        ///     foreach(var val in respVal.value)
         ///     {
         ///         var unit = val.unit;
         ///         var name = val.name.value;
