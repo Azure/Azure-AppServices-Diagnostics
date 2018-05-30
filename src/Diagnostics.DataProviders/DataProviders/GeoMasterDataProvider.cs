@@ -283,7 +283,7 @@ namespace Diagnostics.DataProviders
 
         #region HttpMethods
 
-        protected async Task<R> HttpGet<R>(string path, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
+        private async Task<R> HttpGet<R>(string path, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
         {
             var query = SitePathUtility.CsmAnnotateQueryString(queryString, apiVersion);
             var response = new HttpResponseMessage();
@@ -313,7 +313,7 @@ namespace Diagnostics.DataProviders
             return value;
         }
         
-        protected async Task<R> HttpPost<R, T>(string path, T content = default(T) , string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
+        private async Task<R> HttpPost<R, T>(string path, T content = default(T) , string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
         {
             var query = SitePathUtility.CsmAnnotateQueryString(queryString, apiVersion);
             var response = new HttpResponseMessage();
