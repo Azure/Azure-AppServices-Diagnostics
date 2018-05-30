@@ -12,6 +12,11 @@ namespace Diagnostics.DataProviders
     {
         public async Task<DataTable> ExecuteQueryAsync(string query, string stampName, string requestId = null, string operationName = null)
         {
+            if (string.IsNullOrWhiteSpace(stampName))
+            {
+                throw new ArgumentNullException("stampName");
+            }
+
             if (!string.IsNullOrWhiteSpace(operationName))
             {
                 switch (operationName.ToLower())

@@ -102,7 +102,7 @@ namespace Diagnostics.DataProviders
         // From Kusto.Data.Common.CslCommandGenerator.EncodeQueryAsBase64Url
         private string EncodeQueryAsBase64Url(string query)
         {
-            if (string.IsNullOrEmpty(query))
+            if (string.IsNullOrWhiteSpace(query))
             {
                 return string.Empty;
             }
