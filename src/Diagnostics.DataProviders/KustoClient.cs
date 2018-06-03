@@ -50,17 +50,7 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string stampName, string requestId = null, string operationName = null)
         {
-            string appserviceRegion = ParseRegionFromStamp(stampName);
-
-            string kustoClusterName;
-            if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName))
-            {
-                // try to use default cluster name.
-                if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
-                {
-                    throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
-                }
-            }
+            string kustoClusterName = GetClusterNameFromStamp(stampName);
 
             string authorizationToken = await KustoTokenService.Instance.GetAuthorizationTokenAsync();
 
@@ -105,25 +95,29 @@ namespace Diagnostics.DataProviders
             }
             return result;
         }
+
+        private string GetClusterNameFromStamp(string stampName)
+        {
+            string kustoClusterName = null;
+            string appserviceRegion = ParseRegionFromStamp(stampName);
+
+            if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName))
+            {
+                if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
+                {
+                    throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
+                }
+            }
+            return kustoClusterName;
+        }
         public async Task<string> GetKustoQueryUriAsync(string stampName, string query)
         {
             string kustoClusterName = null;
             try
             {
-                string appserviceRegion = ParseRegionFromStamp(stampName);
-
-                if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName))
-                {
-                    if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
-                    {
-                        throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
-                    }
-                }
-
+                kustoClusterName = GetClusterNameFromStamp(stampName);
                 string encodedQuery = await EncodeQueryAsBase64UrlAsync(query);
-
                 var url = string.Format("https://web.kusto.windows.net/clusters/{0}.kusto.windows.net/databases/{1}?q={2}", kustoClusterName, _configuration.DBName, encodedQuery);
-
                 return url;
             }
             catch (Exception ex)
@@ -134,7 +128,6 @@ namespace Diagnostics.DataProviders
                     ex.ToString());
                 throw;
             }
-
         }
 
         private static string ParseRegionFromStamp(string stampName)
