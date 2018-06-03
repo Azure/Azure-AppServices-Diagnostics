@@ -80,5 +80,18 @@ namespace Diagnostics.DataProviders
 
             return Task.FromResult(table);
         }
+
+        public Task<string> GetKustoQueryUriAsync(string stampName, string query)
+        {
+            if (string.IsNullOrWhiteSpace(stampName))
+            {
+                throw new ArgumentNullException("stampName");
+            }
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                throw new ArgumentNullException("query");
+            }
+            return Task.FromResult("https://fakekusto.windows.net/q=somequery");
+        }
     }
 }
