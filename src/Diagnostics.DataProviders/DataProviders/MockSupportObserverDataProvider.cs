@@ -86,6 +86,71 @@ namespace Diagnostics.DataProviders
             return Task.FromResult(JsonConvert.DeserializeObject(siteData));
         }
 
+        public override Task<string> GetSiteResourceGroupName(string siteName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<dynamic> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<dynamic> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<dynamic> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<string> GetServerFarmWebspaceName(string subscriptionId, string serverFarm)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<string> GetSiteWebSpaceName(string subscriptionId, string siteName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<dynamic> GetSitesInServerFarm(string subscriptionId, string serverFarmName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<JObject> GetAppServiceEnvironmentDetails(string hostingEnvironmentName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<IEnumerable<object>> GetAppServiceEnvironmentDeployments(string hostingEnvironmentName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<JObject> GetAdminSitesBySiteName(string stampName, string siteName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<JObject> GetAdminSitesByHostName(string stampName, string[] hostNames)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<string> GetStorageVolumeForSite(string stampName, string siteName)
+        {
+            throw new NotImplementedException();
+        }
+
         public override HttpClient GetObserverClient()
         {
             return new MockHttpClient();

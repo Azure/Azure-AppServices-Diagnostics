@@ -5,7 +5,8 @@
         {
           "cwd": "../../src/",
           "files": [
-            "Diagnostics.ModelsAndUtils/**.csproj"
+            "Diagnostics.ModelsAndUtils/**.csproj",
+            "Diagnostics.DataProviders/DataProviders/GeoMasterDataProvider.cs"
           ]
         }
       ],

@@ -94,7 +94,8 @@ namespace Diagnostics.RuntimeHost.Services
 
             return
                 $@"{tableName}
-                | where TIMESTAMP >= datetime({startTimeStr}) and TIMESTAMP <= datetime({endTimeStr}) and PublicHost startswith ""{stamp}""
+                | where TIMESTAMP >= datetime({startTimeStr}) and TIMESTAMP <= datetime({endTimeStr}) 
+                | where PublicHost =~ ""{stamp}.cloudapp.net"" or PublicHost matches regex ""{stamp}([a-z{{1}}]).cloudapp.net""
                 | summarize by Tenant, PublicHost";
         }
     }

@@ -85,10 +85,35 @@ namespace Diagnostics.RuntimeHost.Controllers
             };
 
             var response = (Response)await invoker.Invoke(new object[] { dataProviders, context, res });
+
+            List<DataProviderMetadata> dataProvidersMetadata = null;
             response.UpdateDetectorStatusFromInsights();
-            var apiResponse = DiagnosticApiResponse.FromCsxResponse(response);
+
+            if (context.IsInternalCall)
+            {
+                dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
+            }
+            
+            var apiResponse = DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata);
 
             return Ok(apiResponse);
+        }
+
+        private List<DataProviderMetadata> GetDataProvidersMetadata(DataProviders.DataProviders dataProviders)
+        {
+            var dataprovidersMetadata = new List<DataProviderMetadata>();
+            foreach (var dataProvider in dataProviders.GetType().GetFields())
+            {
+                if (dataProvider.FieldType.BaseType == typeof(DiagnosticDataProvider))
+                {
+                    var provider = dataProvider.GetValue(dataProviders) as DiagnosticDataProvider;
+                    if (provider.Metadata != null)
+                    {
+                        dataprovidersMetadata.Add(provider.Metadata);
+                    }
+                }
+            }
+            return dataprovidersMetadata;
         }
 
         protected async Task<IActionResult> ExecuteQuery<TResource>(string csxScript, OperationContext<TResource> context)
