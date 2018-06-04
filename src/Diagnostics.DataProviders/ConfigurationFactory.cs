@@ -59,10 +59,19 @@ namespace Diagnostics.DataProviders
     {
         protected override string GetValue(string prefix, string name)
         {
-            if(prefix == "Kusto" && name == "DBName")
+            if (prefix == "Kusto")
             {
-                return "Mock";
-            }
+                switch (name)
+                {
+                    case "DBName":
+                        return "Mock";
+                    case "KustoClusterNameGroupings":
+                        return "wawsmock";
+                    case "KustoRegionGroupings":
+                        return "mockstamp";
+                    default: return string.Empty;
+                }
+            }           
             else if (prefix == "SupportObserver" && name == "IsMockConfigured")
             {
                 return "true";

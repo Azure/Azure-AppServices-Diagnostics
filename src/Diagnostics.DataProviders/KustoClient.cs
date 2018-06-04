@@ -4,12 +4,15 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace Diagnostics.DataProviders
 {
@@ -47,17 +50,7 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string stampName, string requestId = null, string operationName = null)
         {
-            string appserviceRegion = ParseRegionFromStamp(stampName);
-
-            string kustoClusterName;
-            if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName))
-            {
-                // try to use default cluster name.
-                if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
-                {
-                    throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
-                }
-            }
+            string kustoClusterName = GetClusterNameFromStamp(stampName);
 
             string authorizationToken = await KustoTokenService.Instance.GetAuthorizationTokenAsync();
 
@@ -86,6 +79,61 @@ namespace Diagnostics.DataProviders
             else
             {
                 return dataSet.Tables.FirstOrDefault().ToDataTable();
+            }
+        }
+
+        // From Kusto.Data.Common.CslCommandGenerator.EncodeQueryAsBase64Url
+        private async Task<string> EncodeQueryAsBase64UrlAsync(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return string.Empty;
+            }
+            byte[] bytes = Encoding.UTF8.GetBytes(query);
+            string result;
+            using (MemoryStream memoryStream = new MemoryStream())
+            {
+                using (GZipStream gZipStream = new GZipStream(memoryStream, CompressionMode.Compress, true))
+                {
+                    await gZipStream.WriteAsync(bytes, 0, bytes.Length);
+                }
+                memoryStream.Seek(0L, SeekOrigin.Begin);
+                result = HttpUtility.UrlEncode(Convert.ToBase64String(memoryStream.ToArray()));
+            }
+            return result;
+        }
+
+        private string GetClusterNameFromStamp(string stampName)
+        {
+            string kustoClusterName = null;
+            string appserviceRegion = ParseRegionFromStamp(stampName);
+
+            if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName))
+            {
+                if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
+                {
+                    throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
+                }
+            }
+            return kustoClusterName;
+        }
+        public async Task<string> GetKustoQueryUriAsync(string stampName, string query)
+        {
+            string kustoClusterName = null;
+            try
+            {
+                kustoClusterName = GetClusterNameFromStamp(stampName);
+                string encodedQuery = await EncodeQueryAsBase64UrlAsync(query);
+                var url = string.Format("https://web.kusto.windows.net/clusters/{0}.kusto.windows.net/databases/{1}?q={2}", kustoClusterName, _configuration.DBName, encodedQuery);
+                return url;
+            }
+            catch (Exception ex)
+            {
+                string message = string.Format("stamp : {0}, kustoClusterName : {1}, Exception : {2}",
+                    stampName ?? "null",
+                    kustoClusterName ?? "null",
+                    ex.ToString());
+                throw;
             }
         }
 
