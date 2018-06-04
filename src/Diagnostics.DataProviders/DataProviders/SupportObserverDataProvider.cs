@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.DataProviders
 {
@@ -16,27 +17,27 @@ namespace Diagnostics.DataProviders
         {
         }
 
-        public override Task<JObject> GetAdminSitesByHostName(string stampName, string[] hostNames)
+        public override Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<JObject> GetAdminSitesBySiteName(string stampName, string siteName)
+        public override Task<JObject> GetAdminSitesBySiteNameAsync(string stampName, string siteName)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<IEnumerable<object>> GetAppServiceEnvironmentDeployments(string hostingEnvironmentName)
+        public override Task<IEnumerable<object>> GetAppServiceEnvironmentDeploymentsAsync(string hostingEnvironmentName)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<JObject> GetAppServiceEnvironmentDetails(string hostingEnvironmentName)
+        public override Task<JObject> GetAppServiceEnvironmentDetailsAsync(string hostingEnvironmentName)
         {
             throw new NotImplementedException();
         }
 
-        public override async Task<dynamic> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override async Task<dynamic> GetCertificatesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
             var result = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/certificates");
             return JsonConvert.DeserializeObject(result);
@@ -60,7 +61,7 @@ namespace Diagnostics.DataProviders
             return slotTimeRange;
         }
 
-        public override async Task<dynamic> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override async Task<dynamic> GetServerFarmsInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
             var result = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/serverfarms");
             return JsonConvert.DeserializeObject(result);
@@ -71,29 +72,29 @@ namespace Diagnostics.DataProviders
             return await Get($"subscriptionid/{subscriptionId}/serverfarm/{serverFarm}/webspacename");
         }
 
-        public override async Task<string> GetSiteResourceGroupName(string siteName)
+        public override async Task<string> GetSiteResourceGroupNameAsync(string siteName)
         {
             return await Get($"sites/{siteName}/resourcegroupname");
         }
 
-        public override async Task<dynamic> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override async Task<dynamic> GetSitesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
             var sitesResult = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}");
             return JsonConvert.DeserializeObject(sitesResult);
         }
 
-        public override async Task<dynamic> GetSitesInServerFarm(string subscriptionId, string serverFarmName)
+        public override async Task<dynamic> GetSitesInServerFarmAsync(string subscriptionId, string serverFarmName)
         {
             var sitesResult = await Get($"subscriptionid/{subscriptionId}/serverfarm/{serverFarmName}/sites");
             return JsonConvert.DeserializeObject(sitesResult);
         }
 
-        public override async Task<string> GetSiteWebSpaceName(string subscriptionId, string siteName)
+        public override async Task<string> GetSiteWebSpaceNameAsync(string subscriptionId, string siteName)
         {
             return await Get($"subscriptionid/{subscriptionId}/sitename/{siteName}/webspacename");
         }
 
-        public override Task<string> GetStorageVolumeForSite(string stampName, string siteName)
+        public override Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName)
         {
             throw new NotImplementedException();
         }

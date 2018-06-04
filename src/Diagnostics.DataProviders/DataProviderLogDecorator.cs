@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
+using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.DataProviders
 {
@@ -30,54 +31,119 @@ namespace Diagnostics.DataProviders
             _observerDataProvider = dataProvider;
         }
 
-        public async Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
+        public Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
         {
-            return await MakeDependencyCall(requestId, _kustoDataProvider.ExecuteQuery(query, stampName, requestId, operationName));
+            return MakeDependencyCall(requestId, _kustoDataProvider.ExecuteQuery(query, stampName, requestId, operationName));
         }
 
-        public async Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name)
+        public Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames)
         {
-            return await MakeDependencyCall(null, _geomasterDataProvider.GetAppDeployments(subscriptionId, resourceGroupName, name));
+            return MakeDependencyCall(null, _observerDataProvider.GetAdminSitesByHostNameAsync(stampName, hostNames));
         }
 
-        public async Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name)
+        public Task<JObject> GetAdminSitesBySiteNameAsync(string stampName, string siteName)
         {
-            return await MakeDependencyCall(null, _geomasterDataProvider.GetAppSettings(subscriptionId, resourceGroupName, name));
+            return MakeDependencyCall(null, _observerDataProvider.GetAdminSitesBySiteNameAsync(stampName, siteName));
         }
 
-        public async Task<dynamic> GetResource(string wawsObserverUrl)
+        public Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name)
         {
-            return await MakeDependencyCall(null, _observerDataProvider.GetResource(wawsObserverUrl));
+            return MakeDependencyCall(null, _geomasterDataProvider.GetAppDeployments(subscriptionId, resourceGroupName, name));
         }
 
-        public async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
+        public Task<IEnumerable<object>> GetAppServiceEnvironmentDeploymentsAsync(string hostingEnvironmentName)
         {
-            return await MakeDependencyCall(null, _observerDataProvider.GetRuntimeSiteSlotMap(siteName));
+            return MakeDependencyCall(null, _observerDataProvider.GetAppServiceEnvironmentDeploymentsAsync(hostingEnvironmentName));
         }
 
-        public async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
+        public Task<JObject> GetAppServiceEnvironmentDetailsAsync(string hostingEnvironmentName)
         {
-            return await MakeDependencyCall(null, _observerDataProvider.GetRuntimeSiteSlotMap(stampName, siteName));
+            return MakeDependencyCall(null, _observerDataProvider.GetAppServiceEnvironmentDetailsAsync(hostingEnvironmentName));
         }
 
-        public async Task<dynamic> GetSite(string siteName)
+        public Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name)
         {
-            return await MakeDependencyCall(null, _observerDataProvider.GetSite(siteName));
+            return MakeDependencyCall(null, _geomasterDataProvider.GetAppSettings(subscriptionId, resourceGroupName, name));
         }
 
-        public async Task<dynamic> GetSite(string stampName, string siteName)
+        public Task<dynamic> GetCertificatesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
-            return await MakeDependencyCall(null, _observerDataProvider.GetSite(stampName, siteName));
+            return MakeDependencyCall(null, _observerDataProvider.GetCertificatesInResourceGroupAsync(subscriptionName, resourceGroupName));
         }
 
-        public async Task<IDictionary<string, string[]>> GetStickySlotSettingNames(string subscriptionId, string resourceGroupName, string name)
+        public Task<dynamic> GetResource(string wawsObserverUrl)
         {
-            return await MakeDependencyCall(null, _geomasterDataProvider.GetStickySlotSettingNames(subscriptionId, resourceGroupName, name));
+            return MakeDependencyCall(null, _observerDataProvider.GetResource(wawsObserverUrl));
         }
 
-        public async Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
         {
-            return await MakeDependencyCall(null, _geomasterDataProvider.VerifyHostingEnvironmentVnet(subscriptionId, vnetResourceGroup, vnetName, vnetSubnetName, cancellationToken));
+            return MakeDependencyCall(null, _observerDataProvider.GetRuntimeSiteSlotMap(siteName));
+        }
+
+        public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetRuntimeSiteSlotMap(stampName, siteName));
+        }
+
+        public Task<dynamic> GetServerFarmsInResourceGroupAsync(string subscriptionName, string resourceGroupName)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetServerFarmsInResourceGroupAsync(subscriptionName, resourceGroupName));
+        }
+
+        public Task<string> GetServerFarmWebspaceName(string subscriptionId, string serverFarm)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetServerFarmWebspaceName(subscriptionId, serverFarm));
+        }
+
+        public Task<dynamic> GetSite(string siteName)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetSite(siteName));
+        }
+
+        public Task<dynamic> GetSite(string stampName, string siteName)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetSite(stampName, siteName));
+        }
+
+        public Task<string> GetSiteResourceGroupNameAsync(string siteName)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetSiteResourceGroupNameAsync(siteName));
+        }
+
+        public Task<dynamic> GetSitesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetSitesInResourceGroupAsync(subscriptionName, resourceGroupName));
+        }
+
+        public Task<dynamic> GetSitesInServerFarmAsync(string subscriptionId, string serverFarmName)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetSitesInServerFarmAsync(subscriptionId, serverFarmName));
+        }
+
+        public Task<string> GetSiteWebSpaceNameAsync(string subscriptionId, string siteName)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetSiteWebSpaceNameAsync(subscriptionId, siteName));
+        }
+
+        public Task<IDictionary<string, string[]>> GetStickySlotSettingNames(string subscriptionId, string resourceGroupName, string name)
+        {
+            return MakeDependencyCall(null, _geomasterDataProvider.GetStickySlotSettingNames(subscriptionId, resourceGroupName, name));
+        }
+
+        public Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetStorageVolumeForSiteAsync(stampName, siteName));
+        }
+
+        public Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetWebspaceResourceGroupName(subscriptionId, webSpaceName));
+        }
+
+        public Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return MakeDependencyCall(null, _geomasterDataProvider.VerifyHostingEnvironmentVnet(subscriptionId, vnetResourceGroup, vnetName, vnetSubnetName, cancellationToken));
         }
 
         private async Task<T> MakeDependencyCall<T>(string requestId, Task<T> dataProviderTask, [CallerMemberName]string dataProviderOperation = "")
