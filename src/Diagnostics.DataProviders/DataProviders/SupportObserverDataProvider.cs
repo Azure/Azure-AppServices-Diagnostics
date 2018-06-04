@@ -79,7 +79,7 @@ namespace Diagnostics.DataProviders
 
         public override async Task<dynamic> GetSitesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
-            var sitesResult = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}");
+            var sitesResult = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/sites");
             return JsonConvert.DeserializeObject(sitesResult);
         }
 
