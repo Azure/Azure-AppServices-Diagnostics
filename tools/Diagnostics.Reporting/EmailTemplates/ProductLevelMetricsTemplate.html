@@ -1,0 +1,44 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 80%;
+            padding: 20px;
+        }
+
+        td, th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>{ProductName} : Deflection Metrics (Week Ending on {WeekDate})</h2>
+
+    <div style="margin-bottom:20px">
+        {ProductMetricsTable}
+    </div>
+
+    <div style="margin-top:50px">
+        <div style="font-weight:500;font-size:25px;color:#5c85d6;margin-bottom:20px">Useful Links</div>
+        <a href="">Leaked Cases</a>
+        <a href=""
+    </div>
+
+    <div style="margin-top:50px">
+        <div style="font-weight:500;font-size:25px;color:#5c85d6;margin-bottom:20px">Breakdown By Problem Category</div>
+
+        {CategoryMetricsTable}
+    </div>
+
+    <div style="margin-top:50px">
+        {SubCategoryMetricsTable}
+    </div>
+    
+</body>
+</html>

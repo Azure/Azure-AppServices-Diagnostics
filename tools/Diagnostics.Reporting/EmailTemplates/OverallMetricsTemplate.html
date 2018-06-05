@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 80%;
+            padding: 20px;
+        }
+
+        td, th {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Overall App Services Deflection Metrics (Week Ending on {WeekDate})</h2>
+
+    {ProductMetricsTable}
+
+    <div style="margin-top:30px">
+        <div style="font-weight:500;font-size:25px;color:#5c85d6;margin-bottom:20px">Deflection Metrics By Solutions</div>
+
+        {SolutionMetricsTable}
+    </div>
+
+</body>
+</html>
