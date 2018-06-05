@@ -263,20 +263,38 @@ namespace Diagnostics.DataProviders
         ///                   name, 
         ///                   "usages");
         ///     
-        ///     foreach(var val in respVal.value)
+        ///     foreach(var val in respVal.Value)
         ///     {
         ///         var unit = val.unit;
         ///         var name = val.name.value;
         ///         var localizedValue = val.name.localizedValue;
         ///         var currentValue = val.currentValue;
         ///     }
+        ///     
+        ///     // To get properties on the site root path, just pass an empty string like this
+        ///     var siteProperties = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponse>]]>(subId, 
+        ///                rg, 
+        ///                name, 
+        ///                "");
+        ///     foreach(var item in siteProperties.Properties)
+        ///     {
+        ///         string str = item.Key + " " + item.Value;
+        ///     }
         /// }
         /// </code>
         /// </example>
         public async Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path)
         {
-            path = path.StartsWith("/") ? path.Substring(1): path;
-            path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}/{path}";
+            path = path.StartsWith("/") ? path.Substring(1) : path;
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}";
+            }
+            else
+            {
+                path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}/{path}";
+            }
+
             var geoMasterResponse = await HttpGet<T>(path);
             return geoMasterResponse;
         }
