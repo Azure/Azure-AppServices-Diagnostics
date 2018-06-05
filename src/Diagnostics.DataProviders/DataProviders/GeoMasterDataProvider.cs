@@ -271,11 +271,10 @@ namespace Diagnostics.DataProviders
         ///         var currentValue = val.currentValue;
         ///     }
         ///     
-        ///     // To get properties on the site root path, just pass an empty string like this
+        ///     // To get properties on the site root path, just call the method like this
         ///     var siteProperties = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponse>]]>(subId, 
         ///                rg, 
-        ///                name, 
-        ///                "");
+        ///                name);
         ///     foreach(var item in siteProperties.Properties)
         ///     {
         ///         string str = item.Key + " " + item.Value;
@@ -283,7 +282,7 @@ namespace Diagnostics.DataProviders
         /// }
         /// </code>
         /// </example>
-        public async Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path)
+        public async Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path = "")
         {
             path = path.StartsWith("/") ? path.Substring(1) : path;
             if (string.IsNullOrWhiteSpace(path))
