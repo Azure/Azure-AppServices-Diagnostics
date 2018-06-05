@@ -284,7 +284,10 @@ namespace Diagnostics.DataProviders
         /// </example>
         public async Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path = "")
         {
-            path = path.StartsWith("/") ? path.Substring(1) : path;
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                path = path.StartsWith("/") ? path.Substring(1) : path;
+            }
             if (string.IsNullOrWhiteSpace(path))
             {
                 path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}";
