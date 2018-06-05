@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Models;
 
 namespace Diagnostics.DataProviders
 {
@@ -19,5 +20,7 @@ namespace Diagnostics.DataProviders
         {
             return Convert.ChangeType(_cache.GetOrAdd(key, addFunction), typeof(Task<T>)) as Task<T>;
         }
+
+        public DataProviderMetadata Metadata { get; set; }
     }
 }
