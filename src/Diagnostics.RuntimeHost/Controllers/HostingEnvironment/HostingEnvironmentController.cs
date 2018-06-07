@@ -80,7 +80,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             HostingEnvironment ase = await GetHostingEnvironment(subscriptionId, resourceGroupName, hostingEnvironmentName, postBody, startTimeUtc, endTimeUtc);
             OperationContext<HostingEnvironment> cxt = PrepareContext<HostingEnvironment>(ase, startTimeUtc, endTimeUtc);
 
-            return await base.GetDetector<HostingEnvironment>(detectorId, cxt);
+            return await base.GetDetectorResponse<HostingEnvironment>(detectorId, cxt);
         }
     }
 }

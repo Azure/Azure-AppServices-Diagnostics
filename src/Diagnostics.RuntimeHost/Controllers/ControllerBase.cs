@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Models.GeoMaster;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -38,7 +39,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._dataSourcesConfigService = dataSourcesConfigService;
         }
 
-        protected OperationContext<TResource> PrepareContext<TResource>(TResource resource, DateTime startTime, DateTime endTime)
+        protected OperationContext<TResource> PrepareContext<TResource>(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false)
             where TResource : IResource
         {
             this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
@@ -53,7 +54,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 resource,
                 DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(DataProviderConstants.KustoTimeFormat),
                 DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(DataProviderConstants.KustoTimeFormat),
-                isInternalRequest,
+                isInternalRequest || forceInternal,
                 requestIds.FirstOrDefault()
             );
         }
@@ -67,7 +68,16 @@ namespace Diagnostics.RuntimeHost.Controllers
                 .Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.IsInternalCall) });
         }
 
-        protected async Task<IActionResult> GetDetector<TResource>(string detectorId, OperationContext<TResource> context)
+        protected async Task<IActionResult> GetDetectorResponse<TResource>(string detectorId, OperationContext<TResource> context)
+            where TResource : IResource
+        {
+            var detectorResponse = await GetDetector(detectorId, context);
+
+
+            return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse));
+        }
+
+        protected async Task<Response> GetDetector<TResource>(string detectorId, OperationContext<TResource> context)
             where TResource : IResource
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
@@ -76,7 +86,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             if (invoker == null)
             {
-                return NotFound();
+                return null;
             }
 
             Response res = new Response
@@ -86,9 +96,66 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             var response = (Response)await invoker.Invoke(new object[] { dataProviders, context, res });
             response.UpdateDetectorStatusFromInsights();
-            var apiResponse = DiagnosticApiResponse.FromCsxResponse(response);
 
-            return Ok(apiResponse);
+            return response;
+        }
+
+        protected async Task<IEnumerable<Definition>> GetDetectorsBySupportTopicId<TResource>(OperationContext<TResource> context, string supportTopicId)
+            where TResource : IResource
+        {
+            var allDetectors = (await ListDetectors(context)).Select(detectorResponse => detectorResponse.Metadata);
+
+            var applicableDetectors = string.IsNullOrWhiteSpace(supportTopicId) ? 
+                allDetectors:
+                allDetectors.Where(detector => detector.SupportTopicList.FirstOrDefault(supportTopic => supportTopic.Id == supportTopicId) != null);
+
+            return applicableDetectors;
+        }
+
+        protected async Task<IEnumerable<AzureSupportCenterInsight>> GetInsightsFromDetector<TResource>(OperationContext<TResource> context, Definition detector)
+            where TResource: IResource
+        {
+            Response response = null;
+            try
+            {
+                response = await GetDetector(detector.Id, context);
+            }
+            catch(Exception)
+            {
+                //TODO: log
+            }
+            
+            // Handle Exception or Not Found
+            // Not found can occur if invalid detector is put in detector list
+            if (response == null)
+            {
+                return null;
+            }
+
+            List<AzureSupportCenterInsight> supportCenterInsights = new List<AzureSupportCenterInsight>();
+
+            // Take max one insight per detector, only critical or warning, pick the most critical
+            var mostCriticalInsight = response.Insights.Where(insight => ((int)insight.Status) < ((int)InsightStatus.Warning)).OrderBy(insight => insight.Status).FirstOrDefault();
+
+            if (mostCriticalInsight != null)
+            {
+                supportCenterInsights.Add(AzureSupportCenterInsightUtilites.CreateInsight(mostCriticalInsight, context, detector));
+            }
+
+            var detectorLists = response.Dataset
+                .Where(diagnosicData => diagnosicData.RenderingProperties.Type == RenderingType.Detector)
+                .SelectMany(diagnosticData => ((DetectorCollectionRendering)diagnosticData.RenderingProperties).DetectorIds)
+                .Distinct();
+
+            if (detectorLists.Any())
+            {
+                var applicableDetectorMetaData = (await this.ListDetectors(context)).Where(detectorResponse => detectorLists.Contains(detectorResponse.Metadata.Id));
+                var detectorListResponses = await Task.WhenAll(applicableDetectorMetaData.Select(detectorResponse => GetInsightsFromDetector(context, detectorResponse.Metadata)));
+
+                supportCenterInsights.AddRange(detectorListResponses.Where(detectorInsights => detectorInsights != null).SelectMany(detectorInsights => detectorInsights));
+            }
+
+            return supportCenterInsights;
         }
 
         protected async Task<IActionResult> ExecuteQuery<TResource>(string csxScript, OperationContext<TResource> context)
