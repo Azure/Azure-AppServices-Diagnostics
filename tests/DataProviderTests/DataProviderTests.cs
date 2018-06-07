@@ -76,7 +76,7 @@ namespace Diagnostics.Tests.DataProviderTests
                        
                         public async static Task<DataTable> Run(DataProviders dataProviders) {
 
-                            var dt = await dataProviders.Kusto.ExecuteQuery(""TestA"", string.Empty);
+                            var dt = await dataProviders.Kusto.ExecuteQuery(""TestA"", ""waws-prod-mockstamp"");
                             return dt;
                     }";
             }

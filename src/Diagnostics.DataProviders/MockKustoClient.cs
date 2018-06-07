@@ -12,6 +12,11 @@ namespace Diagnostics.DataProviders
     {
         public async Task<DataTable> ExecuteQueryAsync(string query, string stampName, string requestId = null, string operationName = null)
         {
+            if (string.IsNullOrWhiteSpace(stampName))
+            {
+                throw new ArgumentNullException("stampName");
+            }
+
             if (!string.IsNullOrWhiteSpace(operationName))
             {
                 switch (operationName.ToLower())
@@ -74,6 +79,19 @@ namespace Diagnostics.DataProviders
             table.Rows.Add(new object[] { DateTime.UtcNow });
 
             return Task.FromResult(table);
+        }
+
+        public Task<string> GetKustoQueryUriAsync(string stampName, string query)
+        {
+            if (string.IsNullOrWhiteSpace(stampName))
+            {
+                throw new ArgumentNullException("stampName");
+            }
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                throw new ArgumentNullException("query");
+            }
+            return Task.FromResult("https://fakekusto.windows.net/q=somequery");
         }
     }
 }

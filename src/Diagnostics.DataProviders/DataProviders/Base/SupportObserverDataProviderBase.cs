@@ -103,13 +103,13 @@ namespace Diagnostics.DataProviders
         public abstract Task<dynamic> GetSite(string siteName);
         public abstract Task<dynamic> GetSite(string stampName, string siteName);
         public abstract Task<string> GetSiteResourceGroupName(string siteName);
-        public abstract Task<IEnumerable<Dictionary<string, string>>> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName);
-        public abstract Task<IEnumerable<Dictionary<string, string>>> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName);
-        public abstract Task<IEnumerable<Dictionary<string, string>>> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName);
+        public abstract Task<dynamic> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName);
+        public abstract Task<dynamic> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName);
+        public abstract Task<dynamic> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName);
         public abstract Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName);
         public abstract Task<string> GetServerFarmWebspaceName(string subscriptionId, string serverFarm);
         public abstract Task<string> GetSiteWebSpaceName(string subscriptionId, string siteName);
-        public abstract Task<IEnumerable<Dictionary<string, string>>> GetSitesInServerFarm(string subscriptionId, string serverFarmName);
+        public abstract Task<dynamic> GetSitesInServerFarm(string subscriptionId, string serverFarmName);
         public abstract Task<JObject> GetAppServiceEnvironmentDetails(string hostingEnvironmentName);
         public abstract Task<IEnumerable<object>> GetAppServiceEnvironmentDeployments(string hostingEnvironmentName);
         public abstract Task<JObject> GetAdminSitesBySiteName(string stampName, string siteName);

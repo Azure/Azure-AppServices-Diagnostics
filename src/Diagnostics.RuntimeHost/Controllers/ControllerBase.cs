@@ -95,7 +95,14 @@ namespace Diagnostics.RuntimeHost.Controllers
             };
 
             var response = (Response)await invoker.Invoke(new object[] { dataProviders, context, res });
+
+            List<DataProviderMetadata> dataProvidersMetadata = null;
             response.UpdateDetectorStatusFromInsights();
+
+            if (context.IsInternalCall)
+            {
+                dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
+            }
 
             return response;
         }
@@ -158,6 +165,23 @@ namespace Diagnostics.RuntimeHost.Controllers
             return supportCenterInsights;
         }
 
+        private List<DataProviderMetadata> GetDataProvidersMetadata(DataProviders.DataProviders dataProviders)
+        {
+            var dataprovidersMetadata = new List<DataProviderMetadata>();
+            foreach (var dataProvider in dataProviders.GetType().GetFields())
+            {
+                if (dataProvider.FieldType.BaseType == typeof(DiagnosticDataProvider))
+                {
+                    var provider = dataProvider.GetValue(dataProviders) as DiagnosticDataProvider;
+                    if (provider.Metadata != null)
+                    {
+                        dataprovidersMetadata.Add(provider.Metadata);
+                    }
+                }
+            }
+            return dataprovidersMetadata;
+        }
+
         protected async Task<IActionResult> ExecuteQuery<TResource>(string csxScript, OperationContext<TResource> context)
             where TResource : IResource
         {
@@ -205,10 +229,11 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             List<EntityInvoker> allDetectors = this._invokerCache.GetAll().ToList();
 
-            foreach(var topicId in invoker.EntryPointDefinitionAttribute.SupportTopicList)
+            foreach (var topicId in invoker.EntryPointDefinitionAttribute.SupportTopicList)
             {
-                var existingDetector = allDetectors.FirstOrDefault(p => p.EntryPointDefinitionAttribute.SupportTopicList.Contains(topicId));
-                if(existingDetector != default(EntityInvoker))
+                var existingDetector = allDetectors.FirstOrDefault(p =>
+                (!p.EntryPointDefinitionAttribute.Id.Equals(invoker.EntryPointDefinitionAttribute.Id, StringComparison.OrdinalIgnoreCase) && p.EntryPointDefinitionAttribute.SupportTopicList.Contains(topicId)));
+                if (existingDetector != default(EntityInvoker))
                 {
                     // There exists a detector which has same support topic id.
                     queryRes.CompilationOutput.CompilationSucceeded = false;

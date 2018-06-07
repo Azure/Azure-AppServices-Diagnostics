@@ -93,17 +93,17 @@ namespace Diagnostics.DataProviders
             throw new NotImplementedException();
         }
 
-        public override Task<IEnumerable<Dictionary<string, string>>> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override Task<dynamic> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<IEnumerable<Dictionary<string, string>>> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override Task<dynamic> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<IEnumerable<Dictionary<string, string>>> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override Task<dynamic> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName)
         {
             throw new NotImplementedException();
         }
@@ -123,7 +123,7 @@ namespace Diagnostics.DataProviders
             throw new NotImplementedException();
         }
 
-        public override Task<IEnumerable<Dictionary<string, string>>> GetSitesInServerFarm(string subscriptionId, string serverFarmName)
+        public override Task<dynamic> GetSitesInServerFarm(string subscriptionId, string serverFarmName)
         {
             throw new NotImplementedException();
         }

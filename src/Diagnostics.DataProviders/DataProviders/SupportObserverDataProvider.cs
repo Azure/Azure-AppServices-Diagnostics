@@ -40,9 +40,10 @@ namespace Diagnostics.DataProviders
             throw new NotImplementedException();
         }
 
-        public override Task<IEnumerable<Dictionary<string, string>>> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override async Task<dynamic> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName)
         {
-            throw new NotImplementedException();
+            var result = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/certificates");
+            return JsonConvert.DeserializeObject(result);
         }
 
         public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
@@ -57,44 +58,43 @@ namespace Diagnostics.DataProviders
 
         private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, string.IsNullOrWhiteSpace(stampName) ? $"/sites/{siteName}/runtimesiteslotmap" : $"stamp/{stampName}/sites/{siteName}/runtimesiteslotmap");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _configuration.GetAccessToken(_configuration.RuntimeSiteSlotMapResourceUri));
-            var response = await GetObserverClient().SendAsync(request);
-            response.EnsureSuccessStatusCode();
-            var result = await response.Content.ReadAsStringAsync();
+            var result = await Get(string.IsNullOrWhiteSpace(stampName) ? $"/sites/{siteName}/runtimesiteslotmap" : $"stamp/{stampName}/sites/{siteName}/runtimesiteslotmap");
             var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);
             var slotTimeRange = new Dictionary<string, List<RuntimeSitenameTimeRange>>(slotTimeRangeCaseSensitiveDictionary, StringComparer.CurrentCultureIgnoreCase);
             return slotTimeRange;
         }
 
-        public override Task<IEnumerable<Dictionary<string, string>>> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override async Task<dynamic> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName)
         {
-            throw new NotImplementedException();
+            var result = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/serverfarms");
+            return JsonConvert.DeserializeObject(result);
         }
 
-        public override Task<string> GetServerFarmWebspaceName(string subscriptionId, string serverFarm)
+        public override async Task<string> GetServerFarmWebspaceName(string subscriptionId, string serverFarm)
         {
-            throw new NotImplementedException();
+            return await Get($"subscriptionid/{subscriptionId}/serverfarm/{serverFarm}/webspacename");
         }
 
-        public override Task<string> GetSiteResourceGroupName(string siteName)
+        public override async Task<string> GetSiteResourceGroupName(string siteName)
         {
-            throw new NotImplementedException();
+            return await Get($"sites/{siteName}/resourcegroupname");
         }
 
-        public override Task<IEnumerable<Dictionary<string, string>>> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override async Task<dynamic> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName)
         {
-            throw new NotImplementedException();
+            var sitesResult = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}");
+            return JsonConvert.DeserializeObject(sitesResult);
         }
 
-        public override Task<IEnumerable<Dictionary<string, string>>> GetSitesInServerFarm(string subscriptionId, string serverFarmName)
+        public override async Task<dynamic> GetSitesInServerFarm(string subscriptionId, string serverFarmName)
         {
-            throw new NotImplementedException();
+            var sitesResult = await Get($"subscriptionid/{subscriptionId}/serverfarm/{serverFarmName}/sites");
+            return JsonConvert.DeserializeObject(sitesResult);
         }
 
-        public override Task<string> GetSiteWebSpaceName(string subscriptionId, string siteName)
+        public override async Task<string> GetSiteWebSpaceName(string subscriptionId, string siteName)
         {
-            throw new NotImplementedException();
+            return await Get($"subscriptionid/{subscriptionId}/sitename/{siteName}/webspacename");
         }
 
         public override Task<string> GetStorageVolumeForSite(string stampName, string siteName)
@@ -102,9 +102,9 @@ namespace Diagnostics.DataProviders
             throw new NotImplementedException();
         }
 
-        public override Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName)
+        public override async Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName)
         {
-            throw new NotImplementedException();
+            return await Get($"subscriptionid/{subscriptionId}/webspacename/{webSpaceName}/resourcegroupname");
         }
 
         public override async Task<dynamic> GetSite(string siteName)
@@ -124,6 +124,22 @@ namespace Diagnostics.DataProviders
         public override HttpClient GetObserverClient()
         {
             return new HttpClient();
+        }
+
+        /// <summary>
+        /// Temporary solution
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        private async Task<string> Get(string path)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, $"https://support-bay-api.azurewebsites.net/observer/{path}?api-version=2.0");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _configuration.GetAccessToken(_configuration.RuntimeSiteSlotMapResourceUri));
+            var response = await GetObserverClient().SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            var result = await response.Content.ReadAsStringAsync();
+            return result;
         }
     }
 }
