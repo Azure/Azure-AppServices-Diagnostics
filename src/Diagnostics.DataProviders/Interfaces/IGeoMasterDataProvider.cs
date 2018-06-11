@@ -16,5 +16,7 @@ namespace Diagnostics.DataProviders
         Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken));
 
         Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name);
+
+        Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path = "");
     }
 }

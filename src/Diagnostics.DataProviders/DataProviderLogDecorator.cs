@@ -141,6 +141,11 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(null, _observerDataProvider.GetWebspaceResourceGroupName(subscriptionId, webSpaceName));
         }
 
+        public Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path = "")
+        {
+            return MakeDependencyCall(null, _geomasterDataProvider.MakeHttpGetRequest<T>(subscriptionId, resourceGroupName, name, path));
+        }
+
         public Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
         {
             return MakeDependencyCall(null, _geomasterDataProvider.VerifyHostingEnvironmentVnet(subscriptionId, vnetResourceGroup, vnetName, vnetSubnetName, cancellationToken));
