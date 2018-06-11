@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
@@ -88,22 +87,22 @@ namespace Diagnostics.DataProviders
             return Task.FromResult(JsonConvert.DeserializeObject(siteData));
         }
 
-        public override Task<string> GetSiteResourceGroupName(string siteName)
+        public override Task<string> GetSiteResourceGroupNameAsync(string siteName)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<dynamic> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override Task<dynamic> GetSitesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<dynamic> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override Task<dynamic> GetServerFarmsInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<dynamic> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName)
+        public override Task<dynamic> GetCertificatesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
             throw new NotImplementedException();
         }
@@ -118,37 +117,37 @@ namespace Diagnostics.DataProviders
             throw new NotImplementedException();
         }
 
-        public override Task<string> GetSiteWebSpaceName(string subscriptionId, string siteName)
+        public override Task<string> GetSiteWebSpaceNameAsync(string subscriptionId, string siteName)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<dynamic> GetSitesInServerFarm(string subscriptionId, string serverFarmName)
+        public override Task<dynamic> GetSitesInServerFarmAsync(string subscriptionId, string serverFarmName)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<JObject> GetAppServiceEnvironmentDetails(string hostingEnvironmentName)
+        public override Task<JObject> GetAppServiceEnvironmentDetailsAsync(string hostingEnvironmentName)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<IEnumerable<object>> GetAppServiceEnvironmentDeployments(string hostingEnvironmentName)
+        public override Task<IEnumerable<object>> GetAppServiceEnvironmentDeploymentsAsync(string hostingEnvironmentName)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<JObject> GetAdminSitesBySiteName(string stampName, string siteName)
+        public override Task<JObject> GetAdminSitesBySiteNameAsync(string stampName, string siteName)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<JObject> GetAdminSitesByHostName(string stampName, string[] hostNames)
+        public override Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames)
         {
             throw new NotImplementedException();
         }
 
-        public override Task<string> GetStorageVolumeForSite(string stampName, string siteName)
+        public override Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName)
         {
             throw new NotImplementedException();
         }

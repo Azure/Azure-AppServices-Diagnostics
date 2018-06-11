@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -102,19 +100,19 @@ namespace Diagnostics.DataProviders
 
         public abstract Task<dynamic> GetSite(string siteName);
         public abstract Task<dynamic> GetSite(string stampName, string siteName);
-        public abstract Task<string> GetSiteResourceGroupName(string siteName);
-        public abstract Task<dynamic> GetSitesInResourceGroup(string subscriptionName, string resourceGroupName);
-        public abstract Task<dynamic> GetServerFarmsInResourceGroup(string subscriptionName, string resourceGroupName);
-        public abstract Task<dynamic> GetCertificatesInResourceGroup(string subscriptionName, string resourceGroupName);
+        public abstract Task<string> GetSiteResourceGroupNameAsync(string siteName);
+        public abstract Task<dynamic> GetSitesInResourceGroupAsync(string subscriptionName, string resourceGroupName);
+        public abstract Task<dynamic> GetServerFarmsInResourceGroupAsync(string subscriptionName, string resourceGroupName);
+        public abstract Task<dynamic> GetCertificatesInResourceGroupAsync(string subscriptionName, string resourceGroupName);
         public abstract Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName);
         public abstract Task<string> GetServerFarmWebspaceName(string subscriptionId, string serverFarm);
-        public abstract Task<string> GetSiteWebSpaceName(string subscriptionId, string siteName);
-        public abstract Task<dynamic> GetSitesInServerFarm(string subscriptionId, string serverFarmName);
-        public abstract Task<JObject> GetAppServiceEnvironmentDetails(string hostingEnvironmentName);
-        public abstract Task<IEnumerable<object>> GetAppServiceEnvironmentDeployments(string hostingEnvironmentName);
-        public abstract Task<JObject> GetAdminSitesBySiteName(string stampName, string siteName);
-        public abstract Task<JObject> GetAdminSitesByHostName(string stampName, string[] hostNames);
-        public abstract Task<string> GetStorageVolumeForSite(string stampName, string siteName);
+        public abstract Task<string> GetSiteWebSpaceNameAsync(string subscriptionId, string siteName);
+        public abstract Task<dynamic> GetSitesInServerFarmAsync(string subscriptionId, string serverFarmName);
+        public abstract Task<JObject> GetAppServiceEnvironmentDetailsAsync(string hostingEnvironmentName);
+        public abstract Task<IEnumerable<object>> GetAppServiceEnvironmentDeploymentsAsync(string hostingEnvironmentName);
+        public abstract Task<JObject> GetAdminSitesBySiteNameAsync(string stampName, string siteName);
+        public abstract Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames);
+        public abstract Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName);
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName);
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
         public abstract HttpClient GetObserverClient();

@@ -151,6 +151,38 @@ namespace Diagnostics.Logger
         #endregion
 
         #region Data Provider Events (ID Range : 3000 - 3999)
+        [Event(3000, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDataProviderMessage)]
+        public void LogDataProviderMessage(string RequestId, string Source, string Message)
+        {
+            WriteDiagnosticsEvent(3000,
+                RequestId,
+                Source,
+                Message);
+        }
+
+        [Event(3001, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDataProviderException)]
+        public void LogDataProviderException(string RequestId, string Source, string StartTime, string EndTime, long LatencyInMilliseconds, string ExceptionType, string ExceptionDetails)
+        {
+            WriteDiagnosticsEvent(3001,
+                RequestId,
+                Source,
+                StartTime,
+                EndTime,
+                LatencyInMilliseconds,
+                ExceptionType,
+                ExceptionDetails);
+        }
+
+        [Event(3002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDataProviderOperationSummary)]
+        public void LogDataProviderOperationSummary(string RequestId, string Source, string StartTime, string EndTime, long LatencyInMilliseconds)
+        {
+            WriteDiagnosticsEvent(3002,
+                RequestId,
+                Source,
+                StartTime,
+                EndTime,
+                LatencyInMilliseconds);
+        }
         #endregion
     }
 }

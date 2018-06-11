@@ -10,15 +10,15 @@ namespace Diagnostics.DataProviders
     {
         private OperationDataCache _cache = new OperationDataCache();
 
-        public KustoDataProvider Kusto;
+        public IKustoDataProvider Kusto;
         public ISupportObserverDataProvider Observer;
-        public GeoMasterDataProvider GeoMaster;
+        public IGeoMasterDataProvider GeoMaster;
 
         public DataProviders(DataSourcesConfiguration configuration)
         {
-            Kusto = new KustoDataProvider(_cache, configuration.KustoConfiguration);
-            Observer = SupportObserverDataProviderFactory.GetDataProvider(_cache, configuration);
-            GeoMaster = new GeoMasterDataProvider(_cache, configuration.GeoMasterConfiguration);
+            Kusto = new DataProviderLogDecorator(new KustoDataProvider(_cache, configuration.KustoConfiguration));
+            Observer = new DataProviderLogDecorator(SupportObserverDataProviderFactory.GetDataProvider(_cache, configuration));
+            GeoMaster = new DataProviderLogDecorator(new GeoMasterDataProvider(_cache, configuration.GeoMasterConfiguration));
         }
     }
 }

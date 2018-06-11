@@ -14,7 +14,7 @@ namespace Diagnostics.DataProviders
         public string Text;
         public string Url;
     }
-    public class KustoDataProvider: DiagnosticDataProvider, IDiagnosticDataProvider
+    public class KustoDataProvider: DiagnosticDataProvider, IDiagnosticDataProvider, IKustoDataProvider
     {
         private KustoDataProviderConfiguration _configuration;
         private IKustoClient _kustoClient;
