@@ -73,7 +73,6 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             var detectorResponse = await GetDetector(detectorId, context);
 
-
             return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse));
         }
 
@@ -107,16 +106,39 @@ namespace Diagnostics.RuntimeHost.Controllers
             return response;
         }
 
-        protected async Task<IEnumerable<Definition>> GetDetectorsBySupportTopicId<TResource>(OperationContext<TResource> context, string supportTopicId)
+        protected async Task<AzureSupportCenterInsightEnvelope> GetInsights<TResource>(OperationContext<TResource> cxt, string supportTopicId)
             where TResource : IResource
         {
-            var allDetectors = (await ListDetectors(context)).Select(detectorResponse => detectorResponse.Metadata);
+            IEnumerable<AzureSupportCenterInsight> insights = null;
+            string error = null;
+            try
+            {
+                var allDetectors = (await ListDetectors(cxt)).Select(detectorResponse => detectorResponse.Metadata);
 
-            var applicableDetectors = string.IsNullOrWhiteSpace(supportTopicId) ? 
-                allDetectors:
-                allDetectors.Where(detector => detector.SupportTopicList.FirstOrDefault(supportTopic => supportTopic.Id == supportTopicId) != null);
+                var applicableDetectors = allDetectors
+                    .Where(detector => string.IsNullOrWhiteSpace(supportTopicId) || detector.SupportTopicList.FirstOrDefault(supportTopic => supportTopic.Id == supportTopicId) != null);
 
-            return applicableDetectors;
+                var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => GetInsightsFromDetector(cxt, detector)));
+
+                insights = insightGroups.Where(group => group != null).SelectMany(group => group);
+            }
+            catch (Exception ex)
+            {
+                error = ex.GetType().ToString();
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.RequestId, "GetInsights", cxt.Resource.SubscriptionId, cxt.Resource.ResourceGroup,
+                    cxt.Resource.Name, ex.GetType().ToString(), ex.ToString());
+            }
+
+            
+            var correlationId = Guid.NewGuid();
+
+            return new AzureSupportCenterInsightEnvelope()
+            {
+                CorrelationId = correlationId,
+                ErrorMessage = error,
+                TotalInsightsFound = insights != null ? insights.Count() : 0,
+                Insights = insights
+            };
         }
 
         protected async Task<IEnumerable<AzureSupportCenterInsight>> GetInsightsFromDetector<TResource>(OperationContext<TResource> context, Definition detector)
@@ -127,9 +149,10 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 response = await GetDetector(detector.Id, context);
             }
-            catch(Exception)
+            catch(Exception ex)
             {
-                //TODO: log
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(context.RequestId, "GetInsightsFromDetector", context.Resource.SubscriptionId,
+                    context.Resource.ResourceGroup, context.Resource.Name, ex.GetType().ToString(), ex.ToString());
             }
             
             // Handle Exception or Not Found

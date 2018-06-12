@@ -35,7 +35,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest("Missing script in body");
             }
 
-            if(jsonBody.Resource == null)
+            if (jsonBody.Resource == null)
             {
                 return BadRequest("Missing Site data in body");
             }
@@ -54,7 +54,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpPost(UriElements.Detectors)]
         public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody)
         {
-            if(postBody == null)
+            if (postBody == null)
             {
                 return BadRequest("Post Body missing.");
             }
@@ -77,53 +77,27 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 return BadRequest(errorMessage);
             }
-            
+
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
             OperationContext<App> context = PrepareContext<App>(app, startTimeUtc, endTimeUtc);
             return await base.GetDetectorResponse<App>(detectorId, context);
         }
 
         [HttpPost(UriElements.Insights)]
-        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody, string supportTopicId, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody, string supportTopicId, string minimumSeverity = null, string startTime = null, string endTime = null, string timeGrain = null)
         {
             if (postBody == null)
             {
                 return BadRequest("Post Body missing.");
             }
 
-            if (siteName == "steve")
-            {
-                subscriptionId = "ef90e930-9d7f-4a60-8a99-748e0eea69de";
-                resourceGroupName = "mikono-demo";
-                siteName = "NodeBakery";
-                postBody.Name = "NodeBakery";
-                postBody.IsLinux = true;
-                postBody.Stamp = new DiagnosticStampData()
-                {
-                    Name = "waws-prod-bay-081",
-                    InternalName = "waws-prod-bay-081"
-                };
-                postBody.HostNames = new List<DiagnosticHostnameData>()
-                {
-                    new DiagnosticHostnameData()
-                    {
-                        Name = "nodebakery.azurewebsites.net",
-                        Type = 0
-                    }
-                };
-            }
-
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
             OperationContext<App> cxt = PrepareContext<App>(app, startTimeUtc, endTimeUtc, true);
 
-            var applicableDetectors = await base.GetDetectorsBySupportTopicId(cxt, supportTopicId);
-
-            var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => base.GetInsightsFromDetector(cxt, detector)));
-
-            var insights = insightGroups.Where(group => group != null).SelectMany(group => group);
+            var insightsEnvelope = await GetInsights(cxt, supportTopicId);
             
-            return Ok(insights);
+            return Ok(insightsEnvelope);
         }
     }
 }
