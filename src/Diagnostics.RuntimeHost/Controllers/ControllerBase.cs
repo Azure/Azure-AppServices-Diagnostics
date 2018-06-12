@@ -131,6 +131,8 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             
             var correlationId = Guid.NewGuid();
+            DiagnosticsETWProvider.Instance.LogRuntimeHostInsightCorrelation(cxt.RequestId, "ControllerBase.GetInsights", cxt.Resource.SubscriptionId,
+                cxt.Resource.ResourceGroup, cxt.Resource.Name, correlationId.ToString());
 
             return new AzureSupportCenterInsightEnvelope()
             {
