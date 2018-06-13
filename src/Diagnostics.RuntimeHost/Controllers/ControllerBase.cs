@@ -113,6 +113,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             string error = null;
             try
             {
+                supportTopicId = ParseCorrectSupportTopicId(supportTopicId);
                 var allDetectors = (await ListDetectors(cxt)).Select(detectorResponse => detectorResponse.Metadata);
 
                 var applicableDetectors = allDetectors
@@ -188,6 +189,15 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             return supportCenterInsights;
+        }
+
+        // The reason we have this method is that Azure Support Center will pass support topic id in the format below:
+        // 1003023/32440119/32457411 
+        // But the support topic we are using is only the last one
+        private string ParseCorrectSupportTopicId(string supportTopicId)
+        {
+            string[] subIds = supportTopicId.Split("/");
+            return subIds[subIds.Length - 1]; 
         }
 
         private List<DataProviderMetadata> GetDataProvidersMetadata(DataProviders.DataProviders dataProviders)
