@@ -21,6 +21,8 @@ namespace Diagnostics.Logger
         public const string LogRuntimeHostAPISummary = "Runtime Host API Response Code : {3}";
         public const string LogRetryAttemptSummary = "Retry Attempt Summary";
         public const string LogRetryAttemptMessage = "Retry Attempt Message";
+        public const string LogRuntimeHostInsightsCorrelation = "Insights Correlation Id";
+        public const string LogRuntimeHostHandledException = "Runtime Host Handled Exception : {3}";
 
         #endregion
 

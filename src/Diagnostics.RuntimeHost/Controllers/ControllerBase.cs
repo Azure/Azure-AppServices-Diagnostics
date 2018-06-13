@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Models.GeoMaster;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -38,7 +39,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._dataSourcesConfigService = dataSourcesConfigService;
         }
 
-        protected OperationContext<TResource> PrepareContext<TResource>(TResource resource, DateTime startTime, DateTime endTime)
+        protected OperationContext<TResource> PrepareContext<TResource>(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false)
             where TResource : IResource
         {
             this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
@@ -53,7 +54,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 resource,
                 DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(DataProviderConstants.KustoTimeFormat),
                 DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(DataProviderConstants.KustoTimeFormat),
-                isInternalRequest,
+                isInternalRequest || forceInternal,
                 requestIds.FirstOrDefault()
             );
         }
@@ -67,7 +68,15 @@ namespace Diagnostics.RuntimeHost.Controllers
                 .Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.IsInternalCall) });
         }
 
-        protected async Task<IActionResult> GetDetector<TResource>(string detectorId, OperationContext<TResource> context)
+        protected async Task<IActionResult> GetDetectorResponse<TResource>(string detectorId, OperationContext<TResource> context)
+            where TResource : IResource
+        {
+            var detectorResponse = await GetDetector(detectorId, context);
+
+            return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse));
+        }
+
+        protected async Task<Response> GetDetector<TResource>(string detectorId, OperationContext<TResource> context)
             where TResource : IResource
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
@@ -76,7 +85,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             if (invoker == null)
             {
-                return NotFound();
+                return null;
             }
 
             Response res = new Response
@@ -93,10 +102,102 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
             }
-            
-            var apiResponse = DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata);
 
-            return Ok(apiResponse);
+            return response;
+        }
+
+        protected async Task<AzureSupportCenterInsightEnvelope> GetInsights<TResource>(OperationContext<TResource> cxt, string supportTopicId)
+            where TResource : IResource
+        {
+            IEnumerable<AzureSupportCenterInsight> insights = null;
+            string error = null;
+            try
+            {
+                supportTopicId = ParseCorrectSupportTopicId(supportTopicId);
+                var allDetectors = (await ListDetectors(cxt)).Select(detectorResponse => detectorResponse.Metadata);
+
+                var applicableDetectors = allDetectors
+                    .Where(detector => string.IsNullOrWhiteSpace(supportTopicId) || detector.SupportTopicList.FirstOrDefault(supportTopic => supportTopic.Id == supportTopicId) != null);
+
+                var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => GetInsightsFromDetector(cxt, detector)));
+
+                insights = insightGroups.Where(group => group != null).SelectMany(group => group);
+            }
+            catch (Exception ex)
+            {
+                error = ex.GetType().ToString();
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.RequestId, "GetInsights", cxt.Resource.SubscriptionId, cxt.Resource.ResourceGroup,
+                    cxt.Resource.Name, ex.GetType().ToString(), ex.ToString());
+            }
+
+            
+            var correlationId = Guid.NewGuid();
+            DiagnosticsETWProvider.Instance.LogRuntimeHostInsightCorrelation(cxt.RequestId, "ControllerBase.GetInsights", cxt.Resource.SubscriptionId,
+                cxt.Resource.ResourceGroup, cxt.Resource.Name, correlationId.ToString());
+
+            return new AzureSupportCenterInsightEnvelope()
+            {
+                CorrelationId = correlationId,
+                ErrorMessage = error,
+                TotalInsightsFound = insights != null ? insights.Count() : 0,
+                Insights = insights
+            };
+        }
+
+        protected async Task<IEnumerable<AzureSupportCenterInsight>> GetInsightsFromDetector<TResource>(OperationContext<TResource> context, Definition detector)
+            where TResource: IResource
+        {
+            Response response = null;
+            try
+            {
+                response = await GetDetector(detector.Id, context);
+            }
+            catch(Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(context.RequestId, "GetInsightsFromDetector", context.Resource.SubscriptionId,
+                    context.Resource.ResourceGroup, context.Resource.Name, ex.GetType().ToString(), ex.ToString());
+            }
+            
+            // Handle Exception or Not Found
+            // Not found can occur if invalid detector is put in detector list
+            if (response == null)
+            {
+                return null;
+            }
+
+            List<AzureSupportCenterInsight> supportCenterInsights = new List<AzureSupportCenterInsight>();
+
+            // Take max one insight per detector, only critical or warning, pick the most critical
+            var mostCriticalInsight = response.Insights.Where(insight => ((int)insight.Status) < ((int)InsightStatus.Warning)).OrderBy(insight => insight.Status).FirstOrDefault();
+
+            if (mostCriticalInsight != null)
+            {
+                supportCenterInsights.Add(AzureSupportCenterInsightUtilites.CreateInsight(mostCriticalInsight, context, detector));
+            }
+
+            var detectorLists = response.Dataset
+                .Where(diagnosicData => diagnosicData.RenderingProperties.Type == RenderingType.Detector)
+                .SelectMany(diagnosticData => ((DetectorCollectionRendering)diagnosticData.RenderingProperties).DetectorIds)
+                .Distinct();
+
+            if (detectorLists.Any())
+            {
+                var applicableDetectorMetaData = (await this.ListDetectors(context)).Where(detectorResponse => detectorLists.Contains(detectorResponse.Metadata.Id));
+                var detectorListResponses = await Task.WhenAll(applicableDetectorMetaData.Select(detectorResponse => GetInsightsFromDetector(context, detectorResponse.Metadata)));
+
+                supportCenterInsights.AddRange(detectorListResponses.Where(detectorInsights => detectorInsights != null).SelectMany(detectorInsights => detectorInsights));
+            }
+
+            return supportCenterInsights;
+        }
+
+        // The reason we have this method is that Azure Support Center will pass support topic id in the format below:
+        // 1003023/32440119/32457411 
+        // But the support topic we are using is only the last one
+        private string ParseCorrectSupportTopicId(string supportTopicId)
+        {
+            string[] subIds = supportTopicId.Split("/");
+            return subIds[subIds.Length - 1]; 
         }
 
         private List<DataProviderMetadata> GetDataProvidersMetadata(DataProviders.DataProviders dataProviders)

@@ -155,6 +155,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
             response.Dataset.Add(diagnosticData);
 
+            response.Insights.AddRange(insights);
+
             return diagnosticData;
         }
 

@@ -21,5 +21,7 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string Query = "query";
         public const string Detectors = "detectors";
         public const string DetectorResource = "/{detectorId}";
+        public const string Insights = "insights";
+        public const string InsightResource = "/{insightId}";
     }
 }

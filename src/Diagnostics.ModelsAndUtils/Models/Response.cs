@@ -29,6 +29,11 @@ namespace Diagnostics.ModelsAndUtils.Models
         public Status Status { get; set; }
 
         /// <summary>
+        /// Insight List - DO NOT ADD TO THIS DIRECTLY
+        /// </summary>
+        public List<Insight> Insights { get; set; }
+
+        /// <summary>
         /// Creates an instance of Response
         /// </summary>
         public Response()
@@ -36,6 +41,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             Status = null;
             Metadata = new Definition();
             Dataset = new List<DiagnosticData>();
+            Insights = new List<Insight>();
         }
     }
 

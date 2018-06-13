@@ -104,6 +104,31 @@ namespace Diagnostics.Logger
                 ExceptionDetails);
         }
 
+        [Event(2005, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostInsightsCorrelation)]
+        public void LogRuntimeHostInsightCorrelation(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string CorrelationId)
+        {
+            WriteDiagnosticsEvent(2005,
+                RequestId,
+                Source,
+                SubscriptionId,
+                ResourceGroup,
+                Resource,
+                CorrelationId);
+        }
+
+        [Event(2006, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostHandledException)]
+        public void LogRuntimeHostHandledException(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails)
+        {
+            WriteDiagnosticsEvent(2006,
+                RequestId,
+                Source,
+                SubscriptionId,
+                ResourceGroup,
+                Resource,
+                ExceptionType,
+                ExceptionDetails);
+        }
+
         #endregion
 
         #region SourceWatcher Events (ID Range : 2500 - 2599)
