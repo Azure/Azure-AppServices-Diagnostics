@@ -1,0 +1,97 @@
+﻿using Diagnostics.DataProviders;
+using Diagnostics.Reporting.Models;
+using Microsoft.Extensions.Configuration;
+using SendGrid.Helpers.Mail;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+
+namespace Diagnostics.Reporting
+{
+    public static class CategoryLevelMetrics
+    {
+        private static string _productBreakdownQuery = $@"cluster('Usage360').database('Product360'). 
+            {P360TableResolver.SupportProductionDeflectionWeeklyTable}
+            | extend period = Timestamp
+            | where period >= ago(14d)
+            | where (DerivedProductIDStr in ({{ProductIds}})) 
+            | where SupportTopicL2 contains '{{ProglemCategory}}'
+            | where DenominatorQuantity != 0 
+            | summarize deflection = round(100 * sum(NumeratorQuantity) / sum(DenominatorQuantity), 2), casesLeaked = round(sum(DenominatorQuantity)) - round(sum(NumeratorQuantity)), casesDeflected = round(sum(NumeratorQuantity))  by period, ProductName, DerivedProductIDStr
+            | order by DerivedProductIDStr asc";
+
+        private static string _productWeeklyTrendsQuery = $@"
+            {P360TableResolver.SupportProductionDeflectionWeeklyTable}
+                | extend period = Timestamp
+                | where period >= ago(150d)
+                | where (DerivedProductIDStr in ({{ProductIds}}))
+                | where SupportTopicL2 contains '{{ProglemCategory}}'
+                | where DenominatorQuantity != 0 
+                | summarize qty = sum(NumeratorQuantity) / sum(DenominatorQuantity), auxQty = sum(DenominatorQuantity) by period, ProductName
+                | project period , ProductName , deflection = round(100 * qty, 2)";
+
+        private static string _subCategoryBreakdownQuery = $@"cluster('Usage360').database('Product360'). 
+            {P360TableResolver.SupportProductionDeflectionWeeklyTable}
+            | extend period = Timestamp
+            | where period >= ago(14d)
+            | where (DerivedProductIDStr in ({{ProductIds}})) 
+            | where SupportTopicL2 contains '{{ProglemCategory}}'
+            | summarize deflection = round(100 * sum(NumeratorQuantity) / sum(DenominatorQuantity), 2), casesLeaked = round(sum(DenominatorQuantity)) - round(sum(NumeratorQuantity)), casesDeflected = round(sum(NumeratorQuantity))  by period, SupportTopicL2, SupportTopicL3, SupportTopicId
+            | where SupportTopicL3 != ''
+            | order by period desc";
+
+        private static string _casesLeakedQuery = @"cluster('Usage360').database('Product360').
+            AllCloudSupportIncidentDataWithP360MetadataMapping
+            | where DerivedProductIDStr in ({ProductIds})
+            | where Incidents_SupportTopicL2Current contains '{ProglemCategory}'
+            | where Incidents_CreatedTime > ago(7d)
+            | summarize IncidentTime = any(Incidents_CreatedTime) by Incidents_IncidentId , Incidents_Severity , Incidents_ProductName , Incidents_SupportTopicL2Current , Incidents_SupportTopicL3Current 
+            | order by Incidents_SupportTopicL3Current asc";
+
+        public static void Run(KustoClient kustoClient, IConfiguration config)
+        {
+            var configurations = config.GetSection("CategoryLevel");
+            var entries = configurations.GetChildren();
+            foreach(var entry in entries)
+            {
+                CreateAndSendReport(config, entry, kustoClient);
+            }
+        }
+
+        private static void CreateAndSendReport(IConfiguration config, IConfigurationSection entry, KustoClient kustoClient)
+        {
+            string categoryName = config[$"{entry.Path}:Name"];
+            string productIds = config[$"{entry.Path}:ProductIds"];
+            string emailSubject = config[$"{entry.Path}:Subject"];
+            List<string> toList = config[$"{entry.Path}:To"].Split(new char[] { ',', ';' }).ToList();
+
+            List<Product> productList = DataHelper.GetOverallProductsData(kustoClient, _productBreakdownQuery.Replace("{ProductIds}", productIds).Replace("{ProglemCategory}", categoryName));
+            List<Tuple<string, Image>> productWeeklyTrends = DataHelper.GetProductWeeklyTrends(kustoClient, _productWeeklyTrendsQuery.Replace("{ProductIds}", productIds).Replace("{ProglemCategory}", categoryName));
+            string subCategoryBreakdownQuery = _subCategoryBreakdownQuery.Replace("{ProductIds}", productIds).Replace("{ProglemCategory}", categoryName);
+            List<SubCategory> subCategoryList = DataHelper.GetSubCategoryBreakdownData(kustoClient, subCategoryBreakdownQuery);
+            
+            DateTime period = productList.OrderByDescending(g => g.Period).First().Period;
+            emailSubject = emailSubject.Replace("{date}", $"{period.Month}/{period.Day}");
+
+            SendGridMessage sendGridMessage = EmailClient.InitializeMessage(config, emailSubject, toList);
+
+            string emailtemplate = File.ReadAllText(@"EmailTemplates\CategoryLevelMetricsTemplate.html");
+            string htmlEmail = emailtemplate.Replace("{WeekDate}", $"{period.Month}/{period.Day}").Replace("{CategoryName}", categoryName);
+
+            htmlEmail = htmlEmail.Replace("{ProductMetricsTable}", HtmlHelper.GetProductMetricsTable(productList, productWeeklyTrends, ref sendGridMessage));
+
+            string casesLeakedQuery = _casesLeakedQuery.Replace("{ProductIds}", productIds).Replace("{ProglemCategory}", categoryName);
+
+            htmlEmail = htmlEmail
+                .Replace("{LeakedCasesLink}", kustoClient.GetKustoQueryUriAsync("*", casesLeakedQuery).Result)
+                .Replace("{SubCategoryBreakdownLink}", kustoClient.GetKustoQueryUriAsync("*", subCategoryBreakdownQuery).Result);
+
+            string subCategoryMetricsTable = HtmlHelper.GetSubCategoryBreakdownMetricsTable(subCategoryList);
+            htmlEmail = htmlEmail.Replace("{SubCategoryMetricsTable}", subCategoryMetricsTable);
+
+            var res = EmailClient.SendEmail(config, sendGridMessage, htmlEmail).Result;
+        }
+    }
+}

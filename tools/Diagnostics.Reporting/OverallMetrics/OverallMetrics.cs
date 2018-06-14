@@ -1,6 +1,7 @@
 ﻿using Diagnostics.DataProviders;
 using Diagnostics.Reporting.Models;
 using Microsoft.Extensions.Configuration;
+using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -12,17 +13,18 @@ namespace Diagnostics.Reporting
 {
     public static class OverallMetrics
     {
-        private static string query = @"cluster('Usage360').database('Product360'). 
-            SupportProductionDeflectionWeeklyVer1020
+        private static string query = $@"cluster('Usage360').database('Product360'). 
+            {P360TableResolver.SupportProductionDeflectionWeeklyTable}
             | extend period = Timestamp
-            | where period >= ago(14d)
+            | where period >= ago(20d)
             | where(DerivedProductIDStr in ('14748', '16170', '16333', '16072', '16512', '16513'))
             | where DenominatorQuantity != 0 
             | summarize deflection = round(100 * sum(NumeratorQuantity) / sum(DenominatorQuantity), 2), casesLeaked = round(sum(DenominatorQuantity)) - round(sum(NumeratorQuantity)), casesDeflected = round(sum(NumeratorQuantity))  by period, ProductName, DerivedProductIDStr
             | order by DerivedProductIDStr asc";
 
-        private static string breakdownBySolutionQuery = @"
-            let processedStream = cluster('Usage360').database('Product360').SupportProductionDeflectionWeeklyPoPInsightsVer1020
+        private static string breakdownBySolutionQuery = $@"
+            let processedStream = cluster('Usage360').database('Product360').
+                {P360TableResolver.SupportProductionDeflectionWeeklyPoPInsightsTable}
                 | extend Current = CurrentDenominatorQuantity, Previous = PreviousDenominatorQuantity, PreviousN = PreviousNDenominatorQuantity , CurrentQ = CurrentNumeratorQuantity, PreviousQ = PreviousNumeratorQuantity, PreviousNQ = PreviousNNumeratorQuantity,  Change = CurrentNumeratorQuantity-PreviousNumeratorQuantity
                 | extend C_ID = SolutionType, C_Name = SolutionType
                 | where (DerivedProductIDStr in ('14748', '16170', '16333', '16072', '16512', '16513'))
@@ -37,28 +39,39 @@ namespace Diagnostics.Reporting
                 | project ProductName, Name = C_Name, Current = round(100 * CurPer, 2), CurrentNumerator = round(CurPer * Current), CurrentDenominator = round(Current), Previous = round(100 * PrevPer, 2), PreviousNumerator = round(PrevPer * Previous), PreviousDenominator = round(Previous)
                 | order by ProductName desc";
 
+        private static string weeklyTrendsQuery = $@"
+                {P360TableResolver.SupportProductionDeflectionWeeklyTable}
+                | extend period = Timestamp
+                | where period >= ago(150d)
+                | where (DerivedProductIDStr in  ('14748', '16170', '16333', '16072', '16512', '16513'))
+                | where DenominatorQuantity != 0 
+                | summarize qty = sum(NumeratorQuantity) / sum(DenominatorQuantity), auxQty = sum(DenominatorQuantity) by period, ProductName
+                | project period , ProductName , deflection = round(100 * qty, 2)";
+
         public static void Run(KustoClient kustoClient, IConfiguration config)
         {
-            List<Product> productList = Helper.GetOverallProductsData(kustoClient, query);
+            List<Product> productList = DataHelper.GetOverallProductsData(kustoClient, query);
             if (productList == null || !productList.Any())
             {
                 return;
             }
 
+            List<Tuple<string, Image>> weeklyTrends = DataHelper.GetProductWeeklyTrends(kustoClient, weeklyTrendsQuery);
+            List<Solution> solutions = DataHelper.GetSolutionsData(kustoClient, breakdownBySolutionQuery);
+            
             DateTime period = productList.OrderByDescending(g => g.Period).First().Period;
-
             string emailSubject = config["OverallMetricsReport:Subject"].ToString().Replace("{date}", $"{period.Month}/{period.Day}");
             List<string> toList = config["OverallMetricsReport:To"].ToString().Split(new char[] { ',', ';', ':' }).ToList();
 
+            SendGridMessage sendGridMessage = EmailClient.InitializeMessage(config, emailSubject, toList);
+
             string emailtemplate = File.ReadAllText(@"EmailTemplates\OverallMetricsTemplate.html");
-            string htmlEmail = emailtemplate.Replace("{WeekDate}", $"{period.Month}/{period.Day}");
+            string htmlEmail = emailtemplate
+                .Replace("{WeekDate}", $"{period.Month}/{period.Day}")
+                .Replace("{ProductMetricsTable}", HtmlHelper.GetProductMetricsTable(productList, weeklyTrends, ref sendGridMessage))
+                .Replace("{SolutionMetricsTable}", HtmlHelper.GetSolutionMetricsTable(solutions));
 
-            htmlEmail = htmlEmail.Replace("{ProductMetricsTable}", Helper.GetProductMetricsTable(productList));
-
-            List<Solution> solutions = Helper.GetSolutionsData(kustoClient, breakdownBySolutionQuery);
-            htmlEmail = htmlEmail.Replace("{SolutionMetricsTable}", Helper.GetSolutionMetricsTable(solutions));
-
-            var res = EmailClient.SendEmail(config, toList, emailSubject, "", htmlEmail).Result;
+            var res = EmailClient.SendEmail(config, sendGridMessage, htmlEmail).Result;
         }
     }
 }

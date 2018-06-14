@@ -18,7 +18,7 @@
 </head>
 <body>
 
-    <h2>{ProductName} : Deflection Metrics (Week Ending on {WeekDate})</h2>
+    <h2>{CategoryName} : Deflection Metrics (Week Ending on {WeekDate})</h2>
 
     <div style="margin-bottom:20px">
         {ProductMetricsTable}
@@ -28,19 +28,13 @@
         <div style="font-weight:500;font-size:25px;color:#5c85d6;">Useful Links</div>
         <div style="margin-left:40px">
             <div>- <a target="_blank" href="{LeakedCasesLink}">Leaked Cases</a></div>
-            <div>- <a target="_blank" href="{CategoryBreakdownLink}">Category Breakdown</a></div>
+            <div>- <a target="_blank" href="{SubCategoryBreakdownLink}">Sub-Category Breakdown</a></div>
         </div>
-    </div>
-
-    <div style="margin-top:50px">
-        <div style="font-weight:500;font-size:25px;color:#5c85d6;margin-bottom:20px">Breakdown By Problem Category</div>
-
-        {CategoryMetricsTable}
     </div>
 
     <div style="margin-top:50px">
         {SubCategoryMetricsTable}
     </div>
-    
+
 </body>
 </html>

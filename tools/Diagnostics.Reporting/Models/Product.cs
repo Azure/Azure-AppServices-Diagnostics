@@ -17,7 +17,7 @@ namespace Diagnostics.Reporting.Models
         {
             get
             {
-                return Helper.GetP360Link(ProductId);
+                return DataHelper.GetP360ProductLink(ProductId);
             }
         }
         public List<Category> Categories;

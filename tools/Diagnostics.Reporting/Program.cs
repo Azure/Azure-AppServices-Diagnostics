@@ -20,12 +20,13 @@ namespace Diagnostics.Reporting
 
             KustoDataProviderConfiguration config = PrepareKustoConfig();
             KustoTokenService.Instance.Initialize(config);
-            
             KustoClient ks = new KustoClient(config);
 
-            //OverallMetrics.Run(ks, Configuration);
-            var linux = new LinuxAppMetrics();
-            linux.Run(ks, Configuration);
+            P360TableResolver.Init(ks);
+
+            OverallMetrics.Run(ks, Configuration);
+            ProductLevelMetrics.Run(ks, Configuration);
+            CategoryLevelMetrics.Run(ks, Configuration);
         }
 
         private static KustoDataProviderConfiguration PrepareKustoConfig()
@@ -35,12 +36,12 @@ namespace Diagnostics.Reporting
                 AppKey = Configuration["Kusto:AppKey"].ToString(),
                 ClientId = Configuration["Kusto:ClientId"].ToString(),
                 DBName = Configuration["Kusto:DBName"].ToString(),
-                KustoClusterNameGroupings = Configuration["Kusto:KustoRegionGroupings"].ToString(),
-                KustoRegionGroupings = Configuration["Kusto:KustoClusterNameGroupings"].ToString()
+                KustoClusterNameGroupings = string.Empty,
+                KustoRegionGroupings = string.Empty
             };
 
             config.RegionSpecificClusterNameCollection = new ConcurrentDictionary<string, string>();
-            config.RegionSpecificClusterNameCollection.TryAdd("blu", "wawseus");
+            config.RegionSpecificClusterNameCollection.TryAdd("*", Configuration["Kusto:ClusterName"].ToString());
 
             return config;
         }
