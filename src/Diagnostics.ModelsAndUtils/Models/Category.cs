@@ -33,10 +33,13 @@ namespace Diagnostics.ModelsAndUtils.Models
         public static readonly Category ProblemsWithWebjobs = new Category("Problems with Webjobs");
 
         // Linux Specific
-        public static readonly Category DockerContainers = new Category("DockerContainers");
+        public static readonly Category DockerContainers = new Category("Docker Containers");
 
         // ASE Specific
-        public static readonly Category Networking = new Category("Problems with Webjobs");
+        public static readonly Category NetworkConfiguration = new Category("Network Configuration");
+        public static readonly Category ASEDeployment = new Category("ASE Deployment");
+        public static readonly Category Scaling = new Category("Scaling");
+        public static readonly Category Management = new Category("Management");
 
         // Function Specific
         public static readonly Category DeployingFunctionApps = new Category("Deploying Function Apps");
