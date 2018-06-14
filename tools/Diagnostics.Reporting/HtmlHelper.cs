@@ -206,10 +206,10 @@ namespace Diagnostics.Reporting
             string htmlPart = string.Empty;
             DateTime latestPeriod = subCategories.OrderByDescending(p => p.Period).First().Period;
             var groups = subCategories.GroupBy(p => p.CategoryName);
-
+            string emailTemplate = File.ReadAllText(@"EmailTemplates\Parts\SubCategoryBreakdownTable.html");
             foreach (var categoryGroup in groups)
             {
-                string subCategoryTable = File.ReadAllText(@"EmailTemplates\Parts\SubCategoryBreakdownTable.html");
+                string subCategoryTable = emailTemplate;
                 subCategoryTable = subCategoryTable.Replace(@"{Category}", categoryGroup.Key);
 
                 var subCategoryGroup = categoryGroup.GroupBy(p => p.Name);
