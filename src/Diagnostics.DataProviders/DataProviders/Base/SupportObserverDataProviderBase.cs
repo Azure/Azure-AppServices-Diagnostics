@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
@@ -25,24 +26,24 @@ namespace Diagnostics.DataProviders
             FillObserverRouteTemplates();
         }
 
-        public async Task<dynamic> GetResource(string observerUrl)
+        public Task<dynamic> GetResource(string resourceUrl)
         {
             Uri uri;
-            Dictionary<string, string> routeParametersAndValues = null;
-            string routeTemplate = null;
+
+            var allowedHosts = new string[] { "wawsobserver.azurewebsites.windows.net", "support-bay-api.azurewebsites.net", "support-bay-api-stage.azurewebsites.net" };
 
             try
             {
-                uri = new Uri(observerUrl);
+                uri = new Uri(resourceUrl);
 
-                if (!uri.Host.Equals("wawsobserver.azurewebsites.windows.net", StringComparison.CurrentCultureIgnoreCase))
+                if (!allowedHosts.Any(h => uri.Host.Equals(h, StringComparison.CurrentCultureIgnoreCase)))
                 {
-                    throw new FormatException($"{observerUrl} is not for an Observer call. Please use a URL that points to Observer. Eg., https://wawsobserver.azurewebsites.windows.net/Sites/mySite");
+                    throw new FormatException($"Cannot make a call to {uri.Host}. Please use a URL that points to one of the hosts: {string.Join(',', allowedHosts)}");
                 }
             }
             catch (ArgumentNullException)
             {
-                throw new ArgumentNullException("observerUrl");
+                throw new ArgumentNullException("resourceUrl");
             }
             catch (UriFormatException ex)
             {
@@ -50,19 +51,35 @@ namespace Diagnostics.DataProviders
 
                 if (ex.Message.Contains("The URI is empty"))
                 {
-                    exceptionMessage = "ObserverUrl is empty. Please pass a non empty string for observerUrl";
+                    exceptionMessage = "ResourceUrl is empty. Please pass a non empty string for resourceUrl";
                 }
 
                 //fix for travis ci
-                if (!observerUrl.StartsWith("https://wawsobserver.azurewebsites.windows.net") || !observerUrl.StartsWith("http://wawsobserver.azurewebsites.windows.net"))
+                if (!resourceUrl.StartsWith("https://wawsobserver.azurewebsites.windows.net") || !resourceUrl.StartsWith("http://wawsobserver.azurewebsites.windows.net"))
+                if (!allowedHosts.Any(h => resourceUrl.StartsWith($"https://{h}") || resourceUrl.StartsWith($"http://{h}")))
                 {
-                    throw new FormatException($"{observerUrl} is not for an Observer call. Please use a URL that points to Observer. Eg., https://wawsobserver.azurewebsites.windows.net/Sites/mySite");
+                    throw new FormatException($"Please use a URL that points to one of the hosts: {string.Join(',', allowedHosts)}");
                 }
 
-                exceptionMessage = "ObserverUrl is badly formatted. Please use correct format eg., https://wawsobserver.azurewebsites.windows.net/Sites/mySite";
+                exceptionMessage = "ResourceUrl is badly formatted. Please use correct format eg., https://wawsobserver.azurewebsites.windows.net/Sites/mySite";
 
                 throw new FormatException(exceptionMessage);
             }
+
+            if (uri.Host.Contains(allowedHosts[0]))
+            {
+                return GetWawsObserverResourceAsync(uri);
+            }
+            else
+            {
+                return GetSupportObserverResourceAsync(uri);
+            }
+        }
+
+        private async Task<dynamic> GetWawsObserverResourceAsync(Uri uri)
+        {
+            Dictionary<string, string> routeParametersAndValues = null;
+            string routeTemplate = null;
 
             //take a substring to remove forward-slash from start of PathAndQuery
             var pathAndQuery = uri.PathAndQuery.Substring(1);
@@ -83,6 +100,13 @@ namespace Diagnostics.DataProviders
             var apiPath = CreateObserverQueryAndPath(routeParametersAndValues, routeTemplate);
             var response = await GetObserverResource(apiPath);
 
+            var jObjectResponse = JsonConvert.DeserializeObject(response);
+            return jObjectResponse;
+        }
+
+        private async Task<dynamic> GetSupportObserverResourceAsync(Uri uri)
+        {
+            var response = await GetObserverResource(uri.AbsoluteUri, _configuration.RuntimeSiteSlotMapResourceUri);
             var jObjectResponse = JsonConvert.DeserializeObject(response);
             return jObjectResponse;
         }

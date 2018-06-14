@@ -110,7 +110,7 @@ namespace Diagnostics.Tests.DataProviderTests
                 var data = await dataProviders.Observer.GetResource("https://not-wawsobserver.azurewebsites.windows.net/Sites/thor-api");
             }catch(Exception ex)
             {
-                Assert.Contains("Please use a URL that points to Observer", ex.Message);
+                Assert.Contains("Please use a URL that points to one of the hosts", ex.Message);
             }
 
             await Assert.ThrowsAsync<FormatException>(async() => await dataProviders.Observer.GetResource("/sites/hawfor-site"));
@@ -120,7 +120,7 @@ namespace Diagnostics.Tests.DataProviderTests
                 var data3 = await dataProviders.Observer.GetResource("/not-a-route/hawfor-site/not-resource");
             }catch(FormatException ex)
             {
-                Assert.Contains("Please use a URL that points to Observer", ex.Message);
+                Assert.Contains("Please use a URL that points to one of the hosts", ex.Message);
             }
             
             await Assert.ThrowsAsync<ArgumentNullException>(async() => await dataProviders.Observer.GetResource(null));
