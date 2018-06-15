@@ -55,7 +55,6 @@ namespace Diagnostics.DataProviders
                 }
 
                 //fix for travis ci
-                if (!resourceUrl.StartsWith("https://wawsobserver.azurewebsites.windows.net") || !resourceUrl.StartsWith("http://wawsobserver.azurewebsites.windows.net"))
                 if (!allowedHosts.Any(h => resourceUrl.StartsWith($"https://{h}") || resourceUrl.StartsWith($"http://{h}")))
                 {
                     throw new FormatException($"Please use a URL that points to one of the hosts: {string.Join(',', allowedHosts)}");
