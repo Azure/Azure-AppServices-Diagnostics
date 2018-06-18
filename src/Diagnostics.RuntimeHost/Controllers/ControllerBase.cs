@@ -168,7 +168,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             List<AzureSupportCenterInsight> supportCenterInsights = new List<AzureSupportCenterInsight>();
 
             // Take max one insight per detector, only critical or warning, pick the most critical
-            var mostCriticalInsight = response.Insights.Where(insight => ((int)insight.Status) < ((int)InsightStatus.Warning)).OrderBy(insight => insight.Status).FirstOrDefault();
+            var mostCriticalInsight = response.Insights.Where(insight => ((int)insight.Status) <= ((int)InsightStatus.Info)).OrderBy(insight => insight.Status).FirstOrDefault();
 
             if (mostCriticalInsight != null)
             {
@@ -196,6 +196,11 @@ namespace Diagnostics.RuntimeHost.Controllers
         // But the support topic we are using is only the last one
         private string ParseCorrectSupportTopicId(string supportTopicId)
         {
+            if (supportTopicId == null)
+            {
+                return null;
+            }
+
             string[] subIds = supportTopicId.Split("/");
             return subIds[subIds.Length - 1]; 
         }
