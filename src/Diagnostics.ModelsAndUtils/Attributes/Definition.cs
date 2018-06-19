@@ -35,16 +35,11 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         [DataMember]
         public string Author { get; set; }
 
-        public Category Category { get; set; }
-
+        /// <summary>
+        /// Category
+        /// </summary>
         [DataMember]
-        public string ProblemCategory
-        {
-            get
-            {
-                return Category != null ? Category.Value : null;
-            }
-        }
+        public string Category { get; set; }
 
         /// <summary>
         /// List of Support Topics for which this detector is enabled.

@@ -4,58 +4,46 @@ using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {
-    public class Category 
+    public static class Category 
     {
-        private Category(string categoryName)
-        {
-            Value = categoryName;
-        }
-
-        public string Value { get; private set; }
-
-        public static Category Custom(string name)
-        {
-            return new Category(name);
-        }
-
         // The predefined categories below are broken out by resource type, 
         // but it does not mean they can only by used by that resource type.
 
         // General
-        public static readonly Category AvailabilityAndPerformance = new Category("Availability and Performance");
-        public static readonly Category ConfigurationAndManagement = new Category("Configuration and Management");
-        public static readonly Category Deployment = new Category("Deployment");
-        public static readonly Category OpenSourceTechnologies = new Category("Open Source Technologies");
-        public static readonly Category SSL = new Category("SSL");
+        public const string AvailabilityAndPerformance = "Availability and Performance";
+        public const string ConfigurationAndManagement = "Configuration and Management";
+        public const string Deployment = "Deployment";
+        public const string OpenSourceTechnologies = "Open Source Technologies";
+        public const string SSL = "SSL";
 
         // Site Specific
-        public static readonly Category ProblemsWithAse = new Category("Problems with ASE"); // For site on ASE
-        public static readonly Category ProblemsWithWebjobs = new Category("Problems with Webjobs");
+        public const string ProblemsWithAse = "Problems with ASE"; // For site on ASE
+        public const string ProblemsWithWebjobs = "Problems with Webjobs";
 
         // Linux Specific
-        public static readonly Category DockerContainers = new Category("Docker Containers");
+        public const string DockerContainers = "Docker Containers";
 
         // ASE Specific
-        public static readonly Category NetworkConfiguration = new Category("Network Configuration");
-        public static readonly Category ASEDeployment = new Category("ASE Deployment");
-        public static readonly Category Scaling = new Category("Scaling");
-        public static readonly Category Management = new Category("Management");
+        public const string NetworkConfiguration = "Network Configuration";
+        public const string ASEDeployment = "ASE Deployment";
+        public const string Scaling = "Scaling";
+        public const string Management = "Management";
 
         // Function Specific
-        public static readonly Category DeployingFunctionApps = new Category("Deploying Function Apps");
-        public static readonly Category AddingFunctions = new Category("Adding Functions");
-        public static readonly Category AuthenticationAndAuthorization = new Category("Authentication and Authorization");
-        public static readonly Category ConfiguringAndManagingFunctionApps = new Category("Configuring and Managing Function Apps");
-        public static readonly Category DurableFunctions = new Category("Durable Functions");
-        public static readonly Category FunctionPortalIssues = new Category("Function Portal Issues");
-        public static readonly Category FunctionsPerformance = new Category("Functions Performance");
-        public static readonly Category MonitoringFunctions = new Category("Monitoring Functions");
+        public const string DeployingFunctionApps = "Deploying Function Apps";
+        public const string AddingFunctions = "Adding Functions";
+        public const string AuthenticationAndAuthorization = "Authentication and Authorization";
+        public const string ConfiguringAndManagingFunctionApps = "Configuring and Managing Function Apps";
+        public const string DurableFunctions = "Durable Functions";
+        public const string FunctionPortalIssues = "Function Portal Issues";
+        public const string FunctionsPerformance = "Functions Performance";
+        public const string MonitoringFunctions = "Monitoring Functions";
 
         // Certificates Specific
-        public static readonly Category Importing = new Category("Importing");
-        public static readonly Category Renewals = new Category("Renewals");
+        public const string Importing = "Importing";
+        public const string Renewals = "Renewals";
 
         // Domains Specific
-        public static readonly Category Domains = new Category("App Service Domains");
+        public const string Domains = "App Service Domains";
     }
 }
