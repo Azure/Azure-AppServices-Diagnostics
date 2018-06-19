@@ -24,8 +24,8 @@ namespace Diagnostics.Reporting
 
             P360TableResolver.Init(ks);
 
-            OverallMetrics.Run(ks, Configuration);
-            ProductLevelMetrics.Run(ks, Configuration);
+            //OverallMetrics.Run(ks, Configuration);
+            //ProductLevelMetrics.Run(ks, Configuration);
             CategoryLevelMetrics.Run(ks, Configuration);
         }
 
