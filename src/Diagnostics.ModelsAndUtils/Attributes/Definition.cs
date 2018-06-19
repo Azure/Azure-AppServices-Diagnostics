@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Diagnostics.ModelsAndUtils.Models;
+using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Text;
@@ -33,6 +34,17 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// </summary>
         [DataMember]
         public string Author { get; set; }
+
+        public Category Category { get; set; }
+
+        [DataMember]
+        public string ProblemCategory
+        {
+            get
+            {
+                return Category != null ? Category.Value : null;
+            }
+        }
 
         /// <summary>
         /// List of Support Topics for which this detector is enabled.

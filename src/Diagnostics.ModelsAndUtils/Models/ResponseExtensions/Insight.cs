@@ -42,6 +42,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             this.Status = status;
             this.Message = message ?? string.Empty;
             this.Body = new Dictionary<string, string>();
+            this.IsExpanded = false;
         }
 
         /// <summary>
@@ -55,6 +56,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             this.Status = status;
             this.Message = message ?? string.Empty;
             this.Body = body;
+            this.IsExpanded = false;
         }
 
         /// <summary>
@@ -112,7 +114,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 new DataColumn("Status", typeof(string)),
                 new DataColumn("Message", typeof(string)),
                 new DataColumn("Data.Name", typeof(string)),
-                new DataColumn("Data.Value", typeof(string))
+                new DataColumn("Data.Value", typeof(string)),
+                new DataColumn("Expanded", typeof(string))
             });
 
             insights.ForEach(insight =>
@@ -124,7 +127,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                         insight.Status.ToString(),
                         insight.Message,
                         string.Empty,
-                        string.Empty
+                        string.Empty,
+                        insight.IsExpanded.ToString()
                     });
                 }
                 else
@@ -136,7 +140,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                             insight.Status.ToString(),
                             insight.Message,
                             entry.Key,
-                            entry.Value
+                            entry.Value,
+                            insight.IsExpanded.ToString()
                         });
 
                     }

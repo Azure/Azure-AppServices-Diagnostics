@@ -30,7 +30,7 @@ namespace Diagnostics.Tests.ModelTests
 
             foreach (DataRow row in insightFromDataSet.Table.Rows)
             {
-                Assert.Equal(4, row.ItemArray.Count());
+                Assert.Equal(5, row.ItemArray.Count());
             }
         }
 
