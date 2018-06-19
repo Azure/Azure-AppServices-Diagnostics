@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {
-    public static class Category 
+    public static class Categories
     {
         // The predefined categories below are broken out by resource type, 
         // but it does not mean they can only by used by that resource type.
