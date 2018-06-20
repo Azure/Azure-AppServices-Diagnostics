@@ -4,6 +4,10 @@ using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {
+    /// <summary>
+    /// List of predefined problem categories for organizing detectors
+    /// Please assign one of these categories to your detector definition attribute
+    /// </summary>
     public static class Categories
     {
         // The predefined categories below are broken out by resource type, 
