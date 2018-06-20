@@ -322,7 +322,7 @@ namespace Diagnostics.DataProviders
         ///     // For e.g. Microsoft.CertificateRegistration endpoints are available on our 
         ///     // GeoMaster like this
         ///     
-        ///     var fullPath = "/sharedResourceProviderBase/certificateRegistration/subscriptions/subscriptionId/providers/Microsoft.CertificateRegistration/certificateOrders";        
+        ///     var fullPath = "/sharedResourceProviderBase/certificateRegistration/subscriptions/{subscriptionId}/providers/Microsoft.CertificateRegistration/certificateOrders";        
         ///     var resp = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponseArray>]]>(fullPath, "", "2015-08-01");
         ///     
         ///     foreach (var cert in resp.Value)
