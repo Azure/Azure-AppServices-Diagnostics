@@ -301,6 +301,50 @@ namespace Diagnostics.DataProviders
             return geoMasterResponse;
         }
 
+        /// <summary>
+        /// All the ARM or GeoMaster operations that are allowed over HTTP GET can be called via this method by passing the full path e.g. subscriptions/{subscriptionId}/providers/Microsoft.Web/certificates
+        /// To get a list of all the HTTP GET based ARM operations, check out a WebApp on https://resources.azure.com
+        /// It should be noted that the response of the ARM operation is of 3 types 
+        /// 1) Response contains a Properties{} object.
+        /// 2) Reponse contains a Value[] array which has a properties object.
+        /// 3) Response contains a Value[] array that has no properties object. 
+        /// 
+        /// To invoke the right route, pass the right class to the method call i.e. GeoMasterResponse or GeoMasterResponseArray or GeoMasterResponseDynamicArray
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="fullPath">Full path to the ARM operation</param>
+        /// <example>
+        /// <code>
+        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        /// 
+        ///     // HTTP GET operations supported by Antares Resource Provider only are supported
+        ///     // For e.g. Microsoft.CertificateRegistration endpoints are available on our 
+        ///     // GeoMaster like this
+        ///     
+        ///     var fullPath = "/sharedResourceProviderBase/certificateRegistration/subscriptions/subscriptionId/providers/Microsoft.CertificateRegistration/certificateOrders";        
+        ///     var resp = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponseArray>]]>(fullPath, "", "2015-08-01");
+        ///     
+        ///     foreach (var cert in resp.Value)
+        ///     {
+        ///         string distinguisedName = cert.Properties["distinguishedName"];
+        ///     }
+        ///        
+        /// }
+        /// </code>
+        /// </example>
+        /// <returns></returns>
+        public async Task<T> MakeHttpGetRequestWithFullPath<T>(string fullPath, string queryString ="", string apiVersion = GeoMasterConstants.August2016Version)
+        {
+            if (string.IsNullOrWhiteSpace(fullPath))
+            {
+                throw new ArgumentNullException(fullPath);
+            }
+
+            var geoMasterResponse = await HttpGet<T>(fullPath, queryString, apiVersion);
+            return geoMasterResponse;
+        }
+
         #region HttpMethods
 
         private async Task<R> HttpGet<R>(string path, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
