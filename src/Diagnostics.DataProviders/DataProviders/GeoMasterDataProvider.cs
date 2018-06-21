@@ -408,7 +408,12 @@ namespace Diagnostics.DataProviders
             R value = JsonConvert.DeserializeObject<R>(responseContent);
             return value;
         }
-        
+
+        public DataProviderMetadata GetMetadata()
+        {
+            return null;
+        }
+
         #endregion
 
     }
