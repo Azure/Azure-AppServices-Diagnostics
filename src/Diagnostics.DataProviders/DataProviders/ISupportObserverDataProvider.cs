@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Diagnostics.DataProviders
 {
-    public interface ISupportObserverDataProvider
+    public interface ISupportObserverDataProvider:IMetadataProvider
     {
         Task<dynamic> GetSite(string siteName);
         Task<dynamic> GetSite(string stampName, string siteName);
