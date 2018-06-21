@@ -37,6 +37,11 @@ namespace Diagnostics.DataProviders
             return await _kustoClient.ExecuteQueryAsync(query, stampName, requestId, operationName);
         }
 
+        public DataProviderMetadata GetMetadata()
+        {            
+            return Metadata;
+        }
+
         private void AddQueryInformationToMetadata(string query, string queryUrl, string stampName)
         {
             bool queryExists = false;

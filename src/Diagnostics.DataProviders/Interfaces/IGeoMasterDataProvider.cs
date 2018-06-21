@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Diagnostics.DataProviders
 {
-    public interface IGeoMasterDataProvider
+    public interface IGeoMasterDataProvider: IMetadataProvider
     {
         Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name);
 

@@ -214,5 +214,10 @@ namespace Diagnostics.DataProviders
 
             return routeTemplate;
         }
+
+        public DataProviderMetadata GetMetadata()
+        {
+            return null;
+        }
     }
 }

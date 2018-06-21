@@ -16,19 +16,24 @@ namespace Diagnostics.DataProviders
         IGeoMasterDataProvider _geomasterDataProvider;
         ISupportObserverDataProvider _observerDataProvider;
 
+        DataProviderMetadata _currentMetadataProvider;
+
         public DataProviderLogDecorator(IKustoDataProvider dataProvider)
         {
             _kustoDataProvider = dataProvider;
+            _currentMetadataProvider = dataProvider.GetMetadata();
         }
 
         public DataProviderLogDecorator(IGeoMasterDataProvider dataProvider)
         {
             _geomasterDataProvider = dataProvider;
+            _currentMetadataProvider = dataProvider.GetMetadata();
         }
 
         public DataProviderLogDecorator(ISupportObserverDataProvider dataProvider)
         {
             _observerDataProvider = dataProvider;
+            _currentMetadataProvider = dataProvider.GetMetadata();
         }
 
         public Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
@@ -69,6 +74,11 @@ namespace Diagnostics.DataProviders
         public Task<dynamic> GetCertificatesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
             return MakeDependencyCall(null, _observerDataProvider.GetCertificatesInResourceGroupAsync(subscriptionName, resourceGroupName));
+        }
+
+        public DataProviderMetadata GetMetadata()
+        {
+            return _currentMetadataProvider;
         }
 
         public Task<dynamic> GetResource(string wawsObserverUrl)

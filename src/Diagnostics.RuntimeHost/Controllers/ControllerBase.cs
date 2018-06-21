@@ -73,10 +73,10 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             var detectorResponse = await GetDetector(detectorId, context);
 
-            return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse));
+            return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2));
         }
 
-        protected async Task<Response> GetDetector<TResource>(string detectorId, OperationContext<TResource> context)
+        protected async Task<Tuple<Response, List<DataProviderMetadata>>> GetDetector<TResource>(string detectorId, OperationContext<TResource> context)
             where TResource : IResource
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
@@ -103,7 +103,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
             }
 
-            return response;
+            return new Tuple<Response, List<DataProviderMetadata>>(response, dataProvidersMetadata) ;
         }
 
         protected async Task<AzureSupportCenterInsightEnvelope> GetInsights<TResource>(OperationContext<TResource> cxt, string supportTopicId)
@@ -150,7 +150,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             Response response = null;
             try
             {
-                response = await GetDetector(detector.Id, context);
+                response = (await GetDetector(detector.Id, context)).Item1;
             }
             catch(Exception ex)
             {
@@ -205,14 +205,15 @@ namespace Diagnostics.RuntimeHost.Controllers
             var dataprovidersMetadata = new List<DataProviderMetadata>();
             foreach (var dataProvider in dataProviders.GetType().GetFields())
             {
-                if (dataProvider.FieldType.BaseType == typeof(DiagnosticDataProvider))
+                if (dataProvider.FieldType.IsInterface)
                 {
-                    var provider = dataProvider.GetValue(dataProviders) as DiagnosticDataProvider;
-                    if (provider.Metadata != null)
+                    var metadataProvider = dataProvider.GetValue(dataProviders) as IMetadataProvider;
+                    var metadata = metadataProvider.GetMetadata();
+                    if (metadata != null)
                     {
-                        dataprovidersMetadata.Add(provider.Metadata);
+                        dataprovidersMetadata.Add(metadata);
                     }
-                }
+                }               
             }
             return dataprovidersMetadata;
         }
