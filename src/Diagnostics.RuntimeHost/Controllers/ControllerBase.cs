@@ -218,7 +218,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     {
                         dataprovidersMetadata.Add(metadata);
                     }
-                }               
+                }
             }
             return dataprovidersMetadata;
         }
