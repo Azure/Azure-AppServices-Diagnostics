@@ -22,6 +22,13 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public string ResourceGroup { get; set; }
 
+        public AppServiceCertificate(string subscriptionId, string resourceGroup, string name) : base()
+        {
+            this.SubscriptionId = subscriptionId;
+            this.ResourceGroup = resourceGroup;
+            this.Name = name;
+        }
+
         /// <summary>
         /// Determines whether the App Service certificate resource is applicable after filtering.
         /// </summary>

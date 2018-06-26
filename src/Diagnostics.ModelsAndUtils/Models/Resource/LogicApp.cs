@@ -22,6 +22,13 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public string ResourceGroup { get; set; }
 
+        public LogicApp(string subscriptionId, string resourceGroup, string appName) : base()
+        {
+            this.SubscriptionId = subscriptionId;
+            this.ResourceGroup = resourceGroup;
+            this.Name = appName;
+        }
+
         /// <summary>
         /// Determines whether the logic app resource is applicable after filtering.
         /// </summary>

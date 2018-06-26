@@ -48,11 +48,6 @@ namespace Diagnostics.DataProviders
             _configuration = configuration;
         }
 
-        public async Task<DataTable> ExecuteQueryAsync(string query, string requestId = null, string operationName = null)
-        {
-            return await ExecuteQueryAsync(query, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, operationName);
-        }
-
         public async Task<DataTable> ExecuteQueryAsync(string query, string stampName, string requestId = null, string operationName = null)
         {
             string kustoClusterName = GetClusterNameFromStamp(stampName);
