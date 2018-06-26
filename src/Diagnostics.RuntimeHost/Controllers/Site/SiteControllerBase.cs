@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
-    public abstract class SiteControllerBase : ControllerBase
+    public abstract class SiteControllerBase : DiagnosticControllerBase<App>
     {
         protected ISiteService _siteService;
 
@@ -67,7 +67,6 @@ namespace Diagnostics.RuntimeHost.Controllers
             if (kindProperty.Contains("api")) return AppType.ApiApp;
             else if (kindProperty.Contains("function")) return AppType.FunctionApp;
             else if (kindProperty.Contains("mobile")) return AppType.MobileApp;
-            else if (kindProperty.Contains("logic")) return AppType.LogicApp;
             else if (kindProperty.Contains("gateway")) return AppType.GatewayApp;
             else return AppType.WebApp;
         }

@@ -41,6 +41,11 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(requestId, _kustoDataProvider.ExecuteQuery(query, stampName, requestId, operationName));
         }
 
+        public Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null)
+        {
+            return ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, operationName);
+        }
+
         public Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames)
         {
             return MakeDependencyCall(null, _observerDataProvider.GetAdminSitesByHostNameAsync(stampName, hostNames));

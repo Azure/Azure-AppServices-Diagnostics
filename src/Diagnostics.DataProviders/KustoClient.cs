@@ -16,7 +16,7 @@ using System.Web;
 
 namespace Diagnostics.DataProviders
 {
-    public class KustoClient: IKustoClient
+    public class KustoClient : IKustoClient
     {
         private KustoDataProviderConfiguration _configuration;
 
@@ -82,6 +82,26 @@ namespace Diagnostics.DataProviders
             }
         }
 
+        public async Task<string> GetKustoQueryUriAsync(string stampName, string query)
+        {
+            string kustoClusterName = null;
+            try
+            {
+                kustoClusterName = GetClusterNameFromStamp(stampName);
+                string encodedQuery = await EncodeQueryAsBase64UrlAsync(query);
+                var url = string.Format("https://web.kusto.windows.net/clusters/{0}.kusto.windows.net/databases/{1}?q={2}", kustoClusterName, _configuration.DBName, encodedQuery);
+                return url;
+            }
+            catch (Exception ex)
+            {
+                string message = string.Format("stamp : {0}, kustoClusterName : {1}, Exception : {2}",
+                    stampName ?? "null",
+                    kustoClusterName ?? "null",
+                    ex.ToString());
+                throw;
+            }
+        }
+
         // From Kusto.Data.Common.CslCommandGenerator.EncodeQueryAsBase64Url
         private async Task<string> EncodeQueryAsBase64UrlAsync(string query)
         {
@@ -116,25 +136,6 @@ namespace Diagnostics.DataProviders
                 }
             }
             return kustoClusterName;
-        }
-        public async Task<string> GetKustoQueryUriAsync(string stampName, string query)
-        {
-            string kustoClusterName = null;
-            try
-            {
-                kustoClusterName = GetClusterNameFromStamp(stampName);
-                string encodedQuery = await EncodeQueryAsBase64UrlAsync(query);
-                var url = string.Format("https://web.kusto.windows.net/clusters/{0}.kusto.windows.net/databases/{1}?q={2}", kustoClusterName, _configuration.DBName, encodedQuery);
-                return url;
-            }
-            catch (Exception ex)
-            {
-                string message = string.Format("stamp : {0}, kustoClusterName : {1}, Exception : {2}",
-                    stampName ?? "null",
-                    kustoClusterName ?? "null",
-                    ex.ToString());
-                throw;
-            }
         }
 
         private static string ParseRegionFromStamp(string stampName)

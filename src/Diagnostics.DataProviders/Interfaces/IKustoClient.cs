@@ -11,6 +11,7 @@ namespace Diagnostics.DataProviders
     public interface IKustoClient
     {
         Task<DataTable> ExecuteQueryAsync(string query, string stampName, string requestId = null, string operationName = null);
+
         Task<string> GetKustoQueryUriAsync(string stampName, string query);
     }
 }

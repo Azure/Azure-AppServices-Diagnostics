@@ -29,12 +29,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 return BadRequest("Missing body");
             }
-
-            if (string.IsNullOrWhiteSpace(jsonBody.Script))
-            {
-                return BadRequest("Missing script in body");
-            }
-
+            
             if (jsonBody.Resource == null)
             {
                 return BadRequest("Missing Site data in body");
@@ -46,9 +41,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, jsonBody.Resource, startTimeUtc, endTimeUtc);
-            OperationContext<App> cxt = PrepareContext<App>(app, startTimeUtc, endTimeUtc);
-
-            return await base.ExecuteQuery<App>(jsonBody.Script, cxt);
+            return await base.ExecuteQuery(app, jsonBody, startTime, endTime, timeGrain);
         }
 
         [HttpPost(UriElements.Detectors)]
@@ -61,8 +54,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
-            OperationContext<App> cxt = PrepareContext<App>(app, startTimeUtc, endTimeUtc);
-            return Ok(await base.ListDetectors(cxt));
+            return await base.ListDetectors(app);
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
@@ -79,8 +71,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
-            OperationContext<App> context = PrepareContext<App>(app, startTimeUtc, endTimeUtc);
-            return await base.GetDetectorResponse<App>(detectorId, context);
+            return await base.GetDetector(app, detectorId, startTime, endTime, timeGrain);
         }
 
         [HttpPost(UriElements.Insights)]
@@ -91,13 +82,13 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest("Post Body missing.");
             }
 
-            DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
-            App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
-            OperationContext<App> cxt = PrepareContext<App>(app, startTimeUtc, endTimeUtc, true);
+            if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
+            {
+                return BadRequest(errorMessage);
+            }
 
-            var insightsEnvelope = await GetInsights(cxt, supportTopicId);
-            
-            return Ok(insightsEnvelope);
+            App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
+            return await base.GetInsights(app, supportTopicId, minimumSeverity, startTime, endTime, timeGrain);
         }
     }
 }

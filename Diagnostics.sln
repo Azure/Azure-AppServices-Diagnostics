@@ -16,11 +16,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Diagnostics.Scripts", "src\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Diagnostics.Tests", "tests\Diagnostics.Tests.csproj", "{CFD34079-6A40-4938-8840-4325B504ACFA}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{2092A19F-7B5C-4B42-BD99-9A91A252F7ED}"
-	ProjectSection(SolutionItems) = preProject
-		templates\Detector_KustoQuery.csx = templates\Detector_KustoQuery.csx
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{C0537983-2503-4D70-B831-27614DB29F81}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{1923DCF1-54EE-40DA-AE0C-DE10647D3928}"

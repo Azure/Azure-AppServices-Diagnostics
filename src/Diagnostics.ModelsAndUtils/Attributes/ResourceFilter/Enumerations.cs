@@ -17,7 +17,27 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// <summary>
         /// Hosting Environment Resource
         /// </summary>
-        HostingEnvironment = 2
+        HostingEnvironment = 2,
+
+        /// <summary>
+        /// App Service Certificate Resource
+        /// </summary>
+        AppServiceCertificate = 4,
+
+        /// <summary>
+        /// App Service Domain Resource
+        /// </summary>
+        AppServiceDomain = 8,
+
+        /// <summary>
+        /// Logic App Resource
+        /// </summary>
+        LogicApp = 16,
+
+        /// <summary>
+        /// Api Management Service Resource
+        /// </summary>
+        ApiManagementService = 32
     }
 
     /// <summary>
@@ -45,8 +65,7 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         FunctionApp = 2,
         ApiApp = 4,
         MobileApp = 8,
-        LogicApp = 16,
-        GatewayApp = 32,
+        GatewayApp = 16,
         All = 255
     }
 

@@ -29,6 +29,11 @@ namespace Diagnostics.DataProviders
             };
         }
 
+        public async Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null)
+        {
+            return await ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, operationName);
+        }
+
         public async Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
         {
 
