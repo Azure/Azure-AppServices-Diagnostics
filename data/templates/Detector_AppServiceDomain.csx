@@ -15,7 +15,7 @@ public async static Task<Response> Run(DataProviders dp, OperationContext<AppSer
 {
     res.Dataset.Add(new DiagnosticData()
     {
-        Table = await dp.Kusto.ExecuteQuery(GetQuery(cxt))
+        Table = await dp.Kusto.ExecuteClusterQuery(GetQuery(cxt))
     });
 
     return res;

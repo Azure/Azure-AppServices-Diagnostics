@@ -41,7 +41,7 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(requestId, _kustoDataProvider.ExecuteQuery(query, stampName, requestId, operationName));
         }
 
-        public Task<DataTable> ExecuteQuery(string query, string requestId = null, string operationName = null)
+        public Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null)
         {
             return ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, operationName);
         }
