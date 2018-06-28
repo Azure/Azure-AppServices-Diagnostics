@@ -57,11 +57,11 @@ namespace Diagnostics.RuntimeHost.Utilities
                 AdditionalDetails = GetExtraNameValuePairs(insight.Body),
                 ConfidenceLevel = InsightConfidenceLevel.High,
                 Scope = InsightScope.ResourceLevel,
-                ApplensLinks = new List<Link>()
+                Links = new List<Link>()
                 {
                     new Link()
                         {
-                            Type = 0,
+                            Type = 2,
                             Text = "Applens Link",
                             Uri = $"https://applens.azurewebsites.net/{applensPath}"
                         }
