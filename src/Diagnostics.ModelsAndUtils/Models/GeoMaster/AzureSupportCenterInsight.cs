@@ -47,8 +47,6 @@ namespace Diagnostics.ModelsAndUtils.Models.GeoMaster
 
         public InsightScope Scope { get; set; }
 
-        public IEnumerable<Link> ApplensLinks { get; set; }
-
         public IEnumerable<KeyValuePair<string, string>> AdditionalDetails { get; set; }
     }
 
