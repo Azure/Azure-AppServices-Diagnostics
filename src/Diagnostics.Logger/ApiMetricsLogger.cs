@@ -48,27 +48,16 @@ namespace Diagnostics.Logger
                     return;
                 }
 
-                Regex webAppRegEx = new Regex("(.*)subscriptions/(.*)/resourcegroups/(.*)/providers/microsoft.web/sites/(.*)/diagnostics/(.*)");
-                Regex hostingEnvRegEx = new Regex("(.*)subscriptions/(.*)/resourcegroups/(.*)/providers/microsoft.web/hostingenvironments/(.*)/diagnostics/(.*)");
+                Regex csmResourceRegEx = new Regex("(.*)subscriptions/(.*)/resourcegroups/(.*)/providers/(.*)/(.*)/(.*)/diagnostics/(.*)");
 
                 string addressPath = httpContext.Request.Path.ToString().ToLower();
-                Match webAppMatch = webAppRegEx.Match(addressPath);
+                Match match = csmResourceRegEx.Match(addressPath);
 
-                if (webAppMatch.Success)
+                if (match.Success)
                 {
-                    _subscriptionId = webAppMatch.Groups[2].Value;
-                    _resourceGroupName = webAppMatch.Groups[3].Value;
-                    _resourceName = webAppMatch.Groups[4].Value;
-                }
-                else
-                {
-                    Match hostingEnvMatch = hostingEnvRegEx.Match(addressPath);
-                    if (hostingEnvMatch.Success)
-                    {
-                        _subscriptionId = hostingEnvMatch.Groups[2].Value;
-                        _resourceGroupName = hostingEnvMatch.Groups[3].Value;
-                        _resourceName = hostingEnvMatch.Groups[4].Value;
-                    }
+                    _subscriptionId = match.Groups[2].Value;
+                    _resourceGroupName = match.Groups[3].Value;
+                    _resourceName = match.Groups[6].Value;
                 }
             }
             catch (Exception)
