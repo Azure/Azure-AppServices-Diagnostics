@@ -59,6 +59,23 @@ namespace Diagnostics.Reporting
             | order by Incidents_SupportTopicL2Current asc 
             ";
 
+        private static string breakdownBySolutionQuery = $@"
+            let processedStream = cluster('Usage360').database('Product360').
+                {P360TableResolver.SupportProductionDeflectionWeeklyPoPInsightsTable}
+                | extend Current = CurrentDenominatorQuantity, Previous = PreviousDenominatorQuantity, PreviousN = PreviousNDenominatorQuantity , CurrentQ = CurrentNumeratorQuantity, PreviousQ = PreviousNumeratorQuantity, PreviousNQ = PreviousNNumeratorQuantity,  Change = CurrentNumeratorQuantity-PreviousNumeratorQuantity
+                | extend C_ID = SolutionType, C_Name = SolutionType
+                | where (DerivedProductIDStr in ({{ProductIds}}))
+                | where C_ID != """"
+                | summarize C_Name=any(C_Name), Current= sum(Current), Previous = sum(Previous), PreviousN = sum(PreviousN), CurrentQ = sum(CurrentNumeratorQuantity), PreviousQ = sum(PreviousNumeratorQuantity), PreviousNQ = sum(PreviousNNumeratorQuantity) by C_ID, ProductName | extend Change = Current - Previous
+                | extend CurPer = iff(Current == 0, todouble(''), CurrentQ/Current), PrevPer = iff(Previous == 0, todouble(''), PreviousQ/Previous), NPrevPer = iff(PreviousN == 0, todouble(''), PreviousNQ/PreviousN);
+            processedStream
+                | order by Current desc, Previous desc, PreviousN desc
+                | limit 100
+                | project ProductName , C_ID, C_Name = iif(isempty(C_Name),C_ID,C_Name), Current, CurPer, Previous, PrevPer, Change, PreviousN, NPrevPer
+                | order by Current desc, Previous desc, PreviousN desc 
+                | project ProductName, Name = C_Name, Current = round(100 * CurPer, 2), CurrentNumerator = round(CurPer * Current), CurrentDenominator = round(Current), Previous = round(100 * PrevPer, 2), PreviousNumerator = round(PrevPer * Previous), PreviousDenominator = round(Previous)
+                | order by ProductName desc";
+
         public static void Run(KustoClient kustoClient, IConfiguration config)
         {
             var configurations = config.GetSection("ProductLevel");
@@ -86,7 +103,8 @@ namespace Diagnostics.Reporting
 
             List<Tuple<string, Image>> productWeeklyTrends = DataHelper.GetProductWeeklyTrends(kustoClient, _productWeeklyTrendsQuery.Replace("{ProductIds}", productIds));
             List<Category> categoryList = DataHelper.GetCategoryBreakdownData(kustoClient, _categoryBreakdownQuery.Replace("{ProductIds}", productIds));
-            
+            List<Solution> solutions = DataHelper.GetSolutionsData(kustoClient, breakdownBySolutionQuery.Replace("{ProductIds}", productIds));
+
             DateTime period = productList.OrderByDescending(g => g.Period).First().Period;
             emailSubject = emailSubject.Replace("{date}", $"{period.Month}/{period.Day}");
 
@@ -101,7 +119,8 @@ namespace Diagnostics.Reporting
             
             htmlEmail = htmlEmail
                 .Replace("{ProductMetricsTable}", HtmlHelper.GetProductMetricsTable(productList, productWeeklyTrends, ref sendGridMessage))
-                .Replace("{CategoryMetricsTable}", HtmlHelper.GetCategoryBreakdownMetricsTable(categoryList));
+                .Replace("{CategoryMetricsTable}", HtmlHelper.GetCategoryBreakdownMetricsTable(categoryList))
+                .Replace("{SolutionMetricsTable}", HtmlHelper.GetSolutionMetricsTable(solutions));
 
             string subCategoryMetricsTable = string.Empty;
 

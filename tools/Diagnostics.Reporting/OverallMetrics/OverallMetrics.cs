@@ -17,7 +17,7 @@ namespace Diagnostics.Reporting
             {P360TableResolver.SupportProductionDeflectionWeeklyTable}
             | extend period = Timestamp
             | where period >= ago(20d)
-            | where(DerivedProductIDStr in ('14748', '16170', '16333', '16072', '16512', '16513'))
+            | where(DerivedProductIDStr in ('14748', '16170', '16333', '16072', '16533', '16512', '16513'))
             | where DenominatorQuantity != 0 
             | summarize deflection = round(100 * sum(NumeratorQuantity) / sum(DenominatorQuantity), 2), casesLeaked = round(sum(DenominatorQuantity)) - round(sum(NumeratorQuantity)), casesDeflected = round(sum(NumeratorQuantity))  by period, ProductName, DerivedProductIDStr
             | order by DerivedProductIDStr asc";
@@ -27,7 +27,7 @@ namespace Diagnostics.Reporting
                 {P360TableResolver.SupportProductionDeflectionWeeklyPoPInsightsTable}
                 | extend Current = CurrentDenominatorQuantity, Previous = PreviousDenominatorQuantity, PreviousN = PreviousNDenominatorQuantity , CurrentQ = CurrentNumeratorQuantity, PreviousQ = PreviousNumeratorQuantity, PreviousNQ = PreviousNNumeratorQuantity,  Change = CurrentNumeratorQuantity-PreviousNumeratorQuantity
                 | extend C_ID = SolutionType, C_Name = SolutionType
-                | where (DerivedProductIDStr in ('14748', '16170', '16333', '16072', '16512', '16513'))
+                | where (DerivedProductIDStr in ('14748', '16170', '16333', '16072',  '16533', '16512', '16513'))
                 | where C_ID != """"
                 | summarize C_Name=any(C_Name), Current= sum(Current), Previous = sum(Previous), PreviousN = sum(PreviousN), CurrentQ = sum(CurrentNumeratorQuantity), PreviousQ = sum(PreviousNumeratorQuantity), PreviousNQ = sum(PreviousNNumeratorQuantity) by C_ID, ProductName | extend Change = Current - Previous
                 | extend CurPer = iff(Current == 0, todouble(''), CurrentQ/Current), PrevPer = iff(Previous == 0, todouble(''), PreviousQ/Previous), NPrevPer = iff(PreviousN == 0, todouble(''), PreviousNQ/PreviousN);
@@ -43,7 +43,7 @@ namespace Diagnostics.Reporting
                 {P360TableResolver.SupportProductionDeflectionWeeklyTable}
                 | extend period = Timestamp
                 | where period >= ago(150d)
-                | where (DerivedProductIDStr in  ('14748', '16170', '16333', '16072', '16512', '16513'))
+                | where (DerivedProductIDStr in  ('14748', '16170', '16333', '16072', '16533', '16512', '16513'))
                 | where DenominatorQuantity != 0 
                 | summarize qty = sum(NumeratorQuantity) / sum(DenominatorQuantity), auxQty = sum(DenominatorQuantity) by period, ProductName
                 | project period , ProductName , deflection = round(100 * qty, 2)";

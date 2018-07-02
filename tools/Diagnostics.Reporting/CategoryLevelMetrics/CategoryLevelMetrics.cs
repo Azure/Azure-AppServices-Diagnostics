@@ -42,11 +42,14 @@ namespace Diagnostics.Reporting
             | where SupportTopicL3 != ''
             | order by period desc";
 
-        private static string _casesLeakedQuery = @"cluster('Usage360').database('Product360').
+        private static string _casesLeakedQuery = @"
+            let endTime = datetime({endTime});
+            let startTime = datetime({startTime});
+            cluster('Usage360').database('Product360').
             AllCloudSupportIncidentDataWithP360MetadataMapping
             | where DerivedProductIDStr in ({ProductIds})
             | where Incidents_SupportTopicL2Current contains '{ProglemCategory}'
-            | where Incidents_CreatedTime > ago(7d)
+            | where Incidents_CreatedTime > startTime and Incidents_CreatedTime <= endTime
             | summarize IncidentTime = any(Incidents_CreatedTime) by Incidents_IncidentId , Incidents_Severity , Incidents_ProductName , Incidents_SupportTopicL2Current , Incidents_SupportTopicL3Current 
             | order by Incidents_SupportTopicL3Current asc";
 
@@ -101,7 +104,11 @@ namespace Diagnostics.Reporting
 
             htmlEmail = htmlEmail.Replace("{ProductMetricsTable}", HtmlHelper.GetProductMetricsTable(productList, productWeeklyTrends, ref sendGridMessage));
 
-            string casesLeakedQuery = _casesLeakedQuery.Replace("{ProductIds}", productIds).Replace("{ProglemCategory}", categoryName);
+            string casesLeakedQuery = _casesLeakedQuery
+                .Replace("{ProductIds}", productIds)
+                .Replace("{ProglemCategory}", categoryName)
+                .Replace("{endTime}", $"{period.Year}-{period.Month}-{period.Day}")
+                .Replace("{startTime}", $"{period.AddDays(-7).Year}-{period.AddDays(-7).Month}-{period.AddDays(-7).Day}");
 
             htmlEmail = htmlEmail
                 .Replace("{LeakedCasesLink}", kustoClient.GetKustoQueryUriAsync("*", casesLeakedQuery).Result)
