@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace Diagnostics.RuntimeHost.Controllers
 {
     [Produces("application/json")]
-    [Route(UriElements.SitesResource + UriElements.Diagnostics)]
+    [Route(UriElements.SitesResource)]
     public sealed class SitesController : SiteControllerBase
     {
         public SitesController(IStampService stampService, ISiteService siteService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService)

@@ -32,10 +32,8 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string ApiManagementServiceResource = ResourceProvidersRoot + ResourceProviders.ApiManagement + "/service/{serviceName}";
 
         #endregion
-
-        public const string Diagnostics = "/diagnostics";
-
-        public const string Query = "query";
+        
+        public const string Query = "diagnostics/query";
         public const string Detectors = "detectors";
         public const string DetectorResource = "/{detectorId}";
         public const string Insights = "insights";
