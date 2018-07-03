@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Diagnostics.RuntimeHost.Controllers
 {
     [Produces("application/json")]
-    [Route(UriElements.LogicAppResource + UriElements.Diagnostics)]
+    [Route(UriElements.LogicAppResource)]
     public sealed class LogicAppController : DiagnosticControllerBase<LogicApp>
     {
         public LogicAppController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService)

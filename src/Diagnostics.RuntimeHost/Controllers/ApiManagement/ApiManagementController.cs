@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Diagnostics.RuntimeHost.Controllers
 {
     [Produces("application/json")]
-    [Route(UriElements.ApiManagementServiceResource + UriElements.Diagnostics)]
+    [Route(UriElements.ApiManagementServiceResource)]
     public sealed class ApiManagementController : DiagnosticControllerBase<ApiManagementService>
     {
         public ApiManagementController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService)

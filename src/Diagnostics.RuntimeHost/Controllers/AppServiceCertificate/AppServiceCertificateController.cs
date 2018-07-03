@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Diagnostics.RuntimeHost.Controllers
 {
     [Produces("application/json")]
-    [Route(UriElements.AppServiceCertResource + UriElements.Diagnostics)]
+    [Route(UriElements.AppServiceCertResource)]
     public sealed class AppServiceCertificateController : DiagnosticControllerBase<AppServiceCertificate>
     {
         public AppServiceCertificateController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService)
