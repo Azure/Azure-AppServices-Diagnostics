@@ -110,10 +110,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     invocationResponse.UpdateDetectorStatusFromInsights();
 
                     List<DataProviderMetadata> dataProvidersMetadata = null;
-                    if (cxt.IsInternalCall)
-                    {
-                        dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
-                    }
+                    dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);                    
                     queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse, dataProvidersMetadata);
                 }
             }
