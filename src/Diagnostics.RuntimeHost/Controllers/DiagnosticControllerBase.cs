@@ -108,7 +108,13 @@ namespace Diagnostics.RuntimeHost.Controllers
                     var responseInput = new Response() { Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, cxt.IsInternalCall) };
                     var invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, cxt, responseInput });
                     invocationResponse.UpdateDetectorStatusFromInsights();
-                    queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse);
+
+                    List<DataProviderMetadata> dataProvidersMetadata = null;
+                    if (cxt.IsInternalCall)
+                    {
+                        dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
+                    }
+                    queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse, dataProvidersMetadata);
                 }
             }
 
