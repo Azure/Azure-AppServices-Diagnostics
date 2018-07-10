@@ -51,6 +51,7 @@ namespace Diagnostics.Reporting
             | where Incidents_SupportTopicL2Current contains '{ProglemCategory}'
             | where Incidents_CreatedTime > startTime and Incidents_CreatedTime <= endTime
             | summarize IncidentTime = any(Incidents_CreatedTime) by Incidents_IncidentId , Incidents_Severity , Incidents_ProductName , Incidents_SupportTopicL2Current , Incidents_SupportTopicL3Current 
+            | extend SupportCenterCaseLink = strcat(""https://azuresupportcenter.msftcloudes.com/caseoverview?srId="", Incidents_IncidentId)
             | order by Incidents_SupportTopicL3Current asc";
 
         private static string breakdownBySolutionQuery = $@"

@@ -51,13 +51,16 @@ namespace Diagnostics.Reporting
             | order by period desc
         ";
 
-        private static string _casesLeakedQuery = @"cluster('Usage360').database('Product360').
+        private static string _casesLeakedQuery = @"
+            let endTime = datetime({endTime});
+            let startTime = datetime({startTime});
+            cluster('Usage360').database('Product360').
             AllCloudSupportIncidentDataWithP360MetadataMapping
             | where DerivedProductIDStr in ({ProductIds})
-            | where Incidents_CreatedTime > ago(7d)
+            | where Incidents_CreatedTime > startTime and Incidents_CreatedTime <= endTime
             | summarize by Incidents_IncidentId , Incidents_Severity , Incidents_ProductName , Incidents_SupportTopicL2Current , Incidents_SupportTopicL3Current 
-            | order by Incidents_SupportTopicL2Current asc 
-            ";
+            | extend SupportCenterCaseLink = strcat(""https://azuresupportcenter.msftcloudes.com/caseoverview?srId="", Incidents_IncidentId)
+            | order by Incidents_SupportTopicL2Current asc";
 
         private static string breakdownBySolutionQuery = $@"
             let processedStream = cluster('Usage360').database('Product360').
@@ -111,10 +114,17 @@ namespace Diagnostics.Reporting
             SendGridMessage sendGridMessage = EmailClient.InitializeMessage(config, emailSubject, toList);
 
             string emailtemplate = File.ReadAllText(@"EmailTemplates\ProductLevelMetricsTemplate.html");
+
+            string casesLeakedQuery = _casesLeakedQuery
+                .Replace("{ProductIds}", productIds)
+                .Replace("{endTime}", $"{period.Year}-{period.Month}-{period.Day}")
+                .Replace("{startTime}", $"{period.AddDays(-7).Year}-{period.AddDays(-7).Month}-{period.AddDays(-7).Day}");
+
+
             string htmlEmail = emailtemplate
                 .Replace("{WeekDate}", $"{period.Month}/{period.Day}")
                 .Replace("{ProductName}", productName)
-                .Replace("{LeakedCasesLink}", kustoClient.GetKustoQueryUriAsync("*", _casesLeakedQuery.Replace("{ProductIds}", productIds)).Result)
+                .Replace("{LeakedCasesLink}", kustoClient.GetKustoQueryUriAsync("*", casesLeakedQuery).Result)
                 .Replace("{CategoryBreakdownLink}", kustoClient.GetKustoQueryUriAsync("*", _categoryBreakdownQuery.Replace("{ProductIds}", productIds)).Result);
             
             htmlEmail = htmlEmail
