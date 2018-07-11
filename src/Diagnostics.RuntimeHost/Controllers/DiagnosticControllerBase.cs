@@ -16,6 +16,7 @@ using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -334,7 +335,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return null;
             }
 
-            string[] subIds = supportTopicId.Split("/");
+            string[] subIds = supportTopicId.Split("\\");
             return subIds[subIds.Length - 1]; 
         }
 
