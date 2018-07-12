@@ -6,4 +6,4 @@ script:
 - 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./build.sh; fi'
 branches:
   only: 
-    - test
+    - APIM
