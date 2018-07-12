@@ -3,6 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{0F59F43E-D06C-4A0F-8D38-9538BA58FC6A}"
+	ProjectSection(SolutionItems) = preProject
+		src\Diagnostics.nuspec = src\Diagnostics.nuspec
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Diagnostics.CompilerHost", "src\Diagnostics.CompilerHost\Diagnostics.CompilerHost.csproj", "{BA2DEE46-11B3-4861-9A4B-A673C02484F6}"
 EndProject
