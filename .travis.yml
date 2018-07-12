@@ -2,6 +2,8 @@ language: csharp
 mono: none
 dotnet: 2.1.3
 script:
- - dotnet build Diagnostics.sln
- - cd tests
- - dotnet test
+- 'if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then bash ./build.sh BuildAndPublish; fi'
+- 'if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then bash ./build.sh; fi'
+branches:
+  only: 
+    - test

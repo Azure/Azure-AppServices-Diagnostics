@@ -314,3 +314,6 @@ wwwroot/
 build/
 dist/
 aot/
+
+# Temp file generated during build (using bash)
+1

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>AppServices.Diagnostics.Runtime</id>
+    <version>1.0.1</version>
+    <authors>shgup</authors>
+    <owners>shgup</owners>
+    <licenseUrl>https://github.com/Azure/Azure-AppServices-Diagnostics/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/Azure/Azure-AppServices-Diagnostics</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Runtime SDK for AppService Diagnostics</description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright ©2018 Microsoft Corporation</copyright>
+  </metadata>
+</package>
