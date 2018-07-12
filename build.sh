@@ -53,17 +53,17 @@ dest="$BUILD_DIR/Diagnostics.nuspec"
 cp -rf "$src" "$dest"
 copyRetVal=$?
 
-if [ $copyRetVal -ne 0 ]; then
+if [ $copyRetVal -ne 0 ] || [ "$buildMode" != "BuildAndPublish" ]; then
     exit $copyRetVal
 fi
 
 echo "Generating Nuget Packages"
 
 # Generating Nuget packages
-nuget pack $BUILD_DIR/Diagnostics.nuspec -OutputDirectory $BUILD_DIR
+mono nuget.exe pack $BUILD_DIR/Diagnostics.nuspec -OutputDirectory $BUILD_DIR
 generateNugetPackageRetVal=$?
 
-if [ $generateNugetPackageRetVal -ne 0 ] || [ "$buildMode" != "BuildAndPublish" ]; then
+if [ $generateNugetPackageRetVal -ne 0 ]; then
     exit $generateNugetPackageRetVal
 fi
 
@@ -78,7 +78,7 @@ if [ -z "$CURRENT_PKG" ]; then
     exit 1
 fi
 
-nugetPushOutput=$(nuget push $CURRENT_PKG -Source https://api.nuget.org/v3/index.json $NUGET_PUSH_KEY)
+nugetPushOutput=$(mono nuget.exe push $CURRENT_PKG -Source https://api.nuget.org/v3/index.json $NUGET_PUSH_KEY)
 nugetPushRetVal=$?
 printf '%s\n' "$nugetPushOutput"
 
