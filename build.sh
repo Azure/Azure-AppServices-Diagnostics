@@ -19,7 +19,7 @@ if [ -d "$BUILD_DIR" ]; then
     rm -rf "$BUILD_DIR"
 fi
 
-echo "Starting build"
+printf '\n\e[1;34m%-6s\e[m\n' "Starting Build"
 
 # Build step
 dotnet build Diagnostics.sln | tee /dev/stderr | grep 'Build succeeded.' &> /dev/null
@@ -29,7 +29,7 @@ if [ $buildRetVal -ne 0 ]; then
     exit $buildRetVal
 fi
 
-echo "Running Tests"
+printf '\n\e[1;34m%-6s\e[m\n' "Running Tests"
 
 # Test step
 dotnet test $TEST_DIR | tee /dev/stderr | grep 'Test Run Successful.' &> /dev/null
@@ -39,13 +39,13 @@ if [ $testRetVal -ne 0 ]; then
     exit $testRetVal
 fi
 
-echo "Publishing Locally"
+printf '\n\e[1;34m%-6s\e[m\n' "Publishing Packages locally"
 
 # Publish step
 dotnet publish $SRC_DIR/Diagnostics.RuntimeHost/Diagnostics.RuntimeHost.csproj -c Release -o ../../$BUILD_DIR/Diagnostics.RuntimeHost
 dotnet publish $SRC_DIR/Diagnostics.CompilerHost/Diagnostics.CompilerHost.csproj -c Release -o ../../$BUILD_DIR/Diagnostics.CompilerHost
 
-echo "Copying NuSpec File"
+printf '\n\e[1;34m%-6s\e[m\n' "Copying Nupsec File"
 
 # Copy Nuspec File
 src="$SRC_DIR/Diagnostics.nuspec"
@@ -57,7 +57,7 @@ if [ $copyRetVal -ne 0 ] || [ "$buildMode" != "BuildAndPublish" ]; then
     exit $copyRetVal
 fi
 
-echo "Generating Nuget Packages"
+printf '\n\e[1;34m%-6s\e[m\n' "Generating Nuget Packages"
 
 # Generating Nuget packages
 mono nuget.exe pack $BUILD_DIR/Diagnostics.nuspec -OutputDirectory $BUILD_DIR
@@ -67,10 +67,9 @@ if [ $generateNugetPackageRetVal -ne 0 ]; then
     exit $generateNugetPackageRetVal
 fi
 
-
+printf '\n\e[1;34m%-6s\e[m\n' "Publishing Nuget Packages to nuget server"
 # Publish Nuget Package to Source Server
 
-echo "Publishing Nuget Package to server"
 CURRENT_PKG=$(find $BUILD_DIR -type f -name "*.nupkg")
 
 if [ -z "$CURRENT_PKG" ]; then
