@@ -59,7 +59,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             var detectorResponse = await GetDetectorInternal(detectorId, cxt);
             return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2));
         }
-        
+
         protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationBostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain)
         {
             if (jsonBody == null)
@@ -104,23 +104,45 @@ namespace Diagnostics.RuntimeHost.Controllers
 
                     // Verify Detector with other detectors in the system in case of conflicts
                     if (!VerifyEntity(invoker, ref queryRes)) return Ok(queryRes);
-
                     OperationContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
-                    var responseInput = new Response() { Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, cxt.IsInternalCall) };
-                    var invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, cxt, responseInput });
-                    invocationResponse.UpdateDetectorStatusFromInsights();
-
                     List<DataProviderMetadata> dataProvidersMetadata = null;
-                    if  (cxt.IsInternalCall)
+
+                    try
                     {
-                        dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
+                        var responseInput = new Response() { Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, cxt.IsInternalCall) };
+                        var invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, cxt, responseInput });
+                        invocationResponse.UpdateDetectorStatusFromInsights();
+
+                        if (cxt.IsInternalCall)
+                        {
+                            dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
+                        }
+
+                        queryRes.RuntimeSucceeded = true;
+                        queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse, dataProvidersMetadata);
                     }
-                                        
-                    queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse, dataProvidersMetadata);
+                    catch(Exception ex)
+                    {
+                        if (cxt.IsInternalCall)
+                        {
+                            queryRes.RuntimeSucceeded = false;
+                            queryRes.InvocationOutput = CreateQueryExceptionResponse(ex, invoker.EntryPointDefinitionAttribute, cxt.IsInternalCall, GetDataProvidersMetadata(dataProviders));
+                        }
+                        else
+                            throw;
+                    }
+                    
                 }
             }
 
             return Ok(queryRes);
+        }
+
+        private DiagnosticApiResponse CreateQueryExceptionResponse(Exception ex, Definition detectorDefinition, bool isInternal, List<DataProviderMetadata> dataProvidersMetadata)
+        {
+            Response response = new Response() { Metadata = RemovePIIFromDefinition(detectorDefinition, isInternal) };
+            response.AddMarkdownView(ex.ToString(), "Detector Runtime Exception");
+            return DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata);
         }
 
         protected async Task<IActionResult> GetInsights(TResource resource, string supportTopicId, string minimumSeverity, string startTime, string endTime, string timeGrain)
