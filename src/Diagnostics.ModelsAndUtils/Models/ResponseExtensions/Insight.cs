@@ -78,8 +78,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     {
         Critical,
         Warning,
-        Success,
         Info,
+        Success,
         None
     }
 
