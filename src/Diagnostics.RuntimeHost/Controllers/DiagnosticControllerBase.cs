@@ -13,6 +13,7 @@ using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -132,8 +133,9 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             OperationContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, forceInternal: true);
 
-            IEnumerable<AzureSupportCenterInsight> insights = null;
+            List<AzureSupportCenterInsight> insights = null;
             string error = null;
+            List<Definition> detectorsRun = new List<Definition>();
             try
             {
                 supportTopicId = ParseCorrectSupportTopicId(supportTopicId);
@@ -142,9 +144,9 @@ namespace Diagnostics.RuntimeHost.Controllers
                 var applicableDetectors = allDetectors
                     .Where(detector => string.IsNullOrWhiteSpace(supportTopicId) || detector.SupportTopicList.FirstOrDefault(supportTopic => supportTopic.Id == supportTopicId) != null);
 
-                var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => GetInsightsFromDetector(cxt, detector)));
+                var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => GetInsightsFromDetector(cxt, detector, detectorsRun)));
 
-                insights = insightGroups.Where(group => group != null).SelectMany(group => group);
+                insights = insightGroups.Where(group => group != null).SelectMany(group => group).ToList();
             }
             catch (Exception ex)
             {
@@ -155,8 +157,22 @@ namespace Diagnostics.RuntimeHost.Controllers
 
 
             var correlationId = Guid.NewGuid();
+            var insightInfo = new
+            {
+                Total = insights.Count,
+                Critical = insights.Count(insight => insight.ImportanceLevel == ImportanceLevel.Critical),
+                Warning = insights.Count(insight => insight.ImportanceLevel == ImportanceLevel.Warning),
+                Info = insights.Count(insight => insight.ImportanceLevel == ImportanceLevel.Info),
+                Default = detectorsRun.Any() && !insights.Any() ? 1 : 0
+            };
+
             DiagnosticsETWProvider.Instance.LogRuntimeHostInsightCorrelation(cxt.RequestId, "ControllerBase.GetInsights", cxt.Resource.SubscriptionId,
-                cxt.Resource.ResourceGroup, cxt.Resource.Name, correlationId.ToString());
+                cxt.Resource.ResourceGroup, cxt.Resource.Name, correlationId.ToString(), JsonConvert.SerializeObject(insightInfo));
+
+            if(!insights.Any() && detectorsRun.Any())
+            {
+                insights.Add(AzureSupportCenterInsightUtilites.CreateDefaultInsight(cxt, detectorsRun));
+            }
 
             var response = new AzureSupportCenterInsightEnvelope()
             {
@@ -279,12 +295,19 @@ namespace Diagnostics.RuntimeHost.Controllers
             return new Tuple<Response, List<DataProviderMetadata>>(response, dataProvidersMetadata) ;
         }
         
-        private async Task<IEnumerable<AzureSupportCenterInsight>> GetInsightsFromDetector(OperationContext<TResource> context, Definition detector)
+        private async Task<IEnumerable<AzureSupportCenterInsight>> GetInsightsFromDetector(OperationContext<TResource> context, Definition detector, List<Definition> detectorsRun)
         {
             Response response = null;
+
+            detectorsRun.Add(detector);
+
             try
             {
-                response = (await GetDetectorInternal(detector.Id, context)).Item1;
+                var fullResponse = await GetDetectorInternal(detector.Id, context);
+                if (fullResponse != null)
+                {
+                    response = fullResponse.Item1;
+                }
             }
             catch(Exception ex)
             {
@@ -302,12 +325,17 @@ namespace Diagnostics.RuntimeHost.Controllers
             List<AzureSupportCenterInsight> supportCenterInsights = new List<AzureSupportCenterInsight>();
 
             // Take max one insight per detector, only critical or warning, pick the most critical
-            var mostCriticalInsight = response.Insights.Where(insight => ((int)insight.Status) <= ((int)InsightStatus.Info)).OrderBy(insight => insight.Status).FirstOrDefault();
+            var mostCriticalInsight = response.Insights.OrderBy(insight => insight.Status).FirstOrDefault();
 
+            //TODO: Add Logging Per Detector Here
+            AzureSupportCenterInsight ascInsight = null;
             if (mostCriticalInsight != null)
             {
-                supportCenterInsights.Add(AzureSupportCenterInsightUtilites.CreateInsight(mostCriticalInsight, context, detector));
+                ascInsight = AzureSupportCenterInsightUtilites.CreateInsight(mostCriticalInsight, context, detector);
+                supportCenterInsights.Add(ascInsight);
             }
+
+            DiagnosticsETWProvider.Instance.LogRuntimeHostDetectorAscInsight(context.RequestId, detector.Id, ascInsight?.ImportanceLevel.ToString());
 
             var detectorLists = response.Dataset
                 .Where(diagnosicData => diagnosicData.RenderingProperties.Type == RenderingType.Detector)
@@ -317,7 +345,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             if (detectorLists.Any())
             {
                 var applicableDetectorMetaData = (await this.ListDetectorsInternal(context)).Where(detectorResponse => detectorLists.Contains(detectorResponse.Metadata.Id));
-                var detectorListResponses = await Task.WhenAll(applicableDetectorMetaData.Select(detectorResponse => GetInsightsFromDetector(context, detectorResponse.Metadata)));
+                var detectorListResponses = await Task.WhenAll(applicableDetectorMetaData.Select(detectorResponse => GetInsightsFromDetector(context, detectorResponse.Metadata, detectorsRun)));
 
                 supportCenterInsights.AddRange(detectorListResponses.Where(detectorInsights => detectorInsights != null).SelectMany(detectorInsights => detectorInsights));
             }

@@ -14,6 +14,7 @@ namespace Diagnostics.RuntimeHost.Utilities
     {
         private static readonly string DefaultDescription = "This insight was raised as part of the {0} detector.";
         private static readonly HashSet<string> ReservedFieldNames = new HashSet<string> { "description", "recommended action", "customer ready content" };
+        public static readonly string DefaultInsightGuid = "9a666d9e-23b4-4502-95b7-1a00a0419ce4";
 
         private static readonly Text DefaultRecommendedAction = new Text()
         {
@@ -29,11 +30,16 @@ namespace Diagnostics.RuntimeHost.Utilities
             // TODO: May make sense to have resource type enums contain the resource type string
             var resourceTypeString = context.Resource.ResourceType == ResourceType.App ? "sites" : "hostingEnvironments";
             var issueCategory = context.Resource.ResourceType == ResourceType.App ? "Web App" : "App Service Environment";
-            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/{resourceTypeString}/{context.Resource.Name}/detectors/{detector.Id}";
+            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/Microsoft.Web/{resourceTypeString}/{context.Resource.Name}/detectors/{detector.Id}";
 
             var description = GetTextObjectFromData("description", insight.Body) ?? new Text() { IsMarkdown = false, Value = string.Format(DefaultDescription, detector.Name) };
             var recommendedAction = GetTextObjectFromData("recommended action", insight.Body) ?? DefaultRecommendedAction;
             var customerReadyContent = GetTextObjectFromData("customer ready content", insight.Body);
+
+            if (insight.Status == InsightStatus.Success || insight.Status == InsightStatus.None)
+            {
+                insight.Status = InsightStatus.Info;
+            }
 
             var supportCenterInsight = new AzureSupportCenterInsight()
             {
@@ -71,7 +77,61 @@ namespace Diagnostics.RuntimeHost.Utilities
             return supportCenterInsight;
         }
 
-        private static Guid GetDetectorGuid(string detector)
+        internal static AzureSupportCenterInsight CreateDefaultInsight<TResource>(OperationContext<TResource> context, List<Definition> detectorsRun)
+            where TResource : IResource
+        {
+            var description = new StringBuilder();
+            description.AppendLine("The following detector(s) were run but no insights were found:");
+            description.AppendLine();
+            foreach(var detector in detectorsRun)
+            {
+                description.AppendLine($"* {detector.Name}");
+            }
+            description.AppendLine();
+
+            // TODO: Handle other resource types
+            var resourceTypeString = context.Resource.ResourceType == ResourceType.App ? "sites" : "hostingEnvironments";
+            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/{resourceTypeString}/{context.Resource.Name}/detectors/{detectorsRun.FirstOrDefault().Id}";
+
+            var supportCenterInsight = new AzureSupportCenterInsight()
+            {
+                Id = Guid.Parse(DefaultInsightGuid),
+                Title = "No issues found in relevant detector(s) in applens",
+                ImportanceLevel = ImportanceLevel.Info,
+                InsightFriendlyName = "No Issue",
+                IssueCategory = "NOISSUE",
+                IssueSubCategory = "noissue",
+                Description = new Text()
+                {
+                    IsMarkdown = true,
+                    Value = description.ToString()
+                },
+                RecommendedAction = new RecommendedAction()
+                {
+                    Id = Guid.NewGuid(),
+                    Text = new Text()
+                    {
+                        IsMarkdown = false,
+                        Value = "Follow the applens link to see any other information these detectors have."
+                    }
+                },
+                ConfidenceLevel = InsightConfidenceLevel.High,
+                Scope = InsightScope.ResourceLevel,
+                Links = new List<Link>()
+                {
+                    new Link()
+                        {
+                            Type = 2,
+                            Text = "Applens Link",
+                            Uri = $"https://applens.azurewebsites.net/{applensPath}"
+                        }
+                }
+            };
+
+            return supportCenterInsight;
+        }
+
+            private static Guid GetDetectorGuid(string detector)
         {
 
             Encoding utf8 = Encoding.UTF8;
