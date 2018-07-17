@@ -163,7 +163,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 Critical = insights.Count(insight => insight.ImportanceLevel == ImportanceLevel.Critical),
                 Warning = insights.Count(insight => insight.ImportanceLevel == ImportanceLevel.Warning),
                 Info = insights.Count(insight => insight.ImportanceLevel == ImportanceLevel.Info),
-                Default = detectorsRun.Any() ? 1 : 0
+                Default = detectorsRun.Any() && !insights.Any() ? 1 : 0
             };
 
             DiagnosticsETWProvider.Instance.LogRuntimeHostInsightCorrelation(cxt.RequestId, "ControllerBase.GetInsights", cxt.Resource.SubscriptionId,
