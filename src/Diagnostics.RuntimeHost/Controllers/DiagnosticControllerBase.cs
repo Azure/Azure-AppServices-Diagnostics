@@ -140,7 +140,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private DiagnosticApiResponse CreateQueryExceptionResponse(Exception ex, Definition detectorDefinition, bool isInternal, List<DataProviderMetadata> dataProvidersMetadata)
         {
-            Response response = new Response() { Metadata = RemovePIIFromDefinition(detectorDefinition, true) };
+            Response response = new Response() { Metadata = RemovePIIFromDefinition(detectorDefinition, isInternal) };
             response.AddMarkdownView($"<pre><code>{ex.ToString()}</code></pre>", "Detector Runtime Exception");
             return DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata);
         }
