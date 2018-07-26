@@ -30,7 +30,7 @@ namespace Diagnostics.RuntimeHost.Utilities
             // TODO: May make sense to have resource type enums contain the resource type string
             var resourceTypeString = context.Resource.ResourceType == ResourceType.App ? "sites" : "hostingEnvironments";
             var issueCategory = context.Resource.ResourceType == ResourceType.App ? "Web App" : "App Service Environment";
-            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/Microsoft.Web/{resourceTypeString}/{context.Resource.Name}/detectors/{detector.Id}";
+            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/Microsoft.Web/{resourceTypeString}/{context.Resource.Name}/detectors/{detector.Id}?startTime={context.StartTime}&endTime={context.EndTime}";
 
             var description = GetTextObjectFromData("description", insight.Body) ?? new Text() { IsMarkdown = false, Value = string.Format(DefaultDescription, detector.Name) };
             var recommendedAction = GetTextObjectFromData("recommended action", insight.Body) ?? DefaultRecommendedAction;
@@ -58,7 +58,8 @@ namespace Diagnostics.RuntimeHost.Utilities
                 CustomerReadyContent = customerReadyContent == null ? null :
                     new CustomerReadyContent()
                     {
-                        Text = customerReadyContent
+                        ArticleId = Guid.NewGuid(),
+                        ArticleContent = customerReadyContent.Value
                     },
                 AdditionalDetails = GetExtraNameValuePairs(insight.Body),
                 ConfidenceLevel = InsightConfidenceLevel.High,
