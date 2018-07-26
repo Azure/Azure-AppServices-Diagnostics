@@ -52,9 +52,9 @@ namespace Diagnostics.ModelsAndUtils.Models.GeoMaster
 
     public class CustomerReadyContent
     {
-        public string ArticleId { get; set; }
+        public Guid ArticleId { get; set; }
 
-        public Text Text { get; set; }
+        public string ArticleContent { get; set; }
     }
 
     public class Text
