@@ -35,6 +35,33 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
     public static class ResponseDropdownExtension
     {
+        /// <summary>
+        /// Adds a Dropdown View to Response
+        /// </summary>
+        /// <param name="response">Response</param>
+        /// <param name="dropdownView">Dropdown ViewModel</param>
+        /// <param name="title">Title</param>
+        /// <returns></returns>
+        /// <example> 
+        /// This sample shows how to use <see cref="AddDropdownView"/> method.
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        ///      string label = "select item here";
+        ///      List<![CDATA[<Tuple<string, bool, Response>>]]> data = new List<![CDATA[<Tuple<string, bool, Response>>]]>();
+        ///      
+        ///      string firstDataKey = "key1";
+        ///      bool selected = true;
+        ///      var firstDataEntry = new Response();
+        ///      firstDataEntry.AddMarkdownView(@"some markdown content");
+        ///      
+        ///     data.Add(new Tuple<![CDATA[<string, bool, Response>]]>(firstDataKey, selected, firstDataEntry));
+        ///     
+        ///     Dropdown dropdownViewModel = new Dropdown(label, data);
+        ///     res.AddDropdownView(dropdownViewModel);
+        /// }
+        /// </code>
+        /// </example>
         public static DiagnosticData AddDropdownView(this Response response, Dropdown dropdownView, string title = null)
         {
             var table = new DataTable();
