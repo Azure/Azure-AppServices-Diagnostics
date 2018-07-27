@@ -92,5 +92,24 @@ namespace Diagnostics.Tests.ModelTests
 
             Assert.Equal(((TimeSeriesPerInstanceRendering)diagnosticData.RenderingProperties).GraphOptions.yAxis.axisLabel, "This is a label");
         }
+
+        [Fact]
+        public void TestAddDropdownToResponse()
+        {
+            Response apiResponse = new Response();
+            string label = "test";
+            List<Tuple<string, bool, Response>> data = new List<Tuple<string, bool, Response>>();
+
+            var firstData = new Response();
+            firstData.AddMarkdownView(@"some markdown content");
+            data.Add(new Tuple<string, bool, Response>("firstKey", true, firstData));
+            
+            Dropdown dropdown = new Dropdown(label, data);
+
+            apiResponse.AddDropdownView(dropdown);
+
+            Assert.NotEmpty(apiResponse.Dataset);
+            Assert.Equal<RenderingType>(RenderingType.DropDown, apiResponse.Dataset.FirstOrDefault().RenderingProperties.Type);
+        }
     }
 }
