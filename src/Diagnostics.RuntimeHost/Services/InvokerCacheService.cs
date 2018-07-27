@@ -79,7 +79,7 @@ namespace Diagnostics.RuntimeHost.Services
         }
 
         public EntityInvoker GetInvoker<TResource>(string detectorId, OperationContext<TResource> context)
-            where TResource : IResource
+            where TResource : IResource  
         {
             if (!TryGetValue(detectorId, out EntityInvoker invoker) || (!context.IsInternalCall && invoker.ResourceFilter.InternalOnly))
             {

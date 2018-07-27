@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Diagnostics.DataProviders.DataProviderConfigurations;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,5 +12,6 @@ namespace Diagnostics.DataProviders
         public KustoDataProviderConfiguration KustoConfiguration { get; set; }
         public SupportObserverDataProviderConfiguration SupportObserverConfiguration { get; set; }
         public GeoMasterDataProviderConfiguration GeoMasterConfiguration  { get; set; }
+        public AppInsightsDataProviderConfiguration AppInsightsConfiguration { get; set; }
     }
 }

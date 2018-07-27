@@ -4,17 +4,19 @@ using System.Data;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.DataProviders
 {
-    internal class DataProviderLogDecorator : IKustoDataProvider, IGeoMasterDataProvider, ISupportObserverDataProvider
+    internal class DataProviderLogDecorator : IKustoDataProvider, IGeoMasterDataProvider, ISupportObserverDataProvider, IAppInsightsDataProvider
     {
         IKustoDataProvider _kustoDataProvider;
         IGeoMasterDataProvider _geomasterDataProvider;
         ISupportObserverDataProvider _observerDataProvider;
+        IAppInsightsDataProvider _appInsightsDataProvider;
 
         DataProviderMetadata _currentMetadataProvider;
 
@@ -34,6 +36,22 @@ namespace Diagnostics.DataProviders
         {
             _observerDataProvider = dataProvider;
             _currentMetadataProvider = dataProvider.GetMetadata();
+        }
+
+        public DataProviderLogDecorator(IAppInsightsDataProvider dataProvider)
+        {
+            _appInsightsDataProvider = dataProvider;
+            _currentMetadataProvider = dataProvider.GetMetadata();
+        }
+
+        public Task<DataTable> ExecuteAppInsightsQuery(string query)
+        {
+            return MakeDependencyCall(null, _appInsightsDataProvider.ExecuteAppInsightsQuery(query));
+        }
+
+        public Task<bool> SetAppInsightsKey(string appId, string apiKey)
+        {
+            return MakeDependencyCall(null, _appInsightsDataProvider.SetAppInsightsKey(appId, apiKey));
         }
 
         public Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)

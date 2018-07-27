@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Diagnostics.DataProviders.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,12 +14,14 @@ namespace Diagnostics.DataProviders
         public IKustoDataProvider Kusto;
         public ISupportObserverDataProvider Observer;
         public IGeoMasterDataProvider GeoMaster;
+        public IAppInsightsDataProvider AppInsights;
 
         public DataProviders(DataSourcesConfiguration configuration)
         {
             Kusto = new DataProviderLogDecorator(new KustoDataProvider(_cache, configuration.KustoConfiguration));
             Observer = new DataProviderLogDecorator(SupportObserverDataProviderFactory.GetDataProvider(_cache, configuration));
             GeoMaster = new DataProviderLogDecorator(new GeoMasterDataProvider(_cache, configuration.GeoMasterConfiguration));
+            AppInsights = new DataProviderLogDecorator(new AppInsightsDataProvider(_cache, configuration.AppInsightsConfiguration));
         }
     }
 }
