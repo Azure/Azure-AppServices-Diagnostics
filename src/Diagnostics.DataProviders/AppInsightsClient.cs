@@ -1,14 +1,15 @@
-﻿using Diagnostics.DataProviders.DataProviderConfigurations;
-using Diagnostics.DataProviders.Interfaces;
-using Diagnostics.ModelsAndUtils.Models;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Data;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders.DataProviderConfigurations;
+using Diagnostics.DataProviders.Interfaces;
+using Diagnostics.ModelsAndUtils.Models;
+using Newtonsoft.Json;
 
 namespace Diagnostics.DataProviders
 {
@@ -29,7 +30,7 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// Applicaion Insights Endpoint
         /// </summary>
-        private const string BaseURL = "https://api.applicationinsights.io/v1/apps/{0}/query?query={1}";
+        private const string BaseURL = "https://api.applicationinsights.io/v1/apps/{0}/query";
 
         private readonly Lazy<HttpClient> _client = new Lazy<HttpClient>(() =>
         {
@@ -67,7 +68,7 @@ namespace Diagnostics.DataProviders
             _apiKey = apiKey;
         }
 
-        public async Task<DataTable> ExecuteQueryAsync(string query)
+        public async Task<DataTable> ExecuteQueryAsync(string queryString)
         {
             if (string.IsNullOrWhiteSpace(_appId))
             {
@@ -77,9 +78,15 @@ namespace Diagnostics.DataProviders
             {
                 throw new ArgumentNullException("_apiKey");
             }
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, string.Format(BaseURL, _appId, Uri.EscapeUriString(query)));
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, string.Format(BaseURL, _appId));
             request.Headers.Add("x-api-key", _apiKey);
 
+            object requestPayload = new
+            {
+                query = queryString
+            };
+
+            request.Content = new StringContent(JsonConvert.SerializeObject(requestPayload), Encoding.UTF8, "application/json");
             CancellationTokenSource tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
             HttpResponseMessage responseMsg = await _httpClient.SendAsync(request, tokenSource.Token);
             string content = await responseMsg.Content.ReadAsStringAsync();

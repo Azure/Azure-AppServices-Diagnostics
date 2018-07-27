@@ -1,8 +1,8 @@
-﻿using Diagnostics.DataProviders.DataProviderConfigurations;
+﻿using System.Data;
+using System.Threading.Tasks;
+using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.ModelsAndUtils.Models;
-using System.Data;
-using System.Threading.Tasks;
 
 namespace Diagnostics.DataProviders
 {

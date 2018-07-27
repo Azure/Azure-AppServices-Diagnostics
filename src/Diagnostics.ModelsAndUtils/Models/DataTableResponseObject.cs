@@ -136,8 +136,16 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         internal static Type GetColumnType(string datatype)
         {
-            datatype = datatype.Equals("int", StringComparison.OrdinalIgnoreCase) ? "int32" : datatype;
-            datatype = datatype.Equals("dynamic", StringComparison.OrdinalIgnoreCase) ? "string" : datatype;
+            if (datatype.Equals("int", StringComparison.OrdinalIgnoreCase))
+            {
+                datatype = "int32";
+            }
+
+            if (datatype.Equals("dynamic", StringComparison.OrdinalIgnoreCase) || datatype.Equals("real", StringComparison.OrdinalIgnoreCase))
+            {
+                datatype = "string";
+            }
+
             return Type.GetType($"System.{datatype}", false, true);
         }
     }
