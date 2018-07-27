@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Diagnostics.DataProviders.Interfaces;
+using Diagnostics.Logger;
+using Diagnostics.ModelsAndUtils.Models;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Diagnostics.DataProviders.Interfaces;
-using Diagnostics.Logger;
-using Diagnostics.ModelsAndUtils.Models;
-using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.DataProviders
 {

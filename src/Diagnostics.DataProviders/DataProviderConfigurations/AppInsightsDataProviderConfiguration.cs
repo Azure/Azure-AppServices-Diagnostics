@@ -1,5 +1,4 @@
-﻿
-namespace Diagnostics.DataProviders.DataProviderConfigurations
+﻿namespace Diagnostics.DataProviders.DataProviderConfigurations
 {
     [DataSourceConfiguration("AppInsights")]
     public class AppInsightsDataProviderConfiguration : IDataProviderConfiguration

@@ -1,16 +1,14 @@
 ﻿using Diagnostics.DataProviders.DataProviderConfigurations;
+using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
-using System.Linq;
-using Diagnostics.DataProviders.Interfaces;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Diagnostics.DataProviders
 {
