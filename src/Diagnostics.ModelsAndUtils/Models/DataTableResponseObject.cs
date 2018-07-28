@@ -141,12 +141,7 @@ namespace Diagnostics.ModelsAndUtils.Models
                 datatype = "int32";
             }
 
-            if (datatype.Equals("dynamic", StringComparison.OrdinalIgnoreCase) || datatype.Equals("real", StringComparison.OrdinalIgnoreCase))
-            {
-                datatype = "string";
-            }
-
-            return Type.GetType($"System.{datatype}", false, true);
+            return Type.GetType($"System.{datatype}", false, true) ?? Type.GetType($"System.String");
         }
     }
 }
