@@ -26,6 +26,24 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string ColumnType { get; set; }
     }
 
+    public class AppInsightsDataTableResponseObjectCollection
+    {
+        public IEnumerable<AppInsightsDataTableResponseObject> Tables { get; set; }
+    }
+
+    public class AppInsightsDataTableResponseObject
+    {
+        public string Name { get; set; }
+        public IEnumerable<AppInsightsDataTableResponseColumn> Columns { get; set; }
+        public string[][] Rows { get; set; }
+    }
+
+    public class AppInsightsDataTableResponseColumn
+    {
+        public string Name { get; set; }
+        public string Type { get; set; }
+    }
+
     public static class DataTableExtensions
     {
         public static DataTable ToDataTable(this DataTableResponseObject dataTableResponse)
@@ -37,7 +55,7 @@ namespace Diagnostics.ModelsAndUtils.Models
 
             var dataTable = new DataTable(dataTableResponse.TableName);
 
-            dataTable.Columns.AddRange(dataTableResponse.Columns.Select(column => new DataColumn(column.ColumnName, GetColumnType(column.ColumnType, column.DataType))).ToArray());
+            dataTable.Columns.AddRange(dataTableResponse.Columns.Select(column => new DataColumn(column.ColumnName, GetColumnType(column.DataType))).ToArray());
 
             foreach (var row in dataTableResponse.Rows)
             {
@@ -55,6 +73,38 @@ namespace Diagnostics.ModelsAndUtils.Models
                 }
 
                 dataTable.Rows.Add(rowWithCorrectTypes.ToArray());
+            }
+
+            return dataTable;
+        }
+
+        public static DataTable ToAppInsightsDataTable(this AppInsightsDataTableResponseObject appInsightsDataTableResponse)
+        {
+            if (appInsightsDataTableResponse == null)
+            {
+                throw new ArgumentNullException("appInsightsDataTableResponse");
+            }
+
+            var dataTable = new DataTable(appInsightsDataTableResponse.Name);
+            dataTable.Columns.AddRange(appInsightsDataTableResponse.Columns.Select(column => new DataColumn(column.Name, GetColumnType(column.Type))).ToArray());
+
+            foreach (var row in appInsightsDataTableResponse.Rows)
+            {
+                var rowWithCorrectTypes = new List<object>();
+                for (int i = 0; i < dataTable.Columns.Count; i++)
+                {
+                    object rowValueWithCorrectType = null;
+
+                    if (row[i] != null)
+                    {
+                        rowValueWithCorrectType = Convert.ChangeType(row[i], dataTable.Columns[i].DataType);
+                    }
+
+                    rowWithCorrectTypes.Add(rowValueWithCorrectType);
+                }
+
+                dataTable.Rows.Add(rowWithCorrectTypes.ToArray());
+
             }
 
             return dataTable;
@@ -84,9 +134,14 @@ namespace Diagnostics.ModelsAndUtils.Models
             return dataTableResponseObject;
         }
 
-        internal static Type GetColumnType(string type, string datatype)
+        internal static Type GetColumnType(string datatype)
         {
-            return Type.GetType($"System.{datatype}");
+            if (datatype.Equals("int", StringComparison.OrdinalIgnoreCase))
+            {
+                datatype = "int32";
+            }
+
+            return Type.GetType($"System.{datatype}", false, true) ?? Type.GetType($"System.String");
         }
     }
 }
