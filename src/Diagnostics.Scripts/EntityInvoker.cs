@@ -90,7 +90,6 @@ namespace Diagnostics.Scripts
                 }
                 catch(Exception ex)
                 {
-                    // Adding an exception here? If it's a detector, but trying to add a system filter.. But how can we know if it's a detector...
                     if (ex is ScriptCompilationException scriptEx)
                     {
                         IsCompilationSuccessful = false;
@@ -289,7 +288,7 @@ namespace Diagnostics.Scripts
                         }
                     });
 
-                    if (this._resourceFilter.InternalOnly && this._entryPointDefinitionAttribute.SupportTopicList.Any())
+                    if (this.SystemFilter == null && this._resourceFilter.InternalOnly && this._entryPointDefinitionAttribute.SupportTopicList.Any())
                     {
                         throw new ScriptCompilationException("Detector is marked internal and SupportTopic is specified. This attribute will have no affect until the detector is made public.");
                     }
