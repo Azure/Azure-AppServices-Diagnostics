@@ -288,10 +288,15 @@ namespace Diagnostics.Scripts
                         }
                     });
 
-                    if (this.SystemFilter == null && this._resourceFilter.InternalOnly && this._entryPointDefinitionAttribute.SupportTopicList.Any())
+                    if (this._systemFilter == null && this._resourceFilter.InternalOnly && this._entryPointDefinitionAttribute.SupportTopicList.Any())
                     {
                         throw new ScriptCompilationException("Detector is marked internal and SupportTopic is specified. This attribute will have no affect until the detector is made public.");
                     }
+                }
+
+                if (this._systemFilter != null && this._resourceFilter != null)
+                {
+                    throw new ScriptCompilationException("Detector is marked with both SystemFilter and ResourceFilter. System Invoker should not include any ResourceFilter attribute.");
                 }
             }
         }

@@ -36,9 +36,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.Statistics + UriElements.StatisticsResource)]
-        public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string certificateName, string invokerId, string detectorId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string certificateName, string detectorId, string invokerId, string startTime = null, string endTime = null, string timeGrain = null)
         {
-            return await base.GetSystemInvoker(GetResource(subscriptionId, resourceGroupName, certificateName), invokerId, detectorId, startTime, endTime, timeGrain);
+            return await base.GetSystemInvoker(GetResource(subscriptionId, resourceGroupName, certificateName), detectorId, invokerId, startTime, endTime, timeGrain);
         }
 
         [HttpPost(UriElements.Insights)]

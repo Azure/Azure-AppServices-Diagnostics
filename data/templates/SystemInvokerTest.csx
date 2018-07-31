@@ -8,7 +8,7 @@
 
 [SystemFilter]
 [Definition(Id = "<YOUR_DETECTOR_ID>", Name = "<YOUR_DETECTOR_NAME>", Author = "<YOUR_ALIAS>", Description = "")]
-public async static Task<Response> Run(DataProviders dp, OperationContext<App> cxt, Response res)
+public async static Task<Response> Run(DataProviders dp, OperationContext<IResource> cxt, Response res)
 {
     res.Dataset.Add(new DiagnosticData()
     {

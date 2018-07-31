@@ -75,20 +75,15 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.Statistics + UriElements.StatisticsResource)]
-        public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string siteName, string invokerId, string detectorId, [FromBody] DiagnosticSiteData postBody, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string siteName, string detectorId, string invokerId, string startTime = null, string endTime = null, string timeGrain = null)
         {
-            if (postBody == null)
-            {
-                return BadRequest("Post Body missing.");
-            }
-
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
             {
                 return BadRequest(errorMessage);
             }
 
-            App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
-            return await base.GetSystemInvoker(app, invokerId, detectorId, startTime, endTime, timeGrain);
+            App app = new App(subscriptionId, resourceGroupName, siteName);
+            return await base.GetSystemInvoker(app, detectorId, invokerId, startTime, endTime, timeGrain);
         }
 
         [HttpPost(UriElements.Insights)]

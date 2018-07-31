@@ -74,19 +74,19 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(systemInvokers);
         }
 
-        protected async Task<IActionResult> GetSystemInvoker(TResource resource, string invokerId, string detectorId, string startTime, string endTime, string timeGrain)
+        protected async Task<IActionResult> GetSystemInvoker(TResource resource, string detectorId, string invokerId, string startTime, string endTime, string timeGrain)
         {
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
             {
                 return BadRequest(errorMessage);
             }
 
-            Dictionary<string, string> additionalContext = new Dictionary<string, string>
+            Dictionary<string, dynamic> additionalProperties = new Dictionary<string, dynamic>
             {
                 { "DetectorId", detectorId }
             };
 
-            OperationContext<TResource> context = PrepareContext(resource, startTimeUtc, endTimeUtc, false, additionalContext);
+            OperationContext<TResource> context = PrepareContext(resource, startTimeUtc, endTimeUtc, false, additionalProperties);
 
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
@@ -103,7 +103,6 @@ namespace Diagnostics.RuntimeHost.Controllers
             };
 
             var response = (Response)await invoker.Invoke(new object[] { dataProviders, context, res });
-            response.UpdateDetectorStatusFromInsights();
 
             List<DataProviderMetadata> dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
 
@@ -310,7 +309,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return hostingEnv;
         }
 
-        private OperationContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, Dictionary<string, string> additionalContext = null)
+        private OperationContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, Dictionary<string, dynamic> additionalProperties = null)
         {
             this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
             this.Request.Headers.TryGetValue(HeaderConstants.InternalCallHeaderName, out StringValues internalCallHeader);
@@ -326,7 +325,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(DataProviderConstants.KustoTimeFormat),
                 isInternalRequest || forceInternal,
                 requestIds.FirstOrDefault(),
-                additionalContext
+                additionalProperties
             );
         }
 
