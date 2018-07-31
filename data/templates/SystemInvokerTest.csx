@@ -1,4 +1,4 @@
-﻿private static string GetQuery(OperationContext<App> cxt)
+﻿private static string GetQuery(OperationContext<IResource> cxt)
 {
     return
     $@"<YOUR_TABLE_NAME>
@@ -12,7 +12,7 @@ public async static Task<Response> Run(DataProviders dp, OperationContext<IResou
 {
     res.Dataset.Add(new DiagnosticData()
     {
-        Table = await dp.Kusto.ExecuteQuery(GetQuery(cxt), cxt.Resource.Stamp.Name)
+		Table = await dp.Kusto.ExecuteClusterQuery(GetQuery(cxt))
     });
 
     return res;
