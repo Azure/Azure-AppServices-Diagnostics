@@ -72,6 +72,23 @@ namespace Diagnostics.RuntimeHost.Controllers
             return await base.GetDetector(ase, detectorId, startTime, endTime, timeGrain);
         }
 
+        [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.Statistics + UriElements.StatisticsResource)]
+        public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, string invokerId, string detectorId, [FromBody] DiagnosticStampData postBody, string startTime = null, string endTime = null, string timeGrain = null)
+        {
+            if (postBody == null)
+            {
+                return BadRequest("Post Body missing.");
+            }
+
+            if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
+            {
+                return BadRequest(errorMessage);
+            }
+
+            HostingEnvironment ase = await GetHostingEnvironment(subscriptionId, resourceGroupName, hostingEnvironmentName, postBody, startTimeUtc, endTimeUtc);
+            return await base.GetSystemInvoker(ase, invokerId, detectorId, startTime, endTime, timeGrain);
+        }
+
         [HttpPost(UriElements.Insights)]
         public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, [FromBody] DiagnosticStampData postBody, string supportTopicId, string minimumSeverity = null, string startTime = null, string endTime = null, string timeGrain = null)
         {

@@ -27,7 +27,7 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         /// <summary>
         /// sets to false when detector is called from external source (Azure portal, CLI ...)
-        /// sets to true when detexctor is called from internal source (Applens ..)
+        /// sets to true when detector is called from internal source (Applens ..)
         /// </summary>
         public bool IsInternalCall { get; private set; }
 
@@ -41,14 +41,17 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public string TimeGrain { get; private set; }
 
-        public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, string timeGrain = "5")
+        public Dictionary<string, string> AdditionalContext { get; private set; }
+
+        public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, Dictionary<string, string> additionalContext = null, string timeGrain = "5")
         {
             Resource = resource;
             StartTime = startTimeStr;
             EndTime = endTimeStr;
             IsInternalCall = isInternalCall;
-            TimeGrain = timeGrain;
             RequestId = requestId;
+            AdditionalContext = additionalContext;
+            TimeGrain = timeGrain;
         }
     }
 }

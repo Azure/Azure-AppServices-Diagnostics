@@ -35,6 +35,12 @@ namespace Diagnostics.RuntimeHost.Controllers
             return await base.GetDetector(GetResource(subscriptionId, resourceGroupName, logicAppName), detectorId, startTime, endTime, timeGrain);
         }
 
+        [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.Statistics + UriElements.StatisticsResource)]
+        public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string logicAppName, string invokerId, string detectorId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null)
+        {
+            return await base.GetSystemInvoker(GetResource(subscriptionId, resourceGroupName, logicAppName), invokerId, detectorId, startTime, endTime, timeGrain);
+        }
+
         [HttpPost(UriElements.Insights)]
         public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string logicAppName, [FromBody] dynamic postBody, string supportTopicId, string minimumSeverity = null, string startTime = null, string endTime = null, string timeGrain = null)
         {

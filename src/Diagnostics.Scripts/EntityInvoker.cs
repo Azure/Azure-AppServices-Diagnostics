@@ -25,6 +25,7 @@ namespace Diagnostics.Scripts
         private MethodInfo _entryPointMethodInfo;
         private Definition _entryPointDefinitionAttribute;
         private IResourceFilter _resourceFilter;
+        private SystemFilter _systemFilter;
         
         public bool IsCompilationSuccessful { get; private set; }
 
@@ -35,6 +36,8 @@ namespace Diagnostics.Scripts
         public Definition EntryPointDefinitionAttribute => _entryPointDefinitionAttribute;
 
         public IResourceFilter ResourceFilter => _resourceFilter;
+
+        public SystemFilter SystemFilter => _systemFilter;
 
         public EntityInvoker(EntityMetadata entityMetadata)
         {
@@ -87,6 +90,7 @@ namespace Diagnostics.Scripts
                 }
                 catch(Exception ex)
                 {
+                    // Adding an exception here? If it's a detector, but trying to add a system filter.. But how can we know if it's a detector...
                     if (ex is ScriptCompilationException scriptEx)
                     {
                         IsCompilationSuccessful = false;
@@ -213,6 +217,7 @@ namespace Diagnostics.Scripts
             }
 
             _resourceFilter = _entryPointMethodInfo.GetCustomAttribute<ResourceFilterBase>();
+            _systemFilter = _entryPointMethodInfo.GetCustomAttribute<SystemFilter>();
         }
 
         private ScriptOptions GetScriptOptions(ImmutableArray<string> frameworkReferences)
