@@ -28,8 +28,7 @@ namespace Diagnostics.RuntimeHost.Services
         IEnumerable<EntityInvoker> GetDetectorInvokerList<TResource>(OperationContext<TResource> context)
             where TResource : IResource;
 
-        EntityInvoker GetSystemInvoker<TResource>(string invokerId, OperationContext<TResource> context)
-    where TResource : IResource;
+        EntityInvoker GetSystemInvoker(string invokerId);
 
         IEnumerable<EntityInvoker> GetSystemInvokerList<TResource>(OperationContext<TResource> context)
             where TResource : IResource;
@@ -112,10 +111,9 @@ namespace Diagnostics.RuntimeHost.Services
             return list.OrderBy(p => p.EntryPointDefinitionAttribute.Name);
         }
 
-        public EntityInvoker GetSystemInvoker<TResource>(string invokerId, OperationContext<TResource> context)
-    where TResource : IResource
+        public EntityInvoker GetSystemInvoker(string invokerId)
         {
-            if (!TryGetValue(invokerId, out EntityInvoker invoker) || !context.IsInternalCall || invoker.SystemFilter == null)
+            if (!TryGetValue(invokerId, out EntityInvoker invoker) || invoker.SystemFilter == null || invoker.ResourceFilter != null)
             {
                 return null;
             }

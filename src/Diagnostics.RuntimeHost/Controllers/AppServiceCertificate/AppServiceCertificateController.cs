@@ -35,10 +35,16 @@ namespace Diagnostics.RuntimeHost.Controllers
             return await base.GetDetector(GetResource(subscriptionId, resourceGroupName, certificateName), detectorId, startTime, endTime, timeGrain);
         }
 
-        [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.Statistics + UriElements.StatisticsResource)]
-        public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string certificateName, string detectorId, string invokerId, string startTime = null, string endTime = null, string timeGrain = null)
+        [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]
+        public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string certificateName, string detectorId, [FromBody]CompilationBostBody<dynamic> jsonBody, string startTime = null, string endTime = null, string timeGrain = null)
         {
-            return await base.GetSystemInvoker(GetResource(subscriptionId, resourceGroupName, certificateName), detectorId, invokerId, startTime, endTime, timeGrain);
+            return await base.ExecuteQuery(GetResource(subscriptionId, resourceGroupName, certificateName), jsonBody, startTime, endTime, timeGrain, detectorId);
+        }
+
+        [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.Statistics + UriElements.StatisticsResource)]
+        public async Task<IActionResult> GetSystemInvoker(string detectorId, string invokerId)
+        {
+            return await base.GetSystemInvoker(detectorId, invokerId);
         }
 
         [HttpPost(UriElements.Insights)]
