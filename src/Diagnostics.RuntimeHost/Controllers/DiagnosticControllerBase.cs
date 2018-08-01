@@ -329,7 +329,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             return systemContext;
         }
-        private OperationContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, Dictionary<string, dynamic> additionalProperties = null)
+        private OperationContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false)
         {
             this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
             this.Request.Headers.TryGetValue(HeaderConstants.InternalCallHeaderName, out StringValues internalCallHeader);
@@ -344,8 +344,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(DataProviderConstants.KustoTimeFormat),
                 DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(DataProviderConstants.KustoTimeFormat),
                 isInternalRequest || forceInternal,
-                requestIds.FirstOrDefault(),
-                additionalProperties
+                requestIds.FirstOrDefault()
             );
         }
 

@@ -80,7 +80,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.Statistics + UriElements.StatisticsResource)]
-        public async Task<IActionResult> GetSystemInvoker(string detectorId, string invokerId)
+        public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, string detectorId, string invokerId, string startTime = null, string endTime = null, string timeGrain = null)
         {
             return await base.GetSystemInvoker(detectorId, invokerId);
         }

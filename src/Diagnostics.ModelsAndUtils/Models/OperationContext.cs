@@ -41,19 +41,13 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public string TimeGrain { get; private set; }
 
-        /// <summary>
-        /// Additional properties.
-        /// </summary>
-        public Dictionary<string, dynamic> AdditionalProperties { get; private set; }
-
-        public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, Dictionary<string, dynamic> additionalProperties= null, string timeGrain = "5")
+        public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, string timeGrain = "5")
         {
             Resource = resource;
             StartTime = startTimeStr;
             EndTime = endTimeStr;
             IsInternalCall = isInternalCall;
             RequestId = requestId;
-            AdditionalProperties = additionalProperties;
             TimeGrain = timeGrain;
         }
     }
