@@ -70,7 +70,7 @@ namespace Diagnostics.RuntimeHost.Services
 
             if (list == null || !list.Any()) return list;
 
-            list = list.Where(item => ((item.ResourceFilter.ResourceType & context.Resource.ResourceType) > 0) && (context.IsInternalCall || !item.ResourceFilter.InternalOnly) && (item.SystemFilter == null));
+            list = list.Where(item => ((item.SystemFilter == null) && (item.ResourceFilter != null) && (item.ResourceFilter.ResourceType & context.Resource.ResourceType) > 0) && (context.IsInternalCall || !item.ResourceFilter.InternalOnly));
             List<EntityInvoker> filteredList = new List<EntityInvoker>();
             list.ToList().ForEach(item =>
             {
