@@ -19,11 +19,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
-        ///     res.SetDetectorStatus(DetectorStatus.Critical, "This is an error message that will come from the detector");
+        ///     res.SetDetectorStatus(InsightStatus.Critical, "This is an error message that will come from the detector");
         /// }
         /// </code>
         /// </example>
-        public static void SetDetectorStatus(this Response response, DetectorStatus status, string message = null)
+        public static void SetDetectorStatus(this Response response, InsightStatus status, string message = null)
         {
             response.Status = new Status()
             {
@@ -46,7 +46,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 {
                     if (set.RenderingProperties.Type == RenderingType.DynamicInsight)
                     {
-                        return (int)((DynamicInsightRendering)set.RenderingProperties).Status;
+                        return ((DynamicInsightRendering)set.RenderingProperties).Status;
                     }
                     else
                     {
@@ -59,12 +59,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                                 lowestStatus = insightStatusInt;
                             }
                         }
-                        return lowestStatus;
+                        return (InsightStatus)lowestStatus;
                     }
                     
                 }).OrderBy(st => st).FirstOrDefault();
 
-            response.Status = new Status() { StatusId = (DetectorStatus)status };
+            response.Status = new Status() { StatusId = status };
         }
     }
 }

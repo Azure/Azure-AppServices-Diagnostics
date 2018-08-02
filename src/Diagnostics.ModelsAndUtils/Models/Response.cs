@@ -48,43 +48,12 @@ namespace Diagnostics.ModelsAndUtils.Models
     public class Status
     {
         public string Message { get; set; }
-        public DetectorStatus StatusId { get; set; }
+        public InsightStatus StatusId { get; set; }
 
         public Status()
         {
-            StatusId = DetectorStatus.None;
+            StatusId = InsightStatus.None;
         }
-    }
-
-    /// <summary>
-    /// Status of Detector
-    /// </summary>
-    public enum DetectorStatus
-    {
-        /// <summary>
-        /// The detector analyzed the data and determined there is a critical problem or error
-        /// </summary>
-        Critical = 0,
-
-        /// <summary>
-        /// The detector analyzed the data and determined there is a warning
-        /// </summary>
-        Warning,
-
-        /// <summary>
-        /// The detector analyzed the data and determined there was no issue
-        /// </summary>
-        Healthy,
-
-        /// <summary>
-        /// The detector is merely informational
-        /// </summary>
-        Info,        
-
-        /// <summary>
-        /// No status, this is the default
-        /// </summary>
-        None
     }
 
     public class DiagnosticData
