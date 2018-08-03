@@ -86,7 +86,7 @@ namespace Diagnostics.RuntimeHost.Services
         public EntityInvoker GetDetectorInvoker<TResource>(string detectorId, OperationContext<TResource> context)
             where TResource : IResource
         {
-            if (!TryGetValue(detectorId, out EntityInvoker invoker) || (!context.IsInternalCall && invoker.ResourceFilter.InternalOnly) || invoker.SystemFilter != null)
+            if (!TryGetValue(detectorId, out EntityInvoker invoker) || invoker.SystemFilter != null || invoker.ResourceFilter == null || (!context.IsInternalCall && invoker.ResourceFilter.InternalOnly))
             {
                 return null;
             }

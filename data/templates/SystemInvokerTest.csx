@@ -1,8 +1,7 @@
 ﻿private static string GetQuery(Dictionary<string, dynamic> cxt)
 {
     return
-    $@"cluster('MockCluster).database('Mockdb').DiagnosticRole
-		| top 1 by PreciseTimeStamp desc";
+    $@"<YOUR_QUERY>";
 }
 
 [SystemFilter]

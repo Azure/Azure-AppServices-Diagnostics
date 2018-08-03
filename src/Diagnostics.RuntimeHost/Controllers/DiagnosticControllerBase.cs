@@ -313,6 +313,9 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private Dictionary<string, dynamic> PrepareSystemContext(string detectorId, string dataSource, string timeRange)
         {
+            dataSource = string.IsNullOrWhiteSpace(dataSource) ? "0" : dataSource;
+            timeRange = string.IsNullOrWhiteSpace(timeRange) ? "168" : timeRange;
+
             this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
             this.Request.Headers.TryGetValue(HeaderConstants.InternalCallHeaderName, out StringValues internalCallHeader);
             bool isInternalRequest = false;

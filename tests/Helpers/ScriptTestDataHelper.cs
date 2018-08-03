@@ -89,10 +89,11 @@ namespace Diagnostics.Tests.Helpers
         public static async Task<string> GetSystemInvokerScript(Definition def)
         {
             string template = await File.ReadAllTextAsync(@"templates/SystemInvokerTest.csx");
-
+            string query = "cluster('MockCluster).database('Mockdb').DiagnosticRole | top 1 by PreciseTimeStamp desc";
             return template.Replace("<YOUR_DETECTOR_ID>", def.Id)
                 .Replace("<YOUR_DETECTOR_NAME>", def.Name)
-                .Replace("<YOUR_ALIAS>", def.Author);
+                .Replace("<YOUR_ALIAS>", def.Author)
+                .Replace("<YOUR_QUERY>", query);
         }
     }
 }
