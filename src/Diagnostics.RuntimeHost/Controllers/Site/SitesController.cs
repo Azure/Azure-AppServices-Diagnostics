@@ -75,16 +75,16 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]
-        public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string siteName, [FromBody]CompilationBostBody<DiagnosticSiteData> jsonBody, string detectorId, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string siteName, [FromBody]CompilationBostBody<DiagnosticSiteData> jsonBody, string detectorId, string dataSource = null, string timeRange = null)
         {
             App app = new App(subscriptionId, resourceGroupName, siteName);
-            return await base.ExecuteQuery(app, jsonBody, startTime, endTime, timeGrain, detectorId);
+            return await base.ExecuteQuery(app, jsonBody, null, null, null, detectorId, dataSource, timeRange);
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.Statistics + UriElements.StatisticsResource)]
-        public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string siteName, string detectorId, string invokerId, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string siteName, string detectorId, string invokerId, string dataSource = null, string timeRange = null)
         {
-            return await base.GetSystemInvoker(detectorId, invokerId);
+            return await base.GetSystemInvoker(detectorId, invokerId, dataSource, timeRange);
         }
 
         [HttpPost(UriElements.Insights)]

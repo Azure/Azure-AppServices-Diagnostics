@@ -73,11 +73,10 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             return Ok(systemInvokers);
         }
-
         
-        protected async Task<IActionResult> GetSystemInvoker(string detectorId, string invokerId)
+        protected async Task<IActionResult> GetSystemInvoker(string detectorId, string invokerId, string dataSource, string timeRange)
         {
-            Dictionary<string, dynamic> systemContext = PrepareSystemContext(detectorId);
+            Dictionary<string, dynamic> systemContext = PrepareSystemContext(detectorId, dataSource, timeRange);
 
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
@@ -100,7 +99,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return response == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata));
         }
 
-        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationBostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null)
+        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationBostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null)
         {
             if (jsonBody == null)
             {
@@ -160,7 +159,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         }
                         else
                         {
-                            Dictionary<string, dynamic> systemContext = PrepareSystemContext(detectorId);
+                            Dictionary<string, dynamic> systemContext = PrepareSystemContext(detectorId, dataSource, timeRange);
                             var responseInput = new Response() { Metadata = invoker.EntryPointDefinitionAttribute };
                             invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, systemContext, responseInput });
                         }
@@ -312,7 +311,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return hostingEnv;
         }
 
-        private Dictionary<string, dynamic> PrepareSystemContext(string detectorId)
+        private Dictionary<string, dynamic> PrepareSystemContext(string detectorId, string dataSource, string timeRange)
         {
             this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
             this.Request.Headers.TryGetValue(HeaderConstants.InternalCallHeaderName, out StringValues internalCallHeader);
@@ -326,7 +325,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             systemContext.Add("detectorId", detectorId);
             systemContext.Add("requestIds", requestIds);
             systemContext.Add("isInternal", isInternalRequest);
-
+            systemContext.Add("dataSource", dataSource);
+            systemContext.Add("timeRange", timeRange);
             return systemContext;
         }
         private OperationContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false)
