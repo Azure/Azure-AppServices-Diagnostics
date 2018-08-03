@@ -22,11 +22,11 @@ namespace Diagnostics.RuntimeHost.Utilities
             Value = "Go to applens to see more information about this insight."
         };
 
-        internal static AzureSupportCenterInsight CreateInsight<TResource>(Insight insight, OperationContext<TResource> context, ArmResourceType armResourceType,  Definition detector)
+        internal static AzureSupportCenterInsight CreateInsight<TResource>(Insight insight, OperationContext<TResource> context,  Definition detector)
             where TResource : IResource
         {
-            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/{armResourceType.Provider}/{armResourceType.ResourceTypeName}/{context.Resource.Name}/detectors/{detector.Id}?startTime={context.StartTime}&endTime={context.EndTime}";
-            var category = detector.Name.Length > 32 ? armResourceType.ResourceTypeName : detector.Name;
+            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/{context.Resource.Provider}/{context.Resource.ResourceTypeName}/{context.Resource.Name}/detectors/{detector.Id}?startTime={context.StartTime}&endTime={context.EndTime}";
+            var category = detector.Name.Length > 32 ? context.Resource.ResourceTypeName : detector.Name;
 
             var description = GetTextObjectFromData("description", insight.Body) ?? new Text() { IsMarkdown = false, Value = string.Format(DefaultDescription, detector.Name) };
             var recommendedAction = GetTextObjectFromData("recommended action", insight.Body) ?? DefaultRecommendedAction;
@@ -73,7 +73,7 @@ namespace Diagnostics.RuntimeHost.Utilities
             return supportCenterInsight;
         }
 
-        internal static AzureSupportCenterInsight CreateDefaultInsight<TResource>(OperationContext<TResource> context, ArmResourceType resourceType, List<Definition> detectorsRun)
+        internal static AzureSupportCenterInsight CreateDefaultInsight<TResource>(OperationContext<TResource> context, List<Definition> detectorsRun)
             where TResource : IResource
         {
             var description = new StringBuilder();
@@ -85,7 +85,7 @@ namespace Diagnostics.RuntimeHost.Utilities
             }
             description.AppendLine();
 
-            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/{resourceType.Provider}/{resourceType.ResourceTypeName}/{context.Resource.Name}/detectors/{detectorsRun.FirstOrDefault().Id}?startTime={context.StartTime}&endTime={context.EndTime}";
+            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/{context.Resource.Provider}/{context.Resource.ResourceTypeName}/{context.Resource.Name}/detectors/{detectorsRun.FirstOrDefault().Id}?startTime={context.StartTime}&endTime={context.EndTime}";
 
             var supportCenterInsight = new AzureSupportCenterInsight()
             {

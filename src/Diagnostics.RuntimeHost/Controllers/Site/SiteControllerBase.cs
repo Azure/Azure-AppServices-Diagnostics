@@ -16,14 +16,6 @@ namespace Diagnostics.RuntimeHost.Controllers
     {
         protected ISiteService _siteService;
 
-        protected override ArmResourceType ResourceType
-        {
-            get
-            {
-                return ArmResourceTypes.App;
-            }
-        }
-
         public SiteControllerBase(IStampService stampService, ISiteService siteService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService)
             : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, dataSourcesConfigService)
         {

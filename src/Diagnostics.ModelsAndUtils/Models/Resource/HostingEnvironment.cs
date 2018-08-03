@@ -70,6 +70,28 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public IEnumerable<string> TenantIdList;
 
+        /// <summary>
+        /// Arm Resource Provider
+        /// </summary>
+        public string Provider
+        {
+            get
+            {
+                return "Microsoft.Web";
+            }
+        }
+
+        /// <summary>
+        /// Name of Resource Type as defined by ARM resource id. Examples: 'sites', 'hostingEnvironments'
+        /// </summary>
+        public string ResourceTypeName
+        {
+            get
+            {
+                return "hostingEnvironment";
+            }
+        }
+
         public HostingEnvironment(string subscriptionId, string resourceGroup, string name)
         {
             this.SubscriptionId = subscriptionId;
