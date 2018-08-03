@@ -29,7 +29,17 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// Type of Resource
         /// </summary>
         ResourceType ResourceType { get; set; }
-        
+
+        /// <summary>
+        /// Arm Resource Provider
+        /// </summary>
+        string Provider { get; }
+
+        /// <summary>
+        /// Name of Resource Type as defined by ARM resource id. Examples: 'sites', 'hostingEnvironments'
+        /// </summary>
+        string ResourceTypeName { get; }
+
         /// <summary>
         /// Determines whether the resource is applicable after filtering.
         /// </summary>

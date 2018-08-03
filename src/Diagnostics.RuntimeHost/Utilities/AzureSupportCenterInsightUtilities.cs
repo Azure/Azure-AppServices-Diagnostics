@@ -22,15 +22,11 @@ namespace Diagnostics.RuntimeHost.Utilities
             Value = "Go to applens to see more information about this insight."
         };
 
-        internal static AzureSupportCenterInsight CreateInsight<TResource>(Insight insight, OperationContext<TResource> context, Definition detector)
+        internal static AzureSupportCenterInsight CreateInsight<TResource>(Insight insight, OperationContext<TResource> context,  Definition detector)
             where TResource : IResource
         {
-
-            // Logic in line before would have to be updated if we added more resource types. 
-            // TODO: May make sense to have resource type enums contain the resource type string
-            var resourceTypeString = context.Resource.ResourceType == ResourceType.App ? "sites" : "hostingEnvironments";
-            var issueCategory = context.Resource.ResourceType == ResourceType.App ? "Web App" : "App Service Environment";
-            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/Microsoft.Web/{resourceTypeString}/{context.Resource.Name}/detectors/{detector.Id}?startTime={context.StartTime}&endTime={context.EndTime}";
+            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/{context.Resource.Provider}/{context.Resource.ResourceTypeName}/{context.Resource.Name}/detectors/{detector.Id}?startTime={context.StartTime}&endTime={context.EndTime}";
+            var category = detector.Name.Length > 32 ? context.Resource.ResourceTypeName : detector.Name;
 
             var description = GetTextObjectFromData("description", insight.Body) ?? new Text() { IsMarkdown = false, Value = string.Format(DefaultDescription, detector.Name) };
             var recommendedAction = GetTextObjectFromData("recommended action", insight.Body) ?? DefaultRecommendedAction;
@@ -47,8 +43,8 @@ namespace Diagnostics.RuntimeHost.Utilities
                 Title = insight.Message,
                 ImportanceLevel = (ImportanceLevel)Enum.Parse(typeof(ImportanceLevel), ((int)insight.Status).ToString()),
                 InsightFriendlyName = insight.Message,
-                IssueCategory = issueCategory.ToUpper(),
-                IssueSubCategory = issueCategory,
+                IssueCategory = category,
+                IssueSubCategory = category,
                 Description = description,
                 RecommendedAction = new RecommendedAction()
                 {
@@ -61,7 +57,6 @@ namespace Diagnostics.RuntimeHost.Utilities
                         ArticleId = Guid.NewGuid(),
                         ArticleContent = customerReadyContent.Value
                     },
-                AdditionalDetails = GetExtraNameValuePairs(insight.Body),
                 ConfidenceLevel = InsightConfidenceLevel.High,
                 Scope = InsightScope.ResourceLevel,
                 Links = new List<Link>()
@@ -90,9 +85,7 @@ namespace Diagnostics.RuntimeHost.Utilities
             }
             description.AppendLine();
 
-            // TODO: Handle other resource types
-            var resourceTypeString = context.Resource.ResourceType == ResourceType.App ? "sites" : "hostingEnvironments";
-            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/{resourceTypeString}/{context.Resource.Name}/detectors/{detectorsRun.FirstOrDefault().Id}";
+            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/{context.Resource.Provider}/{context.Resource.ResourceTypeName}/{context.Resource.Name}/detectors/{detectorsRun.FirstOrDefault().Id}?startTime={context.StartTime}&endTime={context.EndTime}";
 
             var supportCenterInsight = new AzureSupportCenterInsight()
             {
@@ -141,16 +134,6 @@ namespace Diagnostics.RuntimeHost.Utilities
             Encoding.UTF8.GetBytes(detector, 0, detector.Length, bytes, 0);
             // Guid only takes byte array of length 16
             return new Guid(bytes.Take(16).ToArray());
-        }
-
-        private static IEnumerable<KeyValuePair<string, string>> GetExtraNameValuePairs(Dictionary<string, string> data)
-        {
-            if (data == null)
-            {
-                return null;
-            }
-
-            return data.Where(k => ReservedFieldNames.Contains(k.Key.ToLower()) && !k.Value.Contains("<markdown>"));
         }
 
         // Returns true if markdown

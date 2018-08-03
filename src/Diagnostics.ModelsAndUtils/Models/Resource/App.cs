@@ -50,6 +50,28 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public HostingEnvironment Stamp { get; set; }
 
+        /// <summary>
+        /// Arm Resource Provider
+        /// </summary>
+        public string Provider
+        {
+            get
+            {
+                return "Microsoft.Web";
+            }
+        }
+
+        /// <summary>
+        /// Name of Resource Type as defined by ARM resource id. Examples: 'sites', 'hostingEnvironments'
+        /// </summary>
+        public string ResourceTypeName
+        {
+            get
+            {
+                return "sites";
+            }
+        }
+
         public App(string subscriptionId, string resourceGroup, string appName) : base()
         {
             this.SubscriptionId = subscriptionId;

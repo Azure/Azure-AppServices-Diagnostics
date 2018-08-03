@@ -290,7 +290,7 @@ namespace Diagnostics.Scripts
 
                     if (this._systemFilter == null && this._resourceFilter.InternalOnly && this._entryPointDefinitionAttribute.SupportTopicList.Any())
                     {
-                        throw new ScriptCompilationException("Detector is marked internal and SupportTopic is specified. This attribute will have no affect until the detector is made public.");
+                        this.CompilationOutput = this.CompilationOutput.Concat(new string[] { "WARNING: Detector is marked internal and SupportTopic is specified. This means the detector will be enabled for Azure Support Center but not for case submission flow, until the isInternal flag is set to false." });
                     }
                 }
 

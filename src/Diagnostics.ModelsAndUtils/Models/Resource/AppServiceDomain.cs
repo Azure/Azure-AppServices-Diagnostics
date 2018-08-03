@@ -22,6 +22,28 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public string ResourceGroup { get; set; }
 
+        /// <summary>
+        /// Arm Resource Provider
+        /// </summary>
+        public string Provider
+        {
+            get
+            {
+                return "Microsoft.DomainRegistration";
+            }
+        }
+
+        /// <summary>
+        /// Name of Resource Type as defined by ARM resource id. Examples: 'sites', 'hostingEnvironments'
+        /// </summary>
+        public string ResourceTypeName
+        {
+            get
+            {
+                return "domains";
+            }
+        }
+
         public AppServiceDomain(string subscriptionId, string resourceGroup, string name) : base()
         {
             this.SubscriptionId = subscriptionId;

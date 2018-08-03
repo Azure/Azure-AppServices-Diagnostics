@@ -78,7 +78,6 @@ namespace Diagnostics.Tests.ScriptsTests
         [Theory]
         [InlineData("", "14878", false)]
         [InlineData("1234", "", false)]
-        [InlineData("1234", "14878", true)]
         public async void EntityInvoker_InvalidSupportTopicId(string supportTopicId, string pesId, bool isInternal)
         {
             Definition definitonAttribute = new Definition()
