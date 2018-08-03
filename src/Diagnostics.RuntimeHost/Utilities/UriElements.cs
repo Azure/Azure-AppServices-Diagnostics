@@ -38,6 +38,9 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string DetectorResource = "/{detectorId}";
         public const string Insights = "insights";
         public const string InsightResource = "/{insightId}";
+        public const string Statistics = "/statistics";
+        public const string StatisticsResource = "/{invokerId}";
+        public const string StatisticsQuery = "/statisticsQuery";
     }
 
     /// <summary>

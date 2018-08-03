@@ -72,6 +72,19 @@ namespace Diagnostics.RuntimeHost.Controllers
             return await base.GetDetector(ase, detectorId, startTime, endTime, timeGrain);
         }
 
+        [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]
+        public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, string[] hostNames, string stampName, [FromBody]CompilationBostBody<DiagnosticStampData> jsonBody, string detectorId, string dataSource = null, string timeRange = null)
+        {
+            HostingEnvironment ase = new HostingEnvironment(subscriptionId, resourceGroupName, hostingEnvironmentName);
+            return await base.ExecuteQuery(ase, jsonBody, null, null, null, detectorId, dataSource, timeRange);
+        }
+
+        [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.Statistics + UriElements.StatisticsResource)]
+        public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, string detectorId, string invokerId, string dataSource = null, string timeRange = null)
+        {
+            return await base.GetSystemInvoker(detectorId, invokerId, dataSource, timeRange);
+        }
+
         [HttpPost(UriElements.Insights)]
         public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, [FromBody] DiagnosticStampData postBody, string supportTopicId, string minimumSeverity = null, string startTime = null, string endTime = null, string timeGrain = null)
         {

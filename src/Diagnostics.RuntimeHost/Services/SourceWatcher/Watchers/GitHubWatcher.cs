@@ -111,7 +111,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                         continue;
                     }
 
-                    LogMessage($"Deteced changes in Github Folder : {gitHubDir.Name.ToLower()}. Syncing it locally ...");
+                    LogMessage($"Detected changes in Github Folder : {gitHubDir.Name.ToLower()}. Syncing it locally ...");
 
                     try
                     {

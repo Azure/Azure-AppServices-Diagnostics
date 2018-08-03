@@ -27,7 +27,7 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         /// <summary>
         /// sets to false when detector is called from external source (Azure portal, CLI ...)
-        /// sets to true when detexctor is called from internal source (Applens ..)
+        /// sets to true when detector is called from internal source (Applens ..)
         /// </summary>
         public bool IsInternalCall { get; private set; }
 
@@ -47,8 +47,8 @@ namespace Diagnostics.ModelsAndUtils.Models
             StartTime = startTimeStr;
             EndTime = endTimeStr;
             IsInternalCall = isInternalCall;
-            TimeGrain = timeGrain;
             RequestId = requestId;
+            TimeGrain = timeGrain;
         }
     }
 }
