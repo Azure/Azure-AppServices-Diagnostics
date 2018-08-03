@@ -1,4 +1,5 @@
-﻿using Diagnostics.ModelsAndUtils.Models;
+﻿using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
@@ -12,6 +13,15 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.AppServiceDomainResource)]
     public sealed class AppServiceDomainController : DiagnosticControllerBase<AppServiceDomain>
     {
+        protected override ArmResourceType ResourceType
+        {
+            get
+            {
+                return ArmResourceTypes.AppServiceDomain;
+            }
+        }
+
+
         public AppServiceDomainController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService)
             : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, dataSourcesConfigService)
         {

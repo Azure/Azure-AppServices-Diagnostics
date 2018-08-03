@@ -4,6 +4,60 @@ using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Attributes
 {
+    public class ArmResourceType
+    {
+        public ResourceType ResourceType { get; set; }
+
+        public string Provider { get; set; }
+
+        public string ResourceTypeName { get; set; }
+    }
+
+    public static class ArmResourceTypes
+    {
+        public static readonly ArmResourceType App = new ArmResourceType()
+        {
+            ResourceType = ResourceType.App,
+            Provider = "Microsoft.Web",
+            ResourceTypeName = "sites"
+        };
+
+        public static readonly ArmResourceType HostingEnvironment = new ArmResourceType()
+        {
+            ResourceType = ResourceType.HostingEnvironment,
+            Provider = "Microsoft.Web",
+            ResourceTypeName = "hostingEnvironments"
+        };
+
+        public static readonly ArmResourceType AppServiceCertificate = new ArmResourceType()
+        {
+            ResourceType = ResourceType.AppServiceCertificate,
+            Provider = "Microsoft.CertificateRegistration",
+            ResourceTypeName = "certificateOrders"
+        };
+
+        public static readonly ArmResourceType AppServiceDomain = new ArmResourceType()
+        {
+            ResourceType = ResourceType.AppServiceDomain,
+            Provider = "Microsoft.DomainRegistration",
+            ResourceTypeName = "domains"
+        };
+
+        public static readonly ArmResourceType LogicApp = new ArmResourceType()
+        {
+            ResourceType = ResourceType.LogicApp,
+            Provider = "Microsoft.Logic",
+            ResourceTypeName = "workflows"
+        };
+
+        public static readonly ArmResourceType ApiManagementService = new ArmResourceType()
+        {
+            ResourceType = ResourceType.ApiManagementService,
+            Provider = "Microsoft.ApiManagement",
+            ResourceTypeName = "service"
+        };
+    }
+
     /// <summary>
     /// Enum representing Resource type or collection of Resource Types
     /// </summary>

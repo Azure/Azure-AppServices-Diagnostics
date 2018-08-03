@@ -31,6 +31,8 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IDataSourcesConfigurationService _dataSourcesConfigService;
         protected IStampService _stampService;
 
+        protected abstract ArmResourceType ResourceType { get; }
+
         public DiagnosticControllerBase(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService)
         {
             this._compilerHostClient = compilerHostClient;
@@ -193,7 +195,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             if(!insights.Any() && detectorsRun.Any())
             {
-                insights.Add(AzureSupportCenterInsightUtilites.CreateDefaultInsight(cxt, detectorsRun));
+                insights.Add(AzureSupportCenterInsightUtilites.CreateDefaultInsight(cxt, ResourceType, detectorsRun));
             }
 
             var response = new AzureSupportCenterInsightEnvelope()
@@ -353,7 +355,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             AzureSupportCenterInsight ascInsight = null;
             if (mostCriticalInsight != null)
             {
-                ascInsight = AzureSupportCenterInsightUtilites.CreateInsight(mostCriticalInsight, context, detector);
+                ascInsight = AzureSupportCenterInsightUtilites.CreateInsight(mostCriticalInsight, context, ResourceType, detector);
                 supportCenterInsights.Add(ascInsight);
             }
 
