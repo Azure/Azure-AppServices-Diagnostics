@@ -74,9 +74,9 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(systemInvokers);
         }
         
-        protected async Task<IActionResult> GetSystemInvoker(string detectorId, string invokerId, string dataSource, string timeRange)
+        protected async Task<IActionResult> GetSystemInvoker(TResource resource, string detectorId, string invokerId, string dataSource, string timeRange)
         {
-            Dictionary<string, dynamic> systemContext = PrepareSystemContext(detectorId, dataSource, timeRange);
+            Dictionary<string, dynamic> systemContext = PrepareSystemContext(resource, detectorId, dataSource, timeRange);
 
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
@@ -159,7 +159,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         }
                         else
                         {
-                            Dictionary<string, dynamic> systemContext = PrepareSystemContext(detectorId, dataSource, timeRange);
+                            Dictionary<string, dynamic> systemContext = PrepareSystemContext(resource, detectorId, dataSource, timeRange);
                             var responseInput = new Response() { Metadata = invoker.EntryPointDefinitionAttribute };
                             invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, systemContext, responseInput });
                         }
@@ -311,7 +311,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return hostingEnv;
         }
 
-        private Dictionary<string, dynamic> PrepareSystemContext(string detectorId, string dataSource, string timeRange)
+        private Dictionary<string, dynamic> PrepareSystemContext(TResource resource, string detectorId, string dataSource, string timeRange)
         {
             dataSource = string.IsNullOrWhiteSpace(dataSource) ? "0" : dataSource;
             timeRange = string.IsNullOrWhiteSpace(timeRange) ? "168" : timeRange;
@@ -324,12 +324,28 @@ namespace Diagnostics.RuntimeHost.Controllers
                 bool.TryParse(internalCallHeader.First(), out isInternalRequest);
             }
 
+            OperationContext<TResource> cxt = new OperationContext<TResource>(
+                resource,
+                "",
+                "",
+                isInternalRequest,
+                requestIds.FirstOrDefault()
+            );
+
+            var invoker = this._invokerCache.GetDetectorInvoker<TResource>(detectorId, cxt);
+            IEnumerable<SupportTopic> supportTopicList = null;
+            if (invoker != null && invoker.EntryPointDefinitionAttribute != null && invoker.EntryPointDefinitionAttribute.SupportTopicList != null && invoker.EntryPointDefinitionAttribute.SupportTopicList.Any())
+            {
+                supportTopicList = invoker.EntryPointDefinitionAttribute.SupportTopicList;
+            }
+                
             Dictionary<string, dynamic> systemContext = new Dictionary<string, dynamic>();
             systemContext.Add("detectorId", detectorId);
             systemContext.Add("requestIds", requestIds);
             systemContext.Add("isInternal", isInternalRequest);
             systemContext.Add("dataSource", dataSource);
             systemContext.Add("timeRange", timeRange);
+            systemContext.Add("supportTopicList", supportTopicList);
             return systemContext;
         }
         private OperationContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false)
