@@ -20,5 +20,7 @@ namespace Diagnostics.DataProviders
         Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path = "");
 
         Task<T> MakeHttpGetRequestWithFullPath<T>(string fullPath, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version);
+
+        Task<T> InvokeSiteExtension<T>(string subscriptionId, string resourceGroupName, string name, string extension, string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken));
     }
 }
