@@ -103,5 +103,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
             return await base.GetInsights(app, supportTopicId, minimumSeverity, startTime, endTime, timeGrain);
         }
+
+        [HttpPost(UriElements.Publish)]
+        public async Task<IActionResult> PublishDetector(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DetectorPackage pkg)
+        {
+            return await base.PublishDetector(pkg);
+        }
     }
 }

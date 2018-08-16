@@ -1,4 +1,5 @@
 ﻿using Diagnostics.Logger;
+using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
@@ -46,6 +47,37 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         {
             _firstTimeCompletionTask = StartWatcherInternal();
             StartPollingForChanges();
+        }
+
+        public override async Task<Tuple<bool, Exception>> CreateOrUpdateDetector(DetectorPackage pkg)
+        {
+            if (pkg == null)
+            {
+                return new Tuple<bool, Exception>(false, new ArgumentNullException("pkg"));
+            }
+
+            Tuple<bool, Exception> output = new Tuple<bool, Exception>(true, null);
+
+            try
+            {
+                string detectorFilePath = $"{pkg.Id.ToLower()}/{pkg.Id.ToLower()}";
+
+                string csxFilePath = $"{detectorFilePath}.csx";
+                string dllFilePath = $"{detectorFilePath}.dll";
+                string pdbFilePath = $"{detectorFilePath}.pdb";
+
+                string commitMessage = $@"Detector : {pkg.Id.ToLower()}, CommittedBy : {pkg.CommittedByAlias}";
+
+                await _githubClient.CreateOrUpdateFile(csxFilePath, pkg.CodeString, commitMessage);
+                await _githubClient.CreateOrUpdateFile(dllFilePath, pkg.DllBytes, commitMessage, false);
+                await _githubClient.CreateOrUpdateFile(pdbFilePath, pkg.PdbBytes, commitMessage, false);
+            }
+            catch(Exception e)
+            {
+                output = new Tuple<bool, Exception>(false, e);
+            }
+
+            return output;
         }
 
         private async Task StartWatcherInternal()
