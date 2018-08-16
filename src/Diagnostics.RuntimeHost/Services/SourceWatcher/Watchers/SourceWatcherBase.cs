@@ -1,4 +1,5 @@
 ﻿using Diagnostics.Logger;
+using Diagnostics.RuntimeHost.Models;
 using Diagnostics.Scripts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +22,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         public abstract void Start();
 
         public Task WaitForFirstCompletion() => FirstTimeCompletionTask;
+
+        public abstract Task<Tuple<bool, Exception>> CreateOrUpdateDetector(DetectorPackage pkg);
 
         public SourceWatcherBase(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, string eventSource)
         {
