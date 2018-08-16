@@ -52,5 +52,11 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             return await base.GetInsights(GetResource(subscriptionId, resourceGroupName, serviceName), supportTopicId, minimumSeverity, startTime, endTime, timeGrain);
         }
+
+        [HttpPost(UriElements.Publish)]
+        public async Task<IActionResult> PublishDetector(string subscriptionId, string resourceGroupName, string serviceName, [FromBody] DetectorPackage pkg)
+        {
+            return await base.PublishDetector(pkg);
+        }
     }
 }

@@ -101,5 +101,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             HostingEnvironment ase = await GetHostingEnvironment(subscriptionId, resourceGroupName, hostingEnvironmentName, postBody, startTimeUtc, endTimeUtc);
             return await base.GetInsights(ase, supportTopicId, minimumSeverity, startTime, endTime, timeGrain);
         }
+
+        [HttpPost(UriElements.Publish)]
+        public async Task<IActionResult> PublishDetector(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, [FromBody] DetectorPackage pkg)
+        {
+            return await base.PublishDetector(pkg);
+        }
     }
 }

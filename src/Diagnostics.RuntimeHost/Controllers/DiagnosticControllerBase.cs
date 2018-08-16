@@ -189,6 +189,30 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(queryRes);
         }
 
+        protected async Task<IActionResult> PublishDetector(DetectorPackage pkg)
+        {
+            if (pkg == null || string.IsNullOrWhiteSpace(pkg.Id) || string.IsNullOrWhiteSpace(pkg.DllBytes))
+            {
+                return BadRequest();
+            }
+
+            var publishResult = await _sourceWatcherService.Watcher.CreateOrUpdateDetector(pkg);
+            bool isPublishSuccessful = publishResult.Item1;
+            Exception publishEx = publishResult.Item2;
+
+            if (!isPublishSuccessful)
+            {
+                if(publishEx != null)
+                {
+                    throw publishEx;
+                }
+
+                throw new Exception("Publish Operation failed");
+            }
+
+            return Ok();
+        }
+
         private DiagnosticApiResponse CreateQueryExceptionResponse(Exception ex, Definition detectorDefinition, bool isInternal, List<DataProviderMetadata> dataProvidersMetadata)
         {
             Response response = new Response() { Metadata = RemovePIIFromDefinition(detectorDefinition, isInternal) };
