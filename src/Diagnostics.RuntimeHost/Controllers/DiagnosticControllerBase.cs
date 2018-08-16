@@ -280,6 +280,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             HostingEnvironment hostingEnv = new HostingEnvironment(subscriptionId, resourceGroup, name)
             {
+                Name = stampPostBody.InternalName,
                 InternalName = stampPostBody.InternalName,
                 ServiceAddress = stampPostBody.ServiceAddress,
                 State = stampPostBody.State,

@@ -28,6 +28,11 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string InternalName { get; set; }
 
         /// <summary>
+        /// If the hosting environment is an ASE then this would be the ASE name
+        /// </summary>
+        public string FriendlyName { get; set; }
+
+        /// <summary>
         /// Service Address
         /// </summary>
         public string ServiceAddress { get; set; }
@@ -96,7 +101,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
-            this.Name = name;
+            this.FriendlyName = name;
             this.TenantIdList = new List<string>();
         }
 
