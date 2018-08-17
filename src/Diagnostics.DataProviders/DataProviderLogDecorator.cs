@@ -184,11 +184,6 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(null, _geomasterDataProvider.MakeHttpGetRequestWithFullPath<T>(fullPath, queryString, apiVersion));
         }
 
-        public Task<T> InvokeSiteExtension<T>(string subscriptionId, string resourceGroupName, string name, string extension, string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
-        {
-            return MakeDependencyCall(null, _geomasterDataProvider.InvokeSiteExtension<T>(subscriptionId, resourceGroupName, name, extension, apiVersion, cancellationToken));
-        }
-
         public Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
         {
             return MakeDependencyCall(null, _geomasterDataProvider.VerifyHostingEnvironmentVnet(subscriptionId, vnetResourceGroup, vnetName, vnetSubnetName, cancellationToken));

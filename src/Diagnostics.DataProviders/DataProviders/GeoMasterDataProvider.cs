@@ -391,7 +391,7 @@ namespace Diagnostics.DataProviders
         /// </code>
         /// </example>
         /// <returns></returns>
-        public async Task<T> InvokeSiteExtension<T>(string subscriptionId, string resourceGroupName, string name, string extension, string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
+        private async Task<T> InvokeSiteExtension<T>(string subscriptionId, string resourceGroupName, string name, string extension, string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(extension))
             {
