@@ -1,6 +1,7 @@
 ﻿using Diagnostics.ModelsAndUtils.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 
@@ -120,6 +121,46 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
             }
 
             return hostNameQuery;
+        }
+
+        /// <summary>
+        /// Given a table and slot time ranges, filter out irrevelant site events from the table
+        /// </summary>
+        /// <param name="siteEventsTable">Tabular data with</param>
+        /// <param name="siteColumnName">Column name for the web apps runtime site name</param>
+        /// <param name="timeStampColumnName">Column name for the timestamp</param>
+        /// <param name="slotTimeRanges">Times ranges per slot obtained from Observer</param>
+        /// <returns></returns>
+        public static DataTable GetRuntimeSiteEventsTable(DataTable siteEventsTable, string siteColumnName, string timeStampColumnName, List<RuntimeSitenameTimeRange> slotTimeRanges)
+        {
+            var dt = new DataTable();
+            var dataColumnArr = new DataColumn[siteEventsTable.Columns.Count];
+            siteEventsTable.Columns.CopyTo(dataColumnArr, 0);
+
+            try
+            {
+                dt.Columns.AddRange(dataColumnArr);
+
+                foreach (DataRow row in siteEventsTable.Rows)
+                {
+                    var siteName = (string)row[siteColumnName];
+                    var timeStamp = DateTime.Parse((string)row[timeStampColumnName]);
+
+                    foreach (var slotTimeRangeInfo in slotTimeRanges)
+                    {
+                        if (siteName.Equals(slotTimeRangeInfo.RuntimeSitename, StringComparison.CurrentCultureIgnoreCase) && timeStamp >= slotTimeRangeInfo.StartTime && timeStamp <= slotTimeRangeInfo.EndTime)
+                        {
+                            dt.Rows.Add(row.ItemArray);
+                            break;
+                        }
+                    }
+                }
+            }catch(Exception ex)
+            {
+                throw new Exception("Failed to get runtime site events table.", ex);
+            }
+
+            return dt;
         }
     }
 }
