@@ -36,6 +36,7 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
             services.AddSingleton<ISiteService, SiteService>();
             services.AddSingleton<IStampService, StampService>();
+            services.AddSingleton<IQnAService, QnAService>();
 
             // TODO : Not sure what's the right place for the following code piece.
             #region Custom Start up Code

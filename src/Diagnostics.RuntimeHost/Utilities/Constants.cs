@@ -34,5 +34,11 @@ namespace Diagnostics.RuntimeHost.Utilities
         internal const string GithubRepoNameKey = "RepoName";
         internal const string GithubBranchKey = "Branch";
         internal const string DestinationScriptsPathKey = "DestinationScriptsPath";
+
+        // QnA Knowledge Base Registry Constants
+        internal const string QnAKnowledgeBaseRegistryPath = RegistryRootPath + @"\QnAKnowledgeBase";
+        internal const string QnAPipelineEnabledKey = "QnAPipelineEnabled";
+        internal const string QnAPipelineTriggerIntervalInSecondsKey = "QnAPipelineTriggerIntervalInSeconds";
+        internal const string QnAServiceOcpApimSubscriptionKey = "OcpApimSubscriptionKey";
     }
 }

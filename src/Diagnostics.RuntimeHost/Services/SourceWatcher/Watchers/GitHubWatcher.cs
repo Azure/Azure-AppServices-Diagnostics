@@ -1,5 +1,7 @@
 ﻿using Diagnostics.Logger;
+using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.RuntimeHost.Models;
+using Diagnostics.RuntimeHost.Models.QnAModels;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
@@ -21,6 +23,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
     {
         private Task _firstTimeCompletionTask;
         private IGithubClient _githubClient;
+        private IQnAService _qnaService;
         private string _rootContentApiPath;
         private readonly string _lastModifiedMarkerName;
         private readonly string _deleteMarkerName;
@@ -31,10 +34,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         protected override Task FirstTimeCompletionTask => _firstTimeCompletionTask;
 
-        public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGithubClient githubClient)
+        public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGithubClient githubClient, IQnAService qnaService)
             : base(env, configuration, invokerCache, "GithubWatcher")
         {
             _githubClient = githubClient;
+            _qnaService = qnaService;
 
             _lastModifiedMarkerName = "_lastModified.marker";
             _deleteMarkerName = "_delete.marker";
@@ -172,7 +176,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             }
         }
 
-        private async void StartPollingForChanges()
+        private async Task StartPollingForChanges()
         {
             await _firstTimeCompletionTask;
 
@@ -219,6 +223,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                         LogMessage($"Updating cache with  new invoker with id : {invoker.EntryPointDefinitionAttribute.Id}");
                         _invokerCache.AddOrUpdate(invoker.EntryPointDefinitionAttribute.Id, invoker);
                         await FileHelper.WriteToFileAsync(subDir.FullName, _cacheIdFileName, invoker.EntryPointDefinitionAttribute.Id);
+
+                        this.AddRequestToUpdateQnAService(invoker, QnAOperationType.Add);
                     }
                     else
                     {
@@ -296,6 +302,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 LogMessage($"Updating cache with  new invoker with id : {newInvoker.EntryPointDefinitionAttribute.Id}");
                 _invokerCache.AddOrUpdate(newInvoker.EntryPointDefinitionAttribute.Id, newInvoker);
                 await FileHelper.WriteToFileAsync(cacheIdFilePath, newInvoker.EntryPointDefinitionAttribute.Id);
+
+                AddRequestToUpdateQnAService(newInvoker, QnAOperationType.Add);
             }
             else
             {
@@ -318,7 +326,9 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     string cacheId = await FileHelper.GetFileContentAsync(subDir.FullName, _cacheIdFileName);
                     if (!string.IsNullOrWhiteSpace(cacheId) && _invokerCache.TryRemoveValue(cacheId, out EntityInvoker invoker))
                     {
+                        AddRequestToUpdateQnAService(invoker, QnAOperationType.Delete);
                         invoker.Dispose();
+
                     }
 
                     await FileHelper.WriteToFileAsync(subDir.FullName, _deleteMarkerName, "true");
@@ -340,6 +350,70 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         {
             return dir.GetFiles().Where(p => (!string.IsNullOrWhiteSpace(p.Extension) && p.Extension.Equals(extension, StringComparison.OrdinalIgnoreCase)))
                 .OrderByDescending(f => f.LastWriteTimeUtc).FirstOrDefault();
+        }
+
+        private void AddRequestToUpdateQnAService(EntityInvoker invoker, QnAOperationType operationType)
+        {
+            if(invoker.SystemFilter != null || invoker.ResourceFilter == null)
+            {
+                // Exclude System Invokers from QnA Pipeline
+                return;
+            }
+
+
+            // Speical Handing for App Resource as it comprises of three resources - Web App (windows), Web App (Linux) and Function App
+            if(invoker.ResourceFilter.ResourceType == ResourceType.App)
+            {
+                List<QnAResourceType> qnaResourceTypes = new List<QnAResourceType>() { QnAResourceType.WebAppWindows, QnAResourceType.WebAppLinux, QnAResourceType.FunctionApp };
+
+                if (operationType == QnAOperationType.Delete)
+                {
+                    qnaResourceTypes.ForEach(item => this._qnaService.EnqueueQnAServiceRequest(new QnAServiceRequest(invoker, operationType, item)));
+                }
+                else if (operationType == QnAOperationType.Add)
+                {
+                    if (invoker.ResourceFilter is AppFilter appFilter)
+                    {
+                        if (appFilter.AppType == AppType.FunctionApp)
+                        {
+                            this._qnaService.EnqueueQnAServiceRequest(new QnAServiceRequest(invoker, QnAOperationType.Add, QnAResourceType.FunctionApp));
+                            this._qnaService.EnqueueQnAServiceRequest(new QnAServiceRequest(invoker, QnAOperationType.Delete, QnAResourceType.WebAppLinux));
+                            this._qnaService.EnqueueQnAServiceRequest(new QnAServiceRequest(invoker, QnAOperationType.Delete, QnAResourceType.WebAppWindows));
+                        }
+                        else
+                        {
+                            if (appFilter.PlatformType == PlatformType.Windows)
+                            {
+                                this._qnaService.EnqueueQnAServiceRequest(new QnAServiceRequest(invoker, QnAOperationType.Add, QnAResourceType.WebAppWindows));
+                                this._qnaService.EnqueueQnAServiceRequest(new QnAServiceRequest(invoker, QnAOperationType.Delete, QnAResourceType.WebAppLinux));
+                            }
+                            else if(appFilter.PlatformType == PlatformType.Linux)
+                            {
+                                this._qnaService.EnqueueQnAServiceRequest(new QnAServiceRequest(invoker, QnAOperationType.Add, QnAResourceType.WebAppLinux));
+                                this._qnaService.EnqueueQnAServiceRequest(new QnAServiceRequest(invoker, QnAOperationType.Delete, QnAResourceType.WebAppWindows));
+                            }
+                            else if(appFilter.PlatformType == (PlatformType.Windows | PlatformType.Linux))
+                            {
+                                this._qnaService.EnqueueQnAServiceRequest(new QnAServiceRequest(invoker, QnAOperationType.Add, QnAResourceType.WebAppLinux));
+                                this._qnaService.EnqueueQnAServiceRequest(new QnAServiceRequest(invoker, QnAOperationType.Add, QnAResourceType.WebAppWindows));
+                            }
+
+                            if (appFilter.AppType == AppType.All)
+                            {
+                                this._qnaService.EnqueueQnAServiceRequest(new QnAServiceRequest(invoker, QnAOperationType.Add, QnAResourceType.FunctionApp));
+                            }
+                            else if (appFilter.AppType == AppType.WebApp)
+                            {
+                                this._qnaService.EnqueueQnAServiceRequest(new QnAServiceRequest(invoker, QnAOperationType.Delete, QnAResourceType.FunctionApp));
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                this._qnaService.EnqueueQnAServiceRequest(new QnAServiceRequest(invoker, operationType, QnAUtilities.GetQnAResourceType(invoker.ResourceFilter.ResourceType)));
+            }
         }
 
         private void LoadConfigurations()

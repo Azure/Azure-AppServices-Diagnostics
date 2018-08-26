@@ -16,7 +16,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         public ISourceWatcher Watcher => _watcher;
 
-        public SourceWatcherService(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCacheService)
+        public SourceWatcherService(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCacheService, IQnAService qnaService)
         {
             SourceWatcherType watcherType;
 
@@ -40,7 +40,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     break;
                 case SourceWatcherType.Github:
                     IGithubClient githubClient = new GithubClient(env, configuration);
-                    _watcher = new GitHubWatcher(env, configuration, invokerCacheService, githubClient);
+                    _watcher = new GitHubWatcher(env, configuration, invokerCacheService, githubClient, qnaService);
                     break;
                 default:
                     throw new NotSupportedException("Source Watcher Type not supported");
