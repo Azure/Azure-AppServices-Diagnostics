@@ -34,6 +34,11 @@ namespace Diagnostics.ModelsAndUtils.Models
         public List<Insight> Insights { get; set; }
 
         /// <summary>
+        /// ASC Insight List
+        /// </summary>
+        public List<AzureSupportCenterInsight> AscInsights { get; set; }
+
+        /// <summary>
         /// Creates an instance of Response
         /// </summary>
         public Response()
@@ -42,6 +47,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             Metadata = new Definition();
             Dataset = new List<DiagnosticData>();
             Insights = new List<Insight>();
+            AscInsights = new List<AzureSupportCenterInsight>();
         }
     }
 

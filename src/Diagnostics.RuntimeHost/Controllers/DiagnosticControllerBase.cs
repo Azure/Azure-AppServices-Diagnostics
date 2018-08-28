@@ -2,9 +2,9 @@
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
-using Diagnostics.ModelsAndUtils.Models.GeoMaster;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
+using Diagnostics.ModelsAndUtils.Utilities;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
@@ -458,18 +458,29 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             List<AzureSupportCenterInsight> supportCenterInsights = new List<AzureSupportCenterInsight>();
 
-            // Take max one insight per detector, only critical or warning, pick the most critical
-            var mostCriticalInsight = response.Insights.OrderBy(insight => insight.Status).FirstOrDefault();
-
-            //TODO: Add Logging Per Detector Here
-            AzureSupportCenterInsight ascInsight = null;
-            if (mostCriticalInsight != null)
+            if (response.AscInsights.Any())
             {
-                ascInsight = AzureSupportCenterInsightUtilites.CreateInsight(mostCriticalInsight, context, detector);
-                supportCenterInsights.Add(ascInsight);
+                foreach(var ascInsight in response.AscInsights)
+                {
+                    DiagnosticsETWProvider.Instance.LogRuntimeHostDetectorAscInsight(context.RequestId, detector.Id, ascInsight.ImportanceLevel.ToString(), JsonConvert.SerializeObject(ascInsight));
+                    supportCenterInsights.Add(ascInsight);
+                }
             }
+            else
+            {
+                // Take max one insight per detector, only critical or warning, pick the most critical
+                var mostCriticalInsight = response.Insights.OrderBy(insight => insight.Status).FirstOrDefault();
 
-            DiagnosticsETWProvider.Instance.LogRuntimeHostDetectorAscInsight(context.RequestId, detector.Id, ascInsight?.ImportanceLevel.ToString());
+                //TODO: Add Logging Per Detector Here
+                AzureSupportCenterInsight ascInsight = null;
+                if (mostCriticalInsight != null)
+                {
+                    ascInsight = AzureSupportCenterInsightUtilites.CreateInsight(mostCriticalInsight, context, detector);
+                    supportCenterInsights.Add(ascInsight);
+                }
+
+                DiagnosticsETWProvider.Instance.LogRuntimeHostDetectorAscInsight(context.RequestId, detector.Id, ascInsight?.ImportanceLevel.ToString(), JsonConvert.SerializeObject(ascInsight));
+            }
 
             var detectorLists = response.Dataset
                 .Where(diagnosicData => diagnosicData.RenderingProperties.Type == RenderingType.Detector)
