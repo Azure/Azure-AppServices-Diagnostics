@@ -1,6 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
-using Diagnostics.ModelsAndUtils.Models.GeoMaster;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using System;
 using System.Collections.Generic;
@@ -8,41 +7,49 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Diagnostics.RuntimeHost.Utilities
+namespace Diagnostics.ModelsAndUtils.Utilities
 {
-    internal static class AzureSupportCenterInsightUtilites
+    public static class AzureSupportCenterInsightUtilites
     {
         private static readonly string DefaultDescription = "This insight was raised as part of the {0} detector.";
-        private static readonly HashSet<string> ReservedFieldNames = new HashSet<string> { "description", "recommended action", "customer ready content" };
         public static readonly string DefaultInsightGuid = "9a666d9e-23b4-4502-95b7-1a00a0419ce4";
 
-        private static readonly Text DefaultRecommendedAction = new Text()
-        {
-            IsMarkdown = false,
-            Value = "Go to applens to see more information about this insight."
-        };
+        private static readonly Text DefaultRecommendedAction = new Text("Go to applens to see more information about this insight.");
 
-        internal static AzureSupportCenterInsight CreateInsight<TResource>(Insight insight, OperationContext<TResource> context,  Definition detector)
+        public static AzureSupportCenterInsight CreateInsight<TResource>(Insight insight, OperationContext<TResource> context,  Definition detector)
             where TResource : IResource
         {
-            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/{context.Resource.Provider}/{context.Resource.ResourceTypeName}/{context.Resource.Name}/detectors/{detector.Id}?startTime={context.StartTime}&endTime={context.EndTime}";
-            var category = detector.Name.Length > 32 ? context.Resource.ResourceTypeName : detector.Name;
-
-            var description = GetTextObjectFromData("description", insight.Body) ?? new Text() { IsMarkdown = false, Value = string.Format(DefaultDescription, detector.Name) };
+            var description = GetTextObjectFromData("description", insight.Body) ?? new Text(string.Format(DefaultDescription, detector.Name));
             var recommendedAction = GetTextObjectFromData("recommended action", insight.Body) ?? DefaultRecommendedAction;
             var customerReadyContent = GetTextObjectFromData("customer ready content", insight.Body);
 
-            if (insight.Status == InsightStatus.Success || insight.Status == InsightStatus.None)
+            return CreateInsight<TResource>(insight.Message, insight.Status, description, recommendedAction, customerReadyContent, detector, context);
+        }
+
+        internal static AzureSupportCenterInsight CreateInsight<TResource>(string title, InsightStatus status, Text description, Text recommendedAction, Text customerReadyContent, Definition detector, OperationContext<TResource> context)
+            where TResource : IResource
+        {
+            var category = detector.Name.Length > 32 ? context.Resource.ResourceTypeName : detector.Name;
+            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/{context.Resource.Provider}/{context.Resource.ResourceTypeName}/{context.Resource.Name}/detectors/{detector.Id}?startTime={context.StartTime}&endTime={context.EndTime}";
+
+            string customerReadyContentText = customerReadyContent?.Value;
+            if (customerReadyContent != null && customerReadyContent.IsMarkdown)
             {
-                insight.Status = InsightStatus.Info;
+                // Turn the customer ready content into HTML since that is what is supported by ASC as of now
+                customerReadyContentText = CommonMark.CommonMarkConverter.Convert(customerReadyContent.Value);
+            }
+
+            if (status == InsightStatus.Success || status == InsightStatus.None)
+            {
+                status = InsightStatus.Info;
             }
 
             var supportCenterInsight = new AzureSupportCenterInsight()
             {
                 Id = GetDetectorGuid(detector.Id),
-                Title = insight.Message,
-                ImportanceLevel = (ImportanceLevel)Enum.Parse(typeof(ImportanceLevel), ((int)insight.Status).ToString()),
-                InsightFriendlyName = insight.Message,
+                Title = title,
+                ImportanceLevel = (ImportanceLevel)Enum.Parse(typeof(ImportanceLevel), ((int)status).ToString()),
+                InsightFriendlyName = title,
                 IssueCategory = category,
                 IssueSubCategory = category,
                 Description = description,
@@ -54,8 +61,8 @@ namespace Diagnostics.RuntimeHost.Utilities
                 CustomerReadyContent = customerReadyContent == null ? null :
                     new CustomerReadyContent()
                     {
-                        ArticleId = Guid.NewGuid(),
-                        ArticleContent = customerReadyContent.Value
+                        ArticleId = Guid.NewGuid(),                        
+                        ArticleContent = customerReadyContentText
                     },
                 ConfidenceLevel = InsightConfidenceLevel.High,
                 Scope = InsightScope.ResourceLevel,
@@ -73,7 +80,7 @@ namespace Diagnostics.RuntimeHost.Utilities
             return supportCenterInsight;
         }
 
-        internal static AzureSupportCenterInsight CreateDefaultInsight<TResource>(OperationContext<TResource> context, List<Definition> detectorsRun)
+        public static AzureSupportCenterInsight CreateDefaultInsight<TResource>(OperationContext<TResource> context, List<Definition> detectorsRun)
             where TResource : IResource
         {
             var description = new StringBuilder();
@@ -95,19 +102,11 @@ namespace Diagnostics.RuntimeHost.Utilities
                 InsightFriendlyName = "No Issue",
                 IssueCategory = "NOISSUE",
                 IssueSubCategory = "noissue",
-                Description = new Text()
-                {
-                    IsMarkdown = true,
-                    Value = description.ToString()
-                },
+                Description = new Text(description.ToString(), true),
                 RecommendedAction = new RecommendedAction()
                 {
                     Id = Guid.NewGuid(),
-                    Text = new Text()
-                    {
-                        IsMarkdown = false,
-                        Value = "Follow the applens link to see any other information these detectors have."
-                    }
+                    Text = new Text("Follow the applens link to see any other information these detectors have.")
                 },
                 ConfidenceLevel = InsightConfidenceLevel.High,
                 Scope = InsightScope.ResourceLevel,
@@ -125,7 +124,7 @@ namespace Diagnostics.RuntimeHost.Utilities
             return supportCenterInsight;
         }
 
-            private static Guid GetDetectorGuid(string detector)
+        private static Guid GetDetectorGuid(string detector)
         {
 
             Encoding utf8 = Encoding.UTF8;
@@ -136,7 +135,6 @@ namespace Diagnostics.RuntimeHost.Utilities
             return new Guid(bytes.Take(16).ToArray());
         }
 
-        // Returns true if markdown
         private static Text GetTextObjectFromData(string searchKey, Dictionary<string, string> data)
         {
             if (data == null)
@@ -147,18 +145,19 @@ namespace Diagnostics.RuntimeHost.Utilities
             var matchingNameValuePairs = data.Where(x => x.Key.ToLower() == searchKey);
             var matchingString = matchingNameValuePairs.Any() ? matchingNameValuePairs.FirstOrDefault().Value : null;
 
-            if (string.IsNullOrWhiteSpace(matchingString))
+            return string.IsNullOrWhiteSpace(matchingString) ? null : ParseForMarkdown(matchingString);
+        }
+
+        public static Text ParseForMarkdown(string input)
+        {
+            if(string.IsNullOrWhiteSpace(input))
             {
                 return null;
             }
 
-            var isMarkdown = matchingString.Contains("<markdown>");
+            var isMarkdown = input.Contains("<markdown>");
 
-            var output = new Text()
-            {
-                IsMarkdown = isMarkdown,
-                Value = isMarkdown ? matchingString.Replace("<markdown>", "").Replace("</markdown>", "") : matchingString
-            };
+            var output = new Text(isMarkdown ? input.Replace("<markdown>", "").Replace("</markdown>", "") : input, isMarkdown);
 
             return output;
         }

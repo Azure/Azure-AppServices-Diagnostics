@@ -1,4 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils;
+using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using System;
@@ -110,6 +111,60 @@ namespace Diagnostics.Tests.ModelTests
 
             Assert.NotEmpty(apiResponse.Dataset);
             Assert.Equal<RenderingType>(RenderingType.DropDown, apiResponse.Dataset.FirstOrDefault().RenderingProperties.Type);
+        }
+
+        [Theory]
+        [InlineData(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        public void AscInsightExtentionTest(bool ascOnly, bool isInternal)
+        {
+            OperationContext<App> operationContext = new OperationContext<App>(new App("sub", "rg", "site"), string.Empty, string.Empty, isInternal, string.Empty);
+            Response apiResponse = new Response()
+            {
+                Metadata = new Definition()
+                {
+                    Id = "detectorid",
+                    Name = "detector Name"
+                },
+                
+            };
+
+            var description = new Text("description", true);
+            var recommendedAction = new Text("recommended Action");
+            var customerReadyContent = new Text("*Customer Ready Content*", true);
+
+            var customerReadyContentHtml = CommonMark.CommonMarkConverter.Convert(customerReadyContent.Value);
+
+            apiResponse.AddAscInsight("Title", InsightStatus.Critical, description, recommendedAction, customerReadyContent, operationContext, ascOnly: ascOnly);
+
+            var ascInsightAdded = apiResponse.AscInsights.FirstOrDefault();
+            var nativeInsightAdded = apiResponse.Insights.FirstOrDefault();
+
+            Assert.NotNull(ascInsightAdded);
+            Assert.Equal(ascInsightAdded.Description, description);
+            Assert.Equal(ascInsightAdded.RecommendedAction.Text, recommendedAction);
+            Assert.Equal(ascInsightAdded.CustomerReadyContent.ArticleContent, customerReadyContentHtml);
+
+            if (ascOnly || !isInternal)
+            {
+                Assert.Null(nativeInsightAdded);
+            }
+            else if(!ascOnly && isInternal)
+            {
+                Assert.NotNull(nativeInsightAdded);
+                Assert.Equal(nativeInsightAdded.Body["Description"], $"<markdown>{description.Value}</markdown>");
+                Assert.Equal(nativeInsightAdded.Body["Recommended Action"], recommendedAction.Value);
+                Assert.Equal(nativeInsightAdded.Body["Customer Ready Content"], customerReadyContentHtml);
+            }
+            else if (!ascOnly && !isInternal)
+            {
+                Assert.NotNull(nativeInsightAdded);
+                Assert.Equal(nativeInsightAdded.Body["Description"], $"<markdown>{description.Value}</markdown>");
+                Assert.Equal(nativeInsightAdded.Body["Recommended Action"], customerReadyContentHtml);
+                Assert.False(nativeInsightAdded.Body.ContainsKey("CustomerReadyContent"));
+            }
         }
     }
 }
