@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 
 namespace Diagnostics.ModelsAndUtils.Models
@@ -66,7 +67,12 @@ namespace Diagnostics.ModelsAndUtils.Models
 
                     if (row[i] != null)
                     {
-                        rowValueWithCorrectType = Convert.ChangeType(row[i], dataTable.Columns[i].DataType);
+                        rowValueWithCorrectType = Convert.ChangeType(row[i], dataTable.Columns[i].DataType, CultureInfo.InvariantCulture);
+
+                        if(dataTable.Columns[i].DataType == typeof(DateTime))
+                        {
+                            rowValueWithCorrectType = Convert.ToDateTime(row[i]).ToUniversalTime();
+                        }
                     }
 
                     rowWithCorrectTypes.Add(rowValueWithCorrectType);
