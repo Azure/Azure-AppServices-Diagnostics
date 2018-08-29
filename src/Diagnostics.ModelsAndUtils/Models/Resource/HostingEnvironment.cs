@@ -93,7 +93,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         {
             get
             {
-                return "hostingEnvironment";
+                return "hostingEnvironments";
             }
         }
 
