@@ -76,16 +76,18 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 nameValuePairs.Add("Description", GetContentStringForApplens(description));
             }
 
-            if (recommendedAction != null)
+            // Recommended Action is only for internal
+            if (context.IsInternalCall && recommendedAction != null)
             {
                 nameValuePairs.Add("Recommended Action", GetContentStringForApplens(recommendedAction));
             }
 
             // For consistency with ASC, we will convert Customer Ready Content to HTML on the server side, 
             // so that we ensure that it renders the same in both ASC and applens
+            // For external requests, we will put this content as 'Recommended Action'
             if (customerReadyContent != null)
             {
-                nameValuePairs.Add("Customer Ready Content", CommonMark.CommonMarkConverter.Convert(customerReadyContent.Value));
+                nameValuePairs.Add(context.IsInternalCall ? "Customer Ready Content" : "Recommended Action", CommonMark.CommonMarkConverter.Convert(customerReadyContent.Value));
             }
 
             if (extraNameValuePairs != null)

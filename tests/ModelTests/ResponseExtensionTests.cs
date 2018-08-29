@@ -114,11 +114,13 @@ namespace Diagnostics.Tests.ModelTests
         }
 
         [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void AscInsightExtentionTest(bool ascOnly)
+        [InlineData(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        public void AscInsightExtentionTest(bool ascOnly, bool isInternal)
         {
-            OperationContext<App> operationContext = new OperationContext<App>(new App("sub", "rg", "site"), string.Empty, string.Empty, true, string.Empty);
+            OperationContext<App> operationContext = new OperationContext<App>(new App("sub", "rg", "site"), string.Empty, string.Empty, isInternal, string.Empty);
             Response apiResponse = new Response()
             {
                 Metadata = new Definition()
@@ -145,16 +147,23 @@ namespace Diagnostics.Tests.ModelTests
             Assert.Equal(ascInsightAdded.RecommendedAction.Text, recommendedAction);
             Assert.Equal(ascInsightAdded.CustomerReadyContent.ArticleContent, customerReadyContentHtml);
 
-            if (ascOnly)
+            if (ascOnly || !isInternal)
             {
                 Assert.Null(nativeInsightAdded);
             }
-            else
+            else if(!ascOnly && isInternal)
             {
                 Assert.NotNull(nativeInsightAdded);
                 Assert.Equal(nativeInsightAdded.Body["Description"], $"<markdown>{description.Value}</markdown>");
                 Assert.Equal(nativeInsightAdded.Body["Recommended Action"], recommendedAction.Value);
                 Assert.Equal(nativeInsightAdded.Body["Customer Ready Content"], customerReadyContentHtml);
+            }
+            else if (!ascOnly && !isInternal)
+            {
+                Assert.NotNull(nativeInsightAdded);
+                Assert.Equal(nativeInsightAdded.Body["Description"], $"<markdown>{description.Value}</markdown>");
+                Assert.Equal(nativeInsightAdded.Body["Recommended Action"], customerReadyContentHtml);
+                Assert.False(nativeInsightAdded.Body.ContainsKey("CustomerReadyContent"));
             }
         }
     }
