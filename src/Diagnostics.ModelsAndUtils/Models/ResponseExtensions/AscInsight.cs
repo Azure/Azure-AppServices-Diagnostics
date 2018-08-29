@@ -12,7 +12,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// It will flow automatically to Azure Support Center if your detector is enabled for a support topic.
         /// </summary>
         /// <param name="res">Response object for extension method</param>
-        /// <param name="title">Title of insight. This should be a constant string, without any part of it changing depending on the resource</param>
+        /// <param name="title">Title of insight. This should be a constant string, without any part of it changing depending on the resource.</param>
         /// <param name="status">Status of the insight. All insight status types are available, but None and Success with be changes to Info in Azure Support Center.</param>
         /// <param name="description">The description of the insight. This should not contain anything that is instructing the reader to do anything. 
         /// It should only expand on any relevant information about the insight.</param>
@@ -21,32 +21,38 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="customerReadyContent">This is a response that is meant for the support engineer to paste directly into an email to the customer. 
         /// It is meant to completely solve the problem, and if that is not the case you may not want to use this field, by passing a null value. 
         /// Other good information to have is additional resources for the customer so that they can solve the problem in the future.</param>
-        /// <param name="context">Operation context which is passed into detector run method</param>
-        /// <param name="extraNameValuePairs">Additional name value pairs that you want to display in Applens/App Service Diagnostics. These will not be added in Azure Support Center.</param>
-        /// <param name="isExpanded">Whether you want to Applens/App Service Diagnostics to expand the insight initially</param>
+        /// <param name="context">Operation context which is passed into detector run method.</param>
+        /// <param name="ascOnly">Only show the insight in Azure Support Center.</param>
+        /// <param name="extraNameValuePairs">Additional name value pairs that you want to display in Applens/App Service Diagnostics. These will not be added in Azure Support Center. 
+        /// For markdown, wrap your text in markdown tags. HTML or plain text also allowed</param>
+        /// <param name="isExpanded">Whether you want to Applens/App Service Diagnostics to expand the insight initially.</param>
         /// <returns>Azure Support Center Insight Object</returns>
         /// <example> 
         /// This sample shows how to use the <see cref="AddAscInsight"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
+        ///     var descriptionMarkdown = 
+        ///         @"###A scale operation failed because there was already a scale operation underway. Here is the error:
+        ///                    
+        ///           ```
+        ///           Operation failed because a current scale operation is ongoing.
+        ///           ```";
+        ///     
+        ///     var recommendedActionPlainText = "Copy and paste the Customer Ready Content and send to the customer";
+        ///     
+        ///     var customerReadyActionMarkdown = 
+        ///         @$"Your scale operation for site ***{cxt.Resource.Name}*** failed because there was a current scale operation underway. 
+        ///                    
+        ///            Please wait for the current operation to finish and then try again to scale your app service plan. ";
+        /// 
         ///     res.AddAscInsight(
-        ///         "Failed Scale Operation Detected", // Do not put resource specific information here
+        ///         "Failed Scale Operation Detected",
         ///         InsightStatus.Critical,
-        ///         new Text(@"###A scale operation failed because there was already a scale operation underway. Here is the error:
-        ///                    
-        ///                    ```
-        ///                    Operation failed because a current scale operation is ongoing.
-        ///                    ```
-        ///         ", true), // This is markdown
-        ///         new Text(@"Copy and paste the Customer Ready Content and send to the customer"), // This is not markdown
-        ///         new Text(@$"Your scale operation for site ***{cxt.Resource.Name}*** failed because there was a current scale operation underway. 
-        ///                    
-        ///                    Please wait for the current operation to finish and then try again to scale your app service plan. ", true),
-        ///         cxt,
-        ///         new Dictionary<string, string>() {
-        ///             { "Header", "<markdown>This is extra insight members that you want to be shown in ***Applens*** and ***App Service Diagnostics***.</markdown>"
-        ///         });
+        ///         new Text(descriptionMarkdown, true), 
+        ///         new Text(recommendedActionPlainText),
+        ///         new Text(customerReadyActionMarkdown, true),
+        ///         cxt);
         /// }
         /// </code>
         /// </example>
