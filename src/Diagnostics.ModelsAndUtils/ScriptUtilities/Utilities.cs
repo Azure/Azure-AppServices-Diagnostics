@@ -134,17 +134,16 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         public static DataTable GetRuntimeSiteEventsTable(DataTable siteEventsTable, string siteColumnName, string timeStampColumnName, List<RuntimeSitenameTimeRange> slotTimeRanges)
         {
             var dt = new DataTable();
-            var dataColumnArr = new DataColumn[siteEventsTable.Columns.Count];
-            siteEventsTable.Columns.CopyTo(dataColumnArr, 0);
+            var columns = siteEventsTable.Columns.Cast<DataColumn>().Select(dc => new DataColumn(dc.ColumnName, dc.DataType, dc.Expression, dc.ColumnMapping)).ToArray();
 
             try
             {
-                dt.Columns.AddRange(dataColumnArr);
+                dt.Columns.AddRange(columns);
 
                 foreach (DataRow row in siteEventsTable.Rows)
                 {
                     var siteName = (string)row[siteColumnName];
-                    var timeStamp = DateTime.Parse((string)row[timeStampColumnName]);
+                    var timeStamp = (DateTime)row[timeStampColumnName];
 
                     foreach (var slotTimeRangeInfo in slotTimeRanges)
                     {
