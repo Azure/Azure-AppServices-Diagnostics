@@ -124,17 +124,37 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         }
 
         /// <summary>
-        /// Given a table and slot time ranges, filter out irrevelant site events from the table
+        /// Filter the given table to get site events for the given slot name.
         /// </summary>
-        /// <param name="siteEventsTable">Tabular data with</param>
-        /// <param name="siteColumnName">Column name for the web apps runtime site name</param>
-        /// <param name="timeStampColumnName">Column name for the timestamp</param>
-        /// <param name="slotTimeRanges">Times ranges per slot obtained from Observer</param>
+        /// <param name="slotName">SlotName</param>
+        /// <param name="slotTimeRanges">Runtime site slot map obtained from observer</param>
+        /// <param name="siteEventsTable">DataTable of web app events that atleast has a site name column and a timestamp column</param>
+        /// <param name="siteColumnName">Name of column for site name</param>
+        /// <param name="timeStampColumnName">Name of column for timestamp</param>
+        /// <example>
+        /// <code>
+        /// public async static Task<Response> Run(DataProviders dp, <![CDATA[OperationContext<App> cxt]]>, Response res){
+        ///     var siteEventsDataTable = await dp.Kusto.ExecuteQuery(runtimeWorkerEventsQuery, cxt.Resource.Stamp.InternalName));
+        ///     var slotTimeRanges = await dp.Observer.GetRuntimeSiteSlotMap(cxt.Resource.Stamp.InternalName, cxt.Resource.Name);
+        ///     var webAppStagingEvents = Utilities.GetSlotEvents(cxt.Resource.Slot, slotTimeRanges, siteEventsDataTable, "SiteName", "TIMESTAMP").
+        /// }
+        /// </code>
+        /// </example>
         /// <returns></returns>
-        public static DataTable GetRuntimeSiteEventsTable(DataTable siteEventsTable, string siteColumnName, string timeStampColumnName, List<RuntimeSitenameTimeRange> slotTimeRanges)
+        public static DataTable GetSlotEvents(string slotName, Dictionary<string, List<RuntimeSitenameTimeRange>> slotTimeRanges, DataTable siteEventsTable, string siteColumnName = "SiteName", string timeStampColumnName = "TIMESTAMP")
         {
             var dt = new DataTable();
             var columns = siteEventsTable.Columns.Cast<DataColumn>().Select(dc => new DataColumn(dc.ColumnName, dc.DataType, dc.Expression, dc.ColumnMapping)).ToArray();
+            List<RuntimeSitenameTimeRange> timeRangeForSlot;
+
+            if (slotTimeRanges.ContainsKey(slotName.ToLower()))
+            {
+                timeRangeForSlot = slotTimeRanges[slotName];
+            }
+            else
+            {
+                throw new ArgumentException($"{slotName} is not an existing slot for this site. ");
+            }
 
             try
             {
@@ -145,7 +165,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
                     var siteName = (string)row[siteColumnName];
                     var timeStamp = (DateTime)row[timeStampColumnName];
 
-                    foreach (var slotTimeRangeInfo in slotTimeRanges)
+                    foreach (var slotTimeRangeInfo in timeRangeForSlot)
                     {
                         if (siteName.Equals(slotTimeRangeInfo.RuntimeSitename, StringComparison.CurrentCultureIgnoreCase) && timeStamp >= slotTimeRangeInfo.StartTime && timeStamp <= slotTimeRangeInfo.EndTime)
                         {
