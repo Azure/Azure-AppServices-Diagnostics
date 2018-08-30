@@ -11,9 +11,14 @@ namespace Diagnostics.ModelsAndUtils.Models
     public class App : AppFilter, IResource
     {
         /// <summary>
-        /// Name of the App (For example :- foobar, foobar(staging) ...)
+        /// Name of the App
         /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// Slot name
+        /// </summary>
+        public string Slot { get; private set; }
 
         /// <summary>
         /// Subscription Id(Guid)
@@ -76,7 +81,16 @@ namespace Diagnostics.ModelsAndUtils.Models
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
-            this.Name = appName;
+            var appNameAndSlot = appName.Split(new char[] { '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
+            this.Name = appNameAndSlot[0];
+            if (appNameAndSlot.Length > 1)
+            {
+                this.Slot = appNameAndSlot[1].ToLower();
+            }
+            else
+            {
+                this.Slot = "production";
+            }
         }
 
         /// <summary>

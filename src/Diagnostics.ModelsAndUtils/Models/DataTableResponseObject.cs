@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 
 namespace Diagnostics.ModelsAndUtils.Models
@@ -66,7 +67,22 @@ namespace Diagnostics.ModelsAndUtils.Models
 
                     if (row[i] != null)
                     {
-                        rowValueWithCorrectType = Convert.ChangeType(row[i], dataTable.Columns[i].DataType);
+                        rowValueWithCorrectType = Convert.ChangeType(row[i], dataTable.Columns[i].DataType, CultureInfo.InvariantCulture);
+
+                        if(dataTable.Columns[i].DataType == typeof(DateTime))
+                        {
+                            var dateTimeString = row[i].ToString();
+
+                            //check if the string is in UTC time
+                            if (dateTimeString.EndsWith("Z", false, CultureInfo.InvariantCulture))
+                            {
+                                rowValueWithCorrectType = Convert.ToDateTime(row[i]).ToUniversalTime();
+                            }
+                            else
+                            {
+                                rowValueWithCorrectType = Convert.ToDateTime(row[i]);
+                            }
+                        }
                     }
 
                     rowWithCorrectTypes.Add(rowValueWithCorrectType);
