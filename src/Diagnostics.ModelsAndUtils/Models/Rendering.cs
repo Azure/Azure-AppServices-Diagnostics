@@ -112,6 +112,16 @@ namespace Diagnostics.ModelsAndUtils.Models
         }
     }
 
+    public class MarkdownRendering : Rendering
+    {
+        public bool EnableEmailButtons { get; set; }
+
+        public MarkdownRendering() : base(RenderingType.Markdown)
+        {
+            EnableEmailButtons = false;
+        }
+    }
+
     public enum RenderingType
     {
         /// <summary>
