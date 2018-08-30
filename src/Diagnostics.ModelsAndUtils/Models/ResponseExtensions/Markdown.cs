@@ -28,7 +28,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </example>
         public static DiagnosticData AddMarkdownView(this Response response, string markdown, string title = null)
         {
-            return response.AddMarkdownView(markdown, title, false);
+            return response.AddMarkdownView(markdown, false, title);
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// }
         /// </code>
         /// </example>
-        public static DiagnosticData AddMarkdownView(this Response response, string markdown, string title = null, bool enableEmailButtons = false)
+        public static DiagnosticData AddMarkdownView(this Response response, string markdown, bool enableEmailButtons, string title = null)
         {
             var table = new DataTable();
             table.Columns.Add(new DataColumn("Markdown", typeof(string)));
