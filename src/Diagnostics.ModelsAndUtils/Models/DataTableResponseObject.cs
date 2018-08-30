@@ -71,7 +71,17 @@ namespace Diagnostics.ModelsAndUtils.Models
 
                         if(dataTable.Columns[i].DataType == typeof(DateTime))
                         {
-                            rowValueWithCorrectType = Convert.ToDateTime(row[i]).ToUniversalTime();
+                            var dateTimeString = row[i].ToString();
+
+                            //check if the string is in UTC time
+                            if (dateTimeString.EndsWith("Z", false, CultureInfo.InvariantCulture))
+                            {
+                                rowValueWithCorrectType = Convert.ToDateTime(row[i]).ToUniversalTime();
+                            }
+                            else
+                            {
+                                rowValueWithCorrectType = Convert.ToDateTime(row[i]);
+                            }
                         }
                     }
 

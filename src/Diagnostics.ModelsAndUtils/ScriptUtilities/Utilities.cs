@@ -176,7 +176,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
                 }
             }catch(Exception ex)
             {
-                throw new Exception("Failed to get runtime site events table.", ex);
+                throw new Exception("Failed to get runtime slotmap table.", ex);
             }
 
             return dt;
