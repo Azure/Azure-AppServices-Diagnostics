@@ -31,8 +31,8 @@ namespace Diagnostics.ModelsAndUtils.Attributes
 
         public AppFilter(bool internalOnly = true) : base(ResourceType.App, internalOnly)
         {
-            this.AppType = AppType.WebApp;
-            this.PlatformType = PlatformType.Windows;
+            this.AppType = AppType.All;
+            this.PlatformType = PlatformType.Windows | PlatformType.Linux;
             this.StackType = StackType.All;
             this.StampType = StampType.All;
         }
