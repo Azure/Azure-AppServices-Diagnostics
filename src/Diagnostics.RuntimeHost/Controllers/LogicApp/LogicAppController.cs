@@ -48,9 +48,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Insights)]
-        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string logicAppName, [FromBody] dynamic postBody, string supportTopicId, string minimumSeverity = null, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string logicAppName, [FromBody] dynamic postBody, string pesId, string supportTopicId = null, string startTime = null, string endTime = null, string timeGrain = null)
         {
-            return await base.GetInsights(GetResource(subscriptionId, resourceGroupName, logicAppName), supportTopicId, minimumSeverity, startTime, endTime, timeGrain);
+            return await base.GetInsights(GetResource(subscriptionId, resourceGroupName, logicAppName), pesId, supportTopicId, startTime, endTime, timeGrain);
         }
 
         [HttpPost(UriElements.Publish)]

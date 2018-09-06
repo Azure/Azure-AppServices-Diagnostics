@@ -120,7 +120,7 @@ namespace Diagnostics.Tests.ModelTests
         [InlineData(false, true)]
         public void AscInsightExtentionTest(bool ascOnly, bool isInternal)
         {
-            OperationContext<App> operationContext = new OperationContext<App>(new App("sub", "rg", "site"), string.Empty, string.Empty, isInternal, string.Empty);
+            OperationContext<App> operationContext = new OperationContext<App>(new App("sub", "rg", "site"), string.Empty, string.Empty, isInternal, true, string.Empty);
             Response apiResponse = new Response()
             {
                 Metadata = new Definition()

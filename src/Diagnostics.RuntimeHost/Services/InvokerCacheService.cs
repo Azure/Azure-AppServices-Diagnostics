@@ -70,7 +70,7 @@ namespace Diagnostics.RuntimeHost.Services
 
             if (list == null || !list.Any()) return list;
 
-            list = list.Where(item => ((item.SystemFilter == null) && (item.ResourceFilter != null) && (item.ResourceFilter.ResourceType & context.Resource.ResourceType) > 0) && (context.IsInternalCall || !item.ResourceFilter.InternalOnly));
+            list = list.Where(item => ((item.SystemFilter == null) && (item.ResourceFilter != null) && (item.ResourceFilter.ResourceType & context.Resource.ResourceType) > 0) && (context.IsInternalClient || !item.ResourceFilter.InternalOnly));
             List<EntityInvoker> filteredList = new List<EntityInvoker>();
             list.ToList().ForEach(item =>
             {
@@ -86,7 +86,7 @@ namespace Diagnostics.RuntimeHost.Services
         public EntityInvoker GetDetectorInvoker<TResource>(string detectorId, OperationContext<TResource> context)
             where TResource : IResource
         {
-            if (!TryGetValue(detectorId, out EntityInvoker invoker) || invoker.SystemFilter != null || invoker.ResourceFilter == null || (!context.IsInternalCall && invoker.ResourceFilter.InternalOnly))
+            if (!TryGetValue(detectorId, out EntityInvoker invoker) || invoker.SystemFilter != null || invoker.ResourceFilter == null || (!context.IsInternalClient && invoker.ResourceFilter.InternalOnly))
             {
                 return null;
             }
@@ -106,7 +106,7 @@ namespace Diagnostics.RuntimeHost.Services
 
             if (list == null || !list.Any()) return list;
 
-            list = list.Where(item => (context.IsInternalCall && item.SystemFilter != null));
+            list = list.Where(item => (context.IsInternalClient && item.SystemFilter != null));
 
             return list.OrderBy(p => p.EntryPointDefinitionAttribute.Name);
         }
