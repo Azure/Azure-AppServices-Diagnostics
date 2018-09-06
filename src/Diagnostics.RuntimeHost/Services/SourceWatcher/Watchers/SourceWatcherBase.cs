@@ -17,6 +17,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         protected IInvokerCacheService _invokerCache;
         protected string _eventSource;
 
+        protected abstract string SourceName { get; }
+
         protected abstract Task FirstTimeCompletionTask { get; }
 
         public abstract void Start();
@@ -45,10 +47,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         protected void LogException(string message, Exception ex)
         {
-            string exceptionType = ex != null ? ex.GetType().ToString() : string.Empty;
-            string exceptionDetails = ex != null ? ex.ToString() : string.Empty;
-
-            DiagnosticsETWProvider.Instance.LogSourceWatcherException(_eventSource, message, exceptionType, exceptionDetails);
+            var exception = new SourceWatcherException(SourceName, message, ex);
+            DiagnosticsETWProvider.Instance.LogSourceWatcherException(_eventSource, message, exception.GetType().ToString(), exception.ToString());
         }
     }
 }
