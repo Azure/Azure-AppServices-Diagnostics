@@ -119,7 +119,7 @@ namespace Diagnostics.RuntimeHost.Utilities
 
             if (endTimeUtc - startTimeUtc > TimeSpan.FromHours(72))
             {
-                errorMessage = "Invalid Time Range. Time Range cannot be more than 24 hours.";
+                errorMessage = "Invalid Time Range. Time Range cannot be more than 72 hours.";
                 return false;
             }
 
