@@ -86,7 +86,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Insights)]
-        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, [FromBody] DiagnosticStampData postBody, string supportTopicId, string minimumSeverity = null, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, [FromBody] DiagnosticStampData postBody, string pesId, string supportTopicId = null, string startTime = null, string endTime = null, string timeGrain = null)
         {
             if (postBody == null)
             {
@@ -99,7 +99,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             HostingEnvironment ase = await GetHostingEnvironment(subscriptionId, resourceGroupName, hostingEnvironmentName, postBody, startTimeUtc, endTimeUtc);
-            return await base.GetInsights(ase, supportTopicId, minimumSeverity, startTime, endTime, timeGrain);
+            return await base.GetInsights(ase, pesId, supportTopicId, startTime, endTime, timeGrain);
         }
 
         [HttpPost(UriElements.Publish)]
