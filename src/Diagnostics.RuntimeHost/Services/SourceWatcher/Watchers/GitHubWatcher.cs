@@ -31,6 +31,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         protected override Task FirstTimeCompletionTask => _firstTimeCompletionTask;
 
+        protected override string SourceName => "GitHub";
+
         public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGithubClient githubClient)
             : base(env, configuration, invokerCache, "GithubWatcher")
         {
@@ -99,7 +101,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     }
                     catch (Exception) { }
 
-                    LogException($"Unexpected resonse from repository root path. Response : {errorContent}", null);
+                    LogException($"Unexpected response while checking for detector modifications. Response : {errorContent}", null);
                     return;
                 }
 

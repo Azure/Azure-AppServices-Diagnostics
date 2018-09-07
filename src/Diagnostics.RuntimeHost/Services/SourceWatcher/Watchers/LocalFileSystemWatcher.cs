@@ -20,6 +20,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         protected override Task FirstTimeCompletionTask => _firstTimeCompletionTask;
 
+        protected override string SourceName => "LocalFileSystem";
+
         public LocalFileSystemWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache)
             : base(env, configuration, invokerCache, "LocalFileSystemWatcher")
         {
