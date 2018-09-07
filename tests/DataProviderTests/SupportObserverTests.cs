@@ -46,7 +46,7 @@ namespace Diagnostics.Tests.DataProviderTests
                     }
                 };
 
-                var operationContext = new OperationContext<App>(appResource, string.Empty, string.Empty, true, true, string.Empty);
+                var operationContext = new OperationContext<App>(appResource, string.Empty, string.Empty, true, string.Empty);
                 var response = new Response();
 
                 Response result = (Response)await invoker.Invoke(new object[] { dataProviders, operationContext, response });
@@ -81,7 +81,7 @@ namespace Diagnostics.Tests.DataProviderTests
                     Guid.NewGuid().ToString()
                 };
 
-                var operationContext = new OperationContext<App>(appResource, null, null, true, true, null);
+                var operationContext = new OperationContext<App>(appResource, null, null, true, null);
 
                 var response = new Response();
 
