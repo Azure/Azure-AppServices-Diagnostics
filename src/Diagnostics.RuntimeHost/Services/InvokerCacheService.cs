@@ -1,5 +1,6 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.RuntimeHost.Models;
 using Diagnostics.Scripts;
 using System;
 using System.Collections.Concurrent;
@@ -22,15 +23,15 @@ namespace Diagnostics.RuntimeHost.Services
 
     public interface IInvokerCacheService : ICache<string, EntityInvoker>
     {
-        EntityInvoker GetDetectorInvoker<TResource>(string detectorId, OperationContext<TResource> context)
+        EntityInvoker GetDetectorInvoker<TResource>(string detectorId, RuntimeContext<TResource> context)
             where TResource : IResource;
 
-        IEnumerable<EntityInvoker> GetDetectorInvokerList<TResource>(OperationContext<TResource> context)
+        IEnumerable<EntityInvoker> GetDetectorInvokerList<TResource>(RuntimeContext<TResource> context)
             where TResource : IResource;
 
         EntityInvoker GetSystemInvoker(string invokerId);
 
-        IEnumerable<EntityInvoker> GetSystemInvokerList<TResource>(OperationContext<TResource> context)
+        IEnumerable<EntityInvoker> GetSystemInvokerList<TResource>(RuntimeContext<TResource> context)
             where TResource : IResource;
     }
 
@@ -63,18 +64,18 @@ namespace Diagnostics.RuntimeHost.Services
             return _collection.TryGetValue(key.ToLower(), out value);
         }
 
-        public IEnumerable<EntityInvoker> GetDetectorInvokerList<TResource>(OperationContext<TResource> context)
+        public IEnumerable<EntityInvoker> GetDetectorInvokerList<TResource>(RuntimeContext<TResource> context)
             where TResource : IResource
         {
             IEnumerable<EntityInvoker> list = GetAll();
 
             if (list == null || !list.Any()) return list;
 
-            list = list.Where(item => ((item.SystemFilter == null) && (item.ResourceFilter != null) && (item.ResourceFilter.ResourceType & context.Resource.ResourceType) > 0) && (context.IsInternalCall || !item.ResourceFilter.InternalOnly));
+            list = list.Where(item => ((item.SystemFilter == null) && (item.ResourceFilter != null) && (item.ResourceFilter.ResourceType & context.OperationContext.Resource.ResourceType) > 0) && (context.ClientIsInternal || !item.ResourceFilter.InternalOnly));
             List<EntityInvoker> filteredList = new List<EntityInvoker>();
             list.ToList().ForEach(item =>
             {
-                if (context.Resource.IsApplicable(item.ResourceFilter))
+                if (context.OperationContext.Resource.IsApplicable(item.ResourceFilter))
                 {
                     filteredList.Add(item);
                 }
@@ -83,15 +84,15 @@ namespace Diagnostics.RuntimeHost.Services
             return filteredList.OrderBy(p => p.EntryPointDefinitionAttribute.Name);
         }
 
-        public EntityInvoker GetDetectorInvoker<TResource>(string detectorId, OperationContext<TResource> context)
+        public EntityInvoker GetDetectorInvoker<TResource>(string detectorId, RuntimeContext<TResource> context)
             where TResource : IResource
         {
-            if (!TryGetValue(detectorId, out EntityInvoker invoker) || invoker.SystemFilter != null || invoker.ResourceFilter == null || (!context.IsInternalCall && invoker.ResourceFilter.InternalOnly))
+            if (!TryGetValue(detectorId, out EntityInvoker invoker) || invoker.SystemFilter != null || invoker.ResourceFilter == null || (!context.ClientIsInternal && invoker.ResourceFilter.InternalOnly))
             {
                 return null;
             }
 
-            if (context.Resource.IsApplicable(invoker.ResourceFilter))
+            if (context.OperationContext.Resource.IsApplicable(invoker.ResourceFilter))
             {
                 return invoker;
             }
@@ -99,14 +100,14 @@ namespace Diagnostics.RuntimeHost.Services
             return null;
         }
 
-        public IEnumerable<EntityInvoker> GetSystemInvokerList<TResource>(OperationContext<TResource> context)
-    where TResource : IResource
+        public IEnumerable<EntityInvoker> GetSystemInvokerList<TResource>(RuntimeContext<TResource> context)
+            where TResource : IResource
         {
             IEnumerable<EntityInvoker> list = GetAll();
 
             if (list == null || !list.Any()) return list;
 
-            list = list.Where(item => (context.IsInternalCall && item.SystemFilter != null));
+            list = list.Where(item => (context.ClientIsInternal && item.SystemFilter != null));
 
             return list.OrderBy(p => p.EntryPointDefinitionAttribute.Name);
         }
