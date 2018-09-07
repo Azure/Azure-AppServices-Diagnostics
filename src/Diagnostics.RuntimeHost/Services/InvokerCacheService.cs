@@ -1,5 +1,6 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.RuntimeHost.Models;
 using Diagnostics.Scripts;
 using System;
 using System.Collections.Concurrent;

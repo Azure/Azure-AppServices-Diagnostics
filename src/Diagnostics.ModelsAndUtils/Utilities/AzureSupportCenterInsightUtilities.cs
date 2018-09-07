@@ -11,9 +11,6 @@ namespace Diagnostics.ModelsAndUtils.Utilities
 {
     public static class AzureSupportCenterInsightUtilites
     {
-        
-
-
         private static readonly string DefaultDescription = "This insight was raised as part of the {0} detector.";
         public static readonly string DefaultInsightGuid = "9a666d9e-23b4-4502-95b7-1a00a0419ce4";
 

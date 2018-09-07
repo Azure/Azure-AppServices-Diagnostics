@@ -271,6 +271,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 {
                     var defaultDetectorInsights = await GetInsightsFromDetector(cxt, defaultDetector, new List<Definition>());
                     defaultInsightReturned = defaultDetectorInsights.Any();
+                    insights.AddRange(defaultDetectorInsights);
                 }
             }
 
