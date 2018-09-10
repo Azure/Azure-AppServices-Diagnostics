@@ -30,11 +30,11 @@ namespace Diagnostics.Reporting
                 | summarize qty = sum(NumeratorQuantity) / sum(DenominatorQuantity), auxQty = sum(DenominatorQuantity) by period, ProductName
                 | project period , ProductName , deflection = round(100 * qty, 2)";
 
-        private static string _categoryBreakdownQuery = @"cluster('Usage360').database('Product360'). 
-            SupportProductionDeflectionWeeklyVer1021
+        private static string _categoryBreakdownQuery = $@"cluster('Usage360').database('Product360'). 
+            {P360TableResolver.SupportProductionDeflectionWeeklyTable}
             | extend period = Timestamp
             | where period >= ago(14d)
-            | where (DerivedProductIDStr in ({ProductIds}))
+            | where (DerivedProductIDStr in ({{ProductIds}}))
             | where DenominatorQuantity != 0 
             | summarize deflection = round(100 * sum(NumeratorQuantity) / sum(DenominatorQuantity), 2), casesLeaked = round(sum(DenominatorQuantity)) - round(sum(NumeratorQuantity)), casesDeflected = round(sum(NumeratorQuantity))  by period, SupportTopicL2
             | where SupportTopicL2 != ''
