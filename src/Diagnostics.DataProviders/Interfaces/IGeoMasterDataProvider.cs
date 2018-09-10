@@ -1,7 +1,6 @@
 ﻿using Diagnostics.ModelsAndUtils.Models;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,5 +19,7 @@ namespace Diagnostics.DataProviders
         Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path = "");
 
         Task<T> MakeHttpGetRequestWithFullPath<T>(string fullPath, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version);
+
+        Task<string> GetContainerLogs(string subscriptionId, string resourceGroupName, string name);
     }
 }
