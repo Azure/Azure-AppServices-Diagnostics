@@ -372,7 +372,7 @@ namespace Diagnostics.DataProviders
         /// <param name="name">Name of the resource</param>
         /// 
         /// <example>
-        /// The below example shows how you call <see cref="GetContainerLogs"/> to get container logs for this app.
+        /// The below example shows how you call <see cref="GetLinuxContainerLogs"/> to get container logs for this app.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
@@ -380,14 +380,14 @@ namespace Diagnostics.DataProviders
         ///     var rg = cxt.Resource.ResourceGroup;
         ///     var name = cxt.Resource.Name;
         ///     
-        ///     string containerLogs = await dp.GeoMaster.GetContainerLogs(subId, rg, name);
+        ///     string containerLogs = await dp.GeoMaster.GetLinuxContainerLogs(subId, rg, name);
         ///         
         ///     // do any processing on the string variable containerLogs
         /// }
         /// </code>
         /// </example>
         /// <returns></returns>
-        public async Task<string> GetContainerLogs(string subscriptionId, string resourceGroupName, string name)
+        public async Task<string> GetLinuxContainerLogs(string subscriptionId, string resourceGroupName, string name)
         {
             string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}/containerlogs";
             var geoMasterResponse = await HttpPost<string, string>(path);           

@@ -20,6 +20,6 @@ namespace Diagnostics.DataProviders
 
         Task<T> MakeHttpGetRequestWithFullPath<T>(string fullPath, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version);
 
-        Task<string> GetContainerLogs(string subscriptionId, string resourceGroupName, string name);
+        Task<string> GetLinuxContainerLogs(string subscriptionId, string resourceGroupName, string name);
     }
 }
