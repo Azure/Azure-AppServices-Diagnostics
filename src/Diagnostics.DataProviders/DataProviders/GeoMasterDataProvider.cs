@@ -52,7 +52,7 @@ namespace Diagnostics.DataProviders
         /// <example>
         /// <code>
         /// This sample shows how to call the <see cref="GetAppSettings"/> method in a detector
-        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
         ///     var subId = cxt.Resource.SubscriptionId;
         ///     var rg = cxt.Resource.ResourceGroup;
@@ -96,7 +96,7 @@ namespace Diagnostics.DataProviders
         /// <example>
         /// This sample shows how to call the <see cref="GetStickySlotSettingNames"/> method in a detector
         /// <code>
-        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
         ///     var subId = cxt.Resource.SubscriptionId;
         ///     var rg = cxt.Resource.ResourceGroup;
@@ -144,7 +144,7 @@ namespace Diagnostics.DataProviders
         /// This sample shows how you can call this function to get the NSG rules that failed or succeeded
         /// for this App Service environment
         /// <code>
-        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
         ///     
         ///     //Get VNET information from observer
@@ -188,7 +188,7 @@ namespace Diagnostics.DataProviders
         /// <example>
         /// The below example shows how you call <see cref="GetAppDeployments"/> to find out details about the deployments that were triggered for this App.
         /// <code>
-        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
         ///     var subId = cxt.Resource.SubscriptionId;
         ///     var rg = cxt.Resource.ResourceGroup;
@@ -243,7 +243,7 @@ namespace Diagnostics.DataProviders
         /// <example>
         /// The below shows how to make this method call to invoke the different types of operations
         /// <code>
-        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
         /// 
         ///     var subId = cxt.Resource.SubscriptionId;
@@ -361,6 +361,36 @@ namespace Diagnostics.DataProviders
             }
 
             var geoMasterResponse = await HttpGet<T>(fullPath, queryString, apiVersion);
+            return geoMasterResponse;
+        }
+
+        /// <summary>
+        /// Gets the container logs for a site as a string
+        /// </summary>
+        /// <param name="subscriptionId">Subscription Id for the resource</param>
+        /// <param name="resourceGroupName">The resource group that the resource is part of </param>
+        /// <param name="name">Name of the resource</param>
+        /// 
+        /// <example>
+        /// The below example shows how you call <see cref="GetLinuxContainerLogs"/> to get container logs for this app.
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
+        /// {
+        ///     var subId = cxt.Resource.SubscriptionId;
+        ///     var rg = cxt.Resource.ResourceGroup;
+        ///     var name = cxt.Resource.Name;
+        ///     
+        ///     string containerLogs = await dp.GeoMaster.GetLinuxContainerLogs(subId, rg, name);
+        ///         
+        ///     // do any processing on the string variable containerLogs
+        /// }
+        /// </code>
+        /// </example>
+        /// <returns></returns>
+        public async Task<string> GetLinuxContainerLogs(string subscriptionId, string resourceGroupName, string name)
+        {
+            string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}/containerlogs";
+            var geoMasterResponse = await HttpPost<string, string>(path);           
             return geoMasterResponse;
         }
 

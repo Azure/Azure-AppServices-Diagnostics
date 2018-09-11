@@ -184,6 +184,11 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(null, _geomasterDataProvider.MakeHttpGetRequestWithFullPath<T>(fullPath, queryString, apiVersion));
         }
 
+        public Task<string> GetLinuxContainerLogs(string subscriptionId, string resourceGroupName, string name)
+        {
+            return MakeDependencyCall(null, _geomasterDataProvider.GetLinuxContainerLogs(subscriptionId, resourceGroupName,name));
+        }
+
         public Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
         {
             return MakeDependencyCall(null, _geomasterDataProvider.VerifyHostingEnvironmentVnet(subscriptionId, vnetResourceGroup, vnetName, vnetSubnetName, cancellationToken));
