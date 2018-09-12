@@ -28,17 +28,15 @@ namespace Diagnostics.DataProviders
 
     public static class SitePathUtility
     {
-        public static string GetSitePath(string subscriptionId, string resourceGroupName, string name = null)
+        public static string GetSitePath(string subscriptionId, string resourceGroupName, string name = null, string slotName = GeoMasterConstants.ProductionSlot)
         {
             var path = GetResourceRootPath(subscriptionId, resourceGroupName) + "/" + GeoMasterConstants.SitesResource;
 
-            if (!string.IsNullOrWhiteSpace(name) )
+            if (!string.IsNullOrWhiteSpace(name))
             {
-                SiteNameParser.ParseSiteWithSlotName(name, out string siteName, out string slotName);
-
                 path += GeoMasterConstants.NameTemplateParamater.NamedFormat(new Dictionary<string, string>
                 {
-                    {"name", siteName}
+                    {"name", name}
                 });
 
                 if (!string.Equals(slotName, GeoMasterConstants.ProductionSlot, StringComparison.OrdinalIgnoreCase))
@@ -70,8 +68,6 @@ namespace Diagnostics.DataProviders
             return "?" + string.Join("&", from kvp in dict
                                           where kvp.Value != null
                                           select string.Format("{0}={1}", HttpUtility.UrlEncode(kvp.Key), HttpUtility.UrlEncode(kvp.Value)));
-
-
         }
     }
 
