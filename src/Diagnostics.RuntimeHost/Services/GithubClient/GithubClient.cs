@@ -90,7 +90,8 @@ namespace Diagnostics.RuntimeHost.Services
             {
                 if (!httpResponse.IsSuccessStatusCode)
                 {
-                    throw new HttpRequestException($"Failed while getting resource : {fileUrl} . Http Status Code : {httpResponse.StatusCode}");
+                    var uri = new Uri(fileUrl);
+                    throw new HttpRequestException($"Failed while getting resource : {uri.Scheme}:/{uri.AbsolutePath} . Http Status Code : {httpResponse.StatusCode}");
                 }
 
                 using (Stream srcStream = await httpResponse.Content.ReadAsStreamAsync(),
