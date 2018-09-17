@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
+using Octokit;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -24,6 +26,8 @@ namespace Diagnostics.RuntimeHost.Services
         Task<HttpResponseMessage> Get(HttpRequestMessage request);
 
         Task DownloadFile(string fileUrl, string destinationPath);
+
+        Task CreateOrUpdateFile(string destinationFilePath, string content, string commitMessage, bool convertContentToBase64 = true);
     }
 
     public class GithubClient : IGithubClient
@@ -35,6 +39,7 @@ namespace Diagnostics.RuntimeHost.Services
         private string _branch;
         private string _accessToken;
         private HttpClient _httpClient;
+        private Octokit.GitHubClient _octokitClient;
 
         public string UserName => _userName;
 
@@ -49,6 +54,7 @@ namespace Diagnostics.RuntimeHost.Services
             LoadConfigurations();
             ValidateConfigurations();
             InitializeHttpClient();
+            InitializeOctokitClient();
         }
 
         public GithubClient(string userName, string repoName, string branch = "master", string accessToken = "")
@@ -59,6 +65,7 @@ namespace Diagnostics.RuntimeHost.Services
             _accessToken = accessToken ?? string.Empty;
             ValidateConfigurations();
             InitializeHttpClient();
+            InitializeOctokitClient();
         }
 
         public Task<HttpResponseMessage> Get(string url, string etag = "")
@@ -71,7 +78,7 @@ namespace Diagnostics.RuntimeHost.Services
 
             return Get(request);
         }
-        
+
         public Task<HttpResponseMessage> Get(HttpRequestMessage request)
         {
             return _httpClient.SendAsync(request);
@@ -83,14 +90,35 @@ namespace Diagnostics.RuntimeHost.Services
             {
                 if (!httpResponse.IsSuccessStatusCode)
                 {
-                    throw new HttpRequestException($"Failed while getting resource : {fileUrl} . Http Status Code : {httpResponse.StatusCode}");
+                    var uri = new Uri(fileUrl);
+                    throw new HttpRequestException($"Failed while getting resource : {uri.Scheme}:/{uri.AbsolutePath} . Http Status Code : {httpResponse.StatusCode}");
                 }
 
                 using (Stream srcStream = await httpResponse.Content.ReadAsStreamAsync(),
-                        destStream = new FileStream(destinationPath, FileMode.Create))
+                        destStream = new FileStream(destinationPath, System.IO.FileMode.Create))
                 {
                     await srcStream.CopyToAsync(destStream);
                 }
+            }
+        }
+
+        public async Task CreateOrUpdateFile(string filePath, string content, string commitMessage, bool convertContentToBase64 = true)
+        {
+            try
+            {
+                // try to get the file (and with the file the last commit sha)
+                var existingFile = await _octokitClient.Repository.Content.GetAllContentsByRef(_userName, _repoName, filePath, _branch);
+
+                // update the existing file
+                var updateChangeSet = await _octokitClient.Repository.Content.UpdateFile(_userName, _repoName, filePath,
+                   new UpdateFileRequest(commitMessage, content, existingFile.First().Sha, _branch, convertContentToBase64));
+            }
+            catch (NotFoundException)
+            {
+                var createFileRequest = new CreateFileRequest(commitMessage, content, _branch, convertContentToBase64);
+                // if file is not found, create it
+                var createChangeSet = await _octokitClient.Repository.Content.CreateFile(_userName, _repoName, filePath,
+                    createFileRequest);
             }
         }
 
@@ -143,9 +171,17 @@ namespace Diagnostics.RuntimeHost.Services
                 MaxResponseContentBufferSize = Int32.MaxValue,
                 Timeout = TimeSpan.FromSeconds(30)
             };
-            
+
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _httpClient.DefaultRequestHeaders.Add("User-Agent", _userName);
+        }
+
+        private void InitializeOctokitClient()
+        {
+            _octokitClient = new Octokit.GitHubClient(new Octokit.ProductHeaderValue(_userName))
+            {
+                Credentials = new Credentials(_accessToken)
+            };
         }
 
         private string AppendQueryStringParams(string url)

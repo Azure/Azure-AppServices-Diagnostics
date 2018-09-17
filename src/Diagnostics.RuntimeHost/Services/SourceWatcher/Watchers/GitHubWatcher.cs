@@ -1,4 +1,5 @@
 ﻿using Diagnostics.Logger;
+using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
@@ -30,6 +31,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         protected override Task FirstTimeCompletionTask => _firstTimeCompletionTask;
 
+        protected override string SourceName => "GitHub";
+
         public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGithubClient githubClient)
             : base(env, configuration, invokerCache, "GithubWatcher")
         {
@@ -46,6 +49,37 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         {
             _firstTimeCompletionTask = StartWatcherInternal();
             StartPollingForChanges();
+        }
+
+        public override async Task<Tuple<bool, Exception>> CreateOrUpdateDetector(DetectorPackage pkg)
+        {
+            if (pkg == null)
+            {
+                return new Tuple<bool, Exception>(false, new ArgumentNullException("pkg"));
+            }
+
+            Tuple<bool, Exception> output = new Tuple<bool, Exception>(true, null);
+
+            try
+            {
+                string detectorFilePath = $"{pkg.Id.ToLower()}/{pkg.Id.ToLower()}";
+
+                string csxFilePath = $"{detectorFilePath}.csx";
+                string dllFilePath = $"{detectorFilePath}.dll";
+                string pdbFilePath = $"{detectorFilePath}.pdb";
+
+                string commitMessage = $@"Detector : {pkg.Id.ToLower()}, CommittedBy : {pkg.CommittedByAlias}";
+
+                await _githubClient.CreateOrUpdateFile(csxFilePath, pkg.CodeString, commitMessage);
+                await _githubClient.CreateOrUpdateFile(dllFilePath, pkg.DllBytes, commitMessage, false);
+                await _githubClient.CreateOrUpdateFile(pdbFilePath, pkg.PdbBytes, commitMessage, false);
+            }
+            catch(Exception e)
+            {
+                output = new Tuple<bool, Exception>(false, e);
+            }
+
+            return output;
         }
 
         private async Task StartWatcherInternal()
@@ -67,7 +101,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     }
                     catch (Exception) { }
 
-                    LogException($"Unexpected resonse from repository root path. Response : {errorContent}", null);
+                    LogException($"Unexpected response while checking for detector modifications. Response : {errorContent}", null);
                     return;
                 }
 
@@ -111,7 +145,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                         continue;
                     }
 
-                    LogMessage($"Deteced changes in Github Folder : {gitHubDir.Name.ToLower()}. Syncing it locally ...");
+                    LogMessage($"Detected changes in Github Folder : {gitHubDir.Name.ToLower()}. Syncing it locally ...");
 
                     try
                     {

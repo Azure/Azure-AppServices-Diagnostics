@@ -70,6 +70,11 @@ namespace Diagnostics.DataProviders
             HttpResponseMessage responseMsg = await _httpClient.SendAsync(request, tokenSource.Token);
             string content = await responseMsg.Content.ReadAsStringAsync();
 
+            if (!responseMsg.IsSuccessStatusCode)
+            {
+                throw new Exception(content);
+            }
+
             DataTableResponseObjectCollection dataSet = JsonConvert.DeserializeObject<DataTableResponseObjectCollection>(content);
 
             if (dataSet == null || dataSet.Tables == null)

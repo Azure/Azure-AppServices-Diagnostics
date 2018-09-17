@@ -85,5 +85,15 @@ namespace Diagnostics.Tests.Helpers
                 .Replace("<PES_ID_2>", topic2.PesId.ToString())
                 .Replace("\"<INTERNAL_FLAG>\"", isInternal ? "true" : "false");
         }
+
+        public static async Task<string> GetSystemInvokerScript(Definition def)
+        {
+            string template = await File.ReadAllTextAsync(@"templates/SystemInvokerTest.csx");
+            string query = "cluster('MockCluster).database('Mockdb').DiagnosticRole | top 1 by PreciseTimeStamp desc";
+            return template.Replace("<YOUR_DETECTOR_ID>", def.Id)
+                .Replace("<YOUR_DETECTOR_NAME>", def.Name)
+                .Replace("<YOUR_ALIAS>", def.Author)
+                .Replace("<YOUR_QUERY>", query);
+        }
     }
 }

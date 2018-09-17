@@ -8,6 +8,8 @@ namespace Diagnostics.ModelsAndUtils.Models
     {
         public CompilerResponse CompilationOutput;
 
+        public bool RuntimeSucceeded;
+
         public T InvocationOutput;
     }
 }

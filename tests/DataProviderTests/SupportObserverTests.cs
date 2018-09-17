@@ -41,6 +41,9 @@ namespace Diagnostics.Tests.DataProviderTests
                 var appResource = new App(string.Empty, string.Empty, "my-api")
                 {
                     Stamp = new HostingEnvironment(string.Empty, string.Empty, "waws-prod-bn1-71717c45")
+                    {
+                        Name = "waws-prod-bn1-71717c45"
+                    }
                 };
 
                 var operationContext = new OperationContext<App>(appResource, string.Empty, string.Empty, true, string.Empty);

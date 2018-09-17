@@ -13,6 +13,8 @@ namespace Diagnostics.DataProviders
 
     public class GeoMasterDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IGeoMasterDataProvider
     {
+        const string SiteExtensionResource = "/extensions/{*extensionApiMethod}";
+
         private readonly IGeoMasterClient _geoMasterClient;
         private GeoMasterDataProviderConfiguration _configuration;
         
@@ -46,17 +48,19 @@ namespace Diagnostics.DataProviders
         /// <param name="subscriptionId">Subscription Id for the resource</param>
         /// <param name="resourceGroupName">The resource group that the resource is part of </param>
         /// <param name="name">Name of the resource</param>
+        /// <param name="slotName">slot name (if querying for a slot, defaults to production slot)</param>
         /// <returns>A dictionary of AppSetting Keys and values</returns>
         /// <example>
         /// <code>
         /// This sample shows how to call the <see cref="GetAppSettings"/> method in a detector
-        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
         ///     var subId = cxt.Resource.SubscriptionId;
         ///     var rg = cxt.Resource.ResourceGroup;
         ///     var name = cxt.Resource.Name;
+        ///     var slot = cxt.Resource.Slot;
         ///     
-        ///     var appSettings = await dp.GeoMaster.GetAppSettings(subId, rg, name);
+        ///     var appSettings = await dp.GeoMaster.GetAppSettings(subId, rg, name, slot);
         ///     foreach(var key in appSettings.Keys)
         ///     {
         ///         // do something with the appSettingValue
@@ -65,9 +69,9 @@ namespace Diagnostics.DataProviders
         /// }
         /// </code>
         /// </example>
-        public async Task<IDictionary<string,string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name)
+        public async Task<IDictionary<string,string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name, string slotName)
         {
-            string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}/config/appsettings/list";
+            string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName)}/config/appsettings/list";
             var geoMasterResponse = await HttpPost<GeoMasterResponse, string>(path);
             var properties = geoMasterResponse.Properties;
             Dictionary<string, string> appSettings = new Dictionary<string, string>();
@@ -84,6 +88,11 @@ namespace Diagnostics.DataProviders
             return appSettings;
         }
 
+        public async Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name)
+        {
+            return await GetAppSettings(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot);
+        }
+
         /// <summary>
         /// Gets all App Settings that are marked sticky to the slot for this site\slot
         /// </summary>
@@ -94,7 +103,7 @@ namespace Diagnostics.DataProviders
         /// <example>
         /// This sample shows how to call the <see cref="GetStickySlotSettingNames"/> method in a detector
         /// <code>
-        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
         ///     var subId = cxt.Resource.SubscriptionId;
         ///     var rg = cxt.Resource.ResourceGroup;
@@ -142,7 +151,7 @@ namespace Diagnostics.DataProviders
         /// This sample shows how you can call this function to get the NSG rules that failed or succeeded
         /// for this App Service environment
         /// <code>
-        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
         ///     
         ///     //Get VNET information from observer
@@ -182,17 +191,19 @@ namespace Diagnostics.DataProviders
         /// <param name="subscriptionId">Subscription Id for the resource</param>
         /// <param name="resourceGroupName">The resource group that the resource is part of </param>
         /// <param name="name">Name of the resource</param>
+        /// <param name="slotName">slot name (if querying for a slot, defaults to production slot)</param>
         /// <returns></returns>
         /// <example>
         /// The below example shows how you call <see cref="GetAppDeployments"/> to find out details about the deployments that were triggered for this App.
         /// <code>
-        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
         ///     var subId = cxt.Resource.SubscriptionId;
         ///     var rg = cxt.Resource.ResourceGroup;
         ///     var name = cxt.Resource.Name;
+        ///     var slot = cxt.Resource.Slot;
         ///     
-        ///     var deployments = await dp.GeoMaster.GetAppDeployments(subId, rg, name);
+        ///     var deployments = await dp.GeoMaster.GetAppDeployments(subId, rg, name, slot);
         ///     foreach(var deployment in deployments)
         ///     {
         ///         string deploymentId = deployment["id"].ToString();
@@ -211,9 +222,9 @@ namespace Diagnostics.DataProviders
         /// }
         /// </code>
         /// </example>
-        public async Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name)
+        public async Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name, string slotName)
         {
-            string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}/deployments";
+            string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName)}/deployments";
             GeoMasterResponseArray geoMasterResponse = null;
             geoMasterResponse = await HttpGet<GeoMasterResponseArray>(path);
             var deployments = new List<IDictionary<string, dynamic>> ();
@@ -224,13 +235,17 @@ namespace Diagnostics.DataProviders
             return deployments;
         }
 
+        public async Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name)
+        {
+            return await GetAppDeployments(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot);
+        }
+
         /// <summary>
-        /// All the ARM or GeoMaster operations that are allowed over HTTP GET can be called via this method by passing the path. 
-        /// To get a list of all the HTTP GET based ARM operations, check out a WebApp on https://resources.azure.com
-        /// It should be noted that the response of the ARM operation is of 3 types 
-        /// 1) Response contains a Properties{} object.
-        /// 2) Reponse contains a Value[] array which has a properties object.
-        /// 3) Response contains a Value[] array that has no properties object. 
+        /// All the ARM or GeoMaster operations that are allowed over HTTP GET can be called via this method by passing the path. To get a list of all the HTTP GET based ARM operations, check out a WebApp on https://resources.azure.com .
+        /// <para>It should be noted that the response of the ARM operation is of 3 types:</para>
+        /// <para>1) Response contains a Properties{} object.</para>
+        /// <para>2) Reponse contains a Value[] array which has a properties object.</para>
+        /// <para>3) Response contains a Value[] array that has no properties object. </para>
         /// 
         /// To invoke the right route, pass the right class to the method call i.e. GeoMasterResponse or GeoMasterResponseArray or GeoMasterResponseDynamicArray
         /// </summary>
@@ -238,20 +253,23 @@ namespace Diagnostics.DataProviders
         /// <param name="subscriptionId">Subscription Id for the resource</param>
         /// <param name="resourceGroupName">The resource group that the resource is part of </param>
         /// <param name="name">Name of the resource</param>
+        /// <param name="slotName">slot name (if querying for a slot, defaults to production slot)</param>
         /// <param name="path">The path to the API route (for e.g. usages, recommendations)</param>
         /// <example>
         /// The below shows how to make this method call to invoke the different types of operations
         /// <code>
-        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
         /// 
         ///     var subId = cxt.Resource.SubscriptionId;
         ///     var rg = cxt.Resource.ResourceGroup;
         ///     var name = cxt.Resource.Name;
+        ///     var slot = cxt.Resource.Slot;
         ///     
         ///     var resp = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponse>]]>(subId, 
         ///                rg, 
-        ///                name, 
+        ///                name,
+        ///                slot,
         ///                "sourcecontrols/web");
         ///     
         ///     var repoUrl =  resp.Properties["repoUrl"];
@@ -274,7 +292,8 @@ namespace Diagnostics.DataProviders
         ///     // To get properties on the site root path, just call the method like this
         ///     var siteProperties = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponse>]]>(subId, 
         ///                rg, 
-        ///                name);
+        ///                name,
+        ///                slot);
         ///     foreach(var item in siteProperties.Properties)
         ///     {
         ///         string str = item.Key + " " + item.Value;
@@ -282,7 +301,7 @@ namespace Diagnostics.DataProviders
         /// }
         /// </code>
         /// </example>
-        public async Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path = "")
+        public async Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string path = "")
         {
             if (!string.IsNullOrWhiteSpace(path))
             {
@@ -301,36 +320,59 @@ namespace Diagnostics.DataProviders
             return geoMasterResponse;
         }
 
+        public async Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path = "")
+        {
+            return await MakeHttpGetRequest<T>(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot, path);
+        }
+
         /// <summary>
         /// All the ARM or GeoMaster operations that are allowed over HTTP GET can be called via this method by passing the full path e.g. subscriptions/{subscriptionId}/providers/Microsoft.Web/certificates
         /// To get a list of all the HTTP GET based ARM operations, check out a WebApp on https://resources.azure.com
         /// It should be noted that the response of the ARM operation is of 3 types 
-        /// 1) Response contains a Properties{} object.
-        /// 2) Reponse contains a Value[] array which has a properties object.
-        /// 3) Response contains a Value[] array that has no properties object. 
+        ///     1) Response contains a Properties{} object.
+        ///     2) Reponse contains a Value[] array which has a properties object.
+        ///     3) Response contains a Value[] array that has no properties object. 
         /// 
         /// To invoke the right route, pass the right class to the method call i.e. GeoMasterResponse or GeoMasterResponseArray or GeoMasterResponseDynamicArray
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="fullPath">Full path to the ARM operation</param>
+        /// <param name="fullPath">Full path to the ARM resource</param>
         /// <example>
         /// <code>
-        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
-        /// {
+        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
+        ///  {
+        ///
+        ///  // HTTP GET operations supported by Antares Resource Provider only are supported
+        ///  // To call a non Microsoft.Web route (for e.g. Microsoft.CertificateRegistration), pass
+        ///  // the full path prepended with sharedResourceProviderBase
+        ///
+        ///  var fullPath = $"/sharedResourceProviderBase/certificateRegistration/subscriptions/{cxt.Resource.SubscriptionId}/providers/Microsoft.CertificateRegistration/certificateOrders";
+        ///  var resp = await dp.GeoMaster.MakeHttpGetRequestWithFullPath<![CDATA[<dynamic>]]>(fullPath, "");
+        ///
+        ///  DataTable tblCertificates = new DataTable();
+        ///
+        ///  tblCertificates.Columns.Add("distinguishedName");
+        ///  tblCertificates.Columns.Add("name");
+        ///  tblCertificates.Columns.Add("serialNumber");
+        ///  tblCertificates.Columns.Add("autoRenew");
+        ///  tblCertificates.Columns.Add("expirationTime");
+        ///  
         /// 
-        ///     // HTTP GET operations supported by Antares Resource Provider only are supported
-        ///     // For e.g. Microsoft.CertificateRegistration endpoints are available on our 
-        ///     // GeoMaster like this
-        ///     
-        ///     var fullPath = "/sharedResourceProviderBase/certificateRegistration/subscriptions/{subscriptionId}/providers/Microsoft.CertificateRegistration/certificateOrders";        
-        ///     var resp = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponseArray>]]>(fullPath, "", "2015-08-01");
-        ///     
-        ///     foreach (var cert in resp.Value)
-        ///     {
-        ///         string distinguisedName = cert.Properties["distinguishedName"];
-        ///     }
-        ///        
+        /// foreach(var cert in resp.value)
+        /// {
+        ///     DataRow dr = tblCertificates.NewRow();
+        ///     dr["distinguishedName"] = cert.properties.distinguishedName;
+        ///     dr["name"] = cert.name;
+        ///     dr["serialNumber"] = cert.properties.serialNumber;
+        ///     dr["autoRenew"] = cert.properties.autoRenew;
+        ///     dr["expirationTime"] = cert.properties.expirationTime;
+        ///     tblCertificates.Rows.Add(dr);
         /// }
+        /// 
+        ///  // do something with tblCertificates
+        ///  return res;
+        ///  
+        ///  }
         /// </code>
         /// </example>
         /// <returns></returns>
@@ -343,6 +385,78 @@ namespace Diagnostics.DataProviders
 
             var geoMasterResponse = await HttpGet<T>(fullPath, queryString, apiVersion);
             return geoMasterResponse;
+        }
+
+        /// <summary>
+        /// Gets the container logs for a site as a string
+        /// </summary>
+        /// <param name="subscriptionId">Subscription Id for the resource</param>
+        /// <param name="resourceGroupName">The resource group that the resource is part of </param>
+        /// <param name="name">Name of the resource</param>
+        /// <param name="slotName">slot name (if querying for a slot, defaults to production slot)</param>
+        /// 
+        /// <example>
+        /// The below example shows how you call <see cref="GetLinuxContainerLogs"/> to get container logs for this app.
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
+        /// {
+        ///     var subId = cxt.Resource.SubscriptionId;
+        ///     var rg = cxt.Resource.ResourceGroup;
+        ///     var name = cxt.Resource.Name;
+        ///     var slot = cxt.Resource.Slot;
+        ///     
+        ///     string containerLogs = await dp.GeoMaster.GetLinuxContainerLogs(subId, rg, name,slot);
+        ///         
+        ///     // do any processing on the string variable containerLogs
+        /// }
+        /// </code>
+        /// </example>
+        /// <returns></returns>
+        public async Task<string> GetLinuxContainerLogs(string subscriptionId, string resourceGroupName, string name, string slotName)
+        {
+            string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName)}/containerlogs";
+            var geoMasterResponse = await HttpPost<string, string>(path);           
+            return geoMasterResponse;
+        }
+
+        /// <summary>
+        /// Using this method you can invoke any API on a SiteExtension that is installed on the Web App
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="subscriptionId">Subscription Id for the resource</param>
+        /// <param name="resourceGroupName">The resource group that the resource is part of </param>
+        /// <param name="name">The resource name</param>
+        /// <param name="slotName">slot name (if querying for a slot, defaults to production slot)</param>
+        /// <param name="extension">Full path to the SiteExtension and any api under that extension</param>
+        /// <param name="apiVersion">(Optional Parameter) Pass an API version if required, 2016-08-01 is the default value</param>
+        /// <param name="cancellationToken">(Optional Parameter) Cancellation token </param>
+        /// <example>
+        /// This sample shows how to call the <see cref="InvokeSiteExtension"/> method in a detector
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
+        /// {
+        ///     var resp = await dp.GeoMaster.InvokeSiteExtension<![CDATA[<dynamic>]]>(cxt.Resource.SubscriptionId, 
+        ///                     cxt.Resource.ResourceGroup, 
+        ///                     cxt.Resource.Name, 
+        ///                     "loganalyzer/log/eventlogs");
+        /// 
+        ///     // do something with the response object
+        ///     var responseFromSiteExtension = resp.ToString();
+        ///     return res;
+        /// }
+        /// </code>
+        /// </example>
+        /// <returns></returns>
+        private async Task<T> InvokeSiteExtension<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string extension, string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (string.IsNullOrWhiteSpace(extension))
+            {
+                throw new ArgumentNullException(extension);
+            }
+
+            string path = SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName) + SiteExtensionResource.Replace("{*extensionApiMethod}", extension);
+            var result = await HttpGet<T>(path, string.Empty, apiVersion, cancellationToken);
+            return result;
         }
 
         #region HttpMethods

@@ -23,6 +23,7 @@ namespace Diagnostics.Logger
         public const string LogRetryAttemptMessage = "Retry Attempt Message";
         public const string LogRuntimeHostInsightsCorrelation = "Insights Correlation Id";
         public const string LogRuntimeHostHandledException = "Runtime Host Handled Exception : {3}";
+        public const string LogRuntimeHostDetectorAscInsight = "ASC Insight Detail for Detector";
 
         #endregion
 

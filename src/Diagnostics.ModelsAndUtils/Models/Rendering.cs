@@ -111,7 +111,17 @@ namespace Diagnostics.ModelsAndUtils.Models
             Expanded = true;
         }
     }
-    
+
+    public class MarkdownRendering : Rendering
+    {
+        public bool EnableEmailButtons { get; set; }
+
+        public MarkdownRendering() : base(RenderingType.Markdown)
+        {
+            EnableEmailButtons = false;
+        }
+    }
+
     public enum RenderingType
     {
         /// <summary>
@@ -167,7 +177,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// This will pass the definition of a detector that will be rendered in the view
         /// </summary>
-        Detector
+        Detector,
+
+        /// <summary>
+        /// Data rendered as (key, value) pair where key goes in dropdown and value goes in body.
+        /// </summary>
+        DropDown
     }
 
     /// <summary>

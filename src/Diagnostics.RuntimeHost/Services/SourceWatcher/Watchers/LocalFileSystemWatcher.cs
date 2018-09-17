@@ -1,4 +1,5 @@
-﻿using Diagnostics.RuntimeHost.Utilities;
+﻿using Diagnostics.RuntimeHost.Models;
+using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Hosting;
@@ -19,6 +20,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         protected override Task FirstTimeCompletionTask => _firstTimeCompletionTask;
 
+        protected override string SourceName => "LocalFileSystem";
+
         public LocalFileSystemWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache)
             : base(env, configuration, invokerCache, "LocalFileSystemWatcher")
         {
@@ -30,7 +33,12 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         {
             _firstTimeCompletionTask = StartWatcherInternal();
         }
-        
+
+        public override async Task<Tuple<bool, Exception>> CreateOrUpdateDetector(DetectorPackage pkg)
+        {
+            throw new NotImplementedException("Local Source Watcher Mode right now doesnt support live detector deployment.");
+        }
+
         private async Task StartWatcherInternal()
         {
             try

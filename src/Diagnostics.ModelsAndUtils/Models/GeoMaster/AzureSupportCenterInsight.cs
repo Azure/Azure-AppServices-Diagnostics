@@ -1,12 +1,7 @@
-﻿using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
 
-namespace Diagnostics.ModelsAndUtils.Models.GeoMaster
+namespace Diagnostics.ModelsAndUtils.Models
 {
     public class AzureSupportCenterInsightEnvelope
     {
@@ -52,9 +47,9 @@ namespace Diagnostics.ModelsAndUtils.Models.GeoMaster
 
     public class CustomerReadyContent
     {
-        public string ArticleId { get; set; }
+        public Guid ArticleId { get; set; }
 
-        public Text Text { get; set; }
+        public string ArticleContent { get; set; }
     }
 
     public class Text
@@ -62,6 +57,16 @@ namespace Diagnostics.ModelsAndUtils.Models.GeoMaster
         public bool IsMarkdown { get; set; }
 
         public string Value { get; set; }
+
+        public Text(string value)
+        {
+            Value = value;
+        }
+
+        public Text(string value, bool isMarkdown): this(value)
+        {
+            IsMarkdown = isMarkdown;
+        }
     }
 
     public class Link

@@ -22,6 +22,25 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public string ResourceGroup { get; set; }
 
+        public string Provider
+        {
+            get
+            {
+                return "Microsoft.Logic";
+            }
+        }
+
+        /// <summary>
+        /// Name of Resource Type as defined by ARM resource id. Examples: 'sites', 'hostingEnvironments'
+        /// </summary>
+        public string ResourceTypeName
+        {
+            get
+            {
+                return "workflows";
+            }
+        }
+
         public LogicApp(string subscriptionId, string resourceGroup, string appName) : base()
         {
             this.SubscriptionId = subscriptionId;

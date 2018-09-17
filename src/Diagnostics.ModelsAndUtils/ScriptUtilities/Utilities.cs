@@ -1,6 +1,7 @@
 ﻿using Diagnostics.ModelsAndUtils.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 
@@ -120,6 +121,65 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
             }
 
             return hostNameQuery;
+        }
+
+        /// <summary>
+        /// Filter the given table to get site events for the given slot name.
+        /// </summary>
+        /// <param name="slotName">SlotName</param>
+        /// <param name="slotTimeRanges">Runtime site slot map obtained from observer</param>
+        /// <param name="siteEventsTable">DataTable of web app events that atleast has a site name column and a timestamp column</param>
+        /// <param name="siteColumnName">Name of column for site name</param>
+        /// <param name="timeStampColumnName">Name of column for timestamp</param>
+        /// <example>
+        /// <code>
+        /// public async static Task<Response> Run(DataProviders dp, <![CDATA[OperationContext<App> cxt]]>, Response res){
+        ///     var siteEventsDataTable = await dp.Kusto.ExecuteQuery(runtimeWorkerEventsQuery, cxt.Resource.Stamp.InternalName));
+        ///     var slotTimeRanges = await dp.Observer.GetRuntimeSiteSlotMap(cxt.Resource.Stamp.InternalName, cxt.Resource.Name);
+        ///     var webAppStagingEvents = Utilities.GetSlotEvents(cxt.Resource.Slot, slotTimeRanges, siteEventsDataTable, "SiteName", "TIMESTAMP").
+        /// }
+        /// </code>
+        /// </example>
+        /// <returns></returns>
+        public static DataTable GetSlotEvents(string slotName, Dictionary<string, List<RuntimeSitenameTimeRange>> slotTimeRanges, DataTable siteEventsTable, string siteColumnName = "SiteName", string timeStampColumnName = "TIMESTAMP")
+        {
+            var dt = new DataTable();
+            var columns = siteEventsTable.Columns.Cast<DataColumn>().Select(dc => new DataColumn(dc.ColumnName, dc.DataType, dc.Expression, dc.ColumnMapping)).ToArray();
+            List<RuntimeSitenameTimeRange> timeRangeForSlot;
+
+            if (slotTimeRanges.ContainsKey(slotName.ToLower()))
+            {
+                timeRangeForSlot = slotTimeRanges[slotName];
+            }
+            else
+            {
+                throw new ArgumentException($"{slotName} is not an existing slot for this site. ");
+            }
+
+            try
+            {
+                dt.Columns.AddRange(columns);
+
+                foreach (DataRow row in siteEventsTable.Rows)
+                {
+                    var siteName = (string)row[siteColumnName];
+                    var timeStamp = (DateTime)row[timeStampColumnName];
+
+                    foreach (var slotTimeRangeInfo in timeRangeForSlot)
+                    {
+                        if (siteName.Equals(slotTimeRangeInfo.RuntimeSitename, StringComparison.CurrentCultureIgnoreCase) && timeStamp >= slotTimeRangeInfo.StartTime && timeStamp <= slotTimeRangeInfo.EndTime)
+                        {
+                            dt.Rows.Add(row.ItemArray);
+                            break;
+                        }
+                    }
+                }
+            }catch(Exception ex)
+            {
+                throw new Exception("Failed to get runtime slotmap table.", ex);
+            }
+
+            return dt;
         }
     }
 }

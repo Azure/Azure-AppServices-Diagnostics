@@ -1,6 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
-using Diagnostics.ModelsAndUtils.Models.GeoMaster;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
@@ -74,8 +73,21 @@ namespace Diagnostics.RuntimeHost.Controllers
             return await base.GetDetector(app, detectorId, startTime, endTime, timeGrain);
         }
 
+        [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]
+        public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string siteName, [FromBody]CompilationBostBody<DiagnosticSiteData> jsonBody, string detectorId, string dataSource = null, string timeRange = null)
+        {
+            App app = new App(subscriptionId, resourceGroupName, siteName);
+            return await base.ExecuteQuery(app, jsonBody, null, null, null, detectorId, dataSource, timeRange);
+        }
+
+        [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.Statistics + UriElements.StatisticsResource)]
+        public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string siteName, string detectorId, string invokerId, string dataSource = null, string timeRange = null)
+        {
+            return await base.GetSystemInvoker(GetResource(subscriptionId, resourceGroupName, siteName), detectorId, invokerId, dataSource, timeRange);
+        }
+
         [HttpPost(UriElements.Insights)]
-        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody, string supportTopicId, string minimumSeverity = null, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody, string pesId = null, string supportTopicId = null, string startTime = null, string endTime = null, string timeGrain = null)
         {
             if (postBody == null)
             {
@@ -88,7 +100,13 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
-            return await base.GetInsights(app, supportTopicId, minimumSeverity, startTime, endTime, timeGrain);
+            return await base.GetInsights(app, pesId, supportTopicId, startTime, endTime, timeGrain);
+        }
+
+        [HttpPost(UriElements.Publish)]
+        public async Task<IActionResult> PublishDetector(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DetectorPackage pkg)
+        {
+            return await base.PublishDetector(pkg);
         }
     }
 }

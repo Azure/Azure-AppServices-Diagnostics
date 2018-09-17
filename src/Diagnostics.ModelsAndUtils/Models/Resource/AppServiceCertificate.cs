@@ -22,6 +22,28 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public string ResourceGroup { get; set; }
 
+        /// <summary>
+        /// Arm Resource Provider
+        /// </summary>
+        public string Provider
+        {
+            get
+            {
+                return "Microsoft.CertificateRegistration";
+            }
+        }
+
+        /// <summary>
+        /// Name of Resource Type as defined by ARM resource id. Examples: 'sites', 'hostingEnvironments'
+        /// </summary>
+        public string ResourceTypeName
+        {
+            get
+            {
+                return "certificateOrders";
+            }
+        }
+
         public AppServiceCertificate(string subscriptionId, string resourceGroup, string name) : base()
         {
             this.SubscriptionId = subscriptionId;

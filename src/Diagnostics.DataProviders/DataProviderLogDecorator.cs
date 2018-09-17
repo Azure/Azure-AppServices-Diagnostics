@@ -4,17 +4,19 @@ using System.Data;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.DataProviders
 {
-    internal class DataProviderLogDecorator : IKustoDataProvider, IGeoMasterDataProvider, ISupportObserverDataProvider
+    internal class DataProviderLogDecorator : IKustoDataProvider, IGeoMasterDataProvider, ISupportObserverDataProvider, IAppInsightsDataProvider
     {
         IKustoDataProvider _kustoDataProvider;
         IGeoMasterDataProvider _geomasterDataProvider;
         ISupportObserverDataProvider _observerDataProvider;
+        IAppInsightsDataProvider _appInsightsDataProvider;
 
         DataProviderMetadata _currentMetadataProvider;
 
@@ -34,6 +36,22 @@ namespace Diagnostics.DataProviders
         {
             _observerDataProvider = dataProvider;
             _currentMetadataProvider = dataProvider.GetMetadata();
+        }
+
+        public DataProviderLogDecorator(IAppInsightsDataProvider dataProvider)
+        {
+            _appInsightsDataProvider = dataProvider;
+            _currentMetadataProvider = dataProvider.GetMetadata();
+        }
+
+        public Task<DataTable> ExecuteAppInsightsQuery(string query)
+        {
+            return MakeDependencyCall(null, _appInsightsDataProvider.ExecuteAppInsightsQuery(query));
+        }
+
+        public Task<bool> SetAppInsightsKey(string appId, string apiKey)
+        {
+            return MakeDependencyCall(null, _appInsightsDataProvider.SetAppInsightsKey(appId, apiKey));
         }
 
         public Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
@@ -58,7 +76,11 @@ namespace Diagnostics.DataProviders
 
         public Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name)
         {
-            return MakeDependencyCall(null, _geomasterDataProvider.GetAppDeployments(subscriptionId, resourceGroupName, name));
+            return GetAppDeployments(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot);
+        }
+        public Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name, string slotName)
+        {
+            return MakeDependencyCall(null, _geomasterDataProvider.GetAppDeployments(subscriptionId, resourceGroupName, name, slotName));
         }
 
         public Task<IEnumerable<object>> GetAppServiceEnvironmentDeploymentsAsync(string hostingEnvironmentName)
@@ -73,7 +95,11 @@ namespace Diagnostics.DataProviders
 
         public Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name)
         {
-            return MakeDependencyCall(null, _geomasterDataProvider.GetAppSettings(subscriptionId, resourceGroupName, name));
+            return GetAppSettings(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot);
+        }
+        public Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name, string slotName = GeoMasterConstants.ProductionSlot)
+        {
+            return MakeDependencyCall(null, _geomasterDataProvider.GetAppSettings(subscriptionId, resourceGroupName, name, slotName));
         }
 
         public Task<dynamic> GetCertificatesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
@@ -156,14 +182,23 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(null, _observerDataProvider.GetWebspaceResourceGroupName(subscriptionId, webSpaceName));
         }
 
+        public Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string path = "")
+        {
+            return MakeDependencyCall(null, _geomasterDataProvider.MakeHttpGetRequest<T>(subscriptionId, resourceGroupName, name, slotName, path));
+        }
         public Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path = "")
         {
-            return MakeDependencyCall(null, _geomasterDataProvider.MakeHttpGetRequest<T>(subscriptionId, resourceGroupName, name, path));
+            return MakeHttpGetRequest<T>(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot, path);
         }
 
         public Task<T> MakeHttpGetRequestWithFullPath<T>(string fullPath, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version)
         {
             return MakeDependencyCall(null, _geomasterDataProvider.MakeHttpGetRequestWithFullPath<T>(fullPath, queryString, apiVersion));
+        }
+
+        public Task<string> GetLinuxContainerLogs(string subscriptionId, string resourceGroupName, string name, string slotName)
+        {
+            return MakeDependencyCall(null, _geomasterDataProvider.GetLinuxContainerLogs(subscriptionId, resourceGroupName, name, slotName));
         }
 
         public Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))

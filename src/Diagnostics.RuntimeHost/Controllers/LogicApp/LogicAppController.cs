@@ -35,10 +35,28 @@ namespace Diagnostics.RuntimeHost.Controllers
             return await base.GetDetector(GetResource(subscriptionId, resourceGroupName, logicAppName), detectorId, startTime, endTime, timeGrain);
         }
 
-        [HttpPost(UriElements.Insights)]
-        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string logicAppName, [FromBody] dynamic postBody, string supportTopicId, string minimumSeverity = null, string startTime = null, string endTime = null, string timeGrain = null)
+        [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]
+        public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string logicAppName, [FromBody]CompilationBostBody<dynamic> jsonBody, string detectorId, string dataSource = null, string timeRange = null)
         {
-            return await base.GetInsights(GetResource(subscriptionId, resourceGroupName, logicAppName), supportTopicId, minimumSeverity, startTime, endTime, timeGrain);
+            return await base.ExecuteQuery(GetResource(subscriptionId, resourceGroupName, logicAppName), jsonBody, null, null, null, detectorId, dataSource, timeRange);
+        }
+
+        [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.Statistics + UriElements.StatisticsResource)]
+        public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string logicAppName, string detectorId, string invokerId, string dataSource = null, string timeRange = null)
+        {
+            return await base.GetSystemInvoker(GetResource(subscriptionId, resourceGroupName, logicAppName), detectorId, invokerId, dataSource, timeRange);
+        }
+
+        [HttpPost(UriElements.Insights)]
+        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string logicAppName, [FromBody] dynamic postBody, string pesId, string supportTopicId = null, string startTime = null, string endTime = null, string timeGrain = null)
+        {
+            return await base.GetInsights(GetResource(subscriptionId, resourceGroupName, logicAppName), pesId, supportTopicId, startTime, endTime, timeGrain);
+        }
+
+        [HttpPost(UriElements.Publish)]
+        public async Task<IActionResult> PublishDetector(string subscriptionId, string resourceGroupName, string logicAppName, [FromBody] DetectorPackage pkg)
+        {
+            return await base.PublishDetector(pkg);
         }
     }
 }

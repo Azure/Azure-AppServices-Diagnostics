@@ -78,7 +78,6 @@ namespace Diagnostics.Tests.ScriptsTests
         [Theory]
         [InlineData("", "14878", false)]
         [InlineData("1234", "", false)]
-        [InlineData("1234", "14878", true)]
         public async void EntityInvoker_InvalidSupportTopicId(string supportTopicId, string pesId, bool isInternal)
         {
             Definition definitonAttribute = new Definition()
@@ -100,6 +99,30 @@ namespace Diagnostics.Tests.ScriptsTests
 
                 Assert.False(invoker.IsCompilationSuccessful);
                 Assert.NotEmpty(invoker.CompilationOutput);
+            }
+        }
+
+        [Fact]
+        public async void EntityInvoker_TestSystemFilterAttributeResolution()
+        {
+            Definition definitonAttribute = new Definition()
+            {
+                Id = "TestId",
+                Name = "Test",
+                Author = "User"
+            };
+
+            SystemFilter filter = new SystemFilter();
+            EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
+            metadata.ScriptText = await ScriptTestDataHelper.GetSystemInvokerScript(definitonAttribute);
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+
+                Assert.True(invoker.IsCompilationSuccessful);
+                Assert.NotNull(invoker.SystemFilter);
+                Assert.Equal(filter, invoker.SystemFilter);
             }
         }
 

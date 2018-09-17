@@ -104,8 +104,8 @@ namespace Diagnostics.Logger
                 ExceptionDetails);
         }
 
-        [Event(2005, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostInsightsCorrelation)]
-        public void LogRuntimeHostInsightCorrelation(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string CorrelationId)
+        [Event(2005, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostInsightsCorrelation, Version = 2)]
+        public void LogRuntimeHostInsightCorrelation(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string CorrelationId, string Message)
         {
             WriteDiagnosticsEvent(2005,
                 RequestId,
@@ -113,7 +113,8 @@ namespace Diagnostics.Logger
                 SubscriptionId,
                 ResourceGroup,
                 Resource,
-                CorrelationId);
+                CorrelationId,
+                Message);
         }
 
         [Event(2006, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostHandledException)]
@@ -127,6 +128,16 @@ namespace Diagnostics.Logger
                 Resource,
                 ExceptionType,
                 ExceptionDetails);
+        }
+
+        [Event(2007, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostDetectorAscInsight, Version = 2)]
+        public void LogRuntimeHostDetectorAscInsight(string RequestId, string Source, string Message, string Details)
+        {
+            WriteDiagnosticsEvent(2007,
+                RequestId,
+                Source,
+                Message,
+                Details);
         }
 
         #endregion

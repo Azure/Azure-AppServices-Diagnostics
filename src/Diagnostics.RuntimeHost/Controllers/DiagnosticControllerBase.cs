@@ -2,9 +2,9 @@
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
-using Diagnostics.ModelsAndUtils.Models.GeoMaster;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
+using Diagnostics.ModelsAndUtils.Utilities;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
@@ -13,9 +13,11 @@ using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -43,7 +45,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected async Task<IActionResult> ListDetectors(TResource resource)
         {
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
-            OperationContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
             return Ok(await this.ListDetectorsInternal(cxt));
         }
 
@@ -54,12 +56,50 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest(errorMessage);
             }
 
-            OperationContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
             var detectorResponse = await GetDetectorInternal(detectorId, cxt);
             return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2));
         }
+
+        protected async Task<IActionResult> ListSystemInvokers(TResource resource)
+        {
+            DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
+            RuntimeContext<TResource> context = PrepareContext(resource, startTimeUtc, endTimeUtc);
+
+            await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+
+            var systemInvokers = _invokerCache.GetSystemInvokerList<TResource>(context)
+               .Select(p => new DiagnosticApiResponse { Metadata = p.EntryPointDefinitionAttribute });
+
+            return Ok(systemInvokers);
+        }
         
-        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationBostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain)
+        protected async Task<IActionResult> GetSystemInvoker(TResource resource, string detectorId, string invokerId, string dataSource, string timeRange)
+        {
+            Dictionary<string, dynamic> systemContext = PrepareSystemContext(resource, detectorId, dataSource, timeRange);
+
+            await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+            var dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
+            var invoker = this._invokerCache.GetSystemInvoker(invokerId);
+
+            if (invoker == null)
+            {
+                return null;
+            }
+
+            Response res = new Response
+            {
+                Metadata = invoker.EntryPointDefinitionAttribute
+            };
+
+            var response = (Response)await invoker.Invoke(new object[] { dataProviders, systemContext, res });
+
+            List<DataProviderMetadata> dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
+
+            return response == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata));
+        }
+
+        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationBostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null)
         {
             if (jsonBody == null)
             {
@@ -102,53 +142,150 @@ namespace Diagnostics.RuntimeHost.Controllers
                     invoker.InitializeEntryPoint(tempAsm);
 
                     // Verify Detector with other detectors in the system in case of conflicts
-                    if (!VerifyEntity(invoker, ref queryRes)) return Ok(queryRes);
+                    List<DataProviderMetadata> dataProvidersMetadata = null;
+                    Response invocationResponse = null;
+                    bool isInternalCall = true;
+                    try
+                    {
+                        if (detectorId == null)
+                        {
+                            if (!VerifyEntity(invoker, ref queryRes)) return Ok(queryRes);
+                            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
 
-                    OperationContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
-                    var responseInput = new Response() { Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, cxt.IsInternalCall) };
-                    var invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, cxt, responseInput });
-                    invocationResponse.UpdateDetectorStatusFromInsights();
-                    queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse);
+                            var responseInput = new Response() { Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, cxt.ClientIsInternal) };
+                            invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, cxt.OperationContext, responseInput });
+                            invocationResponse.UpdateDetectorStatusFromInsights();
+                            isInternalCall = cxt.ClientIsInternal;
+                        }
+                        else
+                        {
+                            Dictionary<string, dynamic> systemContext = PrepareSystemContext(resource, detectorId, dataSource, timeRange);
+                            var responseInput = new Response() { Metadata = invoker.EntryPointDefinitionAttribute };
+                            invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, systemContext, responseInput });
+                        }
+
+                        if (isInternalCall)
+                        {
+                            dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
+                        }
+
+                        queryRes.RuntimeSucceeded = true;
+                        queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse, dataProvidersMetadata);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (isInternalCall)
+                        {
+                            queryRes.RuntimeSucceeded = false;
+                            queryRes.InvocationOutput = CreateQueryExceptionResponse(ex, invoker.EntryPointDefinitionAttribute, isInternalCall, GetDataProvidersMetadata(dataProviders));
+                        }
+                        else
+                            throw;
+                    }
+
                 }
             }
 
             return Ok(queryRes);
         }
 
-        protected async Task<IActionResult> GetInsights(TResource resource, string supportTopicId, string minimumSeverity, string startTime, string endTime, string timeGrain)
+        protected async Task<IActionResult> PublishDetector(DetectorPackage pkg)
+        {
+            if (pkg == null || string.IsNullOrWhiteSpace(pkg.Id) || string.IsNullOrWhiteSpace(pkg.DllBytes))
+            {
+                return BadRequest();
+            }
+
+            var publishResult = await _sourceWatcherService.Watcher.CreateOrUpdateDetector(pkg);
+            bool isPublishSuccessful = publishResult.Item1;
+            Exception publishEx = publishResult.Item2;
+
+            if (!isPublishSuccessful)
+            {
+                if(publishEx != null)
+                {
+                    throw publishEx;
+                }
+
+                throw new Exception("Publish Operation failed");
+            }
+
+            return Ok();
+        }
+
+        private DiagnosticApiResponse CreateQueryExceptionResponse(Exception ex, Definition detectorDefinition, bool isInternal, List<DataProviderMetadata> dataProvidersMetadata)
+        {
+            Response response = new Response() { Metadata = RemovePIIFromDefinition(detectorDefinition, isInternal) };
+            response.AddMarkdownView($"<pre><code>{ex.ToString()}</code></pre>", "Detector Runtime Exception");
+            return DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata);
+        }
+
+        protected async Task<IActionResult> GetInsights(TResource resource, string pesId, string supportTopicId, string startTime, string endTime, string timeGrain)
         {
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
             {
                 return BadRequest(errorMessage);
             }
 
-            OperationContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, forceInternal: true);
+            var supportTopic = new SupportTopic() { Id = supportTopicId, PesId = pesId };
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, true, supportTopic);
 
-            IEnumerable<AzureSupportCenterInsight> insights = null;
+            List<AzureSupportCenterInsight> insights = null;
             string error = null;
+            List<Definition> detectorsRun = new List<Definition>();
+            IEnumerable<Definition> allDetectors = null;
             try
             {
                 supportTopicId = ParseCorrectSupportTopicId(supportTopicId);
-                var allDetectors = (await ListDetectorsInternal(cxt)).Select(detectorResponse => detectorResponse.Metadata);
+                allDetectors = (await ListDetectorsInternal(cxt)).Select(detectorResponse => detectorResponse.Metadata);
 
                 var applicableDetectors = allDetectors
-                    .Where(detector => string.IsNullOrWhiteSpace(supportTopicId) || detector.SupportTopicList.FirstOrDefault(supportTopic => supportTopic.Id == supportTopicId) != null);
+                    .Where(detector => string.IsNullOrWhiteSpace(supportTopicId) || detector.SupportTopicList.FirstOrDefault(st => st.Id == supportTopicId) != null);
 
-                var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => GetInsightsFromDetector(cxt, detector)));
+                var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => GetInsightsFromDetector(cxt, detector, detectorsRun)));
 
-                insights = insightGroups.Where(group => group != null).SelectMany(group => group);
+                insights = insightGroups.Where(group => group != null).SelectMany(group => group).ToList();
             }
             catch (Exception ex)
             {
                 error = ex.GetType().ToString();
-                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.RequestId, "GetInsights", cxt.Resource.SubscriptionId, cxt.Resource.ResourceGroup,
-                    cxt.Resource.Name, ex.GetType().ToString(), ex.ToString());
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.OperationContext.RequestId, "GetInsights", cxt.OperationContext.Resource.SubscriptionId, 
+                    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, ex.GetType().ToString(), ex.ToString());
             }
 
 
             var correlationId = Guid.NewGuid();
-            DiagnosticsETWProvider.Instance.LogRuntimeHostInsightCorrelation(cxt.RequestId, "ControllerBase.GetInsights", cxt.Resource.SubscriptionId,
-                cxt.Resource.ResourceGroup, cxt.Resource.Name, correlationId.ToString());
+
+            bool defaultInsightReturned = false;
+            // Detectors Ran but no insights
+            if (!insights.Any() && detectorsRun.Any())
+            {
+                defaultInsightReturned = true;
+                insights.Add(AzureSupportCenterInsightUtilites.CreateDefaultInsight(cxt.OperationContext, detectorsRun));
+            }
+            // No detectors matched this support topic
+            else if (!detectorsRun.Any())
+            {
+                var defaultDetector = allDetectors.FirstOrDefault(detector => detector.Id.StartsWith("default_insights"));
+                if (defaultDetector != null)
+                {
+                    var defaultDetectorInsights = await GetInsightsFromDetector(cxt, defaultDetector, new List<Definition>());
+                    defaultInsightReturned = defaultDetectorInsights.Any();
+                    insights.AddRange(defaultDetectorInsights);
+                }
+            }
+
+            var insightInfo = new
+            {
+                Total = insights.Count,
+                Critical = insights.Count(insight => insight.ImportanceLevel == ImportanceLevel.Critical),
+                Warning = insights.Count(insight => insight.ImportanceLevel == ImportanceLevel.Warning),
+                Info = insights.Count(insight => insight.ImportanceLevel == ImportanceLevel.Info),
+                Default = defaultInsightReturned ? 1 : 0
+            };
+
+            DiagnosticsETWProvider.Instance.LogRuntimeHostInsightCorrelation(cxt.OperationContext.RequestId, "ControllerBase.GetInsights", cxt.OperationContext.Resource.SubscriptionId,
+                cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, correlationId.ToString(), JsonConvert.SerializeObject(insightInfo));
 
             var response = new AzureSupportCenterInsightEnvelope()
             {
@@ -184,6 +321,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             HostingEnvironment hostingEnv = new HostingEnvironment(subscriptionId, resourceGroup, name)
             {
+                Name = stampPostBody.InternalName,
                 InternalName = stampPostBody.InternalName,
                 ServiceAddress = stampPostBody.ServiceAddress,
                 State = stampPostBody.State,
@@ -215,38 +353,93 @@ namespace Diagnostics.RuntimeHost.Controllers
             return hostingEnv;
         }
 
-        private OperationContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false)
+        private Dictionary<string, dynamic> PrepareSystemContext(TResource resource, string detectorId, string dataSource, string timeRange)
+        {
+            dataSource = string.IsNullOrWhiteSpace(dataSource) ? "0" : dataSource;
+            timeRange = string.IsNullOrWhiteSpace(timeRange) ? "168" : timeRange;
+
+            this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
+
+            OperationContext<TResource> cxt = new OperationContext<TResource>(
+                resource,
+                "",
+                "",
+                true,
+                requestIds.FirstOrDefault()
+            );
+
+            RuntimeContext<TResource> runtimeContext = new RuntimeContext<TResource>()
+            {
+                ClientIsInternal = true,
+                OperationContext = cxt
+            };
+
+            var invoker = this._invokerCache.GetDetectorInvoker<TResource>(detectorId, runtimeContext);
+            IEnumerable<SupportTopic> supportTopicList = null;
+            if (invoker != null && invoker.EntryPointDefinitionAttribute != null && invoker.EntryPointDefinitionAttribute.SupportTopicList != null && invoker.EntryPointDefinitionAttribute.SupportTopicList.Any())
+            {
+                supportTopicList = invoker.EntryPointDefinitionAttribute.SupportTopicList;
+            }
+                
+            Dictionary<string, dynamic> systemContext = new Dictionary<string, dynamic>();
+            systemContext.Add("detectorId", detectorId);
+            systemContext.Add("requestIds", requestIds);
+            systemContext.Add("isInternal", true);
+            systemContext.Add("dataSource", dataSource);
+            systemContext.Add("timeRange", timeRange);
+            systemContext.Add("supportTopicList", supportTopicList);
+            return systemContext;
+        }
+
+        private RuntimeContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, SupportTopic supportTopic = null)
         {
             this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
-            this.Request.Headers.TryGetValue(HeaderConstants.InternalCallHeaderName, out StringValues internalCallHeader);
-            bool isInternalRequest = false;
+            this.Request.Headers.TryGetValue(HeaderConstants.InternalClientHeader, out StringValues internalCallHeader);
+            bool isInternalClient = false;
+            bool internalViewRequested = false;
             if (internalCallHeader.Any())
             {
-                bool.TryParse(internalCallHeader.First(), out isInternalRequest);
+                bool.TryParse(internalCallHeader.First(), out isInternalClient);
             }
 
-            return new OperationContext<TResource>(
+            if (isInternalClient)
+            {
+                this.Request.Headers.TryGetValue(HeaderConstants.InternalViewHeader, out StringValues internalViewHeader);
+                if (internalViewHeader.Any())
+                {
+                    bool.TryParse(internalViewHeader.First(), out internalViewRequested);
+                }
+            }
+
+            var operationContext = new OperationContext<TResource>(
                 resource,
                 DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(DataProviderConstants.KustoTimeFormat),
                 DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(DataProviderConstants.KustoTimeFormat),
-                isInternalRequest || forceInternal,
-                requestIds.FirstOrDefault()
+                internalViewRequested || forceInternal,
+                requestIds.FirstOrDefault(),
+                supportTopic: supportTopic
             );
+
+            return new RuntimeContext<TResource>()
+            {
+                ClientIsInternal = isInternalClient || forceInternal,
+                OperationContext = operationContext
+            };
         }
 
-        private async Task<IEnumerable<DiagnosticApiResponse>> ListDetectorsInternal(OperationContext<TResource> context)
+        private async Task<IEnumerable<DiagnosticApiResponse>> ListDetectorsInternal(RuntimeContext<TResource> context)
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
 
-            return _invokerCache.GetInvokerList<TResource>(context)
-                .Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.IsInternalCall) });
+            return _invokerCache.GetDetectorInvokerList<TResource>(context)
+                .Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
         }
-        
-        private async Task<Tuple<Response, List<DataProviderMetadata>>> GetDetectorInternal(string detectorId, OperationContext<TResource> context)
+
+        private async Task<Tuple<Response, List<DataProviderMetadata>>> GetDetectorInternal(string detectorId, RuntimeContext<TResource> context)
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
-            var invoker = this._invokerCache.GetInvoker<TResource>(detectorId, context);
+            var invoker = this._invokerCache.GetDetectorInvoker<TResource>(detectorId, context);
 
             if (invoker == null)
             {
@@ -255,35 +448,42 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             Response res = new Response
             {
-                Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, context.IsInternalCall)
+                Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, context.ClientIsInternal)
             };
 
-            var response = (Response)await invoker.Invoke(new object[] { dataProviders, context, res });
+            var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
 
             List<DataProviderMetadata> dataProvidersMetadata = null;
             response.UpdateDetectorStatusFromInsights();
 
-            if (context.IsInternalCall)
+            if (context.ClientIsInternal)
             {
                 dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
             }
 
-            return new Tuple<Response, List<DataProviderMetadata>>(response, dataProvidersMetadata) ;
+            return new Tuple<Response, List<DataProviderMetadata>>(response, dataProvidersMetadata);
         }
-        
-        private async Task<IEnumerable<AzureSupportCenterInsight>> GetInsightsFromDetector(OperationContext<TResource> context, Definition detector)
+
+        private async Task<IEnumerable<AzureSupportCenterInsight>> GetInsightsFromDetector(RuntimeContext<TResource> context, Definition detector, List<Definition> detectorsRun)
         {
             Response response = null;
+
+            detectorsRun.Add(detector);
+
             try
             {
-                response = (await GetDetectorInternal(detector.Id, context)).Item1;
+                var fullResponse = await GetDetectorInternal(detector.Id, context);
+                if (fullResponse != null)
+                {
+                    response = fullResponse.Item1;
+                }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(context.RequestId, "GetInsightsFromDetector", context.Resource.SubscriptionId,
-                    context.Resource.ResourceGroup, context.Resource.Name, ex.GetType().ToString(), ex.ToString());
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(context.OperationContext.RequestId, "GetInsightsFromDetector", context.OperationContext.Resource.SubscriptionId,
+                    context.OperationContext.Resource.ResourceGroup, context.OperationContext.Resource.Name, ex.GetType().ToString(), ex.ToString());
             }
-            
+
             // Handle Exception or Not Found
             // Not found can occur if invalid detector is put in detector list
             if (response == null)
@@ -293,12 +493,28 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             List<AzureSupportCenterInsight> supportCenterInsights = new List<AzureSupportCenterInsight>();
 
-            // Take max one insight per detector, only critical or warning, pick the most critical
-            var mostCriticalInsight = response.Insights.Where(insight => ((int)insight.Status) <= ((int)InsightStatus.Info)).OrderBy(insight => insight.Status).FirstOrDefault();
-
-            if (mostCriticalInsight != null)
+            if (response.AscInsights.Any())
             {
-                supportCenterInsights.Add(AzureSupportCenterInsightUtilites.CreateInsight(mostCriticalInsight, context, detector));
+                foreach(var ascInsight in response.AscInsights)
+                {
+                    DiagnosticsETWProvider.Instance.LogRuntimeHostDetectorAscInsight(context.OperationContext.RequestId, detector.Id, ascInsight.ImportanceLevel.ToString(), JsonConvert.SerializeObject(ascInsight));
+                    supportCenterInsights.Add(ascInsight);
+                }
+            }
+            else
+            {
+                // Take max one insight per detector, only critical or warning, pick the most critical
+                var mostCriticalInsight = response.Insights.OrderBy(insight => insight.Status).FirstOrDefault();
+
+                //TODO: Add Logging Per Detector Here
+                AzureSupportCenterInsight ascInsight = null;
+                if (mostCriticalInsight != null)
+                {
+                    ascInsight = AzureSupportCenterInsightUtilites.CreateInsight(mostCriticalInsight, context.OperationContext, detector);
+                    supportCenterInsights.Add(ascInsight);
+                }
+
+                DiagnosticsETWProvider.Instance.LogRuntimeHostDetectorAscInsight(context.OperationContext.RequestId, detector.Id, ascInsight?.ImportanceLevel.ToString(), JsonConvert.SerializeObject(ascInsight));
             }
 
             var detectorLists = response.Dataset
@@ -309,7 +525,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             if (detectorLists.Any())
             {
                 var applicableDetectorMetaData = (await this.ListDetectorsInternal(context)).Where(detectorResponse => detectorLists.Contains(detectorResponse.Metadata.Id));
-                var detectorListResponses = await Task.WhenAll(applicableDetectorMetaData.Select(detectorResponse => GetInsightsFromDetector(context, detectorResponse.Metadata)));
+                var detectorListResponses = await Task.WhenAll(applicableDetectorMetaData.Select(detectorResponse => GetInsightsFromDetector(context, detectorResponse.Metadata, detectorsRun)));
 
                 supportCenterInsights.AddRange(detectorListResponses.Where(detectorInsights => detectorInsights != null).SelectMany(detectorInsights => detectorInsights));
             }
@@ -327,8 +543,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return null;
             }
 
-            string[] subIds = supportTopicId.Split("/");
-            return subIds[subIds.Length - 1]; 
+            string[] subIds = supportTopicId.Split("\\");
+            return subIds[subIds.Length - 1];
         }
 
         private List<DataProviderMetadata> GetDataProvidersMetadata(DataProviders.DataProviders dataProviders)
@@ -348,7 +564,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             return dataprovidersMetadata;
         }
-        
+
         private bool VerifyEntity(EntityInvoker invoker, ref QueryResponse<DiagnosticApiResponse> queryRes)
         {
             List<EntityInvoker> allDetectors = this._invokerCache.GetAll().ToList();
@@ -375,7 +591,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             return true;
         }
-        
+
         private Definition RemovePIIFromDefinition(Definition definition, bool isInternal)
         {
             if (!isInternal) definition.Author = string.Empty;
