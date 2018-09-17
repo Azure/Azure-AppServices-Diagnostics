@@ -220,7 +220,7 @@ namespace Diagnostics.Logger
                 LatencyInMilliseconds);
         }
 
-        [Event(3003, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogKustoTokenRefreshSummary)]
+        [Event(3003, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogKustoTokenRefreshSummary)]
         public void LogKustoTokenRefreshSummary(string Source, string Message, long LatencyInMilliseconds, string StartTime, string EndTime, string ExceptionType, string ExceptionDetails)
         {
             WriteDiagnosticsEvent(3003,
