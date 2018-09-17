@@ -221,12 +221,11 @@ namespace Diagnostics.Logger
         }
 
         [Event(3003, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogKustoTokenRefreshSummary)]
-        public void LogKustoTokenRefreshSummary(string RequestId, string Source, int StatusCode, long LatencyInMilliseconds, string StartTime, string EndTime, string ExceptionType, string ExceptionDetails)
+        public void LogKustoTokenRefreshSummary(string Source, string Message, long LatencyInMilliseconds, string StartTime, string EndTime, string ExceptionType, string ExceptionDetails)
         {
             WriteDiagnosticsEvent(3003,
-                RequestId,
                 Source,
-                StatusCode,
+                Message,
                 LatencyInMilliseconds,
                 StartTime,
                 EndTime,

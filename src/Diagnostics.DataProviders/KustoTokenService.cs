@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Clients.ActiveDirectory;
+﻿using Diagnostics.Logger;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -21,7 +22,7 @@ namespace Diagnostics.DataProviders
         public string AuthorizationToken => _authorizationToken;
 
         private KustoTokenService() : base()
-        {   
+        {
         }
 
         public void Initialize(KustoDataProviderConfiguration configuration)
@@ -37,10 +38,39 @@ namespace Diagnostics.DataProviders
         {
             while (true)
             {
-                _acquireTokenTask = _authContext.AcquireTokenAsync(DataProviderConstants.DefaultKustoEndpoint, _clientCredential);
-                AuthenticationResult authResult = await _acquireTokenTask;
-                _authorizationToken = GetAuthTokenFromAuthenticationResult(authResult);
-                _tokenAcquiredAtleastOnce = true;
+                DateTime invocationStartTime = DateTime.UtcNow;
+                string exceptionType = string.Empty;
+                string exceptionDetails = string.Empty;
+                string message = string.Empty;
+
+                try
+                {
+                    _acquireTokenTask = _authContext.AcquireTokenAsync(DataProviderConstants.DefaultKustoEndpoint, _clientCredential);
+                    AuthenticationResult authResult = await _acquireTokenTask;
+                    _authorizationToken = GetAuthTokenFromAuthenticationResult(authResult);
+                    _tokenAcquiredAtleastOnce = true;
+                    message = "Token Acquisition Status : Success";
+                }
+                catch (Exception ex)
+                {
+                    exceptionType = ex.GetType().ToString();
+                    exceptionDetails = ex.ToString();
+                    message = "Token Acquisition Status : Failed";
+                }
+                finally
+                {
+                    DateTime invocationEndTime = DateTime.UtcNow;
+                    long latencyInMs = Convert.ToInt64((invocationEndTime - invocationStartTime).TotalMilliseconds);
+                    DiagnosticsETWProvider.Instance.LogKustoTokenRefreshSummary(
+                        "KustoTokenRefreshService",
+                        message,
+                        latencyInMs,
+                        invocationStartTime.ToString("HH:mm:ss.fff"),
+                        invocationEndTime.ToString("HH:mm:ss.fff"),
+                        exceptionType,
+                        exceptionDetails
+                        );
+                }
 
                 await Task.Delay(DataProviderConstants.TokenRefreshIntervalInMs);
             }
