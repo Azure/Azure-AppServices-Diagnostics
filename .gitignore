@@ -20,6 +20,7 @@
 x64/
 x86/
 build/
+buildOutput/
 bld/
 [Bb]in/
 [Oo]bj/

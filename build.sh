@@ -11,7 +11,7 @@ fi
 
 SRC_DIR=src
 TEST_DIR=tests
-BUILD_DIR=build
+BUILD_DIR=buildOutput
 
 # Deleting the build folder if already exists
 if [ -d "$BUILD_DIR" ]; then
