@@ -219,6 +219,21 @@ namespace Diagnostics.Logger
                 EndTime,
                 LatencyInMilliseconds);
         }
+
+        [Event(3003, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogKustoTokenRefreshSummary)]
+        public void LogKustoTokenRefreshSummary(string Source, string Message, long LatencyInMilliseconds, string StartTime, string EndTime, string ExceptionType, string ExceptionDetails)
+        {
+            WriteDiagnosticsEvent(3003,
+                Source,
+                Message,
+                LatencyInMilliseconds,
+                StartTime,
+                EndTime,
+                ExceptionType,
+                ExceptionDetails);
+        }
+
+
         #endregion
     }
 }
