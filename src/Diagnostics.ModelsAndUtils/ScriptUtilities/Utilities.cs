@@ -133,14 +133,13 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         /// <param name="timeStampColumnName">Name of column for timestamp</param>
         /// <example>
         /// <code>
-        /// public async static Task<Response> Run(DataProviders dp, <![CDATA[OperationContext<App> cxt]]>, Response res){
+        /// public async static Task<![CDATA[Response]]> Run(DataProviders dp, <![CDATA[OperationContext<App> cxt]]>, Response res){
         ///     var siteEventsDataTable = await dp.Kusto.ExecuteQuery(runtimeWorkerEventsQuery, cxt.Resource.Stamp.InternalName));
         ///     var slotTimeRanges = await dp.Observer.GetRuntimeSiteSlotMap(cxt.Resource.Stamp.InternalName, cxt.Resource.Name);
         ///     var webAppStagingEvents = Utilities.GetSlotEvents(cxt.Resource.Slot, slotTimeRanges, siteEventsDataTable, "SiteName", "TIMESTAMP").
         /// }
         /// </code>
         /// </example>
-        /// <returns></returns>
         public static DataTable GetSlotEvents(string slotName, Dictionary<string, List<RuntimeSitenameTimeRange>> slotTimeRanges, DataTable siteEventsTable, string siteColumnName = "SiteName", string timeStampColumnName = "TIMESTAMP")
         {
             var dt = new DataTable();
