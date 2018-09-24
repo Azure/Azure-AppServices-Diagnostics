@@ -152,9 +152,9 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(null, _observerDataProvider.GetStampName(subscriptionId, resourceGroupName, siteName));
         }
 
-        public Task<dynamic> GetHostNames(string siteName)
+        public Task<dynamic> GetHostNames(string stampName, string siteName)
         {
-            return MakeDependencyCall(null, _observerDataProvider.GetHostNames(siteName));
+            return MakeDependencyCall(null, _observerDataProvider.GetHostNames(stampName, siteName));
         }
 
         public Task<dynamic> GetSitePostBody(string stampName, string siteName)

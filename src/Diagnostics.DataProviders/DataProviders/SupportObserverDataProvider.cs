@@ -127,15 +127,15 @@ namespace Diagnostics.DataProviders
                     .FirstOrDefault(
                         j => (j.ContainsKey("Subscription") && j["Subscription"].ToString() == subscriptionId
                             && j.ContainsKey("ResourceGroupName") && j["ResourceGroupName"].ToString() == resourceGroupName
-                            && j.ContainsKey("stampName")));
+                            && j.ContainsKey("StampName")));
 
-            string stampName = obj2?["stampName"]?.ToString();
+            string stampName = obj2?["StampName"]?.ToString();
             return stampName;
         }
 
-        public override async Task<dynamic> GetHostNames(string siteName)
+        public override async Task<dynamic> GetHostNames(string stampName, string siteName)
         {
-            var response = await Get($"sites/{siteName}/hostnames");
+            var response = await Get($"stamps/{stampName}/sites/{siteName}/hostnames");
             var hostNames = JsonConvert.DeserializeObject(response);
             return hostNames;
         }
@@ -147,7 +147,7 @@ namespace Diagnostics.DataProviders
 
             if (sitePostBody["HostNames"] == null)
             {
-                var hostNames = await GetHostNames(siteName);
+                var hostNames = await GetHostNames(stampName, siteName);
                 List<dynamic> hostNamesList = new List<dynamic>();
                 foreach (var hostName in hostNames)
                 {

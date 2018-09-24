@@ -68,7 +68,7 @@ namespace Diagnostics.DataProviders
             throw new NotImplementedException();
         }
 
-        public override async Task<dynamic> GetHostNames(string siteName)
+        public override async Task<dynamic> GetHostNames(string stampName, string siteName)
         {
             throw new NotImplementedException();
         }

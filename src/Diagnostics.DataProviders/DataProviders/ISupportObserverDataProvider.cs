@@ -24,7 +24,7 @@ namespace Diagnostics.DataProviders
         Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName);
         Task<IEnumerable<object>> GetAppServiceEnvironmentDeploymentsAsync(string hostingEnvironmentName);
         Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName);
-        Task<dynamic> GetHostNames(string siteName);
+        Task<dynamic> GetHostNames(string stampName, string siteName);
         Task<dynamic> GetSitePostBody(string stampName, string siteName);
         Task<JObject> GetAdminSitesBySiteNameAsync(string stampName, string siteName);
         Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames);
