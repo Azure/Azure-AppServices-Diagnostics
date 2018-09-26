@@ -4,6 +4,7 @@ using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,11 +21,13 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
         }
 
-        public async Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName)
+        private async Task<DiagnosticStampData> GetHostingEnvironmentPostBody(string hostingEnvironmentName)
         {
             var dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
             dynamic postBody = await dataProviders.Observer.GetHostingEnvironmentPostBody(hostingEnvironmentName);
-            return postBody;
+            JObject bodyObject = (JObject)postBody;
+            var hostingEnvironmentPostBody = bodyObject.ToObject<DiagnosticStampData>();
+            return hostingEnvironmentPostBody;
         }
 
         [HttpPost(UriElements.Query)]

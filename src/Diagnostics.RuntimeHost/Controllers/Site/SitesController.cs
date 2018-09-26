@@ -5,6 +5,7 @@ using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,12 +22,14 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
         }
 
-        public async Task<dynamic> GetSitePostBody (string subscriptionId, string resourceGroupName, string siteName)
+        private async Task<DiagnosticSiteData> GetSitePostBody (string subscriptionId, string resourceGroupName, string siteName)
         {
             var dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
             string stampName = await dataProviders.Observer.GetStampName(subscriptionId, resourceGroupName, siteName);
             dynamic postBody = await dataProviders.Observer.GetSitePostBody(stampName, siteName);
-            return postBody;
+            JObject bodyObject = (JObject)postBody;
+            var sitePostBody = bodyObject.ToObject<DiagnosticSiteData>();
+            return sitePostBody;
         }
 
         [HttpPost(UriElements.Query)]
