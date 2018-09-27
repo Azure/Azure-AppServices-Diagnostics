@@ -40,7 +40,7 @@ namespace Diagnostics.DataProviders
 
         public override async Task<dynamic> GetCertificatesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
-            var result = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/certificates?api-version=2.0");
+            var result = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/certificates");
             return JsonConvert.DeserializeObject(result);
         }
 
@@ -56,7 +56,7 @@ namespace Diagnostics.DataProviders
 
         private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName)
         {
-            var result = await Get(string.IsNullOrWhiteSpace(stampName) ? $"/sites/{siteName}/runtimesiteslotmap?api-version=2.0" : $"stamp/{stampName}/sites/{siteName}/runtimesiteslotmap?api-version=2.0");
+            var result = await Get(string.IsNullOrWhiteSpace(stampName) ? $"/sites/{siteName}/runtimesiteslotmap" : $"stamp/{stampName}/sites/{siteName}/runtimesiteslotmap");
             var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);
             var slotTimeRange = new Dictionary<string, List<RuntimeSitenameTimeRange>>(slotTimeRangeCaseSensitiveDictionary, StringComparer.CurrentCultureIgnoreCase);
             return slotTimeRange;
@@ -64,35 +64,35 @@ namespace Diagnostics.DataProviders
 
         public override async Task<dynamic> GetServerFarmsInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
-            var result = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/serverfarms?api-version=2.0");
+            var result = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/serverfarms");
             return JsonConvert.DeserializeObject(result);
         }
 
         public override async Task<string> GetServerFarmWebspaceName(string subscriptionId, string serverFarm)
         {
-            return await Get($"subscriptionid/{subscriptionId}/serverfarm/{serverFarm}/webspacename?api-version=2.0");
+            return await Get($"subscriptionid/{subscriptionId}/serverfarm/{serverFarm}/webspacename");
         }
 
         public override async Task<string> GetSiteResourceGroupNameAsync(string siteName)
         {
-            return await Get($"sites/{siteName}/resourcegroupname?api-version=2.0");
+            return await Get($"sites/{siteName}/resourcegroupname");
         }
 
         public override async Task<dynamic> GetSitesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
-            var sitesResult = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/sites?api-version=2.0");
+            var sitesResult = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/sites");
             return JsonConvert.DeserializeObject(sitesResult);
         }
 
         public override async Task<dynamic> GetSitesInServerFarmAsync(string subscriptionId, string serverFarmName)
         {
-            var sitesResult = await Get($"subscriptionid/{subscriptionId}/serverfarm/{serverFarmName}/sites?api-version=2.0");
+            var sitesResult = await Get($"subscriptionid/{subscriptionId}/serverfarm/{serverFarmName}/sites");
             return JsonConvert.DeserializeObject(sitesResult);
         }
 
         public override async Task<string> GetSiteWebSpaceNameAsync(string subscriptionId, string siteName)
         {
-            return await Get($"subscriptionid/{subscriptionId}/sitename/{siteName}/webspacename?api-version=2.0");
+            return await Get($"subscriptionid/{subscriptionId}/sitename/{siteName}/webspacename");
         }
 
         public override Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName)
@@ -102,7 +102,7 @@ namespace Diagnostics.DataProviders
 
         public override async Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName)
         {
-            return await Get($"subscriptionid/{subscriptionId}/webspacename/{webSpaceName}/resourcegroupname?api-version=2.0");
+            return await Get($"subscriptionid/{subscriptionId}/webspacename/{webSpaceName}/resourcegroupname");
         }
 
         public override async Task<dynamic> GetSite(string siteName)
@@ -135,7 +135,7 @@ namespace Diagnostics.DataProviders
 
         public override async Task<dynamic> GetHostNames(string stampName, string siteName)
         {
-            var response = await Get($"stamps/{stampName}/sites/{siteName}/hostnames?api-version=2.0");
+            var response = await Get($"stamps/{stampName}/sites/{siteName}/hostnames");
             var hostNames = JsonConvert.DeserializeObject(response);
             return hostNames;
         }
@@ -167,7 +167,7 @@ namespace Diagnostics.DataProviders
         /// <returns></returns>
         private async Task<string> Get(string path)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://support-bay-api.azurewebsites.net/observer/{path}");
+            var request = new HttpRequestMessage(HttpMethod.Get, $"https://support-bay-api.azurewebsites.net/observer/{path}?api-version=2.0");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _configuration.GetAccessToken(_configuration.RuntimeSiteSlotMapResourceUri));
             var response = await GetObserverClient().SendAsync(request);
             response.EnsureSuccessStatusCode();
