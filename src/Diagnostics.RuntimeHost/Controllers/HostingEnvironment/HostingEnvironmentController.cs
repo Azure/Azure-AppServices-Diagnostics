@@ -4,6 +4,7 @@ using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,15 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
         }
 
+        private async Task<DiagnosticStampData> GetHostingEnvironmentPostBody(string hostingEnvironmentName)
+        {
+            var dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
+            dynamic postBody = await dataProviders.Observer.GetHostingEnvironmentPostBody(hostingEnvironmentName);
+            JObject bodyObject = (JObject)postBody;
+            var hostingEnvironmentPostBody = bodyObject.ToObject<DiagnosticStampData>();
+            return hostingEnvironmentPostBody;
+        }
+
         [HttpPost(UriElements.Query)]
         public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, string[] hostNames, string stampName, [FromBody]CompilationBostBody<DiagnosticStampData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null)
         {
@@ -30,7 +40,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             
             if (jsonBody.Resource == null)
             {
-                return BadRequest("Missing Hosting Enviroment Data in body");
+                jsonBody.Resource = await GetHostingEnvironmentPostBody(hostingEnvironmentName);
             }
 
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
@@ -47,7 +57,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             if (postBody == null)
             {
-                return BadRequest("Post Body missing.");
+                postBody = await GetHostingEnvironmentPostBody(hostingEnvironmentName);
             }
 
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
@@ -60,7 +70,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             if (postBody == null)
             {
-                return BadRequest("Post Body missing.");
+                postBody = await GetHostingEnvironmentPostBody(hostingEnvironmentName);
             }
 
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
@@ -90,7 +100,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             if (postBody == null)
             {
-                return BadRequest("Post Body missing.");
+                postBody = await GetHostingEnvironmentPostBody(hostingEnvironmentName);
             }
 
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))

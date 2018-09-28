@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -116,6 +117,41 @@ namespace Diagnostics.DataProviders
             var response = await GetObserverResource($"stamps/{stampName}/sites/{siteName}");
             var siteObject = JsonConvert.DeserializeObject(response);
             return siteObject;
+        }
+
+        public override async Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName)
+        {
+            dynamic siteObjects = await GetSite(siteName);
+            JToken obj2 = ((JArray)siteObjects)
+                    .Select(i => (JObject)i)
+                    .FirstOrDefault(
+                        j => (j.ContainsKey("subscription") && j["subscription"]["name"].ToString() == subscriptionId
+                            && j.ContainsKey("resource_group_name") && j["resource_group_name"].ToString() == resourceGroupName
+                            && j.ContainsKey("stamp")));
+
+            string stampName = obj2?["stamp"]?["name"]?.ToString();
+            return stampName;
+        }
+
+        public override async Task<dynamic> GetHostNames(string stampName, string siteName)
+        {
+            var response = await Get($"stamps/{stampName}/sites/{siteName}/hostnames");
+            var hostNames = JsonConvert.DeserializeObject(response);
+            return hostNames;
+        }
+
+        public override async Task<dynamic> GetSitePostBody(string stampName, string siteName)
+        {
+            var response = await Get($"stamps/{stampName}/sites/{siteName}/postbody");
+            dynamic sitePostBody = JsonConvert.DeserializeObject(response);
+            return sitePostBody;
+        }
+
+        public override async Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName)
+        {
+            var response = await Get($"hostingEnvironments/{hostingEnvironmentName}/postbody");
+            var hostingEnvironmentPostBody = JsonConvert.DeserializeObject(response);
+            return hostingEnvironmentPostBody;
         }
 
         public override HttpClient GetObserverClient()

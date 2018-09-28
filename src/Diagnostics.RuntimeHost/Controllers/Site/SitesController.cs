@@ -5,6 +5,7 @@ using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,16 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
         }
 
+        private async Task<DiagnosticSiteData> GetSitePostBody (string subscriptionId, string resourceGroupName, string siteName)
+        {
+            var dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
+            string stampName = await dataProviders.Observer.GetStampName(subscriptionId, resourceGroupName, siteName);
+            dynamic postBody = await dataProviders.Observer.GetSitePostBody(stampName, siteName);
+            JObject bodyObject = (JObject)postBody;
+            var sitePostBody = bodyObject.ToObject<DiagnosticSiteData>();
+            return sitePostBody;
+        }
+
         [HttpPost(UriElements.Query)]
         public async Task<IActionResult> Post(string subscriptionId, string resourceGroupName, string siteName, [FromBody]CompilationBostBody<DiagnosticSiteData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null)
         {
@@ -31,7 +42,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             
             if (jsonBody.Resource == null)
             {
-                return BadRequest("Missing Site data in body");
+                jsonBody.Resource = await GetSitePostBody(subscriptionId, resourceGroupName, siteName);
             }
 
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
@@ -48,7 +59,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             if (postBody == null)
             {
-                return BadRequest("Post Body missing.");
+                postBody = await GetSitePostBody(subscriptionId, resourceGroupName, siteName);
             }
 
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
@@ -61,7 +72,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             if (postBody == null)
             {
-                return BadRequest("Post Body missing.");
+                postBody = await GetSitePostBody(subscriptionId, resourceGroupName, siteName);
             }
 
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
@@ -91,7 +102,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             if (postBody == null)
             {
-                return BadRequest("Post Body missing.");
+                postBody = await GetSitePostBody(subscriptionId, resourceGroupName, siteName);
             }
 
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))

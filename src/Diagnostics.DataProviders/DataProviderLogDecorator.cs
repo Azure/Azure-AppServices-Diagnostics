@@ -147,6 +147,26 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(null, _observerDataProvider.GetSite(stampName, siteName));
         }
 
+        public Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetStampName(subscriptionId, resourceGroupName, siteName));
+        }
+
+        public Task<dynamic> GetHostNames(string stampName, string siteName)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetHostNames(stampName, siteName));
+        }
+
+        public Task<dynamic> GetSitePostBody(string stampName, string siteName)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetSitePostBody(stampName, siteName));
+        }
+
+        public Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName)
+        {
+            return MakeDependencyCall(null, _observerDataProvider.GetHostingEnvironmentPostBody(hostingEnvironmentName));
+        }
+
         public Task<string> GetSiteResourceGroupNameAsync(string siteName)
         {
             return MakeDependencyCall(null, _observerDataProvider.GetSiteResourceGroupNameAsync(siteName));
