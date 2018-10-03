@@ -11,22 +11,16 @@ namespace Diagnostics.RuntimeHost.Services
 {
     public interface ISiteService
     {
-        Task<StackType> GetApplicationStack(string subscriptionId, string resourceGroup, string siteName, string requestId = null);
+        Task<StackType> GetApplicationStack(string subscriptionId, string resourceGroup, string siteName, DataProviderContext dataProviderContext);
     }
 
     public class SiteService : ISiteService
     {
-        private IDataSourcesConfigurationService _dataSourcesConfigService;
-        private DataProviders.DataProviders _dataProviders;
-        
-        public SiteService(IDataSourcesConfigurationService dataSourcesConfigService)
-        {
-            _dataSourcesConfigService = dataSourcesConfigService;
-            _dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
-        }
+        public SiteService(IDataSourcesConfigurationService dataSourcesConfigService){ }
 
-        public async Task<StackType> GetApplicationStack(string subscriptionId, string resourceGroup, string siteName, string requestId = null)
+        public async Task<StackType> GetApplicationStack(string subscriptionId, string resourceGroup, string siteName, DataProviderContext dataProviderContext)
         {
+            var dp = new DataProviders.DataProviders(dataProviderContext);
             if (string.IsNullOrWhiteSpace(subscriptionId)) throw new ArgumentNullException("subscriptionId");
             if (string.IsNullOrWhiteSpace(resourceGroup)) throw new ArgumentNullException("resourceGroup");
             if (string.IsNullOrWhiteSpace(siteName)) throw new ArgumentNullException("siteName");
@@ -38,7 +32,7 @@ namespace Diagnostics.RuntimeHost.Services
                 | top 1 by pdate desc
                 | project sitestack";
 
-            DataTable stackTable = await _dataProviders.Kusto.ExecuteQuery(queryTemplate, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, "GetApplicationStack");
+            DataTable stackTable = await dp.Kusto.ExecuteQuery(queryTemplate, DataProviderConstants.FakeStampForAnalyticsCluster, operationName: "GetApplicationStack");
             
             if(stackTable == null || stackTable.Rows == null || stackTable.Rows.Count == 0)
             {
