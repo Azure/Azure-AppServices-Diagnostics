@@ -11,12 +11,12 @@ namespace Diagnostics.DataProviders
         public IGeoMasterDataProvider GeoMaster;
         public IAppInsightsDataProvider AppInsights;
 
-        public DataProviders(DataSourcesConfiguration configuration)
+        public DataProviders(DataProviderContext context)
         {
-            Kusto = new DataProviderLogDecorator(new KustoDataProvider(_cache, configuration.KustoConfiguration));
-            Observer = new DataProviderLogDecorator(SupportObserverDataProviderFactory.GetDataProvider(_cache, configuration));
-            GeoMaster = new DataProviderLogDecorator(new GeoMasterDataProvider(_cache, configuration.GeoMasterConfiguration));
-            AppInsights = new DataProviderLogDecorator(new AppInsightsDataProvider(_cache, configuration.AppInsightsConfiguration));
+            Kusto = new DataProviderLogDecorator(context, new KustoDataProvider(_cache, context.Configuration.KustoConfiguration));
+            Observer = new DataProviderLogDecorator(context, SupportObserverDataProviderFactory.GetDataProvider(_cache, context.Configuration));
+            GeoMaster = new DataProviderLogDecorator(context, new GeoMasterDataProvider(_cache, context.Configuration.GeoMasterConfiguration));
+            AppInsights = new DataProviderLogDecorator(context, new AppInsightsDataProvider(_cache, context.Configuration.AppInsightsConfiguration));
         }
     }
 }
