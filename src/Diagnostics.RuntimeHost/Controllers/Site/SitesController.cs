@@ -57,7 +57,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpPost(UriElements.Detectors)]
         public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody)
         {
-            if (postBody == null)
+            if (IsPostBodyMissing(postBody))
             {
                 postBody = await GetSitePostBody(subscriptionId, resourceGroupName, siteName);
             }
@@ -67,10 +67,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             return await base.ListDetectors(app);
         }
 
+
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
         public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string siteName, string detectorId, [FromBody] DiagnosticSiteData postBody, string startTime = null, string endTime = null, string timeGrain = null)
         {
-            if (postBody == null)
+            if (IsPostBodyMissing(postBody))
             {
                 postBody = await GetSitePostBody(subscriptionId, resourceGroupName, siteName);
             }
@@ -100,7 +101,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpPost(UriElements.Insights)]
         public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody, string pesId = null, string supportTopicId = null, string startTime = null, string endTime = null, string timeGrain = null)
         {
-            if (postBody == null)
+            if (IsPostBodyMissing(postBody))
             {
                 postBody = await GetSitePostBody(subscriptionId, resourceGroupName, siteName);
             }
@@ -118,6 +119,11 @@ namespace Diagnostics.RuntimeHost.Controllers
         public async Task<IActionResult> PublishDetector(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DetectorPackage pkg)
         {
             return await base.PublishDetector(pkg);
+        }
+
+        private bool IsPostBodyMissing(DiagnosticSiteData postBody)
+        {
+            return postBody == null || string.IsNullOrWhiteSpace(postBody.Name);
         }
     }
 }
