@@ -26,6 +26,8 @@ namespace Diagnostics.RuntimeHost.Middleware
 
         public async Task Invoke(HttpContext httpContext)
         {
+            Exception exception = null;
+            int statusCode = 0;
             GenerateMissingRequestHeaders(ref httpContext);
             BeginRequest_Handle(httpContext);
 
@@ -35,22 +37,23 @@ namespace Diagnostics.RuntimeHost.Middleware
             }
             catch (TimeoutException ex)
             {
-                httpContext.Response.Clear();
-                httpContext.Response.StatusCode = (int)HttpStatusCode.RequestTimeout;
-                LogException(httpContext, ex);
+                exception = ex;
+                statusCode = (int)HttpStatusCode.RequestTimeout;
             }
             catch (Exception ex)
             {
-                if (!httpContext.Response.HasStarted)
-                {
-                    httpContext.Response.Clear();
-                    httpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                }
-
-                LogException(httpContext, ex);
+                exception = ex;
+                statusCode = (int)HttpStatusCode.InternalServerError;
             }
             finally
             {
+                if (exception != null && !httpContext.Response.HasStarted)
+                {
+                    httpContext.Response.Clear();
+                    httpContext.Response.StatusCode = statusCode;
+                    LogException(httpContext, exception);
+                }
+
                 EndRequest_Handle(httpContext);
             }
 
