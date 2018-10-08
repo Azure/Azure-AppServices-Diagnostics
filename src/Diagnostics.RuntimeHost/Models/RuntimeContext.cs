@@ -9,7 +9,5 @@ namespace Diagnostics.RuntimeHost.Models
         public bool ClientIsInternal { get; set; }
 
         public OperationContext<TResource> OperationContext;
-
-        public DataProviderContext DataProviderContext { get; set; }
     }
 }

@@ -80,7 +80,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             Dictionary<string, dynamic> systemContext = PrepareSystemContext(resource, detectorId, dataSource, timeRange);
 
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(_dataSourcesConfigService.Config));
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)this.HttpContext.Items[HostConstants.DataProviderContextKey]);
             var invoker = this._invokerCache.GetSystemInvoker(invokerId);
 
             if (invoker == null)
@@ -120,9 +120,9 @@ namespace Diagnostics.RuntimeHost.Controllers
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             EntityMetadata metaData = new EntityMetadata(jsonBody.Script);
 
-            this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
+            var runtimeContext = PrepareContext(resource, startTimeUtc, endTimeUtc);
 
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(_dataSourcesConfigService.Config, requestId: requestIds.FirstOrDefault()));
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
 
             QueryResponse<DiagnosticApiResponse> queryRes = new QueryResponse<DiagnosticApiResponse>
             {
@@ -131,7 +131,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             Assembly tempAsm = null;
 
-            var compilerResponse = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, requestIds.FirstOrDefault() ?? string.Empty);
+            var compilerResponse = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, runtimeContext.OperationContext.RequestId);
             queryRes.CompilationOutput = compilerResponse;
 
             if (queryRes.CompilationOutput.CompilationSucceeded)
@@ -317,8 +317,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return new HostingEnvironment(subscriptionId, resourceGroup, name);
             }
 
-            this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
-
             HostingEnvironment hostingEnv = new HostingEnvironment(subscriptionId, resourceGroup, name)
             {
                 Name = stampPostBody.InternalName,
@@ -346,8 +344,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             string stampName = !string.IsNullOrWhiteSpace(hostingEnv.InternalName) ? hostingEnv.InternalName : hostingEnv.Name;
 
-            var dataProviderContext = new DataProviderContext(_dataSourcesConfigService.Config, requestId: requestIds.FirstOrDefault());
-            var result = await this._stampService.GetTenantIdForStamp(stampName, startTime, endTime, dataProviderContext);
+            var result = await this._stampService.GetTenantIdForStamp(stampName, startTime, endTime, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
             hostingEnv.TenantIdList = result.Item1;
             hostingEnv.PlatformType = result.Item2;
 
@@ -426,8 +423,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return new RuntimeContext<TResource>()
             {
                 ClientIsInternal = isInternalClient || forceInternal,
-                OperationContext = operationContext,
-                DataProviderContext = new DataProviderContext(_dataSourcesConfigService.Config, tokenSource.Token, requestIds.FirstOrDefault())
+                OperationContext = operationContext
             };
         }
 
@@ -442,7 +438,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         private async Task<Tuple<Response, List<DataProviderMetadata>>> GetDetectorInternal(string detectorId, RuntimeContext<TResource> context)
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(_dataSourcesConfigService.Config, null, context.OperationContext.RequestId));
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
             var invoker = this._invokerCache.GetDetectorInvoker<TResource>(detectorId, context);
 
             if (invoker == null)

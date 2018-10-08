@@ -1,4 +1,5 @@
-﻿using Diagnostics.ModelsAndUtils.Attributes;
+﻿using Diagnostics.DataProviders;
+using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
@@ -24,7 +25,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private async Task<DiagnosticSiteData> GetSitePostBody (string subscriptionId, string resourceGroupName, string siteName)
         {
-            var dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
             string stampName = await dataProviders.Observer.GetStampName(subscriptionId, resourceGroupName, siteName);
             dynamic postBody = await dataProviders.Observer.GetSitePostBody(stampName, siteName);
             JObject bodyObject = (JObject)postBody;

@@ -60,7 +60,7 @@ namespace Diagnostics.DataProviders
 
         public Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
         {
-            return MakeDependencyCall(_kustoDataProvider.ExecuteQuery(query, stampName, requestId, operationName), requestId);
+            return MakeDependencyCall(_kustoDataProvider.ExecuteQuery(query, stampName, _requestId, operationName));
         }
 
         public Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null)
@@ -230,11 +230,10 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_geomasterDataProvider.VerifyHostingEnvironmentVnet(subscriptionId, vnetResourceGroup, vnetName, vnetSubnetName, cancellationToken));
         }
 
-        private async Task<T> MakeDependencyCall<T>(Task<T> dataProviderTask, string requestId = null, [CallerMemberName]string dataProviderOperation = "")
+        private async Task<T> MakeDependencyCall<T>(Task<T> dataProviderTask, [CallerMemberName]string dataProviderOperation = "")
         {
             Exception dataProviderException = null;
             DateTime startTime = DateTime.UtcNow, endTime;
-            var cancellationTask = Task.FromCanceled(_dataSoureCancellationToken);
             CancellationTokenRegistration cTokenRegistration;
 
             try
@@ -269,13 +268,13 @@ namespace Diagnostics.DataProviders
 
                 if (dataProviderException != null)
                 {
-                    DiagnosticsETWProvider.Instance.LogDataProviderException(requestId ?? _requestId ?? string.Empty, dataProviderOperation, 
+                    DiagnosticsETWProvider.Instance.LogDataProviderException(_requestId, dataProviderOperation, 
                         startTime.ToString("HH:mm:ss.fff"), endTime.ToString("HH:mm:ss.fff"), 
                         latencyMilliseconds, dataProviderException.GetType().ToString(), dataProviderException.ToString());
                 }
                 else
                 {
-                    DiagnosticsETWProvider.Instance.LogDataProviderOperationSummary(requestId ?? _requestId ?? string.Empty, dataProviderOperation, startTime.ToString("HH:mm:ss.fff"), 
+                    DiagnosticsETWProvider.Instance.LogDataProviderOperationSummary(_requestId, dataProviderOperation, startTime.ToString("HH:mm:ss.fff"), 
                         endTime.ToString("HH:mm:ss.fff"), latencyMilliseconds);
                 }
             }

@@ -2,11 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders;
 using Diagnostics.Logger;
+using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 
 namespace Diagnostics.RuntimeHost.Middleware
@@ -29,6 +33,12 @@ namespace Diagnostics.RuntimeHost.Middleware
             {
                 await _next(httpContext);
             }
+            catch (TimeoutException ex)
+            {
+                httpContext.Response.Clear();
+                httpContext.Response.StatusCode = (int)HttpStatusCode.RequestTimeout;
+                LogException(httpContext, ex);
+            }
             catch (Exception ex)
             {
                 if (!httpContext.Response.HasStarted)
@@ -50,7 +60,15 @@ namespace Diagnostics.RuntimeHost.Middleware
         private void BeginRequest_Handle(HttpContext httpContext)
         {
             var logger = new ApiMetricsLogger(httpContext);
+            var cTokenSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(HostConstants.TimeoutInMilliSeconds));
+
+            httpContext.RequestAborted = cTokenSource.Token;
+            httpContext.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values);
+
+            var dataSourcesConfigurationService = ((ServiceProvider)httpContext.RequestServices).GetService<IDataSourcesConfigurationService>();
+
             httpContext.Items.Add(HostConstants.ApiLoggerKey, logger);
+            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, cTokenSource.Token, values.FirstOrDefault() ?? string.Empty));
         }
 
         private void EndRequest_Handle(HttpContext httpContext)

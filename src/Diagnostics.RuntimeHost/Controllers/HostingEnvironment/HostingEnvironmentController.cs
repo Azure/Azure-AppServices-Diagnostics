@@ -1,4 +1,5 @@
-﻿using Diagnostics.ModelsAndUtils.Models;
+﻿using Diagnostics.DataProviders;
+using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
@@ -23,7 +24,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private async Task<DiagnosticStampData> GetHostingEnvironmentPostBody(string hostingEnvironmentName)
         {
-            var dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
             dynamic postBody = await dataProviders.Observer.GetHostingEnvironmentPostBody(hostingEnvironmentName);
             JObject bodyObject = (JObject)postBody;
             var hostingEnvironmentPostBody = bodyObject.ToObject<DiagnosticStampData>();
