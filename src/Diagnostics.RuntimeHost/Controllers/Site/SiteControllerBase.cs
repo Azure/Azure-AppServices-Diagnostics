@@ -1,9 +1,11 @@
-﻿using Diagnostics.Logger;
+﻿using Diagnostics.DataProviders;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
@@ -24,12 +26,6 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         protected async Task<App> GetAppResource(string subscriptionId, string resourceGroup, string appName, DiagnosticSiteData postBody, DateTime startTime, DateTime endTime)
         {
-            string requestId = string.Empty;
-            if (this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds))
-            {
-                requestId = requestIds.FirstOrDefault() ?? string.Empty;
-            }
-
             App app = new App(subscriptionId, resourceGroup, appName)
             {
                 DefaultHostName = postBody.DefaultHostName,
@@ -39,7 +35,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 Stamp = await GetHostingEnvironment(postBody.Stamp.Subscription, postBody.Stamp.ResourceGroup, postBody.Stamp != null ? postBody.Stamp.Name : string.Empty, postBody.Stamp, startTime, endTime),
                 AppType = GetApplicationType(postBody.Kind),
                 PlatformType = (!string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Kind.ToLower().Contains("linux")) ? PlatformType.Linux : PlatformType.Windows,
-                StackType = await this._siteService.GetApplicationStack(subscriptionId, resourceGroup, appName, requestId)
+                StackType = await this._siteService.GetApplicationStack(subscriptionId, resourceGroup, appName, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey])
             };
 
             switch (app.Stamp.HostingEnvironmentType)

@@ -2,11 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders;
 using Diagnostics.Logger;
+using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 
 namespace Diagnostics.RuntimeHost.Middleware
@@ -22,6 +26,8 @@ namespace Diagnostics.RuntimeHost.Middleware
 
         public async Task Invoke(HttpContext httpContext)
         {
+            Exception exception = null;
+            int statusCode = 0;
             GenerateMissingRequestHeaders(ref httpContext);
             BeginRequest_Handle(httpContext);
 
@@ -29,18 +35,25 @@ namespace Diagnostics.RuntimeHost.Middleware
             {
                 await _next(httpContext);
             }
+            catch (TimeoutException ex)
+            {
+                exception = ex;
+                statusCode = (int)HttpStatusCode.RequestTimeout;
+            }
             catch (Exception ex)
             {
-                if (!httpContext.Response.HasStarted)
-                {
-                    httpContext.Response.Clear();
-                    httpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                }
-
-                LogException(httpContext, ex);
+                exception = ex;
+                statusCode = (int)HttpStatusCode.InternalServerError;
             }
             finally
             {
+                if (exception != null && !httpContext.Response.HasStarted)
+                {
+                    httpContext.Response.Clear();
+                    httpContext.Response.StatusCode = statusCode;
+                    LogException(httpContext, exception);
+                }
+
                 EndRequest_Handle(httpContext);
             }
 
@@ -50,7 +63,15 @@ namespace Diagnostics.RuntimeHost.Middleware
         private void BeginRequest_Handle(HttpContext httpContext)
         {
             var logger = new ApiMetricsLogger(httpContext);
+            var cTokenSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(HostConstants.TimeoutInMilliSeconds));
+
+            httpContext.RequestAborted = cTokenSource.Token;
+            httpContext.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values);
+
+            var dataSourcesConfigurationService = ((ServiceProvider)httpContext.RequestServices).GetService<IDataSourcesConfigurationService>();
+
             httpContext.Items.Add(HostConstants.ApiLoggerKey, logger);
+            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, cTokenSource.Token, values.FirstOrDefault() ?? string.Empty));
         }
 
         private void EndRequest_Handle(HttpContext httpContext)

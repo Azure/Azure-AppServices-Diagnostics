@@ -9,6 +9,8 @@ namespace Diagnostics.RuntimeHost.Utilities
     {
         internal const int WatcherDefaultPollingIntervalInSeconds = 5 * 60;
         internal const string ApiLoggerKey = "API_LOGGER";
+        internal const string DataProviderContextKey = "DATA_PROVIDER_CONTEXT";
+        internal const int TimeoutInMilliSeconds = 60 * 1000;
     }
     
     internal class RegistryConstants

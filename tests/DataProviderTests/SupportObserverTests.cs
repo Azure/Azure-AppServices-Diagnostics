@@ -32,7 +32,7 @@ namespace Diagnostics.Tests.DataProviderTests
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
 
-            var dataProviders = new DataProviders.DataProviders(config);
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -65,7 +65,7 @@ namespace Diagnostics.Tests.DataProviderTests
             //read a sample csx file from local directory
             metadata.ScriptText = await File.ReadAllTextAsync("BackupCheckDetector.csx");
 
-            var dataProviders = new DataProviders.DataProviders(config);
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -106,7 +106,7 @@ namespace Diagnostics.Tests.DataProviderTests
         {
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
-            var dataProviders = new DataProviders.DataProviders(config);
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
 
             try
             {
@@ -134,7 +134,7 @@ namespace Diagnostics.Tests.DataProviderTests
         {
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
-            var dataProviders = new DataProviders.DataProviders(config);
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
 
             //basic test
             var site123Data = await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/stamps/stamp123/sites/site123");
