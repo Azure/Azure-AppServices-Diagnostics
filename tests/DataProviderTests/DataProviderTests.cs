@@ -32,7 +32,7 @@ namespace Diagnostics.Tests.DataProviderTests
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
 
-            var dataProviders = new DataProviders.DataProviders(config);
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
