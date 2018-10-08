@@ -418,8 +418,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                 supportTopic: supportTopic
             );
 
-            var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60 * 1000));
-
             return new RuntimeContext<TResource>()
             {
                 ClientIsInternal = isInternalClient || forceInternal,
