@@ -122,11 +122,11 @@ namespace Diagnostics.DataProviders
 
         private async Task<dynamic> GetSiteInternal(string stampName, string siteName, string slotName)
         {
-            string path = null;
+            string path = "";
 
             if (!string.IsNullOrWhiteSpace(stampName))
             {
-                path = "stamps/";
+                path = $"stamps/{stampName}";
             }
 
             path = slotName == null ? path + $"sites/{siteName}" : path + $"sites/{siteName}({slotName})";
