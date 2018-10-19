@@ -53,12 +53,17 @@ namespace Diagnostics.DataProviders
             return Task.FromResult(mock);
         }
 
-        public override async Task<dynamic> GetSite(string siteName, string slotName = GeoMasterConstants.ProductionSlot)
+        public override async Task<dynamic> GetSite(string siteName)
         {
             throw new NotImplementedException();
         }
 
-        public override async Task<dynamic> GetSite(string stampName, string siteName, string slotName = GeoMasterConstants.ProductionSlot)
+        public override async Task<dynamic> GetSite(string stampName, string siteName)
+        {
+            return await GetSiteInternal();
+        }
+
+        public override async Task<dynamic> GetSite(string stampName, string siteName, string slotName)
         {
             return await GetSiteInternal();
         }

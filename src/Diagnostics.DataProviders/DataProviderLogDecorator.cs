@@ -141,12 +141,17 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_observerDataProvider.GetServerFarmWebspaceName(subscriptionId, serverFarm));
         }
 
-        public Task<dynamic> GetSite(string siteName, string slotName = GeoMasterConstants.ProductionSlot)
+        public Task<dynamic> GetSite(string siteName)
         {
-            return MakeDependencyCall(_observerDataProvider.GetSite(siteName, slotName));
+            return MakeDependencyCall(_observerDataProvider.GetSite(siteName));
         }
 
-        public Task<dynamic> GetSite(string stampName, string siteName, string slotName = GeoMasterConstants.ProductionSlot)
+        public Task<dynamic> GetSite(string stampName, string siteName)
+        {
+            return MakeDependencyCall(_observerDataProvider.GetSite(stampName, siteName));
+        }
+
+        public Task<dynamic> GetSite(string stampName, string siteName, string slotName)
         {
             return MakeDependencyCall(_observerDataProvider.GetSite(stampName, siteName, slotName));
         }

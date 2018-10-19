@@ -105,16 +105,33 @@ namespace Diagnostics.DataProviders
             return await Get($"subscriptionid/{subscriptionId}/webspacename/{webSpaceName}/resourcegroupname");
         }
 
-        public override async Task<dynamic> GetSite(string siteName, string slotName = GeoMasterConstants.ProductionSlot)
+        public override async Task<dynamic> GetSite(string siteName)
         {
-            var response = slotName == GeoMasterConstants.ProductionSlot ? await GetObserverResource($"sites/{siteName}") :  await GetObserverResource($"sites/{siteName}({slotName})");
-            var siteObject = JsonConvert.DeserializeObject(response);
-            return siteObject;
+            return await GetSiteInternal(null, siteName, null);
         }
 
-        public override async Task<dynamic> GetSite(string stampName, string siteName, string slotName = GeoMasterConstants.ProductionSlot)
+        public override async Task<dynamic> GetSite(string stampName, string siteName)
         {
-            var response = slotName == GeoMasterConstants.ProductionSlot ? await GetObserverResource($"stamps/{stampName}/sites/{siteName}") : await GetObserverResource($"stamps/{stampName}/sites/{siteName}({slotName})");
+            return await GetSiteInternal(stampName, siteName, null);
+        }
+
+        public override async Task<dynamic> GetSite(string stampName, string siteName, string slotName)
+        {
+            return await GetSiteInternal(stampName, siteName, slotName);
+        }
+
+        private async Task<dynamic> GetSiteInternal(string stampName, string siteName, string slotName)
+        {
+            string path = null;
+
+            if (!string.IsNullOrWhiteSpace(stampName))
+            {
+                path = "stamps/";
+            }
+
+            path = slotName == null ? path + $"sites/{siteName}" : path + $"sites/{siteName}({slotName})";
+
+            var response = await GetObserverResource(path);
             var siteObject = JsonConvert.DeserializeObject(response);
             return siteObject;
         }
