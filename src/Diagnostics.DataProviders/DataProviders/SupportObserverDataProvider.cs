@@ -105,16 +105,16 @@ namespace Diagnostics.DataProviders
             return await Get($"subscriptionid/{subscriptionId}/webspacename/{webSpaceName}/resourcegroupname");
         }
 
-        public override async Task<dynamic> GetSite(string siteName)
+        public override async Task<dynamic> GetSite(string siteName, string slotName = GeoMasterConstants.ProductionSlot)
         {
-            var response = await GetObserverResource($"sites/{siteName}");
+            var response = slotName == GeoMasterConstants.ProductionSlot ? await GetObserverResource($"sites/{siteName}") :  await GetObserverResource($"sites/{siteName}({slotName})");
             var siteObject = JsonConvert.DeserializeObject(response);
             return siteObject;
         }
 
-        public override async Task<dynamic> GetSite(string stampName, string siteName)
+        public override async Task<dynamic> GetSite(string stampName, string siteName, string slotName = GeoMasterConstants.ProductionSlot)
         {
-            var response = await GetObserverResource($"stamps/{stampName}/sites/{siteName}");
+            var response = slotName == GeoMasterConstants.ProductionSlot ? await GetObserverResource($"stamps/{stampName}/sites/{siteName}") : await GetObserverResource($"stamps/{stampName}/sites/{siteName}({slotName})");
             var siteObject = JsonConvert.DeserializeObject(response);
             return siteObject;
         }
