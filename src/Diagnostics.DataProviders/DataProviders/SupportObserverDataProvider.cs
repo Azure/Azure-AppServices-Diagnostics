@@ -126,7 +126,7 @@ namespace Diagnostics.DataProviders
 
             if (!string.IsNullOrWhiteSpace(stampName))
             {
-                path = $"stamps/{stampName}";
+                path = $"stamps/{stampName}/";
             }
 
             path = slotName == null ? path + $"sites/{siteName}" : path + $"sites/{siteName}({slotName})";
