@@ -129,7 +129,7 @@ namespace Diagnostics.DataProviders
                 path = $"stamps/{stampName}/";
             }
 
-            path = slotName == null ? path + $"sites/{siteName}" : path + $"sites/{siteName}({slotName})";
+            path = string.IsNullOrWhiteSpace(slotName) ? path + $"sites/{siteName}" : path + $"sites/{siteName}({slotName})";
 
             var response = await GetObserverResource(path);
             var siteObject = JsonConvert.DeserializeObject(response);
