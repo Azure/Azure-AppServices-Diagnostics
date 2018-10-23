@@ -63,6 +63,11 @@ namespace Diagnostics.DataProviders
             return await GetSiteInternal();
         }
 
+        public override async Task<dynamic> GetSite(string stampName, string siteName, string slotName)
+        {
+            return await GetSiteInternal();
+        }
+
         public override async Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName)
         {
             throw new NotImplementedException();

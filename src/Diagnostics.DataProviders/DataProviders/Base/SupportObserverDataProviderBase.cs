@@ -123,6 +123,7 @@ namespace Diagnostics.DataProviders
 
         public abstract Task<dynamic> GetSite(string siteName);
         public abstract Task<dynamic> GetSite(string stampName, string siteName);
+        public abstract Task<dynamic> GetSite(string stampName, string siteName, string slotName);
         public abstract Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName);
         public abstract Task<dynamic> GetHostNames(string stampName, string siteName);
         public abstract Task<dynamic> GetSitePostBody(string stampName, string siteName);

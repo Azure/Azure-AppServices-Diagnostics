@@ -151,6 +151,11 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_observerDataProvider.GetSite(stampName, siteName));
         }
 
+        public Task<dynamic> GetSite(string stampName, string siteName, string slotName)
+        {
+            return MakeDependencyCall(_observerDataProvider.GetSite(stampName, siteName, slotName));
+        }
+
         public Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName)
         {
             return MakeDependencyCall(_observerDataProvider.GetStampName(subscriptionId, resourceGroupName, siteName));

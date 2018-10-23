@@ -107,14 +107,31 @@ namespace Diagnostics.DataProviders
 
         public override async Task<dynamic> GetSite(string siteName)
         {
-            var response = await GetObserverResource($"sites/{siteName}");
-            var siteObject = JsonConvert.DeserializeObject(response);
-            return siteObject;
+            return await GetSiteInternal(null, siteName, null);
         }
 
         public override async Task<dynamic> GetSite(string stampName, string siteName)
         {
-            var response = await GetObserverResource($"stamps/{stampName}/sites/{siteName}");
+            return await GetSiteInternal(stampName, siteName, null);
+        }
+
+        public override async Task<dynamic> GetSite(string stampName, string siteName, string slotName)
+        {
+            return await GetSiteInternal(stampName, siteName, slotName);
+        }
+
+        private async Task<dynamic> GetSiteInternal(string stampName, string siteName, string slotName)
+        {
+            string path = "";
+
+            if (!string.IsNullOrWhiteSpace(stampName))
+            {
+                path = $"stamps/{stampName}/";
+            }
+
+            path = string.IsNullOrWhiteSpace(slotName) ? path + $"sites/{siteName}" : path + $"sites/{siteName}({slotName})";
+
+            var response = await GetObserverResource(path);
             var siteObject = JsonConvert.DeserializeObject(response);
             return siteObject;
         }

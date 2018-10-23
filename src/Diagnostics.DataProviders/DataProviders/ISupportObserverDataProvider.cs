@@ -11,6 +11,7 @@ namespace Diagnostics.DataProviders
     {
         Task<dynamic> GetSite(string siteName);
         Task<dynamic> GetSite(string stampName, string siteName);
+        Task<dynamic> GetSite(string stampName, string siteName, string slotName);
         Task<string> GetSiteResourceGroupNameAsync(string siteName);
         Task<dynamic> GetSitesInResourceGroupAsync(string subscriptionName, string resourceGroupName);
         Task<dynamic> GetServerFarmsInResourceGroupAsync(string subscriptionName, string resourceGroupName);
