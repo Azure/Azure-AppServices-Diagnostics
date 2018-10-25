@@ -374,11 +374,17 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             var invoker = this._invokerCache.GetDetectorInvoker<TResource>(detectorId, runtimeContext);
             IEnumerable<SupportTopic> supportTopicList = null;
-            if (invoker != null && invoker.EntryPointDefinitionAttribute != null && invoker.EntryPointDefinitionAttribute.SupportTopicList != null && invoker.EntryPointDefinitionAttribute.SupportTopicList.Any())
+            Definition definition = null;
+            if (invoker != null && invoker.EntryPointDefinitionAttribute != null)
             {
-                supportTopicList = invoker.EntryPointDefinitionAttribute.SupportTopicList;
+                if (invoker.EntryPointDefinitionAttribute.SupportTopicList != null && invoker.EntryPointDefinitionAttribute.SupportTopicList.Any())
+                {
+                    supportTopicList = invoker.EntryPointDefinitionAttribute.SupportTopicList;
+                }
+
+                definition = invoker.EntryPointDefinitionAttribute;
             }
-                
+
             Dictionary<string, dynamic> systemContext = new Dictionary<string, dynamic>();
             systemContext.Add("detectorId", detectorId);
             systemContext.Add("requestIds", requestIds);
@@ -386,6 +392,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             systemContext.Add("dataSource", dataSource);
             systemContext.Add("timeRange", timeRange);
             systemContext.Add("supportTopicList", supportTopicList);
+            systemContext.Add("definition", definition);
             return systemContext;
         }
 
