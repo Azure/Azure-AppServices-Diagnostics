@@ -140,6 +140,16 @@ namespace Diagnostics.Logger
                 Details);
         }
 
+        [Event(2008, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostDetectorAscInsight)]
+        public void LogFullAscInsight(string RequestId, string Source, string Message, string Details)
+        {
+            WriteDiagnosticsEvent(2007,
+                RequestId,
+                Source,
+                Message,
+                Details);
+        }
+
         #endregion
 
         #region SourceWatcher Events (ID Range : 2500 - 2599)

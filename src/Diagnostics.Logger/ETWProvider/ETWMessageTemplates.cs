@@ -24,6 +24,7 @@ namespace Diagnostics.Logger
         public const string LogRuntimeHostInsightsCorrelation = "Insights Correlation Id";
         public const string LogRuntimeHostHandledException = "Runtime Host Handled Exception : {3}";
         public const string LogRuntimeHostDetectorAscInsight = "ASC Insight Detail for Detector";
+        public const string LogRuntimeHostSupportTopicAscInsight = "ASC Insight Detail for Detector";
 
         #endregion
 
