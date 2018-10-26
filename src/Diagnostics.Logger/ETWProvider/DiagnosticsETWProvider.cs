@@ -130,10 +130,10 @@ namespace Diagnostics.Logger
                 ExceptionDetails);
         }
 
-        [Event(2007, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostDetectorAscInsight, Version = 2)]
-        public void LogRuntimeHostDetectorAscInsight(string RequestId, string Source, string Message, string Details)
+        [Event(2008, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostSupportTopicAscInsight)]
+        public void LogFullAscInsight(string RequestId, string Source, string Message, string Details)
         {
-            WriteDiagnosticsEvent(2007,
+            WriteDiagnosticsEvent(2008,
                 RequestId,
                 Source,
                 Message,

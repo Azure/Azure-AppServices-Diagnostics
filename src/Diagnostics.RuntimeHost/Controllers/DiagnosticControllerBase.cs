@@ -231,6 +231,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest(errorMessage);
             }
 
+            supportTopicId = ParseCorrectSupportTopicId(supportTopicId);
             var supportTopic = new SupportTopic() { Id = supportTopicId, PesId = pesId };
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, true, supportTopic);
 
@@ -240,7 +241,6 @@ namespace Diagnostics.RuntimeHost.Controllers
             IEnumerable<Definition> allDetectors = null;
             try
             {
-                supportTopicId = ParseCorrectSupportTopicId(supportTopicId);
                 allDetectors = (await ListDetectorsInternal(cxt)).Select(detectorResponse => detectorResponse.Metadata);
 
                 var applicableDetectors = allDetectors
@@ -502,24 +502,20 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 foreach(var ascInsight in response.AscInsights)
                 {
-                    DiagnosticsETWProvider.Instance.LogRuntimeHostDetectorAscInsight(context.OperationContext.RequestId, detector.Id, ascInsight.ImportanceLevel.ToString(), JsonConvert.SerializeObject(ascInsight));
+                    logAscInsight(context, detector, ascInsight);
                     supportCenterInsights.Add(ascInsight);
                 }
             }
             else
             {
-                // Take max one insight per detector, only critical or warning, pick the most critical
-                var mostCriticalInsight = response.Insights.OrderBy(insight => insight.Status).FirstOrDefault();
+                var regularToAscInsights = response.Insights.Select(insight => {
+                    var ascInsight = AzureSupportCenterInsightUtilites.CreateInsight(insight, context.OperationContext, detector);
+                    logAscInsight(context, detector, ascInsight);
+                    return ascInsight;
+                });
+                supportCenterInsights.AddRange(regularToAscInsights);
 
-                //TODO: Add Logging Per Detector Here
-                AzureSupportCenterInsight ascInsight = null;
-                if (mostCriticalInsight != null)
-                {
-                    ascInsight = AzureSupportCenterInsightUtilites.CreateInsight(mostCriticalInsight, context.OperationContext, detector);
-                    supportCenterInsights.Add(ascInsight);
-                }
-
-                DiagnosticsETWProvider.Instance.LogRuntimeHostDetectorAscInsight(context.OperationContext.RequestId, detector.Id, ascInsight?.ImportanceLevel.ToString(), JsonConvert.SerializeObject(ascInsight));
+                
             }
 
             var detectorLists = response.Dataset
@@ -536,6 +532,18 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             return supportCenterInsights;
+        }
+
+        private void logAscInsight(RuntimeContext<TResource> context, Definition detector, AzureSupportCenterInsight ascInsight)
+        {
+            var loggingContent = new
+            {
+                supportTopicId = context.OperationContext.SupportTopic.Id,
+                pesId = context.OperationContext.SupportTopic.PesId,
+                insight = ascInsight
+            };
+
+            DiagnosticsETWProvider.Instance.LogFullAscInsight(context.OperationContext.RequestId, detector.Id, ascInsight?.ImportanceLevel.ToString(), JsonConvert.SerializeObject(loggingContent));
         }
 
         // The reason we have this method is that Azure Support Center will pass support topic id in the format below:
