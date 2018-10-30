@@ -77,7 +77,7 @@ namespace Diagnostics.DataProviders
             Dictionary<string, string> appSettings = new Dictionary<string, string>();
             foreach (var item in properties)
             {
-                if (item.Key.StartsWith("WEBSITE_"))
+                if (item.Key.StartsWith("WEBSITE_") || item.Key.StartsWith("WEBSITES_"))
                 {
                     if (!SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x)))
                     {
