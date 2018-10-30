@@ -81,7 +81,7 @@ namespace Diagnostics.DataProviders
             return Task.FromResult(table);
         }
 
-        public Task<string> GetKustoQueryUriAsync(string stampName, string query)
+        public Task<KustoQuery> GetKustoQueryAsync(string stampName, string query)
         {
             if (string.IsNullOrWhiteSpace(stampName))
             {
@@ -91,7 +91,13 @@ namespace Diagnostics.DataProviders
             {
                 throw new ArgumentNullException("query");
             }
-            return Task.FromResult("https://fakekusto.windows.net/q=somequery");
+            KustoQuery k = new KustoQuery
+            {
+                Url = "https://fakekusto.windows.net/q=somequery",
+                KustoDesktopUrl = "https://fakekusto.windows.net/q=somequery",
+                Text = query
+            };
+            return Task.FromResult(k);
         }
     }
 }

@@ -68,6 +68,11 @@ namespace Diagnostics.DataProviders
             return ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, operationName);
         }
 
+        public Task<KustoQuery> GetKustoQuery(string query, string stampName)
+        {
+            return MakeDependencyCall(_kustoDataProvider.GetKustoQuery(query, stampName));
+        }
+
         public Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames)
         {
             return MakeDependencyCall(_observerDataProvider.GetAdminSitesByHostNameAsync(stampName, hostNames));
@@ -228,6 +233,11 @@ namespace Diagnostics.DataProviders
         public Task<string> GetLinuxContainerLogs(string subscriptionId, string resourceGroupName, string name, string slotName)
         {
             return MakeDependencyCall(_geomasterDataProvider.GetLinuxContainerLogs(subscriptionId, resourceGroupName, name, slotName));
+        }
+
+        public Task<T> InvokeDaasExtension<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string daasApiPath, string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return MakeDependencyCall(_geomasterDataProvider.InvokeDaasExtension<T>(subscriptionId, resourceGroupName, name, slotName, daasApiPath, apiVersion, cancellationToken));
         }
 
         public Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))

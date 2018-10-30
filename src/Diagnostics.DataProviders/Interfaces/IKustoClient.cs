@@ -12,6 +12,6 @@ namespace Diagnostics.DataProviders
     {
         Task<DataTable> ExecuteQueryAsync(string query, string stampName, string requestId = null, string operationName = null);
 
-        Task<string> GetKustoQueryUriAsync(string stampName, string query);
+        Task<KustoQuery> GetKustoQueryAsync(string stampName, string query);
     }
 }
