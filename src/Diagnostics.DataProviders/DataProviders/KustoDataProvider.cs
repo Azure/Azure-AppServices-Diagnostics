@@ -13,6 +13,7 @@ namespace Diagnostics.DataProviders
     {
         public string Text;
         public string Url;
+        public string KustoDesktopUrl;
     }
     public class KustoDataProvider: DiagnosticDataProvider, IDiagnosticDataProvider, IKustoDataProvider
     {
@@ -35,11 +36,20 @@ namespace Diagnostics.DataProviders
         }
 
         public async Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
-        {
-
-            var queryUrl = await _kustoClient.GetKustoQueryUriAsync(stampName, query);
-            AddQueryInformationToMetadata(query, queryUrl, stampName);
+        {           
+            await AddQueryInformationToMetadata(query, stampName);
             return await _kustoClient.ExecuteQueryAsync(query, stampName, requestId, operationName);
+        }
+
+        public Task<KustoQuery> GetKustoClusterQuery(string query)
+        {
+            return GetKustoQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster);
+        }
+
+        public async Task<KustoQuery> GetKustoQuery(string query, string stampName)
+        {
+            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, stampName);
+            return kustoQuery;
         }
 
         public DataProviderMetadata GetMetadata()
@@ -47,21 +57,17 @@ namespace Diagnostics.DataProviders
             return Metadata;
         }
 
-        private void AddQueryInformationToMetadata(string query, string queryUrl, string stampName)
+        private async Task AddQueryInformationToMetadata(string query, string stampName)
         {
+            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, stampName);
             bool queryExists = false;
-            KustoQuery q = new KustoQuery
-            {
-                Text = query,
-                Url = queryUrl
-            };
-
+            
             queryExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&
                                                         x.Value.GetType() == typeof(KustoQuery) &&
-                                                        x.Value.CastTo<KustoQuery>().Url.Equals(q.Url, StringComparison.OrdinalIgnoreCase));
+                                                        x.Value.CastTo<KustoQuery>().Url.Equals(kustoQuery.Url, StringComparison.OrdinalIgnoreCase));
             if (!queryExists)
             {
-                Metadata.PropertyBag.Add(new KeyValuePair<string, object>("Query", q));
+                Metadata.PropertyBag.Add(new KeyValuePair<string, object>("Query", kustoQuery));
             }
         }
     }

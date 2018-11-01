@@ -380,7 +380,7 @@ namespace Diagnostics.DataProviders
         {
             if (string.IsNullOrWhiteSpace(fullPath))
             {
-                throw new ArgumentNullException(fullPath);
+                throw new ArgumentNullException("fullPath");
             }
 
             var geoMasterResponse = await HttpGet<T>(fullPath, queryString, apiVersion);
@@ -451,10 +451,58 @@ namespace Diagnostics.DataProviders
         {
             if (string.IsNullOrWhiteSpace(extension))
             {
-                throw new ArgumentNullException(extension);
+                throw new ArgumentNullException("extension");
             }
 
             string path = SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName) + SiteExtensionResource.Replace("{*extensionApiMethod}", extension);
+            var result = await HttpGet<T>(path, string.Empty, apiVersion, cancellationToken);
+            return result;
+        }
+
+        /// <summary>
+        /// Using this method you can invoke an API on the DaaS SiteExtension that is installed on the Web App
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="subscriptionId">Subscription Id for the resource</param>
+        /// <param name="resourceGroupName">The resource group that the resource is part of </param>
+        /// <param name="name">The resource name</param>
+        /// <param name="slotName">slot name (if querying for a slot, defaults to production slot)</param>
+        /// <param name="daasApiPath">Full path to the DAAS API </param>
+        /// <param name="apiVersion">(Optional Parameter) Pass an API version if required, 2016-08-01 is the default value</param>
+        /// <param name="cancellationToken">(Optional Parameter) Cancellation token </param>
+        /// <example>
+        /// This sample shows how to call the <see cref="InvokeDaasExtension"/> method in a detector
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
+        /// {
+        ///     var resp = await dp.GeoMaster.InvokeDaasExtension<![CDATA[<dynamic>]]>(cxt.Resource.SubscriptionId, 
+        ///                     cxt.Resource.ResourceGroup, 
+        ///                     cxt.Resource.Name,
+        ///                     cxt.Resource.Slot,
+        ///                     "api/diagnosers");
+        /// 
+        ///     // do something with the response object
+        ///     var responseFromDaaS = resp.ToString();
+        ///     return res;
+        /// }
+        /// </code>
+        /// </example>
+        /// <returns></returns>
+        public async Task<T> InvokeDaasExtension<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string daasApiPath, string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (string.IsNullOrWhiteSpace(daasApiPath))
+            {
+                throw new ArgumentNullException("daasApiPath");
+            }
+
+            if (daasApiPath.StartsWith("api/databasetest", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Accessing DatabaseTestController under DAAS is not allowed as it contains PII");
+            }
+
+            string extensionPath = $"daas/{daasApiPath}";
+
+            string path = SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName) + SiteExtensionResource.Replace("{*extensionApiMethod}", extensionPath);
             var result = await HttpGet<T>(path, string.Empty, apiVersion, cancellationToken);
             return result;
         }

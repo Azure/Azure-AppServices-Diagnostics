@@ -87,15 +87,21 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        public async Task<string> GetKustoQueryUriAsync(string stampName, string query)
+        public async Task<KustoQuery> GetKustoQueryAsync(string query, string stampName)
         {
             string kustoClusterName = null;
             try
             {
                 kustoClusterName = GetClusterNameFromStamp(stampName);
                 string encodedQuery = await EncodeQueryAsBase64UrlAsync(query);
-                var url = string.Format("https://web.kusto.windows.net/clusters/{0}.kusto.windows.net/databases/{1}?q={2}", kustoClusterName, _configuration.DBName, encodedQuery);
-                return url;
+                
+                KustoQuery kustoQuery = new KustoQuery
+                {
+                    Text = query,
+                    Url = string.Format("https://web.kusto.windows.net/clusters/{0}.kusto.windows.net/databases/{1}?q={2}", kustoClusterName, _configuration.DBName, encodedQuery),
+                    KustoDesktopUrl = $"https://{kustoClusterName}.kusto.windows.net:443/{_configuration.DBName}?query={encodedQuery}&web=0"
+                };
+                return kustoQuery;
             }
             catch (Exception ex)
             {
