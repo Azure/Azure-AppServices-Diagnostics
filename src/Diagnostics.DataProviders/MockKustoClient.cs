@@ -81,7 +81,7 @@ namespace Diagnostics.DataProviders
             return Task.FromResult(table);
         }
 
-        public Task<KustoQuery> GetKustoQueryAsync(string stampName, string query)
+        public Task<KustoQuery> GetKustoQueryAsync(string query, string stampName)
         {
             if (string.IsNullOrWhiteSpace(stampName))
             {

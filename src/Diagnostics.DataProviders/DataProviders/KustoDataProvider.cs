@@ -41,9 +41,14 @@ namespace Diagnostics.DataProviders
             return await _kustoClient.ExecuteQueryAsync(query, stampName, requestId, operationName);
         }
 
+        public Task<KustoQuery> GetKustoClusterQuery(string query)
+        {
+            return GetKustoQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster);
+        }
+
         public async Task<KustoQuery> GetKustoQuery(string query, string stampName)
         {
-            var kustoQuery = await _kustoClient.GetKustoQueryAsync(stampName, query);
+            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, stampName);
             return kustoQuery;
         }
 
@@ -54,7 +59,7 @@ namespace Diagnostics.DataProviders
 
         private async Task AddQueryInformationToMetadata(string query, string stampName)
         {
-            var kustoQuery = await _kustoClient.GetKustoQueryAsync(stampName, query);
+            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, stampName);
             bool queryExists = false;
             
             queryExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&

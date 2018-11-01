@@ -87,7 +87,7 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        public async Task<KustoQuery> GetKustoQueryAsync(string stampName, string query)
+        public async Task<KustoQuery> GetKustoQueryAsync(string query, string stampName)
         {
             string kustoClusterName = null;
             try

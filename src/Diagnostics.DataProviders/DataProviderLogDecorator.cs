@@ -72,6 +72,10 @@ namespace Diagnostics.DataProviders
         {
             return MakeDependencyCall(_kustoDataProvider.GetKustoQuery(query, stampName));
         }
+        public Task<KustoQuery> GetKustoClusterQuery(string query)
+        {
+            return MakeDependencyCall(_kustoDataProvider.GetKustoClusterQuery(query));
+        }
 
         public Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames)
         {
@@ -294,5 +298,7 @@ namespace Diagnostics.DataProviders
                 }
             }
         }
+
+       
     }
 }

@@ -380,7 +380,7 @@ namespace Diagnostics.DataProviders
         {
             if (string.IsNullOrWhiteSpace(fullPath))
             {
-                throw new ArgumentNullException(fullPath);
+                throw new ArgumentNullException("fullPath");
             }
 
             var geoMasterResponse = await HttpGet<T>(fullPath, queryString, apiVersion);
@@ -451,7 +451,7 @@ namespace Diagnostics.DataProviders
         {
             if (string.IsNullOrWhiteSpace(extension))
             {
-                throw new ArgumentNullException(extension);
+                throw new ArgumentNullException("extension");
             }
 
             string path = SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName) + SiteExtensionResource.Replace("{*extensionApiMethod}", extension);
@@ -492,7 +492,7 @@ namespace Diagnostics.DataProviders
         {
             if (string.IsNullOrWhiteSpace(daasApiPath))
             {
-                throw new ArgumentNullException(daasApiPath);
+                throw new ArgumentNullException("daasApiPath");
             }
 
             if (daasApiPath.StartsWith("api/databasetest", StringComparison.OrdinalIgnoreCase))
