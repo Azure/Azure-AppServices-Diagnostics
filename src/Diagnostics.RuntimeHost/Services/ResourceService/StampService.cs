@@ -59,8 +59,8 @@ namespace Diagnostics.RuntimeHost.Services
             
             result = new Tuple<List<string>, PlatformType>(tenantIds, type);
 
-            // Only cache TenantIds for Public stamps
-            if (isPublicStamp)
+            // Only cache TenantIds if not empty
+            if (tenantIds != null && tenantIds.Any())
             {
                 _tenantCache.TryAdd(stamp.ToLower(), result);
             }           
