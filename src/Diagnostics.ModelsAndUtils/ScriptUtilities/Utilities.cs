@@ -116,7 +116,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 
             if (wildCardHostNames.Any())
             {
-                string wildCardQuery = string.Join("or", wildCardHostNames.Select(w => $@"{hostNameColumn} endswith ""{w}"""));
+                string wildCardQuery = string.Join("or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w}"""));
                 hostNameQuery = $"{hostNameQuery} or {wildCardQuery}";
             }
 
