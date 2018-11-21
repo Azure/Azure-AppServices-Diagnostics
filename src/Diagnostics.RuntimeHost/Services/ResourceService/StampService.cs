@@ -14,7 +14,7 @@ namespace Diagnostics.RuntimeHost.Services
 {
     public interface IStampService
     {
-        Task<Tuple<List<string>, PlatformType>> GetTenantIdForStamp(string stamp, DateTime startTime, DateTime endTime, DataProviderContext dataProviderContext);
+        Task<Tuple<List<string>, PlatformType>> GetTenantIdForStamp(string stamp, bool isPublicStamp, DateTime startTime, DateTime endTime, DataProviderContext dataProviderContext);
     }
 
     public class StampService : IStampService
@@ -26,7 +26,7 @@ namespace Diagnostics.RuntimeHost.Services
             _tenantCache = new ConcurrentDictionary<string, Tuple<List<string>, PlatformType>>();
         }
 
-        public async Task<Tuple<List<string>, PlatformType>> GetTenantIdForStamp(string stamp, DateTime startTime, DateTime endTime, DataProviderContext dataProviderContext)
+        public async Task<Tuple<List<string>, PlatformType>> GetTenantIdForStamp(string stamp, bool isPublicStamp, DateTime startTime, DateTime endTime, DataProviderContext dataProviderContext)
         {
             var dp = new DataProviders.DataProviders(dataProviderContext);
             if (string.IsNullOrWhiteSpace(stamp))
@@ -59,7 +59,12 @@ namespace Diagnostics.RuntimeHost.Services
             
             result = new Tuple<List<string>, PlatformType>(tenantIds, type);
 
-            _tenantCache.TryAdd(stamp.ToLower(), result);
+            // Only cache TenantIds if not empty
+            if (tenantIds != null && tenantIds.Any())
+            {
+                _tenantCache.TryAdd(stamp.ToLower(), result);
+            }           
+
             return result;
         }
 

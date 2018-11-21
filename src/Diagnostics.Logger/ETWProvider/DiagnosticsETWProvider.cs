@@ -130,8 +130,6 @@ namespace Diagnostics.Logger
                 ExceptionDetails);
         }
 
-        // Do not use 2007, corrupted the event somehow and it was not flowing to kusto in production
-
         [Event(2008, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostSupportTopicAscInsight)]
         public void LogFullAscInsight(string RequestId, string Source, string Message, string Details)
         {

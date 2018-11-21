@@ -344,7 +344,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             string stampName = !string.IsNullOrWhiteSpace(hostingEnv.InternalName) ? hostingEnv.InternalName : hostingEnv.Name;
 
-            var result = await this._stampService.GetTenantIdForStamp(stampName, startTime, endTime, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+            var result = await this._stampService.GetTenantIdForStamp(stampName, hostingEnv.HostingEnvironmentType == HostingEnvironmentType.None,  startTime, endTime, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
             hostingEnv.TenantIdList = result.Item1;
             hostingEnv.PlatformType = result.Item2;
 
