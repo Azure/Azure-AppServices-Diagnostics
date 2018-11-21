@@ -39,10 +39,17 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             {
                 return;
             }
-            
-            var status = response.Dataset
-                .Where(set => set.RenderingProperties.Type == RenderingType.Insights || set.RenderingProperties.Type == RenderingType.DynamicInsight)
-                .Select(set =>
+
+            var insights = response.Dataset
+                .Where(set => set.RenderingProperties.Type == RenderingType.Insights || set.RenderingProperties.Type == RenderingType.DynamicInsight);
+
+            if (!insights.Any())
+            {
+                response.Status = new Status() { StatusId = InsightStatus.None };
+                return;
+            }
+
+            var status = insights.Select(set =>
                 {
                     if (set.RenderingProperties.Type == RenderingType.DynamicInsight)
                     {
@@ -54,7 +61,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                         foreach (DataRow row in set.Table.Rows)
                         {
                             var insightStatusInt = (int)Enum.Parse(typeof(InsightStatus), row["Status"].ToString());
-                            if (lowestStatus > insightStatusInt)
+                            if (insightStatusInt < lowestStatus)
                             {
                                 lowestStatus = insightStatusInt;
                             }

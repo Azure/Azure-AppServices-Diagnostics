@@ -35,6 +35,27 @@ namespace Diagnostics.Tests.ModelTests
             }
         }
 
+        [Theory]
+        [InlineData(true, InsightStatus.Critical)]
+        [InlineData(true, InsightStatus.Warning)]
+        [InlineData(true, InsightStatus.None)]
+        [InlineData(false, InsightStatus.Critical)]
+        public void TestCorrectDetectorStatus(bool addInsight, InsightStatus status)
+        {
+            Response res = new Response();
+
+            if (addInsight)
+            {
+                Insight insight = new Insight(status, "some test message");
+                var returnedInsight = res.AddInsight(insight);
+            }
+
+            res.UpdateDetectorStatusFromInsights();
+
+            Assert.NotNull(res.Status);
+            Assert.Equal(addInsight ? status : InsightStatus.None, res.Status.StatusId);
+        }
+
         [Fact]
         public void TestAddEmailExtension()
         {

@@ -17,7 +17,7 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public IEnumerable<DataTableResponseColumn> Columns { get; set; }
 
-        public string[][] Rows { get; set; }
+        public dynamic[,] Rows { get; set; }
     }
 
     public class DataTableResponseColumn
@@ -36,7 +36,7 @@ namespace Diagnostics.ModelsAndUtils.Models
     {
         public string Name { get; set; }
         public IEnumerable<AppInsightsDataTableResponseColumn> Columns { get; set; }
-        public string[][] Rows { get; set; }
+        public dynamic[,] Rows { get; set; }
     }
 
     public class AppInsightsDataTableResponseColumn
@@ -58,37 +58,15 @@ namespace Diagnostics.ModelsAndUtils.Models
 
             dataTable.Columns.AddRange(dataTableResponse.Columns.Select(column => new DataColumn(column.ColumnName, GetColumnType(column.DataType))).ToArray());
 
-            foreach (var row in dataTableResponse.Rows)
+            for (int i = 0; i < dataTableResponse.Rows.GetLength(0); i++)
             {
-                var rowWithCorrectTypes = new List<object>();
-                for (int i = 0; i < dataTable.Columns.Count; i++)
+                var row = dataTable.NewRow();
+                for (int j = 0; j < dataTable.Columns.Count; j++)
                 {
-                    object rowValueWithCorrectType = null;
-
-                    if (row[i] != null)
-                    {
-                        rowValueWithCorrectType = Convert.ChangeType(row[i], dataTable.Columns[i].DataType, CultureInfo.InvariantCulture);
-
-                        if(dataTable.Columns[i].DataType == typeof(DateTime))
-                        {
-                            var dateTimeString = row[i].ToString();
-
-                            //check if the string is in UTC time
-                            if (dateTimeString.EndsWith("Z", false, CultureInfo.InvariantCulture))
-                            {
-                                rowValueWithCorrectType = Convert.ToDateTime(row[i]).ToUniversalTime();
-                            }
-                            else
-                            {
-                                rowValueWithCorrectType = Convert.ToDateTime(row[i]);
-                            }
-                        }
-                    }
-
-                    rowWithCorrectTypes.Add(rowValueWithCorrectType);
+                    row[j] = dataTableResponse.Rows[i, j];
                 }
 
-                dataTable.Rows.Add(rowWithCorrectTypes.ToArray());
+                dataTable.Rows.Add(row);
             }
 
             return dataTable;
@@ -104,23 +82,15 @@ namespace Diagnostics.ModelsAndUtils.Models
             var dataTable = new DataTable(appInsightsDataTableResponse.Name);
             dataTable.Columns.AddRange(appInsightsDataTableResponse.Columns.Select(column => new DataColumn(column.Name, GetColumnType(column.Type))).ToArray());
 
-            foreach (var row in appInsightsDataTableResponse.Rows)
+            for (int i = 0; i < dataTable.Rows.Count; i++)
             {
-                var rowWithCorrectTypes = new List<object>();
-                for (int i = 0; i < dataTable.Columns.Count; i++)
+                var row = dataTable.NewRow();
+                for (int j = 0; j < dataTable.Columns.Count; j++)
                 {
-                    object rowValueWithCorrectType = null;
-
-                    if (row[i] != null)
-                    {
-                        rowValueWithCorrectType = Convert.ChangeType(row[i], dataTable.Columns[i].DataType);
-                    }
-
-                    rowWithCorrectTypes.Add(rowValueWithCorrectType);
+                    row[j] = appInsightsDataTableResponse.Rows[i,j];
                 }
 
-                dataTable.Rows.Add(rowWithCorrectTypes.ToArray());
-
+                dataTable.Rows.Add(row);
             }
 
             return dataTable;
@@ -138,14 +108,18 @@ namespace Diagnostics.ModelsAndUtils.Models
                 columns.Add(new DataTableResponseColumn() { ColumnName = col.ColumnName, DataType = col.DataType.ToString().Replace("System.", "") });
             }
 
-            var rows = new List<string[]>();
-            foreach (DataRow row in table.Rows)
+            var rows = new dynamic[table.Rows.Count, table.Columns.Count];
+            
+            for(int i = 0; i < table.Rows.Count; i++)
             {
-                rows.Add(row.ItemArray.Select(x => x.ToString()).ToArray());
+                for(int j = 0; j < table.Columns.Count; j++)
+                {
+                    rows[i, j] = table.Rows[i][j];
+                }
             }
 
             dataTableResponseObject.Columns = columns;
-            dataTableResponseObject.Rows = rows.ToArray();
+            dataTableResponseObject.Rows = rows;
 
             return dataTableResponseObject;
         }
