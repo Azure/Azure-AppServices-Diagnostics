@@ -1,6 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
-using Diagnostics.RuntimeHost.Models;
 using Diagnostics.Scripts;
 using System;
 using System.Collections.Concurrent;
@@ -8,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Diagnostics.RuntimeHost.Services
+namespace Diagnostics.Scripts
 {
     public interface ICache<K, V>
     {

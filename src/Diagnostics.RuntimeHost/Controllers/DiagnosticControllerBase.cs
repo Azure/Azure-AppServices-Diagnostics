@@ -422,7 +422,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(DataProviderConstants.KustoTimeFormat),
                 internalViewRequested || forceInternal,
                 requestIds.FirstOrDefault(),
-                supportTopic: supportTopic
+                supportTopic: supportTopic,
+                invokerCacheService: this._invokerCache
             );
 
             return new RuntimeContext<TResource>()

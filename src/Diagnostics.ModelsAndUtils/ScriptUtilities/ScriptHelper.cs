@@ -13,6 +13,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
                 "System.Data",
                 "Diagnostics.DataProviders",
                 "Diagnostics.ModelsAndUtils",
+                 "Diagnostics.Scripts",
                 "Newtonsoft.Json"
             );
 

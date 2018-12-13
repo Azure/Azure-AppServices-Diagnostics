@@ -5,6 +5,7 @@ using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using Diagnostics.Scripts;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {

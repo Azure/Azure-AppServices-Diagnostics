@@ -48,7 +48,9 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public string TimeGrain { get; private set; }
 
-        public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, string timeGrain = "5", SupportTopic supportTopic = null)
+        public object InvokerCacheService { get; private set; }
+
+        public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, string timeGrain = "5", SupportTopic supportTopic = null, object invokerCacheService = null)
         {
             Resource = resource;
             StartTime = startTimeStr;
@@ -57,6 +59,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             RequestId = requestId;
             TimeGrain = timeGrain;
             SupportTopic = supportTopic;
+            InvokerCacheService = invokerCacheService;
         }
     }
 }

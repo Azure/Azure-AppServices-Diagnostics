@@ -1,7 +1,6 @@
-﻿using Diagnostics.DataProviders;
-using Diagnostics.ModelsAndUtils.Models;
+﻿using Diagnostics.ModelsAndUtils.Models;
 
-namespace Diagnostics.RuntimeHost.Models
+namespace Diagnostics.Scripts
 {
     public class RuntimeContext<TResource>
         where TResource: IResource

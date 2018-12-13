@@ -27,6 +27,7 @@ namespace Diagnostics.RuntimeHost
             WebHost.CreateDefaultBuilder(args)
                 .UseConfiguration(config)
                 .UseStartup<Startup>()
+                .UseUrls("http://0.0.0.0:29550/")
                 .Build();
         }
     }

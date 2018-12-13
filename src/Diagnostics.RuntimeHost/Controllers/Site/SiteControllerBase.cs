@@ -6,6 +6,7 @@ using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
+using Diagnostics.Scripts;
 using Microsoft.Extensions.Primitives;
 using System;
 using System.Collections.Generic;
