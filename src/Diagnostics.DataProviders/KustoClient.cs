@@ -1,9 +1,11 @@
-﻿using Diagnostics.ModelsAndUtils;
+﻿using Diagnostics.Logger;
+using Diagnostics.ModelsAndUtils;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -18,7 +20,7 @@ namespace Diagnostics.DataProviders
 {
     public class KustoClient : IKustoClient
     {
-        private KustoDataProviderConfiguration _configuration;
+        private string _requestId;
 
         /// <summary>
         /// Kusto Endpoint
@@ -43,39 +45,83 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        public KustoClient(KustoDataProviderConfiguration configuration)
+        public KustoClient(string requestId)
         {
-            _configuration = configuration;
+            _requestId = requestId;
         }
 
-        public async Task<DataTable> ExecuteQueryAsync(string query, string stampName, string requestId = null, string operationName = null)
+        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
         {
-            string kustoClusterName = GetClusterNameFromStamp(stampName);
+            var timeTakenStopWatch = new Stopwatch();
 
             string authorizationToken = await KustoTokenService.Instance.GetAuthorizationTokenAsync();
 
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, string.Format(KustoApiEndpoint, kustoClusterName));
+            var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId}##{0}";
+
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, string.Format(KustoApiEndpoint, cluster));
             request.Headers.Add("Authorization", authorizationToken);
             request.Headers.Add("x-ms-client-request-id", requestId ?? Guid.NewGuid().ToString());
 
             object requestPayload = new
             {
-                db = _configuration.DBName,
+                db = database,
                 csl = query
             };
 
             request.Content = new StringContent(JsonConvert.SerializeObject(requestPayload), Encoding.UTF8, "application/json");
 
             CancellationTokenSource tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
-            HttpResponseMessage responseMsg = await _httpClient.SendAsync(request, tokenSource.Token);
-            string content = await responseMsg.Content.ReadAsStringAsync();
 
-            if (!responseMsg.IsSuccessStatusCode)
+            timeTakenStopWatch.Start();
+
+            Exception kustoApiException = null;
+            string responseContent = null;
+            DataTableResponseObjectCollection dataSet = null;
+            try
             {
-                throw new Exception(content);
+                HttpResponseMessage responseMsg = await _httpClient.SendAsync(request, tokenSource.Token);
+                responseContent = await responseMsg.Content.ReadAsStringAsync();
+
+                if (!responseMsg.IsSuccessStatusCode)
+                {
+                    throw new Exception(responseContent);
+                }
+                else
+                {
+                    dataSet = JsonConvert.DeserializeObject<DataTableResponseObjectCollection>(responseContent);
+                }
+            }
+            catch(Exception ex)
+            {
+                kustoApiException = ex;
+            }
+            finally
+            {
+                timeTakenStopWatch.Stop();
+                var status = kustoApiException == null ? "Success" : "Failed";
+
+                object stats = null;
+                if (dataSet != null && dataSet.Tables != null && dataSet.Tables.Count() >= 4)
+                {
+                    var statisticsTable = dataSet.Tables.ToArray()[dataSet.Tables.Count() - 2];
+                    if (statisticsTable.Rows.GetLength(0) >= 2 && statisticsTable.Rows.GetLength(1) >= 5)
+                    {
+                        stats = statisticsTable.Rows[1, 4];
+                    }
+                }
+
+                DiagnosticsETWProvider.Instance.LogKustoQueryInformation(
+                   operationName ?? "None",
+                   _requestId,
+                   $"KustoQueryRequestId:{kustoClientId},Status:{status},TimeTaken:{timeTakenStopWatch.ElapsedMilliseconds},Cluster:{cluster}",
+                   timeTakenStopWatch.ElapsedMilliseconds,
+                   JsonConvert.SerializeObject(stats) ?? string.Empty,
+                   query,
+                   kustoApiException != null ? kustoApiException.GetType().ToString() : string.Empty,
+                   kustoApiException != null ? kustoApiException.ToString() : string.Empty);
             }
 
-            DataTableResponseObjectCollection dataSet = JsonConvert.DeserializeObject<DataTableResponseObjectCollection>(content);
+            
 
             if (dataSet == null || dataSet.Tables == null)
             {
@@ -87,28 +133,23 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        public async Task<KustoQuery> GetKustoQueryAsync(string query, string stampName)
+        public async Task<KustoQuery> GetKustoQueryAsync(string query, string cluster, string database)
         {
-            string kustoClusterName = null;
             try
             {
-                kustoClusterName = GetClusterNameFromStamp(stampName);
                 string encodedQuery = await EncodeQueryAsBase64UrlAsync(query);
                 
                 KustoQuery kustoQuery = new KustoQuery
                 {
                     Text = query,
-                    Url = string.Format("https://web.kusto.windows.net/clusters/{0}.kusto.windows.net/databases/{1}?q={2}", kustoClusterName, _configuration.DBName, encodedQuery),
-                    KustoDesktopUrl = $"https://{kustoClusterName}.kusto.windows.net:443/{_configuration.DBName}?query={encodedQuery}&web=0"
+                    Url = string.Format("https://web.kusto.windows.net/clusters/{0}.kusto.windows.net/databases/{1}?q={2}", cluster, database, encodedQuery),
+                    KustoDesktopUrl = $"https://{cluster}.kusto.windows.net:443/{database}?query={encodedQuery}&web=0"
                 };
                 return kustoQuery;
             }
             catch (Exception ex)
             {
-                string message = string.Format("stamp : {0}, kustoClusterName : {1}, Exception : {2}",
-                    stampName ?? "null",
-                    kustoClusterName ?? "null",
-                    ex.ToString());
+                DiagnosticsETWProvider.Instance.LogDataProviderMessage(_requestId, "KustoClient", $"GetKustoQueryAsync Failure. Query: {query}; Cluster: {cluster}; Database: {database}; Exception: {ex.ToString()}");
                 throw;
             }
         }
@@ -132,38 +173,6 @@ namespace Diagnostics.DataProviders
                 result = HttpUtility.UrlEncode(Convert.ToBase64String(memoryStream.ToArray()));
             }
             return result;
-        }
-
-        private string GetClusterNameFromStamp(string stampName)
-        {
-            string kustoClusterName = null;
-            string appserviceRegion = ParseRegionFromStamp(stampName);
-
-            if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName))
-            {
-                if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
-                {
-                    throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
-                }
-            }
-            return kustoClusterName;
-        }
-
-        private static string ParseRegionFromStamp(string stampName)
-        {
-            if (string.IsNullOrWhiteSpace(stampName))
-            {
-                throw new ArgumentNullException("stampName");
-            }
-
-            var stampParts = stampName.Split(new char[] { '-' });
-            if (stampParts.Any() && stampParts.Length >= 3)
-            {
-                return stampParts[2];
-            }
-
-            //return * for private stamps if no prod stamps are found
-            return "*";
         }
     }
 }

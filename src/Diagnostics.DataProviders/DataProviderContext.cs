@@ -11,10 +11,10 @@ namespace Diagnostics.DataProviders
         public string RequestId { get; private set; }
         public CancellationToken DataSourcesCancellationToken { get; private set; }
 
-        public DataProviderContext(DataSourcesConfiguration dataSourceConfiguration, CancellationToken dataSourceCancellationToken = default(CancellationToken), string requestId = null)
+        public DataProviderContext(DataSourcesConfiguration dataSourceConfiguration, string requestId = null, CancellationToken dataSourceCancellationToken = default(CancellationToken))
         {
             Configuration = dataSourceConfiguration;
-            RequestId = requestId;
+            RequestId = requestId ?? Guid.NewGuid().ToString();
             DataSourcesCancellationToken = dataSourceCancellationToken;
         }
     }

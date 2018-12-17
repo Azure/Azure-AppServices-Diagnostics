@@ -19,11 +19,13 @@ namespace Diagnostics.DataProviders
     {
         private KustoDataProviderConfiguration _configuration;
         private IKustoClient _kustoClient;
+        private string _requestId;
 
-        public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration) : base(cache)
+        public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration, string requestId) : base(cache)
         {
             _configuration = configuration;
-            _kustoClient = KustoClientFactory.GetKustoClient(configuration);
+            _kustoClient = KustoClientFactory.GetKustoClient(configuration, requestId);
+            _requestId = requestId;
             Metadata = new DataProviderMetadata
             {
                 ProviderName = "Kusto"
@@ -38,7 +40,8 @@ namespace Diagnostics.DataProviders
         public async Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
         {           
             await AddQueryInformationToMetadata(query, stampName);
-            return await _kustoClient.ExecuteQueryAsync(query, stampName, requestId, operationName);
+            var cluster = GetClusterNameFromStamp(stampName);
+            return await _kustoClient.ExecuteQueryAsync(query, cluster, _configuration.DBName, requestId, operationName);
         }
 
         public Task<KustoQuery> GetKustoClusterQuery(string query)
@@ -48,7 +51,8 @@ namespace Diagnostics.DataProviders
 
         public async Task<KustoQuery> GetKustoQuery(string query, string stampName)
         {
-            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, stampName);
+            var cluster = GetClusterNameFromStamp(stampName);
+            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, cluster, _configuration.DBName);
             return kustoQuery;
         }
 
@@ -59,7 +63,8 @@ namespace Diagnostics.DataProviders
 
         private async Task AddQueryInformationToMetadata(string query, string stampName)
         {
-            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, stampName);
+            var cluster = GetClusterNameFromStamp(stampName);
+            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, cluster, _configuration.DBName);
             bool queryExists = false;
             
             queryExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&
@@ -69,6 +74,38 @@ namespace Diagnostics.DataProviders
             {
                 Metadata.PropertyBag.Add(new KeyValuePair<string, object>("Query", kustoQuery));
             }
+        }
+
+        private string GetClusterNameFromStamp(string stampName)
+        {
+            string kustoClusterName = null;
+            string appserviceRegion = ParseRegionFromStamp(stampName);
+
+            if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName))
+            {
+                if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
+                {
+                    throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
+                }
+            }
+            return kustoClusterName;
+        }
+
+        private static string ParseRegionFromStamp(string stampName)
+        {
+            if (string.IsNullOrWhiteSpace(stampName))
+            {
+                throw new ArgumentNullException("stampName");
+            }
+
+            var stampParts = stampName.Split(new char[] { '-' });
+            if (stampParts.Any() && stampParts.Length >= 3)
+            {
+                return stampParts[2];
+            }
+
+            //return * for private stamps if no prod stamps are found
+            return "*";
         }
     }
 }
