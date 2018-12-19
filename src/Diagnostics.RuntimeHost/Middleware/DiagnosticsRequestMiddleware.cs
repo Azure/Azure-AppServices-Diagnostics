@@ -71,7 +71,7 @@ namespace Diagnostics.RuntimeHost.Middleware
             var dataSourcesConfigurationService = ((ServiceProvider)httpContext.RequestServices).GetService<IDataSourcesConfigurationService>();
 
             httpContext.Items.Add(HostConstants.ApiLoggerKey, logger);
-            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, cTokenSource.Token, values.FirstOrDefault() ?? string.Empty));
+            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token));
         }
 
         private void EndRequest_Handle(HttpContext httpContext)

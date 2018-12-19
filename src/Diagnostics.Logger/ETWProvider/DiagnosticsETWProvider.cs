@@ -233,6 +233,19 @@ namespace Diagnostics.Logger
                 ExceptionDetails);
         }
 
+        [Event(3004, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogKustoQueryInformation)]
+        public void LogKustoQueryInformation(string Source, string RequestId, string Message, long LatencyInMilliseconds, string Details, string Content, string ExceptionType, string ExceptionDetails)
+        {
+            WriteDiagnosticsEvent(3004,
+                Source,
+                RequestId,
+                Message,
+                LatencyInMilliseconds,
+                Details,
+                Content,
+                ExceptionType,
+                ExceptionDetails);
+        }
 
         #endregion
     }

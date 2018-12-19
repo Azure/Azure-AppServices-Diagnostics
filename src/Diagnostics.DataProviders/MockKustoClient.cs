@@ -10,11 +10,16 @@ namespace Diagnostics.DataProviders
 {
     class MockKustoClient: IKustoClient
     {
-        public async Task<DataTable> ExecuteQueryAsync(string query, string stampName, string requestId = null, string operationName = null)
+        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
         {
-            if (string.IsNullOrWhiteSpace(stampName))
+            if (string.IsNullOrWhiteSpace(cluster))
             {
-                throw new ArgumentNullException("stampName");
+                throw new ArgumentNullException("cluster");
+            }
+
+            if (string.IsNullOrWhiteSpace(database))
+            {
+                throw new ArgumentNullException("database");
             }
 
             if (!string.IsNullOrWhiteSpace(operationName))
@@ -81,11 +86,16 @@ namespace Diagnostics.DataProviders
             return Task.FromResult(table);
         }
 
-        public Task<KustoQuery> GetKustoQueryAsync(string query, string stampName)
+        public Task<KustoQuery> GetKustoQueryAsync(string query, string cluster, string database)
         {
-            if (string.IsNullOrWhiteSpace(stampName))
+            if (string.IsNullOrWhiteSpace(cluster))
             {
-                throw new ArgumentNullException("stampName");
+                throw new ArgumentNullException("cluster");
+            }
+
+            if (string.IsNullOrWhiteSpace(database))
+            {
+                throw new ArgumentNullException("database");
             }
             if (string.IsNullOrWhiteSpace(query))
             {
