@@ -14,7 +14,7 @@ namespace Diagnostics.DataProviders
         {
             if (string.IsNullOrWhiteSpace(cluster))
             {
-                throw new ArgumentNullException("stampName");
+                throw new ArgumentNullException("cluster");
             }
 
             if (string.IsNullOrWhiteSpace(database))
@@ -90,7 +90,7 @@ namespace Diagnostics.DataProviders
         {
             if (string.IsNullOrWhiteSpace(cluster))
             {
-                throw new ArgumentNullException("stampName");
+                throw new ArgumentNullException("cluster");
             }
 
             if (string.IsNullOrWhiteSpace(database))
