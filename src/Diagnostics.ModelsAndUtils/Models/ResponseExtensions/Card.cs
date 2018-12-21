@@ -76,31 +76,27 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
+        ///
         ///     var cards = new List<![CDATA[<Card>]]>();
-        ///     cards.Add(new Card(
-        ///         {
-        ///             Title = "HTTP 4XX Errors",
-        ///             ShortDescription = "Select this category for following issue types",
-        ///             Descriptions = new List<![CDATA[<string>]]> { "Getting 401, 405, 403 error","The web app is stopped","You are not authorized to view this page" },
-        ///             Icon = "fa-circle",
-        ///             ActionsType =  CardActionType.Detector,
-        ///             ActionValue = "http4xx"
-        ///         }
-        ///     ));
         ///
         ///     cards.Add(new Card(
-        ///         {
-        ///             Title = "HTTP 5XX Errors",
-        ///             ShortDescription = "Chosse these if app is failing with these errors",
-        ///             Descriptions = new List<![CDATA[<string>]]> { "App failing with 502, 503, 500 error","The Page cannot be displayed","App failing with a server error" },
-        ///             Icon = "fa-exclamation",
-        ///             ActionsType =  CardActionType.Detector,
-        ///             ActionValue = "httpservererrors"
-        ///         }
-        ///     ));
+        ///                     title: "HTTP 4XX Errors",
+        ///                     shortDescription: "Select this category for following issue types",
+        ///                     descriptions: new List<![CDATA[<string>]]> { "Getting 401, 405, 403 error", "The web app is stopped", "You are not authorized to view this page" },
+        ///                     icon: "fa-circle",
+        ///                     actionType: CardActionType.Detector,
+        ///                     actionValue: "http4xx"));
+        ///     
+        ///     cards.Add(new Card(
+        ///                     title: "HTTP Server Errors",
+        ///                     shortDescription: "Select this category for following issue types",
+        ///                     descriptions: new List<![CDATA[<string>]]> { "App failing with 502, 503, 500 error","The Page cannot be displayed","App failing with a server error" },
+        ///                     icon: "fa-exclamation",
+        ///                     actionType: CardActionType.Detector,
+        ///                     actionValue: "httpservererrors"));
         ///
         ///     res.AddCards(cards);
-        /// }
+        ///}
         /// </code>
         /// </example>
         public static DiagnosticData AddCards(this Response response, List<Card> cards)
