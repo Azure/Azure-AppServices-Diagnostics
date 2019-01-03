@@ -45,6 +45,7 @@ namespace Diagnostics.DataProviders
 
                 try
                 {
+                    _authContext.TokenCache.Clear();
                     _acquireTokenTask = _authContext.AcquireTokenAsync(DataProviderConstants.DefaultKustoEndpoint, _clientCredential);
                     AuthenticationResult authResult = await _acquireTokenTask;
                     _authorizationToken = GetAuthTokenFromAuthenticationResult(authResult);
