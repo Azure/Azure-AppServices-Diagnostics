@@ -2,7 +2,7 @@
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Diagnostics.DataProviders
@@ -45,7 +45,13 @@ namespace Diagnostics.DataProviders
 
                 try
                 {
-                    _authContext.TokenCache.Clear();
+                    var items = _authContext.TokenCache.ReadItems();
+                    var kustoCacheItem = items.FirstOrDefault(x => x.Resource == DataProviderConstants.DefaultKustoEndpoint);
+                    if (kustoCacheItem != null)
+                    {
+                        _authContext.TokenCache.DeleteItem(kustoCacheItem);
+                    }
+
                     _acquireTokenTask = _authContext.AcquireTokenAsync(DataProviderConstants.DefaultKustoEndpoint, _clientCredential);
                     AuthenticationResult authResult = await _acquireTokenTask;
                     _authorizationToken = GetAuthTokenFromAuthenticationResult(authResult);
