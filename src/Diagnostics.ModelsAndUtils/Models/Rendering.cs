@@ -182,7 +182,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data rendered as (key, value) pair where key goes in dropdown and value goes in body.
         /// </summary>
-        DropDown
+        DropDown,
+
+        /// <summary>
+        /// Data rendered as Tile with a title, some text and a link to another detector or a diagnostic tool
+        /// </summary>
+        Card
     }
 
     /// <summary>
