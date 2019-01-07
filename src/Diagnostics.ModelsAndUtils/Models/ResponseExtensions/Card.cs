@@ -20,11 +20,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// A list of descriptions for this card
         /// </summary>
-        public string ShortDescription;
-
-        /// <summary>
-        /// A list of descriptions for this card
-        /// </summary>
         public List<string> Descriptions;
 
         /// <summary>
@@ -47,15 +42,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// Creates an instance of Card class.
         /// </summary>
         /// <param name="title">Title text for the card</param>
-        /// <param name="shortDescription">Small description text just after the title</param>
         /// <param name="descriptions">List of descriptions to add to the card.</param>
         /// <param name="icon">One of the icons from the font-awesome collection (for e.g. fa-circle)</param>
         /// <param name="actionValue">Action value for the card (will be detectorId for detectors)</param>
         /// <param name="actionType">One of the supported ActionType</param>
-        public Card(string title, string shortDescription, List<string> descriptions, string icon, string actionValue, CardActionType actionType = CardActionType.Detector)
+        public Card(string title, List<string> descriptions, string icon, string actionValue, CardActionType actionType = CardActionType.Detector)
         {
             Title = title;
-            ShortDescription = shortDescription;
             Descriptions = descriptions;
             Icon = icon;
             ActionType = actionType;
@@ -81,7 +74,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///
         ///     cards.Add(new Card(
         ///                     title: "HTTP 4XX Errors",
-        ///                     shortDescription: "Select this category for following issue types",
         ///                     descriptions: new List<![CDATA[<string>]]> { "Getting 401, 405, 403 error", "The web app is stopped", "You are not authorized to view this page" },
         ///                     icon: "fa-circle",
         ///                     actionType: CardActionType.Detector,
@@ -89,7 +81,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///     
         ///     cards.Add(new Card(
         ///                     title: "HTTP Server Errors",
-        ///                     shortDescription: "Select this category for following issue types",
         ///                     descriptions: new List<![CDATA[<string>]]> { "App failing with 502, 503, 500 error","The Page cannot be displayed","App failing with a server error" },
         ///                     icon: "fa-exclamation",
         ///                     actionType: CardActionType.Detector,
@@ -104,7 +95,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             var table = new DataTable();
             table.Columns.Add(new DataColumn("Title", typeof(string)));
             table.Columns.Add(new DataColumn("Icon", typeof(string)));
-            table.Columns.Add(new DataColumn("ShortDescription", typeof(string)));
             table.Columns.Add(new DataColumn("Descriptions", typeof(string)));
             table.Columns.Add(new DataColumn("ActionType", typeof(string)));
             table.Columns.Add(new DataColumn("ActionValue", typeof(string)));
@@ -114,7 +104,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 table.Rows.Add(new object[] {
                     card.Title,
                     card.Icon,
-                    card.ShortDescription,
                     JsonConvert.SerializeObject(card.Descriptions),
                     JsonConvert.SerializeObject(card.ActionType),
                     card.ActionValue
