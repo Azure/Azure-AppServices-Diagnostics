@@ -82,7 +82,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             var dataTable = new DataTable(appInsightsDataTableResponse.Name);
             dataTable.Columns.AddRange(appInsightsDataTableResponse.Columns.Select(column => new DataColumn(column.Name, GetColumnType(column.Type))).ToArray());
 
-            for (int i = 0; i < dataTable.Rows.Count; i++)
+            for (int i = 0; i < appInsightsDataTableResponse.Rows.GetLength(0); i++)
             {
                 var row = dataTable.NewRow();
                 for (int j = 0; j < dataTable.Columns.Count; j++)
