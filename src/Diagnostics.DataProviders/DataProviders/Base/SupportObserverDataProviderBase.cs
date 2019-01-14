@@ -15,7 +15,6 @@ namespace Diagnostics.DataProviders
     {
         protected readonly SupportObserverDataProviderConfiguration _configuration;
         private readonly HttpClient _httpClient;
-        private List<string> _routeTemplates;
 
         public SupportObserverDataProviderBase(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration) : base(cache)
         {
@@ -23,14 +22,13 @@ namespace Diagnostics.DataProviders
             _httpClient = GetObserverClient();
             _httpClient.BaseAddress = new Uri("https://wawsobserver-prod.azurewebsites.net/api/");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            FillObserverRouteTemplates();
         }
 
         public Task<dynamic> GetResource(string resourceUrl)
         {
             Uri uri;
 
-            var allowedHosts = new string[] { "wawsobserver.azurewebsites.windows.net", "support-bay-api.azurewebsites.net", "support-bay-api-stage.azurewebsites.net" };
+            var allowedHosts = new string[] { "wawsobserver.azurewebsites.windows.net", "wawsobserver-prod-staging.azurewebsites.net", "support-bay-api.azurewebsites.net", "support-bay-api-stage.azurewebsites.net"};
 
             try
             {
@@ -65,7 +63,7 @@ namespace Diagnostics.DataProviders
                 throw new FormatException(exceptionMessage);
             }
 
-            if (uri.Host.Contains(allowedHosts[0]))
+            if (uri.Host.Contains(allowedHosts[0]) || uri.Host.Contains(allowedHosts[1]))
             {
                 return GetWawsObserverResourceAsync(uri);
             }
@@ -77,28 +75,8 @@ namespace Diagnostics.DataProviders
 
         private async Task<dynamic> GetWawsObserverResourceAsync(Uri uri)
         {
-            Dictionary<string, string> routeParametersAndValues = null;
-            string routeTemplate = null;
-
-            //take a substring to remove forward-slash from start of PathAndQuery
-            var pathAndQuery = uri.PathAndQuery.Substring(1);
-            foreach (var template in _routeTemplates)
-            {
-                if (TryMatchRoute(pathAndQuery, template, out routeParametersAndValues))
-                {
-                    routeTemplate = template;
-                    break;
-                }
-            }
-
-            if (routeParametersAndValues == null)
-            {
-                throw new ArgumentException("Obsever may not have an API for your observerUrl");
-            }
-
-            var apiPath = CreateObserverQueryAndPath(routeParametersAndValues, routeTemplate);
+            var apiPath = uri.PathAndQuery.Substring(1);
             var response = await GetObserverResource(apiPath);
-
             var jObjectResponse = JsonConvert.DeserializeObject(response);
             return jObjectResponse;
         }
@@ -144,81 +122,6 @@ namespace Diagnostics.DataProviders
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName);
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
         public abstract HttpClient GetObserverClient();
-
-        private void FillObserverRouteTemplates()
-        {
-            if (_routeTemplates == null)
-            {
-
-                _routeTemplates = new List<string>
-                {
-                    "sites/{siteName}",
-                    "stamps/{stampName}/sites/{siteName}",
-                    "deletedsites/{siteName}",
-                    "stamps/{stampName}/sites/deleted/{siteName}",
-                    "webspaces/{webspaceGeoId}",
-                    "subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}",
-                    "subscriptions/{subscriptionName}",
-                    "subscriptions/id/{subscriptionId}",
-                    "stamps/{stampName}/subscriptions/{subscriptionName}",
-                    "stamps/{stampName}",
-                    "certificates/{thumbprint}",
-                    "subscriptions/{subscriptionName}/certificates",
-                    "domains/{domainName}",
-                    "subscriptions/{subscriptionName}/domains",
-                    "certificateorders/{certificateOrderName}",
-                    "subscriptions/{subscriptionName}/certificateorders",
-                    "minienvironments/{environmentName}",
-                    "stamps/{stampName}/storagevolumes/{volumeName}",
-                    "stamps/{stampName}/serverfarms/id/{serverFarmId}",
-                };
-            }
-        }
-
-        private bool TryMatchRoute(string inputUrl, string routeTemplate, out Dictionary<string, string> routeParametersAndValues)
-        {
-            var inputUrlArr = inputUrl.Split(new char[] { '/' });
-            var routeTemplateArr = routeTemplate.Split(new char[] { '/' });
-
-            Dictionary<string, string> _tmpRouteParametersAndValues = new Dictionary<string, string>();
-            routeParametersAndValues = null;
-
-            if (inputUrlArr.Length == routeTemplateArr.Length)
-            {
-                for (int i = 0; i < inputUrlArr.Length; i++)
-                {
-                    if (routeTemplateArr[i].Contains("{") && routeTemplateArr[i].Contains("}"))
-                    {
-                        var key = routeTemplateArr[i].Replace("{", string.Empty).Replace("}", string.Empty).ToLower();
-                        _tmpRouteParametersAndValues.Add(key, inputUrlArr[i]);
-                        continue;
-                    }
-                    else if (!routeTemplateArr[i].Equals(inputUrlArr[i], StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        return false;
-                    }
-                }
-            }
-            else
-            {
-                return false;
-            }
-
-            routeParametersAndValues = _tmpRouteParametersAndValues;
-
-            return true;
-        }
-
-        private string CreateObserverQueryAndPath(Dictionary<string, string> routeParametersAndValues, string routeTemplate)
-        {
-            routeTemplate = routeTemplate.ToLower();
-            foreach (var item in routeParametersAndValues)
-            {
-                routeTemplate = routeTemplate.Replace("{" + item.Key + "}", item.Value);
-            }
-
-            return routeTemplate;
-        }
 
         public DataProviderMetadata GetMetadata()
         {
