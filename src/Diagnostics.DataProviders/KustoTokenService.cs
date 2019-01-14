@@ -28,7 +28,7 @@ namespace Diagnostics.DataProviders
         public void Initialize(KustoDataProviderConfiguration configuration)
         {
             _configuration = configuration;
-            _authContext = new AuthenticationContext(DataProviderConstants.MicrosoftTenantAuthorityUrl);
+            _authContext = new AuthenticationContext(_configuration.AADAuthority);
             _clientCredential = new ClientCredential(_configuration.ClientId, _configuration.AppKey);
             _tokenAcquiredAtleastOnce = false;
             StartTokenRefresh();
@@ -46,13 +46,13 @@ namespace Diagnostics.DataProviders
                 try
                 {
                     var items = _authContext.TokenCache.ReadItems();
-                    var kustoCacheItem = items.FirstOrDefault(x => x.Resource == DataProviderConstants.DefaultKustoEndpoint);
+                    var kustoCacheItem = items.FirstOrDefault(x => x.Resource == _configuration.AADKustoResource);
                     if (kustoCacheItem != null)
                     {
                         _authContext.TokenCache.DeleteItem(kustoCacheItem);
                     }
 
-                    _acquireTokenTask = _authContext.AcquireTokenAsync(DataProviderConstants.DefaultKustoEndpoint, _clientCredential);
+                    _acquireTokenTask = _authContext.AcquireTokenAsync(_configuration.AADKustoResource, _clientCredential);
                     AuthenticationResult authResult = await _acquireTokenTask;
                     _authorizationToken = GetAuthTokenFromAuthenticationResult(authResult);
                     _tokenAcquiredAtleastOnce = true;

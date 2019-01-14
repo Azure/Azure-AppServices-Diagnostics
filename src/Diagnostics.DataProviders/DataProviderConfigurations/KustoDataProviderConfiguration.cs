@@ -37,6 +37,18 @@ namespace Diagnostics.DataProviders
         public string KustoClusterNameGroupings { get; set; }
 
         /// <summary>
+        /// Tenant to authenticate with
+        /// </summary>
+        [ConfigurationName("AADAuthority")]
+        public string AADAuthority { get; set; }
+
+        /// <summary>
+        /// Resource to issue token
+        /// </summary>
+        [ConfigurationName("AADKustoResource")]
+        public string AADKustoResource { get; set; }
+
+        /// <summary>
         /// Region Specific Cluster Names.
         /// </summary>
         public ConcurrentDictionary<string, string> RegionSpecificClusterNameCollection { get; set; }
