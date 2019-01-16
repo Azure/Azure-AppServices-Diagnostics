@@ -76,6 +76,21 @@ namespace Diagnostics.DataProviders
             {
                 return "true";
             }
+            else if (prefix == "Mdm")
+            {
+                switch (name)
+                {
+                    case "Endpoint":
+                        return "https://antares.metrics.nsatc.net";
+                    case "CertificateThumbprint":
+                        // Replace the thumbprint with the certificate installed in your machine.
+                        return "57BA82D3BEAEB2A60072B4684113C6201BA61E4E";
+                    case "MonitoringAccount":
+                        return "Mock";
+                    default:
+                        return string.Empty;
+                }
+            }
 
             return string.Empty;
         }

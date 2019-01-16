@@ -247,6 +247,17 @@ namespace Diagnostics.Logger
                 ExceptionDetails);
         }
 
+        [Event(3005, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDataProviderException)]
+        public void LogDataProviderException(string RequestId, string Source, string TimeStamp, string ExceptionType, string ExceptionDetails)
+        {
+            WriteDiagnosticsEvent(3005,
+                RequestId,
+                Source,
+                TimeStamp,
+                ExceptionType,
+                ExceptionDetails);
+        }
+
         #endregion
     }
 }

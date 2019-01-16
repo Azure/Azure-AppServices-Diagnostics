@@ -7,16 +7,19 @@ using System.Threading.Tasks;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
+using Microsoft.Cloud.Metrics.Client.Metrics;
+using Microsoft.Cloud.Metrics.Client.Query;
 using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.DataProviders
 {
-    internal class DataProviderLogDecorator : IKustoDataProvider, IGeoMasterDataProvider, ISupportObserverDataProvider, IAppInsightsDataProvider
+    internal class DataProviderLogDecorator : IKustoDataProvider, IGeoMasterDataProvider, ISupportObserverDataProvider, IAppInsightsDataProvider, IMdmDataProvider
     {
         private IKustoDataProvider _kustoDataProvider;
         private IGeoMasterDataProvider _geomasterDataProvider;
         private ISupportObserverDataProvider _observerDataProvider;
         private IAppInsightsDataProvider _appInsightsDataProvider;
+        private IMdmDataProvider _mdmDataProvider;
         private DataProviderMetadata _currentMetadataProvider;
         private string _requestId;
         private CancellationToken _dataSoureCancellationToken;
@@ -39,6 +42,11 @@ namespace Diagnostics.DataProviders
         public DataProviderLogDecorator(DataProviderContext context, IAppInsightsDataProvider dataProvider) : this(context, dataProvider.GetMetadata())
         {
             _appInsightsDataProvider = dataProvider;
+        }
+
+        public DataProviderLogDecorator(DataProviderContext context, IMdmDataProvider dataProvider) : this(context, dataProvider.GetMetadata())
+        {
+            _mdmDataProvider = dataProvider;
         }
 
         private DataProviderLogDecorator(DataProviderContext context, DataProviderMetadata metaData)
@@ -249,6 +257,99 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_geomasterDataProvider.VerifyHostingEnvironmentVnet(subscriptionId, vnetResourceGroup, vnetName, vnetSubnetName, cancellationToken));
         }
 
+        #region MDM_DataProvider
+
+        /// <summary>
+        /// Gets the list of namespaces for the monitoringAccount.
+        /// </summary>
+        /// <returns>The list of namespaces for the monitoringAccount.</returns>
+        public Task<IEnumerable<string>> GetNamespacesAsync()
+        {
+            return MakeDependencyCall(_mdmDataProvider.GetNamespacesAsync());
+        }
+
+        /// <summary>
+        /// Gets the list of metric names for the monitoringAccount and metricNamespace.
+        /// </summary>
+        /// <param name="metricNamespace">The metric namespace.</param>
+        /// <returns>The list of metric names for the monitoringAccount and metricNamespace.</returns>
+        public Task<IEnumerable<string>> GetMetricNamesAsync(string metricNamespace)
+        {
+            return MakeDependencyCall(_mdmDataProvider.GetMetricNamesAsync(metricNamespace));
+        }
+
+        /// <summary>
+        /// Gets the list of dimension names for the metricId.
+        /// </summary>
+        /// <param name="monitoringAccount">Monitoring account.</param>
+        /// <param name="metricNamespace">Metric namespace</param>
+        /// <param name="metricName">Metric name</param>
+        /// <returns>The list of dimension names for the metricId.</returns>
+        public Task<IEnumerable<string>> GetDimensionNamesAsync(string metricNamespace, string metricName)
+        {
+            return MakeDependencyCall(_mdmDataProvider.GetDimensionNamesAsync(metricNamespace, metricName));
+        }
+
+        /// <summary>
+        /// Gets the dimension values for dimensionName satifying the dimensionFilters and
+        /// </summary>
+        /// <param name="metricNamespace">Metric namespace</param>
+        /// <param name="metricName">Metric name</param>
+        /// <param name="includeFilter">The dimension filters representing the pre-aggregate dimensions. Create an emtpy include filter for dimension with no filter values. Requested dimension should also be part of this and should be empty.</param>
+        /// <param name="excludeFilter">The dimension filters representing the pre-aggregate dimensions. Create an emtpy include filter for dimension with no filter values. Requested dimension should also be part of this and should be empty.</param>
+        /// <param name="dimensionName">Name of the dimension for which values are requested.</param>
+        /// <param name="startTimeUtc">Start time for evaluating dimension values.</param>
+        /// <param name="endTimeUtc">End time for evaluating dimension values.</param>
+        /// <returns>Dimension values for dimensionName.</returns>
+        public Task<IEnumerable<string>> GetDimensionValuesAsync(string metricNamespace, string metricName, List<Tuple<string, IEnumerable<string>>> includeFilter, List<Tuple<string, IEnumerable<string>>> excludeFilter, string dimensionName, DateTime startTimeUtc, DateTime endTimeUtc)
+        {
+            return MakeDependencyCall(_mdmDataProvider.GetDimensionValuesAsync(metricNamespace, metricName, includeFilter, excludeFilter, dimensionName, startTimeUtc, endTimeUtc));
+        }
+
+        /// <summary>
+        /// Gets the time series.
+        /// </summary>
+        /// <param name="startTimeUtc">The start time UTC.</param>
+        /// <param name="endTimeUtc">The end time UTC.</param>
+        /// <param name="sampling">The sampling type.</param>
+        /// <param name="definition">The time series definition.</param>
+        /// <returns>The time series for the given definition.</returns>
+        public Task<IEnumerable<DataTable>> GetTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, Sampling sampling, Tuple<string, string, IEnumerable<KeyValuePair<string, string>>> definition)
+        {
+            return MakeDependencyCall(_mdmDataProvider.GetTimeSeriesAsync(startTimeUtc, endTimeUtc, sampling, definition));
+        }
+
+        /// <summary>
+        /// Gets a list of the time series.
+        /// </summary>
+        /// <param name="startTimeUtc">The start time UTC.</param>
+        /// <param name="endTimeUtc">The end time UTC.</param>
+        /// <param name="sampling">The sampling type.</param>
+        /// <param name="seriesResolutionInMinutes">The resolution window used to reduce the resolution of the returned series.</param>
+        /// <param name="definitions">The time series definitions.</param>
+        /// <returns>The time series of for the given definitions.</returns>
+        public Task<IEnumerable<DataTable>> GetMultipleTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, Sampling sampling, int seriesResolutionInMinutes, IEnumerable<Tuple<string, string, IEnumerable<KeyValuePair<string, string>>>> definitions)
+        {
+            return MakeDependencyCall(_mdmDataProvider.GetMultipleTimeSeriesAsync(startTimeUtc, endTimeUtc, sampling, seriesResolutionInMinutes, definitions));
+        }
+
+        /// <summary>
+        /// Gets a list of the time series, each with multiple sampling types.
+        /// </summary>
+        /// <param name="startTimeUtc">The start time UTC.</param>
+        /// <param name="endTimeUtc">The end time UTC.</param>
+        /// <param name="sampling">The sampling types.</param>
+        /// <param name="definitions">The time series definitions.</param>
+        /// <param name="seriesResolutionInMinutes">The resolution window used to reduce the resolution of the returned series.</param>
+        /// <param name="aggregationType">The aggregation function used to reduce the resolution of the returned series.</param>
+        /// <returns>The time series of for the given definitions.</returns>
+        public Task<IEnumerable<DataTable>> GetMultipleTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, Sampling sampling, IEnumerable<Tuple<string, string, IEnumerable<KeyValuePair<string, string>>>> definitions, int seriesResolutionInMinutes = 1, AggregationType aggregationType = AggregationType.Automatic)
+        {
+            return MakeDependencyCall(_mdmDataProvider.GetMultipleTimeSeriesAsync(startTimeUtc, endTimeUtc, sampling, definitions, seriesResolutionInMinutes, aggregationType));
+        }
+
+        #endregion
+
         private async Task<T> MakeDependencyCall<T>(Task<T> dataProviderTask, [CallerMemberName]string dataProviderOperation = "")
         {
             Exception dataProviderException = null;
@@ -298,7 +399,5 @@ namespace Diagnostics.DataProviders
                 }
             }
         }
-
-       
     }
 }
