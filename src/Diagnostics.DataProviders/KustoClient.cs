@@ -61,6 +61,7 @@ namespace Diagnostics.DataProviders
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, string.Format(KustoApiEndpoint, cluster));
             request.Headers.Add("Authorization", authorizationToken);
             request.Headers.Add("x-ms-client-request-id", requestId ?? Guid.NewGuid().ToString());
+            request.Headers.UserAgent.ParseAdd("appservice-diagnostics"); 
 
             object requestPayload = new
             {
@@ -94,6 +95,7 @@ namespace Diagnostics.DataProviders
             catch(Exception ex)
             {
                 kustoApiException = ex;
+                throw;
             }
             finally
             {

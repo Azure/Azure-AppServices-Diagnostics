@@ -63,7 +63,7 @@ namespace Diagnostics.ModelsAndUtils.Models
                 var row = dataTable.NewRow();
                 for (int j = 0; j < dataTable.Columns.Count; j++)
                 {
-                    row[j] = dataTableResponse.Rows[i, j];
+                    row[j] = dataTableResponse.Rows[i, j] ?? DBNull.Value;
                 }
 
                 dataTable.Rows.Add(row);
@@ -87,7 +87,7 @@ namespace Diagnostics.ModelsAndUtils.Models
                 var row = dataTable.NewRow();
                 for (int j = 0; j < dataTable.Columns.Count; j++)
                 {
-                    row[j] = appInsightsDataTableResponse.Rows[i,j];
+                    row[j] = appInsightsDataTableResponse.Rows[i,j] ?? DBNull.Value;
                 }
 
                 dataTable.Rows.Add(row);
@@ -114,7 +114,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             {
                 for(int j = 0; j < table.Columns.Count; j++)
                 {
-                    rows[i, j] = table.Rows[i][j];
+                    rows[i, j] = table.Rows[i][j] == DBNull.Value ? null : table.Rows[i][j];
                 }
             }
 
