@@ -118,12 +118,12 @@ namespace Diagnostics.Tests.DataProviderTests
             var metadata = ScriptTestDataHelper.GetRandomMetadata();
             metadata.ScriptText = @"
                 public async static Task<IEnumerable<string>> Run(DataProviders dataProviders) {
-                    var includeFilter = new List<Tuple<string, IEnumerable<string>>>
+                    var filter = new List<Tuple<string, IEnumerable<string>>>
                     {
-                        new Tuple<string, IEnumerable<string>>(""ServerName"", new List<string>())
+                        new Tuple<string, IEnumerable<string>>(""StampName"", new List<string>())
                     };
 
-                    return await dataProviders.Mdm.GetDimensionValuesAsync(""Microsoft/Web/WebApps"", ""CpuTime"", includeFilter, new List<Tuple<string, IEnumerable<string>>>(), ""ServerName"", DateTime.UtcNow.AddMinutes(-30), DateTime.UtcNow);
+                    return await dataProviders.Mdm.GetDimensionValuesAsync(""Microsoft/Web/WebApps"", ""CpuTime"", filter, ""ServerName"", DateTime.UtcNow.AddMinutes(-30), DateTime.UtcNow);
                 }";
 
             var configFactory = new MockDataProviderConfigurationFactory();
@@ -152,7 +152,7 @@ namespace Diagnostics.Tests.DataProviderTests
                 public async static Task<IEnumerable<DataTable>> Run(DataProviders dataProviders) {
                     var dimensions = new Dictionary<string, string> { { ""StampName"", ""kudu1"" } };
                     var definition = Tuple.Create<string, string, IEnumerable<KeyValuePair<string, string>>>(""Microsoft/Web/WebApps"", ""CpuTime"", dimensions);
-                    return await dataProviders.Mdm.GetTimeSeriesAsync(DateTime.UtcNow.AddMinutes(-10), DateTime.UtcNow, Sampling.Average | Sampling.Max, definition);
+                    return await dataProviders.Mdm.GetTimeSeriesAsync(DateTime.UtcNow.AddMinutes(-10), DateTime.UtcNow, Sampling.Average | Sampling.Max | Sampling.Count, definition);
                 }";
 
             var configFactory = new MockDataProviderConfigurationFactory();

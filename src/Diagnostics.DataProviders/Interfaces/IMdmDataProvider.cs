@@ -1,8 +1,4 @@
-﻿using Microsoft.Cloud.Metrics.Client;
-using Microsoft.Cloud.Metrics.Client.Metrics;
-using Microsoft.Cloud.Metrics.Client.Query;
-using Microsoft.Online.Metrics.Serialization.Configuration;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
@@ -37,13 +33,12 @@ namespace Diagnostics.DataProviders.Interfaces
         /// </summary>
         /// <param name="metricNamespace">Metric namespace</param>
         /// <param name="metricName">Metric name</param>
-        /// <param name="includeFilter">The dimension filters representing the pre-aggregate dimensions. Create an emtpy include filter for dimension with no filter values. Requested dimension should also be part of this and should be empty.</param>
-        /// <param name="excludeFilter">The dimension filters representing the pre-aggregate dimensions. Create an emtpy include filter for dimension with no filter values. Requested dimension should also be part of this and should be empty.</param>
+        /// <param name="filter">The dimension filters representing the pre-aggregate dimensions. Create an emtpy include filter for dimension with no filter values. Requested dimension should also be part of this and should be empty.</param>
         /// <param name="dimensionName">Name of the dimension for which values are requested.</param>
         /// <param name="startTimeUtc">Start time for evaluating dimension values.</param>
         /// <param name="endTimeUtc">End time for evaluating dimension values.</param>
         /// <returns>Dimension values for dimensionName.</returns>
-        Task<IEnumerable<string>> GetDimensionValuesAsync(string metricNamespace, string metricName, List<Tuple<string, IEnumerable<string>>> includeFilter, List<Tuple<string, IEnumerable<string>>> excludeFilter, string dimensionName, DateTime startTimeUtc, DateTime endTimeUtc);
+        Task<IEnumerable<string>> GetDimensionValuesAsync(string metricNamespace, string metricName, List<Tuple<string, IEnumerable<string>>> filter, string dimensionName, DateTime startTimeUtc, DateTime endTimeUtc);
 
         /// <summary>
         /// Gets the time series.

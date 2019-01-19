@@ -5,10 +5,6 @@ using System.Threading.Tasks;
 using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.ModelsAndUtils.Models;
-using Microsoft.Cloud.Metrics.Client;
-using Microsoft.Cloud.Metrics.Client.Metrics;
-using Microsoft.Cloud.Metrics.Client.Query;
-using Microsoft.Online.Metrics.Serialization.Configuration;
 
 namespace Diagnostics.DataProviders
 {
@@ -76,17 +72,28 @@ namespace Diagnostics.DataProviders
         /// </summary>
         /// <param name="metricNamespace">Metric namespace</param>
         /// <param name="metricName">Metric name</param>
-        /// <param name="includeFilter">The dimension filters representing the pre-aggregate dimensions. Create an emtpy include filter for dimension with no filter values. Requested dimension should also be part of this and should be empty.</param>
-        /// <param name="excludeFilter">The dimension filters representing the pre-aggregate dimensions. Create an emtpy include filter for dimension with no filter values. Requested dimension should also be part of this and should be empty.</param>
+        /// <param name="filter">The dimension filters representing the pre-aggregate dimensions. Create an emtpy include filter for dimension with no filter values. Requested dimension should also be part of this and should be empty.</param>
         /// <param name="dimensionName">Name of the dimension for which values are requested.</param>
         /// <param name="startTimeUtc">Start time for evaluating dimension values.</param>
         /// <param name="endTimeUtc">End time for evaluating dimension values.</param>
         /// <returns>Dimension values for dimensionName.</returns>
-        public async Task<IEnumerable<string>> GetDimensionValuesAsync(string metricNamespace, string metricName, List<Tuple<string, IEnumerable<string>>> includeFilter, List<Tuple<string, IEnumerable<string>>> excludeFilter, string dimensionName, DateTime startTimeUtc, DateTime endTimeUtc)
+        public async Task<IEnumerable<string>> GetDimensionValuesAsync(string metricNamespace, string metricName, List<Tuple<string, IEnumerable<string>>> filter, string dimensionName, DateTime startTimeUtc, DateTime endTimeUtc)
         {
-            var filter = new List<DimensionFilter>();
-            includeFilter.ForEach(f => filter.Add(DimensionFilter.CreateIncludeFilter(f.Item1, f.Item2)));
-            excludeFilter.ForEach(f => filter.Add(DimensionFilter.CreateExcludeFilter(f.Item1, f.Item2)));
+            var contain = false;
+            foreach (var f in filter)
+            {
+                if(f.Item1.Equals(dimensionName, StringComparison.OrdinalIgnoreCase))
+                {
+                    contain = true;
+                    break;
+                }
+            }
+
+            if (!contain)
+            {
+                filter.Add(Tuple.Create(dimensionName, (IEnumerable<string>)new string[] { }));
+            }
+
             return await _mdmClient.GetDimensionValuesAsync(new MetricIdentifier(_configuration.MonitoringAccount, metricNamespace, metricName), filter, dimensionName, startTimeUtc, endTimeUtc);
         }
 

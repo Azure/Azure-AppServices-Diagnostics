@@ -1,5 +1,4 @@
-﻿using Microsoft.Cloud.Metrics.Client.Metrics;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Diagnostics.DataProviders
