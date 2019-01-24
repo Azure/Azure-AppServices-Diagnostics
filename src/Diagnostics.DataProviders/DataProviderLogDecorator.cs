@@ -54,6 +54,13 @@ namespace Diagnostics.DataProviders
             _dataSoureCancellationToken = context.DataSourcesCancellationToken;
         }
 
+        public DataProviderMetadata GetMetadata()
+        {
+            return _currentMetadataProvider;
+        }
+
+        #region AppInsight_DataProvider
+
         public Task<DataTable> ExecuteAppInsightsQuery(string query)
         {
             return MakeDependencyCall(_appInsightsDataProvider.ExecuteAppInsightsQuery(query));
@@ -63,6 +70,10 @@ namespace Diagnostics.DataProviders
         {
             return MakeDependencyCall(_appInsightsDataProvider.SetAppInsightsKey(appId, apiKey));
         }
+
+        #endregion
+
+        #region Kusto_DataProvider
 
         public Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
         {
@@ -83,6 +94,10 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_kustoDataProvider.GetKustoClusterQuery(query));
         }
 
+        #endregion
+
+        #region Observer_DataProvider
+
         public Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames)
         {
             return MakeDependencyCall(_observerDataProvider.GetAdminSitesByHostNameAsync(stampName, hostNames));
@@ -91,15 +106,6 @@ namespace Diagnostics.DataProviders
         public Task<JObject> GetAdminSitesBySiteNameAsync(string stampName, string siteName)
         {
             return MakeDependencyCall(_observerDataProvider.GetAdminSitesBySiteNameAsync(stampName, siteName));
-        }
-
-        public Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name)
-        {
-            return GetAppDeployments(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot);
-        }
-        public Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name, string slotName)
-        {
-            return MakeDependencyCall(_geomasterDataProvider.GetAppDeployments(subscriptionId, resourceGroupName, name, slotName));
         }
 
         public Task<IEnumerable<object>> GetAppServiceEnvironmentDeploymentsAsync(string hostingEnvironmentName)
@@ -112,23 +118,9 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_observerDataProvider.GetAppServiceEnvironmentDetailsAsync(hostingEnvironmentName));
         }
 
-        public Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name)
-        {
-            return GetAppSettings(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot);
-        }
-        public Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name, string slotName = GeoMasterConstants.ProductionSlot)
-        {
-            return MakeDependencyCall(_geomasterDataProvider.GetAppSettings(subscriptionId, resourceGroupName, name, slotName));
-        }
-
         public Task<dynamic> GetCertificatesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
             return MakeDependencyCall(_observerDataProvider.GetCertificatesInResourceGroupAsync(subscriptionName, resourceGroupName));
-        }
-
-        public DataProviderMetadata GetMetadata()
-        {
-            return _currentMetadataProvider;
         }
 
         public Task<dynamic> GetResource(string wawsObserverUrl)
@@ -211,11 +203,6 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_observerDataProvider.GetSiteWebSpaceNameAsync(subscriptionId, siteName));
         }
 
-        public Task<IDictionary<string, string[]>> GetStickySlotSettingNames(string subscriptionId, string resourceGroupName, string name)
-        {
-            return MakeDependencyCall(_geomasterDataProvider.GetStickySlotSettingNames(subscriptionId, resourceGroupName, name));
-        }
-
         public Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName)
         {
             return MakeDependencyCall(_observerDataProvider.GetStorageVolumeForSiteAsync(stampName, siteName));
@@ -226,10 +213,40 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_observerDataProvider.GetWebspaceResourceGroupName(subscriptionId, webSpaceName));
         }
 
+        #endregion
+
+        #region GeoMaster_DataProvider
+
+        public Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name)
+        {
+            return GetAppSettings(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot);
+        }
+
+        public Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name, string slotName = GeoMasterConstants.ProductionSlot)
+        {
+            return MakeDependencyCall(_geomasterDataProvider.GetAppSettings(subscriptionId, resourceGroupName, name, slotName));
+        }
+
+        public Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name)
+        {
+            return GetAppDeployments(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot);
+        }
+
+        public Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name, string slotName)
+        {
+            return MakeDependencyCall(_geomasterDataProvider.GetAppDeployments(subscriptionId, resourceGroupName, name, slotName));
+        }
+
+        public Task<IDictionary<string, string[]>> GetStickySlotSettingNames(string subscriptionId, string resourceGroupName, string name)
+        {
+            return MakeDependencyCall(_geomasterDataProvider.GetStickySlotSettingNames(subscriptionId, resourceGroupName, name));
+        }
+
         public Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string path = "")
         {
             return MakeDependencyCall(_geomasterDataProvider.MakeHttpGetRequest<T>(subscriptionId, resourceGroupName, name, slotName, path));
         }
+
         public Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path = "")
         {
             return MakeHttpGetRequest<T>(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot, path);
@@ -255,6 +272,8 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_geomasterDataProvider.VerifyHostingEnvironmentVnet(subscriptionId, vnetResourceGroup, vnetName, vnetSubnetName, cancellationToken));
         }
 
+        #endregion
+
         #region MDM_DataProvider
 
         /// <summary>
@@ -279,7 +298,6 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// Gets the list of dimension names for the metricId.
         /// </summary>
-        /// <param name="monitoringAccount">Monitoring account.</param>
         /// <param name="metricNamespace">Metric namespace</param>
         /// <param name="metricName">Metric name</param>
         /// <returns>The list of dimension names for the metricId.</returns>

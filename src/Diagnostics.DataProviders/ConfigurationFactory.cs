@@ -84,7 +84,7 @@ namespace Diagnostics.DataProviders
                         return "https://antares.metrics.nsatc.net";
                     case "CertificateThumbprint":
                         // Replace the thumbprint with the certificate installed in your machine.
-                        return "57BA82D3BEAEB2A60072B4684113C6201BA61E4E";
+                        return "";
                     case "MonitoringAccount":
                         return "Mock";
                     default:
