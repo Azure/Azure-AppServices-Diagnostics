@@ -6,14 +6,18 @@
 #region Gist Definition
 
 /***********************************************************/
-/************* Update id, tags and authors ***************/
+/***** Update id, name, tags, authors and description ******/
 /***********************************************************/
 
-public const string Id = "<YOUR_GIST_NAME>";
+public const string Id = "<GIST_ID>";
 
-public static readonly string[] Tags = new string[] {"<FIRST_TAG>"};
+public const string Name = "<GIST_NAME>";
 
-public static readonly string[] Authors = new string[] {"<FIRST_AUTHOR>"};
+public const string Tags = "<GIST_TAG>";
+
+public const string Authors = "<GIST_AUTHOR>";
+
+public const string Description = "<GIST_DESCRIPTION>";
 
 #endregion
 
