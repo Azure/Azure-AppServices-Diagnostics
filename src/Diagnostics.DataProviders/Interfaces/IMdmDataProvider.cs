@@ -41,14 +41,27 @@ namespace Diagnostics.DataProviders.Interfaces
         Task<IEnumerable<string>> GetDimensionValuesAsync(string metricNamespace, string metricName, List<Tuple<string, IEnumerable<string>>> filter, string dimensionName, DateTime startTimeUtc, DateTime endTimeUtc);
 
         /// <summary>
+        /// Gets the dimension values for dimensionName satifying the dimensionFilters and
+        /// </summary>
+        /// <param name="metricNamespace">Metric namespace</param>
+        /// <param name="metricName">Metric name</param>
+        /// <param name="dimensionName">Name of the dimension for which values are requested.</param>
+        /// <param name="startTimeUtc">Start time for evaluating dimension values.</param>
+        /// <param name="endTimeUtc">End time for evaluating dimension values.</param>
+        /// <returns>Dimension values for dimensionName.</returns>
+        Task<IEnumerable<string>> GetDimensionValuesAsync(string metricNamespace, string metricName, string dimensionName, DateTime startTimeUtc, DateTime endTimeUtc);
+
+        /// <summary>
         /// Gets the time series.
         /// </summary>
         /// <param name="startTimeUtc">The start time UTC.</param>
         /// <param name="endTimeUtc">The end time UTC.</param>
         /// <param name="sampling">The sampling type.</param>
-        /// <param name="definition">The time series definition.</param>
+        /// <param name="metricNamespace">The metric namespace.</param>
+        /// <param name="metricName">The metric name.</param>
+        /// <param name="dimension">The dimension.</param>
         /// <returns>The time series for the given definition.</returns>
-        Task<IEnumerable<DataTable>> GetTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, Sampling sampling, Tuple<string, string, IEnumerable<KeyValuePair<string, string>>> definition);
+        Task<IEnumerable<DataTable>> GetTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, Sampling sampling, string metricNamespace, string metricName, IDictionary<string, string> dimension);
 
         /// <summary>
         /// Gets a list of the time series.

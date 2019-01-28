@@ -151,8 +151,7 @@ namespace Diagnostics.Tests.DataProviderTests
             metadata.ScriptText = @"
                 public async static Task<IEnumerable<DataTable>> Run(DataProviders dataProviders) {
                     var dimensions = new Dictionary<string, string> { { ""StampName"", ""kudu1"" } };
-                    var definition = Tuple.Create<string, string, IEnumerable<KeyValuePair<string, string>>>(""Microsoft/Web/WebApps"", ""CpuTime"", dimensions);
-                    return await dataProviders.Mdm.GetTimeSeriesAsync(DateTime.UtcNow.AddMinutes(-10), DateTime.UtcNow, Sampling.Average | Sampling.Max | Sampling.Count, definition);
+                    return await dataProviders.Mdm.GetTimeSeriesAsync(DateTime.UtcNow.AddMinutes(-10), DateTime.UtcNow, Sampling.Average | Sampling.Max | Sampling.Count, ""Microsoft/Web/WebApps"", ""CpuTime"", dimensions);
                 }";
 
             var configFactory = new MockDataProviderConfigurationFactory();

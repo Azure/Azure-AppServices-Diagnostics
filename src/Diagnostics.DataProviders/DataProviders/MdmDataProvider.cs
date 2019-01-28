@@ -98,15 +98,37 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
+        /// Gets the dimension values for dimensionName satifying the dimensionFilters and
+        /// </summary>
+        /// <param name="metricNamespace">Metric namespace</param>
+        /// <param name="metricName">Metric name</param>
+        /// <param name="dimensionName">Name of the dimension for which values are requested.</param>
+        /// <param name="startTimeUtc">Start time for evaluating dimension values.</param>
+        /// <param name="endTimeUtc">End time for evaluating dimension values.</param>
+        /// <returns>Dimension values for dimensionName.</returns>
+        public async Task<IEnumerable<string>> GetDimensionValuesAsync(string metricNamespace, string metricName, string dimensionName, DateTime startTimeUtc, DateTime endTimeUtc)
+        {
+            var filter = new List<Tuple<string, IEnumerable<string>>>
+            {
+                Tuple.Create(dimensionName, (IEnumerable<string>)new string[] { })
+            };
+
+            return await _mdmClient.GetDimensionValuesAsync(new MetricIdentifier(_configuration.MonitoringAccount, metricNamespace, metricName), filter, dimensionName, startTimeUtc, endTimeUtc);
+        }
+
+        /// <summary>
         /// Gets the time series.
         /// </summary>
         /// <param name="startTimeUtc">The start time UTC.</param>
         /// <param name="endTimeUtc">The end time UTC.</param>
         /// <param name="sampling">The sampling type.</param>
-        /// <param name="definition">The time series definition.</param>
+        /// <param name="metricNamespace">The metric namespace.</param>
+        /// <param name="metricName">The metric name.</param>
+        /// <param name="dimension">The dimension.</param>
         /// <returns>The time series for the given definition.</returns>
-        public async Task<IEnumerable<DataTable>> GetTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, Sampling sampling, Tuple<string, string, IEnumerable<KeyValuePair<string, string>>> definition)
+        public async Task<IEnumerable<DataTable>> GetTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, Sampling sampling, string metricNamespace, string metricName, IDictionary<string, string> dimension)
         {
+            var definition = Tuple.Create<string, string, IEnumerable<KeyValuePair<string, string>>>(metricNamespace, metricName, dimension);
             return await GetMultipleTimeSeriesAsync(startTimeUtc, endTimeUtc, sampling, new List<Tuple<string, string, IEnumerable<KeyValuePair<string, string>>>> { definition });
         }
 

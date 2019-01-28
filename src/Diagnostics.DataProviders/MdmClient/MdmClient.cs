@@ -325,7 +325,7 @@ namespace Diagnostics.DataProviders
         /// We attempt up to 3 times with delay of 5 seconds and 10 seconds in between respectively, if the request cannot be sent or the response status code is 503.
         /// However, we don't want to retry in the OBO case.
         /// </remarks>
-        private static async Task<Tuple<string, HttpResponseMessage>> GetResponse(
+        private async Task<Tuple<string, HttpResponseMessage>> GetResponse(
             Uri url,
             HttpMethod method,
             HttpClient client,
@@ -353,6 +353,7 @@ namespace Diagnostics.DataProviders
                         (e.ResponseStatusCode != null && e.ResponseStatusCode != HttpStatusCode.ServiceUnavailable) ||
                         i == numAttempts)
                     {
+                        DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, "MdmClient", $"GetResponse Failure. Latency: {stopWatch.Elapsed}; Number of attempts: {i}; Exception: {e.ToString()}");
                         throw;
                     }
 
@@ -365,7 +366,7 @@ namespace Diagnostics.DataProviders
             throw new MetricsClientException($"Exhausted {numAttempts} attempts.", lastException);
         }
 
-        private static async Task<Tuple<string, HttpResponseMessage>> GetResponseNoRetry(
+        private async Task<Tuple<string, HttpResponseMessage>> GetResponseNoRetry(
                     Uri url,
                     HttpMethod method,
                     HttpClient client,
@@ -395,6 +396,7 @@ namespace Diagnostics.DataProviders
             }
 
             string responseString = null;
+            string message = null;
             var requestLatency = Stopwatch.StartNew();
             var stage = "SendRequest";
             var handlingServer = "Unknown";
@@ -427,17 +429,20 @@ namespace Diagnostics.DataProviders
                 stage = "ValidateStatus";
                 response.EnsureSuccessStatusCode();
 
+                message = $"Succeeded to get a response from the server. Url: {request.RequestUri}, HandlingServer:{handlingServer}";
+
                 return Tuple.Create(responseString, response);
             }
             catch (Exception e)
             {
-                var message = $"Failed to get a response from the server. TraceId:{traceId.Value.ToString("B")}, Url:{request.RequestUri}, HandlingServer:{handlingServer} Stage:{stage}, "
-                    + $"LatencyMs:{requestLatency.ElapsedMilliseconds}, ResponseStatus:{response?.StatusCode.ToString() ?? "<none>"}, Response:{responseString}";
+                message = $"Failed to get a response from the server. Url:{request.RequestUri}, HandlingServer:{handlingServer} Stage:{stage}, "
+                    + $"ResponseStatus:{response?.StatusCode.ToString() ?? "<none>"}";
 
                 throw new MetricsClientException(message, e, traceId.Value, response?.StatusCode);
             }
             finally
             {
+                DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, "MdmClient", message);
                 requestLatency.Stop();
             }
         }

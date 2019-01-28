@@ -18,31 +18,31 @@ namespace Diagnostics.DataProviders
             var cert = FindX509Certificate(certificateThumbprint, certificateStoreLocation);
             if (!cert.HasPrivateKey)
             {
-                throw new MetricsClientException(string.Format("Cert with Thumbprint [{0}] doesn't have a private key", cert.Thumbprint));
+                throw new InvalidOperationException(string.Format("Cert with Thumbprint [{0}] doesn't have a private key", cert.Thumbprint));
             }
 
             // Check expire and effective date
             var now = DateTime.Now;
             if (cert.NotBefore > now)
             {
-                throw new MetricsClientException(string.Format("The certificate is not valid until {0}.", cert.GetEffectiveDateString()));
+                throw new InvalidOperationException(string.Format("The certificate is not valid until {0}.", cert.GetEffectiveDateString()));
             }
 
             if (cert.NotAfter < now)
             {
-                throw new MetricsClientException(string.Format("The certificate is not valid after {0}.", cert.GetExpirationDateString()));
+                throw new InvalidOperationException(string.Format("The certificate is not valid after {0}.", cert.GetExpirationDateString()));
             }
 
             try
             {
                 if (cert.PrivateKey == null)
                 {
-                    throw new MetricsClientException("The certificate has a private key but the PrivateKey property is null, and it is typically due to a permission issue.");
+                    throw new InvalidOperationException("The certificate has a private key but the PrivateKey property is null, and it is typically due to a permission issue.");
                 }
             }
             catch (CryptographicException)
             {
-                throw new MetricsClientException("The certificate has a private key but the PrivateKey property is null, and it is typically due to a permission issue.");
+                throw new InvalidOperationException("The certificate has a private key but the PrivateKey property is null, and it is typically due to a permission issue.");
             }
 
             return cert;
@@ -65,14 +65,14 @@ namespace Diagnostics.DataProviders
                 var certificates = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
                 if (certificates.Count == 0)
                 {
-                    throw new MetricsClientException(
+                    throw new InvalidOperationException(
                         string.Format("No cert with Thumbprint [{0}] is found in the [{1}] store", thumbprint, storeLocation));
                 }
 
                 var cert = certificates.OfType<X509Certificate2>().FirstOrDefault(c => c.HasPrivateKey);
                 if (cert == null)
                 {
-                    throw new MetricsClientException(string.Format("No cert with Thumbprint [{0}] has a private key", thumbprint));
+                    throw new InvalidOperationException(string.Format("No cert with Thumbprint [{0}] has a private key", thumbprint));
                 }
 
                 return cert;
