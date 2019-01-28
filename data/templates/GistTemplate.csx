@@ -11,7 +11,7 @@
 
 public const string Id = "<GIST_ID>";
 
-public const string Name = "<GIST_NAME>";
+public const string Name = "";
 
 public const string Tags = "";
 
