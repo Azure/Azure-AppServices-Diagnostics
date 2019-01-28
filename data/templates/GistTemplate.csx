@@ -13,11 +13,11 @@ public const string Id = "<GIST_ID>";
 
 public const string Name = "<GIST_NAME>";
 
-public const string Tags = "<GIST_TAG>";
+public const string Tags = "";
 
 public const string Authors = "<GIST_AUTHOR>";
 
-public const string Description = "<GIST_DESCRIPTION>";
+public const string Description = "";
 
 #endregion
 
