@@ -18,31 +18,31 @@ namespace Diagnostics.DataProviders
             var cert = FindX509Certificate(certificateThumbprint, certificateStoreLocation);
             if (!cert.HasPrivateKey)
             {
-                throw new InvalidOperationException(string.Format("Cert with Thumbprint [{0}] doesn't have a private key", cert.Thumbprint));
+                throw new Exception(string.Format("Cert with Thumbprint [{0}] doesn't have a private key", cert.Thumbprint));
             }
 
             // Check expire and effective date
             var now = DateTime.Now;
             if (cert.NotBefore > now)
             {
-                throw new InvalidOperationException(string.Format("The certificate is not valid until {0}.", cert.GetEffectiveDateString()));
+                throw new Exception(string.Format("The certificate is not valid until {0}.", cert.GetEffectiveDateString()));
             }
 
             if (cert.NotAfter < now)
             {
-                throw new InvalidOperationException(string.Format("The certificate is not valid after {0}.", cert.GetExpirationDateString()));
+                throw new Exception(string.Format("The certificate is not valid after {0}.", cert.GetExpirationDateString()));
             }
 
             try
             {
                 if (cert.PrivateKey == null)
                 {
-                    throw new InvalidOperationException("The certificate has a private key but the PrivateKey property is null, and it is typically due to a permission issue.");
+                    throw new Exception("The certificate has a private key but the PrivateKey property is null, and it is typically due to a permission issue.");
                 }
             }
             catch (CryptographicException)
             {
-                throw new InvalidOperationException("The certificate has a private key but the PrivateKey property is null, and it is typically due to a permission issue.");
+                throw new Exception("The certificate has a private key but the PrivateKey property is null, and it is typically due to a permission issue.");
             }
 
             return cert;
@@ -65,14 +65,14 @@ namespace Diagnostics.DataProviders
                 var certificates = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
                 if (certificates.Count == 0)
                 {
-                    throw new InvalidOperationException(
+                    throw new Exception(
                         string.Format("No cert with Thumbprint [{0}] is found in the [{1}] store", thumbprint, storeLocation));
                 }
 
                 var cert = certificates.OfType<X509Certificate2>().FirstOrDefault(c => c.HasPrivateKey);
                 if (cert == null)
                 {
-                    throw new InvalidOperationException(string.Format("No cert with Thumbprint [{0}] has a private key", thumbprint));
+                    throw new Exception(string.Format("No cert with Thumbprint [{0}] has a private key", thumbprint));
                 }
 
                 return cert;

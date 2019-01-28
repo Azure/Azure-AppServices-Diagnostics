@@ -349,11 +349,12 @@ namespace Diagnostics.DataProviders
                 {
                     lastException = e;
 
+                    DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, "MdmClient", $"GetResponse Failure. Latency: {stopWatch.Elapsed}; Number of attempts: {i}; Exception: {e.ToString()}");
+
                     if (stopWatch.Elapsed >= client.Timeout ||
                         (e.ResponseStatusCode != null && e.ResponseStatusCode != HttpStatusCode.ServiceUnavailable) ||
                         i == numAttempts)
                     {
-                        DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, "MdmClient", $"GetResponse Failure. Latency: {stopWatch.Elapsed}; Number of attempts: {i}; Exception: {e.ToString()}");
                         throw;
                     }
 
