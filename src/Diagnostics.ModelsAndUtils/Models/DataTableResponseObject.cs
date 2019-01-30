@@ -98,9 +98,10 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public static DataTableResponseObject ToDataTableResponseObject(this DataTable table)
         {
-            var dataTableResponseObject = new DataTableResponseObject();
-
-            dataTableResponseObject.TableName = table.TableName;
+            var dataTableResponseObject = new DataTableResponseObject
+            {
+                TableName = table.TableName
+            };
 
             var columns = new List<DataTableResponseColumn>();
             foreach (DataColumn col in table.Columns)
