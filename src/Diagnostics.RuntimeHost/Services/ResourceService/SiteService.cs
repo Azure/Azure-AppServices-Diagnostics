@@ -1,4 +1,5 @@
 ﻿using Diagnostics.DataProviders;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.RuntimeHost.Utilities;
 using System;
@@ -26,13 +27,21 @@ namespace Diagnostics.RuntimeHost.Services
             if (string.IsNullOrWhiteSpace(siteName)) throw new ArgumentNullException("siteName");
 
             string queryTemplate =
-                $@"WawsAn_dailyentity 
+                $@"WawsAn_dailyentity
                 | where pdate >= ago(5d) and sitename =~ ""{siteName}"" and sitesubscription =~ ""{subscriptionId}"" and resourcegroup =~ ""{resourceGroup}"" 
                 | where sitestack !contains ""unknown"" and sitestack !contains ""no traffic"" and sitestack  !contains ""undefined""
                 | top 1 by pdate desc
                 | project sitestack";
 
-            DataTable stackTable = await dp.Kusto.ExecuteQuery(queryTemplate, DataProviderConstants.FakeStampForAnalyticsCluster, operationName: "GetApplicationStack");
+            DataTable stackTable = null;
+            
+            try{
+                stackTable = await dp.Kusto.ExecuteQuery(queryTemplate, DataProviderConstants.FakeStampForAnalyticsCluster, operationName: "GetApplicationStack");
+            }catch(Exception ex){
+                //swallow the exception. Since Mooncake does not have an analytics cluster
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(dataProviderContext.RequestId, "GetApplicationStack", subscriptionId,
+                    resourceGroup, siteName, ex.GetType().ToString(), ex.ToString());
+            }
             
             if(stackTable == null || stackTable.Rows == null || stackTable.Rows.Count == 0)
             {
