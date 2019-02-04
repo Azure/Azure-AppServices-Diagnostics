@@ -159,8 +159,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </example>
         public static DiagnosticData AddGuages(this Response response, List<Guage> guages, GuageRenderDirection renderDirection, GuageSize guageSize)
         {
-            try
-            {
                 if (guages == null || !guages.Any())
                     return null;
 
@@ -197,11 +195,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 };
                 response.Dataset.Add(diagData);
                 return diagData;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
         }
 
 
