@@ -37,7 +37,13 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// <summary>
         /// Api Management Service Resource
         /// </summary>
-        ApiManagementService = 32
+        ApiManagementService = 32,
+
+        /// <summary>
+        /// Azure Kubernetes Service Resource
+        /// </summary>
+        AzureKubernetesService = 64
+
     }
 
     /// <summary>
