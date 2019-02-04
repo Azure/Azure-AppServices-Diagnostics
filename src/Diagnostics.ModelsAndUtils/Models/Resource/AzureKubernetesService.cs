@@ -51,11 +51,11 @@ namespace Diagnostics.ModelsAndUtils.Models
             return filter is AzureKubernetesServiceFilter;
         }
 
-        public AzureKubernetesService(string subscriptionId, string resourceGroup, string appName) : base()
+        public AzureKubernetesService(string subscriptionId, string resourceGroup, string resourceName) : base()
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
-            this.Name = appName;
+            this.Name = resourceName;
         }
     }
 }
