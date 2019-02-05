@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
@@ -28,7 +28,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public InsightStatus Status { get; set; }
-
+      
         private double _percentFilled;
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 _percentFilled = value;
             }
         }
-
+      
         /// <summary>
         /// Text to show within the Guage, typically a number representation. Can be a markdown string. No need to decorate the string with the <markdown> tag
         /// </summary>
