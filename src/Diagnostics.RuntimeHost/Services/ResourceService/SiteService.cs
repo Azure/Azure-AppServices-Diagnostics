@@ -36,7 +36,10 @@ namespace Diagnostics.RuntimeHost.Services
             DataTable stackTable = null;
             
             try{
-                stackTable = await dp.Kusto.ExecuteQuery(queryTemplate, DataProviderConstants.FakeStampForAnalyticsCluster, operationName: "GetApplicationStack");
+                if (dataProviderContext.Configuration.KustoConfiguration.CloudDomain == KustoDataProviderConfiguration.AzureCloud)
+                {
+                    stackTable = await dp.Kusto.ExecuteQuery(queryTemplate, DataProviderConstants.FakeStampForAnalyticsCluster, operationName: "GetApplicationStack");
+                }
             }catch(Exception ex){
                 //swallow the exception. Since Mooncake does not have an analytics cluster
                 DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(dataProviderContext.RequestId, "GetApplicationStack", subscriptionId,
