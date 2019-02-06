@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -32,17 +33,20 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public bool IsExpanded;
 
+        public IEnumerable<Solution> Solutions;
+
         /// <summary>
         /// Creates an instance of Insight class.
         /// </summary>
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
-        public Insight(InsightStatus status, string message)
+        public Insight(InsightStatus status, string message, IEnumerable<Solution> solutions=null)
         {
             this.Status = status;
             this.Message = message ?? string.Empty;
             this.Body = new Dictionary<string, string>();
             this.IsExpanded = false;
+            this.Solutions = solutions;
         }
 
         /// <summary>
@@ -51,12 +55,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
         /// <param name="body">Insights Body.</param>
-        public Insight(InsightStatus status, string message, Dictionary<string, string> body)
+        public Insight(InsightStatus status, string message, Dictionary<string, string> body, IEnumerable<Solution> solutions = null)
         {
             this.Status = status;
             this.Message = message ?? string.Empty;
             this.Body = body;
             this.IsExpanded = false;
+            this.Solutions = solutions;
         }
 
         /// <summary>
@@ -65,9 +70,22 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
         /// <param name="body">Insights Body.</param>
-        public Insight(InsightStatus status, string message, Dictionary<string, string> body, bool isExpanded) : this(status, message, body)
+        public Insight(InsightStatus status, string message, Dictionary<string, string> body, 
+            bool isExpanded, IEnumerable<Solution> solutions = null) : this(status, message, body, solutions)
         {
             this.IsExpanded = isExpanded;
+        }
+        
+        public Insight WithSolutions(params Solution[] solutions)
+        {
+            if (Solutions == null)
+            {
+                Solutions = new List<Solution>();
+            }
+
+            Solutions.Concat(solutions);
+
+            return this;
         }
     }
 
@@ -115,7 +133,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 new DataColumn("Message", typeof(string)),
                 new DataColumn("Data.Name", typeof(string)),
                 new DataColumn("Data.Value", typeof(string)),
-                new DataColumn("Expanded", typeof(string))
+                new DataColumn("Expanded", typeof(string)),
+                new DataColumn(nameof(Insight.Solutions), typeof(string))
             });
 
             insights.ForEach(insight =>
@@ -128,11 +147,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                         insight.Message,
                         string.Empty,
                         string.Empty,
-                        insight.IsExpanded.ToString()
+                        insight.IsExpanded.ToString(),
+                        JsonConvert.SerializeObject(insight.Solutions)
                     });
                 }
                 else
                 {
+                    // This duplicates all other insight properties for each KVP in Body
                     foreach (KeyValuePair<string, string> entry in insight.Body)
                     {
                         table.Rows.Add(new string[]
@@ -141,7 +162,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                             insight.Message,
                             entry.Key,
                             entry.Value,
-                            insight.IsExpanded.ToString()
+                            insight.IsExpanded.ToString(),
+                            JsonConvert.SerializeObject(insight.Solutions)
                         });
 
                     }

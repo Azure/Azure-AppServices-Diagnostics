@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -26,6 +27,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public IEnumerable<string> Descriptions;
         // In case confirmation is needed for "instant" actions like restart, which could down the service
         public bool RequiresConfirmation;
+        public SolutionActionType ActionType;
 
         // Option 1: Call an azure operation (Ex. Restart Service)
         // Not sure what this would require, maybe it uses http call? 
@@ -43,6 +45,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public string ContentType;
         public string Content;
         public IHttpResponse Response;
+
+        public Solution(string title, IEnumerable<string> descriptions, bool confirm = false)
+        {
+            Title = title;
+            Descriptions = descriptions;
+            RequiresConfirmation = confirm;
+        }
     }
 
     public static class ResponseSolutionExtension
@@ -64,7 +73,49 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
             table.Rows.Add(new object[]
             {
-                solution.Title, solution.Descriptions, solution.RequiresConfirmation, solution.ResourceGroup, solution.ResourceName, solution.BladeName
+                solution.Title,
+                // Strange antipattern
+                JsonConvert.SerializeObject(solution.Descriptions),
+                solution.RequiresConfirmation,
+                solution.ResourceGroup,
+                solution.ResourceName,
+                solution.BladeName
+            });
+
+            var diagData = new DiagnosticData()
+            {
+                Table = table,
+                RenderingProperties = new Rendering(RenderingType.Solution)
+            };
+
+            response.Dataset.Add(diagData);
+            return diagData;
+        }
+
+        public static DiagnosticData AddSolution(this Response response, Insight forInsight, Solution solution)
+        {
+            var table = new DataTable();
+            foreach (var label in new List<string>() {
+                nameof(Solution.Title),
+                nameof(Solution.Descriptions),
+                nameof(Solution.RequiresConfirmation),
+                nameof(Solution.ResourceGroup),
+                nameof(Solution.ResourceName),
+                nameof(Solution.BladeName)
+            })
+            {
+                table.Columns.Add(new DataColumn(label, typeof(string)));
+            }
+
+            table.Rows.Add(new object[]
+            {
+                solution.Title,
+                // Strange antipattern
+                JsonConvert.SerializeObject(solution.Descriptions),
+                solution.RequiresConfirmation,
+                solution.ResourceGroup,
+                solution.ResourceName,
+                solution.BladeName
             });
 
             var diagData = new DiagnosticData()
