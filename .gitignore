@@ -314,3 +314,5 @@ wwwroot/
 build/
 dist/
 aot/
+
+src/Diagnostics.RuntimeHost/appsettings.json
