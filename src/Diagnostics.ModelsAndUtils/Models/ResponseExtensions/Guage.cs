@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
@@ -8,39 +8,27 @@ using Newtonsoft.Json.Converters;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
-    
-
     public class Guage
     {
         /// <summary>
         /// Create a new Guage instance. Does not have a default constructor.
         /// </summary>
-        public Guage(InsightStatus status, double percentFilled, string displayValue, string label, GuageSize size, string description = "")
+        public Guage(InsightStatus status, double percentFilled, string displayValue, string label, GuageSize size = GuageSize.Medium, string description = "")
         {
-            try
-            {
-                this.Status = status;
-                this.PercentFilled = percentFilled;
-                this.DisplayValue = displayValue;
-                this.Label = label;
-                if (size == GuageSize.Inherit) throw new Exception("Guage elements must have a size. Allowed size's are GuageSize.Small, GuageSize.Medium and GuageSize.Large. GuageSize.Inherit is allowed to use only with the Response.AddGuages extension method.");
-                this.Size = size;
-                this.Description = description;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            this.Status = status;
+            this.PercentFilled = percentFilled;
+            this.DisplayValue = displayValue;
+            this.Label = label;
+            this.Size = size;
+            this.Description = description;
         }
 
-
         /// <summary>
-        /// Insight Level for the Guage. Decides the color of the Guage
+        /// Insight Level for the Guage. Decides the color of the Guage. Red for Critical, Orange for Warning, Green for Success and Blue for Info & None.
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public InsightStatus Status { get; set; }
-
-        
+      
         private double _percentFilled;
 
         /// <summary>
@@ -50,14 +38,15 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             get { return _percentFilled; }
             set {
                 if (value < 0)
-                    throw new Exception("Supplied value for PercentFilled should be a non negetive number");
+                    throw new ArgumentException("Supplied value for PercentFilled should be a non negetive number");
 
                 if (value > 100)
-                    throw new Exception("Supplied value for PercentFilled should be less than or equal to 100");
+                    throw new ArgumentException("Supplied value for PercentFilled should be less than or equal to 100");
 
                 _percentFilled = value;
-            } }
-
+            }
+        }
+      
         /// <summary>
         /// Text to show within the Guage, typically a number representation. Can be a markdown string. No need to decorate the string with the <markdown> tag
         /// </summary>
@@ -94,14 +83,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
     /// <summary>
     /// Size of the Guage to Render.
-    /// Inherit should be used only with the Response.AddGuages extension method
     /// </summary>
     public enum GuageSize
     {
         Small,
         Medium,
-        Large,
-        Inherit
+        Large
     }
 
     public static class ResponseGuageExtension
@@ -112,7 +99,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="response">Response</param>
         /// <param name="guages">List<![CDATA[<Guage>]]></param>
         /// <param name="renderDirection">GuageRenderDirection</param>
-        /// <param name="guageSize">GuageSize. This will override the size of individual Guage's in the list and render them all with the specified size. To retain the Guage's individual size, use GuageSize.Inherit</param>
         /// <returns></returns>
         /// <example> 
         /// This sample shows how to use <see cref="AddGuages"/> method.
@@ -150,22 +136,21 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///             }
         ///         }
         ///     }
-        ///     res.AddGuages(guages, GuageRenderDirection.Horizontal, GuageSize.Inherit);
+        ///     res.AddGuages(guages, GuageRenderDirection.Horizontal);
         ///     res.AddInsight(InsightStatus.Info, "More detailed info below");
-        ///     res.AddGuages(guages, GuageRenderDirection.Vertical, GuageSize.Large);
+        ///     res.AddGuages(guages, GuageRenderDirection.Vertical);
         ///     return res;
         /// }
         /// </code>
         /// </example>
-        public static DiagnosticData AddGuages(this Response response, List<Guage> guages, GuageRenderDirection renderDirection, GuageSize guageSize)
+        public static DiagnosticData AddGuages(this Response response, List<Guage> guages, GuageRenderDirection renderDirection)
         {
-                if (guages == null || !guages.Any())
-                    return null;
+            if (guages == null || !guages.Any())
+                throw new ArgumentNullException("Paramter List<Guage> is null or contains no elements.");
 
                 var table = new DataTable();
-                table.Columns.Add("RenderDirection", typeof(string));
-                table.Columns.Add("MasterSize", typeof(string));
-                table.Columns.Add("Size", typeof(string));
+                table.Columns.Add("RenderDirection", typeof(int));
+                table.Columns.Add("Size", typeof(int));
                 table.Columns.Add("FillColor", typeof(int));
                 table.Columns.Add("PercentFilled", typeof(double));
                 table.Columns.Add("DisplayValue", typeof(string));
@@ -177,7 +162,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 {
                     table.Rows.Add(
                         JsonConvert.SerializeObject(renderDirection),
-                        JsonConvert.SerializeObject(guageSize),
                         JsonConvert.SerializeObject(g.Size),
                         g.Status,
                         g.PercentFilled,
@@ -218,7 +202,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public static DiagnosticData AddGuage(this Response response, Guage guage)
         {
             if (guage == null) return null;
-            return AddGuages(response, new List<Guage>() { guage}, GuageRenderDirection.Vertical, guage.Size);
+            return AddGuages(response, new List<Guage>() { guage}, GuageRenderDirection.Vertical);
+        }
+
+        public static DiagnosticData AddGuage(this Response response, InsightStatus status, double percentFilled, string displayValue, string label, GuageSize size = GuageSize.Medium, string description = "")
+        {
+            Guage guage = new Guage(status, percentFilled, displayValue, label, size, description);
+            return AddGuages(response, new List<Guage>() { guage }, GuageRenderDirection.Vertical);
         }
     }
 }
