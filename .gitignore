@@ -314,3 +314,7 @@ wwwroot/
 build/
 dist/
 aot/
+
+# .Net Core configuration files to avoid all risk of committing secrets
+appsettings.json
+appsettings.*.json

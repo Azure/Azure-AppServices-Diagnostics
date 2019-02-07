@@ -20,11 +20,10 @@ namespace Diagnostics.RuntimeHost
         public static IWebHost BuildWebHost(string[] args)
         {
             var config = new ConfigurationBuilder()
-            .AddCommandLine(args)
-            .Build();
+                .AddCommandLine(args)
+                .Build();
 
-            return
-            WebHost.CreateDefaultBuilder(args)
+            return WebHost.CreateDefaultBuilder(args)
                 .UseConfiguration(config)
                 .UseStartup<Startup>()
                 .Build();
