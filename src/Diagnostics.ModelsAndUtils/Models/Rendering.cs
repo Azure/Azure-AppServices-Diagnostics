@@ -187,7 +187,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data rendered as Tile with a title, some text and a link to another detector or a diagnostic tool
         /// </summary>
-        Card
+        Card,
+
+        /// <summary>
+        /// Data rendered as form with inputs fields and buttons.
+        /// </summary>
+        Form,
     }
 
     /// <summary>
