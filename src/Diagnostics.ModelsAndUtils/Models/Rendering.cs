@@ -187,7 +187,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         Card,
 
-        Solution
+        Solution,
+
+        /// <summary>
+        /// Data rendered as Guage with a label, some description text
+        /// </summary>
+        Guage
     }
 
     /// <summary>

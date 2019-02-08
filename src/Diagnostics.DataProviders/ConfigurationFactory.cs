@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -16,11 +17,11 @@ namespace Diagnostics.DataProviders
     public class AppSettingsDataProviderConfigurationFactory : DataProviderConfigurationFactory
     {
         private IConfigurationRoot _configuration;
-        public AppSettingsDataProviderConfigurationFactory()
+        public AppSettingsDataProviderConfigurationFactory(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
             _configuration = builder.Build();
         }

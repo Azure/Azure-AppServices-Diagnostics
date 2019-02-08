@@ -315,4 +315,5 @@ build/
 dist/
 aot/
 
-src/Diagnostics.RuntimeHost/appsettings.json
+# Appsettings file that may contain secrets
+appsettings.*.json
