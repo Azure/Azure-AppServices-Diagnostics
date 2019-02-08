@@ -315,6 +315,5 @@ build/
 dist/
 aot/
 
-# .Net Core configuration files to avoid all risk of committing secrets
-appsettings.json
-appsettings.*.json
+# Appsettings file that may contain secrets
+appsettings.Development.json
