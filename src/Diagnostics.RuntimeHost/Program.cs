@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore;
+﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -20,11 +14,10 @@ namespace Diagnostics.RuntimeHost
         public static IWebHost BuildWebHost(string[] args)
         {
             var config = new ConfigurationBuilder()
-            .AddCommandLine(args)
-            .Build();
+                .AddCommandLine(args)
+                .Build();
 
-            return
-            WebHost.CreateDefaultBuilder(args)
+            return WebHost.CreateDefaultBuilder(args)
                 .UseConfiguration(config)
                 .UseStartup<Startup>()
                 .Build();

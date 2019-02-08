@@ -37,7 +37,7 @@ namespace Diagnostics.RuntimeHost.Services
                 case "mock":
                     return new MockDataProviderConfigurationFactory();
                 default:
-                    return new AppSettingsDataProviderConfigurationFactory();
+                    return new AppSettingsDataProviderConfigurationFactory(env);
             }
         }
     }
