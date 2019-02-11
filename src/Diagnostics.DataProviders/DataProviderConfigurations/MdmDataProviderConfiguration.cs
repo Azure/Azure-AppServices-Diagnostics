@@ -9,19 +9,19 @@
         /// <summary>
         /// Gets or sets the base endpoint
         /// </summary>
-        [ConfigurationName("Endpoint")]
+        [ConfigurationName("MdmShoeboxEndpoint")]
         public string Endpoint { get; set; }
 
         /// <summary>
         /// Gets or sets the certificate thumbprint
         /// </summary>
-        [ConfigurationName("CertificateThumbprint")]
+        [ConfigurationName("MdmRegistrationCertThumbprint")]
         public string CertificateThumbprint { get; set; }
 
         /// <summary>
         /// Gets or sets monitoring account
         /// </summary>
-        [ConfigurationName("MonitoringAccount")]
+        [ConfigurationName("MdmShoeboxAccount")]
         public string MonitoringAccount { get; set; }
 
         /// <summary>
