@@ -18,7 +18,6 @@ namespace Diagnostics.DataProviders
             Observer = new DataProviderLogDecorator(context, SupportObserverDataProviderFactory.GetDataProvider(_cache, context.Configuration));
             GeoMaster = new DataProviderLogDecorator(context, new GeoMasterDataProvider(_cache, context.Configuration.GeoMasterConfiguration));
             AppInsights = new DataProviderLogDecorator(context, new AppInsightsDataProvider(_cache, context.Configuration.AppInsightsConfiguration));
-            Mdm = new DataProviderLogDecorator(context, new MdmDataProvider(_cache, context.Configuration.MdmConfiguration, context.RequestId));
         }
     }
 }
