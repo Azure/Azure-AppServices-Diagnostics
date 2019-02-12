@@ -167,7 +167,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                             var responseInput = new Response() { Metadata = invoker.EntryPointDefinitionAttribute };
                             invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, systemContext, responseInput });
                         }
-
+                        ValidateForms(invocationResponse.DetectorForms);
                         if (isInternalCall)
                         {
                             dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
@@ -220,7 +220,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         private DiagnosticApiResponse CreateQueryExceptionResponse(Exception ex, Definition detectorDefinition, bool isInternal, List<DataProviderMetadata> dataProvidersMetadata)
         {
             Response response = new Response() { Metadata = RemovePIIFromDefinition(detectorDefinition, isInternal) };
-            response.AddMarkdownView($"<pre><code>{ex.ToString()}</code></pre>", "Detector Runtime Exception");
+            response.AddMarkdownView($"<pre><code>Exception message:<strong> {ex.Message}</strong><br>Stack trace: {ex.StackTrace}</code></pre>", "Detector Runtime Exception");
             return DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata);
         }
 
@@ -609,6 +609,30 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             if (!isInternal) definition.Author = string.Empty;
             return definition;
+        }
+
+        /// <summary>
+        /// Validation to check if Form ID is unique and if a form contains a button
+        /// </summary>
+        private void ValidateForms(List<Form> detectorForms)
+        {
+            HashSet<int> formIds = new HashSet<int>();           
+            foreach(var form in detectorForms)
+            {
+                if (!formIds.Add(form.FormId))
+                {
+                    throw new Exception($"Form ID {form.FormId} already exists. Please give a unique Form ID");
+                }
+                bool isButtonPresent = false;
+                form.FormInputs.ForEach(input =>
+                {
+                    if (input.InputType == InputTypes.Button) isButtonPresent = true;
+                });
+                if(!isButtonPresent)
+                {
+                    throw new Exception($"There must at least one button for form id {form.FormId}");
+                }
+            }
         }
     }
 }

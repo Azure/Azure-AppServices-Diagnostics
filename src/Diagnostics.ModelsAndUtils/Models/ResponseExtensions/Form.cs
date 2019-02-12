@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
@@ -10,6 +11,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public int FormId;
 
         /// <summary>
+        /// Title for the form 
+        /// </summary>
+        public string FormTitle;
+
+        /// <summary>
         /// Represents list of inputs for the form
         /// </summary>
         public List<FormInput> FormInputs;
@@ -18,19 +24,48 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// Creates instance of Form class
         /// </summary>
         /// <param name="id">Unique ID for the Form</param>
-        public Form(int id)
+        /// <param name="title">Title for the Form</param>
+        public Form(int id, string title = "")
         {
             FormId = id;
             FormInputs = new List<FormInput>();
+            CurrentInputIds = new HashSet<int>();
+            FormTitle = title;
         }
+
+        /// <summary>
+        /// Hashset containing input IDs
+        /// </summary>
+        private HashSet<int> CurrentInputIds;
 
         /// <summary>
         /// Adds a form input to the form
         /// </summary>
-        /// <param name="input"></param>
+        /// <param name="input">Input element to be added to the form</param>
         public void AddFormInput(FormInput input)
         {
-            FormInputs.Add(input);
+            // Returns true if we are able to add the input id to hashset
+            if(CurrentInputIds.Add(input.InputId))
+            {
+                input.CombinedId = input.InputId.ToString() + "." + FormId.ToString();
+                FormInputs.Add(input);             
+            }
+            else
+            {
+                throw new Exception($"Input ID {input.InputId} already exists for Form {FormId}. Please give a unique ID for the input");
+            }          
+        }
+
+        /// <summary>
+        /// Adds a list of form inputs to the form
+        /// </summary>
+        /// <param name="inputs">List of form inputs</param>
+        public void AddFormInputs(List<FormInput> inputs)
+        {
+            inputs.ForEach(input =>
+            {
+                AddFormInput(input);
+            });
         }
     }
 
@@ -57,21 +92,25 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public string Label;
 
         /// <summary>
+        /// Combines the parent form id and input id
+        /// </summary>
+        public string CombinedId;
+
+        /// <summary>
         /// Creates an input with given id and input type
         /// </summary>
         /// <param name="id">unique id for the input</param>
         /// <param name="inputType">Input type for the input</param>
-        /// <param name="isRequired">Indicates whether this is a required input</param>
         /// <param name="label">The label of the input</param>
-        public FormInput(int id, InputTypes inputType, bool isRequired = false, string label = "")
+        /// <param name="isRequired">Indicates whether this is a required input</param>
+        public FormInput(int id, InputTypes inputType, string label = "", bool isRequired = false)
         {
             InputId = id;
             InputType = inputType;
-            IsRequired = isRequired;
             Label = label;
+            IsRequired = isRequired;
         }
     }
-
 
     public enum InputTypes
     {
@@ -79,34 +118,40 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         Checkbox,
         RadioButton,
         DropDown,
+        Button
     }
+
 
     public static class ResponseFormExtension
     {
-        public static DiagnosticData AddFormView(this Response response, Form form)
+        /// <summary>
+        /// Adds a list of forms to response
+        /// </summary>
+        /// <param name="response">Response object</param>
+        /// <param name="forms">List of forms</param>
+        /// <returns></returns>
+        public static DiagnosticData AddForms(this Response response, List<Form> forms)
         {
-            if(form == null)
+            if(forms == null)
             {
                 return null;
             }
+
             var table = new DataTable();
+            table.TableName = "Forms";
             table.Columns.Add(new DataColumn("FormId", typeof(int)));
-            table.Columns.Add(new DataColumn("InputId", typeof(int)));
-            table.Columns.Add(new DataColumn("InputType", typeof(InputTypes)));
-            table.Columns.Add(new DataColumn("IsRequired", typeof(bool)));
-            table.Columns.Add(new DataColumn("Label", typeof(string)));
-            
-            foreach(var input in form.FormInputs)
-            {
+            table.Columns.Add(new DataColumn("FormTitle", typeof(string)));
+            table.Columns.Add(new DataColumn("Inputs", typeof(List<FormInput>)));
+            forms.ForEach(form =>
+            {               
                 table.Rows.Add(new object[]
                 {
                     form.FormId,
-                    input.InputId,
-                    input.InputType,
-                    input.IsRequired,
-                    input.Label
-                });
-            }
+                    form.FormTitle,
+                    form.FormInputs,
+                });              
+            });
+
             var diagData = new DiagnosticData()
             {
                 Table = table,
@@ -115,9 +160,20 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                     Title = string.Empty
                 }
             };
-
+            response.DetectorForms.AddRange(forms);
             response.Dataset.Add(diagData);
             return diagData;
+        }
+
+        /// <summary>
+        /// Adds a single form to response
+        /// </summary>
+        /// <param name="response">Response object</param>
+        /// <param name="form">Form to be added</param>
+        /// <returns></returns>
+        public static DiagnosticData AddForm(this Response response, Form form)
+        {
+            return AddForms(response, new List<Form> { form });
         }
     }
 }
