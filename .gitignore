@@ -314,3 +314,6 @@ wwwroot/
 build/
 dist/
 aot/
+
+# Appsettings file that may contain secrets
+appsettings.*.json

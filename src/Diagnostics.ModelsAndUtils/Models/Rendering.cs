@@ -190,6 +190,11 @@ namespace Diagnostics.ModelsAndUtils.Models
         Card,
 
         /// <summary>
+        /// Data rendered as Guage with a label, some description text
+        /// </summary>
+        Guage,
+
+        /// <summary>
         /// Data rendered as form with inputs fields and buttons.
         /// </summary>
         Form,
