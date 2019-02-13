@@ -20,7 +20,7 @@ namespace Diagnostics.DataProviders
         {
             _configuration = configuration;
             _httpClient = GetObserverClient();
-            _httpClient.BaseAddress = new Uri("https://wawsobserver-prod.azurewebsites.net/api/");
+            _httpClient.BaseAddress = new Uri($"{configuration.Endpoint}/api/");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
