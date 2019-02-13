@@ -568,10 +568,13 @@ namespace Diagnostics.RuntimeHost.Controllers
                 if (dataProvider.FieldType.IsInterface)
                 {
                     var metadataProvider = dataProvider.GetValue(dataProviders) as IMetadataProvider;
-                    var metadata = metadataProvider.GetMetadata();
-                    if (metadata != null)
+                    if (metadataProvider != null)
                     {
-                        dataprovidersMetadata.Add(metadata);
+                        var metadata = metadataProvider.GetMetadata();
+                        if (metadata != null)
+                        {
+                            dataprovidersMetadata.Add(metadata);
+                        }
                     }
                 }
             }
