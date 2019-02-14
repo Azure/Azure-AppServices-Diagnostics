@@ -10,7 +10,6 @@ namespace Diagnostics.DataProviders
         public ISupportObserverDataProvider Observer;
         public IGeoMasterDataProvider GeoMaster;
         public IAppInsightsDataProvider AppInsights;
-        public IMdmDataProvider Mdm;
 
         public DataProviders(DataProviderContext context)
         {
