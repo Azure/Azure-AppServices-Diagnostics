@@ -51,12 +51,22 @@ namespace Diagnostics.DataProviders
 
         public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
         {
+            if (string.IsNullOrWhiteSpace(stampName))
+            {
+                throw new ArgumentNullException();
+            }
+
+            if (string.IsNullOrWhiteSpace(siteName))
+            {
+                throw new ArgumentNullException();
+            }
+
             return await GetRuntimeSiteSlotMapInternal(stampName, siteName);
         }
 
         private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName)
         {
-            var result = await Get(string.IsNullOrWhiteSpace(stampName) ? $"/sites/{siteName}/runtimesiteslotmap" : $"stamp/{stampName}/sites/{siteName}/runtimesiteslotmap");
+            var result = await GetObserverResource($"stamps/{stampName}/sites/{siteName}/runtimesiteslotmap");
             var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);
             var slotTimeRange = new Dictionary<string, List<RuntimeSitenameTimeRange>>(slotTimeRangeCaseSensitiveDictionary, StringComparer.CurrentCultureIgnoreCase);
             return slotTimeRange;
