@@ -34,7 +34,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Query)]
-        public async Task<IActionResult> Post(string subscriptionId, string resourceGroupName, string siteName, [FromBody]CompilationBostBody<DiagnosticSiteData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> Post(string subscriptionId, string resourceGroupName, string siteName, [FromBody]CompilationBostBody<DiagnosticSiteData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] FormContext formContext = null)
         {
             if (jsonBody == null)
             {
@@ -52,7 +52,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, jsonBody.Resource, startTimeUtc, endTimeUtc);
-            return await base.ExecuteQuery(app, jsonBody, startTime, endTime, timeGrain);
+            return await base.ExecuteQuery(app, jsonBody, startTime, endTime, timeGrain, formContext: formContext);
         }
 
         [HttpPost(UriElements.Detectors)]

@@ -16,6 +16,7 @@ using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
@@ -100,7 +101,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return response == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata));
         }
 
-        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationBostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null)
+        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationBostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null, FormContext formContext = null)
         {
             if (jsonBody == null)
             {
@@ -120,7 +121,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             EntityMetadata metaData = new EntityMetadata(jsonBody.Script);
 
-            var runtimeContext = PrepareContext(resource, startTimeUtc, endTimeUtc);
+            var runtimeContext = PrepareContext(resource, startTimeUtc, endTimeUtc, formContext: formContext);
 
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
 
@@ -133,14 +134,14 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             var compilerResponse = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, runtimeContext.OperationContext.RequestId);
             queryRes.CompilationOutput = compilerResponse;
-
+            
             if (queryRes.CompilationOutput.CompilationSucceeded)
             {
                 byte[] asmData = Convert.FromBase64String(compilerResponse.AssemblyBytes);
                 byte[] pdbData = Convert.FromBase64String(compilerResponse.PdbBytes);
 
                 tempAsm = Assembly.Load(asmData, pdbData);
-
+                queryRes.CompilationOutput.AssemblyPath = tempAsm.ToString();
                 using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
                 {
                     invoker.InitializeEntryPoint(tempAsm);
@@ -154,7 +155,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         if (detectorId == null)
                         {
                             if (!VerifyEntity(invoker, ref queryRes)) return Ok(queryRes);
-                            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
+                            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, formContext: formContext);
 
                             var responseInput = new Response() { Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, cxt.ClientIsInternal) };
                             invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, cxt.OperationContext, responseInput });
@@ -396,7 +397,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return systemContext;
         }
 
-        private RuntimeContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, SupportTopic supportTopic = null)
+        private RuntimeContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, SupportTopic supportTopic = null, FormContext formContext = null)
         {
             this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
             this.Request.Headers.TryGetValue(HeaderConstants.InternalClientHeader, out StringValues internalCallHeader);
@@ -422,7 +423,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(DataProviderConstants.KustoTimeFormat),
                 internalViewRequested || forceInternal,
                 requestIds.FirstOrDefault(),
-                supportTopic: supportTopic
+                supportTopic: supportTopic,
+                form: formContext
             );
 
             return new RuntimeContext<TResource>()

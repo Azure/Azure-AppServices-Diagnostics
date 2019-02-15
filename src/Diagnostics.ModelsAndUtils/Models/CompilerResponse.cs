@@ -13,5 +13,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string AssemblyBytes;
 
         public string PdbBytes;
+
+        public string AssemblyPath;
     }
 }
