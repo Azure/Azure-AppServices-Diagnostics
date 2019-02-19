@@ -12,19 +12,16 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     {
         public string Title { get; set; }
         public IEnumerable<string> Descriptions { get; set; }
-        public Uri ResourceUri { get; set; }
+        public string ResourceUri { get; set; }
         public bool RequiresConfirmation { get; set; }
 
-        public Solution(string title, IEnumerable<string> descriptions, Uri resourceUri, bool confirm = false)
+        public Solution(string title, IEnumerable<string> descriptions, string resourceUri, bool confirm = false)
         {
             Title = title;
             Descriptions = descriptions;
             ResourceUri = resourceUri;
             RequiresConfirmation = confirm;
         }
-
-        public Solution(string title, IEnumerable<string> descriptions, string resourceUri, bool confirm = false) : 
-            this(title, descriptions, new Uri(resourceUri), confirm) { }
 
         //TODO: Another overload taking ResourceGroup and SiteName to build resourceUri would also be useful
     }
@@ -50,8 +47,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 solution.Title,
                 // Strange antipattern
                 JsonConvert.SerializeObject(solution.Descriptions),
-                solution.ResourceUri.ToString(),
-                solution.RequiresConfirmation
+                solution.ResourceUri,
+                solution.RequiresConfirmation.ToString()
             });
 
             var diagData = new DiagnosticData()
