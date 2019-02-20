@@ -53,12 +53,12 @@ namespace Diagnostics.DataProviders
         {
             if (string.IsNullOrWhiteSpace(stampName))
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(stampName);
             }
 
             if (string.IsNullOrWhiteSpace(siteName))
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(siteName);
             }
 
             return await GetRuntimeSiteSlotMapInternal(stampName, siteName);
