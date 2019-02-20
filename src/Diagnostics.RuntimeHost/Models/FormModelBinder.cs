@@ -28,6 +28,16 @@ namespace Diagnostics.RuntimeHost.Models
             {
                 return Task.CompletedTask;
             }
+            if(!IsInt(formIdValueProvider.FirstValue))
+            {
+                bindingContext.ModelState.TryAddModelError("fId", "Form Id must be an integer.");
+                return Task.CompletedTask;
+            }
+            if(!IsInt(btnIdProvider.FirstValue))
+            {
+                bindingContext.ModelState.TryAddModelError("btnId", "Button Id must be an integer.");
+                return Task.CompletedTask;
+            }
             var result = new FormContext();
             result.FormId = Convert.ToInt32(formIdValueProvider.FirstValue);
             result.ButtonId = Convert.ToInt32(btnIdProvider.FirstValue);
@@ -35,13 +45,23 @@ namespace Diagnostics.RuntimeHost.Models
             {
                 bindingContext.ModelState.TryAddModelError(
                                        "InputId",
-                                       "Number of input ids must be same as number of input values");
+                                       "Number of input ids must be same as number of input values.");
                 return Task.CompletedTask;
             }
             var inputIds = inputIdProvider.Values.ToArray();
             var inputValues = inputValueProvider.Values.ToArray();
             for(int i = 0; i<inputIds.Length; i++)
             {
+                if(!IsInt(inputIds[i]))
+                {
+                    bindingContext.ModelState.TryAddModelError("inpId", "Input Id must be an integer.");
+                    return Task.CompletedTask;
+                }
+                if(inputValues[i].Length > 50)
+                {
+                    bindingContext.ModelState.TryAddModelError("val", "Length of val cannot exceed 50 characters.");
+                    return Task.CompletedTask;
+                }
                 result.AddFormInput(new ExecuteFormInput
                 {
                     InputId = Convert.ToInt32(inputIds[i]),
@@ -50,6 +70,12 @@ namespace Diagnostics.RuntimeHost.Models
             }
             bindingContext.Result = ModelBindingResult.Success(result);
             return Task.CompletedTask;
+        }
+
+        private bool IsInt(string num)
+        {
+            int id = 0;
+            return int.TryParse(num, out id);
         }
     }
 }

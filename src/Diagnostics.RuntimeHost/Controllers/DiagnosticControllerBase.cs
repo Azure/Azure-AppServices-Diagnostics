@@ -51,14 +51,14 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(await this.ListDetectorsInternal(cxt));
         }
 
-        protected async Task<IActionResult> GetDetector(TResource resource, string detectorId, string startTime, string endTime, string timeGrain)
+        protected async Task<IActionResult> GetDetector(TResource resource, string detectorId, string startTime, string endTime, string timeGrain, FormContext form = null)
         {
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
             {
                 return BadRequest(errorMessage);
             }
 
-            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, formContext: form);
             var detectorResponse = await GetDetectorInternal(detectorId, cxt);
             return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2));
         }
@@ -141,7 +141,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                 byte[] pdbData = Convert.FromBase64String(compilerResponse.PdbBytes);
 
                 tempAsm = Assembly.Load(asmData, pdbData);
-                queryRes.CompilationOutput.AssemblyPath = tempAsm.ToString();
                 using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
                 {
                     invoker.InitializeEntryPoint(tempAsm);
@@ -624,18 +623,24 @@ namespace Diagnostics.RuntimeHost.Controllers
             HashSet<int> formIds = new HashSet<int>();           
             foreach(var form in detectorForms)
             {
+                int totalInputs = 0;
                 if (!formIds.Add(form.FormId))
                 {
-                    throw new Exception($"Form ID {form.FormId} already exists. Please give a unique Form ID");
+                    throw new Exception($"Form ID {form.FormId} already exists. Please give a unique Form ID.");
                 }
                 bool isButtonPresent = false;
                 form.FormInputs.ForEach(input =>
                 {
                     if (input.InputType == InputTypes.Button) isButtonPresent = true;
+                    if (input.InputType != InputTypes.Button) totalInputs++;
                 });
                 if(!isButtonPresent)
                 {
-                    throw new Exception($"There must at least one button for form id {form.FormId}");
+                    throw new Exception($"There must at least one button for form id {form.FormId}.");
+                }
+                if(totalInputs > 5)
+                {
+                    throw new Exception("Total number of inputs for a form cannot exceed 5.");
                 }
             }
         }
