@@ -142,9 +142,9 @@ namespace Diagnostics.DataProviders
             JToken obj2 = ((JArray)siteObjects)
                     .Select(i => (JObject)i)
                     .FirstOrDefault(
-                        j => (j.ContainsKey("subscription") && j["subscription"]["name"].ToString() == subscriptionId
-                            && j.ContainsKey("resource_group_name") && j["resource_group_name"].ToString() == resourceGroupName
-                            && j.ContainsKey("stamp")));
+                        j => j.ContainsKey("subscription") && j["subscription"]["name"].ToString().ToLower() == subscriptionId.ToLower()
+                            && j.ContainsKey("resource_group_name") && j["resource_group_name"].ToString().ToLower() == resourceGroupName.ToLower()
+                            && j.ContainsKey("stamp"));
 
             string stampName = obj2?["stamp"]?["name"]?.ToString();
             return stampName;

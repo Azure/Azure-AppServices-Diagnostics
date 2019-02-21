@@ -157,7 +157,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     {
                         LogException(downloadEx.Message, downloadEx);
                     }
-                    
+
                 }
 
                 await SyncLocalDirForDeletedEntriesInGitHub(githubDirectories, destDirInfo);
