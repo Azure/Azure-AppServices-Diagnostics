@@ -73,9 +73,14 @@ namespace Diagnostics.DataProviders
                     default: return string.Empty;
                 }
             }           
-            else if (prefix == "SupportObserver" && name == "IsMockConfigured")
+            else if (prefix == "SupportObserver")
             {
-                return "true";
+                switch (name)
+                {
+                    case "IsMockConfigured": return "true";
+                    case "Endpoint": return "https://wawsobserver.azurewebsites.windows.net";
+                    default: return string.Empty;
+                }
             }
             else if (prefix == "Mdm")
             {
