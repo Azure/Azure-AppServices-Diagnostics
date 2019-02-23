@@ -22,7 +22,8 @@ using System.Net;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Diagnostics.Scripts.Utilities;
+using System.Web;
 namespace Diagnostics.RuntimeHost.Controllers
 {
     public abstract class DiagnosticControllerBase<TResource> : Controller where TResource : IResource
@@ -130,17 +131,54 @@ namespace Diagnostics.RuntimeHost.Controllers
                 InvocationOutput = new DiagnosticApiResponse()
             };
 
+            string scriptETag = string.Empty;
+            if(Request.Headers.ContainsKey("script-etag"))
+            {
+                scriptETag = Request.Headers["script-etag"];
+            }
+            string assemblyFullName = string.Empty;
+            if(Request.Headers.ContainsKey("assembly-name"))
+            {
+                assemblyFullName = HttpUtility.UrlDecode(Request.Headers["assembly-name"]);
+            }
+
             Assembly tempAsm = null;
 
-            var compilerResponse = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, runtimeContext.OperationContext.RequestId);
-            queryRes.CompilationOutput = compilerResponse;
+            bool isCompilationNeeded = ScriptCompilation.IsCompilationNeeded(assemblyFullName, jsonBody.Script, scriptETag, out tempAsm);
+            bool loadFromAssembly = false;
+            if(isCompilationNeeded)
+            {
+                var compilerResponse = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, runtimeContext.OperationContext.RequestId);
+                queryRes.CompilationOutput = compilerResponse;
+                queryRes.CompilationOutput.IsCompiled = true;
+            }
+            else
+            {
+                // Setting compilation succeeded to be true as it has been successfully compiled before
+                queryRes.CompilationOutput = new CompilerResponse();
+                queryRes.CompilationOutput.CompilationSucceeded = true;
+                loadFromAssembly = true;
+                queryRes.CompilationOutput.CompilationTraces = new string[] { "No code changes were detected. Detector code was executed using previous compilation." };
+            }
             
             if (queryRes.CompilationOutput.CompilationSucceeded)
             {
-                byte[] asmData = Convert.FromBase64String(compilerResponse.AssemblyBytes);
-                byte[] pdbData = Convert.FromBase64String(compilerResponse.PdbBytes);
-
-                tempAsm = Assembly.Load(asmData, pdbData);
+                try
+                {
+                    if (!loadFromAssembly)
+                    {
+                        byte[] asmData = Convert.FromBase64String(queryRes.CompilationOutput.AssemblyBytes);
+                        byte[] pdbData = Convert.FromBase64String(queryRes.CompilationOutput.PdbBytes);
+                        tempAsm = Assembly.Load(asmData, pdbData);
+                        queryRes.CompilationOutput.AssemblyName = tempAsm.FullName;
+                        Response.Headers.Add("script-etag", Convert.ToBase64String(ScriptCompilation.GetHashFromScript(jsonBody.Script)));
+                        queryRes.CompilationOutput.ScriptETag = Convert.ToBase64String(ScriptCompilation.GetHashFromScript(jsonBody.Script));
+                    }
+                }
+                catch(Exception e)
+                {
+                    throw new Exception($"Problem while loading Assembly: {e.Message}");
+                }
                 using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
                 {
                     invoker.InitializeEntryPoint(tempAsm);
@@ -596,7 +634,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     queryRes.CompilationOutput.CompilationSucceeded = false;
                     queryRes.CompilationOutput.AssemblyBytes = string.Empty;
                     queryRes.CompilationOutput.PdbBytes = string.Empty;
-                    queryRes.CompilationOutput.CompilationOutput = queryRes.CompilationOutput.CompilationOutput.Concat(new List<string>()
+                    queryRes.CompilationOutput.CompilationTraces = queryRes.CompilationOutput.CompilationTraces.Concat(new List<string>()
                     {
                         $"Error : There is already a detector(id : {existingDetector.EntryPointDefinitionAttribute.Id}, name : {existingDetector.EntryPointDefinitionAttribute.Name})" +
                         $" that uses the SupportTopic (id : {topicId.Id}, pesId : {topicId.PesId}). System can't have two detectors for same support topic id. Consider merging these two detectors."

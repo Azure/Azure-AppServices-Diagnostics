@@ -180,5 +180,23 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 
             return dt;
         }
+
+        /// <summary>
+        /// Gets the form input object for the given form and input id
+        /// </summary>
+        /// <param name="form">Form to search</param>
+        /// <param name="inputId">Given input id</param>
+        public static ExecuteFormInput GetFormInput(FormContext form, int inputId)
+        {
+            try
+            {
+                var formInput = form.FormInputs.First(i => i.InputId == inputId);
+                return formInput;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"{e.Message}, Please check the given input id");
+            }
+        }
     }
 }

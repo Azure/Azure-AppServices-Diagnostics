@@ -8,12 +8,16 @@ namespace Diagnostics.ModelsAndUtils.Models
     {
         public bool CompilationSucceeded;
 
-        public IEnumerable<string> CompilationOutput;
+        public IEnumerable<string> CompilationTraces;
 
         public string AssemblyBytes;
 
         public string PdbBytes;
 
-        public string AssemblyPath;
+        public string AssemblyName;
+
+        public string ScriptETag;
+
+        public bool IsCompiled;
     }
 }
