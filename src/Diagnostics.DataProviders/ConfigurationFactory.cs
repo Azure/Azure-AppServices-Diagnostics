@@ -81,12 +81,12 @@ namespace Diagnostics.DataProviders
             {
                 switch (name)
                 {
-                    case "Endpoint":
+                    case "MdmShoeboxEndpoint":
                         return "https://antares.metrics.nsatc.net";
-                    case "CertificateThumbprint":
+                    case "MdmRegistrationCertThumbprint":
                         // Replace the thumbprint with the certificate installed in your machine.
                         return "";
-                    case "MonitoringAccount":
+                    case "MdmShoeboxAccount":
                         return "Mock";
                     default:
                         return string.Empty;
