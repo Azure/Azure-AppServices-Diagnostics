@@ -57,11 +57,14 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             markdownBuilder.AppendLine();
             markdownBuilder.Append(DictionaryToMarkdownList(actionArgs));
 
+            var instructions = $"{SolutionConstants.UpdateSettingsInstructions}\n\n" +
+                $"{DictionaryToMarkdownList(actionArgs, new string(' ', 5))}";
+
             return new Solution("Update App Settings", resourceUri, ActionType.UpdateSiteAppSettings, isInternal, 
-                SolutionConstants.UpdateSettingsInstructions, new string[] { markdownBuilder.ToString() }, actionArgs);
+                instructions, new string[] { markdownBuilder.ToString() }, actionArgs);
         }
 
-        private static string DictionaryToMarkdownList(Dictionary<string, object> input)
+        private static string DictionaryToMarkdownList(Dictionary<string, object> input, string indent = " ")
         {
             var markdownBuilder = new StringBuilder();
 
@@ -84,7 +87,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                     value = $"{value}...";
                 }
 
-                markdownBuilder.AppendLine($" - {kvp.Key}: {value}");
+                markdownBuilder.AppendLine($"{indent}- {kvp.Key}: {value}");
             }
 
             return markdownBuilder.ToString();
@@ -94,8 +97,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     public static class SolutionConstants
     {
         public static readonly string RestartDescription = "Restarting the site may cause application downtime";
-        public static readonly string RestartInstructions = "## Copy these instructions to the customer";
-        public static readonly string UpdateSettingsInstructions = "# Copy these settings to the customer";
+        public static readonly string RestartInstructions = @"
+    1. Navigate to the resource in Azure Portal
+    2. Press `Restart` to invoke a site restart";
+        public static readonly string UpdateSettingsInstructions = @"
+    1. Navigate to the resource in Azure Portal
+    2. Navigate to the `Application Settings` tab
+    3. Enter the following settings under the `Application Settings` section:";
     }
 
     public static class StringExtensions
