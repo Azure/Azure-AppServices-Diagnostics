@@ -48,6 +48,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public string TimeGrain { get; private set; }
 
+        public static implicit operator OperationContext(OperationContext<TResource> context)
+        {
+            return new OperationContext(context.Resource, context.StartTime, context.EndTime, context.IsInternalCall, 
+                context.RequestId, context.TimeGrain, context.SupportTopic);
+        }
+
         public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, string timeGrain = "5", SupportTopic supportTopic = null)
         {
             Resource = resource;
@@ -57,6 +63,15 @@ namespace Diagnostics.ModelsAndUtils.Models
             RequestId = requestId;
             TimeGrain = timeGrain;
             SupportTopic = supportTopic;
+        }
+    }
+
+    public class OperationContext : OperationContext<IResource>
+    {
+        public OperationContext(IResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, 
+            string requestId, string timeGrain = "5", SupportTopic supportTopic = null) : 
+            base(resource, startTimeStr, endTimeStr, isInternalCall, requestId, timeGrain, supportTopic)
+        {
         }
     }
 }

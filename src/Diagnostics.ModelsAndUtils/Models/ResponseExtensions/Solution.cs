@@ -42,7 +42,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             ActionArgs = actionArgs;
             RequiresConfirmation = confirm;
         }
-
+        
         // TODO: This should pass any remaining arguments to the constructor
         // TODO: isInternal and detectorId should be integrated in backend, not passed here
         public static Solution Restart(string resourceUri, bool isInternal, string detectorId)
@@ -52,6 +52,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
             return new Solution("Restart Site", resourceUri, ActionType.RestartSite, isInternal, instructions,
                 new string[] { SolutionConstants.RestartDescription }, confirm: true);
+        }
+
+        public static Solution Restart(OperationContext context, string detectorId)
+        {
+            return Restart(context.Resource.ResourceUri, context.IsInternalCall, detectorId);
         }
 
         // TODO: isInternal and detectorId should be integrated in backend, not passed here
@@ -70,6 +75,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             return new Solution("Update App Settings", resourceUri, ActionType.UpdateSiteAppSettings, isInternal,
                 instructions, new string[] { descriptionBuilder.ToString() }, actionArgs);
         }
+
+        public static Solution UpdateAppSettings(OperationContext context, string detectorId, Dictionary<string, object> actionArgs)
+        {
+            return UpdateAppSettings(context.Resource.ResourceUri, context.IsInternalCall, detectorId, actionArgs);
+        }
+
 
         private static string DictionaryToMarkdownList(Dictionary<string, object> input, string indent = " ")
         {

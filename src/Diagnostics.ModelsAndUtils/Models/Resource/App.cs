@@ -1,4 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -29,6 +30,16 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// Resource Group Name
         /// </summary>
         public string ResourceGroup { get; set; }
+
+        /// <summary>
+        /// Resource URI
+        /// </summary>
+        public string ResourceUri {
+            get
+            {
+                return UriUtilities.BuildResourceUri(SubscriptionId, ResourceGroup, Name, Provider, ResourceTypeName);
+            }
+        }
 
         /// <summary>
         /// WebSpace name for the app.
