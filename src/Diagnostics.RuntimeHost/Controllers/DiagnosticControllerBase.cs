@@ -171,8 +171,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         byte[] pdbData = Convert.FromBase64String(queryRes.CompilationOutput.PdbBytes);
                         tempAsm = Assembly.Load(asmData, pdbData);
                         queryRes.CompilationOutput.AssemblyName = tempAsm.FullName;
-                        Response.Headers.Add("script-etag", Convert.ToBase64String(ScriptCompilation.GetHashFromScript(jsonBody.Script)));
-                        queryRes.CompilationOutput.ScriptETag = Convert.ToBase64String(ScriptCompilation.GetHashFromScript(jsonBody.Script));
+                        Request.HttpContext.Response.Headers.Add("script-etag", Convert.ToBase64String(ScriptCompilation.GetHashFromScript(jsonBody.Script)));
                     }
                 }
                 catch(Exception e)

@@ -69,7 +69,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         }
     }
 
-    public class FormInput
+    public abstract class FormInput
     {
         /// <summary>
         /// Represents Input ID
@@ -112,6 +112,58 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         }
     }
 
+    /// <summary>
+    /// Textbox class used to create a textbox input
+    /// </summary>
+    /// <example>
+    /// This sample shows how to create a textbox input
+    /// <code>
+    /// Textbox input1 = new Textbox(1, "Role Instance name", true);
+    /// </code>
+    /// </example>
+    public class Textbox: FormInput
+    {
+        /// <summary>
+        /// Creates an instance of Textbox class
+        /// </summary>
+        /// <param name="id">Unique id for the input</param>
+        /// <param name="label">Label for the textbox</param>
+        /// <param name="isRequired">Indicates if it is a required input</param>
+        public Textbox(int id, string label = "", bool isRequired = false): base(id, InputTypes.TextBox, label, isRequired)
+        {
+
+        }
+    }
+
+    /// <summary>
+    /// Button class used to create a button input
+    /// </summary>
+    /// <example>
+    /// This sample shows how to create a button input
+    /// <code>
+    /// Button saveButton = new Button(1, "Save");
+    /// </code>
+    /// </example>
+    public class Button: FormInput
+    {
+        /// <summary>
+        /// Sets the bootstrap button style
+        /// </summary>
+        public ButtonStyles ButtonStyle;
+
+        /// <summary>
+        /// Creates an instance of button class 
+        /// </summary>
+        /// <param name="id">Unique id for the button</param>
+        /// <param name="label">Label to display on the button</param>
+        /// <param name="buttonStyle">Bootstrap button style for the button</param>
+        public Button(int id, string label = "", ButtonStyles buttonStyle = ButtonStyles.Primary): base(id, InputTypes.Button, label, false)
+        {
+            this.ButtonStyle = buttonStyle;
+        }
+
+    }
+
     public enum InputTypes
     {
         TextBox = 0,
@@ -121,6 +173,18 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         Button
     }
 
+    public enum ButtonStyles
+    {
+        Primary = 0,
+        Secondary,
+        Success,
+        Danger,
+        Warning,
+        Info,
+        Light,
+        Dark,
+        Link
+    }
 
     public static class ResponseFormExtension
     {
@@ -129,7 +193,23 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         /// <param name="response">Response object</param>
         /// <param name="forms">List of forms</param>
-        /// <returns></returns>
+        /// <example>
+        /// This sample shows how to use <see cref="AddForms"/> method to add a list of Form to the response.
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res) 
+        /// {
+        ///     Form myform1 = new Form(1);
+        ///     Textbox input1 = new Textbox(1, "Enter input 1", true);
+        ///     Button saveButton = new Button(2, "Save");
+        ///     myform1.AddFormInput(new List<![CDATA[<FormInput]]>() { input1, saveButton});
+        ///     Form myform2 = new Form(2);
+        ///     Textbox input2 = new Textbox(1, "Enter input 2", true);
+        ///     Button saveButton2 = new Button(2, "Save");
+        ///     myform2.AddFormInput(new List<![CDATA[<FormInput]]>() { input2, saveButton2});
+        ///     res.AddForms(new List<![CDATA[<Form]]>() { myform1, myform2});
+        /// }
+        /// </code>
+        /// </example>
         public static DiagnosticData AddForms(this Response response, List<Form> forms)
         {
             if(forms == null)
@@ -170,7 +250,19 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         /// <param name="response">Response object</param>
         /// <param name="form">Form to be added</param>
-        /// <returns></returns>
+        /// <example>
+        /// This sample shows how to use <see cref="AddForm"/> method to add a Form to the response.
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res) 
+        /// {
+        ///     Form myform = new Form(1);
+        ///     Textbox input1 = new Textbox(1, "Enter input", true);
+        ///     Button saveButton = new Button(2, "Save");
+        ///     myform.AddFormInput(new List<![CDATA[<FormInput]]>() { input1, saveButton});
+        ///     res.AddForm(myform);
+        /// }
+        /// </code>
+        /// </example>
         public static DiagnosticData AddForm(this Response response, Form form)
         {
             return AddForms(response, new List<Form> { form });
