@@ -21,38 +21,44 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public string Title { get; set; }
         public IEnumerable<string> Descriptions { get; set; }
         public string ResourceUri { get; set; }
+        // Really don't like this, would like to pull isInternal in the context without adding to the constructor
+        public bool IsInternal { get; set; }
+        public string InternalInstructions { get; set; }
         public bool RequiresConfirmation { get; set; }
         public ActionType Action { get; set; }
         public Dictionary<string, object> ActionArgs { get; set; }
 
         // TODO: Another overload taking ResourceGroup and SiteName to build resourceUri would also be useful
-        public Solution(string title, string resourceUri, ActionType action, IEnumerable<string> descriptions = null, 
+        public Solution(string title, string resourceUri, ActionType action, bool isInternal, string internalInstructions, IEnumerable<string> descriptions = null, 
             Dictionary<string, object> actionArgs = null, bool confirm = false)
         {
             Title = title;
             ResourceUri = resourceUri;
             Action = action;
+            IsInternal = isInternal;
+            InternalInstructions = internalInstructions;
             Descriptions = descriptions;
             ActionArgs = actionArgs;
             RequiresConfirmation = confirm;
         }
 
         // TODO: This should pass any remaining arguments to the constructor
-        public static Solution Restart(string resourceUri)
+        public static Solution Restart(string resourceUri, bool isInternal)
         {
-            return new Solution("Restart Site", resourceUri, ActionType.RestartSite,
-                new string[] { SolutionConstants.RestartMarkdown }, confirm: true);
+            return new Solution("Restart Site", resourceUri, ActionType.RestartSite, isInternal, 
+                SolutionConstants.RestartInstructions, new string[] { SolutionConstants.RestartDescription }, 
+                confirm: true);
         }
 
-        public static Solution UpdateAppSettings(string resourceUri, Dictionary<string, object> actionArgs)
+        public static Solution UpdateAppSettings(string resourceUri, bool isInternal, Dictionary<string, object> actionArgs)
         {
             var markdownBuilder = new StringBuilder();
             markdownBuilder.AppendLine("Apply the following settings changes:");
             markdownBuilder.AppendLine();
             markdownBuilder.Append(DictionaryToMarkdownList(actionArgs));
 
-            return new Solution("Update App Settings", resourceUri, ActionType.UpdateSiteAppSettings, 
-                new string[] { markdownBuilder.ToString() }, actionArgs);
+            return new Solution("Update App Settings", resourceUri, ActionType.UpdateSiteAppSettings, isInternal, 
+                SolutionConstants.UpdateSettingsInstructions, new string[] { markdownBuilder.ToString() }, actionArgs);
         }
 
         private static string DictionaryToMarkdownList(Dictionary<string, object> input)
@@ -87,7 +93,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
     public static class SolutionConstants
     {
-        public static readonly string RestartMarkdown = @"Restarting the site may cause application downtime";
+        public static readonly string RestartDescription = "Restarting the site may cause application downtime";
+        public static readonly string RestartInstructions = "## Copy these instructions to the customer";
+        public static readonly string UpdateSettingsInstructions = "# Copy these settings to the customer";
     }
 
     public static class StringExtensions

@@ -372,7 +372,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 OperationContext = cxt
             };
 
-            var invoker = this._invokerCache.GetDetectorInvoker<TResource>(detectorId, runtimeContext);
+            var invoker = this._invokerCache.GetDetectorInvoker(detectorId, runtimeContext);
             IEnumerable<SupportTopic> supportTopicList = null;
             Definition definition = null;
             if (invoker != null && invoker.EntryPointDefinitionAttribute != null)

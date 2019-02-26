@@ -22,7 +22,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string StartTime { get; private set; }
 
         /// <summary>
-        /// End Tim(UTC) for data measurement
+        /// End Time(UTC) for data measurement
         /// </summary>
         public string EndTime { get; private set; }
 
