@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
-using Diagnostics.ModelsAndUtils;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.CompilerHost.Controllers
@@ -29,24 +28,32 @@ namespace Diagnostics.CompilerHost.Controllers
                 return BadRequest("Missing body");
             }
 
-            string script = jsonBody.Value<string>("script");
+            // Get script and reference
+            var script = jsonBody.Value<string>("script");
+
+            var references = new Dictionary<string, string>();
+            if (jsonBody["reference"] != null)
+            {
+                references = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonBody["reference"].ToString());
+            }
 
             if (string.IsNullOrWhiteSpace(script))
             {
                 return BadRequest("Missing script from body");
             }
 
-            EntityMetadata metaData = new EntityMetadata(script);
-            CompilerResponse compilerResponse = new CompilerResponse();
-            using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            var metaData = new EntityMetadata(script);
+            var compilerResponse = new CompilerResponse();
+            using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports(), references.ToImmutableDictionary()))
             {
                 await invoker.InitializeEntryPointAsync();
                 compilerResponse.CompilationTraces = invoker.CompilationOutput;
                 compilerResponse.CompilationSucceeded = invoker.IsCompilationSuccessful;
+                compilerResponse.References = invoker.References;
 
                 if (compilerResponse.CompilationSucceeded)
                 {
-                    Tuple<string, string> asmBytes = await invoker.GetAssemblyBytesAsync();
+                    var asmBytes = await invoker.GetAssemblyBytesAsync();
                     compilerResponse.AssemblyBytes = asmBytes.Item1;
                     compilerResponse.PdbBytes = asmBytes.Item2;
                 }

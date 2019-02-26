@@ -1,13 +1,18 @@
-﻿using Diagnostics.Scripts;
+﻿using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.ScriptUtilities;
+using Diagnostics.Scripts;
 using Diagnostics.Scripts.CompilationService;
 using Diagnostics.Scripts.CompilationService.Interfaces;
+using Diagnostics.Scripts.CompilationService.ReferenceResolver;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Tests.Helpers;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Xunit;
@@ -25,6 +30,20 @@ namespace Diagnostics.Tests.ScriptsTests
             ICompilation compilation = await serviceInstance.GetCompilationAsync();
 
             ImmutableArray<Diagnostic> diagnostics = await compilation.GetDiagnosticsAsync();
+            Assert.Empty(diagnostics.Select(d => d.Severity == DiagnosticSeverity.Error));
+        }
+
+        [Fact]
+        public async void CompilationService_TestGistCompilation()
+        {
+            var gist = await ScriptTestDataHelper.GetGistAsync();
+            var references = new Dictionary<string, string> { { "__internal__.csx", gist } };
+            var metadata = new EntityMetadata(ScriptTestDataHelper.GetSentinel(), EntityType.Detector);
+            var scriptOptions = ScriptTestDataHelper.GetScriptOption(ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports(), new MemoryReferenceResolver(references));
+            var serviceInstance = CompilationServiceFactory.CreateService(metadata, scriptOptions);
+            var compilation = await serviceInstance.GetCompilationAsync();
+
+            var diagnostics = await compilation.GetDiagnosticsAsync();
             Assert.Empty(diagnostics.Select(d => d.Severity == DiagnosticSeverity.Error));
         }
 

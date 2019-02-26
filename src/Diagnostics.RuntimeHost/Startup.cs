@@ -1,6 +1,8 @@
 ﻿using Diagnostics.DataProviders;
 using Diagnostics.RuntimeHost.Middleware;
+using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
+using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -27,6 +29,7 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<ICompilerHostClient, CompilerHostClient>();
             services.AddSingleton<ISourceWatcherService, SourceWatcherService>();
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
+            services.AddSingleton<IGistCacheService, GistCacheService>();
             services.AddSingleton<ISiteService, SiteService>();
             services.AddSingleton<IStampService, StampService>();
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();

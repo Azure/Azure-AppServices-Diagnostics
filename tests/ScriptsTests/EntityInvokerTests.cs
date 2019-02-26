@@ -2,13 +2,16 @@
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
+using Diagnostics.RuntimeHost.Models;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Tests.Helpers;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Xunit;
@@ -123,6 +126,27 @@ namespace Diagnostics.Tests.ScriptsTests
                 Assert.True(invoker.IsCompilationSuccessful);
                 Assert.NotNull(invoker.SystemFilter);
                 Assert.Equal(filter, invoker.SystemFilter);
+            }
+        }
+
+        [Fact]
+        public async void EntityInvoker_TestGistValidation()
+        {
+            var gist = await ScriptTestDataHelper.GetGistAsync();
+            var references = new Dictionary<string, string>
+            {
+                { "__internal__.csx", gist },
+                { "xxx.csx", "" },
+                { "yyy.csx", "" }
+            };
+
+            var metadata = new EntityMetadata(ScriptTestDataHelper.GetSentinel(), EntityType.Detector);
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports(), references.ToImmutableDictionary()))
+            {
+                await invoker.InitializeEntryPointAsync();
+                var result = (string)await invoker.Invoke(new object[] { });
+                Assert.Equal(2, invoker.References.Count());
+                Assert.False(string.IsNullOrWhiteSpace(result));
             }
         }
 

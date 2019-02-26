@@ -3,6 +3,7 @@ using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
+using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
@@ -85,7 +86,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]
-        public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, string[] hostNames, string stampName, [FromBody]CompilationBostBody<DiagnosticStampData> jsonBody, string detectorId, string dataSource = null, string timeRange = null)
+        public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, string[] hostNames, string stampName, [FromBody]CompilationPostBody<DiagnosticStampData> jsonBody, string detectorId, string dataSource = null, string timeRange = null)
         {
             HostingEnvironment ase = new HostingEnvironment(subscriptionId, resourceGroupName, hostingEnvironmentName);
             return await base.ExecuteQuery(ase, jsonBody, null, null, null, detectorId, dataSource, timeRange);
@@ -114,10 +115,50 @@ namespace Diagnostics.RuntimeHost.Controllers
             return await base.GetInsights(ase, pesId, supportTopicId, startTime, endTime, timeGrain);
         }
 
+        /// <summary>
+        /// Publish detector package.
+        /// </summary>
+        /// <param name="pkg">The package.</param>
+        /// <returns>Task for publishing package.</returns>
         [HttpPost(UriElements.Publish)]
-        public async Task<IActionResult> PublishDetector(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, [FromBody] DetectorPackage pkg)
+        public async Task<IActionResult> PublishDetectorPackage([FromBody] DetectorPackage pkg)
         {
-            return await base.PublishDetector(pkg);
+            return await base.PublishPackage(pkg);
+        }
+
+        /// <summary>
+        /// Publish gist package.
+        /// </summary>
+        /// <param name="pkg">The package.</param>
+        /// <returns>Task for publishing package.</returns>
+        [HttpPost(UriElements.PublishGist)]
+        public async Task<IActionResult> PublishGistPackage([FromBody] GistPackage pkg)
+        {
+            return await base.PublishPackage(pkg);
+        }
+
+        /// <summary>
+        /// List all gists.
+        /// </summary>
+        /// <returns>Task for listing all gists.</returns>
+        [HttpPost(UriElements.Gists)]
+        public async Task<IActionResult> ListGistsAsync()
+        {
+            return await ListGists();
+        }
+
+        /// <summary>
+        /// List the gist.
+        /// </summary>
+        /// <param name="subscriptionId">Subscription id.</param>
+        /// <param name="resourceGroupName">Resource group name.</param>
+        /// <param name="siteName">Site name.</param>
+        /// <param name="gistId">Gist id.</param>
+        /// <returns>Task for listing the gist.</returns>
+        [HttpPost(UriElements.Gists + UriElements.GistResource)]
+        public async Task<IActionResult> GetGistAsync(string subscriptionId, string resourceGroupName, string siteName, string gistId)
+        {
+            return await base.GetGist(gistId);
         }
     }
 }

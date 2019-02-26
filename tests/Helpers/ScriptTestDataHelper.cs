@@ -1,7 +1,10 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.Scripts.Models;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Scripting;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -94,6 +97,51 @@ namespace Diagnostics.Tests.Helpers
                 .Replace("<YOUR_DETECTOR_NAME>", def.Name)
                 .Replace("<YOUR_ALIAS>", def.Author)
                 .Replace("<YOUR_QUERY>", query);
+        }
+
+        public static async Task<string> GetGistAsync()
+        {
+            var template = await File.ReadAllTextAsync(@"templates/GistTemplate.csx");
+            return template.Replace("<GIST_ID>", "test")
+                .Replace("<GIST_AUTHOR>", "xuey");
+        }
+
+        public static string GetSentinel()
+        {
+            return @"
+                #load ""__internal__.csx""
+                #load ""xxx.csx""
+
+                using System;
+
+                [AppFilter(AppType = AppType.All, PlatformType = PlatformType.Windows, StackType = StackType.All)]
+                [Definition(Id = Id, Name = ""name"", Author = Authors, Description = Description, Category = Tags)]
+                public static string Run()
+                {
+                    return ""Test"";
+                }";
+        }
+
+        public static ScriptOptions GetScriptOption(ImmutableArray<string> frameworkReferences, ImmutableArray<string> frameworkImports, SourceReferenceResolver resolver = null)
+        {
+            var scriptOptions = ScriptOptions.Default;
+
+            if (!frameworkReferences.IsDefaultOrEmpty)
+            {
+                scriptOptions = scriptOptions.WithReferences(frameworkReferences);
+            }
+
+            if (!frameworkImports.IsDefaultOrEmpty)
+            {
+                scriptOptions = scriptOptions.WithImports(frameworkImports);
+            }
+
+            if (resolver != null)
+            {
+                scriptOptions = scriptOptions.WithSourceResolver(resolver);
+            }
+
+            return scriptOptions;
         }
     }
 }

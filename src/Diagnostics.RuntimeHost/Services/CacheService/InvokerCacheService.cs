@@ -1,40 +1,15 @@
-﻿using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.ModelsAndUtils.Models;
+﻿using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.Scripts;
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
-namespace Diagnostics.RuntimeHost.Services
+namespace Diagnostics.RuntimeHost.Services.CacheService
 {
-    public interface ICache<K, V>
-    {
-        void AddOrUpdate(K key, V value);
-
-        bool TryGetValue(K key, out V value);
-
-        bool TryRemoveValue(K key, out V value);
-
-        IEnumerable<V> GetAll();
-    }
-
-    public interface IInvokerCacheService : ICache<string, EntityInvoker>
-    {
-        EntityInvoker GetDetectorInvoker<TResource>(string detectorId, RuntimeContext<TResource> context)
-            where TResource : IResource;
-
-        IEnumerable<EntityInvoker> GetDetectorInvokerList<TResource>(RuntimeContext<TResource> context)
-            where TResource : IResource;
-
-        EntityInvoker GetSystemInvoker(string invokerId);
-
-        IEnumerable<EntityInvoker> GetSystemInvokerList<TResource>(RuntimeContext<TResource> context)
-            where TResource : IResource;
-    }
-
+    /// <summary>
+    /// Invoker cache service.
+    /// </summary>
     public class InvokerCacheService : IInvokerCacheService
     {
         private ConcurrentDictionary<string, EntityInvoker> _collection;

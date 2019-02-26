@@ -7,6 +7,7 @@ using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using Diagnostics.ModelsAndUtils.Utilities;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
+using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
@@ -17,9 +18,11 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.Scripts.Utilities;
@@ -33,15 +36,17 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected ICompilerHostClient _compilerHostClient;
         protected ISourceWatcherService _sourceWatcherService;
         protected IInvokerCacheService _invokerCache;
+        protected IGistCacheService _gistCache;
         protected IDataSourcesConfigurationService _dataSourcesConfigService;
         protected IStampService _stampService;
         protected IAssemblyCacheService _assemblyCacheService;
 
-        public DiagnosticControllerBase(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
+        public DiagnosticControllerBase(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
         {
             this._compilerHostClient = compilerHostClient;
             this._sourceWatcherService = sourceWatcherService;
             this._invokerCache = invokerCache;
+            this._gistCache = gistCache;
             this._dataSourcesConfigService = dataSourcesConfigService;
             this._stampService = stampService;
             this._assemblyCacheService = assemblyCacheService;
@@ -66,6 +71,35 @@ namespace Diagnostics.RuntimeHost.Controllers
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: form);
             var detectorResponse = await GetDetectorInternal(detectorId, cxt);
             return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2));
+        }
+
+        protected async Task<IActionResult> ListGists()
+        {
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
+
+            return Ok(_gistCache.GetAll()
+                .Select(p => new Dictionary<string, string>
+                {
+                    { "Id", p.Id },
+                    { "Name", p.Name },
+                    { "Category", p.Category },
+                    { "Description", p.Description },
+                    { "Author", p.Author }
+                }));
+        }
+
+        protected async Task<IActionResult> GetGist(string id)
+        {
+            await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+
+            if (_gistCache.TryGetValue(id, out var value))
+            {
+                return Ok(value.CodeString);
+            }
+            else
+            {
+                return NotFound($"Gist {id} not found.");
+            }
         }
 
         protected async Task<IActionResult> ListSystemInvokers(TResource resource)
@@ -232,14 +266,14 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(queryRes);
         }
 
-        protected async Task<IActionResult> PublishDetector(DetectorPackage pkg)
+        protected async Task<IActionResult> PublishPackage(Package pkg)
         {
-            if (pkg == null || string.IsNullOrWhiteSpace(pkg.Id) || string.IsNullOrWhiteSpace(pkg.DllBytes))
+            if (pkg == null || string.IsNullOrWhiteSpace(pkg.Id))
             {
                 return BadRequest();
             }
 
-            var publishResult = await _sourceWatcherService.Watcher.CreateOrUpdateDetector(pkg);
+            var publishResult = await _sourceWatcherService.Watcher.CreateOrUpdatePackage(pkg);
             bool isPublishSuccessful = publishResult.Item1;
             Exception publishEx = publishResult.Item2;
 

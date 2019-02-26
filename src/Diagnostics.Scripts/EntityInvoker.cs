@@ -2,6 +2,7 @@
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.Scripts.CompilationService;
 using Diagnostics.Scripts.CompilationService.Interfaces;
+using Diagnostics.Scripts.CompilationService.ReferenceResolver;
 using Diagnostics.Scripts.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
@@ -20,13 +21,16 @@ namespace Diagnostics.Scripts
         private EntityMetadata _entityMetaData;
         private ImmutableArray<string> _frameworkReferences;
         private ImmutableArray<string> _frameworkImports;
+        private ImmutableDictionary<string, string> _frameworkLoads;
         private ICompilation _compilation;
         private ImmutableArray<Diagnostic> _diagnostics;
         private MethodInfo _entryPointMethodInfo;
         private Definition _entryPointDefinitionAttribute;
         private IResourceFilter _resourceFilter;
         private SystemFilter _systemFilter;
-        
+ 
+        public IEnumerable<string> References { get; private set; }
+
         public bool IsCompilationSuccessful { get; private set; }
 
         public IEnumerable<string> CompilationOutput { get; private set; }
@@ -42,8 +46,9 @@ namespace Diagnostics.Scripts
         public EntityInvoker(EntityMetadata entityMetadata)
         {
             _entityMetaData = entityMetadata;
-            _frameworkReferences = ImmutableArray.Create<string>();
-            _frameworkImports = ImmutableArray.Create<string>();
+            _frameworkReferences = ImmutableArray<string>.Empty;
+            _frameworkImports = ImmutableArray<string>.Empty;
+            _frameworkLoads = ImmutableDictionary<string, string>.Empty;
             CompilationOutput = Enumerable.Empty<string>();
         }
 
@@ -51,7 +56,8 @@ namespace Diagnostics.Scripts
         {
             _entityMetaData = entityMetadata;
             _frameworkReferences = frameworkReferences;
-            _frameworkImports = ImmutableArray.Create<string>();
+            _frameworkImports = ImmutableArray<string>.Empty;
+            _frameworkLoads = ImmutableDictionary<string, string>.Empty;
             CompilationOutput = Enumerable.Empty<string>();
         }
 
@@ -60,19 +66,30 @@ namespace Diagnostics.Scripts
             _entityMetaData = entityMetadata;
             _frameworkImports = frameworkImports;
             _frameworkReferences = frameworkReferences;
+            _frameworkLoads = ImmutableDictionary<string, string>.Empty;
+            CompilationOutput = Enumerable.Empty<string>();
+        }
+
+        public EntityInvoker(EntityMetadata entityMetadata, ImmutableArray<string> frameworkReferences, ImmutableArray<string> frameworkImports, ImmutableDictionary<string, string> frameworkLoads)
+        {
+            _entityMetaData = entityMetadata;
+            _frameworkImports = frameworkImports;
+            _frameworkReferences = frameworkReferences;
+            _frameworkLoads = frameworkLoads;
             CompilationOutput = Enumerable.Empty<string>();
         }
 
         /// <summary>
         /// Initializes the entry point by compiling the script and loading/saving the assembly
         /// </summary>
-        /// <param name="assemblyInitType"></param>
         /// <returns></returns>
         public async Task InitializeEntryPointAsync()
         {
-            ICompilationService compilationService = CompilationServiceFactory.CreateService(_entityMetaData, GetScriptOptions(_frameworkReferences));
+            var referenceResolver = new MemoryReferenceResolver(_frameworkLoads);
+            ICompilationService compilationService = CompilationServiceFactory.CreateService(_entityMetaData, GetScriptOptions(referenceResolver));
             _compilation = await compilationService.GetCompilationAsync();
             _diagnostics = await _compilation.GetDiagnosticsAsync();
+            References = referenceResolver.Used.ToImmutableArray();
 
             IsCompilationSuccessful = !_diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
             CompilationOutput = _diagnostics.Select(m => m.ToString());
@@ -170,9 +187,11 @@ namespace Diagnostics.Scripts
 
         public async Task<string> SaveAssemblyToDiskAsync(string assemblyPath)
         {
-            ICompilationService compilationService = CompilationServiceFactory.CreateService(_entityMetaData, GetScriptOptions(_frameworkReferences));
+            var referenceResolver = new MemoryReferenceResolver(_frameworkLoads);
+            ICompilationService compilationService = CompilationServiceFactory.CreateService(_entityMetaData, GetScriptOptions(referenceResolver));
             _compilation = await compilationService.GetCompilationAsync();
             _diagnostics = await _compilation.GetDiagnosticsAsync();
+            References = referenceResolver.Used.ToImmutableArray();
 
             IsCompilationSuccessful = !_diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
             CompilationOutput = _diagnostics.Select(m => m.ToString());
@@ -187,10 +206,12 @@ namespace Diagnostics.Scripts
 
         public async Task<Tuple<string, string>> GetAssemblyBytesAsync()
         {
-            ICompilationService compilationService = CompilationServiceFactory.CreateService(_entityMetaData, GetScriptOptions(_frameworkReferences));
+            var referenceResolver = new MemoryReferenceResolver(_frameworkLoads);
+            ICompilationService compilationService = CompilationServiceFactory.CreateService(_entityMetaData, GetScriptOptions(referenceResolver));
             _compilation = await compilationService.GetCompilationAsync();
             _diagnostics = await _compilation.GetDiagnosticsAsync();
-            
+            References = referenceResolver.Used.ToImmutableArray();
+
             IsCompilationSuccessful = !_diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
             CompilationOutput = _diagnostics.Select(m => m.ToString());
 
@@ -219,14 +240,14 @@ namespace Diagnostics.Scripts
             _systemFilter = _entryPointMethodInfo.GetCustomAttribute<SystemFilter>();
         }
 
-        private ScriptOptions GetScriptOptions(ImmutableArray<string> frameworkReferences)
+        private ScriptOptions GetScriptOptions(SourceReferenceResolver referenceResolver)
         {
-            ScriptOptions scriptOptions = ScriptOptions.Default;
+            var scriptOptions = ScriptOptions.Default;
 
-            if (!frameworkReferences.IsDefaultOrEmpty)
+            if (!_frameworkReferences.IsDefaultOrEmpty)
             {
                 scriptOptions = ScriptOptions.Default
-                    .WithReferences(frameworkReferences);
+                    .WithReferences(_frameworkReferences);
             }
 
             if (!_frameworkImports.IsDefaultOrEmpty)
@@ -234,9 +255,11 @@ namespace Diagnostics.Scripts
                 scriptOptions = scriptOptions.WithImports(_frameworkImports);
             }
 
+            scriptOptions = scriptOptions.WithSourceResolver(referenceResolver);
+
             return scriptOptions;
         }
-        
+
         private void Validate()
         {
             if(this._entryPointDefinitionAttribute != null)
