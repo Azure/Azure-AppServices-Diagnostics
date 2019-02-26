@@ -29,7 +29,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public Dictionary<string, object> ActionArgs { get; set; }
 
         // TODO: Another overload taking ResourceGroup and SiteName to build resourceUri would also be useful
-        public Solution(string title, string resourceUri, ActionType action, bool isInternal, string internalInstructions, IEnumerable<string> descriptions = null, 
+        public Solution(string title, string resourceUri, ActionType action, bool isInternal,
+            string internalInstructions, IEnumerable<string> descriptions = null, 
             Dictionary<string, object> actionArgs = null, bool confirm = false)
         {
             Title = title;
@@ -43,25 +44,31 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         }
 
         // TODO: This should pass any remaining arguments to the constructor
-        public static Solution Restart(string resourceUri, bool isInternal)
+        // TODO: isInternal and detectorId should be integrated in backend, not passed here
+        public static Solution Restart(string resourceUri, bool isInternal, string detectorId)
         {
-            return new Solution("Restart Site", resourceUri, ActionType.RestartSite, isInternal, 
-                SolutionConstants.RestartInstructions, new string[] { SolutionConstants.RestartDescription }, 
-                confirm: true);
+            var resourceLink = BuildDetectorLink(resourceUri, detectorId);
+            var instructions = $"{new string(' ', 2)}[Go To Resource]({resourceLink})\n\n{SolutionConstants.RestartInstructions}";
+
+            return new Solution("Restart Site", resourceUri, ActionType.RestartSite, isInternal, instructions,
+                new string[] { SolutionConstants.RestartDescription }, confirm: true);
         }
 
-        public static Solution UpdateAppSettings(string resourceUri, bool isInternal, Dictionary<string, object> actionArgs)
+        // TODO: isInternal and detectorId should be integrated in backend, not passed here
+        public static Solution UpdateAppSettings(string resourceUri, bool isInternal, string detectorId, Dictionary<string, object> actionArgs)
         {
-            var markdownBuilder = new StringBuilder();
-            markdownBuilder.AppendLine("Apply the following settings changes:");
-            markdownBuilder.AppendLine();
-            markdownBuilder.Append(DictionaryToMarkdownList(actionArgs));
+            var descriptionBuilder = new StringBuilder();
+            descriptionBuilder.AppendLine("Apply the following settings changes:");
+            descriptionBuilder.AppendLine();
+            descriptionBuilder.Append(DictionaryToMarkdownList(actionArgs));
 
-            var instructions = $"{SolutionConstants.UpdateSettingsInstructions}\n\n" +
-                $"{DictionaryToMarkdownList(actionArgs, new string(' ', 5))}";
+            var resourceLink = BuildDetectorLink(resourceUri, detectorId);
 
-            return new Solution("Update App Settings", resourceUri, ActionType.UpdateSiteAppSettings, isInternal, 
-                instructions, new string[] { markdownBuilder.ToString() }, actionArgs);
+            var instructions = $"{new string(' ', 2)}[Go To Settings]({resourceLink})\n\n{SolutionConstants.UpdateSettingsInstructions}" +
+                $"\n\n{DictionaryToMarkdownList(actionArgs, new string(' ', 5))}";
+
+            return new Solution("Update App Settings", resourceUri, ActionType.UpdateSiteAppSettings, isInternal,
+                instructions, new string[] { descriptionBuilder.ToString() }, actionArgs);
         }
 
         private static string DictionaryToMarkdownList(Dictionary<string, object> input, string indent = " ")
@@ -92,10 +99,18 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
             return markdownBuilder.ToString();
         }
+
+        // TODO: Move to utility
+        private static string BuildDetectorLink(string resourceUri, string detectorId)
+        {
+            return "https://portal.azure.com/?websitesextension_ext=asd.featurePath=" +
+                $"diagnostics/{detectorId}#resource/{resourceUri.Trim('/')}/troubleshoot";
+        }
     }
 
     public static class SolutionConstants
     {
+        public static readonly string DetectorIDReplaceMe = "appcrashes";
         public static readonly string RestartDescription = "Restarting the site may cause application downtime";
         public static readonly string RestartInstructions = @"
     1. Navigate to the resource in Azure Portal
