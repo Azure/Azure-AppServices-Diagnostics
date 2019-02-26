@@ -176,7 +176,9 @@ namespace Diagnostics.DataProviders
                 startTimeUtc,
                 endTimeUtc,
                 samplingType.ToArray(),
-                _definitions));
+                _definitions,
+                seriesResolutionInMinutes,
+                aggregationType));
 
             var result = new List<DataTable>();
 
@@ -186,15 +188,13 @@ namespace Diagnostics.DataProviders
                 foreach (var s in samplingType)
                 {
                     var table = new DataTable();
-                    table.Columns.Add("Metric", typeof(string));
                     table.Columns.Add("TimeStamp", typeof(DateTime));
-                    table.Columns.Add(s.ToString());
+                    table.Columns.Add("Metric", typeof(string));
+                    table.Columns.Add(s.ToString(), typeof(double));
 
                     foreach (var point in serie.GetDatapoints(s))
                     {
-                        table.Rows.Add(serie.Definition.Id.MetricName);
-                        table.Rows.Add(point.TimestampUtc);
-                        table.Rows.Add(point.Value);
+                        table.Rows.Add(new object[] { point.TimestampUtc, serie.Definition.Id.MetricName, point.Value });
                     }
 
                     result.Add(table);
