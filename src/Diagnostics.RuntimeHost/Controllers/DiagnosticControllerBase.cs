@@ -152,6 +152,11 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest("Missing script in body");
             }
 
+            if (jsonBody.References == null)
+            {
+                jsonBody.References = new Dictionary<string, string>();
+            }
+
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
             {
                 return BadRequest(errorMessage);
