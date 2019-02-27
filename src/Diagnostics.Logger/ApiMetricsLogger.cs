@@ -1,5 +1,5 @@
 ﻿// <copyright file="ApiMetricsLogger.cs" company="Microsoft">
-// Copyright (c) .NET Foundation. All rights reserved.
+// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 // </copyright>
 

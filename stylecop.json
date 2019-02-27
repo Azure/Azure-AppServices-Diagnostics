@@ -3,7 +3,7 @@
   "settings": {
       "documentationRules": {
           "companyName": "Microsoft",
-          "copyrightText": "Copyright (c) .NET Foundation. All rights reserved.\r\nLicensed under the MIT License. See License.txt in the project root for license information.",
+          "copyrightText": "Copyright (c) {companyName}. All rights reserved.\r\nLicensed under the MIT License. See License.txt in the project root for license information.",
           "xmlHeader": true,
           "documentInterfaces": true,
           "documentInternalElements": false,
