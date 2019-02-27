@@ -13,5 +13,11 @@ namespace Diagnostics.ModelsAndUtils.Utilities
             return $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/" +
                 $"providers/{provider}/{resourceTypeName}/{resourceName}";
         }
+        
+        public static string BuildDetectorLink(string resourceUri, string detectorId)
+        {
+            return "https://ms.portal.azure.com/?websitesextension_ext=asd.featurePath%3D" +
+                $"detectors%2F{detectorId}#@microsoft.onmicrosoft.com/resource/{resourceUri.Trim('/')}/customtroubleshoot";
+        }
     }
 }
