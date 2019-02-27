@@ -78,13 +78,13 @@ namespace Diagnostics.RuntimeHost.Controllers
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
 
             return Ok(_gistCache.GetAll()
-                .Select(p => new Dictionary<string, string>
+                .Select(p => new GistDefinition
                 {
-                    { "Id", p.Id },
-                    { "Name", p.Name },
-                    { "Category", p.Category },
-                    { "Description", p.Description },
-                    { "Author", p.Author }
+                    Id = p.Id,
+                    Name = p.Name,
+                    Category = p.Category,
+                    Description = p.Description,
+                    Author = p.Author
                 }));
         }
 
