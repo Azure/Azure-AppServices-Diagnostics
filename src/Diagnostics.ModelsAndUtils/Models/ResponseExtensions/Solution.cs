@@ -46,7 +46,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public static Solution Restart(string resourceUri, bool isInternal, string detectorId)
         {
             var resourceLink = UriUtilities.BuildDetectorLink(resourceUri, detectorId);
-            var instructions = $"{new string(' ', 2)}[Go To Detector]({resourceLink})\n\n" +
+            var instructions = $"[Go To Detector]({resourceLink})\n\n" +
                 $"{SolutionConstants.RestartInstructions}";
 
             return new Solution("Restart Site", resourceUri, isInternal, ActionType.RestartSite, instructions,
@@ -69,8 +69,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
             var resourceLink = UriUtilities.BuildDetectorLink(resourceUri, detectorId);
 
-            var instructions = $"{new string(' ', 2)}[Go To Detector]({resourceLink})\n\n" +
-                $"{SolutionConstants.UpdateSettingsInstructions}\n\n{actionArgs.ToMarkdownList(new string(' ', 5))}";
+            var instructions = $"[Go To Detector]({resourceLink})\n\n" +
+                $"{SolutionConstants.UpdateSettingsInstructions}\n{actionArgs.ToMarkdownList(new string(' ', 3))}";
 
             return new Solution("Update App Settings", resourceUri, isInternal, ActionType.UpdateSiteAppSettings,
                 instructions, new string[] { descriptionBuilder.ToString() }, actionArgs);
