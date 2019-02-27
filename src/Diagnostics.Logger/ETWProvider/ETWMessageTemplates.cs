@@ -1,11 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿// <copyright file="ETWMessageTemplates.cs" company="Microsoft">
+// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the MIT License. See License.txt in the project root for license information.
+// </copyright>
 
 namespace Diagnostics.Logger
 {
+    /// <summary>
+    /// ETW message template.
+    /// </summary>
     public static class ETWMessageTemplates
     {
+#pragma warning disable SA1600 // Elements should be documented
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
         #region Compile Host Event Message Templates
 
         public const string LogCompilerHostMessage = "Compiler Host Message : {0}";
@@ -51,5 +58,8 @@ namespace Diagnostics.Logger
         public const string LogKustoTokenRefreshSummary = "Kusto Token Refresh Summary";
         public const string LogKustoQueryInformation = "Kusto Query Information";
         #endregion
+
+#pragma warning restore SA1600 // Elements should be documented
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
