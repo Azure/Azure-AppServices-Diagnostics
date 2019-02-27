@@ -25,6 +25,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// </summary>
         /// <param name="pkg">The package.</param>
         /// <returns>Task for creating or updating package.</returns>
-        Task<Tuple<bool, Exception>> CreateOrUpdatePackage(Package pkg);
+        Task CreateOrUpdatePackage(Package pkg);
     }
 }

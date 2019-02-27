@@ -88,25 +88,14 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// </summary>
         /// <param name="pkg">Detector package.</param>
         /// <returns>Task for creating or updateing detector.</returns>
-        public override async Task<Tuple<bool, Exception>> CreateOrUpdatePackage(Package pkg)
+        public override async Task CreateOrUpdatePackage(Package pkg)
         {
             if (pkg == null)
             {
-                return new Tuple<bool, Exception>(false, new ArgumentNullException(nameof(pkg)));
+                throw new ArgumentNullException(nameof(pkg));
             }
 
-            var output = new Tuple<bool, Exception>(true, null);
-
-            try
-            {
-                await PublishDetectorAsync(pkg);
-            }
-            catch (Exception e)
-            {
-                output = new Tuple<bool, Exception>(false, e);
-            }
-
-            return output;
+            await PublishDetectorAsync(pkg);
         }
 
         private async Task PublishDetectorAsync(Package pkg)

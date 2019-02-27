@@ -27,7 +27,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         public Task WaitForFirstCompletion() => FirstTimeCompletionTask;
 
-        public abstract Task<Tuple<bool, Exception>> CreateOrUpdatePackage(Package pkg);
+        public abstract Task CreateOrUpdatePackage(Package pkg);
 
         protected SourceWatcherBase(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, string eventSource)
         {

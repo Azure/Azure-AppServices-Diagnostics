@@ -278,20 +278,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest();
             }
 
-            var publishResult = await _sourceWatcherService.Watcher.CreateOrUpdatePackage(pkg);
-            bool isPublishSuccessful = publishResult.Item1;
-            Exception publishEx = publishResult.Item2;
-
-            if (!isPublishSuccessful)
-            {
-                if(publishEx != null)
-                {
-                    throw publishEx;
-                }
-
-                throw new Exception("Publish Operation failed");
-            }
-
+            await _sourceWatcherService.Watcher.CreateOrUpdatePackage(pkg);
             return Ok();
         }
 

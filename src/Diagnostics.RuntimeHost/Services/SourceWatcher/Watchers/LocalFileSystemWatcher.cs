@@ -35,7 +35,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             _firstTimeCompletionTask = StartWatcherInternal();
         }
 
-        public override Task<Tuple<bool, Exception>> CreateOrUpdatePackage(Package pkg)
+        public override Task CreateOrUpdatePackage(Package pkg)
         {
             throw new NotImplementedException("Local Source Watcher Mode right now doesnt support live detector deployment.");
         }
