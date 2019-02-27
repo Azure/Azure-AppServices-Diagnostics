@@ -3,6 +3,7 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 
 namespace Diagnostics.Logger
@@ -11,6 +12,7 @@ namespace Diagnostics.Logger
     /// Diagnostics ETW provider.
     /// </summary>
     [EventSource(Name = "Microsoft-Azure-AppService-Diagnostics")]
+    [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1313:Parameter names should begin with lower-case letter", Justification = "Used for Kusto and Jarvis.")]
     public sealed class DiagnosticsETWProvider : DiagnosticsEventSourceBase
     {
         /// <summary>
@@ -23,53 +25,53 @@ namespace Diagnostics.Logger
         /// <summary>
         /// Log compiler host message.
         /// </summary>
-        /// <param name="message">The message.</param>
+        /// <param name="Message">The message.</param>
         [Event(1000, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogCompilerHostMessage)]
-        public void LogCompilerHostMessage(string message)
+        public void LogCompilerHostMessage(string Message)
         {
-            WriteDiagnosticsEvent(1000, message);
+            WriteDiagnosticsEvent(1000, Message);
         }
 
         /// <summary>
         /// Log compiler host unhandled exception.
         /// </summary>
-        /// <param name="requestId">Request id.</param>
-        /// <param name="source">The source.</param>
-        /// <param name="exceptionType">Exception type.</param>
-        /// <param name="exceptionDetails">Exception details.</param>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
         [Event(1001, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogCompilerHostUnhandledException)]
-        public void LogCompilerHostUnhandledException(string requestId, string source, string exceptionType, string exceptionDetails)
+        public void LogCompilerHostUnhandledException(string RequestId, string Source, string ExceptionType, string ExceptionDetails)
         {
             WriteDiagnosticsEvent(
                 1001,
-                requestId,
-                source,
-                exceptionType,
-                exceptionDetails);
+                RequestId,
+                Source,
+                ExceptionType,
+                ExceptionDetails);
         }
 
         /// <summary>
         /// Log compiler host API summary.
         /// </summary>
-        /// <param name="requestId">Request id.</param>
-        /// <param name="address">The address.</param>
-        /// <param name="verb">The verb.</param>
-        /// <param name="statusCode">The status code.</param>
-        /// <param name="latencyInMilliseconds">The latency.</param>
-        /// <param name="startTime">The start time.</param>
-        /// <param name="endTime">The end time.</param>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Address">The address.</param>
+        /// <param name="Verb">The verb.</param>
+        /// <param name="StatusCode">The status code.</param>
+        /// <param name="LatencyInMilliseconds">The latency.</param>
+        /// <param name="StartTime">The start time.</param>
+        /// <param name="EndTime">The end time.</param>
         [Event(1002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogCompilerHostAPISummary)]
-        public void LogCompilerHostAPISummary(string requestId, string address, string verb, int statusCode, long latencyInMilliseconds, string startTime, string endTime)
+        public void LogCompilerHostAPISummary(string RequestId, string Address, string Verb, int StatusCode, long LatencyInMilliseconds, string StartTime, string EndTime)
         {
             WriteDiagnosticsEvent(
                 1002,
-                requestId,
-                address,
-                verb,
-                statusCode,
-                latencyInMilliseconds,
-                startTime,
-                endTime);
+                RequestId,
+                Address,
+                Verb,
+                StatusCode,
+                LatencyInMilliseconds,
+                StartTime,
+                EndTime);
         }
 
         #endregion
@@ -79,175 +81,175 @@ namespace Diagnostics.Logger
         /// <summary>
         /// Log runtime host message.
         /// </summary>
-        /// <param name="message">The message.</param>
+        /// <param name="Message">The message.</param>
         [Event(2000, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostMessage)]
-        public void LogRuntimeHostMessage(string message)
+        public void LogRuntimeHostMessage(string Message)
         {
-            WriteDiagnosticsEvent(2000, message);
+            WriteDiagnosticsEvent(2000, Message);
         }
 
         /// <summary>
         /// Log runtime host unhandled exception.
         /// </summary>
-        /// <param name="requestId">Request id.</param>
-        /// <param name="source">The source.</param>
-        /// <param name="subscriptionId">The subscription id.</param>
-        /// <param name="resourceGroup">The resource group.</param>
-        /// <param name="resource">The resource.</param>
-        /// <param name="exceptionType">Exception type.</param>
-        /// <param name="exceptionDetails">Exception details.</param>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="SubscriptionId">The subscription id.</param>
+        /// <param name="ResourceGroup">The resource group.</param>
+        /// <param name="Resource">The resource.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
         [Event(2001, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostUnhandledException)]
-        public void LogRuntimeHostUnhandledException(string requestId, string source, string subscriptionId, string resourceGroup, string resource, string exceptionType, string exceptionDetails)
+        public void LogRuntimeHostUnhandledException(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails)
         {
             WriteDiagnosticsEvent(
                 2001,
-                requestId,
-                source,
-                subscriptionId,
-                resourceGroup,
-                resource,
-                exceptionType,
-                exceptionDetails);
+                RequestId,
+                Source,
+                SubscriptionId,
+                ResourceGroup,
+                Resource,
+                ExceptionType,
+                ExceptionDetails);
         }
 
         /// <summary>
         /// Log runtime host API summary.
         /// </summary>
-        /// <param name="requestId">The request id.</param>
-        /// <param name="subscriptionId">The subscription id.</param>
-        /// <param name="resourceGroup">The resource group.</param>
-        /// <param name="resource">The resource.</param>
-        /// <param name="address">The address.</param>
-        /// <param name="verb">The verb.</param>
-        /// <param name="operationName">Operation time.</param>
-        /// <param name="statusCode">Status code.</param>
-        /// <param name="latencyInMilliseconds">The latency.</param>
-        /// <param name="startTime">The start time.</param>
-        /// <param name="endTime">The end time.</param>
+        /// <param name="RequestId">The request id.</param>
+        /// <param name="SubscriptionId">The subscription id.</param>
+        /// <param name="ResourceGroup">The resource group.</param>
+        /// <param name="Resource">The resource.</param>
+        /// <param name="Address">The address.</param>
+        /// <param name="Verb">The verb.</param>
+        /// <param name="OperationName">Operation time.</param>
+        /// <param name="StatusCode">Status code.</param>
+        /// <param name="LatencyInMilliseconds">The latency.</param>
+        /// <param name="StartTime">The start time.</param>
+        /// <param name="EndTime">The end time.</param>
         [Event(2002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostAPISummary)]
-        public void LogRuntimeHostAPISummary(string requestId, string subscriptionId, string resourceGroup, string resource, string address, string verb, string operationName, int statusCode, long latencyInMilliseconds, string startTime, string endTime)
+        public void LogRuntimeHostAPISummary(string RequestId, string SubscriptionId, string ResourceGroup, string Resource, string Address, string Verb, string OperationName, int StatusCode, long LatencyInMilliseconds, string StartTime, string EndTime)
         {
             WriteDiagnosticsEvent(
                 2002,
-                requestId,
-                subscriptionId,
-                resourceGroup,
-                resource,
-                address,
-                verb,
-                operationName,
-                statusCode,
-                latencyInMilliseconds,
-                startTime,
-                endTime);
+                RequestId,
+                SubscriptionId,
+                ResourceGroup,
+                Resource,
+                Address,
+                Verb,
+                OperationName,
+                StatusCode,
+                LatencyInMilliseconds,
+                StartTime,
+                EndTime);
         }
 
         /// <summary>
         /// Log retry attempt message.
         /// </summary>
-        /// <param name="requestId">The request id.</param>
-        /// <param name="source">The source.</param>
-        /// <param name="message">The message.</param>
+        /// <param name="RequestId">The request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
         [Event(2003, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRetryAttemptMessage)]
-        public void LogRetryAttemptMessage(string requestId, string source, string message)
+        public void LogRetryAttemptMessage(string RequestId, string Source, string Message)
         {
             WriteDiagnosticsEvent(
                 2003,
-                requestId,
-                source,
-                message);
+                RequestId,
+                Source,
+                Message);
         }
 
         /// <summary>
         /// Log retry attempt summary.
         /// </summary>
-        /// <param name="requestId">Request id.</param>
-        /// <param name="source">The source.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="latencyInMilliseconds">The latency.</param>
-        /// <param name="startTime">The start time.</param>
-        /// <param name="endTime">The end time.</param>
-        /// <param name="exceptionType">Exception type.</param>
-        /// <param name="exceptionDetails">Exception details.</param>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
+        /// <param name="LatencyInMilliseconds">The latency.</param>
+        /// <param name="StartTime">The start time.</param>
+        /// <param name="EndTime">The end time.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
         [Event(2004, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRetryAttemptSummary)]
-        public void LogRetryAttemptSummary(string requestId, string source, string message, long latencyInMilliseconds, string startTime, string endTime, string exceptionType, string exceptionDetails)
+        public void LogRetryAttemptSummary(string RequestId, string Source, string Message, long LatencyInMilliseconds, string StartTime, string EndTime, string ExceptionType, string ExceptionDetails)
         {
             WriteDiagnosticsEvent(
                 2004,
-                requestId,
-                source,
-                message,
-                latencyInMilliseconds,
-                startTime,
-                endTime,
-                exceptionType,
-                exceptionDetails);
+                RequestId,
+                Source,
+                Message,
+                LatencyInMilliseconds,
+                StartTime,
+                EndTime,
+                ExceptionType,
+                ExceptionDetails);
         }
 
         /// <summary>
         /// Log runtime host insight correlation.
         /// </summary>
-        /// <param name="requestId">The request id.</param>
-        /// <param name="source">The source.</param>
-        /// <param name="subscriptionId">The subscription id.</param>
-        /// <param name="resourceGroup">The resource group.</param>
-        /// <param name="resource">The resource.</param>
-        /// <param name="correlationId">The correlation id.</param>
-        /// <param name="message">The message.</param>
+        /// <param name="RequestId">The request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="SubscriptionId">The subscription id.</param>
+        /// <param name="ResourceGroup">The resource group.</param>
+        /// <param name="Resource">The resource.</param>
+        /// <param name="CorrelationId">The correlation id.</param>
+        /// <param name="Message">The message.</param>
         [Event(2005, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostInsightsCorrelation, Version = 2)]
-        public void LogRuntimeHostInsightCorrelation(string requestId, string source, string subscriptionId, string resourceGroup, string resource, string correlationId, string message)
+        public void LogRuntimeHostInsightCorrelation(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string CorrelationId, string Message)
         {
             WriteDiagnosticsEvent(
                 2005,
-                requestId,
-                source,
-                subscriptionId,
-                resourceGroup,
-                resource,
-                correlationId,
-                message);
+                RequestId,
+                Source,
+                SubscriptionId,
+                ResourceGroup,
+                Resource,
+                CorrelationId,
+                Message);
         }
 
         /// <summary>
         /// Log runtime host handled exception.
         /// </summary>
-        /// <param name="requestId">Request id.</param>
-        /// <param name="source">The source.</param>
-        /// <param name="subscriptionId">Subscription id.</param>
-        /// <param name="resourceGroup">Resource group.</param>
-        /// <param name="resource">The resource.</param>
-        /// <param name="exceptionType">Exception type.</param>
-        /// <param name="exceptionDetails">Exception details.</param>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="SubscriptionId">Subscription id.</param>
+        /// <param name="ResourceGroup">Resource group.</param>
+        /// <param name="Resource">The resource.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
         [Event(2006, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostHandledException)]
-        public void LogRuntimeHostHandledException(string requestId, string source, string subscriptionId, string resourceGroup, string resource, string exceptionType, string exceptionDetails)
+        public void LogRuntimeHostHandledException(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails)
         {
             WriteDiagnosticsEvent(
                 2006,
-                requestId,
-                source,
-                subscriptionId,
-                resourceGroup,
-                resource,
-                exceptionType,
-                exceptionDetails);
+                RequestId,
+                Source,
+                SubscriptionId,
+                ResourceGroup,
+                Resource,
+                ExceptionType,
+                ExceptionDetails);
         }
 
         /// <summary>
         /// Log full ASC insight.
         /// </summary>
-        /// <param name="requestId">Request id.</param>
-        /// <param name="source">The source.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="details">The details.</param>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
+        /// <param name="Details">The details.</param>
         [Event(2008, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostSupportTopicAscInsight)]
-        public void LogFullAscInsight(string requestId, string source, string message, string details)
+        public void LogFullAscInsight(string RequestId, string Source, string Message, string Details)
         {
             WriteDiagnosticsEvent(
                 2008,
-                requestId,
-                source,
-                message,
-                details);
+                RequestId,
+                Source,
+                Message,
+                Details);
         }
 
         #endregion
@@ -257,36 +259,36 @@ namespace Diagnostics.Logger
         /// <summary>
         /// Log source watch message.
         /// </summary>
-        /// <param name="source">The source.</param>
-        /// <param name="message">The message.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
         [Event(2500, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogSourceWatcherMessage)]
-        public void LogSourceWatcherMessage(string source, string message)
+        public void LogSourceWatcherMessage(string Source, string Message)
         {
-            WriteDiagnosticsEvent(2500, source, message);
+            WriteDiagnosticsEvent(2500, Source, Message);
         }
 
         /// <summary>
         /// Log source watcher warning.
         /// </summary>
-        /// <param name="source">The source.</param>
-        /// <param name="message">The message.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
         [Event(2501, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogSourceWatcherWarning)]
-        public void LogSourceWatcherWarning(string source, string message)
+        public void LogSourceWatcherWarning(string Source, string Message)
         {
-            WriteDiagnosticsEvent(2501, source, message);
+            WriteDiagnosticsEvent(2501, Source, Message);
         }
 
         /// <summary>
         /// Log source watcher exception.
         /// </summary>
-        /// <param name="source">The source.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="exceptionType">Exception type.</param>
-        /// <param name="exceptionDetails">Exception details.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
         [Event(2502, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogSourceWatcherException)]
-        public void LogSourceWatcherException(string source, string message, string exceptionType, string exceptionDetails)
+        public void LogSourceWatcherException(string Source, string Message, string ExceptionType, string ExceptionDetails)
         {
-            WriteDiagnosticsEvent(2502, source, message, exceptionType, exceptionDetails);
+            WriteDiagnosticsEvent(2502, Source, Message, ExceptionType, ExceptionDetails);
         }
 
         #endregion
@@ -296,41 +298,41 @@ namespace Diagnostics.Logger
         /// <summary>
         /// Log compiler host client message.
         /// </summary>
-        /// <param name="requestId">Request id.</param>
-        /// <param name="source">The source.</param>
-        /// <param name="message">The message.</param>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
         [Event(2600, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogCompilerHostClientMessage)]
-        public void LogCompilerHostClientMessage(string requestId, string source, string message)
+        public void LogCompilerHostClientMessage(string RequestId, string Source, string Message)
         {
-            WriteDiagnosticsEvent(2600, requestId, source, message);
+            WriteDiagnosticsEvent(2600, RequestId, Source, Message);
         }
 
         /// <summary>
         /// Log compiler host client exception.
         /// </summary>
-        /// <param name="requestId">Request id.</param>
-        /// <param name="source">The source.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="exceptionType">Exception type.</param>
-        /// <param name="exceptionDetails">Exception details.</param>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
         [Event(2601, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogCompilerHostClientException)]
-        public void LogCompilerHostClientException(string requestId, string source, string message, string exceptionType, string exceptionDetails)
+        public void LogCompilerHostClientException(string RequestId, string Source, string Message, string ExceptionType, string ExceptionDetails)
         {
-            WriteDiagnosticsEvent(2601, requestId, source, message, exceptionType, exceptionDetails);
+            WriteDiagnosticsEvent(2601, RequestId, Source, Message, ExceptionType, ExceptionDetails);
         }
 
         /// <summary>
         /// Log compiler host client warning.
         /// </summary>
-        /// <param name="requestId">The request id.</param>
-        /// <param name="source">The source.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="exceptionType">Exception type.</param>
-        /// <param name="exceptionDetails">Exception details.</param>
+        /// <param name="RequestId">The request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
         [Event(2602, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogCompilerHostClientWarning)]
-        public void LogCompilerHostClientWarning(string requestId, string source, string message, string exceptionType, string exceptionDetails)
+        public void LogCompilerHostClientWarning(string RequestId, string Source, string Message, string ExceptionType, string ExceptionDetails)
         {
-            WriteDiagnosticsEvent(2602, requestId, source, message, exceptionType, exceptionDetails);
+            WriteDiagnosticsEvent(2602, RequestId, Source, Message, ExceptionType, ExceptionDetails);
         }
 
         #endregion
@@ -340,111 +342,111 @@ namespace Diagnostics.Logger
         /// <summary>
         /// Log data provider message.
         /// </summary>
-        /// <param name="requestId">Request id.</param>
-        /// <param name="source">The source.</param>
-        /// <param name="message">The message.</param>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
         [Event(3000, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDataProviderMessage)]
-        public void LogDataProviderMessage(string requestId, string source, string message)
+        public void LogDataProviderMessage(string RequestId, string Source, string Message)
         {
             WriteDiagnosticsEvent(
                 3000,
-                requestId,
-                source,
-                message);
+                RequestId,
+                Source,
+                Message);
         }
 
         /// <summary>
         /// Log data provider exception.
         /// </summary>
-        /// <param name="requestId">Request id.</param>
-        /// <param name="source">The source.</param>
-        /// <param name="startTime">Start time.</param>
-        /// <param name="endTime">End time.</param>
-        /// <param name="latencyInMilliseconds">The latency.</param>
-        /// <param name="exceptionType">Exception type.</param>
-        /// <param name="exceptionDetails">Exception details.</param>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="StartTime">Start time.</param>
+        /// <param name="EndTime">End time.</param>
+        /// <param name="LatencyInMilliseconds">The latency.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
         [Event(3001, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDataProviderException)]
-        public void LogDataProviderException(string requestId, string source, string startTime, string endTime, long latencyInMilliseconds, string exceptionType, string exceptionDetails)
+        public void LogDataProviderException(string RequestId, string Source, string StartTime, string EndTime, long LatencyInMilliseconds, string ExceptionType, string ExceptionDetails)
         {
             WriteDiagnosticsEvent(
                 3001,
-                requestId,
-                source,
-                startTime,
-                endTime,
-                latencyInMilliseconds,
-                exceptionType,
-                exceptionDetails);
+                RequestId,
+                Source,
+                StartTime,
+                EndTime,
+                LatencyInMilliseconds,
+                ExceptionType,
+                ExceptionDetails);
         }
 
         /// <summary>
         /// Log data provider operation summary.
         /// </summary>
-        /// <param name="requestId">The request id.</param>
-        /// <param name="source">The source.</param>
-        /// <param name="startTime">The start time.</param>
-        /// <param name="endTime">The end time.</param>
-        /// <param name="latencyInMilliseconds">The latency.</param>
+        /// <param name="RequestId">The request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="StartTime">The start time.</param>
+        /// <param name="EndTime">The end time.</param>
+        /// <param name="LatencyInMilliseconds">The latency.</param>
         [Event(3002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDataProviderOperationSummary)]
-        public void LogDataProviderOperationSummary(string requestId, string source, string startTime, string endTime, long latencyInMilliseconds)
+        public void LogDataProviderOperationSummary(string RequestId, string Source, string StartTime, string EndTime, long LatencyInMilliseconds)
         {
             WriteDiagnosticsEvent(
                 3002,
-                requestId,
-                source,
-                startTime,
-                endTime,
-                latencyInMilliseconds);
+                RequestId,
+                Source,
+                StartTime,
+                EndTime,
+                LatencyInMilliseconds);
         }
 
         /// <summary>
         /// Log Kusto token refresh summary.
         /// </summary>
-        /// <param name="source">The source.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="latencyInMilliseconds">The latency.</param>
-        /// <param name="startTime">The start time.</param>
-        /// <param name="endTime">The end time.</param>
-        /// <param name="exceptionType">Exception type.</param>
-        /// <param name="exceptionDetails">Exception details.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
+        /// <param name="LatencyInMilliseconds">The latency.</param>
+        /// <param name="StartTime">The start time.</param>
+        /// <param name="EndTime">The end time.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
         [Event(3003, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogKustoTokenRefreshSummary)]
-        public void LogKustoTokenRefreshSummary(string source, string message, long latencyInMilliseconds, string startTime, string endTime, string exceptionType, string exceptionDetails)
+        public void LogKustoTokenRefreshSummary(string Source, string Message, long LatencyInMilliseconds, string StartTime, string EndTime, string ExceptionType, string ExceptionDetails)
         {
             WriteDiagnosticsEvent(
                 3003,
-                source,
-                message,
-                latencyInMilliseconds,
-                startTime,
-                endTime,
-                exceptionType,
-                exceptionDetails);
+                Source,
+                Message,
+                LatencyInMilliseconds,
+                StartTime,
+                EndTime,
+                ExceptionType,
+                ExceptionDetails);
         }
 
         /// <summary>
         /// Log kusto query information.
         /// </summary>
-        /// <param name="source">The source.</param>
-        /// <param name="requestId">Request id.</param>
-        /// <param name="message">The message.</param>
-        /// <param name="latencyInMilliseconds">The latency.</param>
-        /// <param name="details">The details.</param>
-        /// <param name="content">The content.</param>
-        /// <param name="exceptionType">Exception type.</param>
-        /// <param name="exceptionDetails">Exception details.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Message">The message.</param>
+        /// <param name="LatencyInMilliseconds">The latency.</param>
+        /// <param name="Details">The details.</param>
+        /// <param name="Content">The content.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
         [Event(3004, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogKustoQueryInformation)]
-        public void LogKustoQueryInformation(string source, string requestId, string message, long latencyInMilliseconds, string details, string content, string exceptionType, string exceptionDetails)
+        public void LogKustoQueryInformation(string Source, string RequestId, string Message, long LatencyInMilliseconds, string Details, string Content, string ExceptionType, string ExceptionDetails)
         {
             WriteDiagnosticsEvent(
                 3004,
-                source,
-                requestId,
-                message,
-                latencyInMilliseconds,
-                details,
-                content,
-                exceptionType,
-                exceptionDetails);
+                Source,
+                RequestId,
+                Message,
+                LatencyInMilliseconds,
+                Details,
+                Content,
+                ExceptionType,
+                ExceptionDetails);
         }
 
         #endregion
