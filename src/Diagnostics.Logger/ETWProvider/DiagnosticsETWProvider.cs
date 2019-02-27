@@ -1,6 +1,6 @@
 ﻿// <copyright file="DiagnosticsETWProvider.cs" company="Microsoft Corporation">
 // Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See License.txt in the project root for license information.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
 using System.Diagnostics.Tracing;
