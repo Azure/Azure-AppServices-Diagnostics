@@ -3,14 +3,16 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Diagnostics.Logger
 {
     /// <summary>
     /// ETW message template.
     /// </summary>
+    [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1600:Elements should be documented", Justification = "Message templates are enough explanation.")]
     public static class ETWMessageTemplates
     {
-#pragma warning disable SA1600 // Elements should be documented
 #pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
 
         #region Compile Host Event Message Templates
@@ -59,7 +61,6 @@ namespace Diagnostics.Logger
         public const string LogKustoQueryInformation = "Kusto Query Information";
         #endregion
 
-#pragma warning restore SA1600 // Elements should be documented
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
