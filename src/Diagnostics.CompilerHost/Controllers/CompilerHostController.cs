@@ -1,4 +1,10 @@
-﻿using System.Collections.Generic;
+﻿// <copyright file="CompilerHostController.cs" company="Microsoft Corporation">
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
+
+using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
@@ -11,15 +17,27 @@ using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.CompilerHost.Controllers
 {
+    /// <summary>
+    /// Compiler host controller.
+    /// </summary>
     [Route("api/[controller]")]
     public class CompilerHostController : Controller
     {
+        /// <summary>
+        /// Health ping.
+        /// </summary>
+        /// <returns>Action result.</returns>
         [HttpGet("healthping")]
         public IActionResult HealthPing()
         {
             return Ok("Server is up and running.");
         }
 
+        /// <summary>
+        /// Action for handling post request.
+        /// </summary>
+        /// <param name="jsonBody">Json request body.</param>
+        /// <returns>Action result.</returns>
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]JToken jsonBody)
         {
@@ -31,18 +49,19 @@ namespace Diagnostics.CompilerHost.Controllers
             // Get script and reference
             var script = jsonBody.Value<string>("script");
 
-            var references = new Dictionary<string, string>();
-            if (jsonBody["reference"] != null)
-            {
-                references = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonBody["reference"].ToString());
-            }
-
             if (string.IsNullOrWhiteSpace(script))
             {
                 return BadRequest("Missing script from body");
             }
 
-            var metaData = new EntityMetadata(script);
+            var references = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonBody["reference"].ToString());
+
+            if (!Enum.TryParse(jsonBody.Value<string>("entityType"), true, out EntityType entityType))
+            {
+                entityType = EntityType.Signal;
+            }
+
+            var metaData = new EntityMetadata(script, entityType);
             var compilerResponse = new CompilerResponse();
             using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports(), references.ToImmutableDictionary()))
             {

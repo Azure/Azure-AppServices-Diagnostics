@@ -75,6 +75,21 @@ namespace Diagnostics.Tests.Helpers
                 .Replace("<YOUR_QUERY>", queryPart);
         }
 
+        public static async Task<string> GetGistScript(Definition def, ResourceType resourceType = ResourceType.App)
+        {
+            string template;
+            if (resourceType == ResourceType.HostingEnvironment)
+            {
+                template = await File.ReadAllTextAsync(@"templates/Gist_HostingEnvironment.csx");
+            }
+            else
+            {
+                template = await File.ReadAllTextAsync(@"templates/Gist_WebApp.csx");
+            }
+
+            return template.Replace("<YOUR_GIST_ID>", def.Id);
+        }
+
         public static async Task<string> GetDetectorScriptWithMultipleSupportTopics(Definition def, bool isInternal, SupportTopic topic1, SupportTopic topic2)
         {
             string template = await File.ReadAllTextAsync(@"TestData/TestDetectorWithSupportTopic.csx");
@@ -99,23 +114,27 @@ namespace Diagnostics.Tests.Helpers
                 .Replace("<YOUR_QUERY>", query);
         }
 
-        public static async Task<string> GetGistAsync()
+        public static string GetGist()
         {
-            var template = await File.ReadAllTextAsync(@"templates/GistTemplate.csx");
-            return template.Replace("<GIST_ID>", "test")
-                .Replace("<GIST_AUTHOR>", "xuey");
+            return @"public static class A{}";
+        }
+
+        public static string GetErrorGist()
+        {
+            return @"public static class A{};
+                    public static class B{}";
         }
 
         public static string GetSentinel()
         {
             return @"
-                #load ""__internal__.csx""
-                #load ""xxx.csx""
+                #load ""xxx""
+                #load ""yyy""
 
                 using System;
 
                 [AppFilter(AppType = AppType.All, PlatformType = PlatformType.Windows, StackType = StackType.All)]
-                [Definition(Id = Id, Name = ""name"", Author = Authors, Description = Description, Category = Tags)]
+                [Definition(Id = ""id"", Name = ""name"", Author = ""authors"", Description = ""description"", Category = """")]
                 public static string Run()
                 {
                     return ""Test"";

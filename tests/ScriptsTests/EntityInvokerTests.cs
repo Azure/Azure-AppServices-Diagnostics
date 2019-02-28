@@ -52,6 +52,27 @@ namespace Diagnostics.Tests.ScriptsTests
             }
         }
 
+        [Theory]
+        [InlineData(ResourceType.App, typeof(AppFilter))]
+        [InlineData(ResourceType.HostingEnvironment, typeof(HostingEnvironmentFilter))]
+        public async void EntityInvoker_TestGistResourceAttributeResolution(ResourceType resType, Type filterType)
+        {
+            Definition definitonAttribute = new Definition()
+            {
+                Id = "TestId"
+            };
+
+            EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata(EntityType.Gist);
+            metadata.ScriptText = await ScriptTestDataHelper.GetGistScript(definitonAttribute, resType);
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+                Assert.Equal(definitonAttribute, invoker.EntryPointDefinitionAttribute);
+                Assert.Equal(filterType, invoker.ResourceFilter.GetType());
+            }
+        }
+
         [Fact]
         public async void EntityInvoker_TestSupportTopicAttributeResolution()
         {
@@ -130,14 +151,14 @@ namespace Diagnostics.Tests.ScriptsTests
         }
 
         [Fact]
-        public async void EntityInvoker_TestGistValidation()
+        public async void EntityInvoker_TestDetectorWithGists()
         {
-            var gist = await ScriptTestDataHelper.GetGistAsync();
+            var gist = ScriptTestDataHelper.GetGist();
             var references = new Dictionary<string, string>
             {
-                { "__internal__.csx", gist },
-                { "xxx.csx", "" },
-                { "yyy.csx", "" }
+                { "xxx", gist },
+                { "yyy", "" },
+                { "zzz", "" }
             };
 
             var metadata = new EntityMetadata(ScriptTestDataHelper.GetSentinel(), EntityType.Detector);
@@ -193,6 +214,44 @@ namespace Diagnostics.Tests.ScriptsTests
 
                 Assert.True(File.Exists($"{assemblyPath}.dll"));
                 Assert.True(File.Exists($"{assemblyPath}.pdb"));
+            }
+        }
+
+        [Fact]
+        public async void EntityInvoker_TestGistInitializationUsingAssembly()
+        {
+            // First Create and Save a assembly for test purposes.
+            Definition definitonAttribute = new Definition()
+            {
+                Id = "TestId"
+            };
+
+            string assemblyPath = $@"{Directory.GetCurrentDirectory()}/{Guid.NewGuid().ToString()}";
+            EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata(EntityType.Gist);
+            metadata.ScriptText = await ScriptTestDataHelper.GetGistScript(definitonAttribute);
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+                await invoker.SaveAssemblyToDiskAsync(assemblyPath);
+
+                Assert.True(File.Exists($"{assemblyPath}.dll"));
+                Assert.True(File.Exists($"{assemblyPath}.pdb"));
+            }
+
+            // Now test initializing Entry Point of Invoker using assembly
+            Assembly asm = Assembly.LoadFrom($"{assemblyPath}.dll");
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata))
+            {
+                Exception ex = Record.Exception(() =>
+                {
+                    invoker.InitializeEntryPoint(asm);
+                });
+
+                Assert.Null(ex);
+                Assert.True(invoker.IsCompilationSuccessful);
+                Assert.Equal(definitonAttribute.Id, invoker.EntryPointDefinitionAttribute.Id);
             }
         }
 

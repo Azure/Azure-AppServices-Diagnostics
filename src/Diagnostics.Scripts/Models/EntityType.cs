@@ -18,6 +18,11 @@
         /// <summary>
         /// Analysis entity.
         /// </summary>
-        Analysis = 4
+        Analysis = 4,
+
+        /// <summary>
+        /// Gist entity.
+        /// </summary>
+        Gist = 8
     }
 }

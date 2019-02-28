@@ -1,4 +1,5 @@
 ﻿using Diagnostics.RuntimeHost.Utilities;
+using Diagnostics.Scripts.Models;
 using System.Collections.Generic;
 
 namespace Diagnostics.RuntimeHost.Models
@@ -30,6 +31,11 @@ namespace Diagnostics.RuntimeHost.Models
         /// Gets or sets the source code reference.
         /// </summary>
         public IDictionary<string, string> References { get; set; }
+
+        /// <summary>
+        /// Gets or sets the entity type.
+        /// </summary>
+        public string EntityType { get; set; }
 
         /// <summary>
         /// Gets or sets the resource.

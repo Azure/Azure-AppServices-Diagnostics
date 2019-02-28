@@ -140,7 +140,24 @@ namespace Diagnostics.RuntimeHost.Controllers
             return response == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata));
         }
 
+<<<<<<< HEAD
         protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationBostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null, Form Form = null)
+=======
+        /// <summary>
+        /// Execute query.
+        /// </summary>
+        /// <typeparam name="TPostBodyResource">Type for post body resource.</typeparam>
+        /// <param name="resource">The resource.</param>
+        /// <param name="jsonBody">The json body.</param>
+        /// <param name="startTime">The start time.</param>
+        /// <param name="endTime">The end time.</param>
+        /// <param name="timeGrain">The time grain.</param>
+        /// <param name="detectorId">Detector id.</param>
+        /// <param name="dataSource">Data source.</param>
+        /// <param name="timeRange">Time range.</param>
+        /// <returns>Task for executing query.</returns>
+        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationPostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null)
+>>>>>>> EntityInvoker for compiling gists
         {
             if (jsonBody == null)
             {
@@ -162,8 +179,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest(errorMessage);
             }
 
-            await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
-            EntityMetadata metaData = new EntityMetadata(jsonBody.Script);
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
 
             var runtimeContext = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
 
@@ -186,6 +202,22 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             Assembly tempAsm = null;
+            foreach (var p in _gistCache.GetAllReferences())
+            {
+                if (!jsonBody.References.ContainsKey(p.Key))
+                {
+                    // Add latest version to references
+                    jsonBody.References.Add(p);
+                }
+            }
+
+            if (!Enum.TryParse(jsonBody.EntityType, true, out EntityType entityType))
+            {
+                entityType = EntityType.Signal;
+            }
+
+            var compilerResponse = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, jsonBody.EntityType, jsonBody.References, runtimeContext.OperationContext.RequestId);
+            queryRes.CompilationOutput = compilerResponse;
 
             bool isCompilationNeeded = !ScriptCompilation.IsSameScript(jsonBody.Script, scriptETag) || !_assemblyCacheService.IsAssemblyLoaded(assemblyFullName, out tempAsm);
             if(isCompilationNeeded)
@@ -203,6 +235,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             
             if (queryRes.CompilationOutput.CompilationSucceeded)
             {
+<<<<<<< HEAD
                 try
                 {
                     if (isCompilationNeeded)
@@ -220,6 +253,15 @@ namespace Diagnostics.RuntimeHost.Controllers
                     throw new Exception($"Problem while loading Assembly: {e.Message}");
                 }
                 using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+=======
+                byte[] asmData = Convert.FromBase64String(compilerResponse.AssemblyBytes);
+                byte[] pdbData = Convert.FromBase64String(compilerResponse.PdbBytes);
+
+                var tempAsm = Assembly.Load(asmData, pdbData);
+
+                EntityMetadata metaData = new EntityMetadata(jsonBody.Script, entityType);
+                using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports(), jsonBody.References.ToImmutableDictionary()))
+>>>>>>> EntityInvoker for compiling gists
                 {
                     invoker.InitializeEntryPoint(tempAsm);
 
