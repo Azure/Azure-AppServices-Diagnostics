@@ -54,7 +54,14 @@ namespace Diagnostics.CompilerHost.Controllers
                 return BadRequest("Missing script from body");
             }
 
-            var references = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonBody["reference"].ToString());
+            var references = new Dictionary<string, string>();
+            try
+            {
+                references = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonBody["reference"].ToString());
+            }
+            catch
+            {
+            }
 
             if (!Enum.TryParse(jsonBody.Value<string>("entityType"), true, out EntityType entityType))
             {
