@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -14,6 +14,14 @@
     <Folder Include="CompilationService\Signal\CodeAnalyzers\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <AdditionalFiles Include="../../stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <CodeAnalysisRuleSet>../../ca.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  
   <ItemGroup>
     <ProjectReference Include="..\Diagnostics.ModelsAndUtils\Diagnostics.ModelsAndUtils.csproj" />
   </ItemGroup>
