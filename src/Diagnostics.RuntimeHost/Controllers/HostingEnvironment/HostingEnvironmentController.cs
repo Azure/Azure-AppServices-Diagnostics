@@ -1,5 +1,6 @@
 ﻿using Diagnostics.DataProviders;
 using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
@@ -17,8 +18,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.HostingEnvironmentResource)]
     public sealed class HostingEnvironmentController : DiagnosticControllerBase<HostingEnvironment>
     {
-        public HostingEnvironmentController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService)
-            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, dataSourcesConfigService)
+        public HostingEnvironmentController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
+            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, dataSourcesConfigService, assemblyCacheService)
         {
         }
 
@@ -32,7 +33,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Query)]
-        public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, string[] hostNames, string stampName, [FromBody]CompilationBostBody<DiagnosticStampData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, string[] hostNames, string stampName, [FromBody]CompilationBostBody<DiagnosticStampData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
         {
             if (jsonBody == null)
             {
@@ -50,7 +51,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             HostingEnvironment ase = await GetHostingEnvironment(subscriptionId, resourceGroupName, hostingEnvironmentName, jsonBody.Resource, startTimeUtc, endTimeUtc);
-            return await base.ExecuteQuery(ase, jsonBody, startTime, endTime, timeGrain);
+            return await base.ExecuteQuery(ase, jsonBody, startTime, endTime, timeGrain, Form: Form);
         }
 
         [HttpPost(UriElements.Detectors)]
@@ -67,7 +68,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
-        public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, string detectorId, [FromBody] DiagnosticStampData postBody, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, string detectorId, [FromBody] DiagnosticStampData postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null)
         {
             if (postBody == null)
             {
@@ -80,7 +81,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             HostingEnvironment ase = await GetHostingEnvironment(subscriptionId, resourceGroupName, hostingEnvironmentName, postBody, startTimeUtc, endTimeUtc);
-            return await base.GetDetector(ase, detectorId, startTime, endTime, timeGrain);
+            return await base.GetDetector(ase, detectorId, startTime, endTime, timeGrain, form: form);
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]

@@ -5,6 +5,7 @@ using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -12,15 +13,15 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.ApiManagementServiceResource)]
     public sealed class ApiManagementController : DiagnosticControllerBase<ApiManagementService>
     {
-        public ApiManagementController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService)
-            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, dataSourcesConfigService)
+        public ApiManagementController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
+            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, dataSourcesConfigService, assemblyCacheService)
         {
         }
 
         [HttpPost(UriElements.Query)]
-        public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string serviceName, [FromBody]CompilationBostBody<dynamic> jsonBody, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string serviceName, [FromBody]CompilationBostBody<dynamic> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
         {
-            return await base.ExecuteQuery(GetResource(subscriptionId, resourceGroupName, serviceName), jsonBody, startTime, endTime, timeGrain);
+            return await base.ExecuteQuery(GetResource(subscriptionId, resourceGroupName, serviceName), jsonBody, startTime, endTime, timeGrain,  Form: Form);
         }
 
         [HttpPost(UriElements.Detectors)]
@@ -30,9 +31,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
-        public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string serviceName, string detectorId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string serviceName, string detectorId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null)
         {
-            return await base.GetDetector(GetResource(subscriptionId, resourceGroupName, serviceName), detectorId, startTime, endTime, timeGrain);
+            return await base.GetDetector(GetResource(subscriptionId, resourceGroupName, serviceName), detectorId, startTime, endTime, timeGrain, form: form);
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]

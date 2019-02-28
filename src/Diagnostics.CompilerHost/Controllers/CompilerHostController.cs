@@ -41,7 +41,7 @@ namespace Diagnostics.CompilerHost.Controllers
             using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
                 await invoker.InitializeEntryPointAsync();
-                compilerResponse.CompilationOutput = invoker.CompilationOutput;
+                compilerResponse.CompilationTraces = invoker.CompilationOutput;
                 compilerResponse.CompilationSucceeded = invoker.IsCompilationSuccessful;
 
                 if (compilerResponse.CompilationSucceeded)

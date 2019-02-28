@@ -187,5 +187,24 @@ namespace Diagnostics.Tests.ModelTests
                 Assert.False(nativeInsightAdded.Body.ContainsKey("CustomerReadyContent"));
             }
         }
+
+        [Fact]
+        public void TestFormExtension()
+        {
+            Response res = new Response();
+            Form myform = new Form(1);
+            Textbox input1 = new Textbox(1, "Enter first input", true);
+            Textbox input2 = new Textbox(1, "Enter second input", true);
+            // Adding inputs with same ID throws exception
+            Assert.Throws<Exception>(() => myform.AddFormInputs(new List<FormInputBase>() { input1, input2 }));
+            input2 = new Textbox(2, "Enter second input");
+            myform.AddFormInput(input2);
+            Assert.NotEmpty(myform.FormInputs);
+            Assert.Equal(2, myform.FormInputs.Count);
+            res.AddForm(myform);
+            Assert.NotEmpty(res.Dataset);
+            Assert.Equal<RenderingType>(RenderingType.Form, res.Dataset.FirstOrDefault().RenderingProperties.Type);
+
+        }
     }
 }
