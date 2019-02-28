@@ -1,6 +1,10 @@
-﻿using Diagnostics.RuntimeHost.Models;
-using System;
+﻿// <copyright file="ISourceWatcher.cs" company="Microsoft Corporation">
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
+
 using System.Threading.Tasks;
+using Diagnostics.RuntimeHost.Models;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -17,7 +21,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// <summary>
         /// Wait for iteration to complete.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The task.</returns>
         Task WaitForFirstCompletion();
 
         /// <summary>

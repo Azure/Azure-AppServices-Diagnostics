@@ -2,6 +2,7 @@
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.Scripts;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Diagnostics.RuntimeHost.Services.CacheService
 {
@@ -14,10 +15,10 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
         /// Get detector invoker.
         /// </summary>
         /// <typeparam name="TResource">Resource type.</typeparam>
-        /// <param name="detectorId">Detector id.</param>
+        /// <param name="entityId">Detector id.</param>
         /// <param name="context">Runtime context.</param>
         /// <returns>Entity invoker.</returns>
-        EntityInvoker GetDetectorInvoker<TResource>(string detectorId, RuntimeContext<TResource> context)
+        EntityInvoker GetEntityInvoker<TResource>(string entityId, RuntimeContext<TResource> context)
             where TResource : IResource;
 
         /// <summary>
@@ -26,7 +27,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
         /// <typeparam name="TResource">Resource type.</typeparam>
         /// <param name="context">Runtime context.</param>
         /// <returns>Entity invoker list.</returns>
-        IEnumerable<EntityInvoker> GetDetectorInvokerList<TResource>(RuntimeContext<TResource> context)
+        IEnumerable<EntityInvoker> GetEntityInvokerList<TResource>(RuntimeContext<TResource> context)
             where TResource : IResource;
 
         /// <summary>
@@ -45,5 +46,4 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
         IEnumerable<EntityInvoker> GetSystemInvokerList<TResource>(RuntimeContext<TResource> context)
             where TResource : IResource;
     }
-
 }

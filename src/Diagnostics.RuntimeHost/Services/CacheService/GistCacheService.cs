@@ -1,82 +1,35 @@
-﻿using Diagnostics.RuntimeHost.Models;
-using System.Collections.Concurrent;
+﻿// <copyright file="GistCacheService.cs" company="Microsoft Corporation">
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
+
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using Diagnostics.RuntimeHost.Models;
 
 namespace Diagnostics.RuntimeHost.Services.CacheService
 {
     /// <summary>
     /// Gist cache service.
     /// </summary>
-    public class GistCacheService : IGistCacheService
+    public class GistCacheService : InvokerCacheService, IGistCacheService
     {
-        private ConcurrentDictionary<string, GistEntry> _collection;
-        private ConcurrentDictionary<string, string> _reference;
-
-        /// <summary>
-        /// Initialize a new instance of <see cref="GistCacheService"/> class.
-        /// </summary>
-        public GistCacheService()
-        {
-            _collection = new ConcurrentDictionary<string, GistEntry>();
-            _reference = new ConcurrentDictionary<string, string>();
-        }
-
-        /// <summary>
-        /// Add or update cache.
-        /// </summary>
-        /// <param name="key">Cache key.</param>
-        /// <param name="value">Cache value.</param>
-        public void AddOrUpdate(string key, GistEntry value)
-        {
-            _collection.AddOrUpdate(key.ToLower(), value, (existingKey, oldValue) => value);
-            _reference.AddOrUpdate(value.Id, value.CodeString, (existingKey, oldValue) => value.CodeString);
-        }
-
-        /// <summary>
-        /// Get all values.
-        /// </summary>
-        /// <returns>All values.</returns>
-        public IEnumerable<GistEntry> GetAll()
-        {
-            return _collection.Values;
-        }
-
         /// <summary>
         /// Get all references.
         /// </summary>
-        /// <returns>Reference dictionary.</returns>
-        public IImmutableDictionary<string, string> GetAllReferences()
+        /// <typeparam name="TResource">The resource type.</typeparam>
+        /// <param name="context">Runtime context.</param>
+        /// <returns>All references.</returns>
+        IImmutableDictionary<string, string> IGistCacheService.GetAllReferences<TResource>(RuntimeContext<TResource> context)
         {
-            return _reference.ToImmutableDictionary();
-        }
-
-        /// <summary>
-        /// Try to get the cache value.
-        /// </summary>
-        /// <param name="key">Entry key.</param>
-        /// <param name="value">Entry value.</param>
-        /// <returns>A value to indicate get operation success or not.</returns>
-        public bool TryGetValue(string key, out GistEntry value)
-        {
-            return _collection.TryGetValue(key.ToLower(), out value);
-        }
-
-        /// <summary>
-        /// Try to remove the entry.
-        /// </summary>
-        /// <param name="key">Entry key.</param>
-        /// <param name="value">Entry value.</param>
-        /// <returns>A value to indicate remove operation success or not.</returns>
-        public bool TryRemoveValue(string key, out GistEntry value)
-        {
-            if (_collection.TryRemove(key.ToLower(), out value))
+            var list = GetEntityInvokerList(context);
+            var references = new Dictionary<string, string>();
+            foreach (var invoker in list)
             {
-                _reference.TryRemove(value.Id, out var code);
-                return true;
+                references.Add(invoker.EntryPointDefinitionAttribute.Id, invoker.EntityMetadata.ScriptText);
             }
 
-            return false;
+            return references.ToImmutableDictionary();
         }
     }
 }

@@ -39,7 +39,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
             return _collection.TryGetValue(key.ToLower(), out value);
         }
 
-        public IEnumerable<EntityInvoker> GetDetectorInvokerList<TResource>(RuntimeContext<TResource> context)
+        public IEnumerable<EntityInvoker> GetEntityInvokerList<TResource>(RuntimeContext<TResource> context)
             where TResource : IResource
         {
             IEnumerable<EntityInvoker> list = GetAll();
@@ -59,7 +59,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
             return filteredList.OrderBy(p => p.EntryPointDefinitionAttribute.Name);
         }
 
-        public EntityInvoker GetDetectorInvoker<TResource>(string detectorId, RuntimeContext<TResource> context)
+        public EntityInvoker GetEntityInvoker<TResource>(string detectorId, RuntimeContext<TResource> context)
             where TResource : IResource
         {
             if (!TryGetValue(detectorId, out EntityInvoker invoker) || invoker.SystemFilter != null || invoker.ResourceFilter == null || (!context.ClientIsInternal && invoker.ResourceFilter.InternalOnly))

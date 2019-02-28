@@ -41,7 +41,11 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IStampService _stampService;
         protected IAssemblyCacheService _assemblyCacheService;
 
+<<<<<<< HEAD
         public DiagnosticControllerBase(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
+=======
+        public DiagnosticControllerBase(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService)
+>>>>>>> Log separation for gists
         {
             this._compilerHostClient = compilerHostClient;
             this._sourceWatcherService = sourceWatcherService;
@@ -73,33 +77,22 @@ namespace Diagnostics.RuntimeHost.Controllers
             return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2));
         }
 
-        protected async Task<IActionResult> ListGists()
+        protected async Task<IActionResult> ListGists(TResource resource)
         {
-            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
-
-            return Ok(_gistCache.GetAll()
-                .Select(p => new GistDefinition
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Category = p.Category,
-                    Description = p.Description,
-                    Author = p.Author
-                }));
+            DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
+            return Ok(await ListGistsInternal(cxt));
         }
 
-        protected async Task<IActionResult> GetGist(string id)
+        protected async Task<IActionResult> GetGist(TResource resource, string id, string startTime, string endTime, string timeGrain)
         {
-            await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+            if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
+            {
+                return BadRequest(errorMessage);
+            }
 
-            if (_gistCache.TryGetValue(id, out var value))
-            {
-                return Ok(value.CodeString);
-            }
-            else
-            {
-                return NotFound($"Gist {id} not found.");
-            }
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
+            return Ok(await GetGistInternal(id, cxt));
         }
 
         protected async Task<IActionResult> ListSystemInvokers(TResource resource)
@@ -479,7 +472,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 OperationContext = cxt
             };
 
-            var invoker = this._invokerCache.GetDetectorInvoker<TResource>(detectorId, runtimeContext);
+            var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, runtimeContext);
             IEnumerable<SupportTopic> supportTopicList = null;
             Definition definition = null;
             if (invoker != null && invoker.EntryPointDefinitionAttribute != null)
@@ -540,11 +533,30 @@ namespace Diagnostics.RuntimeHost.Controllers
             };
         }
 
+        private async Task<IEnumerable<DiagnosticApiResponse>> ListGistsInternal(RuntimeContext<TResource> context)
+        {
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
+            return _gistCache.GetEntityInvokerList(context).Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
+        }
+
+        private async Task<string> GetGistInternal(string gistId, RuntimeContext<TResource> context)
+        {
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
+            var invoker = this._invokerCache.GetEntityInvoker<TResource>(gistId, context);
+
+            if (invoker == null)
+            {
+                return null;
+            }
+
+            return invoker.EntityMetadata.ScriptText;
+        }
+
         private async Task<IEnumerable<DiagnosticApiResponse>> ListDetectorsInternal(RuntimeContext<TResource> context)
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
 
-            return _invokerCache.GetDetectorInvokerList<TResource>(context)
+            return _invokerCache.GetEntityInvokerList<TResource>(context)
                 .Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
         }
 
@@ -552,7 +564,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
-            var invoker = this._invokerCache.GetDetectorInvoker<TResource>(detectorId, context);
+            var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
 
             if (invoker == null)
             {

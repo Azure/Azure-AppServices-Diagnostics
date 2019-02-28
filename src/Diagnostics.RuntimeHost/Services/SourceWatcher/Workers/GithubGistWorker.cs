@@ -1,10 +1,11 @@
-﻿using Diagnostics.RuntimeHost.Models;
+﻿// <copyright file="GithubGistWorker.cs" company="Microsoft Corporation">
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
+
 using Diagnostics.RuntimeHost.Services.CacheService;
-using Diagnostics.RuntimeHost.Utilities;
-using Newtonsoft.Json;
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using Diagnostics.Scripts;
+using Diagnostics.Scripts.Models;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 {
@@ -32,83 +33,14 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
             GistCache = gistCache;
         }
 
-        /// <summary>
-        /// Create or update cache.
-        /// </summary>
-        /// <param name="subDir">Directory info</param>
-        /// <returns>Task for adding item to cache.</returns>
-        public override async Task CreateOrUpdateCacheAsync(DirectoryInfo subDir)
+        protected override ICache<string, EntityInvoker> GetCacheService()
         {
-            try
-            {
-                // Get cached id from local file.
-                var cacheId = await FileHelper.GetFileContentAsync(subDir.FullName, _cacheIdFileName);
-
-                if (string.IsNullOrWhiteSpace(cacheId) || !GistCache.TryGetValue(cacheId, out GistEntry gist))
-                {
-                    LogMessage($"Folder : {subDir.FullName} missing in gist cache.");
-
-                    // Check if delete marker file exists.
-                    var deleteMarkerFile = new FileInfo(Path.Combine(subDir.FullName, _deleteMarkerName));
-                    if (deleteMarkerFile.Exists)
-                    {
-                        LogMessage("Folder marked for deletion. Skipping cache update");
-                        return;
-                    }
-
-                    // Download csx file.
-                    var csxScriptFile = GetMostRecentFileByExtension(subDir, ".csx");
-                    if (csxScriptFile == default(FileInfo))
-                    {
-                        LogWarning($"No Csx File found (.csx). Skipping cache update");
-                        return;
-                    }
-                    var scriptText = await FileHelper.GetFileContentAsync(csxScriptFile.FullName);
-
-                    // Get package json and deserialize to gist cache entry.
-                    var jsonFile = GetMostRecentFileByExtension(subDir, ".json");
-                    var config = await FileHelper.GetFileContentAsync(jsonFile.FullName);
-                    gist = JsonConvert.DeserializeObject<GistEntry>(config);
-                    gist.CodeString = scriptText;
-
-                    LogMessage($"Updating cache with new gist with id : {gist.Id}");
-                    GistCache.AddOrUpdate(gist.Id, gist);
-
-                    // Write back cache id.
-                    await FileHelper.WriteToFileAsync(subDir.FullName, _cacheIdFileName, gist.Id);
-                }
-            }
-            catch (Exception ex)
-            {
-                LogException(ex.Message, ex);
-            }
+            return GistCache;
         }
 
-        /// <summary>
-        /// Create or update cache.
-        /// </summary>
-        /// <param name="destDir">Destination directory.</param>
-        /// <param name="scriptText">Script text.</param>
-        /// <param name="assemblyPath">Assembly path.</param>
-        /// <returns>Task for downloading and updating cache.</returns>
-        public override async Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string scriptText, string assemblyPath)
+        protected override EntityType GetEntityType()
         {
-            // Read json file and deserialize to gist entry.
-            var cacheIdFilePath = Path.Combine(destDir.FullName, _cacheIdFileName);
-            var jsonFilePath = Path.Combine(destDir.FullName, "package.json");
-            var config = await FileHelper.GetFileContentAsync(jsonFilePath);
-            var gistEntry = JsonConvert.DeserializeObject<GistEntry>(config);
-            gistEntry.CodeString = scriptText;
-
-            var lastCacheId = await FileHelper.GetFileContentAsync(cacheIdFilePath);
-            if (!string.IsNullOrWhiteSpace(lastCacheId) && GistCache.TryRemoveValue(lastCacheId, out GistEntry tmp))
-            {
-                LogMessage($"Removing old gist with id: {lastCacheId} from Cache");
-            }
-
-            LogMessage($"Updating cache with new gist with id: {gistEntry.Id}");
-            GistCache.AddOrUpdate(gistEntry.Id, gistEntry);
-            await FileHelper.WriteToFileAsync(cacheIdFilePath, gistEntry.Id);
+            return EntityType.Gist;
         }
     }
 }

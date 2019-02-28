@@ -56,25 +56,14 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         /// <summary>
-        /// Publish detector package.
+        /// Publish package.
         /// </summary>
         /// <param name="pkg">The package.</param>
         /// <returns>Task for publishing package.</returns>
         [HttpPost(UriElements.Publish)]
-        public async Task<IActionResult> PublishDetectorPackage([FromBody] DetectorPackage pkg)
+        public async Task<IActionResult> PublishPackageAsync([FromBody] Package pkg)
         {
-            return await base.PublishPackage(pkg);
-        }
-
-        /// <summary>
-        /// Publish gist package.
-        /// </summary>
-        /// <param name="pkg">The package.</param>
-        /// <returns>Task for publishing package.</returns>
-        [HttpPost(UriElements.PublishGist)]
-        public async Task<IActionResult> PublishGistPackage([FromBody] GistPackage pkg)
-        {
-            return await base.PublishPackage(pkg);
+            return await PublishPackage(pkg);
         }
 
         /// <summary>
@@ -82,9 +71,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// </summary>
         /// <returns>Task for listing all gists.</returns>
         [HttpPost(UriElements.Gists)]
-        public async Task<IActionResult> ListGistsAsync()
+        public async Task<IActionResult> ListGistsAsync(string subscriptionId, string resourceGroupName, string domainName, [FromBody] dynamic postBody)
         {
-            return await ListGists();
+            return await base.ListGists(GetResource(subscriptionId, resourceGroupName, domainName));
         }
 
         /// <summary>
@@ -96,9 +85,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="gistId">Gist id.</param>
         /// <returns>Task for listing the gist.</returns>
         [HttpPost(UriElements.Gists + UriElements.GistResource)]
-        public async Task<IActionResult> GetGistAsync(string subscriptionId, string resourceGroupName, string siteName, string gistId)
+        public async Task<IActionResult> GetGistAsync(string subscriptionId, string resourceGroupName, string domainName, string gistId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null)
         {
-            return await base.GetGist(gistId);
+            return await base.GetGist(GetResource(subscriptionId, resourceGroupName, domainName), gistId, startTime, endTime, timeGrain);
         }
     }
 }

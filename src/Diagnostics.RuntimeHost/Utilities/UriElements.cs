@@ -36,7 +36,6 @@ namespace Diagnostics.RuntimeHost.Utilities
 
         public const string Query = "diagnostics/query";
         public const string Publish = "diagnostics/publish";
-        public const string PublishGist = "diagnostics/publishgist";
         public const string Detectors = "detectors";
         public const string DetectorResource = "/{detectorId}";
         public const string Gists = "gists";
