@@ -27,12 +27,7 @@ namespace Diagnostics.Tests.ModelTests
 
             Assert.Equal(returnedInsight, insightFromDataSet);
 
-            Assert.Equal<RenderingType>(RenderingType.Insights, insightFromDataSet.RenderingProperties.Type);
-
-            foreach (DataRow row in insightFromDataSet.Table.Rows)
-            {
-                Assert.Equal(5, row.ItemArray.Count());
-            }
+            Assert.Equal(RenderingType.Insights, insightFromDataSet.RenderingProperties.Type);
         }
 
         [Theory]
@@ -125,7 +120,7 @@ namespace Diagnostics.Tests.ModelTests
             var firstData = new Response();
             firstData.AddMarkdownView(@"some markdown content");
             data.Add(new Tuple<string, bool, Response>("firstKey", true, firstData));
-            
+
             Dropdown dropdown = new Dropdown(label, data);
 
             apiResponse.AddDropdownView(dropdown);
@@ -149,7 +144,7 @@ namespace Diagnostics.Tests.ModelTests
                     Id = "detectorid",
                     Name = "detector Name"
                 },
-                
+
             };
 
             var description = new Text("description", true);
