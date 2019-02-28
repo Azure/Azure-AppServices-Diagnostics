@@ -83,7 +83,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 Solutions = new List<Solution>();
             }
 
-            Solutions.Concat(solutions);
+            Solutions = Solutions.Concat(solutions);
 
             return this;
         }
