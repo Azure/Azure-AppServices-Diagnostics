@@ -31,6 +31,14 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <AdditionalFiles Include="../stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <CodeAnalysisRuleSet>../ca.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+
   <Target Name="AfterBuildScript" AfterTargets="Build">
     <Copy SourceFiles="..\data\templates\Detector_WebApp.csx" DestinationFolder="$(OutputPath)\templates" ContinueOnError="true" />
     <Copy SourceFiles="..\data\templates\Detector_HostingEnvironment.csx" DestinationFolder="$(OutputPath)\templates" ContinueOnError="true" />
