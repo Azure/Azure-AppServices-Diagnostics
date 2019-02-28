@@ -30,7 +30,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         {
             get
             {
-                return UriUtilities.BuildResourceUri(SubscriptionId, ResourceGroup, Name, Provider, ResourceTypeName);
+                return UriUtilities.BuildAzureResourceUri(SubscriptionId, ResourceGroup, Name, Provider, ResourceTypeName);
             }
         }
 

@@ -37,7 +37,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string ResourceUri {
             get
             {
-                return UriUtilities.BuildResourceUri(SubscriptionId, ResourceGroup, Name, Provider, ResourceTypeName);
+                return UriUtilities.BuildAzureResourceUri(SubscriptionId, ResourceGroup, Name, Provider, ResourceTypeName);
             }
         }
 

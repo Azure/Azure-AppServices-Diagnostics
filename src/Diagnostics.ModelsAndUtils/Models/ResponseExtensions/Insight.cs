@@ -7,7 +7,6 @@ using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
-
     /// <summary>
     /// Class representing Insight
     /// </summary>
@@ -132,7 +131,10 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </example>
         public static DiagnosticData AddInsights(this Response response, List<Insight> insights, string title = null, string description = null)
         {
-            if (insights == null || !insights.Any()) return null;
+            if (insights == null || !insights.Any())
+            {
+                return null;
+            }
 
             DataTable table = new DataTable();
 
@@ -174,7 +176,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                             insight.IsExpanded.ToString(),
                             JsonConvert.SerializeObject(insight.Solutions)
                         });
-
                     }
                 }
             });
