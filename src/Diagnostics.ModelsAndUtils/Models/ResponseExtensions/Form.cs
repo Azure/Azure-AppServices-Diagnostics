@@ -18,7 +18,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Represents list of inputs for the form
         /// </summary>
-        public List<FormInput> FormInputs;
+        public List<FormInputBase> FormInputs;
 
         /// <summary>
         /// Creates instance of Form class
@@ -28,7 +28,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public Form(int id, string title = "")
         {
             FormId = id;
-            FormInputs = new List<FormInput>();
+            FormInputs = new List<FormInputBase>();
             CurrentInputIds = new HashSet<int>();
             FormTitle = title;
         }
@@ -42,12 +42,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// Adds a form input to the form
         /// </summary>
         /// <param name="input">Input element to be added to the form</param>
-        public void AddFormInput(FormInput input)
+        public void AddFormInput(FormInputBase input)
         {
             // Returns true if we are able to add the input id to hashset
             if(CurrentInputIds.Add(input.InputId))
             {
-                input.CombinedId = input.InputId.ToString() + "." + FormId.ToString();
                 FormInputs.Add(input);             
             }
             else
@@ -60,7 +59,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// Adds a list of form inputs to the form
         /// </summary>
         /// <param name="inputs">List of form inputs</param>
-        public void AddFormInputs(List<FormInput> inputs)
+        public void AddFormInputs(List<FormInputBase> inputs)
         {
             inputs.ForEach(input =>
             {
@@ -69,7 +68,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         }
     }
 
-    public abstract class FormInput
+    public abstract class FormInputBase
     {
         /// <summary>
         /// Represents Input ID
@@ -79,7 +78,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Represents the Input Type
         /// </summary>
-        public InputTypes InputType;
+        public FormInputTypes InputType;
 
         /// <summary>
         /// Represents whether this is a required input
@@ -92,18 +91,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public string Label;
 
         /// <summary>
-        /// Combines the parent form id and input id
-        /// </summary>
-        public string CombinedId;
-
-        /// <summary>
         /// Creates an input with given id and input type
         /// </summary>
         /// <param name="id">unique id for the input</param>
         /// <param name="inputType">Input type for the input</param>
         /// <param name="label">The label of the input</param>
         /// <param name="isRequired">Indicates whether this is a required input</param>
-        public FormInput(int id, InputTypes inputType, string label = "", bool isRequired = false)
+        public FormInputBase(int id, FormInputTypes inputType, string label, bool isRequired = false)
         {
             InputId = id;
             InputType = inputType;
@@ -121,17 +115,21 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     /// Textbox input1 = new Textbox(1, "Role Instance name", true);
     /// </code>
     /// </example>
-    public class Textbox: FormInput
+    public class Textbox: FormInputBase
     {
+        /// <summary>
+        /// Value of the textbox
+        /// </summary>
+        public string Value;
+
         /// <summary>
         /// Creates an instance of Textbox class
         /// </summary>
         /// <param name="id">Unique id for the input</param>
         /// <param name="label">Label for the textbox</param>
         /// <param name="isRequired">Indicates if it is a required input</param>
-        public Textbox(int id, string label = "", bool isRequired = false): base(id, InputTypes.TextBox, label, isRequired)
+        public Textbox(int id, string label, bool isRequired = false): base(id, FormInputTypes.TextBox, label, isRequired)
         {
-
         }
     }
 
@@ -144,7 +142,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     /// Button saveButton = new Button(1, "Save");
     /// </code>
     /// </example>
-    public class Button: FormInput
+    public class Button: FormInputBase
     {
         /// <summary>
         /// Sets the bootstrap button style
@@ -157,14 +155,14 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="id">Unique id for the button</param>
         /// <param name="label">Label to display on the button</param>
         /// <param name="buttonStyle">Bootstrap button style for the button</param>
-        public Button(int id, string label = "", ButtonStyles buttonStyle = ButtonStyles.Primary): base(id, InputTypes.Button, label, false)
+        public Button(int id, string label, ButtonStyles buttonStyle = ButtonStyles.Primary): base(id, FormInputTypes.Button, label, false)
         {
             this.ButtonStyle = buttonStyle;
         }
 
     }
 
-    public enum InputTypes
+    public enum FormInputTypes
     {
         TextBox = 0,
         Checkbox,
@@ -201,11 +199,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///     Form myform1 = new Form(1);
         ///     Textbox input1 = new Textbox(1, "Enter input 1", true);
         ///     Button saveButton = new Button(2, "Save");
-        ///     myform1.AddFormInput(new List<![CDATA[<FormInput]]>() { input1, saveButton});
+        ///     myform1.AddFormInputs(new List<![CDATA[<FormInput]]>() { input1, saveButton});
         ///     Form myform2 = new Form(2);
         ///     Textbox input2 = new Textbox(1, "Enter input 2", true);
         ///     Button saveButton2 = new Button(2, "Save");
-        ///     myform2.AddFormInput(new List<![CDATA[<FormInput]]>() { input2, saveButton2});
+        ///     myform2.AddFormInputs(new List<![CDATA[<FormInput]]>() { input2, saveButton2});
         ///     res.AddForms(new List<![CDATA[<Form]]>() { myform1, myform2});
         /// }
         /// </code>
@@ -221,7 +219,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             table.TableName = "Forms";
             table.Columns.Add(new DataColumn("FormId", typeof(int)));
             table.Columns.Add(new DataColumn("FormTitle", typeof(string)));
-            table.Columns.Add(new DataColumn("Inputs", typeof(List<FormInput>)));
+            table.Columns.Add(new DataColumn("Inputs", typeof(List<FormInputBase>)));
             forms.ForEach(form =>
             {               
                 table.Rows.Add(new object[]
@@ -258,7 +256,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///     Form myform = new Form(1);
         ///     Textbox input1 = new Textbox(1, "Enter input", true);
         ///     Button saveButton = new Button(2, "Save");
-        ///     myform.AddFormInput(new List<![CDATA[<FormInput]]>() { input1, saveButton});
+        ///     myform.AddFormInputs(new List<![CDATA[<FormInput]]>() { input1, saveButton});
         ///     res.AddForm(myform);
         /// }
         /// </code>

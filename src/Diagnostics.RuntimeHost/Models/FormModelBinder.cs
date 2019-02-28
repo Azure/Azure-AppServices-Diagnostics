@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 
 namespace Diagnostics.RuntimeHost.Models
 {
@@ -38,9 +39,8 @@ namespace Diagnostics.RuntimeHost.Models
                 bindingContext.ModelState.TryAddModelError("btnId", "Button Id must be an integer.");
                 return Task.CompletedTask;
             }
-            var result = new FormContext();
-            result.FormId = Convert.ToInt32(formIdValueProvider.FirstValue);
-            result.ButtonId = Convert.ToInt32(btnIdProvider.FirstValue);
+            var result = new Form(Convert.ToInt32(formIdValueProvider.FirstValue));
+            result.AddFormInput(new Button(Convert.ToInt32(btnIdProvider.FirstValue), ""));
             if(inputIdProvider.Length != inputValueProvider.Length)
             {
                 bindingContext.ModelState.TryAddModelError(
@@ -62,11 +62,9 @@ namespace Diagnostics.RuntimeHost.Models
                     bindingContext.ModelState.TryAddModelError("val", "Length of val cannot exceed 50 characters.");
                     return Task.CompletedTask;
                 }
-                result.AddFormInput(new ExecuteFormInput
-                {
-                    InputId = Convert.ToInt32(inputIds[i]),
-                    InputValue = inputValues[i]
-                });
+                var text = new Textbox(Convert.ToInt32(inputIds[i]), "");
+                text.Value = inputValues[i];
+                result.AddFormInput(text);
             }
             bindingContext.Result = ModelBindingResult.Success(result);
             return Task.CompletedTask;
@@ -74,8 +72,7 @@ namespace Diagnostics.RuntimeHost.Models
 
         private bool IsInt(string num)
         {
-            int id = 0;
-            return int.TryParse(num, out id);
+            return int.TryParse(num, out int id);
         }
     }
 }

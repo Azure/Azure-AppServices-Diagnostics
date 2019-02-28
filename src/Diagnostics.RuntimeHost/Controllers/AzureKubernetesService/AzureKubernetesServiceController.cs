@@ -1,4 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
@@ -12,15 +13,15 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.AzureKubernetesServiceResource)]
     public class AzureKubernetesServiceController : DiagnosticControllerBase<AzureKubernetesService>
     {
-        public AzureKubernetesServiceController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService)
-            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, dataSourcesConfigService)
+        public AzureKubernetesServiceController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
+            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, dataSourcesConfigService, assemblyCacheService)
         {
         }
 
         [HttpPost(UriElements.Query)]
-        public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string clusterName, [FromBody]CompilationBostBody<dynamic> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] FormContext formContext = null)
+        public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string clusterName, [FromBody]CompilationBostBody<dynamic> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
         {
-            return await base.ExecuteQuery(GetResource(subscriptionId, resourceGroupName, clusterName), jsonBody, startTime, endTime, timeGrain, formContext: formContext);
+            return await base.ExecuteQuery(GetResource(subscriptionId, resourceGroupName, clusterName), jsonBody, startTime, endTime, timeGrain, Form: Form);
         }
 
         [HttpPost(UriElements.Detectors)]
@@ -30,7 +31,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
-        public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string clusterName, string detectorId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] FormContext form = null)
+        public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string clusterName, string detectorId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null)
         {
             return await base.GetDetector(GetResource(subscriptionId, resourceGroupName, clusterName), detectorId, startTime, endTime, timeGrain, form: form);
         }

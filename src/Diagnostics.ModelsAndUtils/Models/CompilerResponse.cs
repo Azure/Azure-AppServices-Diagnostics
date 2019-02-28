@@ -15,7 +15,5 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string PdbBytes;
 
         public string AssemblyName;
-       
-        public bool IsCompiled;
     }
 }

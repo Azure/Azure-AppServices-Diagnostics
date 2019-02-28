@@ -1,4 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -51,9 +52,9 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// ExecuteForm object
         /// </summary>
-        public FormContext Form { get; private set; }
+        public Form Form { get; private set; }
 
-        public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, string timeGrain = "5", SupportTopic supportTopic = null, FormContext form = null)
+        public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, string timeGrain = "5", SupportTopic supportTopic = null, Form form = null)
         {
             Resource = resource;
             StartTime = startTimeStr;

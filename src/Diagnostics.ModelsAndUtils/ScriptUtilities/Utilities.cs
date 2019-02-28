@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 
 namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 {
@@ -186,7 +187,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         /// </summary>
         /// <param name="form">Form to search</param>
         /// <param name="inputId">Given input id</param>
-        public static ExecuteFormInput GetFormInput(FormContext form, int inputId)
+        public static FormInputBase GetFormInput(Form form, int inputId)
         {
             try
             {
@@ -197,6 +198,30 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
             {
                 throw new Exception($"{e.Message}, Please check the given input id");
             }
+        }
+
+        /// <summary>
+        /// Gets the button id of the button currently executing
+        /// </summary>
+        public static int GetExecutingButtonId(Form form)
+        {
+            try
+            {
+                var executingButtonId = form.FormInputs.Find(input => input.InputType == FormInputTypes.Button);
+                return executingButtonId.InputId;
+            }
+            catch(Exception e)
+            {
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Returns all the form inputs filtered by the <paramref name="filterInputType"/>
+        /// </summary>
+        public IEnumerable<FormInputBase> GetFormInputsByType(Form form, FormInputTypes filterInputType)
+        {
+            return form.FormInputs.Where(input => input.InputType == filterInputType);
         }
     }
 }
