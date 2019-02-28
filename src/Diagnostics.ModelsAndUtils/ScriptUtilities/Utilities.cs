@@ -212,7 +212,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         /// <summary>
         /// Returns all the form inputs filtered by the <paramref name="filterInputType"/>
         /// </summary>
-        public IEnumerable<FormInputBase> GetFormInputsByType(Form form, FormInputTypes filterInputType)
+        public static IEnumerable<FormInputBase> GetFormInputsByType(Form form, FormInputTypes filterInputType)
         {
             return form.FormInputs.Where(input => input.InputType == filterInputType);
         }
