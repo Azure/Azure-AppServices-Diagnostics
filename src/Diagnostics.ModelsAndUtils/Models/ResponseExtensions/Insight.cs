@@ -33,6 +33,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public bool IsExpanded;
 
+        /// <summary>
+        /// Optional solutions to common problems to which the Insight may refer
+        /// </summary>
         public IEnumerable<Solution> Solutions;
 
         /// <summary>
