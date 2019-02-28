@@ -14,7 +14,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     public class Insight
     {
         /// <summary>
-        /// Enum reprensenting insight level.
+        /// Enum representing insight level.
         /// </summary>
         public InsightStatus Status;
 
@@ -40,6 +40,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
+        /// <param name="solutions">Solutions to problems identified by the Insight.</param>
         public Insight(InsightStatus status, string message, params Solution[] solutions)
         {
             this.Status = status;
@@ -55,6 +56,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
         /// <param name="body">Insights Body.</param>
+        /// <param name="solutions">Solutions to problems identified by the Insight.</param>
         public Insight(InsightStatus status, string message, Dictionary<string, string> body, params Solution[] solutions)
         {
             this.Status = status;
@@ -70,12 +72,16 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
         /// <param name="body">Insights Body.</param>
-        public Insight(InsightStatus status, string message, Dictionary<string, string> body, 
+        /// <param name="solutions">Solutions to problems identified by the Insight.</param>
+        public Insight(InsightStatus status, string message, Dictionary<string, string> body,
             bool isExpanded, params Solution[] solutions) : this(status, message, body, solutions)
         {
             this.IsExpanded = isExpanded;
         }
-        
+
+        /// <summary>
+        /// Chain <see cref="Solution"/>s onto existing insights
+        /// </summary>
         public Insight WithSolutions(params Solution[] solutions)
         {
             if (Solutions == null)
@@ -109,14 +115,14 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="response">Response object</param>
         /// <param name="insights">List of Insights</param>
         /// <returns>Diagnostic Data object that represents insights</returns>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="AddInsights"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
         ///     Insight firstInsight = new Insight(InsightStatus.Critical, "insight1 title");
         ///     Insight secondInsight = new Insight(InsightStatus.Warning, "insight2 title");
-        ///     
+        ///
         ///     res.AddInsights(new List<![CDATA[<Insight>]]>(){ firstInsight, secondInsight });
         /// }
         /// </code>
@@ -193,13 +199,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="response">Response object</param>
         /// <param name="insight">Insight</param>
         /// <returns>Diagnostic Data object that represents insights</returns>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="AddInsight"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
         ///     Insight insight = new Insight(InsightStatus.Critical, "insight1 title");
-        ///     
+        ///
         ///     res.AddInsight(insight);
         /// }
         /// </code>
@@ -218,7 +224,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
         /// <param name="body">Insights Body.</param>
-        /// <example> 
+        /// <example>
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
