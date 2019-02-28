@@ -31,7 +31,7 @@ namespace Diagnostics.Tests.DataProviderTests
         /// <summary>
         /// Mdm data provider test
         /// </summary>
-        [Fact(Skip = "See https://github.com/ShekharGupta1988/AppLensV2/issues/1431")]
+        [Fact]
         public async void TestMdmGetNamespaceAsync()
         {
             var metadata = ScriptTestDataHelper.GetRandomMetadata();
@@ -58,7 +58,7 @@ namespace Diagnostics.Tests.DataProviderTests
         /// <summary>
         /// Mdm data provider test
         /// </summary>
-        [Fact(Skip = "See https://github.com/ShekharGupta1988/AppLensV2/issues/1431")]
+        [Fact]
         public async void TestMdmGetMetricNamesAsync()
         {
             var metadata = ScriptTestDataHelper.GetRandomMetadata();
@@ -85,7 +85,7 @@ namespace Diagnostics.Tests.DataProviderTests
         /// <summary>
         /// Mdm data provider test
         /// </summary>
-        [Fact(Skip = "See https://github.com/ShekharGupta1988/AppLensV2/issues/1431")]
+        [Fact]
         public async void TestMdmGetDimensionNamesAsync()
         {
             var metadata = ScriptTestDataHelper.GetRandomMetadata();
@@ -112,7 +112,7 @@ namespace Diagnostics.Tests.DataProviderTests
         /// <summary>
         /// Mdm data provider test
         /// </summary>
-        [Fact(Skip = "See https://github.com/ShekharGupta1988/AppLensV2/issues/1431")]
+        [Fact]
         public async void TestMdmGetDimensionValuesAsync()
         {
             var metadata = ScriptTestDataHelper.GetRandomMetadata();
@@ -144,7 +144,7 @@ namespace Diagnostics.Tests.DataProviderTests
         /// <summary>
         /// Mdm data provider test
         /// </summary>
-        [Fact(Skip = "See https://github.com/ShekharGupta1988/AppLensV2/issues/1431")]
+        [Fact]
         public async void TestMdmGetTimeSeriesValuesAsync()
         {
             var metadata = ScriptTestDataHelper.GetRandomMetadata();
