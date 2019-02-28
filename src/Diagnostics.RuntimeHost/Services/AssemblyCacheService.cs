@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 namespace Diagnostics.RuntimeHost.Services
@@ -23,12 +24,12 @@ namespace Diagnostics.RuntimeHost.Services
         /// <summary>
         /// Queue to maintain top <see cref="MaxQueueSize"/> assemblies
         /// </summary>
-        Queue<string> AssemblyQueue;
+        private ConcurrentQueue<string> AssemblyQueue;
 
         /// <summary>
         /// Dictionary to cache the assemblies
         /// </summary>
-        Dictionary<string, Assembly> AssemblyCache;
+        private Dictionary<string, Assembly> AssemblyCache;
 
         /// <summary>
         /// Maximum number of Assemblies to maintain in cache
@@ -41,21 +42,8 @@ namespace Diagnostics.RuntimeHost.Services
         /// <param name="maxAssembliesCount">Maximum size of assemblies to maintain</param>
         public AssemblyCacheService()
         {
-            AssemblyQueue = new Queue<string>();
+            AssemblyQueue = new ConcurrentQueue<string>();
             AssemblyCache = new Dictionary<string, Assembly>();
-            InitializeCache();
-        }
-
-        /// <summary>
-        /// Initializes the cache with currently loaded assemblies
-        /// </summary>
-        public void InitializeCache()
-        {
-            Assembly[] currentAssemblies = AppDomain.CurrentDomain.GetAssemblies();
-            foreach(Assembly assembly in currentAssemblies)
-            {
-                AddAssemblyToCache(assembly.FullName, assembly);
-            }
         }
 
         /// <summary>
@@ -66,9 +54,10 @@ namespace Diagnostics.RuntimeHost.Services
         public void AddAssemblyToCache(string assemblyName, Assembly assemblyDll)
         {
             AssemblyCache.Add(assemblyName, assemblyDll);
-            if(AssemblyQueue.Count == MaxQueueSize)
+            string oldAssembly = null;
+            if(AssemblyQueue.Count == MaxQueueSize && AssemblyQueue.TryDequeue(out oldAssembly))
             {
-                AssemblyCache.Remove(AssemblyQueue.Dequeue());
+                AssemblyCache.Remove(oldAssembly);
             }
             AssemblyQueue.Enqueue(assemblyName);
         }

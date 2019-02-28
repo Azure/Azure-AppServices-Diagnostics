@@ -24,6 +24,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.Scripts.Utilities;
 using System.Web;
+using System.Data;
+
 namespace Diagnostics.RuntimeHost.Controllers
 {
     public abstract class DiagnosticControllerBase<TResource> : Controller where TResource : IResource
@@ -204,7 +206,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                             var responseInput = new Response() { Metadata = invoker.EntryPointDefinitionAttribute };
                             invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, systemContext, responseInput });
                         }
-                        ValidateForms(invocationResponse.DetectorForms);
+                        ValidateForms(invocationResponse.Dataset);
                         if (isInternalCall)
                         {
                             dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
@@ -655,29 +657,29 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <summary>
         /// Validation to check if Form ID is unique and if a form contains a button
         /// </summary>
-        private void ValidateForms(List<Form> detectorForms)
+        private void ValidateForms(List<DiagnosticData> diagnosticDataSet)
         {
-            HashSet<int> formIds = new HashSet<int>();           
-            foreach(var form in detectorForms)
+           HashSet<int> formIds = new HashSet<int>();
+           var detectorForms = diagnosticDataSet.Where(dataset => dataset.RenderingProperties.Type == RenderingType.Form).Select(d => d.Table);
+           foreach(DataTable table in detectorForms)
             {
-                int totalInputs = 0;
-                if (!formIds.Add(form.FormId))
+                // Each row has FormID and FormInputs
+                foreach(DataRow row in table.Rows)
                 {
-                    throw new Exception($"Form ID {form.FormId} already exists. Please give a unique Form ID.");
-                }
-                bool isButtonPresent = false;
-                form.FormInputs.ForEach(input =>
-                {
-                    if (input.InputType == FormInputTypes.Button) isButtonPresent = true;
-                    if (input.InputType != FormInputTypes.Button) totalInputs++;
-                });
-                if(!isButtonPresent)
-                {
-                    throw new Exception($"There must at least one button for form id {form.FormId}.");
-                }
-                if(totalInputs > 5)
-                {
-                    throw new Exception("Total number of inputs for a form cannot exceed 5.");
+                    var formId = (int)row[0];
+                    if(!formIds.Add(formId))
+                    {
+                        throw new Exception($"Form ID {formId} already exists. Please give a unique Form ID.");
+                    }
+                    var formInputs = row[2].CastTo<List<FormInputBase>>();
+                    if(!formInputs.Any(input => input.InputType == FormInputTypes.Button))
+                    {
+                        throw new Exception($"There must at least one button for form id {formId}.");
+                    }
+                    if(formInputs.Where(input => input.InputType != FormInputTypes.Button).Count() > 5)
+                    {
+                        throw new Exception("Total number of inputs for a form cannot exceed 5.");
+                    }
                 }
             }
         }

@@ -238,7 +238,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                     Title = string.Empty
                 }
             };
-            response.DetectorForms.AddRange(forms);
             response.Dataset.Add(diagData);
             return diagData;
         }

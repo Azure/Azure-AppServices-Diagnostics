@@ -205,15 +205,8 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         /// </summary>
         public static int GetExecutingButtonId(Form form)
         {
-            try
-            {
-                var executingButtonId = form.FormInputs.Find(input => input.InputType == FormInputTypes.Button);
-                return executingButtonId.InputId;
-            }
-            catch(Exception e)
-            {
-                throw;
-            }
+            var executingButtonId = form.FormInputs.Find(input => input.InputType == FormInputTypes.Button);
+            return executingButtonId.InputId;
         }
 
         /// <summary>

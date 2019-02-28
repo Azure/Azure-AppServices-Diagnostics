@@ -39,11 +39,6 @@ namespace Diagnostics.ModelsAndUtils.Models
         public List<AzureSupportCenterInsight> AscInsights { get; set; }
 
         /// <summary>
-        /// List of detector forms - DO NOT ADD TO THIS DIRECTLY
-        /// </summary>
-        public List<Form> DetectorForms { get; set; }
-
-        /// <summary>
         /// Creates an instance of Response
         /// </summary>
         public Response()
@@ -53,7 +48,6 @@ namespace Diagnostics.ModelsAndUtils.Models
             Dataset = new List<DiagnosticData>();
             Insights = new List<Insight>();
             AscInsights = new List<AzureSupportCenterInsight>();
-            DetectorForms = new List<Form>();
         }
     }
 

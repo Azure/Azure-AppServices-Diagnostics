@@ -50,7 +50,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string TimeGrain { get; private set; }
 
         /// <summary>
-        /// ExecuteForm object
+        /// Form object
         /// </summary>
         public Form Form { get; private set; }
 
