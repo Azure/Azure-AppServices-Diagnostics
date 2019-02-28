@@ -13,6 +13,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     {
         public string Title { get; set; }
         public IEnumerable<string> Descriptions { get; set; }
+        public string ActionName { get; set; }
         public bool RequiresConfirmation { get; set; }
         public string ResourceUri { get; set; }
         public bool IsInternal { get; set; }
@@ -22,7 +23,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
         public Solution(string title, string resourceUri, bool isInternal, ActionType action, 
             string internalInstructions, IEnumerable<string> descriptions = null, 
-            Dictionary<string, object> actionArgs = null, bool confirm = false)
+            Dictionary<string, object> actionArgs = null, bool confirm = false, string actionName = "")
         {
             Title = title;
             ResourceUri = resourceUri;
@@ -32,11 +33,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             Descriptions = descriptions;
             ActionArgs = actionArgs;
             RequiresConfirmation = confirm;
+            ActionName = actionName != string.Empty ? actionName : title;
         }
 
         public Solution(string title, string resourceUri, OperationContext context, ActionType action,
             string internalInstructions, IEnumerable<string> descriptions = null,
-            Dictionary<string, object> actionArgs = null, bool confirm = false) :
+            Dictionary<string, object> actionArgs = null, bool confirm = false, string actionName = "") :
             this(title, resourceUri, context.IsInternalCall, action, internalInstructions,
                 descriptions, actionArgs, confirm)
         { }
@@ -50,7 +52,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 $"{SolutionConstants.RestartInstructions}";
 
             return new Solution("Restart Site", resourceUri, isInternal, ActionType.RestartSite, instructions,
-                new string[] { SolutionConstants.RestartDescription }, confirm: true);
+                new string[] { SolutionConstants.AppRestartDescription }, 
+                confirm: true, actionName: "Restart App");
         }
 
         public static Solution Restart(string resourceUri, OperationContext context, string detectorId)
