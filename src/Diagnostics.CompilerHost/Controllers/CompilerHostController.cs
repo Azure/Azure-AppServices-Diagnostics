@@ -57,7 +57,7 @@ namespace Diagnostics.CompilerHost.Controllers
             var references = new Dictionary<string, string>();
             try
             {
-                references = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonBody["reference"].ToString());
+                references = jsonBody["reference"].ToObject<Dictionary<string, string>>();
             }
             catch
             {
