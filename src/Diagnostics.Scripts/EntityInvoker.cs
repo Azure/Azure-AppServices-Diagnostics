@@ -1,10 +1,8 @@
-﻿using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.ModelsAndUtils.Models;
-using Diagnostics.Scripts.CompilationService;
-using Diagnostics.Scripts.CompilationService.Interfaces;
-using Diagnostics.Scripts.Models;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Scripting;
+﻿// <copyright file="EntityInvoker.cs" company="Microsoft Corporation">
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -12,21 +10,35 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.Scripts.CompilationService;
+using Diagnostics.Scripts.CompilationService.Gist;
+using Diagnostics.Scripts.CompilationService.Interfaces;
+using Diagnostics.Scripts.CompilationService.ReferenceResolver;
+using Diagnostics.Scripts.Models;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Scripting;
 
 namespace Diagnostics.Scripts
 {
+    /// <summary>
+    /// Class for entity invoker.
+    /// </summary>
     public sealed class EntityInvoker : IDisposable
     {
         private EntityMetadata _entityMetaData;
         private ImmutableArray<string> _frameworkReferences;
         private ImmutableArray<string> _frameworkImports;
+        private ImmutableDictionary<string, string> _frameworkLoads;
         private ICompilation _compilation;
         private ImmutableArray<Diagnostic> _diagnostics;
-        private MethodInfo _entryPointMethodInfo;
+        private MemberInfo memberInfo;
         private Definition _entryPointDefinitionAttribute;
         private IResourceFilter _resourceFilter;
         private SystemFilter _systemFilter;
-        
+ 
+        public IEnumerable<string> References { get; private set; }
+
         public bool IsCompilationSuccessful { get; private set; }
 
         public IEnumerable<string> CompilationOutput { get; private set; }
@@ -42,8 +54,9 @@ namespace Diagnostics.Scripts
         public EntityInvoker(EntityMetadata entityMetadata)
         {
             _entityMetaData = entityMetadata;
-            _frameworkReferences = ImmutableArray.Create<string>();
-            _frameworkImports = ImmutableArray.Create<string>();
+            _frameworkReferences = ImmutableArray<string>.Empty;
+            _frameworkImports = ImmutableArray<string>.Empty;
+            _frameworkLoads = ImmutableDictionary<string, string>.Empty;
             CompilationOutput = Enumerable.Empty<string>();
         }
 
@@ -51,7 +64,8 @@ namespace Diagnostics.Scripts
         {
             _entityMetaData = entityMetadata;
             _frameworkReferences = frameworkReferences;
-            _frameworkImports = ImmutableArray.Create<string>();
+            _frameworkImports = ImmutableArray<string>.Empty;
+            _frameworkLoads = ImmutableDictionary<string, string>.Empty;
             CompilationOutput = Enumerable.Empty<string>();
         }
 
@@ -60,19 +74,30 @@ namespace Diagnostics.Scripts
             _entityMetaData = entityMetadata;
             _frameworkImports = frameworkImports;
             _frameworkReferences = frameworkReferences;
+            _frameworkLoads = ImmutableDictionary<string, string>.Empty;
+            CompilationOutput = Enumerable.Empty<string>();
+        }
+
+        public EntityInvoker(EntityMetadata entityMetadata, ImmutableArray<string> frameworkReferences, ImmutableArray<string> frameworkImports, ImmutableDictionary<string, string> frameworkLoads)
+        {
+            _entityMetaData = entityMetadata;
+            _frameworkImports = frameworkImports;
+            _frameworkReferences = frameworkReferences;
+            _frameworkLoads = frameworkLoads;
             CompilationOutput = Enumerable.Empty<string>();
         }
 
         /// <summary>
         /// Initializes the entry point by compiling the script and loading/saving the assembly
         /// </summary>
-        /// <param name="assemblyInitType"></param>
-        /// <returns></returns>
+        /// <returns>Taks for initializing entry point.</returns>
         public async Task InitializeEntryPointAsync()
         {
-            ICompilationService compilationService = CompilationServiceFactory.CreateService(_entityMetaData, GetScriptOptions(_frameworkReferences));
+            var referenceResolver = new MemoryReferenceResolver(_frameworkLoads);
+            ICompilationService compilationService = CompilationServiceFactory.CreateService(_entityMetaData, GetScriptOptions(referenceResolver));
             _compilation = await compilationService.GetCompilationAsync();
             _diagnostics = await _compilation.GetDiagnosticsAsync();
+            References = referenceResolver.Used.ToImmutableArray();
 
             IsCompilationSuccessful = !_diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
             CompilationOutput = _diagnostics.Select(m => m.ToString());
@@ -81,14 +106,11 @@ namespace Diagnostics.Scripts
             {
                 try
                 {
-                    EntityMethodSignature methodSignature = _compilation.GetEntryPointSignature();
-                    Assembly assembly = await _compilation.EmitAssemblyAsync();
-                    _entryPointMethodInfo = methodSignature.GetMethod(assembly);
-
+                    memberInfo = await _compilation.GetEntryPoint();
                     InitializeAttributes();
                     Validate();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     if (ex is ScriptCompilationException scriptEx)
                     {
@@ -102,15 +124,15 @@ namespace Diagnostics.Scripts
                         return;
                     }
 
-                    throw ex;
+                    throw;
                 }
             }
         }
-        
+
         /// <summary>
         /// Initializes the entry point from already loaded assembly.
         /// </summary>
-        /// <param name="asm">Assembly</param>
+        /// <param name="asm">The assembly.</param>
         public void InitializeEntryPoint(Assembly asm)
         {
             if (asm == null)
@@ -118,16 +140,14 @@ namespace Diagnostics.Scripts
                 throw new ArgumentNullException("Assembly");
             }
 
-            // TODO : We might need to create a factory to get compilation object based on type.
-            _compilation = new SignalCompilation();
+            _compilation = GetCompilation();
 
             // If assembly is present, that means compilation was successful.
             IsCompilationSuccessful = true;
 
             try
             {
-                EntityMethodSignature methodSignature = _compilation.GetEntryPointSignature();
-                _entryPointMethodInfo = methodSignature.GetMethod(asm);
+                memberInfo = _compilation.GetEntryPoint(asm);
                 InitializeAttributes();
             }
             catch (Exception ex)
@@ -144,7 +164,7 @@ namespace Diagnostics.Scripts
                     return;
                 }
 
-                throw ex;
+                throw;
             }
         }
 
@@ -155,10 +175,16 @@ namespace Diagnostics.Scripts
                 throw new ScriptCompilationException(CompilationOutput);
             }
 
-            int actualParameterCount = _entryPointMethodInfo.GetParameters().Length;
+            var methodInfo = memberInfo as MethodInfo;
+            if (methodInfo == null)
+            {
+                throw new ScriptCompilationException("Failed to invoke non-method entity.");
+            }
+
+            int actualParameterCount = methodInfo.GetParameters().Length;
             parameters = parameters.Take(actualParameterCount).ToArray();
-            
-            object result = _entryPointMethodInfo.Invoke(null, parameters);
+
+            object result = methodInfo.Invoke(null, parameters);
 
             if (result is Task)
             {
@@ -170,9 +196,11 @@ namespace Diagnostics.Scripts
 
         public async Task<string> SaveAssemblyToDiskAsync(string assemblyPath)
         {
-            ICompilationService compilationService = CompilationServiceFactory.CreateService(_entityMetaData, GetScriptOptions(_frameworkReferences));
+            var referenceResolver = new MemoryReferenceResolver(_frameworkLoads);
+            ICompilationService compilationService = CompilationServiceFactory.CreateService(_entityMetaData, GetScriptOptions(referenceResolver));
             _compilation = await compilationService.GetCompilationAsync();
             _diagnostics = await _compilation.GetDiagnosticsAsync();
+            References = referenceResolver.Used.ToImmutableArray();
 
             IsCompilationSuccessful = !_diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
             CompilationOutput = _diagnostics.Select(m => m.ToString());
@@ -187,10 +215,12 @@ namespace Diagnostics.Scripts
 
         public async Task<Tuple<string, string>> GetAssemblyBytesAsync()
         {
-            ICompilationService compilationService = CompilationServiceFactory.CreateService(_entityMetaData, GetScriptOptions(_frameworkReferences));
+            var referenceResolver = new MemoryReferenceResolver(_frameworkLoads);
+            ICompilationService compilationService = CompilationServiceFactory.CreateService(_entityMetaData, GetScriptOptions(referenceResolver));
             _compilation = await compilationService.GetCompilationAsync();
             _diagnostics = await _compilation.GetDiagnosticsAsync();
-            
+            References = referenceResolver.Used.ToImmutableArray();
+
             IsCompilationSuccessful = !_diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
             CompilationOutput = _diagnostics.Select(m => m.ToString());
 
@@ -204,29 +234,29 @@ namespace Diagnostics.Scripts
 
         private void InitializeAttributes()
         {
-            if (_entryPointMethodInfo == null)
+            if (memberInfo == null)
             {
                 return;
             }
 
-            _entryPointDefinitionAttribute = _entryPointMethodInfo.GetCustomAttribute<Definition>();
+            _entryPointDefinitionAttribute = memberInfo.GetCustomAttribute<Definition>();
             if (_entryPointDefinitionAttribute != null)
             {
-                _entryPointDefinitionAttribute.SupportTopicList = _entryPointMethodInfo.GetCustomAttributes<SupportTopic>();
+                _entryPointDefinitionAttribute.SupportTopicList = memberInfo.GetCustomAttributes<SupportTopic>();
             }
 
-            _resourceFilter = _entryPointMethodInfo.GetCustomAttribute<ResourceFilterBase>();
-            _systemFilter = _entryPointMethodInfo.GetCustomAttribute<SystemFilter>();
+            _resourceFilter = memberInfo.GetCustomAttribute<ResourceFilterBase>();
+            _systemFilter = memberInfo.GetCustomAttribute<SystemFilter>();
         }
 
-        private ScriptOptions GetScriptOptions(ImmutableArray<string> frameworkReferences)
+        private ScriptOptions GetScriptOptions(SourceReferenceResolver referenceResolver)
         {
-            ScriptOptions scriptOptions = ScriptOptions.Default;
+            var scriptOptions = ScriptOptions.Default;
 
-            if (!frameworkReferences.IsDefaultOrEmpty)
+            if (!_frameworkReferences.IsDefaultOrEmpty)
             {
                 scriptOptions = ScriptOptions.Default
-                    .WithReferences(frameworkReferences);
+                    .WithReferences(_frameworkReferences);
             }
 
             if (!_frameworkImports.IsDefaultOrEmpty)
@@ -234,9 +264,11 @@ namespace Diagnostics.Scripts
                 scriptOptions = scriptOptions.WithImports(_frameworkImports);
             }
 
+            scriptOptions = scriptOptions.WithSourceResolver(referenceResolver);
+
             return scriptOptions;
         }
-        
+
         private void Validate()
         {
             if(this._entryPointDefinitionAttribute != null)
@@ -301,6 +333,23 @@ namespace Diagnostics.Scripts
             }
         }
 
+        private ICompilation GetCompilation()
+        {
+            switch (EntityMetadata.Type)
+            {
+                case EntityType.Analysis:
+                    return new AnalysisCompilation();
+                case EntityType.Detector:
+                    return new DetectorCompilation();
+                case EntityType.Signal:
+                    return new SignalCompilation();
+                case EntityType.Gist:
+                    return new GistCompilation();
+                default:
+                    throw new NotSupportedException($"{EntityMetadata.Type} is not supported.");
+            }
+        }
+
         internal static object GetTaskResult(Task task)
         {
             if (task.IsFaulted)
@@ -321,7 +370,7 @@ namespace Diagnostics.Scripts
         public void Dispose()
         {
             _compilation = null;
-            _entryPointMethodInfo = null;
+            memberInfo = null;
         }
     }
 }

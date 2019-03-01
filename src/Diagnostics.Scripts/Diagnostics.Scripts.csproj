@@ -21,7 +21,7 @@
   <PropertyGroup>
     <CodeAnalysisRuleSet>../../ca.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\Diagnostics.ModelsAndUtils\Diagnostics.ModelsAndUtils.csproj" />
   </ItemGroup>

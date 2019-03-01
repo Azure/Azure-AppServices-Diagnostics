@@ -74,7 +74,7 @@ namespace Diagnostics.RuntimeHost.Utilities
 
         internal static string SanitizeScriptFile(string val)
         {
-            var lines = val.Split(new[] { '\n' }).Where(p => p.StartsWith("#r ") || p.StartsWith("#load "));
+            var lines = val.Split(new[] { '\n' }).Where(p => p.StartsWith("#r ") || (p.StartsWith("#load ") && p.EndsWith("_frameworkRef.csx\"")));
             string output = val;
             foreach (var line in lines)
             {

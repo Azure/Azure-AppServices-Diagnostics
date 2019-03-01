@@ -1,11 +1,13 @@
 ﻿using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Utilities;
+using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -17,7 +19,7 @@ namespace Diagnostics.RuntimeHost.Services
 {
     public interface ICompilerHostClient
     {
-        Task<CompilerResponse> GetCompilationResponse(string script, string requestId = "");
+        Task<CompilerResponse> GetCompilationResponse(string script, string entityType, IDictionary<string, string> references, string requestId = "");
     }
 
     public class CompilerHostClient : ICompilerHostClient, IDisposable
@@ -65,7 +67,7 @@ namespace Diagnostics.RuntimeHost.Services
             StartProcessMonitor();
         }
         
-        public async Task<CompilerResponse> GetCompilationResponse(string script, string requestId = "")
+        public async Task<CompilerResponse> GetCompilationResponse(string script, string entityType, IDictionary<string, string> references, string requestId = "")
         {
             DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(requestId, _eventSource, "Get Compilation : Waiting on semaphore ...");
 
@@ -82,7 +84,7 @@ namespace Diagnostics.RuntimeHost.Services
 
                 HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, $"{_compilerHostUrl}/api/compilerhost")
                 {
-                    Content = new StringContent(JsonConvert.SerializeObject(PrepareRequestBody(script)), Encoding.UTF8, "application/json")
+                    Content = new StringContent(JsonConvert.SerializeObject(PrepareRequestBody(script, entityType, references)), Encoding.UTF8, "application/json")
                 };
 
                 if (!string.IsNullOrWhiteSpace(requestId))
@@ -243,11 +245,13 @@ namespace Diagnostics.RuntimeHost.Services
             }
         }
 
-        private object PrepareRequestBody(string scriptText)
+        private object PrepareRequestBody(string scriptText, string entityType, IDictionary<string, string> references)
         {
             return new
             {
-                script = scriptText
+                script = scriptText,
+                entityType = entityType,
+                reference = references
             };
         }
 

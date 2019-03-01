@@ -10,6 +10,8 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public IEnumerable<string> CompilationTraces;
 
+        public IEnumerable<string> References;
+
         public string AssemblyBytes;
 
         public string PdbBytes;

@@ -1,5 +1,6 @@
 ﻿using Diagnostics.Logger;
 using Diagnostics.RuntimeHost.Models;
+using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.Scripts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -15,6 +16,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         protected IHostingEnvironment _env;
         protected IConfiguration _config;
         protected IInvokerCacheService _invokerCache;
+        protected IGistCacheService _gistCache;
         protected string _eventSource;
 
         protected abstract string SourceName { get; }
@@ -25,13 +27,14 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         public Task WaitForFirstCompletion() => FirstTimeCompletionTask;
 
-        public abstract Task<Tuple<bool, Exception>> CreateOrUpdateDetector(DetectorPackage pkg);
+        public abstract Task CreateOrUpdatePackage(Package pkg);
 
-        public SourceWatcherBase(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, string eventSource)
+        protected SourceWatcherBase(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, string eventSource)
         {
             _env = env;
             _config = configuration;
             _invokerCache = invokerCache;
+            _gistCache = gistCache;
             _eventSource = eventSource;
         }
 

@@ -1,4 +1,12 @@
-﻿using Diagnostics.DataProviders;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Data;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using System.Web;
+using Diagnostics.DataProviders;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
@@ -7,24 +15,15 @@ using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using Diagnostics.ModelsAndUtils.Utilities;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
+using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
+using Diagnostics.Scripts.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-using Diagnostics.Scripts.Utilities;
-using System.Web;
-using System.Data;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -33,15 +32,17 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected ICompilerHostClient _compilerHostClient;
         protected ISourceWatcherService _sourceWatcherService;
         protected IInvokerCacheService _invokerCache;
+        protected IGistCacheService _gistCache;
         protected IDataSourcesConfigurationService _dataSourcesConfigService;
         protected IStampService _stampService;
         protected IAssemblyCacheService _assemblyCacheService;
 
-        public DiagnosticControllerBase(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
+        public DiagnosticControllerBase(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
         {
             this._compilerHostClient = compilerHostClient;
             this._sourceWatcherService = sourceWatcherService;
             this._invokerCache = invokerCache;
+            this._gistCache = gistCache;
             this._dataSourcesConfigService = dataSourcesConfigService;
             this._stampService = stampService;
             this._assemblyCacheService = assemblyCacheService;
@@ -68,6 +69,24 @@ namespace Diagnostics.RuntimeHost.Controllers
             return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2));
         }
 
+        protected async Task<IActionResult> ListGists(TResource resource)
+        {
+            DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
+            return Ok(await ListGistsInternal(cxt));
+        }
+
+        protected async Task<IActionResult> GetGist(TResource resource, string id, string startTime, string endTime, string timeGrain)
+        {
+            if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
+            {
+                return BadRequest(errorMessage);
+            }
+
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
+            return Ok(await GetGistInternal(id, cxt));
+        }
+
         protected async Task<IActionResult> ListSystemInvokers(TResource resource)
         {
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
@@ -80,7 +99,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             return Ok(systemInvokers);
         }
-        
+
         protected async Task<IActionResult> GetSystemInvoker(TResource resource, string detectorId, string invokerId, string dataSource, string timeRange)
         {
             Dictionary<string, dynamic> systemContext = PrepareSystemContext(resource, detectorId, dataSource, timeRange);
@@ -106,7 +125,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return response == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata));
         }
 
-        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationBostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null, Form Form = null)
+        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationPostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null, Form Form = null)
         {
             if (jsonBody == null)
             {
@@ -118,17 +137,35 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest("Missing script in body");
             }
 
+            if (jsonBody.References == null)
+            {
+                jsonBody.References = new Dictionary<string, string>();
+            }
+
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
             {
                 return BadRequest(errorMessage);
             }
 
-            await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
-            EntityMetadata metaData = new EntityMetadata(jsonBody.Script);
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
 
             var runtimeContext = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
 
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+
+            foreach (var p in _gistCache.GetAllReferences(runtimeContext))
+            {
+                if (!jsonBody.References.ContainsKey(p.Key))
+                {
+                    // Add latest version to references
+                    jsonBody.References.Add(p);
+                }
+            }
+
+            if (!Enum.TryParse(jsonBody.EntityType, true, out EntityType entityType))
+            {
+                entityType = EntityType.Signal;
+            }
 
             QueryResponse<DiagnosticApiResponse> queryRes = new QueryResponse<DiagnosticApiResponse>
             {
@@ -136,12 +173,13 @@ namespace Diagnostics.RuntimeHost.Controllers
             };
 
             string scriptETag = string.Empty;
-            if(Request.Headers.ContainsKey("script-etag"))
+            if (Request.Headers.ContainsKey("script-etag"))
             {
                 scriptETag = Request.Headers["script-etag"];
             }
+
             string assemblyFullName = string.Empty;
-            if(Request.Headers.ContainsKey("assembly-name"))
+            if (Request.Headers.ContainsKey("assembly-name"))
             {
                 assemblyFullName = HttpUtility.UrlDecode(Request.Headers["assembly-name"]);
             }
@@ -149,10 +187,9 @@ namespace Diagnostics.RuntimeHost.Controllers
             Assembly tempAsm = null;
 
             bool isCompilationNeeded = !ScriptCompilation.IsSameScript(jsonBody.Script, scriptETag) || !_assemblyCacheService.IsAssemblyLoaded(assemblyFullName, out tempAsm);
-            if(isCompilationNeeded)
+            if (isCompilationNeeded)
             {
-                var compilerResponse = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, runtimeContext.OperationContext.RequestId);
-                queryRes.CompilationOutput = compilerResponse;
+                queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, jsonBody.EntityType, jsonBody.References, runtimeContext.OperationContext.RequestId);
             }
             else
             {
@@ -161,7 +198,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 queryRes.CompilationOutput.CompilationSucceeded = true;
                 queryRes.CompilationOutput.CompilationTraces = new string[] { "No code changes were detected. Detector code was executed using previous compilation." };
             }
-            
+
             if (queryRes.CompilationOutput.CompilationSucceeded)
             {
                 try
@@ -174,13 +211,16 @@ namespace Diagnostics.RuntimeHost.Controllers
                         queryRes.CompilationOutput.AssemblyName = tempAsm.FullName;
                         _assemblyCacheService.AddAssemblyToCache(tempAsm.FullName, tempAsm);
                     }
+
                     Request.HttpContext.Response.Headers.Add("script-etag", Convert.ToBase64String(ScriptCompilation.GetHashFromScript(jsonBody.Script)));
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     throw new Exception($"Problem while loading Assembly: {e.Message}");
                 }
-                using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+
+                EntityMetadata metaData = new EntityMetadata(jsonBody.Script, entityType);
+                using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports(), jsonBody.References.ToImmutableDictionary()))
                 {
                     invoker.InitializeEntryPoint(tempAsm);
 
@@ -206,6 +246,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                             var responseInput = new Response() { Metadata = invoker.EntryPointDefinitionAttribute };
                             invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, systemContext, responseInput });
                         }
+
                         ValidateForms(invocationResponse.Dataset);
                         if (isInternalCall)
                         {
@@ -223,7 +264,9 @@ namespace Diagnostics.RuntimeHost.Controllers
                             queryRes.InvocationOutput = CreateQueryExceptionResponse(ex, invoker.EntryPointDefinitionAttribute, isInternalCall, GetDataProvidersMetadata(dataProviders));
                         }
                         else
+                        {
                             throw;
+                        }
                     }
 
                 }
@@ -232,27 +275,14 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(queryRes);
         }
 
-        protected async Task<IActionResult> PublishDetector(DetectorPackage pkg)
+        protected async Task<IActionResult> PublishPackage(Package pkg)
         {
-            if (pkg == null || string.IsNullOrWhiteSpace(pkg.Id) || string.IsNullOrWhiteSpace(pkg.DllBytes))
+            if (pkg == null || string.IsNullOrWhiteSpace(pkg.Id))
             {
                 return BadRequest();
             }
 
-            var publishResult = await _sourceWatcherService.Watcher.CreateOrUpdateDetector(pkg);
-            bool isPublishSuccessful = publishResult.Item1;
-            Exception publishEx = publishResult.Item2;
-
-            if (!isPublishSuccessful)
-            {
-                if(publishEx != null)
-                {
-                    throw publishEx;
-                }
-
-                throw new Exception("Publish Operation failed");
-            }
-
+            await _sourceWatcherService.Watcher.CreateOrUpdatePackage(pkg);
             return Ok();
         }
 
@@ -296,17 +326,16 @@ namespace Diagnostics.RuntimeHost.Controllers
                     cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, ex.GetType().ToString(), ex.ToString());
             }
 
-
             var correlationId = Guid.NewGuid();
 
             bool defaultInsightReturned = false;
+
             // Detectors Ran but no insights
             if (!insights.Any() && detectorsRun.Any())
             {
                 defaultInsightReturned = true;
                 insights.Add(AzureSupportCenterInsightUtilites.CreateDefaultInsight(cxt.OperationContext, detectorsRun));
             }
-            // No detectors matched this support topic
             else if (!detectorsRun.Any())
             {
                 var defaultDetector = allDetectors.FirstOrDefault(detector => detector.Id.StartsWith("default_insights"));
@@ -411,7 +440,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 OperationContext = cxt
             };
 
-            var invoker = this._invokerCache.GetDetectorInvoker<TResource>(detectorId, runtimeContext);
+            var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, runtimeContext);
             IEnumerable<SupportTopic> supportTopicList = null;
             Definition definition = null;
             if (invoker != null && invoker.EntryPointDefinitionAttribute != null)
@@ -472,11 +501,30 @@ namespace Diagnostics.RuntimeHost.Controllers
             };
         }
 
+        private async Task<IEnumerable<DiagnosticApiResponse>> ListGistsInternal(RuntimeContext<TResource> context)
+        {
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
+            return _gistCache.GetEntityInvokerList(context).Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
+        }
+
+        private async Task<string> GetGistInternal(string gistId, RuntimeContext<TResource> context)
+        {
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
+            var invoker = this._invokerCache.GetEntityInvoker<TResource>(gistId, context);
+
+            if (invoker == null)
+            {
+                return null;
+            }
+
+            return invoker.EntityMetadata.ScriptText;
+        }
+
         private async Task<IEnumerable<DiagnosticApiResponse>> ListDetectorsInternal(RuntimeContext<TResource> context)
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
 
-            return _invokerCache.GetDetectorInvokerList<TResource>(context)
+            return _invokerCache.GetEntityInvokerList<TResource>(context)
                 .Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
         }
 
@@ -484,7 +532,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
-            var invoker = this._invokerCache.GetDetectorInvoker<TResource>(detectorId, context);
+            var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
 
             if (invoker == null)
             {
@@ -540,7 +588,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             if (response.AscInsights.Any())
             {
-                foreach(var ascInsight in response.AscInsights)
+                foreach (var ascInsight in response.AscInsights)
                 {
                     logAscInsight(context, detector, ascInsight);
                     supportCenterInsights.Add(ascInsight);
@@ -554,8 +602,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                     return ascInsight;
                 });
                 supportCenterInsights.AddRange(regularToAscInsights);
-
-                
             }
 
             var detectorLists = response.Dataset
@@ -618,6 +664,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     }
                 }
             }
+
             return dataprovidersMetadata;
         }
 
@@ -661,22 +708,24 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
            HashSet<int> formIds = new HashSet<int>();
            var detectorForms = diagnosticDataSet.Where(dataset => dataset.RenderingProperties.Type == RenderingType.Form).Select(d => d.Table);
-           foreach(DataTable table in detectorForms)
+           foreach (DataTable table in detectorForms)
             {
                 // Each row has FormID and FormInputs
-                foreach(DataRow row in table.Rows)
+                foreach (DataRow row in table.Rows)
                 {
                     var formId = (int)row[0];
-                    if(!formIds.Add(formId))
+                    if (!formIds.Add(formId))
                     {
                         throw new Exception($"Form ID {formId} already exists. Please give a unique Form ID.");
                     }
+
                     var formInputs = row[2].CastTo<List<FormInputBase>>();
-                    if(!formInputs.Any(input => input.InputType == FormInputTypes.Button))
+                    if (!formInputs.Any(input => input.InputType == FormInputTypes.Button))
                     {
                         throw new Exception($"There must at least one button for form id {formId}.");
                     }
-                    if(formInputs.Where(input => input.InputType != FormInputTypes.Button).Count() > 5)
+
+                    if (formInputs.Where(input => input.InputType != FormInputTypes.Button).Count() > 5)
                     {
                         throw new Exception("Total number of inputs for a form cannot exceed 5.");
                     }

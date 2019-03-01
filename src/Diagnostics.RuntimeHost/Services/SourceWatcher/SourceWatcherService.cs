@@ -1,4 +1,5 @@
-﻿using Diagnostics.RuntimeHost.Utilities;
+﻿using Diagnostics.RuntimeHost.Services.CacheService;
+using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -16,7 +17,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         public ISourceWatcher Watcher => _watcher;
 
-        public SourceWatcherService(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCacheService)
+        public SourceWatcherService(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCacheService, IGistCacheService gistCacheService)
         {
             SourceWatcherType watcherType;
 
@@ -36,11 +37,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             switch (watcherType)
             {
                 case SourceWatcherType.LocalFileSystem:
-                    _watcher = new LocalFileSystemWatcher(env, configuration, invokerCacheService);
+                    _watcher = new LocalFileSystemWatcher(env, configuration, invokerCacheService, gistCacheService);
                     break;
                 case SourceWatcherType.Github:
                     IGithubClient githubClient = new GithubClient(env, configuration);
-                    _watcher = new GitHubWatcher(env, configuration, invokerCacheService, githubClient);
+                    _watcher = new GitHubWatcher(env, configuration, invokerCacheService, gistCacheService, githubClient);
                     break;
                 default:
                     throw new NotSupportedException("Source Watcher Type not supported");
