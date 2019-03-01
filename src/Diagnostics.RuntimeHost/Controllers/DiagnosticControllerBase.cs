@@ -1,4 +1,12 @@
-﻿using Diagnostics.DataProviders;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Data;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using System.Web;
+using Diagnostics.DataProviders;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
@@ -12,22 +20,10 @@ using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
+using Diagnostics.Scripts.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Net;
-using System.Reflection;
-using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using Diagnostics.Scripts.Utilities;
-using System.Web;
-using System.Data;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -41,11 +37,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IStampService _stampService;
         protected IAssemblyCacheService _assemblyCacheService;
 
-<<<<<<< HEAD
         public DiagnosticControllerBase(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
-=======
-        public DiagnosticControllerBase(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService)
->>>>>>> Log separation for gists
         {
             this._compilerHostClient = compilerHostClient;
             this._sourceWatcherService = sourceWatcherService;
@@ -107,7 +99,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             return Ok(systemInvokers);
         }
-        
+
         protected async Task<IActionResult> GetSystemInvoker(TResource resource, string detectorId, string invokerId, string dataSource, string timeRange)
         {
             Dictionary<string, dynamic> systemContext = PrepareSystemContext(resource, detectorId, dataSource, timeRange);
@@ -133,24 +125,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return response == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata));
         }
 
-<<<<<<< HEAD
-        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationBostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null, Form Form = null)
-=======
-        /// <summary>
-        /// Execute query.
-        /// </summary>
-        /// <typeparam name="TPostBodyResource">Type for post body resource.</typeparam>
-        /// <param name="resource">The resource.</param>
-        /// <param name="jsonBody">The json body.</param>
-        /// <param name="startTime">The start time.</param>
-        /// <param name="endTime">The end time.</param>
-        /// <param name="timeGrain">The time grain.</param>
-        /// <param name="detectorId">Detector id.</param>
-        /// <param name="dataSource">Data source.</param>
-        /// <param name="timeRange">Time range.</param>
-        /// <returns>Task for executing query.</returns>
-        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationPostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null)
->>>>>>> EntityInvoker for compiling gists
+        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationPostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null, Form Form = null)
         {
             if (jsonBody == null)
             {
@@ -178,24 +153,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
 
-            QueryResponse<DiagnosticApiResponse> queryRes = new QueryResponse<DiagnosticApiResponse>
-            {
-                InvocationOutput = new DiagnosticApiResponse()
-            };
-
-            string scriptETag = string.Empty;
-            if(Request.Headers.ContainsKey("script-etag"))
-            {
-                scriptETag = Request.Headers["script-etag"];
-            }
-            string assemblyFullName = string.Empty;
-            if(Request.Headers.ContainsKey("assembly-name"))
-            {
-                assemblyFullName = HttpUtility.UrlDecode(Request.Headers["assembly-name"]);
-            }
-
-            Assembly tempAsm = null;
-            foreach (var p in _gistCache.GetAllReferences())
+            foreach (var p in _gistCache.GetAllReferences(runtimeContext))
             {
                 if (!jsonBody.References.ContainsKey(p.Key))
                 {
@@ -209,14 +167,29 @@ namespace Diagnostics.RuntimeHost.Controllers
                 entityType = EntityType.Signal;
             }
 
-            var compilerResponse = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, jsonBody.EntityType, jsonBody.References, runtimeContext.OperationContext.RequestId);
-            queryRes.CompilationOutput = compilerResponse;
+            QueryResponse<DiagnosticApiResponse> queryRes = new QueryResponse<DiagnosticApiResponse>
+            {
+                InvocationOutput = new DiagnosticApiResponse()
+            };
+
+            string scriptETag = string.Empty;
+            if (Request.Headers.ContainsKey("script-etag"))
+            {
+                scriptETag = Request.Headers["script-etag"];
+            }
+
+            string assemblyFullName = string.Empty;
+            if (Request.Headers.ContainsKey("assembly-name"))
+            {
+                assemblyFullName = HttpUtility.UrlDecode(Request.Headers["assembly-name"]);
+            }
+
+            Assembly tempAsm = null;
 
             bool isCompilationNeeded = !ScriptCompilation.IsSameScript(jsonBody.Script, scriptETag) || !_assemblyCacheService.IsAssemblyLoaded(assemblyFullName, out tempAsm);
-            if(isCompilationNeeded)
+            if (isCompilationNeeded)
             {
-                var compilerResponse = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, runtimeContext.OperationContext.RequestId);
-                queryRes.CompilationOutput = compilerResponse;
+                queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, jsonBody.EntityType, jsonBody.References, runtimeContext.OperationContext.RequestId);
             }
             else
             {
@@ -225,10 +198,9 @@ namespace Diagnostics.RuntimeHost.Controllers
                 queryRes.CompilationOutput.CompilationSucceeded = true;
                 queryRes.CompilationOutput.CompilationTraces = new string[] { "No code changes were detected. Detector code was executed using previous compilation." };
             }
-            
+
             if (queryRes.CompilationOutput.CompilationSucceeded)
             {
-<<<<<<< HEAD
                 try
                 {
                     if (isCompilationNeeded)
@@ -239,22 +211,16 @@ namespace Diagnostics.RuntimeHost.Controllers
                         queryRes.CompilationOutput.AssemblyName = tempAsm.FullName;
                         _assemblyCacheService.AddAssemblyToCache(tempAsm.FullName, tempAsm);
                     }
+
                     Request.HttpContext.Response.Headers.Add("script-etag", Convert.ToBase64String(ScriptCompilation.GetHashFromScript(jsonBody.Script)));
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     throw new Exception($"Problem while loading Assembly: {e.Message}");
                 }
-                using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
-=======
-                byte[] asmData = Convert.FromBase64String(compilerResponse.AssemblyBytes);
-                byte[] pdbData = Convert.FromBase64String(compilerResponse.PdbBytes);
-
-                var tempAsm = Assembly.Load(asmData, pdbData);
 
                 EntityMetadata metaData = new EntityMetadata(jsonBody.Script, entityType);
                 using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports(), jsonBody.References.ToImmutableDictionary()))
->>>>>>> EntityInvoker for compiling gists
                 {
                     invoker.InitializeEntryPoint(tempAsm);
 
@@ -280,6 +246,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                             var responseInput = new Response() { Metadata = invoker.EntryPointDefinitionAttribute };
                             invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, systemContext, responseInput });
                         }
+
                         ValidateForms(invocationResponse.Dataset);
                         if (isInternalCall)
                         {
@@ -297,7 +264,9 @@ namespace Diagnostics.RuntimeHost.Controllers
                             queryRes.InvocationOutput = CreateQueryExceptionResponse(ex, invoker.EntryPointDefinitionAttribute, isInternalCall, GetDataProvidersMetadata(dataProviders));
                         }
                         else
+                        {
                             throw;
+                        }
                     }
 
                 }
@@ -357,17 +326,16 @@ namespace Diagnostics.RuntimeHost.Controllers
                     cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, ex.GetType().ToString(), ex.ToString());
             }
 
-
             var correlationId = Guid.NewGuid();
 
             bool defaultInsightReturned = false;
+
             // Detectors Ran but no insights
             if (!insights.Any() && detectorsRun.Any())
             {
                 defaultInsightReturned = true;
                 insights.Add(AzureSupportCenterInsightUtilites.CreateDefaultInsight(cxt.OperationContext, detectorsRun));
             }
-            // No detectors matched this support topic
             else if (!detectorsRun.Any())
             {
                 var defaultDetector = allDetectors.FirstOrDefault(detector => detector.Id.StartsWith("default_insights"));
@@ -620,7 +588,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             if (response.AscInsights.Any())
             {
-                foreach(var ascInsight in response.AscInsights)
+                foreach (var ascInsight in response.AscInsights)
                 {
                     logAscInsight(context, detector, ascInsight);
                     supportCenterInsights.Add(ascInsight);
@@ -634,8 +602,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                     return ascInsight;
                 });
                 supportCenterInsights.AddRange(regularToAscInsights);
-
-                
             }
 
             var detectorLists = response.Dataset
@@ -698,6 +664,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     }
                 }
             }
+
             return dataprovidersMetadata;
         }
 
@@ -741,22 +708,24 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
            HashSet<int> formIds = new HashSet<int>();
            var detectorForms = diagnosticDataSet.Where(dataset => dataset.RenderingProperties.Type == RenderingType.Form).Select(d => d.Table);
-           foreach(DataTable table in detectorForms)
+           foreach (DataTable table in detectorForms)
             {
                 // Each row has FormID and FormInputs
-                foreach(DataRow row in table.Rows)
+                foreach (DataRow row in table.Rows)
                 {
                     var formId = (int)row[0];
-                    if(!formIds.Add(formId))
+                    if (!formIds.Add(formId))
                     {
                         throw new Exception($"Form ID {formId} already exists. Please give a unique Form ID.");
                     }
+
                     var formInputs = row[2].CastTo<List<FormInputBase>>();
-                    if(!formInputs.Any(input => input.InputType == FormInputTypes.Button))
+                    if (!formInputs.Any(input => input.InputType == FormInputTypes.Button))
                     {
                         throw new Exception($"There must at least one button for form id {formId}.");
                     }
-                    if(formInputs.Where(input => input.InputType != FormInputTypes.Button).Count() > 5)
+
+                    if (formInputs.Where(input => input.InputType != FormInputTypes.Button).Count() > 5)
                     {
                         throw new Exception("Total number of inputs for a form cannot exceed 5.");
                     }

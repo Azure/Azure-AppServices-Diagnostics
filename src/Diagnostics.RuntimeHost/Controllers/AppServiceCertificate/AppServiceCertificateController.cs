@@ -14,13 +14,13 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.AppServiceCertResource)]
     public sealed class AppServiceCertificateController : DiagnosticControllerBase<AppServiceCertificate>
     {
-        public AppServiceCertificateController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
-            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, dataSourcesConfigService, assemblyCacheService)
+        public AppServiceCertificateController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
+            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, gistCache, dataSourcesConfigService, assemblyCacheService)
         {
         }
 
         [HttpPost(UriElements.Query)]
-        public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string certificateName, [FromBody]CompilationBostBody<dynamic> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
+        public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string certificateName, [FromBody]CompilationPostBody<dynamic> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
         {
             return await base.ExecuteQuery(GetResource(subscriptionId, resourceGroupName, certificateName), jsonBody, startTime, endTime, timeGrain, Form: Form);
         }

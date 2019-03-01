@@ -1,4 +1,6 @@
-﻿using Diagnostics.DataProviders;
+﻿using System;
+using System.Threading.Tasks;
+using Diagnostics.DataProviders;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.RuntimeHost.Models;
@@ -8,10 +10,6 @@ using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -19,8 +17,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.HostingEnvironmentResource)]
     public sealed class HostingEnvironmentController : DiagnosticControllerBase<HostingEnvironment>
     {
-        public HostingEnvironmentController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
-            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, dataSourcesConfigService, assemblyCacheService)
+        public HostingEnvironmentController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
+            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, gistCache, dataSourcesConfigService, assemblyCacheService)
         {
         }
 
@@ -29,18 +27,17 @@ namespace Diagnostics.RuntimeHost.Controllers
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
             dynamic postBody = await dataProviders.Observer.GetHostingEnvironmentPostBody(hostingEnvironmentName);
             JObject bodyObject = (JObject)postBody;
-            var hostingEnvironmentPostBody = bodyObject.ToObject<DiagnosticStampData>();
-            return hostingEnvironmentPostBody;
+            return bodyObject.ToObject<DiagnosticStampData>();
         }
 
         [HttpPost(UriElements.Query)]
-        public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, string[] hostNames, string stampName, [FromBody]CompilationBostBody<DiagnosticStampData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
+        public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, string[] hostNames, string stampName, [FromBody]CompilationPostBody<DiagnosticStampData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
         {
             if (jsonBody == null)
             {
                 return BadRequest("Missing body");
             }
-            
+
             if (jsonBody.Resource == null)
             {
                 jsonBody.Resource = await GetHostingEnvironmentPostBody(hostingEnvironmentName);

@@ -1,4 +1,6 @@
-﻿using Diagnostics.DataProviders;
+﻿using System;
+using System.Threading.Tasks;
+using Diagnostics.DataProviders;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.RuntimeHost.Models;
@@ -8,8 +10,6 @@ using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -37,7 +37,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="timeGrain">Time grain.</param>
         /// <returns>Task for handling post request.</returns>
         [HttpPost(UriElements.Query)]
-        public async Task<IActionResult> Post(string subscriptionId, string resourceGroupName, string siteName, [FromBody]CompilationBostBody<DiagnosticSiteData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
+        public async Task<IActionResult> Post(string subscriptionId, string resourceGroupName, string siteName, [FromBody]CompilationPostBody<DiagnosticSiteData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
         {
             if (jsonBody == null)
             {
