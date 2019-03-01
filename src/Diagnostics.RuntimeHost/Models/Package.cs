@@ -6,7 +6,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.ComponentModel;
 using Diagnostics.RuntimeHost.Utilities;
+using Newtonsoft.Json;
 
 namespace Diagnostics.RuntimeHost.Models
 {
@@ -44,8 +46,10 @@ namespace Diagnostics.RuntimeHost.Models
         public string CommittedByAlias { get; set; }
 
         /// <summary>
-        /// Gets or sets the configuration
+        /// Gets or sets the configuration.
         /// </summary>
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+        [DefaultValue("{}")]
         public string PackageConfig { get; set; }
 
         /// <summary>

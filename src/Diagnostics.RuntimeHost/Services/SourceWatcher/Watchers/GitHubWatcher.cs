@@ -203,11 +203,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                         await DownloadContentAndUpdateCache(gitHubDir, subDir);
                         await FileHelper.WriteToFileAsync(subDir.FullName, _lastModifiedMarkerName, gitHubDir.Sha);
                     }
-                    catch(Exception downloadEx)
+                    catch (Exception downloadEx)
                     {
                         LogException(downloadEx.Message, downloadEx);
                     }
-                    
                 }
 
                 await SyncLocalDirForDeletedEntriesInGitHub(githubDirectories, destDirInfo);
@@ -263,11 +262,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 }
 
                 var downloadFilePath = Path.Combine(destDir.FullName, githubFile.Name.ToLower());
-                if (fileExtension.ToLower().Equals("csx"))
+                if (fileExtension.Equals("csx", StringComparison.OrdinalIgnoreCase))
                 {
                     csxFilePath = downloadFilePath;
                 }
-                else if (fileExtension.ToLower().Equals("json"))
+                else if (fileExtension.Equals("json", StringComparison.OrdinalIgnoreCase))
                 {
                     confFilePath = downloadFilePath;
                 }
