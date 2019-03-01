@@ -21,14 +21,15 @@ namespace Diagnostics.ModelsAndUtils.Utilities
                 return string.Empty;
             }
 
-            var result = new Uri(parts[0]);
+            var baseUri = new Uri(parts[0]);
 
+            var extensions = "";
             foreach (var part in parts.Skip(1))
             {
-                result = new Uri(result, part);
+                extensions = $"{extensions.TrimEnd('/')}/{part.Trim('/')}";
             }
 
-            return result.ToString();
+            return new Uri(baseUri, extensions).ToString();
         }
 
         public static string BuildDetectorLink(string resourceUri, string detectorId)

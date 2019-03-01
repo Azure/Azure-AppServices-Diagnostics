@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using Diagnostics.ModelsAndUtils.Utilities;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
@@ -50,6 +52,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Denotes which action will be performed, such as a specific API call or navigation link.
         /// </summary>
+        [JsonConverter(typeof(StringEnumConverter))]
         public ActionType Action { get; set; }
 
         /// <summary>
@@ -59,13 +62,16 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public Dictionary<string, object> ActionArgs { get; set; }
 
         /// <summary>
-        /// Adds a pre-written <see cref="Description"/> to the Solution.
+        /// Adds a pre-written <see cref="Description"/> to the Solution. Takes priority over Description values.
         /// </summary>
+        [JsonConverter(typeof(StringEnumConverter))]
         public SolutionText? PremadeDescription { get; set; }
 
         /// <summary>
-        /// Adds pre-written <see cref="InternalInstructions"/> to the Solution.
+        /// Adds pre-written <see cref="InternalInstructions"/> to the Solution. Takes priority over
+        /// InternalInstructions values.
         /// </summary>
+        [JsonConverter(typeof(StringEnumConverter))]
         public SolutionText? PremadeInstructions { get; set; }
 
         /// <summary>
