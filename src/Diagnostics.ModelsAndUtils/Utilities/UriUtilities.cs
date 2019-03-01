@@ -40,5 +40,10 @@ namespace Diagnostics.ModelsAndUtils.Utilities
                 "/customtroubleshoot"
             );
         }
+
+        public static Uri BuildDetectorUri(string resourceUri, string detectorId)
+        {
+            return new Uri(BuildDetectorLink(resourceUri, detectorId));
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Diagnostics.ModelsAndUtils.Utilities;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -150,6 +151,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
             insights.ForEach(insight =>
             {
+                foreach (var solution in insight.Solutions)
+                {
+                    solution.DetectorLink = UriUtilities.BuildDetectorUri(solution.ResourceUri, response.Metadata.Id);
+                    solution.IsInternal = response.IsInternalCall;
+                }
+
                 if (insight.Body == null || !insight.Body.Keys.Any())
                 {
                     table.Rows.Add(new string[]

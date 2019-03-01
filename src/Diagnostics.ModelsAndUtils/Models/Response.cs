@@ -37,6 +37,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         public List<AzureSupportCenterInsight> AscInsights { get; set; }
 
         /// <summary>
+        /// False when detector should run as it is being called from external source (Azure portal, CLI ...)
+        /// True when detector should run as it is being called from internal source (Applens ..)
+        /// </summary>
+        public bool IsInternalCall { get; set; }
+
+        /// <summary>
         /// Creates an instance of Response
         /// </summary>
         public Response()
