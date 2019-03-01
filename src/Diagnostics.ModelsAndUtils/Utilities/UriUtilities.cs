@@ -35,8 +35,9 @@ namespace Diagnostics.ModelsAndUtils.Utilities
         public static string BuildDetectorLink(string resourceUri, string detectorId)
         {
             return BuildUri(
-                "https://ms.portal.azure.com/?websitesextension_ext=asd.featurePath%3D",
-                $"detectors%2F{detectorId}#@microsoft.onmicrosoft.com/resource/",
+                "https://ms.portal.azure.com",
+                $"/?websitesextension_ext=asd.featurePath%3Ddetectors%2F{detectorId}#@microsoft.onmicrosoft.com",
+                "/resource/",
                 resourceUri,
                 "/customtroubleshoot"
             );

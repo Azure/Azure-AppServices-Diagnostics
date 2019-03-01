@@ -86,6 +86,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             Title = title;
             ResourceUri = resourceUri;
             Action = action;
+            ActionName = title;
         }
 
         /// <summary>
