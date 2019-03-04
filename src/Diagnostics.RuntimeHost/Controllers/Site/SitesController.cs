@@ -10,6 +10,7 @@ using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
