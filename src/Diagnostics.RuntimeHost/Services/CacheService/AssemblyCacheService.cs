@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 
-namespace Diagnostics.RuntimeHost.Services
+namespace Diagnostics.RuntimeHost.Services.CacheService
 {
     public class AssemblyCacheService: IAssemblyCacheService
     {
