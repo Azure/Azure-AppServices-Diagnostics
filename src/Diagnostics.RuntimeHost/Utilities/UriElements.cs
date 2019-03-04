@@ -38,6 +38,8 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string Publish = "diagnostics/publish";
         public const string Detectors = "detectors";
         public const string DetectorResource = "/{detectorId}";
+        public const string Gists = "gists";
+        public const string GistResource = "/{gistId}";
         public const string Insights = "insights";
         public const string InsightResource = "/{insightId}";
         public const string Statistics = "/statistics";

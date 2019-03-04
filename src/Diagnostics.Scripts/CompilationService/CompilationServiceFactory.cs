@@ -1,4 +1,5 @@
-﻿using Diagnostics.Scripts.CompilationService.Interfaces;
+﻿using Diagnostics.Scripts.CompilationService.Gist;
+using Diagnostics.Scripts.CompilationService.Interfaces;
 using Diagnostics.Scripts.Models;
 using Microsoft.CodeAnalysis.Scripting;
 using System;
@@ -23,6 +24,8 @@ namespace Diagnostics.Scripts.CompilationService
             {
                 case EntityType.Signal:
                     return new SignalCompilationService(metaData, scriptOptions);
+                case EntityType.Gist:
+                    return new GistCompilationService(metaData, scriptOptions);
                 case EntityType.Detector:
                     return new DetectorCompilationService(metaData, scriptOptions);
                 case EntityType.Analysis:

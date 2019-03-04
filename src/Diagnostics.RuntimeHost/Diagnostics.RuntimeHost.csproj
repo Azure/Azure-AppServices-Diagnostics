@@ -24,6 +24,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AdditionalFiles Include="../../stylecop.json" Link="stylecop.json" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <CodeAnalysisRuleSet>../../ca.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Diagnostics.DataProviders\Diagnostics.DataProviders.csproj" />
     <ProjectReference Include="..\Diagnostics.Logger\Diagnostics.Logger.csproj" />
     <ProjectReference Include="..\Diagnostics.ModelsAndUtils\Diagnostics.ModelsAndUtils.csproj" />

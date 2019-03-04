@@ -1,31 +1,38 @@
 ﻿using Diagnostics.Logger;
 using Diagnostics.RuntimeHost.Models;
+using Diagnostics.RuntimeHost.Services.CacheService;
+using Diagnostics.RuntimeHost.Services.SourceWatcher.Workers;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
-using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
+    /// <summary>
+    /// Github watcher
+    /// </summary>
     public class GitHubWatcher : SourceWatcherBase
     {
         private Task _firstTimeCompletionTask;
-        private IGithubClient _githubClient;
         private string _rootContentApiPath;
-        private readonly string _lastModifiedMarkerName;
-        private readonly string _deleteMarkerName;
-        private readonly string _cacheIdFileName;
 
+        private readonly IGithubClient _githubClient;
+        private readonly string _workerIdFileName = "workerId.txt";
+        private readonly string _lastModifiedMarkerName = "_lastModified.marker";
+        private readonly string _deleteMarkerName = "_delete.marker";
+        private readonly string _cacheIdFileName = "cacheId.txt";
+
+        // Load from configuration.
         private string _destinationCsxPath;
         private int _pollingIntervalInSeconds;
 
@@ -33,73 +40,96 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         protected override string SourceName => "GitHub";
 
-        public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGithubClient githubClient)
-            : base(env, configuration, invokerCache, "GithubWatcher")
+        private IDictionary<string, IGithubWorker> GithubWorkers { get; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="GitHubWatcher" /> class.
+        /// </summary>
+        /// <param name="env">Hosting environment.</param>
+        /// <param name="configuration">The configuration.</param>
+        /// <param name="invokerCache">Invoker cache.</param>
+        /// <param name="gistCache">Gist cache.</param>
+        /// <param name="githubClient">Github client.</param>
+        public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, IGithubClient githubClient)
+            : base(env, configuration, invokerCache, gistCache, "GithubWatcher")
         {
             _githubClient = githubClient;
 
-            _lastModifiedMarkerName = "_lastModified.marker";
-            _deleteMarkerName = "_delete.marker";
-            _cacheIdFileName = "cacheId.txt";
             LoadConfigurations();
+
+            #region Initialize Github Worker
+
+            // TODO: Register the github worker with destination path.
+            var gistWorker = new GithubGistWorker(gistCache);
+            var detectorWorker = new GithubDetectorWorker(invokerCache);
+
+            GithubWorkers = new Dictionary<string, IGithubWorker>
+            {
+                { gistWorker.Name, gistWorker },
+                { detectorWorker.Name, detectorWorker }
+            };
+
+            #endregion
+
             Start();
         }
 
+        /// <summary>
+        /// Start github watcher.
+        /// </summary>
         public override void Start()
         {
             _firstTimeCompletionTask = StartWatcherInternal();
             StartPollingForChanges();
         }
 
-        public override async Task<Tuple<bool, Exception>> CreateOrUpdateDetector(DetectorPackage pkg)
+        /// <summary>
+        /// Create or update a package.
+        /// </summary>
+        /// <param name="pkg">Detector package.</param>
+        /// <returns>Task for creating or updateing detector.</returns>
+        public override async Task CreateOrUpdatePackage(Package pkg)
         {
             if (pkg == null)
             {
-                return new Tuple<bool, Exception>(false, new ArgumentNullException("pkg"));
+                throw new ArgumentNullException(nameof(pkg));
             }
 
-            Tuple<bool, Exception> output = new Tuple<bool, Exception>(true, null);
-
-            try
-            {
-                string detectorFilePath = $"{pkg.Id.ToLower()}/{pkg.Id.ToLower()}";
-
-                string csxFilePath = $"{detectorFilePath}.csx";
-                string dllFilePath = $"{detectorFilePath}.dll";
-                string pdbFilePath = $"{detectorFilePath}.pdb";
-
-                string commitMessage = $@"Detector : {pkg.Id.ToLower()}, CommittedBy : {pkg.CommittedByAlias}";
-
-                await _githubClient.CreateOrUpdateFile(csxFilePath, pkg.CodeString, commitMessage);
-                await _githubClient.CreateOrUpdateFile(dllFilePath, pkg.DllBytes, commitMessage, false);
-                await _githubClient.CreateOrUpdateFile(pdbFilePath, pkg.PdbBytes, commitMessage, false);
-            }
-            catch(Exception e)
-            {
-                output = new Tuple<bool, Exception>(false, e);
-            }
-
-            return output;
+            await PublishDetectorAsync(pkg);
         }
 
+        private async Task PublishDetectorAsync(Package pkg)
+        {
+            var commit = pkg.GetCommit();
+            foreach (var p in commit.Content)
+            {
+                await _githubClient.CreateOrUpdateFile(p.Key, p.Value.Item1, commit.Message, p.Value.Item2);
+            }
+        }
+
+        /// <summary>
+        /// Start github watcher
+        /// </summary>
+        /// <returns>Task for starting watcher.</returns>
         private async Task StartWatcherInternal()
         {
             try
             {
                 LogMessage("SourceWatcher : Start");
-                DirectoryInfo destDirInfo = new DirectoryInfo(_destinationCsxPath);
-                string destLastModifiedMarker = await FileHelper.GetFileContentAsync(destDirInfo.FullName, _lastModifiedMarkerName);
-                HttpResponseMessage response = await _githubClient.Get(_rootContentApiPath, etag: destLastModifiedMarker);
+                var destDirInfo = new DirectoryInfo(_destinationCsxPath);
+                var destLastModifiedMarker = await FileHelper.GetFileContentAsync(destDirInfo.FullName, _lastModifiedMarkerName);
+
+                var response = await _githubClient.Get(_rootContentApiPath, etag: destLastModifiedMarker);
                 LogMessage($"Http call to repository root path completed. Status Code : {response.StatusCode.ToString()}");
 
                 if (response.StatusCode >= HttpStatusCode.NotFound)
                 {
-                    string errorContent = string.Empty;
+                    var errorContent = string.Empty;
                     try
                     {
                         errorContent = await response.Content.ReadAsStringAsync();
                     }
-                    catch (Exception) { }
+                    catch { }
 
                     LogException($"Unexpected response while checking for detector modifications. Response : {errorContent}", null);
                     return;
@@ -115,21 +145,30 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     LogMessage($"Checking if any invoker present locally needs to be added in cache");
                     foreach (DirectoryInfo subDir in destDirInfo.EnumerateDirectories())
                     {
-                        await AddInvokerToCacheIfNeeded(subDir);
+                        var workerId = await GetWorkerIdAsync(subDir);
+
+                        if (GithubWorkers.ContainsKey(workerId))
+                        {
+                            await GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir);
+                        }
+                        else
+                        {
+                            LogWarning($"Cannot find github worker with id {workerId}. Directory: {subDir.FullName}.");
+                        }
                     }
 
                     return;
                 }
 
                 LogMessage("Syncing local directories with github changes");
-                string githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
-                GithubEntry[] githubDirectories = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
+                var githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
+                var githubDirectories = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
 
-                foreach (GithubEntry gitHubDir in githubDirectories)
+                foreach (var gitHubDir in githubDirectories)
                 {
                     if (!gitHubDir.Type.Equals("dir", StringComparison.OrdinalIgnoreCase)) continue;
 
-                    DirectoryInfo subDir = new DirectoryInfo(Path.Combine(destDirInfo.FullName, gitHubDir.Name.ToLower()));
+                    var subDir = new DirectoryInfo(Path.Combine(destDirInfo.FullName, gitHubDir.Name.ToLower()));
                     if (!subDir.Exists)
                     {
                         LogMessage($"Folder : {subDir.Name} present in github but not on local disk. Creating it...");
@@ -137,11 +176,22 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     }
 
                     FileHelper.DeleteFileIfExists(subDir.FullName, _deleteMarkerName);
-                    string subDirModifiedMarker = await FileHelper.GetFileContentAsync(subDir.FullName, _lastModifiedMarkerName);
+                    var subDirModifiedMarker = await FileHelper.GetFileContentAsync(subDir.FullName, _lastModifiedMarkerName);
 
+                    // ETag matches
                     if (subDirModifiedMarker == gitHubDir.Sha)
                     {
-                        await AddInvokerToCacheIfNeeded(subDir);
+                        var workerId = await GetWorkerIdAsync(subDir);
+
+                        if (GithubWorkers.ContainsKey(workerId))
+                        {
+                            await GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir);
+                        }
+                        else
+                        {
+                            LogWarning($"Cannot find github worker with id {workerId}. Directory: {subDir.FullName}.");
+                        }
+
                         continue;
                     }
 
@@ -150,14 +200,13 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     try
                     {
                         // Specifically catching exceptions for downloading and loading assembilies for every detector.
-                        await DownloadContentAndUpdateInvokerCache(gitHubDir, subDir);
+                        await DownloadContentAndUpdateCache(gitHubDir, subDir);
                         await FileHelper.WriteToFileAsync(subDir.FullName, _lastModifiedMarkerName, gitHubDir.Sha);
                     }
-                    catch(Exception downloadEx)
+                    catch (Exception downloadEx)
                     {
                         LogException(downloadEx.Message, downloadEx);
                     }
-
                 }
 
                 await SyncLocalDirForDeletedEntriesInGitHub(githubDirectories, destDirInfo);
@@ -186,84 +235,40 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             } while (true);
         }
 
-        private async Task AddInvokerToCacheIfNeeded(DirectoryInfo subDir)
+        private async Task DownloadContentAndUpdateCache(GithubEntry parentGithubEntry, DirectoryInfo destDir)
         {
-            try
-            {
-                string cacheId = await FileHelper.GetFileContentAsync(subDir.FullName, _cacheIdFileName);
-                if (string.IsNullOrWhiteSpace(cacheId) || !_invokerCache.TryGetValue(cacheId, out EntityInvoker invoker))
-                {
-                    LogMessage($"Folder : {subDir.FullName} missing in invoker cache.");
-                    FileInfo mostRecentAssembly = GetMostRecentFileByExtension(subDir, ".dll");
-                    FileInfo csxScriptFile = GetMostRecentFileByExtension(subDir, ".csx");
-                    FileInfo deleteMarkerFile = new FileInfo(Path.Combine(subDir.FullName, _deleteMarkerName));
+            var assemblyName = Guid.NewGuid().ToString();
+            var csxFilePath = string.Empty;
+            var confFilePath = string.Empty;
+            var lastCacheId = string.Empty;
+            var cacheIdFilePath = Path.Combine(destDir.FullName, _cacheIdFileName);
 
-                    if (mostRecentAssembly == default(FileInfo) || csxScriptFile == default(FileInfo))
-                    {
-                        LogWarning($"No Assembly file (.dll) or Csx File found (.csx). Skipping cache update");
-                        return;
-                    }
-
-                    if (deleteMarkerFile.Exists)
-                    {
-                        LogMessage("Folder marked for deletion. Skipping cache update");
-                        return;
-                    }
-
-                    string scriptText = await FileHelper.GetFileContentAsync(csxScriptFile.FullName);
-                    LogMessage($"Loading assembly : {mostRecentAssembly.FullName}");
-                    Assembly asm = Assembly.LoadFrom(mostRecentAssembly.FullName);
-                    invoker = new EntityInvoker(new EntityMetadata(scriptText));
-                    invoker.InitializeEntryPoint(asm);
-
-                    if (invoker.EntryPointDefinitionAttribute != null)
-                    {
-                        LogMessage($"Updating cache with  new invoker with id : {invoker.EntryPointDefinitionAttribute.Id}");
-                        _invokerCache.AddOrUpdate(invoker.EntryPointDefinitionAttribute.Id, invoker);
-                        await FileHelper.WriteToFileAsync(subDir.FullName, _cacheIdFileName, invoker.EntryPointDefinitionAttribute.Id);
-                    }
-                    else
-                    {
-                        LogWarning("Missing Entry Point Definition attribute. skipping cache update");
-                    }
-                }
-            }
-            catch(Exception ex)
-            {
-                LogException(ex.Message, ex);
-            }
-        }
-
-        private async Task DownloadContentAndUpdateInvokerCache(GithubEntry parentGithubEntry, DirectoryInfo destDir)
-        {
-            string assemblyName = Guid.NewGuid().ToString();
-            string csxFilePath = string.Empty;
-            string lastCacheId = string.Empty;
-            string cacheIdFilePath = Path.Combine(destDir.FullName, _cacheIdFileName);
-            Assembly asm;
-
-            HttpResponseMessage response = await _githubClient.Get(parentGithubEntry.Url);
+            var response = await _githubClient.Get(parentGithubEntry.Url);
             if (!response.IsSuccessStatusCode)
             {
                 LogException($"GET Failed. Url : {parentGithubEntry.Url}, StatusCode : {response.StatusCode.ToString()}", null);
                 return;
             }
 
-            GithubEntry[] githubFiles = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
+            var githubFiles = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
 
             foreach (GithubEntry githubFile in githubFiles)
             {
-                string fileExtension = githubFile.Name.Split(new char[] { '.' }).LastOrDefault();
+                var fileExtension = githubFile.Name.Split(new char[] { '.' }).LastOrDefault();
                 if (string.IsNullOrWhiteSpace(githubFile.Download_url) || string.IsNullOrWhiteSpace(fileExtension))
                 {
                     // Skip Downloading any directory (with empty download url) or any file without an extension.
                     continue;
                 }
 
-                string downloadFilePath = Path.Combine(destDir.FullName, githubFile.Name.ToLower());
-                if (fileExtension.ToLower().Equals("csx"))
+                var downloadFilePath = Path.Combine(destDir.FullName, githubFile.Name.ToLower());
+                if (fileExtension.Equals("csx", StringComparison.OrdinalIgnoreCase))
                 {
                     csxFilePath = downloadFilePath;
+                }
+                else if (fileExtension.Equals("json", StringComparison.OrdinalIgnoreCase))
+                {
+                    confFilePath = downloadFilePath;
                 }
                 else
                 {
@@ -275,33 +280,21 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
             }
 
-            string scriptText = await FileHelper.GetFileContentAsync(csxFilePath);
+            var scriptText = await FileHelper.GetFileContentAsync(csxFilePath);
+            var assemblyPath = Path.Combine(destDir.FullName, $"{assemblyName}.dll");
 
-            string assemblyPath = Path.Combine(destDir.FullName, $"{assemblyName}.dll");
-            LogMessage($"Loading assembly : {assemblyPath}");
-            asm = Assembly.LoadFrom(assemblyPath);
+            var configFile = await FileHelper.GetFileContentAsync(confFilePath);
+            var config = JsonConvert.DeserializeObject<PackageConfig>(configFile);
+            var workerId = string.Equals(config?.Type, "gist", StringComparison.OrdinalIgnoreCase) ? "GistWorker" : "DetectorWorker";
+            await FileHelper.WriteToFileAsync(destDir.FullName, _workerIdFileName, workerId);
 
-            EntityInvoker newInvoker = new EntityInvoker(new EntityMetadata(scriptText));
-            newInvoker.InitializeEntryPoint(asm);
-
-            // Remove the Old Invoker from Cache
-            lastCacheId = await FileHelper.GetFileContentAsync(cacheIdFilePath);
-            if (!string.IsNullOrWhiteSpace(lastCacheId) && _invokerCache.TryRemoveValue(lastCacheId, out EntityInvoker oldInvoker))
+            if (GithubWorkers.ContainsKey(workerId))
             {
-                LogMessage($"Removing old invoker with id : {oldInvoker.EntryPointDefinitionAttribute.Id} from Cache");
-                oldInvoker.Dispose();
-            }
-
-            // Add new invoker to Cache and update Cache Id File
-            if (newInvoker.EntryPointDefinitionAttribute != null)
-            {
-                LogMessage($"Updating cache with  new invoker with id : {newInvoker.EntryPointDefinitionAttribute.Id}");
-                _invokerCache.AddOrUpdate(newInvoker.EntryPointDefinitionAttribute.Id, newInvoker);
-                await FileHelper.WriteToFileAsync(cacheIdFilePath, newInvoker.EntryPointDefinitionAttribute.Id);
+                await GithubWorkers[workerId].CreateOrUpdateCacheAsync(destDir, scriptText, assemblyPath);
             }
             else
             {
-                LogWarning("Missing Entry Point Definition attribute. skipping cache update");
+                LogWarning($"Cannot find github worker with id {workerId}. Directory: {destDir.FullName}.");
             }
         }
 
@@ -312,15 +305,20 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             LogMessage("Checking for deleted folders in github");
             foreach (DirectoryInfo subDir in destDirInfo.EnumerateDirectories())
             {
-                bool dirExistsInGithub = githubDirectories.Any(p => p.Name.Equals(subDir.Name, StringComparison.OrdinalIgnoreCase));
+                var dirExistsInGithub = githubDirectories.Any(p => p.Name.Equals(subDir.Name, StringComparison.OrdinalIgnoreCase));
                 if (!dirExistsInGithub)
                 {
                     LogMessage($"Folder : {subDir.Name} not present in github. Marking for deletion");
                     // remove the entry from cache and mark the folder for deletion.s
-                    string cacheId = await FileHelper.GetFileContentAsync(subDir.FullName, _cacheIdFileName);
+                    var cacheId = await FileHelper.GetFileContentAsync(subDir.FullName, _cacheIdFileName);
                     if (!string.IsNullOrWhiteSpace(cacheId) && _invokerCache.TryRemoveValue(cacheId, out EntityInvoker invoker))
                     {
                         invoker.Dispose();
+                    }
+
+                    if(!string.IsNullOrWhiteSpace(cacheId) && _gistCache.TryRemoveValue(cacheId, out var gist))
+                    {
+                        // No action.
                     }
 
                     await FileHelper.WriteToFileAsync(subDir.FullName, _deleteMarkerName, "true");
@@ -328,7 +326,18 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             }
         }
 
-        private string GetHeaderValue(HttpResponseMessage responseMsg, string headerName)
+        private async Task<string> GetWorkerIdAsync(DirectoryInfo subDir)
+        {
+            var workerId = await FileHelper.GetFileContentAsync(subDir.FullName, _workerIdFileName);
+            if (string.IsNullOrWhiteSpace(workerId))
+            {
+                return "DetectorWorker";
+            }
+
+            return workerId;
+        }
+
+        private static string GetHeaderValue(HttpResponseMessage responseMsg, string headerName)
         {
             if (responseMsg.Headers.TryGetValues(headerName, out IEnumerable<string> values))
             {
@@ -338,16 +347,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             return string.Empty;
         }
 
-        private FileInfo GetMostRecentFileByExtension(DirectoryInfo dir, string extension)
-        {
-            return dir.GetFiles().Where(p => (!string.IsNullOrWhiteSpace(p.Extension) && p.Extension.Equals(extension, StringComparison.OrdinalIgnoreCase)))
-                .OrderByDescending(f => f.LastWriteTimeUtc).FirstOrDefault();
-        }
-
         private void LoadConfigurations()
         {
             _rootContentApiPath = $@"https://api.github.com/repos/{_githubClient.UserName}/{_githubClient.RepoName}/contents?ref={_githubClient.Branch}";
-            string pollingIntervalvalue = string.Empty;
+            var pollingIntervalvalue = string.Empty;
             if (_env.IsProduction())
             {
                 _destinationCsxPath = (string)Registry.GetValue(RegistryConstants.GithubWatcherRegistryPath, RegistryConstants.DestinationScriptsPathKey, string.Empty);

@@ -13,6 +13,10 @@ namespace Diagnostics.Scripts.CompilationService.Interfaces
 
         EntityMethodSignature GetEntryPointSignature();
 
+        Task<MemberInfo> GetEntryPoint();
+
+        MemberInfo GetEntryPoint(Assembly assembly);
+
         Task<Assembly> EmitAssemblyAsync();
 
         Task<string> SaveAssemblyAsync(string assemblyPath);

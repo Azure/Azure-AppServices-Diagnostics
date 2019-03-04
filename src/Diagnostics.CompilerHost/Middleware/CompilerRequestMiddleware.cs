@@ -1,5 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// <copyright file="CompilerRequestMiddleware.cs" company="Microsoft Corporation">
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
+
+using System;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -10,6 +14,9 @@ using Microsoft.Extensions.Primitives;
 
 namespace Diagnostics.CompilerHost.Middleware
 {
+    /// <summary>
+    /// The compiler request middleware.
+    /// </summary>
     public class CompilerRequestMiddleware
     {
         private readonly RequestDelegate _next;

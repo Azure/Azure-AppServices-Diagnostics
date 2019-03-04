@@ -1,11 +1,14 @@
 ﻿using Diagnostics.DataProviders;
 using Diagnostics.RuntimeHost.Middleware;
+using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
+using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -27,8 +30,10 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<ICompilerHostClient, CompilerHostClient>();
             services.AddSingleton<ISourceWatcherService, SourceWatcherService>();
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
+            services.AddSingleton<IGistCacheService, GistCacheService>();
             services.AddSingleton<ISiteService, SiteService>();
             services.AddSingleton<IStampService, StampService>();
+            services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
 
             // TODO : Not sure what's the right place for the following code piece.
             #region Custom Start up Code

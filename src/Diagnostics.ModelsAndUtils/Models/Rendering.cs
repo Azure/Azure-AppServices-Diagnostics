@@ -187,12 +187,20 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         Card,
 
+        /// <summary>
+        /// Solution actions that can be added to Insights
+        /// </summary>
         Solution,
 
         /// <summary>
         /// Data rendered as Guage with a label, some description text
         /// </summary>
-        Guage
+        Guage,
+
+        /// <summary>
+        /// Data rendered as form with inputs fields and buttons.
+        /// </summary>
+        Form,
     }
 
     /// <summary>
