@@ -3,8 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Diagnostics.ModelsAndUtils.Utilities
+namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 {
+    /// <summary>
+    /// Build URIs to interact with Azure resources.
+    /// </summary>
     public static class UriUtilities
     {
         public static string BuildAzureResourceUri(string subscriptionId, string resourceGroup, string resourceName,

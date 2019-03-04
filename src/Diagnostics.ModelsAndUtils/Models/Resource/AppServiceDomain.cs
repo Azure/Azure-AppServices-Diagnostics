@@ -1,5 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.ModelsAndUtils.Utilities;
+using Diagnostics.ModelsAndUtils.ScriptUtilities;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {

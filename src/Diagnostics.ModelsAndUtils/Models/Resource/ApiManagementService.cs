@@ -1,5 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.ModelsAndUtils.Utilities;
+using Diagnostics.ModelsAndUtils.ScriptUtilities;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {
@@ -26,7 +26,8 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Resource URI
         /// </summary>
-        public string ResourceUri {
+        public string ResourceUri
+        {
             get
             {
                 return UriUtilities.BuildAzureResourceUri(SubscriptionId, ResourceGroup, Name, Provider, ResourceTypeName);

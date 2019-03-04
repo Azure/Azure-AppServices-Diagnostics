@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using Diagnostics.ModelsAndUtils.Utilities;
+using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -127,15 +126,5 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 PremadeInstructions = SolutionText.UpdateSettingsInstructions
             };
         }
-    }
-
-    /// <summary>
-    /// Actions that a Solution can perform, such as ARM API requests.
-    /// </summary>
-    public enum ActionType
-    {
-        RestartSite,
-        UpdateSiteAppSettings,
-        KillW3wpOnInstance
     }
 }

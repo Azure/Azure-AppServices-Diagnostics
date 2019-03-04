@@ -1,5 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.ModelsAndUtils.Utilities;
+using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -119,7 +119,7 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public bool IsApplicable(IResourceFilter filter)
         {
-            if(filter is HostingEnvironmentFilter envFilter)
+            if (filter is HostingEnvironmentFilter envFilter)
             {
                 return ((envFilter.PlatformType & this.PlatformType) > 0) &&
                     ((envFilter.HostingEnvironmentType & this.HostingEnvironmentType) > 0);
