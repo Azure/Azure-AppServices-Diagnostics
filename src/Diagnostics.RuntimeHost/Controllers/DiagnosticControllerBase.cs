@@ -173,15 +173,15 @@ namespace Diagnostics.RuntimeHost.Controllers
             };
 
             string scriptETag = string.Empty;
-            if (Request.Headers.ContainsKey("script-etag"))
+            if (Request.Headers.ContainsKey("diag-script-etag"))
             {
-                scriptETag = Request.Headers["script-etag"];
+                scriptETag = Request.Headers["diag-script-etag"];
             }
 
             string assemblyFullName = string.Empty;
-            if (Request.Headers.ContainsKey("assembly-name"))
+            if (Request.Headers.ContainsKey("diag-assembly-name"))
             {
-                assemblyFullName = HttpUtility.UrlDecode(Request.Headers["assembly-name"]);
+                assemblyFullName = HttpUtility.UrlDecode(Request.Headers["diag-assembly-name"]);
             }
 
             Assembly tempAsm = null;
@@ -212,7 +212,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         _assemblyCacheService.AddAssemblyToCache(tempAsm.FullName, tempAsm);
                     }
 
-                    Request.HttpContext.Response.Headers.Add("script-etag", Convert.ToBase64String(ScriptCompilation.GetHashFromScript(jsonBody.Script)));
+                    Request.HttpContext.Response.Headers.Add("diag-script-etag", Convert.ToBase64String(ScriptCompilation.GetHashFromScript(jsonBody.Script)));
                 }
                 catch (Exception e)
                 {
