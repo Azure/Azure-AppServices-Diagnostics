@@ -45,13 +45,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
         /// <param name="solutions">Solutions to problems identified by the Insight.</param>
-        public Insight(InsightStatus status, string message, params Solution[] solutions)
+        public Insight(InsightStatus status, string message)
         {
             this.Status = status;
             this.Message = message ?? string.Empty;
             this.Body = new Dictionary<string, string>();
             this.IsExpanded = false;
-            this.Solutions = solutions;
         }
 
         /// <summary>
@@ -61,13 +60,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="message">Insight Message.</param>
         /// <param name="body">Insights Body.</param>
         /// <param name="solutions">Solutions to problems identified by the Insight.</param>
-        public Insight(InsightStatus status, string message, Dictionary<string, string> body, params Solution[] solutions)
+        public Insight(InsightStatus status, string message, Dictionary<string, string> body)
         {
             this.Status = status;
             this.Message = message ?? string.Empty;
             this.Body = body;
             this.IsExpanded = false;
-            this.Solutions = solutions;
         }
 
         /// <summary>
@@ -77,8 +75,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="message">Insight Message.</param>
         /// <param name="body">Insights Body.</param>
         /// <param name="solutions">Solutions to problems identified by the Insight.</param>
-        public Insight(InsightStatus status, string message, Dictionary<string, string> body,
-            bool isExpanded, params Solution[] solutions) : this(status, message, body, solutions)
+        public Insight(InsightStatus status, string message, Dictionary<string, string> body, bool isExpanded) :
+            this(status, message, body)
         {
             this.IsExpanded = isExpanded;
         }
@@ -88,12 +86,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public Insight WithSolutions(params Solution[] solutions)
         {
-            if (Solutions == null)
-            {
-                Solutions = new List<Solution>();
-            }
-
-            Solutions = Solutions.Concat(solutions);
+            Solutions = (Solutions ?? new List<Solution>()).Concat(solutions);
 
             return this;
         }
@@ -152,7 +145,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
             insights.ForEach(insight =>
             {
-                foreach (var solution in insight.Solutions)
+                foreach (var solution in insight.Solutions ?? Enumerable.Empty<Solution>())
                 {
                     solution.DetectorLink = UriUtilities.BuildDetectorUri(solution.ResourceUri, response.Metadata.Id);
                     solution.IsInternal = response.IsInternalCall;
