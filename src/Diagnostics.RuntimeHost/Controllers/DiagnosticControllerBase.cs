@@ -116,7 +116,8 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             Response res = new Response
             {
-                Metadata = invoker.EntryPointDefinitionAttribute
+                Metadata = invoker.EntryPointDefinitionAttribute,
+                IsInternalCall = systemContext["isInternal"]
             };
 
             var response = (Response)await invoker.Invoke(new object[] { dataProviders, systemContext, res });
@@ -236,7 +237,11 @@ namespace Diagnostics.RuntimeHost.Controllers
                             if (!VerifyEntity(invoker, ref queryRes)) return Ok(queryRes);
                             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
 
-                            var responseInput = new Response() { Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, cxt.ClientIsInternal) };
+                            var responseInput = new Response()
+                            {
+                                Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, cxt.ClientIsInternal),
+                                IsInternalCall = cxt.OperationContext.IsInternalCall
+                            };
                             invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, cxt.OperationContext, responseInput });
                             invocationResponse.UpdateDetectorStatusFromInsights();
                             isInternalCall = cxt.ClientIsInternal;
@@ -244,7 +249,11 @@ namespace Diagnostics.RuntimeHost.Controllers
                         else
                         {
                             Dictionary<string, dynamic> systemContext = PrepareSystemContext(resource, detectorId, dataSource, timeRange);
-                            var responseInput = new Response() { Metadata = invoker.EntryPointDefinitionAttribute };
+                            var responseInput = new Response()
+                            {
+                                Metadata = invoker.EntryPointDefinitionAttribute,
+                                IsInternalCall = systemContext["isInternal"]
+                            };
                             invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, systemContext, responseInput });
                         }
 
@@ -269,7 +278,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                             throw;
                         }
                     }
-
                 }
             }
 
@@ -289,7 +297,11 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private DiagnosticApiResponse CreateQueryExceptionResponse(Exception ex, Definition detectorDefinition, bool isInternal, List<DataProviderMetadata> dataProvidersMetadata)
         {
-            Response response = new Response() { Metadata = RemovePIIFromDefinition(detectorDefinition, isInternal) };
+            Response response = new Response()
+            {
+                Metadata = RemovePIIFromDefinition(detectorDefinition, isInternal),
+                IsInternalCall = isInternal
+            };
             response.AddMarkdownView($"<pre><code>Exception message:<strong> {ex.Message}</strong><br>Stack trace: {ex.StackTrace}</code></pre>", "Detector Runtime Exception");
             return DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata);
         }
@@ -323,7 +335,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             catch (Exception ex)
             {
                 error = ex.GetType().ToString();
-                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.OperationContext.RequestId, "GetInsights", cxt.OperationContext.Resource.SubscriptionId, 
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.OperationContext.RequestId, "GetInsights", cxt.OperationContext.Resource.SubscriptionId,
                     cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, ex.GetType().ToString(), ex.ToString());
             }
 
@@ -371,7 +383,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(response);
         }
 
-        #endregion
+        #endregion API Response Methods
 
         protected TResource GetResource(string subscriptionId, string resourceGroup, string name)
         {
@@ -403,9 +415,11 @@ namespace Diagnostics.RuntimeHost.Controllers
                 case DiagnosticStampType.ASEV1:
                     hostingEnv.HostingEnvironmentType = HostingEnvironmentType.V1;
                     break;
+
                 case DiagnosticStampType.ASEV2:
                     hostingEnv.HostingEnvironmentType = HostingEnvironmentType.V2;
                     break;
+
                 default:
                     hostingEnv.HostingEnvironmentType = HostingEnvironmentType.None;
                     break;
@@ -413,7 +427,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             string stampName = !string.IsNullOrWhiteSpace(hostingEnv.InternalName) ? hostingEnv.InternalName : hostingEnv.Name;
 
-            var result = await this._stampService.GetTenantIdForStamp(stampName, hostingEnv.HostingEnvironmentType == HostingEnvironmentType.None,  startTime, endTime, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+            var result = await this._stampService.GetTenantIdForStamp(stampName, hostingEnv.HostingEnvironmentType == HostingEnvironmentType.None, startTime, endTime, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
             hostingEnv.TenantIdList = result.Item1;
             hostingEnv.PlatformType = result.Item2;
 
@@ -540,9 +554,10 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return null;
             }
 
-            Response res = new Response
+            var res = new Response
             {
-                Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, context.ClientIsInternal)
+                Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, context.ClientIsInternal),
+                IsInternalCall = context.OperationContext.IsInternalCall
             };
 
             var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
@@ -597,7 +612,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             else
             {
-                var regularToAscInsights = response.Insights.Select(insight => {
+                var regularToAscInsights = response.Insights.Select(insight =>
+                {
                     var ascInsight = AzureSupportCenterInsightUtilites.CreateInsight(insight, context.OperationContext, detector);
                     logAscInsight(context, detector, ascInsight);
                     return ascInsight;
@@ -634,7 +650,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         // The reason we have this method is that Azure Support Center will pass support topic id in the format below:
-        // 1003023/32440119/32457411 
+        // 1003023/32440119/32457411
         // But the support topic we are using is only the last one
         private string ParseCorrectSupportTopicId(string supportTopicId)
         {

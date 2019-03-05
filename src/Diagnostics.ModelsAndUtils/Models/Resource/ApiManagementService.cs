@@ -1,4 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.ScriptUtilities;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {
@@ -21,6 +22,17 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// Resource Group Name
         /// </summary>
         public string ResourceGroup { get; set; }
+
+        /// <summary>
+        /// Resource URI
+        /// </summary>
+        public string ResourceUri
+        {
+            get
+            {
+                return UriUtilities.BuildAzureResourceUri(SubscriptionId, ResourceGroup, Name, Provider, ResourceTypeName);
+            }
+        }
 
         /// <summary>
         /// Arm Resource Provider

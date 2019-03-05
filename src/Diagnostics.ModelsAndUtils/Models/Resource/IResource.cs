@@ -26,6 +26,11 @@ namespace Diagnostics.ModelsAndUtils.Models
         string Name { get; set; }
 
         /// <summary>
+        /// Resource URI
+        /// </summary>
+        string ResourceUri { get; }
+
+        /// <summary>
         /// Type of Resource
         /// </summary>
         ResourceType ResourceType { get; set; }

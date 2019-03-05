@@ -23,7 +23,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string StartTime { get; private set; }
 
         /// <summary>
-        /// End Tim(UTC) for data measurement
+        /// End Time(UTC) for data measurement
         /// </summary>
         public string EndTime { get; private set; }
 
@@ -54,6 +54,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public Form Form { get; private set; }
 
+        public static implicit operator OperationContext(OperationContext<TResource> context)
+        {
+            return new OperationContext(context.Resource, context.StartTime, context.EndTime, context.IsInternalCall,
+                context.RequestId, context.TimeGrain, context.SupportTopic);
+        }
+
         public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, string timeGrain = "5", SupportTopic supportTopic = null, Form form = null)
         {
             Resource = resource;
@@ -64,6 +70,15 @@ namespace Diagnostics.ModelsAndUtils.Models
             TimeGrain = timeGrain;
             SupportTopic = supportTopic;
             Form = form;
+        }
+    }
+
+    public class OperationContext : OperationContext<IResource>
+    {
+        public OperationContext(IResource resource, string startTimeStr, string endTimeStr, bool isInternalCall,
+            string requestId, string timeGrain = "5", SupportTopic supportTopic = null) :
+            base(resource, startTimeStr, endTimeStr, isInternalCall, requestId, timeGrain, supportTopic)
+        {
         }
     }
 }

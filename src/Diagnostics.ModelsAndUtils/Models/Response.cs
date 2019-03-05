@@ -1,10 +1,8 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
-using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {
@@ -37,6 +35,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// ASC Insight List
         /// </summary>
         public List<AzureSupportCenterInsight> AscInsights { get; set; }
+
+        /// <summary>
+        /// False when detector should run as it is being called from external source (Azure portal, CLI ...)
+        /// True when detector should run as it is being called from internal source (Applens ..)
+        /// </summary>
+        public bool IsInternalCall { get; set; }
 
         /// <summary>
         /// Creates an instance of Response
