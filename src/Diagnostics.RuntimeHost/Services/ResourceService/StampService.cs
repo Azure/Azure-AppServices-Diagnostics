@@ -14,24 +14,21 @@ namespace Diagnostics.RuntimeHost.Services
 {
     public interface IStampService
     {
-        Task<Tuple<List<string>, PlatformType>> GetTenantIdForStamp(string stamp, DateTime startTime, DateTime endTime, string requestId = null);
+        Task<Tuple<List<string>, PlatformType>> GetTenantIdForStamp(string stamp, bool isPublicStamp, DateTime startTime, DateTime endTime, DataProviderContext dataProviderContext);
     }
 
     public class StampService : IStampService
     {
         private ConcurrentDictionary<string, Tuple<List<string>, PlatformType>> _tenantCache;
-        private IDataSourcesConfigurationService _dataSourcesConfigService;
-        private DataProviders.DataProviders _dataProviders; 
 
-        public StampService(IDataSourcesConfigurationService dataSourcesConfigService)
+        public StampService()
         {
-            _dataSourcesConfigService = dataSourcesConfigService;
             _tenantCache = new ConcurrentDictionary<string, Tuple<List<string>, PlatformType>>();
-            _dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
         }
 
-        public async Task<Tuple<List<string>, PlatformType>> GetTenantIdForStamp(string stamp, DateTime startTime, DateTime endTime, string requestId = null)
+        public async Task<Tuple<List<string>, PlatformType>> GetTenantIdForStamp(string stamp, bool isPublicStamp, DateTime startTime, DateTime endTime, DataProviderContext dataProviderContext)
         {
+            var dp = new DataProviders.DataProviders(dataProviderContext);
             if (string.IsNullOrWhiteSpace(stamp))
             {
                 throw new ArgumentNullException("stamp");
@@ -48,8 +45,8 @@ namespace Diagnostics.RuntimeHost.Services
             string windowsQuery = GetTenantIdQuery(stamp, startTime, endTime, PlatformType.Windows);
             string linuxQuery = GetTenantIdQuery(stamp, startTime, endTime, PlatformType.Linux);
 
-            var windowsTask = _dataProviders.Kusto.ExecuteQuery(windowsQuery, stamp, requestId, KustoOperations.GetTenantIdForWindows);
-            var linuxTask = _dataProviders.Kusto.ExecuteQuery(linuxQuery, stamp, requestId, KustoOperations.GetTenantIdForLinux);
+            var windowsTask = dp.Kusto.ExecuteQuery(windowsQuery, stamp, operationName: KustoOperations.GetTenantIdForWindows);
+            var linuxTask = dp.Kusto.ExecuteQuery(linuxQuery, stamp, operationName: KustoOperations.GetTenantIdForLinux);
 
             windowsTenantIds = GetTenantIdsFromTable(await windowsTask);
             linuxTenantIds = GetTenantIdsFromTable(await linuxTask);
@@ -62,7 +59,12 @@ namespace Diagnostics.RuntimeHost.Services
             
             result = new Tuple<List<string>, PlatformType>(tenantIds, type);
 
-            _tenantCache.TryAdd(stamp.ToLower(), result);
+            // Only cache TenantIds if not empty
+            if (tenantIds != null && tenantIds.Any())
+            {
+                _tenantCache.TryAdd(stamp.ToLower(), result);
+            }           
+
             return result;
         }
 

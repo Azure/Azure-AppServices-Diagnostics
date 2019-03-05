@@ -1,7 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {
@@ -104,7 +102,7 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public Rendering InnerRendering { get; set; }
 
-        public Boolean Expanded { get; set; }
+        public bool Expanded { get; set; }
 
         public DynamicInsightRendering(): base(RenderingType.DynamicInsight)
         {
@@ -182,7 +180,27 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data rendered as (key, value) pair where key goes in dropdown and value goes in body.
         /// </summary>
-        DropDown
+        DropDown,
+
+        /// <summary>
+        /// Data rendered as Tile with a title, some text and a link to another detector or a diagnostic tool
+        /// </summary>
+        Card,
+
+        /// <summary>
+        /// Solution actions that can be added to Insights
+        /// </summary>
+        Solution,
+
+        /// <summary>
+        /// Data rendered as Guage with a label, some description text
+        /// </summary>
+        Guage,
+
+        /// <summary>
+        /// Data rendered as form with inputs fields and buttons.
+        /// </summary>
+        Form,
     }
 
     /// <summary>

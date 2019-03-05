@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
@@ -16,11 +17,11 @@ namespace Diagnostics.DataProviders
     public class AppSettingsDataProviderConfigurationFactory : DataProviderConfigurationFactory
     {
         private IConfigurationRoot _configuration;
-        public AppSettingsDataProviderConfigurationFactory()
+        public AppSettingsDataProviderConfigurationFactory(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
 
             _configuration = builder.Build();
         }
@@ -72,9 +73,29 @@ namespace Diagnostics.DataProviders
                     default: return string.Empty;
                 }
             }           
-            else if (prefix == "SupportObserver" && name == "IsMockConfigured")
+            else if (prefix == "SupportObserver")
             {
-                return "true";
+                switch (name)
+                {
+                    case "IsMockConfigured": return "true";
+                    case "Endpoint": return "https://wawsobserver.azurewebsites.windows.net";
+                    default: return string.Empty;
+                }
+            }
+            else if (prefix == "Mdm")
+            {
+                switch (name)
+                {
+                    case "MdmShoeboxEndpoint":
+                        return "https://antares.metrics.nsatc.net";
+                    case "MdmRegistrationCertThumbprint":
+                        // Replace the thumbprint with the certificate installed in your machine.
+                        return "";
+                    case "MdmShoeboxAccount":
+                        return "Mock";
+                    default:
+                        return string.Empty;
+                }
             }
 
             return string.Empty;

@@ -1,4 +1,5 @@
 ﻿using Diagnostics.DataProviders;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.RuntimeHost.Utilities;
 using System;
@@ -11,34 +12,39 @@ namespace Diagnostics.RuntimeHost.Services
 {
     public interface ISiteService
     {
-        Task<StackType> GetApplicationStack(string subscriptionId, string resourceGroup, string siteName, string requestId = null);
+        Task<StackType> GetApplicationStack(string subscriptionId, string resourceGroup, string siteName, DataProviderContext dataProviderContext);
     }
 
     public class SiteService : ISiteService
     {
-        private IDataSourcesConfigurationService _dataSourcesConfigService;
-        private DataProviders.DataProviders _dataProviders;
-        
-        public SiteService(IDataSourcesConfigurationService dataSourcesConfigService)
-        {
-            _dataSourcesConfigService = dataSourcesConfigService;
-            _dataProviders = new DataProviders.DataProviders(_dataSourcesConfigService.Config);
-        }
+        public SiteService(IDataSourcesConfigurationService dataSourcesConfigService){ }
 
-        public async Task<StackType> GetApplicationStack(string subscriptionId, string resourceGroup, string siteName, string requestId = null)
+        public async Task<StackType> GetApplicationStack(string subscriptionId, string resourceGroup, string siteName, DataProviderContext dataProviderContext)
         {
+            var dp = new DataProviders.DataProviders(dataProviderContext);
             if (string.IsNullOrWhiteSpace(subscriptionId)) throw new ArgumentNullException("subscriptionId");
             if (string.IsNullOrWhiteSpace(resourceGroup)) throw new ArgumentNullException("resourceGroup");
             if (string.IsNullOrWhiteSpace(siteName)) throw new ArgumentNullException("siteName");
 
             string queryTemplate =
-                $@"WawsAn_dailyentity 
+                $@"WawsAn_dailyentity
                 | where pdate >= ago(5d) and sitename =~ ""{siteName}"" and sitesubscription =~ ""{subscriptionId}"" and resourcegroup =~ ""{resourceGroup}"" 
                 | where sitestack !contains ""unknown"" and sitestack !contains ""no traffic"" and sitestack  !contains ""undefined""
                 | top 1 by pdate desc
                 | project sitestack";
 
-            DataTable stackTable = await _dataProviders.Kusto.ExecuteQuery(queryTemplate, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, "GetApplicationStack");
+            DataTable stackTable = null;
+            
+            try{
+                if (dataProviderContext.Configuration.KustoConfiguration.CloudDomain == KustoDataProviderConfiguration.AzureCloud)
+                {
+                    stackTable = await dp.Kusto.ExecuteQuery(queryTemplate, DataProviderConstants.FakeStampForAnalyticsCluster, operationName: "GetApplicationStack");
+                }
+            }catch(Exception ex){
+                //swallow the exception. Since Mooncake does not have an analytics cluster
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(dataProviderContext.RequestId, "GetApplicationStack", subscriptionId,
+                    resourceGroup, siteName, ex.GetType().ToString(), ex.ToString());
+            }
             
             if(stackTable == null || stackTable.Rows == null || stackTable.Rows.Count == 0)
             {

@@ -17,6 +17,12 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
+        /// Observer endpoint
+        /// </summary>
+        [ConfigurationName("Endpoint")]
+        public string Endpoint { get; set; }
+
+        /// <summary>
         /// Client Id
         /// </summary>
         [ConfigurationName("ClientId")]

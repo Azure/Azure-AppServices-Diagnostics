@@ -63,6 +63,30 @@ namespace Diagnostics.DataProviders
             return await GetSiteInternal();
         }
 
+        public override async Task<dynamic> GetSite(string stampName, string siteName, string slotName)
+        {
+            return await GetSiteInternal();
+        }
+
+        public override async Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override async Task<dynamic> GetHostNames(string stampName, string siteName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<dynamic> GetSitePostBody(string stampName, string siteName)
+        {
+            throw new NotImplementedException();
+        }
+        public override Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName)
+        {
+            throw new NotImplementedException();
+        }
+
         private Task<dynamic> GetSiteInternal()
         {
             var siteData = @"

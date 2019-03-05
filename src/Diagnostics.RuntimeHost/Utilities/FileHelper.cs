@@ -49,7 +49,7 @@ namespace Diagnostics.RuntimeHost.Utilities
             foreach (var fileInfo in srcDirInfo.GetFiles())
             {
                 string desiredFileName = fileInfo.Name;
-                
+
                 if (IsDllorPdb(fileInfo) && !string.IsNullOrWhiteSpace(customNameForDllFile))
                 {
                     desiredFileName = $"{customNameForDllFile}{fileInfo.Extension}";
@@ -68,8 +68,20 @@ namespace Diagnostics.RuntimeHost.Utilities
         internal static bool IsDllorPdb(FileInfo fileInfo)
         {
             return !string.IsNullOrWhiteSpace(fileInfo.Extension)
-                && ((fileInfo.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase) 
+                && ((fileInfo.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase)
                     || fileInfo.Extension.Equals(".pdb", StringComparison.OrdinalIgnoreCase)));
+        }
+
+        internal static string SanitizeScriptFile(string val)
+        {
+            var lines = val.Split(new[] { '\n' }).Where(p => p.StartsWith("#r ") || (p.StartsWith("#load ") && p.EndsWith("_frameworkRef.csx\"")));
+            string output = val;
+            foreach (var line in lines)
+            {
+                output = output.Replace($"{line}\n", string.Empty);
+            }
+
+            return output;
         }
     }
 }

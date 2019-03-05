@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 
 namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 {
@@ -116,7 +117,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 
             if (wildCardHostNames.Any())
             {
-                string wildCardQuery = string.Join("or", wildCardHostNames.Select(w => $@"{hostNameColumn} endswith ""{w}"""));
+                string wildCardQuery = string.Join("or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w}"""));
                 hostNameQuery = $"{hostNameQuery} or {wildCardQuery}";
             }
 
@@ -133,14 +134,13 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         /// <param name="timeStampColumnName">Name of column for timestamp</param>
         /// <example>
         /// <code>
-        /// public async static Task<Response> Run(DataProviders dp, <![CDATA[OperationContext<App> cxt]]>, Response res){
+        /// public async static Task<![CDATA[Response]]> Run(DataProviders dp, <![CDATA[OperationContext<App> cxt]]>, Response res){
         ///     var siteEventsDataTable = await dp.Kusto.ExecuteQuery(runtimeWorkerEventsQuery, cxt.Resource.Stamp.InternalName));
         ///     var slotTimeRanges = await dp.Observer.GetRuntimeSiteSlotMap(cxt.Resource.Stamp.InternalName, cxt.Resource.Name);
         ///     var webAppStagingEvents = Utilities.GetSlotEvents(cxt.Resource.Slot, slotTimeRanges, siteEventsDataTable, "SiteName", "TIMESTAMP").
         /// }
         /// </code>
         /// </example>
-        /// <returns></returns>
         public static DataTable GetSlotEvents(string slotName, Dictionary<string, List<RuntimeSitenameTimeRange>> slotTimeRanges, DataTable siteEventsTable, string siteColumnName = "SiteName", string timeStampColumnName = "TIMESTAMP")
         {
             var dt = new DataTable();
@@ -180,6 +180,41 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
             }
 
             return dt;
+        }
+
+        /// <summary>
+        /// Gets the form input object for the given form and input id
+        /// </summary>
+        /// <param name="form">Form to search</param>
+        /// <param name="inputId">Given input id</param>
+        public static FormInputBase GetFormInput(Form form, int inputId)
+        {
+            try
+            {
+                var formInput = form.FormInputs.First(i => i.InputId == inputId);
+                return formInput;
+            }
+            catch (Exception e)
+            {
+                throw new Exception($"{e.Message}, Please check the given input id");
+            }
+        }
+
+        /// <summary>
+        /// Gets the button id of the button currently executing
+        /// </summary>
+        public static int GetExecutingButtonId(Form form)
+        {
+            var executingButtonId = form.FormInputs.Find(input => input.InputType == FormInputTypes.Button);
+            return executingButtonId.InputId;
+        }
+
+        /// <summary>
+        /// Returns all the form inputs filtered by the <paramref name="filterInputType"/>
+        /// </summary>
+        public static IEnumerable<FormInputBase> GetFormInputsByType(Form form, FormInputTypes filterInputType)
+        {
+            return form.FormInputs.Where(input => input.InputType == filterInputType);
         }
     }
 }

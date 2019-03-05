@@ -2,13 +2,16 @@
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
+using Diagnostics.RuntimeHost.Models;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Tests.Helpers;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Xunit;
@@ -45,6 +48,27 @@ namespace Diagnostics.Tests.ScriptsTests
             {
                 await invoker.InitializeEntryPointAsync();
                 Assert.Equal<Definition>(definitonAttribute, invoker.EntryPointDefinitionAttribute);
+                Assert.Equal(filterType, invoker.ResourceFilter.GetType());
+            }
+        }
+
+        [Theory]
+        [InlineData(ResourceType.App, typeof(AppFilter))]
+        [InlineData(ResourceType.HostingEnvironment, typeof(HostingEnvironmentFilter))]
+        public async void EntityInvoker_TestGistResourceAttributeResolution(ResourceType resType, Type filterType)
+        {
+            Definition definitonAttribute = new Definition()
+            {
+                Id = "TestId"
+            };
+
+            EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata(EntityType.Gist);
+            metadata.ScriptText = await ScriptTestDataHelper.GetGistScript(definitonAttribute, resType);
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+                Assert.Equal(definitonAttribute, invoker.EntryPointDefinitionAttribute);
                 Assert.Equal(filterType, invoker.ResourceFilter.GetType());
             }
         }
@@ -127,6 +151,27 @@ namespace Diagnostics.Tests.ScriptsTests
         }
 
         [Fact]
+        public async void EntityInvoker_TestDetectorWithGists()
+        {
+            var gist = ScriptTestDataHelper.GetGist();
+            var references = new Dictionary<string, string>
+            {
+                { "xxx", gist },
+                { "yyy", "" },
+                { "zzz", "" }
+            };
+
+            var metadata = new EntityMetadata(ScriptTestDataHelper.GetSentinel(), EntityType.Detector);
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports(), references.ToImmutableDictionary()))
+            {
+                await invoker.InitializeEntryPointAsync();
+                var result = (string)await invoker.Invoke(new object[] { });
+                Assert.Equal(2, invoker.References.Count());
+                Assert.False(string.IsNullOrWhiteSpace(result));
+            }
+        }
+
+        [Fact]
         public async void EntityInvoker_TestGetAssemblyBytes()
         {
             Definition definitonAttribute = new Definition()
@@ -169,6 +214,44 @@ namespace Diagnostics.Tests.ScriptsTests
 
                 Assert.True(File.Exists($"{assemblyPath}.dll"));
                 Assert.True(File.Exists($"{assemblyPath}.pdb"));
+            }
+        }
+
+        [Fact]
+        public async void EntityInvoker_TestGistInitializationUsingAssembly()
+        {
+            // First Create and Save a assembly for test purposes.
+            Definition definitonAttribute = new Definition()
+            {
+                Id = "TestId"
+            };
+
+            string assemblyPath = $@"{Directory.GetCurrentDirectory()}/{Guid.NewGuid().ToString()}";
+            EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata(EntityType.Gist);
+            metadata.ScriptText = await ScriptTestDataHelper.GetGistScript(definitonAttribute);
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+                await invoker.SaveAssemblyToDiskAsync(assemblyPath);
+
+                Assert.True(File.Exists($"{assemblyPath}.dll"));
+                Assert.True(File.Exists($"{assemblyPath}.pdb"));
+            }
+
+            // Now test initializing Entry Point of Invoker using assembly
+            Assembly asm = Assembly.LoadFrom($"{assemblyPath}.dll");
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata))
+            {
+                Exception ex = Record.Exception(() =>
+                {
+                    invoker.InitializeEntryPoint(asm);
+                });
+
+                Assert.Null(ex);
+                Assert.True(invoker.IsCompilationSuccessful);
+                Assert.Equal(definitonAttribute.Id, invoker.EntryPointDefinitionAttribute.Id);
             }
         }
 

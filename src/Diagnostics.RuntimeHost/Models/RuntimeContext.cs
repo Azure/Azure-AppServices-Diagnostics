@@ -1,4 +1,5 @@
-﻿using Diagnostics.ModelsAndUtils.Models;
+﻿using Diagnostics.DataProviders;
+using Diagnostics.ModelsAndUtils.Models;
 
 namespace Diagnostics.RuntimeHost.Models
 {

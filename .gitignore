@@ -56,7 +56,6 @@ dlldata.c
 project.lock.json
 project.fragment.lock.json
 artifacts/
-**/Properties/launchSettings.json
 
 *_i.c
 *_p.c
@@ -318,3 +317,7 @@ aot/
 
 # Temp file generated during build (using bash)
 1
+
+# Appsettings file that may contain secrets
+appsettings.*.json
+>>>>>>> master

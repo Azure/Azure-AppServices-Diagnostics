@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -50,12 +51,22 @@ namespace Diagnostics.DataProviders
 
         public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
         {
+            if (string.IsNullOrWhiteSpace(stampName))
+            {
+                throw new ArgumentNullException(stampName);
+            }
+
+            if (string.IsNullOrWhiteSpace(siteName))
+            {
+                throw new ArgumentNullException(siteName);
+            }
+
             return await GetRuntimeSiteSlotMapInternal(stampName, siteName);
         }
 
         private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName)
         {
-            var result = await Get(string.IsNullOrWhiteSpace(stampName) ? $"/sites/{siteName}/runtimesiteslotmap" : $"stamp/{stampName}/sites/{siteName}/runtimesiteslotmap");
+            var result = await GetObserverResource($"stamps/{stampName}/sites/{siteName}/runtimesiteslotmap");
             var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);
             var slotTimeRange = new Dictionary<string, List<RuntimeSitenameTimeRange>>(slotTimeRangeCaseSensitiveDictionary, StringComparer.CurrentCultureIgnoreCase);
             return slotTimeRange;
@@ -106,16 +117,73 @@ namespace Diagnostics.DataProviders
 
         public override async Task<dynamic> GetSite(string siteName)
         {
-            var response = await GetObserverResource($"sites/{siteName}");
-            var siteObject = JsonConvert.DeserializeObject(response);
-            return siteObject;
+            return await GetSiteInternal(null, siteName, null);
         }
 
         public override async Task<dynamic> GetSite(string stampName, string siteName)
         {
-            var response = await GetObserverResource($"stamps/{stampName}/sites/{siteName}");
+            return await GetSiteInternal(stampName, siteName, null);
+        }
+
+        public override async Task<dynamic> GetSite(string stampName, string siteName, string slotName)
+        {
+            return await GetSiteInternal(stampName, siteName, slotName);
+        }
+
+        private async Task<dynamic> GetSiteInternal(string stampName, string siteName, string slotName)
+        {
+            string path = "";
+
+            if (!string.IsNullOrWhiteSpace(stampName))
+            {
+                path = $"stamps/{stampName}/";
+            }
+
+            path = string.IsNullOrWhiteSpace(slotName) ? path + $"sites/{siteName}" : path + $"sites/{siteName}({slotName})";
+
+            var response = await GetObserverResource(path);
             var siteObject = JsonConvert.DeserializeObject(response);
             return siteObject;
+        }
+
+        public override async Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName)
+        {
+            dynamic siteObjects = await GetSite(siteName);
+            JToken obj2 = ((JArray)siteObjects)
+                    .Select(i => (JObject)i)
+                    .FirstOrDefault(j =>
+                        j.ContainsKey("subscription") &&
+                        j["subscription"]["name"].ToString().Equals(
+                            subscriptionId, StringComparison.InvariantCultureIgnoreCase
+                        ) &&
+                        j.ContainsKey("resource_group_name") && j["resource_group_name"].ToString().Equals(
+                            resourceGroupName, StringComparison.InvariantCultureIgnoreCase
+                        ) && j.ContainsKey("stamp")
+                    );
+
+            string stampName = obj2?["stamp"]?["name"]?.ToString();
+            return stampName;
+        }
+
+        public override async Task<dynamic> GetHostNames(string stampName, string siteName)
+        {
+            var response = await Get($"stamps/{stampName}/sites/{siteName}/hostnames");
+            var hostNames = JsonConvert.DeserializeObject(response);
+            return hostNames;
+        }
+
+        public override async Task<dynamic> GetSitePostBody(string stampName, string siteName)
+        {
+            var response = await GetObserverResource($"stamps/{stampName}/sites/{siteName}/postbody");
+            dynamic sitePostBody = JsonConvert.DeserializeObject(response);
+            return sitePostBody;
+        }
+
+        public override async Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName)
+        {
+            var response = await GetObserverResource($"hostingEnvironments/{hostingEnvironmentName}/postbody");
+            var hostingEnvironmentPostBody = JsonConvert.DeserializeObject(response);
+            return hostingEnvironmentPostBody;
         }
 
         public override HttpClient GetObserverClient()

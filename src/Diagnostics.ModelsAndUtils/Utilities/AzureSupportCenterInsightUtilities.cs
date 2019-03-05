@@ -46,7 +46,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
 
             var supportCenterInsight = new AzureSupportCenterInsight()
             {
-                Id = GetDetectorGuid(detector.Id),
+                Id = GetDetectorGuid(title),
                 Title = title,
                 ImportanceLevel = (ImportanceLevel)Enum.Parse(typeof(ImportanceLevel), ((int)status).ToString()),
                 InsightFriendlyName = title,

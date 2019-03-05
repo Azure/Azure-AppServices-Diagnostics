@@ -27,5 +27,7 @@ namespace Diagnostics.DataProviders
         Task<T> MakeHttpGetRequestWithFullPath<T>(string fullPath, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version);
 
         Task<string> GetLinuxContainerLogs(string subscriptionId, string resourceGroupName, string name, string slotName);
+
+        Task<T> InvokeDaasExtension<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string daasApiPath, string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken));
     }
 }

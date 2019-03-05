@@ -32,7 +32,7 @@ namespace Diagnostics.Tests.DataProviderTests
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
 
-            var dataProviders = new DataProviders.DataProviders(config);
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -65,7 +65,7 @@ namespace Diagnostics.Tests.DataProviderTests
             //read a sample csx file from local directory
             metadata.ScriptText = await File.ReadAllTextAsync("BackupCheckDetector.csx");
 
-            var dataProviders = new DataProviders.DataProviders(config);
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -96,8 +96,6 @@ namespace Diagnostics.Tests.DataProviderTests
                         Trace.WriteLine(output);
                     }
                 }
-
-                
             }
         }
 
@@ -106,7 +104,7 @@ namespace Diagnostics.Tests.DataProviderTests
         {
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
-            var dataProviders = new DataProviders.DataProviders(config);
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
 
             try
             {
@@ -129,29 +127,23 @@ namespace Diagnostics.Tests.DataProviderTests
             await Assert.ThrowsAsync<ArgumentNullException>(async() => await dataProviders.Observer.GetResource(null));
         }
 
-        [Fact]
-        public async void TestRouteMatchLogic()
+        internal async void TestObserver()
         {
-            var configFactory = new MockDataProviderConfigurationFactory();
-            var config = configFactory.LoadConfigurations();
-            var dataProviders = new DataProviders.DataProviders(config);
+            var dataSourceConfiguration = new MockDataProviderConfigurationFactory();
+            var config = dataSourceConfiguration.LoadConfigurations();
+            config.SupportObserverConfiguration = new SupportObserverDataProviderConfiguration()
+            {
+                AppKey = "",
+                ClientId = "",
+                IsMockConfigured = false
+            };
 
-            //basic test
-            var site123Data = await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/stamps/stamp123/sites/site123");
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
+            var wawsObserverData = await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/sites/highcpuscenario");
+            var supportBayData = await dataProviders.Observer.GetResource("https://support-bay-api.azurewebsites.net/observer/stamps/waws-prod-bay-073/sites/highcpuscenario/postbody");
 
-            //basic test with different resource
-            var certData = await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/certificates/123456789");
-
-            //test where parameter value is middle of url and not end of url
-            var domainData = await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/subscriptions/1111-2222-3333-4444-5555/domains");
-
-            //test with multiple parameter values
-            var storageVolumeData = await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/stamps/waws-prod-mock1-001/storagevolumes/volume-19");
-
-            Assert.Equal("site123", (string)site123Data.siteName);
-            Assert.Equal("IPSSL", (string)certData.type);
-            Assert.Equal("foo_bar.com", (string)domainData[0].name);
-            Assert.Equal("volume-19", (string)storageVolumeData.name);
+            Assert.True(wawsObserverData != null);
+            Assert.True(supportBayData != null);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Diagnostics.RuntimeHost.Models;
+using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
@@ -22,8 +23,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         protected override string SourceName => "LocalFileSystem";
 
-        public LocalFileSystemWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache)
-            : base(env, configuration, invokerCache, "LocalFileSystemWatcher")
+        public LocalFileSystemWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache)
+            : base(env, configuration, invokerCache, gistCache, "LocalFileSystemWatcher")
         {
             LoadConfigurations();
             Start();
@@ -34,7 +35,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             _firstTimeCompletionTask = StartWatcherInternal();
         }
 
-        public override async Task<Tuple<bool, Exception>> CreateOrUpdateDetector(DetectorPackage pkg)
+        public override Task CreateOrUpdatePackage(Package pkg)
         {
             throw new NotImplementedException("Local Source Watcher Mode right now doesnt support live detector deployment.");
         }

@@ -6,11 +6,7 @@ namespace Diagnostics.DataProviders
 {
     public class DataProviderConstants
     {
-        public const string MicrosoftTenantAuthorityUrl = "https://login.windows.net/microsoft.com";
-
         public const int TokenRefreshIntervalInMs = 15 * 60 * 1000;
-
-        public const string DefaultKustoEndpoint = "https://wawswus.kusto.windows.net";
         
         public const int DefaultTimeoutInSeconds = 60;
 
