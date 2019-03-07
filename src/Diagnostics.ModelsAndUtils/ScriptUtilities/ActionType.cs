@@ -7,7 +7,6 @@
     {
         RestartSite,
         UpdateSiteAppSettings,
-        KillW3wpOnInstance,
-        AzureApiRequest
+        KillW3wpOnInstance
     }
 }
