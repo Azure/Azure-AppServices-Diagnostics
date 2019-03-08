@@ -7,6 +7,7 @@
     {
         RestartSite,
         UpdateSiteAppSettings,
-        KillW3wpOnInstance
+        KillW3wpOnInstance,
+        ScaleUpAppService
     }
 }

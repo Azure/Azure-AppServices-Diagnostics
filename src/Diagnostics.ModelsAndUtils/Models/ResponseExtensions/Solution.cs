@@ -99,9 +99,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             this(title, resourceUri, action)
         { }
 
-        // TODO: This should pass any remaining arguments to the constructor
+        // TODO: Premade Solutions should be indicated by an enum on the backend, pass resourceUri and args
+        //       to frontend which should handle all content to avoid needing deployments to update Solutions
+
         /// <summary>
-        /// Creates a pre-defined Solution component capable of restarting an App instance
+        /// Creates a pre-defined Solution component capable of restarting an App instance.
         /// </summary>
         public static Solution Restart(string resourceUri)
         {
@@ -115,8 +117,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         }
 
         /// <summary>
-        /// Creates a pre-defined Solution component capable of updating the App Settings of a resource
+        /// Creates a pre-defined Solution component capable of updating the App Settings of a resource.
         /// </summary>
+        // TODO: Make generic for any (approved) app settings (site, app, ssl)
         public static Solution UpdateAppSettings(string resourceUri, Dictionary<string, object> actionArgs)
         {
             return new Solution("Update App Settings", resourceUri, ActionType.UpdateSiteAppSettings)
@@ -124,6 +127,19 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 ActionArgs = actionArgs,
                 PremadeDescription = SolutionText.UpdateSettingsDescription,
                 PremadeInstructions = SolutionText.UpdateSettingsInstructions
+            };
+        }
+
+        /// <summary>
+        /// Creates a pre-defined Solution component with a link to the Scale Up App Service Blade.
+        /// </summary>
+        public static Solution ScaleUpAppService(string resourceUri)
+        {
+            return new Solution("Scale Up App Service Plan", resourceUri, ActionType.ScaleUpAppService)
+            {
+                ActionName = "Open Scale Up Blade",
+                PremadeDescription = SolutionText.ScaleUpAppServiceDescription,
+                PremadeInstructions = SolutionText.ScaleUpAppServiceInstructions
             };
         }
     }

@@ -8,6 +8,8 @@
         AppRestartDescription,
         RestartInstructions,
         UpdateSettingsInstructions,
-        UpdateSettingsDescription
+        UpdateSettingsDescription,
+        ScaleUpAppServiceDescription,
+        ScaleUpAppServiceInstructions
     }
 }
