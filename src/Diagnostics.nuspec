@@ -10,6 +10,6 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Runtime SDK for AppService Diagnostics</description>
     <releaseNotes></releaseNotes>
-    <copyright>Copyright ©2018 Microsoft Corporation</copyright>
+    <copyright>Copyright ©2019 Microsoft Corporation</copyright>
   </metadata>
 </package>
