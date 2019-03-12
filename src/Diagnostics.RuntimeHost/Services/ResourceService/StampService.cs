@@ -1,17 +1,20 @@
-﻿using Diagnostics.DataProviders;
-using Diagnostics.ModelsAndUtils;
-using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.ModelsAndUtils.Models;
-using Diagnostics.RuntimeHost.Utilities;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders;
+using Diagnostics.ModelsAndUtils;
+using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.RuntimeHost.Utilities;
 
 namespace Diagnostics.RuntimeHost.Services
 {
+    /// <summary>
+    /// Interface for Stamp Service.
+    /// </summary>
     public interface IStampService
     {
         Task<Tuple<List<string>, PlatformType>> GetTenantIdForStamp(string stamp, bool isPublicStamp, DateTime startTime, DateTime endTime, DataProviderContext dataProviderContext);
@@ -54,16 +57,22 @@ namespace Diagnostics.RuntimeHost.Services
             PlatformType type = PlatformType.Windows;
             List<string> tenantIds = windowsTenantIds.Union(linuxTenantIds).ToList();
 
-            if (windowsTenantIds.Any() && linuxTenantIds.Any()) type = PlatformType.Windows | PlatformType.Linux;
-            else if (linuxTenantIds.Any()) type = PlatformType.Linux;
-            
+            if (windowsTenantIds.Any() && linuxTenantIds.Any())
+            {
+                type = PlatformType.Windows | PlatformType.Linux;
+            }
+            else if (linuxTenantIds.Any())
+            {
+                type = PlatformType.Linux;
+            }
+
             result = new Tuple<List<string>, PlatformType>(tenantIds, type);
 
-            // Only cache TenantIds if not empty
-            if (tenantIds != null && tenantIds.Any())
+            // Only cache TenantIds if not empty and for Public Stamps
+            if (tenantIds != null && tenantIds.Any() && isPublicStamp)
             {
                 _tenantCache.TryAdd(stamp.ToLower(), result);
-            }           
+            }
 
             return result;
         }
