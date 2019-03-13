@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Utilities
@@ -74,7 +75,10 @@ namespace Diagnostics.RuntimeHost.Utilities
 
         internal static string SanitizeScriptFile(string val)
         {
-            var lines = val.Split(new[] { '\n' }).Where(p => p.StartsWith("#r ") || (p.StartsWith("#load ") && p.EndsWith("_frameworkRef.csx\"")));
+            // Remove the directory info from source code.
+            val = Regex.Replace(val, @"(#load\s*"")gists/(\w*).csx""", m => $"{m.Groups[1]}{m.Groups[2]}\"");
+
+            var lines = val.Split(new[] { '\n' }).Where(p => p.StartsWith("#r ") || p.StartsWith("#load \"../Framework/References/_frameworkRef.csx\""));
             string output = val;
             foreach (var line in lines)
             {
