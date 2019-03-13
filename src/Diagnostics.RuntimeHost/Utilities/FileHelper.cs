@@ -75,8 +75,10 @@ namespace Diagnostics.RuntimeHost.Utilities
 
         internal static string SanitizeScriptFile(string val)
         {
-            // Remove the directory info from source code.
-            val = Regex.Replace(val, @"(#load\s*"")gists/(\w*).csx""", m => $"{m.Groups[1]}{m.Groups[2]}\"");
+            // Remove the directory and extension info from source code.
+            // #load "gists/test.csx" => #load "test"
+            // #load "test.csx" => #load "test"
+            val = Regex.Replace(val, @"(#load\s*"")(gists/)?(\w*).csx""", m => $"{m.Groups[1]}{m.Groups[3]}\"");
 
             var lines = val.Split(new[] { '\n' }).Where(p => p.StartsWith("#r ") || p.StartsWith("#load \"../Framework/References/_frameworkRef.csx\""));
             string output = val;
