@@ -87,6 +87,8 @@ namespace Diagnostics.Tests.Helpers
                 template = await File.ReadAllTextAsync(@"templates/Gist_WebApp.csx");
             }
 
+            template = template.Replace("<YOUR_CLASS_NAME>", "GistClass");
+
             return template.Replace("<YOUR_GIST_ID>", def.Id);
         }
 
