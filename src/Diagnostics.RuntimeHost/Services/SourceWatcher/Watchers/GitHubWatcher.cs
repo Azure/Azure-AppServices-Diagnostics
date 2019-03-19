@@ -1,4 +1,16 @@
-﻿using Diagnostics.Logger;
+﻿// <copyright file="GitHubWatcher.cs" company="Microsoft Corporation">
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Diagnostics.Logger;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.SourceWatcher.Workers;
@@ -8,18 +20,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
     /// <summary>
-    /// Github watcher
+    /// Github watcher.
     /// </summary>
     public class GitHubWatcher : SourceWatcherBase
     {
@@ -95,16 +100,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 throw new ArgumentNullException(nameof(pkg));
             }
 
-            await PublishDetectorAsync(pkg);
-        }
-
-        private async Task PublishDetectorAsync(Package pkg)
-        {
-            var commit = pkg.GetCommit();
-            foreach (var p in commit.Content)
-            {
-                await _githubClient.CreateOrUpdateFile(p.Key, p.Value.Item1, commit.Message, p.Value.Item2);
-            }
+            await _githubClient.CreateOrUpdateFiles(pkg.GetCommitContents(), pkg.GetCommitMessage());
         }
 
         /// <summary>

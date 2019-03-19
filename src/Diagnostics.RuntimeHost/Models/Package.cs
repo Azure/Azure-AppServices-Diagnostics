@@ -7,8 +7,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel;
+using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Utilities;
 using Newtonsoft.Json;
+using Octokit;
 
 namespace Diagnostics.RuntimeHost.Models
 {
@@ -66,25 +68,30 @@ namespace Diagnostics.RuntimeHost.Models
         /// Get commit for detector package.
         /// </summary>
         /// <returns>The commit.</returns>
-        public Commit GetCommit()
+        public IEnumerable<CommitContent> GetCommitContents()
         {
-            var content = new Dictionary<string, Tuple<string, bool>>();
             var filePath = $"{Id.ToLower()}/{Id.ToLower()}";
             var csxFilePath = $"{filePath}.csx";
             var dllFilePath = $"{filePath}.dll";
             var pdbFilePath = $"{filePath}.pdb";
             var configPath = $"{Id.ToLower()}/package.json";
 
-            content.Add(csxFilePath, Tuple.Create(CodeString, true));
-            content.Add(dllFilePath, Tuple.Create(DllBytes, false));
-            content.Add(pdbFilePath, Tuple.Create(PdbBytes, false));
-            content.Add(configPath, Tuple.Create(PackageConfig, true));
-
-            return new Commit
+            return new List<CommitContent>
             {
-                Message = $"Package : {Id.ToLower()}, CommittedBy : {CommittedByAlias}",
-                Content = content.ToImmutableDictionary()
+                new CommitContent(csxFilePath, CodeString),
+                new CommitContent(configPath, PackageConfig),
+                new CommitContent(dllFilePath, DllBytes, EncodingType.Base64),
+                new CommitContent(pdbFilePath, PdbBytes, EncodingType.Base64)
             };
+        }
+
+        /// <summary>
+        /// Get commit message.
+        /// </summary>
+        /// <returns>Commit message.</returns>
+        public string GetCommitMessage()
+        {
+            return $"Package : {Id.ToLower()}, CommittedBy : {CommittedByAlias}";
         }
     }
 }
