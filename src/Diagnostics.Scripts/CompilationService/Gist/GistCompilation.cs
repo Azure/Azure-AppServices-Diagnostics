@@ -3,6 +3,7 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
+using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
@@ -45,7 +46,7 @@ namespace Diagnostics.Scripts.CompilationService.Gist
             if (_compilation == null)
             {
                 // Try to get the types with attributes.
-                var types = assembly.GetTypes().Where(t => t.CustomAttributes.Any());
+                var types = assembly.GetTypes().Where(t => t.CustomAttributes.Any() && Attribute.GetCustomAttribute(t, typeof(CompilerGeneratedAttribute)) == null);
                 if (!types.Any() || types.Count() > 1)
                 {
                     throw new ScriptCompilationException("One class is allowed in one gist file.");
