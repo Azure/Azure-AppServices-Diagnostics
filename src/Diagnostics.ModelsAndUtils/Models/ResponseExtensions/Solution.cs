@@ -50,6 +50,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public Dictionary<string, object> ActionOptions { get; set; }
 
+        [JsonConverter(typeof(StringEnumConverter))]
+        public SolutionTypeTag TypeTag { get; set; }
+
         /// <summary>
         /// This is set automatically.
         /// Reads <see cref="OperationContext"/> to determine if an internal view should be rendered.
