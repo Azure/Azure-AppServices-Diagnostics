@@ -1,12 +1,13 @@
-﻿namespace Diagnostics.ModelsAndUtils.ScriptUtilities
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 {
-    /// <summary>
-    /// Actions that a Solution can perform, such as ARM API requests.
-    /// </summary>
     public enum ActionType
     {
-        RestartSite,
-        UpdateSiteAppSettings,
-        KillW3wpOnInstance
+        ArmApi,
+        OpenTab,
+        GoToBlade
     }
 }

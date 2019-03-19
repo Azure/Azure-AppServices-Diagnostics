@@ -1,5 +1,4 @@
-﻿
-namespace Diagnostics.RuntimeHost.Models
+﻿namespace Diagnostics.RuntimeHost.Models
 {
     /// <summary>
     /// Gist cache entry.
