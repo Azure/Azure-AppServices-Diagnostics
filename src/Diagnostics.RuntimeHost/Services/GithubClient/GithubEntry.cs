@@ -1,7 +1,12 @@
-﻿namespace Diagnostics.RuntimeHost.Services
+﻿// <copyright file="GithubEntry.cs" company="Microsoft Corporation">
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
+
+namespace Diagnostics.RuntimeHost.Services
 {
     /// <summary>
-    /// Github entry
+    /// Github entry.
     /// </summary>
     public class GithubEntry
     {
