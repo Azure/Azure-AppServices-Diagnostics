@@ -1,10 +1,13 @@
 ﻿using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
+using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
+using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -12,15 +15,15 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.ApiManagementServiceResource)]
     public sealed class ApiManagementController : DiagnosticControllerBase<ApiManagementService>
     {
-        public ApiManagementController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IDataSourcesConfigurationService dataSourcesConfigService)
-            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, dataSourcesConfigService)
+        public ApiManagementController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
+            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, gistCache, dataSourcesConfigService, assemblyCacheService)
         {
         }
 
         [HttpPost(UriElements.Query)]
-        public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string serviceName, [FromBody]CompilationBostBody<dynamic> jsonBody, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string serviceName, [FromBody]CompilationPostBody<dynamic> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
         {
-            return await base.ExecuteQuery(GetResource(subscriptionId, resourceGroupName, serviceName), jsonBody, startTime, endTime, timeGrain);
+            return await base.ExecuteQuery(GetResource(subscriptionId, resourceGroupName, serviceName), jsonBody, startTime, endTime, timeGrain,  Form: Form);
         }
 
         [HttpPost(UriElements.Detectors)]
@@ -30,13 +33,13 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
-        public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string serviceName, string detectorId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string serviceName, string detectorId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null)
         {
-            return await base.GetDetector(GetResource(subscriptionId, resourceGroupName, serviceName), detectorId, startTime, endTime, timeGrain);
+            return await base.GetDetector(GetResource(subscriptionId, resourceGroupName, serviceName), detectorId, startTime, endTime, timeGrain, form: form);
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]
-        public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string serviceName, [FromBody]CompilationBostBody<dynamic> jsonBody, string detectorId, string dataSource = null, string timeRange = null)
+        public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string serviceName, [FromBody]CompilationPostBody<dynamic> jsonBody, string detectorId, string dataSource = null, string timeRange = null)
         {
             return await base.ExecuteQuery(GetResource(subscriptionId, resourceGroupName, serviceName), jsonBody, null, null, null, detectorId, dataSource, timeRange);
         }
@@ -53,10 +56,39 @@ namespace Diagnostics.RuntimeHost.Controllers
             return await base.GetInsights(GetResource(subscriptionId, resourceGroupName, serviceName), pesId, supportTopicId, startTime, endTime, timeGrain);
         }
 
+        /// <summary>
+        /// Publish package.
+        /// </summary>
+        /// <param name="pkg">The package.</param>
+        /// <returns>Task for publishing package.</returns>
         [HttpPost(UriElements.Publish)]
-        public async Task<IActionResult> PublishDetector(string subscriptionId, string resourceGroupName, string serviceName, [FromBody] DetectorPackage pkg)
+        public async Task<IActionResult> PublishPackageAsync([FromBody] Package pkg)
         {
-            return await base.PublishDetector(pkg);
+            return await PublishPackage(pkg);
+        }
+
+        /// <summary>
+        /// List all gists.
+        /// </summary>
+        /// <returns>Task for listing all gists.</returns>
+        [HttpPost(UriElements.Gists)]
+        public async Task<IActionResult> ListGistsAsync(string subscriptionId, string resourceGroupName, string serviceName, [FromBody] dynamic postBody)
+        {
+            return await base.ListGists(GetResource(subscriptionId, resourceGroupName, serviceName));
+        }
+
+        /// <summary>
+        /// List the gist.
+        /// </summary>
+        /// <param name="subscriptionId">Subscription id.</param>
+        /// <param name="resourceGroupName">Resource group name.</param>
+        /// <param name="siteName">Site name.</param>
+        /// <param name="gistId">Gist id.</param>
+        /// <returns>Task for listing the gist.</returns>
+        [HttpPost(UriElements.Gists + UriElements.GistResource)]
+        public async Task<IActionResult> GetGistAsync(string subscriptionId, string resourceGroupName, string serviceName, string gistId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null)
+        {
+            return await base.GetGist(GetResource(subscriptionId, resourceGroupName, serviceName), gistId, startTime, endTime, timeGrain);
         }
     }
 }

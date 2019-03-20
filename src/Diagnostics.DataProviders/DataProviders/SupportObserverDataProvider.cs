@@ -51,12 +51,22 @@ namespace Diagnostics.DataProviders
 
         public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
         {
+            if (string.IsNullOrWhiteSpace(stampName))
+            {
+                throw new ArgumentNullException(stampName);
+            }
+
+            if (string.IsNullOrWhiteSpace(siteName))
+            {
+                throw new ArgumentNullException(siteName);
+            }
+
             return await GetRuntimeSiteSlotMapInternal(stampName, siteName);
         }
 
         private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName)
         {
-            var result = await Get(string.IsNullOrWhiteSpace(stampName) ? $"/sites/{siteName}/runtimesiteslotmap" : $"stamp/{stampName}/sites/{siteName}/runtimesiteslotmap");
+            var result = await GetObserverResource($"stamps/{stampName}/sites/{siteName}/runtimesiteslotmap");
             var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);
             var slotTimeRange = new Dictionary<string, List<RuntimeSitenameTimeRange>>(slotTimeRangeCaseSensitiveDictionary, StringComparer.CurrentCultureIgnoreCase);
             return slotTimeRange;
@@ -141,10 +151,15 @@ namespace Diagnostics.DataProviders
             dynamic siteObjects = await GetSite(siteName);
             JToken obj2 = ((JArray)siteObjects)
                     .Select(i => (JObject)i)
-                    .FirstOrDefault(
-                        j => (j.ContainsKey("subscription") && j["subscription"]["name"].ToString() == subscriptionId
-                            && j.ContainsKey("resource_group_name") && j["resource_group_name"].ToString() == resourceGroupName
-                            && j.ContainsKey("stamp")));
+                    .FirstOrDefault(j =>
+                        j.ContainsKey("subscription") &&
+                        j["subscription"]["name"].ToString().Equals(
+                            subscriptionId, StringComparison.InvariantCultureIgnoreCase
+                        ) &&
+                        j.ContainsKey("resource_group_name") && j["resource_group_name"].ToString().Equals(
+                            resourceGroupName, StringComparison.InvariantCultureIgnoreCase
+                        ) && j.ContainsKey("stamp")
+                    );
 
             string stampName = obj2?["stamp"]?["name"]?.ToString();
             return stampName;
@@ -159,14 +174,14 @@ namespace Diagnostics.DataProviders
 
         public override async Task<dynamic> GetSitePostBody(string stampName, string siteName)
         {
-            var response = await Get($"stamps/{stampName}/sites/{siteName}/postbody");
+            var response = await GetObserverResource($"stamps/{stampName}/sites/{siteName}/postbody");
             dynamic sitePostBody = JsonConvert.DeserializeObject(response);
             return sitePostBody;
         }
 
         public override async Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName)
         {
-            var response = await Get($"hostingEnvironments/{hostingEnvironmentName}/postbody");
+            var response = await GetObserverResource($"hostingEnvironments/{hostingEnvironmentName}/postbody");
             var hostingEnvironmentPostBody = JsonConvert.DeserializeObject(response);
             return hostingEnvironmentPostBody;
         }

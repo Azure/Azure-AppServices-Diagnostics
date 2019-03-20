@@ -27,12 +27,7 @@ namespace Diagnostics.Tests.ModelTests
 
             Assert.Equal(returnedInsight, insightFromDataSet);
 
-            Assert.Equal<RenderingType>(RenderingType.Insights, insightFromDataSet.RenderingProperties.Type);
-
-            foreach (DataRow row in insightFromDataSet.Table.Rows)
-            {
-                Assert.Equal(5, row.ItemArray.Count());
-            }
+            Assert.Equal(RenderingType.Insights, insightFromDataSet.RenderingProperties.Type);
         }
 
         [Theory]
@@ -125,7 +120,7 @@ namespace Diagnostics.Tests.ModelTests
             var firstData = new Response();
             firstData.AddMarkdownView(@"some markdown content");
             data.Add(new Tuple<string, bool, Response>("firstKey", true, firstData));
-            
+
             Dropdown dropdown = new Dropdown(label, data);
 
             apiResponse.AddDropdownView(dropdown);
@@ -149,7 +144,7 @@ namespace Diagnostics.Tests.ModelTests
                     Id = "detectorid",
                     Name = "detector Name"
                 },
-                
+
             };
 
             var description = new Text("description", true);
@@ -186,6 +181,25 @@ namespace Diagnostics.Tests.ModelTests
                 Assert.Equal(nativeInsightAdded.Body["Recommended Action"], customerReadyContentHtml);
                 Assert.False(nativeInsightAdded.Body.ContainsKey("CustomerReadyContent"));
             }
+        }
+
+        [Fact]
+        public void TestFormExtension()
+        {
+            Response res = new Response();
+            Form myform = new Form(1);
+            Textbox input1 = new Textbox(1, "Enter first input", true);
+            Textbox input2 = new Textbox(1, "Enter second input", true);
+            // Adding inputs with same ID throws exception
+            Assert.Throws<Exception>(() => myform.AddFormInputs(new List<FormInputBase>() { input1, input2 }));
+            input2 = new Textbox(2, "Enter second input");
+            myform.AddFormInput(input2);
+            Assert.NotEmpty(myform.FormInputs);
+            Assert.Equal(2, myform.FormInputs.Count);
+            res.AddForm(myform);
+            Assert.NotEmpty(res.Dataset);
+            Assert.Equal<RenderingType>(RenderingType.Form, res.Dataset.FirstOrDefault().RenderingProperties.Type);
+
         }
     }
 }

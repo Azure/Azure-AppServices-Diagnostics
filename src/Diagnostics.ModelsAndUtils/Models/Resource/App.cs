@@ -1,4 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -29,6 +30,17 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// Resource Group Name
         /// </summary>
         public string ResourceGroup { get; set; }
+
+        /// <summary>
+        /// Resource URI
+        /// </summary>
+        public string ResourceUri
+        {
+            get
+            {
+                return UriUtilities.BuildAzureResourceUri(SubscriptionId, ResourceGroup, Name, Provider, ResourceTypeName);
+            }
+        }
 
         /// <summary>
         /// WebSpace name for the app.
@@ -100,7 +112,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <returns>True, if app resource passes the filter. False otherwise</returns>
         public bool IsApplicable(IResourceFilter filter)
         {
-            if(filter is AppFilter appFilter)
+            if (filter is AppFilter appFilter)
             {
                 return ((appFilter.AppType & this.AppType) > 0) &&
                     ((appFilter.PlatformType & this.PlatformType) > 0) &&

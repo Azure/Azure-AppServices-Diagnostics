@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Diagnostics.ModelsAndUtils.ScriptUtilities;
+using Diagnostics.ModelsAndUtils.Utilities;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -6,14 +9,13 @@ using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
-
     /// <summary>
     /// Class representing Insight
     /// </summary>
     public class Insight
     {
         /// <summary>
-        /// Enum reprensenting insight level.
+        /// Enum representing insight level.
         /// </summary>
         public InsightStatus Status;
 
@@ -33,10 +35,16 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public bool IsExpanded;
 
         /// <summary>
+        /// Optional solutions to common problems to which the Insight may refer
+        /// </summary>
+        public IEnumerable<Solution> Solutions;
+
+        /// <summary>
         /// Creates an instance of Insight class.
         /// </summary>
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
+        /// <param name="solutions">Solutions to problems identified by the Insight.</param>
         public Insight(InsightStatus status, string message)
         {
             this.Status = status;
@@ -51,6 +59,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
         /// <param name="body">Insights Body.</param>
+        /// <param name="solutions">Solutions to problems identified by the Insight.</param>
         public Insight(InsightStatus status, string message, Dictionary<string, string> body)
         {
             this.Status = status;
@@ -65,9 +74,21 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
         /// <param name="body">Insights Body.</param>
-        public Insight(InsightStatus status, string message, Dictionary<string, string> body, bool isExpanded) : this(status, message, body)
+        /// <param name="solutions">Solutions to problems identified by the Insight.</param>
+        public Insight(InsightStatus status, string message, Dictionary<string, string> body, bool isExpanded) :
+            this(status, message, body)
         {
             this.IsExpanded = isExpanded;
+        }
+
+        /// <summary>
+        /// Chain <see cref="Solution"/>s onto existing insights
+        /// </summary>
+        public Insight WithSolutions(params Solution[] solutions)
+        {
+            Solutions = (Solutions ?? new List<Solution>()).Concat(solutions);
+
+            return this;
         }
     }
 
@@ -91,21 +112,24 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="response">Response object</param>
         /// <param name="insights">List of Insights</param>
         /// <returns>Diagnostic Data object that represents insights</returns>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="AddInsights"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
         ///     Insight firstInsight = new Insight(InsightStatus.Critical, "insight1 title");
         ///     Insight secondInsight = new Insight(InsightStatus.Warning, "insight2 title");
-        ///     
+        ///
         ///     res.AddInsights(new List<![CDATA[<Insight>]]>(){ firstInsight, secondInsight });
         /// }
         /// </code>
         /// </example>
         public static DiagnosticData AddInsights(this Response response, List<Insight> insights, string title = null, string description = null)
         {
-            if (insights == null || !insights.Any()) return null;
+            if (insights == null || !insights.Any())
+            {
+                return null;
+            }
 
             DataTable table = new DataTable();
 
@@ -115,11 +139,18 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 new DataColumn("Message", typeof(string)),
                 new DataColumn("Data.Name", typeof(string)),
                 new DataColumn("Data.Value", typeof(string)),
-                new DataColumn("Expanded", typeof(string))
+                new DataColumn("Expanded", typeof(string)),
+                new DataColumn(nameof(Insight.Solutions), typeof(string))
             });
 
             insights.ForEach(insight =>
             {
+                foreach (var solution in insight.Solutions ?? Enumerable.Empty<Solution>())
+                {
+                    solution.DetectorLink = UriUtilities.BuildDetectorUri(solution.ResourceUri, response.Metadata.Id);
+                    solution.IsInternal = response.IsInternalCall;
+                }
+
                 if (insight.Body == null || !insight.Body.Keys.Any())
                 {
                     table.Rows.Add(new string[]
@@ -128,11 +159,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                         insight.Message,
                         string.Empty,
                         string.Empty,
-                        insight.IsExpanded.ToString()
+                        insight.IsExpanded.ToString(),
+                        JsonConvert.SerializeObject(insight.Solutions)
                     });
                 }
                 else
                 {
+                    // This duplicates all other insight properties for each KVP in Body
                     foreach (KeyValuePair<string, string> entry in insight.Body)
                     {
                         table.Rows.Add(new string[]
@@ -141,9 +174,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                             insight.Message,
                             entry.Key,
                             entry.Value,
-                            insight.IsExpanded.ToString()
+                            insight.IsExpanded.ToString(),
+                            JsonConvert.SerializeObject(insight.Solutions)
                         });
-
                     }
                 }
             });
@@ -171,13 +204,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="response">Response object</param>
         /// <param name="insight">Insight</param>
         /// <returns>Diagnostic Data object that represents insights</returns>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="AddInsight"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
         ///     Insight insight = new Insight(InsightStatus.Critical, "insight1 title");
-        ///     
+        ///
         ///     res.AddInsight(insight);
         /// }
         /// </code>
@@ -196,7 +229,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
         /// <param name="body">Insights Body.</param>
-        /// <example> 
+        /// <example>
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {

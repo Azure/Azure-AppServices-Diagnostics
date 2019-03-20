@@ -56,7 +56,10 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// }
         /// </code>
         /// </example>
-        public static AzureSupportCenterInsight AddAscInsight<TResource>(this Response res, string title, InsightStatus status, Text description, Text recommendedAction, Text customerReadyContent, OperationContext<TResource> context, Dictionary<string,string> extraNameValuePairs = null, bool ascOnly = false, bool isExpanded = false)
+        public static AzureSupportCenterInsight AddAscInsight<TResource>(this Response res, string title, 
+            InsightStatus status, Text description, Text recommendedAction, Text customerReadyContent, 
+            OperationContext<TResource> context, Dictionary<string,string> extraNameValuePairs = null, 
+            bool ascOnly = false, bool isExpanded = false)
             where TResource : IResource
         {
             var insight = AzureSupportCenterInsightUtilites.CreateInsight(title, status, description, recommendedAction, customerReadyContent, res.Metadata, context);

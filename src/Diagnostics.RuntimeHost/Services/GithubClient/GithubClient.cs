@@ -1,9 +1,11 @@
-﻿using Diagnostics.RuntimeHost.Utilities;
+﻿using Diagnostics.RuntimeHost.Models;
+using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
 using Octokit;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -28,6 +30,8 @@ namespace Diagnostics.RuntimeHost.Services
         Task DownloadFile(string fileUrl, string destinationPath);
 
         Task CreateOrUpdateFile(string destinationFilePath, string content, string commitMessage, bool convertContentToBase64 = true);
+
+        Task CreateOrUpdateFiles(IEnumerable<CommitContent> commits, string commitMessage);
     }
 
     public class GithubClient : IGithubClient
@@ -120,6 +124,57 @@ namespace Diagnostics.RuntimeHost.Services
                 var createChangeSet = await _octokitClient.Repository.Content.CreateFile(_userName, _repoName, filePath,
                     createFileRequest);
             }
+        }
+
+        public async Task CreateOrUpdateFiles(IEnumerable<CommitContent> commits, string commitMessage)
+        {
+            var headRef = $"heads/{_branch}";
+
+            // Get current head ref.
+            var reference = await _octokitClient.Git.Reference.Get(_userName, _repoName, headRef);
+            var latestCommit = await _octokitClient.Git.Commit.Get(_userName, _repoName, reference.Object.Sha);
+
+            // Build new tree.
+            var tree = new NewTree
+            {
+                BaseTree = latestCommit.Tree.Sha
+            };
+
+            var tasks = commits.Select(c =>
+            {
+                return _octokitClient.Git.Blob.Create(
+                    _userName,
+                    _repoName,
+                    new NewBlob
+                    {
+                        Content = c.Content,
+                        Encoding = c.EncodingType
+                    }).ContinueWith(
+                    blob =>
+                    {
+                        return new NewTreeItem
+                        {
+                            Path = c.FilePath,
+                            Mode = "100644",
+                            Type = TreeType.Blob,
+                            Sha = blob.Result.Sha
+                        };
+                    });
+            });
+
+            var treeItem = await Task.WhenAll(tasks);
+            foreach (var item in treeItem)
+            {
+                tree.Tree.Add(item);
+            }
+
+            var response = await _octokitClient.Git.Tree.Create(_userName, _repoName, tree);
+
+            var newCommit = new NewCommit(commitMessage, response.Sha, reference.Object.Sha);
+            var commit = await _octokitClient.Git.Commit.Create(_userName, _repoName, newCommit);
+
+            // Update current head ref.
+            await _octokitClient.Git.Reference.Update(_userName, _repoName, headRef, new ReferenceUpdate(commit.Sha));
         }
 
         public void Dispose()

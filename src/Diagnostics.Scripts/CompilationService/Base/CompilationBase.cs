@@ -15,11 +15,16 @@ namespace Diagnostics.Scripts.CompilationService
 {
     public abstract class CompilationBase : ICompilation
     {
-        private readonly Compilation _compilation;
         private readonly EntryPointResolutionType _resolutionType;
         private readonly string _entryPointName;
+        protected readonly Compilation _compilation;
 
         protected abstract ImmutableArray<DiagnosticAnalyzer> GetCodeAnalyzers();
+
+        public CompilationBase(Compilation compilation)
+        {
+            _compilation = compilation;
+        }
 
         public CompilationBase(EntryPointResolutionType resolutionType, string entryPointName)
         {
@@ -86,6 +91,51 @@ namespace Diagnostics.Scripts.CompilationService
                 ImmutableArray.CreateRange(methodParameters.ToArray()),
                 GetFullTypeName(entryPointReference.ReturnType),
                 attributes);
+        }
+
+        public virtual MemberInfo GetEntryPoint(Assembly assembly)
+        {
+            if (_compilation == null)
+            {
+                return new EntityMethodSignature(_entryPointName).GetMethod(assembly);
+            }
+
+            var methods = _compilation.ScriptClass
+                .GetMembers()
+                .OfType<IMethodSymbol>();
+
+            IMethodSymbol entryPointReference = default(IMethodSymbol);
+
+            switch (_resolutionType)
+            {
+                case EntryPointResolutionType.Attribute:
+                    break;
+                case EntryPointResolutionType.MethodName:
+                default:
+                    entryPointReference = GetMethodByName(methods, _entryPointName);
+                    break;
+            }
+
+            if (entryPointReference == default(IMethodSymbol))
+            {
+                throw new ScriptCompilationException($"No Entry point found. Entry point resoultion type : {_resolutionType} , value : {_entryPointName}");
+            }
+
+            var methodParameters = entryPointReference.Parameters.Select(p => new EntityParameter(p.Name, GetFullTypeName(p.Type), p.IsOptional, p.RefKind));
+            var attributes = entryPointReference.GetAttributes();
+            return new EntityMethodSignature(
+                entryPointReference.ContainingType.ToDisplayString(),
+                entryPointReference.Name,
+                ImmutableArray.CreateRange(methodParameters.ToArray()),
+                GetFullTypeName(entryPointReference.ReturnType),
+                attributes).GetMethod(assembly);
+        }
+
+        public async Task<MemberInfo> GetEntryPoint()
+        {
+            var assembly = await EmitAssemblyAsync();
+
+            return GetEntryPoint(assembly);
         }
 
         public Task<Assembly> EmitAssemblyAsync()

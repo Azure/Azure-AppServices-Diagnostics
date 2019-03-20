@@ -6,6 +6,10 @@ namespace Diagnostics.DataProviders
     [DataSourceConfiguration("Kusto")]
     public class KustoDataProviderConfiguration : IDataProviderConfiguration
     {
+        public const string AzureCloud = "Public Azure";
+        public const string AzureChinaCloud = "China";
+        public const string AzureUSGovernment = "Government";
+
         /// <summary>
         /// Client Id
         /// </summary>
@@ -52,6 +56,25 @@ namespace Diagnostics.DataProviders
         /// Region Specific Cluster Names.
         /// </summary>
         public ConcurrentDictionary<string, string> RegionSpecificClusterNameCollection { get; set; }
+
+        public string CloudDomain
+        {
+            get
+            {
+                if (AADKustoResource.Contains("windows.net"))
+                {
+                    return AzureCloud;
+                }
+                else if (AADKustoResource.Contains("chinacloudapi.cn"))
+                {
+                    return AzureChinaCloud;
+                }
+                else
+                {
+                    return AzureUSGovernment;
+                }
+            }
+        }
 
         public KustoDataProviderConfiguration()
         {

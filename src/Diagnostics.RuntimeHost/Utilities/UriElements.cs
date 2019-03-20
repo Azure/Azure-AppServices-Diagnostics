@@ -30,13 +30,16 @@ namespace Diagnostics.RuntimeHost.Utilities
 
         public const string LogicAppResource = ResourceProvidersRoot + ResourceProviders.LogicApp + "/workflows/{logicAppName}";
         public const string ApiManagementServiceResource = ResourceProvidersRoot + ResourceProviders.ApiManagement + "/service/{serviceName}";
+        public const string AzureKubernetesServiceResource = ResourceProvidersRoot + ResourceProviders.AzureKubernetesService + "/managedClusters/{clusterName}";
 
         #endregion
-        
+
         public const string Query = "diagnostics/query";
         public const string Publish = "diagnostics/publish";
         public const string Detectors = "detectors";
         public const string DetectorResource = "/{detectorId}";
+        public const string Gists = "gists";
+        public const string GistResource = "/{gistId}";
         public const string Insights = "insights";
         public const string InsightResource = "/{insightId}";
         public const string Statistics = "/statistics";
@@ -54,6 +57,7 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string AppServiceDomain = "Microsoft.DomainRegistration";
         public const string LogicApp = "Microsoft.Logic";
         public const string ApiManagement = "Microsoft.ApiManagement";
-        
+        public const string AzureKubernetesService = "Microsoft.ContainerService";
+
     }
 }

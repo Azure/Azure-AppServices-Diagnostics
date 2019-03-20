@@ -10,6 +10,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         Detector,
         Tool
     }
+
     public class Card
     {
         /// <summary>
