@@ -50,7 +50,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public Dictionary<string, object> ActionOptions { get; set; }
 
-        [JsonConverter(typeof(StringEnumConverter))]
         public SolutionTypeTag TypeTag { get; set; }
 
         /// <summary>
