@@ -18,8 +18,7 @@ namespace Diagnostics.DataProviders
         private readonly IGeoMasterClient _geoMasterClient;
         private GeoMasterDataProviderConfiguration _configuration;
 
-
-        private string[] WhitelistAppSettingsStartingWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType" };
+        private string[] AllowedlistAppSettingsStartingWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType" };
 
         private string[] SensitiveAppSettingsEndingWith = new string[] { "CONNECTIONSTRING", "_SECRET", "_KEY", "_ID", "_CONTENTSHARE", "TOKEN_STORE", "TOKEN" };
 
@@ -80,7 +79,7 @@ namespace Diagnostics.DataProviders
             Dictionary<string, string> appSettings = new Dictionary<string, string>();
             foreach (var item in properties)
             {
-                if (WhitelistAppSettingsStartingWith.Any(x => item.Key.StartsWith(x)))
+                if (AllowedlistAppSettingsStartingWith.Any(x => item.Key.StartsWith(x)))
                 {
                     if (!SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x)))
                     {
