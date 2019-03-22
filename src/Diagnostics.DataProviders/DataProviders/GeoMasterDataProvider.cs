@@ -20,6 +20,8 @@ namespace Diagnostics.DataProviders
         
         private string[] SensitiveAppSettingsEndingWith = new string[] { "CONNECTIONSTRING", "_SECRET", "_KEY", "_ID", "_CONTENTSHARE", "TOKEN_STORE", "TOKEN" };
 
+        private string[] WhitelistAppSettingsStartsWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType" };
+
         public GeoMasterDataProvider(OperationDataCache cache, GeoMasterDataProviderConfiguration configuration) : base(cache)
         {
             _configuration = configuration;
@@ -77,7 +79,7 @@ namespace Diagnostics.DataProviders
             Dictionary<string, string> appSettings = new Dictionary<string, string>();
             foreach (var item in properties)
             {
-                if (item.Key.StartsWith("WEBSITE_") || item.Key.StartsWith("WEBSITES_"))
+                if (WhitelistAppSettingsStartsWith.Any(x => item.Key.StartsWith(x)))
                 {
                     if (!SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x)))
                     {
@@ -85,6 +87,7 @@ namespace Diagnostics.DataProviders
                     }
                 }
             }
+
             return appSettings;
         }
 
