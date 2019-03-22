@@ -17,10 +17,11 @@ namespace Diagnostics.DataProviders
 
         private readonly IGeoMasterClient _geoMasterClient;
         private GeoMasterDataProviderConfiguration _configuration;
-        
-        private string[] SensitiveAppSettingsEndingWith = new string[] { "CONNECTIONSTRING", "_SECRET", "_KEY", "_ID", "_CONTENTSHARE", "TOKEN_STORE", "TOKEN" };
 
-        private string[] WhitelistAppSettingsStartsWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType" };
+
+        private string[] WhitelistAppSettingsStartingWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType" };
+
+        private string[] SensitiveAppSettingsEndingWith = new string[] { "CONNECTIONSTRING", "_SECRET", "_KEY", "_ID", "_CONTENTSHARE", "TOKEN_STORE", "TOKEN" };
 
         public GeoMasterDataProvider(OperationDataCache cache, GeoMasterDataProviderConfiguration configuration) : base(cache)
         {
@@ -44,7 +45,7 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
-        /// Gets all the APP SETTINGS for the Web App that start with WEBSITE_ filtering out
+        /// Gets all the APP SETTINGS for the Web App that start with prefixes like WEBSITE_, FUNCTION_ etc, filtering out
         /// the sensitive settings like connectionstrings, tokens, secrets, keys, content shares etc.
         /// </summary>
         /// <param name="subscriptionId">Subscription Id for the resource</param>
@@ -79,7 +80,7 @@ namespace Diagnostics.DataProviders
             Dictionary<string, string> appSettings = new Dictionary<string, string>();
             foreach (var item in properties)
             {
-                if (WhitelistAppSettingsStartsWith.Any(x => item.Key.StartsWith(x)))
+                if (WhitelistAppSettingsStartingWith.Any(x => item.Key.StartsWith(x)))
                 {
                     if (!SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x)))
                     {
