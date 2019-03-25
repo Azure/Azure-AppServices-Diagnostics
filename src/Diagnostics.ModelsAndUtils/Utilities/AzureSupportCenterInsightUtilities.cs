@@ -49,7 +49,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
                 Id = GetDetectorGuid(title),
                 Title = title,
                 ImportanceLevel = (ImportanceLevel)Enum.Parse(typeof(ImportanceLevel), ((int)status).ToString()),
-                InsightFriendlyName = title,
+                InsightFriendlyName = category,
                 IssueCategory = category,
                 IssueSubCategory = category,
                 Description = description,
