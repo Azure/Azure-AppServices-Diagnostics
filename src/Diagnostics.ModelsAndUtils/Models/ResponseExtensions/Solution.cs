@@ -30,6 +30,31 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public ActionType Action { get; set; }
 
         /// <summary>
+        /// Options pertaining to <see cref="ActionType.ArmApi"/>.
+        /// This is ignored if <see cref="Action"/> is not <see cref="ActionType.ArmApi"/>.
+        /// </summary>
+        public ArmApiOptions ApiOptions { get; set; }
+
+        /// <summary>
+        /// Options pertaining to <see cref="ActionType.GoToBlade"/>.
+        /// This is ignored if <see cref="Action"/> is not <see cref="ActionType.GoToBlade"/>.
+        /// </summary>
+        public GoToBladeOptions BladeOptions { get; set; }
+
+        /// <summary>
+        /// Options pertaining to <see cref="ActionType.OpenTab"/>.
+        /// This is ignored if <see cref="Action"/> is not <see cref="ActionType.OpenTab"/>.
+        /// </summary>
+        public OpenTabOptions TabOptions { get; set; }
+
+        /// <summary>
+        /// Free-form JSON-serializable options that will override <see cref="ApiOptions"/>,
+        /// <see cref="BladeOptions"/>, or <see cref="TabOptions"/> for the purpose of compatibility.
+        /// Prefer the aforementioned first-class option objects.
+        /// </summary>
+        public Dictionary<string, object> OverrideOptions { get; set; }
+
+        /// <summary>
         /// If the solution requires confirmation, it will signify a potentially dangerous action in the UI.
         /// </summary>
         public bool RequiresConfirmation { get; set; }
@@ -43,12 +68,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// Instructions that will be sent to the customer by support staff. Rendered as Markdown.
         /// </summary>
         public string InternalInstructions { get; set; }
-
-        /// <summary>
-        /// Free-form JSON-serializable arguments that can be sent as the body of the action request if a request
-        /// body is applicable.
-        /// </summary>
-        public Dictionary<string, object> ActionOptions { get; set; }
 
         public SolutionTypeTag TypeTag { get; set; }
 
@@ -75,7 +94,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
             if (actionOptions != null)
             {
-                ActionOptions = actionOptions;
+                OverrideOptions = actionOptions;
             }
 
             return this;
