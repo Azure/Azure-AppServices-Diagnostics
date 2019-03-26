@@ -126,6 +126,7 @@ namespace Diagnostics.Logger
         /// <param name="LatencyInMilliseconds">The latency.</param>
         /// <param name="StartTime">The start time.</param>
         /// <param name="EndTime">The end time.</param>
+        /// <param name="Content">The headers content received.</param>
         [Event(2002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostAPISummary)]
         public void LogRuntimeHostAPISummary(string RequestId, string SubscriptionId, string ResourceGroup, string Resource, string Address, string Verb, string OperationName, int StatusCode, long LatencyInMilliseconds, string StartTime, string EndTime, string Content)
         {
