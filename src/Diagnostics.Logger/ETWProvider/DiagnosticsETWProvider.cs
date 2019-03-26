@@ -127,7 +127,7 @@ namespace Diagnostics.Logger
         /// <param name="StartTime">The start time.</param>
         /// <param name="EndTime">The end time.</param>
         [Event(2002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostAPISummary)]
-        public void LogRuntimeHostAPISummary(string RequestId, string SubscriptionId, string ResourceGroup, string Resource, string Address, string Verb, string OperationName, int StatusCode, long LatencyInMilliseconds, string StartTime, string EndTime)
+        public void LogRuntimeHostAPISummary(string RequestId, string SubscriptionId, string ResourceGroup, string Resource, string Address, string Verb, string OperationName, int StatusCode, long LatencyInMilliseconds, string StartTime, string EndTime, string Content)
         {
             WriteDiagnosticsEvent(
                 2002,
@@ -141,7 +141,8 @@ namespace Diagnostics.Logger
                 StatusCode,
                 LatencyInMilliseconds,
                 StartTime,
-                EndTime);
+                EndTime,
+                Content);
         }
 
         /// <summary>

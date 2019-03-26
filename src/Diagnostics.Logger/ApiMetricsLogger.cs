@@ -49,6 +49,16 @@ namespace Diagnostics.Logger
 
             endTime = DateTime.UtcNow;
             latencyInMs = Convert.ToInt64((endTime - startTime).TotalMilliseconds);
+            var headers = context.Request.Headers;
+            var headersContent = "Headers received: ";
+            foreach (var header in headers)
+            {
+                if (header.Key.StartsWith("x-ms", StringComparison.OrdinalIgnoreCase))
+                {
+                    headersContent += $"{header.Key} - ";
+                    headersContent += string.IsNullOrWhiteSpace(header.Value.FirstOrDefault()) ? string.Empty : "****";
+                }
+            }
 
             DiagnosticsETWProvider.Instance.LogRuntimeHostAPISummary(
                 requestId ?? string.Empty,
@@ -61,7 +71,8 @@ namespace Diagnostics.Logger
                 context.Response.StatusCode,
                 latencyInMs,
                 startTime.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture),
-                endTime.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture));
+                endTime.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture),
+                headersContent);
         }
 
         /// <summary>
