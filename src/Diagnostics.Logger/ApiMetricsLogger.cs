@@ -4,12 +4,13 @@
 // </copyright>
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
-
+using Newtonsoft.Json;
 namespace Diagnostics.Logger
 {
     /// <summary>
@@ -49,7 +50,24 @@ namespace Diagnostics.Logger
 
             endTime = DateTime.UtcNow;
             latencyInMs = Convert.ToInt64((endTime - startTime).TotalMilliseconds);
+            var headers = context.Request.Headers;
+            List<object> headersContent = new List<object>();
+            foreach (var header in headers)
+            {
+                if (header.Key.StartsWith("x-ms", StringComparison.OrdinalIgnoreCase))
+                {
+                    headersContent.Add(new
+                    {
+                        name = $"{header.Key}",
+                        value = string.IsNullOrWhiteSpace(header.Value.FirstOrDefault()) ? string.Empty : "****"
+                    });
+                }
+            }
 
+            string contentString = JsonConvert.SerializeObject(new
+            {
+                requestHeaders = headersContent
+            });
             DiagnosticsETWProvider.Instance.LogRuntimeHostAPISummary(
                 requestId ?? string.Empty,
                 subscriptionId ?? string.Empty,
@@ -61,7 +79,8 @@ namespace Diagnostics.Logger
                 context.Response.StatusCode,
                 latencyInMs,
                 startTime.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture),
-                endTime.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture));
+                endTime.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture),
+                contentString);
         }
 
         /// <summary>
