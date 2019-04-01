@@ -21,7 +21,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// A description which will be rendered as Markdown.
         /// </summary>
-        public string Description { get; set; }
+        public string DescriptionMarkdown { get; set; }
 
         /// <summary>
         /// Denotes which action will be performed, such as calling an ARM API or navigating to a Portal Blade.
@@ -67,7 +67,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Instructions that will be sent to the customer by support staff. Rendered as Markdown.
         /// </summary>
-        public string InternalInstructions { get; set; }
+        public string InternalMarkdown { get; set; }
 
         public SolutionTypeTag TypeTag { get; set; }
 
