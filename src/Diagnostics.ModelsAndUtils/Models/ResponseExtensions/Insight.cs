@@ -147,7 +147,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             {
                 foreach (var solution in insight.Solutions ?? Enumerable.Empty<Solution>())
                 {
-                    solution.DetectorLink = UriUtilities.BuildDetectorUri(solution.ResourceUri, response.Metadata.Id);
+                    solution.DetectorId = response.Metadata.Id;
                     solution.IsInternal = response.IsInternalCall;
                 }
 
