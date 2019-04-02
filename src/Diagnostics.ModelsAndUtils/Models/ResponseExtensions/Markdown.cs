@@ -28,34 +28,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </example>
         public static DiagnosticData AddMarkdownView(this Response response, string markdown, string title = null)
         {
-            return response.AddMarkdownView(markdown, false, title);
+            return response.AddMarkdownView(markdown, false, title, true);
         }
-
-        /// <summary>
-        /// Adds markdown section to the response
-        /// </summary>
-        /// <param name="response">Response object</param>
-        /// <param name="isContainerNeeded">If true, will add the container for the markdown</param>
-        /// <param name="markdown">String that will be translated to markdown in UI</param>
-        /// <param name="title">Title of markdown section</param>
-        /// <example> 
-        /// This sample shows how to use <see cref="AddMarkdownView"/> method.
-        /// <code>
-        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
-        /// {
-        ///     var markdown = @"
-        ///     ## This is header
-        ///     ";
-        ///     
-        ///     res.AddMarkdownView(true, markdown, "Title of markdown section");
-        /// }
-        /// </code>
-        /// </example>
-        public static DiagnosticData AddMarkdownView(this Response response, bool isContainerNeeded, string markdown, string title = null)
-        {
-            return response.AddMarkdownView(markdown, false, title, isContainerNeeded);
-        }
-
 
         /// <summary>
         /// Adds markdown section to the response
