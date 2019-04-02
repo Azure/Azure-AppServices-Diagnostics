@@ -26,9 +26,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// }
         /// </code>
         /// </example>
-        public static DiagnosticData AddMarkdownView(this Response response, string markdown, string title = null)
+        public static DiagnosticData AddMarkdownView(this Response response, string markdown, string title = null, bool isContainerNeeded = true)
         {
-            return response.AddMarkdownView(markdown, false, title);
+            return response.AddMarkdownView(markdown, false, title, isContainerNeeded);
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// }
         /// </code>
         /// </example>
-        public static DiagnosticData AddMarkdownView(this Response response, string markdown, bool enableEmailButtons, string title = null)
+        public static DiagnosticData AddMarkdownView(this Response response, string markdown, bool enableEmailButtons, string title = null, bool isContainerNeeded = true)
         {
             var table = new DataTable();
             table.Columns.Add(new DataColumn("Markdown", typeof(string)));
@@ -62,7 +62,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 RenderingProperties = new MarkdownRendering()
                 {
                     EnableEmailButtons = enableEmailButtons,
-                    Title = title
+                    Title = title,
+                    IsContainerNeeded = isContainerNeeded
                 }
             };
 
