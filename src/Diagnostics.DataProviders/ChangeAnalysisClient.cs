@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders.Interfaces;
 using Newtonsoft.Json;
+using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 
 namespace Diagnostics.DataProviders
 {
@@ -49,26 +50,26 @@ namespace Diagnostics.DataProviders
         }
 
         /// <inheritdoc/>
-        public async void GetChangesAsync()
+        public async void GetChangesAsync(ChangeRequest changeRequest)
         {
             string requestUri = changeAnalysisEndPoint + "changes?api-version=2019-04-01-preview";
             object postBody = new
             {
-                ResourceId = "",
-                ChangeSetId = ""
+                changeRequest.ResourceId,
+                changeRequest.ChangeSetId
             };
             string jsonString = await PrepareAndSendRequest(requestUri, postBody);
         }
 
         /// <inheritdoc/>
-        public async void GetChangeSetsAsync()
+        public async void GetChangeSetsAsync(ChangeSetsRequest changeSetsRequest)
         {
             string requestUri = changeAnalysisEndPoint + "changesets?api-version=2019-04-01-preview";
             object postBody = new
             {
-                ResourceId = "",
-                StartTime = "",
-                EndTime = ""
+                changeSetsRequest.ResourceId,
+                StartTime = changeSetsRequest.StartTime.ToString(),
+                EndTime = changeSetsRequest.EndTime.ToString()
             };
             string jsonString = await PrepareAndSendRequest(requestUri, postBody);
         }
