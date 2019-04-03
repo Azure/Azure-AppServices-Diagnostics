@@ -114,9 +114,12 @@ namespace Diagnostics.ModelsAndUtils.Models
     {
         public bool EnableEmailButtons { get; set; }
 
+        public bool IsContainerNeeded { get; set; }
+
         public MarkdownRendering() : base(RenderingType.Markdown)
         {
             EnableEmailButtons = false;
+            IsContainerNeeded = true;
         }
     }
 
