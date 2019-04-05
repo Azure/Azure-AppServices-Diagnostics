@@ -44,29 +44,9 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
         {
             IEnumerable<EntityInvoker> list = GetAll();
 
-            if (list == null || !list.Any()) return list;            
-            //list = list.Where(item => ((item.SystemFilter == null) && (item.ResourceFilter != null) && (item.ResourceFilter.ResourceType & context.OperationContext.Resource.ResourceType) > 0) && (context.ClientIsInternal || !item.ResourceFilter.InternalOnly));
+            if (list == null || !list.Any()) return list;
 
-            list = list.Where(item =>
-            {
-                if ((item.SystemFilter == null) && (item.ResourceFilter != null))
-                {
-                    if (item.ResourceFilter.ResourceType == ModelsAndUtils.Attributes.ResourceType.ArmResource)
-                    {
-                        Diagnostics.ModelsAndUtils.Attributes.ArmResourceFilter armFilter = (Diagnostics.ModelsAndUtils.Attributes.ArmResourceFilter)item.ResourceFilter;
-                        return ((string.Compare(armFilter.Provider, context.OperationContext.Resource.Provider, true) == 0) && (string.Compare(armFilter.ResourceTypeName, context.OperationContext.Resource.ResourceTypeName) == 0) && (context.ClientIsInternal || !item.ResourceFilter.InternalOnly));
-                    }
-                    else
-                    {
-                        return (((item.ResourceFilter.ResourceType & context.OperationContext.Resource.ResourceType) > 0) && (context.ClientIsInternal || !item.ResourceFilter.InternalOnly));
-                    }
-                }
-                else
-                {
-                    return false;
-                }
-            });
-
+            list = list.Where(item => ((item.SystemFilter == null) && (item.ResourceFilter != null) && (item.ResourceFilter.ResourceType & context.OperationContext.Resource.ResourceType) > 0) && (context.ClientIsInternal || !item.ResourceFilter.InternalOnly));
             List<EntityInvoker> filteredList = new List<EntityInvoker>();
             list.ToList().ForEach(item =>
             {

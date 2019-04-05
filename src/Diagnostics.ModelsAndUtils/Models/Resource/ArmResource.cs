@@ -22,7 +22,15 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public bool IsApplicable(IResourceFilter filter)
         {
-            return filter is ArmResource;
+            if (filter is ArmResource)
+            {
+                ArmResourceFilter armFilter = filter as ArmResourceFilter;
+                return ((string.Compare(armFilter.Provider, this.Provider, true) == 0) && (string.Compare(armFilter.ResourceTypeName, this.ResourceTypeName) == 0));
+            }
+            else
+            {
+                return false;
+            }
         }
 
         public ArmResource(string subscriptionId, string resourceGroup, string provider, string resourceTypeName, string resourceName) : base(provider, resourceTypeName)
