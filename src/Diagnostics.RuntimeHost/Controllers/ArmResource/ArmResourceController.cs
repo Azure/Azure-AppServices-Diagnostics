@@ -11,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
+    /// <summary>
+    /// Arm resource controller.
+    /// </summary>
     [Produces("application/json")]
     [Route(UriElements.ArmResource)]
     public class ArmResourceController : DiagnosticControllerBase<ArmResource>

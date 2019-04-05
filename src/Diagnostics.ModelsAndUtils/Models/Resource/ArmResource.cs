@@ -8,10 +8,24 @@ namespace Diagnostics.ModelsAndUtils.Models
     /// </summary>
     public class ArmResource : ArmResourceFilter, IResource
     {
+        /// <summary>
+        /// Subscription Id where the resource resides
+        /// </summary>
         public string SubscriptionId { get; set; }
+
+        /// <summary>
+        /// Resource group where the resource resides
+        /// </summary>
         public string ResourceGroup { get; set; }
+
+        /// <summary>
+        /// Name of the resource resides
+        /// </summary>
         public string Name { get; set; }
 
+        /// <summary>
+        /// Arm URI for the resource
+        /// </summary>
         public string ResourceUri
         {
             get
@@ -20,6 +34,11 @@ namespace Diagnostics.ModelsAndUtils.Models
             }
         }
 
+        /// <summary>
+        /// Determines whether the current arm resource is applicable after filtering.
+        /// </summary>
+        /// <param name="filter">App Resource Filter</param>
+        /// <returns>True, if app resource passes the filter. False otherwise</returns>
         public bool IsApplicable(IResourceFilter filter)
         {
             if (filter is ArmResource)
