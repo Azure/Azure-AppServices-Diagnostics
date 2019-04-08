@@ -1,22 +1,26 @@
-﻿namespace Diagnostics.DataProviders.Interfaces
+﻿using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace Diagnostics.DataProviders.Interfaces
 {
     public interface IChangeAnalysisClient
     {
         /// <summary>
-        /// Gets the ARM Resource Id for given hostnames
+        /// Gets the ARM Resource Id for given hostnames.
         /// </summary>
-        /// <param name="hostnames"></param>
-        /// <param name="subscription"></param>
-        void GetResoureceIdAsync(string[] hostnames, string subscription);
+        /// <param name="hostnames">array of hostnames</param>
+        /// <param name="subscription">subscription id</param>
+        Task<ResourceIdResponseModel> GetResourceIdAsync(string[] hostnames, string subscription);
 
         /// <summary>
-        /// Get Change sets for a ResoureceId
+        /// Get Change sets for a ResoureceId.
         /// </summary>
-        void GetChangeSetsAsync();
+        Task<List<ChangeSetResponseModel>> GetChangeSetsAsync(ChangeSetsRequest changeSetsRequest);
 
         /// <summary>
-        /// Gets Changes for a ResoureceId
+        /// Gets Changes for a ResoureceId.
         /// </summary>
-        void GetChangesAsync();
+        Task<List<ResourceChangesResponseModel>> GetChangesAsync(ChangeRequest changeRequest);
     }
 }

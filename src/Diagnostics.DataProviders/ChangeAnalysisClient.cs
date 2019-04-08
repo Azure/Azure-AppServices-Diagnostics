@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Diagnostics.DataProviders.Interfaces;
 using Newtonsoft.Json;
 using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
+using Diagnostics.DataProviders.TokenService;
+using System.Collections.Generic;
 
 namespace Diagnostics.DataProviders
 {
@@ -15,12 +17,12 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// x-ms-client-object-id header to pass to Change Analysis endpoint.
         /// </summary>
-        private string clientObjectId;
+        private string clientObjectIdHeader;
 
         /// <summary>
         /// For detectors loaded from Diagnose and Solve, pass x-ms-client-principal-name to Change Analysis endpoint.
         /// </summary>
-        private string clientPrincipalName;
+        private string clientPrincipalNameHeader;
 
         private readonly string changeAnalysisEndPoint = "https://changeanalysis-dataplane-dev.azurewebsites.net/providers/microsoft.changeanalysis/";
 
@@ -44,13 +46,14 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// Initializes a new instance of the <see cref="ChangeAnalysisClient"/> class.
         /// </summary>
-        public ChangeAnalysisClient()
+        public ChangeAnalysisClient(string clientObjectId, string clientPrincipalName = "")
         {
-
+            clientObjectIdHeader = clientObjectId;
+            clientPrincipalNameHeader = clientPrincipalName;
         }
 
         /// <inheritdoc/>
-        public async void GetChangesAsync(ChangeRequest changeRequest)
+        public async Task<List<ResourceChangesResponseModel>> GetChangesAsync(ChangeRequest changeRequest)
         {
             string requestUri = changeAnalysisEndPoint + "changes?api-version=2019-04-01-preview";
             object postBody = new
@@ -59,10 +62,12 @@ namespace Diagnostics.DataProviders
                 changeRequest.ChangeSetId
             };
             string jsonString = await PrepareAndSendRequest(requestUri, postBody);
+            List<ResourceChangesResponseModel> resourceChangesResponse = JsonConvert.DeserializeObject<List<ResourceChangesResponseModel>>(jsonString);
+            return resourceChangesResponse;
         }
 
         /// <inheritdoc/>
-        public async void GetChangeSetsAsync(ChangeSetsRequest changeSetsRequest)
+        public async Task<List<ChangeSetResponseModel>> GetChangeSetsAsync(ChangeSetsRequest changeSetsRequest)
         {
             string requestUri = changeAnalysisEndPoint + "changesets?api-version=2019-04-01-preview";
             object postBody = new
@@ -72,10 +77,12 @@ namespace Diagnostics.DataProviders
                 EndTime = changeSetsRequest.EndTime.ToString()
             };
             string jsonString = await PrepareAndSendRequest(requestUri, postBody);
+            List<ChangeSetResponseModel> changeSetsResponse = JsonConvert.DeserializeObject<List<ChangeSetResponseModel>>(jsonString);
+            return changeSetsResponse;
         }
 
         /// <inheritdoc/>
-        public async void GetResoureceIdAsync(string[] hostnames, string subscription)
+        public async Task<ResourceIdResponseModel> GetResourceIdAsync(string[] hostnames, string subscription)
         {
             string requestUri = changeAnalysisEndPoint + "resourceId?api-version=2019-04-01-preview";
             object requestBody = new
@@ -84,6 +91,13 @@ namespace Diagnostics.DataProviders
                 subscriptionId = subscription
             };
             string jsonString = await PrepareAndSendRequest(requestUri, requestBody);
+            if (!string.IsNullOrWhiteSpace(jsonString))
+            {
+                ResourceIdResponseModel resourceIdResponse = JsonConvert.DeserializeObject<ResourceIdResponseModel>(jsonString);
+                return resourceIdResponse;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -95,12 +109,18 @@ namespace Diagnostics.DataProviders
         private async Task<string> PrepareAndSendRequest(string requestUri, object postBody)
         {
             HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri);
+            string authToken = await ChangeAnalysisTokenService.Instance.GetAuthorizationTokenAsync();
 
-            // Add required headers
-            requestMessage.Headers.Add("Authorization", "");
-            requestMessage.Headers.Add("x-ms-client-object-id", clientObjectId);
-            // For requests coming from Diagnose and Solve 
-            requestMessage.Headers.Add("x-ms-principal-name", clientPrincipalName);
+            // Add required headers.
+            requestMessage.Headers.Add("Authorization", authToken);
+            requestMessage.Headers.Add("x-ms-client-object-id", clientObjectIdHeader);
+
+            // For requests coming from Diagnose and Solve, add x-ms-principal-name header.
+            if (!string.IsNullOrWhiteSpace(clientPrincipalNameHeader))
+            {
+               requestMessage.Headers.Add("x-ms-principal-name", clientPrincipalNameHeader);
+            }
+
             requestMessage.Content = new StringContent(JsonConvert.SerializeObject(postBody), Encoding.UTF8, "application/json");
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
             try
