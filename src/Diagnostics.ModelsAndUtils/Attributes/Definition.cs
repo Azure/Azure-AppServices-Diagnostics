@@ -49,6 +49,8 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// </summary>
         [DataMember]
         public IEnumerable<SupportTopic> SupportTopicList { get; set; }
+
+        public float Score { get; set; }
         
         public bool Equals(Definition other)
         {

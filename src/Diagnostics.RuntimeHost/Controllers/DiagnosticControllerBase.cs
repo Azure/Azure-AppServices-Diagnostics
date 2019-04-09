@@ -25,6 +25,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
+using System.Net.Http;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -37,8 +38,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IDataSourcesConfigurationService _dataSourcesConfigService;
         protected IStampService _stampService;
         protected IAssemblyCacheService _assemblyCacheService;
+        protected ISearchService _searchService;
 
-        public DiagnosticControllerBase(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
+        public DiagnosticControllerBase(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService, ISearchService searchService)
         {
             this._compilerHostClient = compilerHostClient;
             this._sourceWatcherService = sourceWatcherService;
@@ -47,6 +49,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._dataSourcesConfigService = dataSourcesConfigService;
             this._stampService = stampService;
             this._assemblyCacheService = assemblyCacheService;
+            this._searchService = searchService;
         }
 
         #region API Response Methods
@@ -539,8 +542,32 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
 
-            return _invokerCache.GetEntityInvokerList<TResource>(context)
-                .Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
+            var resourceParams = new Dictionary<string, string>();
+            resourceParams.Add("ResourceType", context.OperationContext.Resource.ResourceType.ToString());
+            if (context.OperationContext.Resource.ResourceType.ToString() == "App")
+            {
+                var appFilter = JsonConvert.DeserializeObject<AppFilter>(JsonConvert.SerializeObject(context.OperationContext.Resource));
+                resourceParams.Add("AppType", appFilter.AppType.ToString());
+                if (appFilter.AppType.ToString() == "WebApp")
+                {
+                    resourceParams.Add("PlatformType", appFilter.PlatformType.ToString());
+                }
+            }
+            var res = await _searchService.SearchDetectors("any string that matters", resourceParams);
+            string resultContent = await res.Content.ReadAsStringAsync();
+            SearchResults searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
+            var scoredResults = _invokerCache.GetEntityInvokerList<TResource>(context).ToList();
+            scoredResults.ForEach(p => {
+                var det = searchResults.Results.FirstOrDefault(x => x.Detector == p.EntryPointDefinitionAttribute.Id);
+                if (det != null) {
+                    p.EntryPointDefinitionAttribute.Score = det.Score;
+                }
+                else
+                {
+                    p.EntryPointDefinitionAttribute.Score = 0;
+                }
+            });
+            return scoredResults.Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
         }
 
         private async Task<Tuple<Response, List<DataProviderMetadata>>> GetDetectorInternal(string detectorId, RuntimeContext<TResource> context)
