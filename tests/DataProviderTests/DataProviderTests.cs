@@ -37,7 +37,7 @@ namespace Diagnostics.Tests.DataProviderTests
             var metadata = ScriptTestDataHelper.GetRandomMetadata();
             metadata.ScriptText = @"
                 public async static Task<IEnumerable<string>> Run(DataProviders dataProviders) {
-                    return await dataProviders.Mdm.GetNamespacesAsync();
+                    return await dataProviders.Mdm(MdmDataSource.Antares).GetNamespacesAsync();
                 }";
 
             var configFactory = new MockDataProviderConfigurationFactory();
@@ -64,7 +64,7 @@ namespace Diagnostics.Tests.DataProviderTests
             var metadata = ScriptTestDataHelper.GetRandomMetadata();
             metadata.ScriptText = @"
                 public async static Task<IEnumerable<string>> Run(DataProviders dataProviders) {
-                    return await dataProviders.Mdm.GetMetricNamesAsync(""Microsoft/Web/WebApps"");
+                    return await dataProviders.Mdm(MdmDataSource.Antares).GetMetricNamesAsync(""Microsoft/Web/WebApps"");
                 }";
 
             var configFactory = new MockDataProviderConfigurationFactory();
@@ -91,7 +91,7 @@ namespace Diagnostics.Tests.DataProviderTests
             var metadata = ScriptTestDataHelper.GetRandomMetadata();
             metadata.ScriptText = @"
                 public async static Task<IEnumerable<string>> Run(DataProviders dataProviders) {
-                    return await dataProviders.Mdm.GetDimensionNamesAsync(""Microsoft/Web/WebApps"", ""CpuTime"");
+                    return await dataProviders.Mdm(MdmDataSource.Antares).GetDimensionNamesAsync(""Microsoft/Web/WebApps"", ""CpuTime"");
                 }";
 
             var configFactory = new MockDataProviderConfigurationFactory();
@@ -123,7 +123,7 @@ namespace Diagnostics.Tests.DataProviderTests
                         new Tuple<string, IEnumerable<string>>(""StampName"", new List<string>())
                     };
 
-                    return await dataProviders.Mdm.GetDimensionValuesAsync(""Microsoft/Web/WebApps"", ""CpuTime"", filter, ""ServerName"", DateTime.UtcNow.AddMinutes(-30), DateTime.UtcNow);
+                    return await dataProviders.Mdm(MdmDataSource.Antares).GetDimensionValuesAsync(""Microsoft/Web/WebApps"", ""CpuTime"", filter, ""ServerName"", DateTime.UtcNow.AddMinutes(-30), DateTime.UtcNow);
                 }";
 
             var configFactory = new MockDataProviderConfigurationFactory();
@@ -151,7 +151,7 @@ namespace Diagnostics.Tests.DataProviderTests
             metadata.ScriptText = @"
                 public async static Task<IEnumerable<DataTable>> Run(DataProviders dataProviders) {
                     var dimensions = new Dictionary<string, string> { { ""StampName"", ""kudu1"" } };
-                    return await dataProviders.Mdm.GetTimeSeriesAsync(DateTime.UtcNow.AddMinutes(-10), DateTime.UtcNow, Sampling.Average | Sampling.Max | Sampling.Count, ""Microsoft/Web/WebApps"", ""CpuTime"", dimensions);
+                    return await dataProviders.Mdm(MdmDataSource.Antares).GetTimeSeriesAsync(DateTime.UtcNow.AddMinutes(-10), DateTime.UtcNow, Sampling.Average | Sampling.Max | Sampling.Count, ""Microsoft/Web/WebApps"", ""CpuTime"", dimensions);
                 }";
 
             var configFactory = new MockDataProviderConfigurationFactory();
