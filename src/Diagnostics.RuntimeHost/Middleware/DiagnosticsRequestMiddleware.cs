@@ -71,7 +71,26 @@ namespace Diagnostics.RuntimeHost.Middleware
             var dataSourcesConfigurationService = ((ServiceProvider)httpContext.RequestServices).GetService<IDataSourcesConfigurationService>();
 
             httpContext.Items.Add(HostConstants.ApiLoggerKey, logger);
-            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token));
+            string clientObjId = string.Empty;
+            StringValues internalClient;
+
+            // For requests coming Applens, populate client object id with Applens App Id.
+            if (httpContext.Request.Headers.TryGetValue("x-ms-internal-client", out internalClient))
+            {
+                clientObjId = dataSourcesConfigurationService.Config.ChangeAnalysisDataProviderConfiguration.ClientId;
+            }
+            else if (httpContext.Request.Headers.ContainsKey("x-ms-client-object-id"))
+            {
+                clientObjId = httpContext.Request.Headers["x-ms-client-object-id"];
+            }
+
+            string clientPrincipalName = string.Empty;
+            if (httpContext.Request.Headers.ContainsKey("x-ms-client-principal-name"))
+            {
+                clientPrincipalName = httpContext.Request.Headers["x-ms-client-principal-name"];
+            }
+
+            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token, clientObjId, clientPrincipalName));
         }
 
         private void EndRequest_Handle(HttpContext httpContext)

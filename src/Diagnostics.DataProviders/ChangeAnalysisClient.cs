@@ -10,6 +10,7 @@ using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using Diagnostics.DataProviders.TokenService;
 using System.Collections.Generic;
 using System.Net;
+using Diagnostics.DataProviders.DataProviderConfigurations;
 
 namespace Diagnostics.DataProviders
 {
@@ -25,7 +26,15 @@ namespace Diagnostics.DataProviders
         /// </summary>
         private string clientPrincipalNameHeader;
 
-        private readonly string changeAnalysisEndPoint = "https://changeanalysis-dataplane-dev.azurewebsites.net/providers/microsoft.changeanalysis/";
+        /// <summary>
+        /// ChangeAnalysis API endpoint.
+        /// </summary>
+        private string changeAnalysisEndPoint;
+
+        /// <summary>
+        /// ChangeAnalysis API version.
+        /// </summary>
+        private string apiVersion;
 
         private readonly Lazy<HttpClient> client = new Lazy<HttpClient>(() =>
         {
@@ -47,16 +56,18 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// Initializes a new instance of the <see cref="ChangeAnalysisClient"/> class.
         /// </summary>
-        public ChangeAnalysisClient(string clientObjectId, string clientPrincipalName = "")
+        public ChangeAnalysisClient(ChangeAnalysisDataProviderConfiguration configuration, string clientObjectId, string clientPrincipalName = "")
         {
             clientObjectIdHeader = clientObjectId;
             clientPrincipalNameHeader = clientPrincipalName;
+            changeAnalysisEndPoint = configuration.Endpoint;
+            apiVersion = configuration.Apiversion;
         }
 
         /// <inheritdoc/>
         public async Task<List<ResourceChangesResponseModel>> GetChangesAsync(ChangeRequest changeRequest)
         {
-            string requestUri = changeAnalysisEndPoint + "changes?api-version=2019-04-01-preview";
+            string requestUri = changeAnalysisEndPoint + $"changes?api-version={apiVersion}";
             object postBody = new
             {
                 changeRequest.ResourceId,
@@ -70,7 +81,7 @@ namespace Diagnostics.DataProviders
         /// <inheritdoc/>
         public async Task<List<ChangeSetResponseModel>> GetChangeSetsAsync(ChangeSetsRequest changeSetsRequest)
         {
-            string requestUri = changeAnalysisEndPoint + "changesets?api-version=2019-04-01-preview";
+            string requestUri = changeAnalysisEndPoint + $"changesets?api-version={apiVersion}";
             object postBody = new
             {
                 changeSetsRequest.ResourceId,
@@ -85,7 +96,7 @@ namespace Diagnostics.DataProviders
         /// <inheritdoc/>
         public async Task<ResourceIdResponseModel> GetResourceIdAsync(List<string> hostnames, string subscription)
         {
-            string requestUri = changeAnalysisEndPoint + "resourceId?api-version=2019-04-01-preview";
+            string requestUri = changeAnalysisEndPoint + $"resourceId?api-version={apiVersion}";
             object requestBody = new
             {
                 hostNames = hostnames,
@@ -124,21 +135,14 @@ namespace Diagnostics.DataProviders
 
             requestMessage.Content = new StringContent(JsonConvert.SerializeObject(postBody), Encoding.UTF8, "application/json");
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
-            try
+            HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage, cancellationTokenSource.Token);
+            string content = await responseMessage.Content.ReadAsStringAsync();
+            if (!responseMessage.IsSuccessStatusCode)
             {
-                HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage, cancellationTokenSource.Token);
-                string content = await responseMessage.Content.ReadAsStringAsync();
-                if (!responseMessage.IsSuccessStatusCode)
-                {
-                    throw new Exception(content);
-                }
+                throw new Exception(content);
+            }
 
-                return content;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            return content;
         }
     }
 }

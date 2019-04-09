@@ -37,14 +37,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ChangeAnalysis
         /// <summary>
         /// Old value.
         /// </summary>
-        [JsonConverter(typeof(SingleOrArrayConverter<object>))]
-        public object OldValue;
+        public JToken OldValue;
 
         /// <summary>
         /// New value.
         /// </summary>
-        [JsonConverter(typeof(SingleOrArrayConverter<object>))]
-        public object NewValue;
+        public JToken NewValue;
 
         /// <summary>
         /// Initiated By. It can be email address or Guid.

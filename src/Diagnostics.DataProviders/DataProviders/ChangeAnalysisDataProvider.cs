@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using Diagnostics.DataProviders.Interfaces;
+using Diagnostics.ModelsAndUtils.Models;
 
 namespace Diagnostics.DataProviders
 {
@@ -22,7 +23,7 @@ namespace Diagnostics.DataProviders
         {
             dataProviderConfiguration = configuration;
             dataProviderRequestId = requestId;
-            changeAnalysisClient = new ChangeAnalysisClient(clientObjectId, principalName);
+            changeAnalysisClient = new ChangeAnalysisClient(configuration, clientObjectId, principalName);
             kustoDataProvider = new KustoDataProvider(cache, kustoConfig, requestId);
         }
 
@@ -35,6 +36,18 @@ namespace Diagnostics.DataProviders
         /// <returns>List of changesets.</returns>
         public async Task<List<ChangeSetResponseModel>> GetChangeSetsForResource(string armResourceUri, DateTime startTime, DateTime endTime)
         {
+            if (string.IsNullOrWhiteSpace(armResourceUri))
+            {
+                throw new ArgumentNullException(nameof(armResourceUri));
+            }
+
+            // Validation for date range as the data retention policy is 14 days.
+            DateTime maxDataRetentionDate = DateTime.Now.AddDays(-14);
+            if (startTime < maxDataRetentionDate)
+            {
+                throw new Exception("Changes beyond last 14 days are not available. Please provide dates within last 14 days");
+            }
+
             ChangeSetsRequest request = new ChangeSetsRequest
             {
                 ResourceId = armResourceUri,
@@ -54,6 +67,16 @@ namespace Diagnostics.DataProviders
         /// <returns>List of changes.</returns>
         public async Task<List<ResourceChangesResponseModel>> GetChangesByChangeSetId(string changeSetId, string resourceUri)
         {
+            if (string.IsNullOrWhiteSpace(changeSetId))
+            {
+                throw new ArgumentNullException(nameof(changeSetId));
+            }
+
+            if (string.IsNullOrWhiteSpace(resourceUri))
+            {
+                throw new ArgumentNullException(nameof(resourceUri));
+            }
+
             ChangeRequest request = new ChangeRequest
             {
                 ResourceId = resourceUri,
@@ -94,6 +117,14 @@ namespace Diagnostics.DataProviders
             List<string> hostnames = GetHostNamesFromTable(kustoResultsTask);
             ResourceIdResponseModel dependentResources = await changeAnalysisClient.GetResourceIdAsync(hostnames, subscriptionId);
             return dependentResources;
+        }
+
+        public DataProviderMetadata GetMetadata()
+        {
+            return new DataProviderMetadata
+            {
+                ProviderName = "ChangeAnalysis"
+            };
         }
 
         private List<string> GetHostNamesFromTable(DataTable kustoTable)

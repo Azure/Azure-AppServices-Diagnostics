@@ -11,7 +11,10 @@ namespace Diagnostics.DataProviders
         public ISupportObserverDataProvider Observer;
         public IGeoMasterDataProvider GeoMaster;
         public IAppInsightsDataProvider AppInsights;
+        public IChangeAnalysisDataProvider ChangeAnalysis;
         public Func<MdmDataSource, IMdmDataProvider> Mdm;
+        public string clientObjectId;
+        public string clientPrincipalName;
 
         public DataProviders(DataProviderContext context)
         {
@@ -19,6 +22,7 @@ namespace Diagnostics.DataProviders
             Observer = new DataProviderLogDecorator(context, SupportObserverDataProviderFactory.GetDataProvider(_cache, context.Configuration));
             GeoMaster = new DataProviderLogDecorator(context, new GeoMasterDataProvider(_cache, context.Configuration.GeoMasterConfiguration));
             AppInsights = new DataProviderLogDecorator(context, new AppInsightsDataProvider(_cache, context.Configuration.AppInsightsConfiguration));
+            ChangeAnalysis = new DataProviderLogDecorator(context, new ChangeAnalysisDataProvider(_cache, context.Configuration.ChangeAnalysisDataProviderConfiguration, context.Configuration.KustoConfiguration, context.RequestId, clientObjectId, clientPrincipalName));
             Mdm = (MdmDataSource ds) =>
             {
                 switch (ds)

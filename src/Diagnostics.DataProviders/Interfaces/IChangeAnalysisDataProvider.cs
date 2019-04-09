@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using Diagnostics.ModelsAndUtils.Models;
 
 namespace Diagnostics.DataProviders.Interfaces
 {
@@ -34,5 +35,7 @@ namespace Diagnostics.DataProviders.Interfaces
         /// <param name="resourceUri">ARM Resource Uri.</param>
         /// <returns>List of changes.</returns>
         Task<List<ResourceChangesResponseModel>> GetChangesByChangeSetId(string changeSetId, string resourceUri);
+
+        DataProviderMetadata GetMetadata();
     }
 }

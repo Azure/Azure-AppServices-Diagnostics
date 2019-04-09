@@ -7,16 +7,18 @@ using System.Threading.Tasks;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.DataProviders
 {
-    internal class DataProviderLogDecorator : IKustoDataProvider, IGeoMasterDataProvider, ISupportObserverDataProvider, IAppInsightsDataProvider, IMdmDataProvider
+    internal class DataProviderLogDecorator : IKustoDataProvider, IGeoMasterDataProvider, ISupportObserverDataProvider, IAppInsightsDataProvider, IMdmDataProvider, IChangeAnalysisDataProvider
     {
         private IKustoDataProvider _kustoDataProvider;
         private IGeoMasterDataProvider _geomasterDataProvider;
         private ISupportObserverDataProvider _observerDataProvider;
         private IAppInsightsDataProvider _appInsightsDataProvider;
+        private IChangeAnalysisDataProvider changeAnalysisDataProvider;
         private IMdmDataProvider _mdmDataProvider;
         private DataProviderMetadata _currentMetadataProvider;
         private string _requestId;
@@ -45,6 +47,11 @@ namespace Diagnostics.DataProviders
         public DataProviderLogDecorator(DataProviderContext context, IMdmDataProvider dataProvider) : this(context, dataProvider.GetMetadata())
         {
             _mdmDataProvider = dataProvider;
+        }
+
+        public DataProviderLogDecorator(DataProviderContext context, IChangeAnalysisDataProvider dataProvider) : this(context, dataProvider.GetMetadata())
+        {
+            changeAnalysisDataProvider = dataProvider;
         }
 
         private DataProviderLogDecorator(DataProviderContext context, DataProviderMetadata metaData)
@@ -379,6 +386,23 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_mdmDataProvider.GetMultipleTimeSeriesAsync(startTimeUtc, endTimeUtc, sampling, definitions, seriesResolutionInMinutes, aggregationType));
         }
 
+        #endregion
+
+        #region ChangeAnalysisDataProvider
+        public Task<ResourceIdResponseModel> GetDependentResourcesAsync(string sitename, string subscriptionId, string stamp, string startTime, string endTime)
+        {
+            return MakeDependencyCall(changeAnalysisDataProvider.GetDependentResourcesAsync(sitename, subscriptionId, stamp, startTime, endTime));
+        }
+
+        public Task<List<ChangeSetResponseModel>> GetChangeSetsForResource(string armResourceUri, DateTime startTime, DateTime endTime)
+        {
+            return MakeDependencyCall(changeAnalysisDataProvider.GetChangeSetsForResource(armResourceUri, startTime, endTime));
+        }
+
+        public Task<List<ResourceChangesResponseModel>> GetChangesByChangeSetId(string changeSetId, string resourceUri)
+        {
+            return MakeDependencyCall(changeAnalysisDataProvider.GetChangesByChangeSetId(changeSetId, resourceUri));
+        }
         #endregion
 
         private async Task<T> MakeDependencyCall<T>(Task<T> dataProviderTask, [CallerMemberName]string dataProviderOperation = "")

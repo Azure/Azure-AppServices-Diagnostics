@@ -27,6 +27,18 @@
         [ConfigurationName("AADChangeAnalysisResource")]
         public string AADChangeAnalysisResource { get; set; }
 
+        /// <summary>
+        /// API endpoint.
+        /// </summary>
+        [ConfigurationName("Endpoint")]
+        public string Endpoint { get; set; }
+
+        /// <summary>
+        /// API version.
+        /// </summary>
+        [ConfigurationName("Apiversion")]
+        public string Apiversion { get; set; }
+
         public void PostInitialize()
         {
 
