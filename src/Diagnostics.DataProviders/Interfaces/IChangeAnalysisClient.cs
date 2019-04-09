@@ -14,12 +14,12 @@ namespace Diagnostics.DataProviders.Interfaces
         Task<ResourceIdResponseModel> GetResourceIdAsync(List<string> hostnames, string subscription);
 
         /// <summary>
-        /// Get Change sets for a ResoureceId.
+        /// Get Change sets for a ResourceId.
         /// </summary>
         Task<List<ChangeSetResponseModel>> GetChangeSetsAsync(ChangeSetsRequest changeSetsRequest);
 
         /// <summary>
-        /// Gets Changes for a ResoureceId.
+        /// Gets Changes for a ChangeSetId and ResourceId.
         /// </summary>
         Task<List<ResourceChangesResponseModel>> GetChangesAsync(ChangeRequest changeRequest);
     }

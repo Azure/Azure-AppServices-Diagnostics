@@ -4,10 +4,11 @@ using System.Data;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
+using Diagnostics.DataProviders.Interfaces;
 
 namespace Diagnostics.DataProviders
 {
-    public class ChangeAnalysisDataProvider : DiagnosticDataProvider
+    public class ChangeAnalysisDataProvider : DiagnosticDataProvider, IChangeAnalysisDataProvider
     {
         private ChangeAnalysisDataProviderConfiguration dataProviderConfiguration;
 
