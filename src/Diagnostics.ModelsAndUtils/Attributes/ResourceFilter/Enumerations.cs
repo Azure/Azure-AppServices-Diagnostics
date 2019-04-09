@@ -42,8 +42,12 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// <summary>
         /// Azure Kubernetes Service Resource
         /// </summary>
-        AzureKubernetesService = 64
+        AzureKubernetesService = 64,
 
+        /// <summary>
+        /// Generic ARM Resource
+        /// </summary>
+        ArmResource = 128
     }
 
     /// <summary>

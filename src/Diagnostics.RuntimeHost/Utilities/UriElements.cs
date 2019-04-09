@@ -31,6 +31,7 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string LogicAppResource = ResourceProvidersRoot + ResourceProviders.LogicApp + "/workflows/{logicAppName}";
         public const string ApiManagementServiceResource = ResourceProvidersRoot + ResourceProviders.ApiManagement + "/service/{serviceName}";
         public const string AzureKubernetesServiceResource = ResourceProvidersRoot + ResourceProviders.AzureKubernetesService + "/managedClusters/{clusterName}";
+        public const string ArmResource = ResourceProvidersRoot + "{provider}/{resourceTypeName}/{resourceName}";
 
         #endregion
 
