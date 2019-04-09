@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using Diagnostics.DataProviders.TokenService;
 using System.Collections.Generic;
+using System.Net;
 
 namespace Diagnostics.DataProviders
 {
@@ -82,7 +83,7 @@ namespace Diagnostics.DataProviders
         }
 
         /// <inheritdoc/>
-        public async Task<ResourceIdResponseModel> GetResourceIdAsync(string[] hostnames, string subscription)
+        public async Task<ResourceIdResponseModel> GetResourceIdAsync(List<string> hostnames, string subscription)
         {
             string requestUri = changeAnalysisEndPoint + "resourceId?api-version=2019-04-01-preview";
             object requestBody = new

@@ -1,5 +1,4 @@
-﻿using System;
-namespace Diagnostics.DataProviders.DataProviderConfigurations
+﻿namespace Diagnostics.DataProviders.DataProviderConfigurations
 {
     [DataSourceConfiguration("ChangeAnalysis")]
     public class ChangeAnalysisDataProviderConfiguration: IDataProviderConfiguration

@@ -11,7 +11,7 @@ namespace Diagnostics.DataProviders.Interfaces
         /// </summary>
         /// <param name="hostnames">array of hostnames</param>
         /// <param name="subscription">subscription id</param>
-        Task<ResourceIdResponseModel> GetResourceIdAsync(string[] hostnames, string subscription);
+        Task<ResourceIdResponseModel> GetResourceIdAsync(List<string> hostnames, string subscription);
 
         /// <summary>
         /// Get Change sets for a ResoureceId.
