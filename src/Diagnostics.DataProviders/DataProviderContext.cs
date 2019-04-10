@@ -20,11 +20,14 @@ namespace Diagnostics.DataProviders
         /// Value of x-ms-client-principal-name header received for requests coming from 'Diagnose and Solve'.
         /// </summary>
         public string clientPrincipalName { get; private set; }
+
         public DataProviderContext(DataSourcesConfiguration dataSourceConfiguration, string requestId = null, CancellationToken dataSourceCancellationToken = default(CancellationToken), string objectId = "", string principalName = "")
         {
             Configuration = dataSourceConfiguration;
             RequestId = requestId ?? Guid.NewGuid().ToString();
             DataSourcesCancellationToken = dataSourceCancellationToken;
+            clientObjectId = objectId;
+            clientPrincipalName = principalName;
         }
     }
 }

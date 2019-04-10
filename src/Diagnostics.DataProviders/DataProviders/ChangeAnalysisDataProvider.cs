@@ -103,7 +103,7 @@ namespace Diagnostics.DataProviders
                     let startTime = datetime({startTime});
                     let endTime = datetime({endTime});
                     let period = 30m;
-                    let sitename = {sitename};
+                    let sitename = ""{sitename}"";
                     AntaresRuntimeWorkerSandboxEvents
                     | where TIMESTAMP  < endTime and TIMESTAMP >= ago(20d) and Sandbox =~ sitename and EventId == 60011 
                     | extend CustomProcessId = iff(ImagePath == 'w3wp.exe' , Pid , NewProcessId )

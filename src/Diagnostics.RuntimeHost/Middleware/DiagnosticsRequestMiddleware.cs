@@ -72,10 +72,17 @@ namespace Diagnostics.RuntimeHost.Middleware
 
             httpContext.Items.Add(HostConstants.ApiLoggerKey, logger);
             string clientObjId = string.Empty;
-            StringValues internalClient;
+            StringValues internalClientHeader;
+            bool isInternalClient = false;
 
             // For requests coming Applens, populate client object id with Applens App Id.
-            if (httpContext.Request.Headers.TryGetValue("x-ms-internal-client", out internalClient))
+            httpContext.Request.Headers.TryGetValue("x-ms-internal-client", out internalClientHeader);
+            if (internalClientHeader.Any())
+            {
+                bool.TryParse(internalClientHeader.First(), out isInternalClient);
+            }
+
+            if (isInternalClient)
             {
                 clientObjId = dataSourcesConfigurationService.Config.ChangeAnalysisDataProviderConfiguration.ClientId;
             }
