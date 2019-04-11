@@ -411,8 +411,8 @@ namespace Diagnostics.Logger
         /// <param name="EndTime">The end time.</param>
         /// <param name="ExceptionType">Exception type.</param>
         /// <param name="ExceptionDetails">Exception details.</param>
-        [Event(3003, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogKustoTokenRefreshSummary)]
-        public void LogKustoTokenRefreshSummary(string Source, string Message, long LatencyInMilliseconds, string StartTime, string EndTime, string ExceptionType, string ExceptionDetails)
+        [Event(3003, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogTokenRefreshSummary)]
+        public void LogTokenRefreshSummary(string Source, string Message, long LatencyInMilliseconds, string StartTime, string EndTime, string ExceptionType, string ExceptionDetails)
         {
             WriteDiagnosticsEvent(
                 3003,
