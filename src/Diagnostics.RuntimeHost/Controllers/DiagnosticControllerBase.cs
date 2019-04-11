@@ -54,11 +54,11 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         #region API Response Methods
 
-        protected async Task<IActionResult> ListDetectors(TResource resource)
+        protected async Task<IActionResult> ListDetectors(TResource resource, string queryText = null)
         {
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
-            return Ok(await this.ListDetectorsInternal(cxt));
+            return Ok(await this.ListDetectorsInternal(cxt, queryText));
         }
 
         protected async Task<IActionResult> GetDetector(TResource resource, string detectorId, string startTime, string endTime, string timeGrain, Form form = null)
@@ -538,36 +538,44 @@ namespace Diagnostics.RuntimeHost.Controllers
             return invoker.EntityMetadata.ScriptText;
         }
 
-        private async Task<IEnumerable<DiagnosticApiResponse>> ListDetectorsInternal(RuntimeContext<TResource> context)
+        private async Task<IEnumerable<DiagnosticApiResponse>> ListDetectorsInternal(RuntimeContext<TResource> context, string queryText=null)
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+            var allDetectors = _invokerCache.GetEntityInvokerList<TResource>(context).ToList();
 
-            var resourceParams = new Dictionary<string, string>();
-            resourceParams.Add("ResourceType", context.OperationContext.Resource.ResourceType.ToString());
-            if (context.OperationContext.Resource.ResourceType.ToString() == "App")
+            SearchResults searchResults = null;
+            if (queryText != null)
             {
-                var appFilter = JsonConvert.DeserializeObject<AppFilter>(JsonConvert.SerializeObject(context.OperationContext.Resource));
-                resourceParams.Add("AppType", appFilter.AppType.ToString());
-                if (appFilter.AppType.ToString() == "WebApp")
+                var resourceParams = new Dictionary<string, string>();
+                resourceParams.Add("ResourceType", context.OperationContext.Resource.ResourceType.ToString());
+                if (context.OperationContext.Resource.ResourceType.ToString() == "App")
                 {
-                    resourceParams.Add("PlatformType", appFilter.PlatformType.ToString());
+                    var appFilter = JsonConvert.DeserializeObject<AppFilter>(JsonConvert.SerializeObject(context.OperationContext.Resource));
+                    resourceParams.Add("AppType", appFilter.AppType.ToString());
+                    if (appFilter.AppType.ToString() == "WebApp")
+                    {
+                        resourceParams.Add("PlatformType", appFilter.PlatformType.ToString());
+                    }
                 }
+                var res = await _searchService.SearchDetectors(queryText, resourceParams);
+                string resultContent = await res.Content.ReadAsStringAsync();
+                searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
+                searchResults.Results = searchResults.Results.Where(x => x.Score > 0.3).ToArray();
+                allDetectors.ForEach(p => {
+                    var det = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == p.EntryPointDefinitionAttribute.Id) : null;
+                    if (det != null)
+                    {
+                        p.EntryPointDefinitionAttribute.Score = det.Score;
+                    }
+                    else
+                    {
+                        p.EntryPointDefinitionAttribute.Score = 0;
+                    }
+                });
+                allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
             }
-            var res = await _searchService.SearchDetectors("any string that matters", resourceParams);
-            string resultContent = await res.Content.ReadAsStringAsync();
-            SearchResults searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
-            var scoredResults = _invokerCache.GetEntityInvokerList<TResource>(context).ToList();
-            scoredResults.ForEach(p => {
-                var det = searchResults.Results.FirstOrDefault(x => x.Detector == p.EntryPointDefinitionAttribute.Id);
-                if (det != null) {
-                    p.EntryPointDefinitionAttribute.Score = det.Score;
-                }
-                else
-                {
-                    p.EntryPointDefinitionAttribute.Score = 0;
-                }
-            });
-            return scoredResults.Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
+
+            return allDetectors.Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
         }
 
         private async Task<Tuple<Response, List<DataProviderMetadata>>> GetDetectorInternal(string detectorId, RuntimeContext<TResource> context)
