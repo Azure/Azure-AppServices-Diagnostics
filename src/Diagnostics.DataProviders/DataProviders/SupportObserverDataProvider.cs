@@ -15,7 +15,7 @@ namespace Diagnostics.DataProviders
     {
         private object _lockObject = new object();
 
-        public SupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, string requestId) : base(cache, configuration, requestId)
+        public SupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, DataProviderContext dataProviderContext) : base(cache, configuration, dataProviderContext)
         {
         }
 
@@ -62,23 +62,50 @@ namespace Diagnostics.DataProviders
                 throw new ArgumentNullException(siteName);
             }
 
-            return await GetRuntimeSiteSlotMapInternal(stampName, siteName);
+            return await GetRuntimeSiteSlotMapInternal(stampName, siteName, null);
         }
 
-        private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName)
+        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName)
+        {
+            if (string.IsNullOrWhiteSpace(stampName))
+            {
+                throw new ArgumentNullException(stampName);
+            }
+
+            if (string.IsNullOrWhiteSpace(siteName))
+            {
+                throw new ArgumentNullException(siteName);
+            }
+
+            if (string.IsNullOrWhiteSpace(slotName))
+            {
+                throw new ArgumentNullException(slotName);
+            }
+
+            return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName);
+        }
+
+        private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName, string slotName)
         {
             var result = await GetObserverResource($"stamps/{stampName}/sites/{siteName}/runtimesiteslotmap");
             var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);
             var slotTimeRange = new Dictionary<string, List<RuntimeSitenameTimeRange>>(slotTimeRangeCaseSensitiveDictionary, StringComparer.CurrentCultureIgnoreCase);
 
-            const string missinDataSignature = "SWAP HISTORY REMOVED";
+            const string missingDataSignature = "SWAP HISTORY REMOVED";
             foreach (var slotMap in slotTimeRange)
             {
-                if (slotMap.Value.Any(swapInfo => swapInfo.RuntimeSitename.Equals(missinDataSignature, StringComparison.CurrentCultureIgnoreCase) && !swapInfo.RuntimeSitename.Equals(missinDataSignature, StringComparison.CurrentCultureIgnoreCase)))
+                var missingHistoricalSwapData = slotMap.Value.Where(swapInfo => swapInfo.RuntimeSitename.Equals(missingDataSignature, StringComparison.CurrentCultureIgnoreCase));
+                if (missingHistoricalSwapData.Any())
                 {
-                    var startTime = slotMap.Value.First(x => x.RuntimeSitename.Equals(missinDataSignature, StringComparison.CurrentCultureIgnoreCase)).StartTime;
-                    var endTime = slotMap.Value.Last(x => x.RuntimeSitename.Equals(missinDataSignature, StringComparison.CurrentCultureIgnoreCase)).EndTime;
-                    DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. Missing swap history data for {slotMap.Key} from {startTime} to {endTime}");
+                    var startTime = missingHistoricalSwapData.Min(x => x.StartTime);
+                    var endTime = missingHistoricalSwapData.Max(x => x.EndTime);
+
+                    if (!string.IsNullOrWhiteSpace(slotName) && slotMap.Key.Equals(slotName, StringComparison.CurrentCultureIgnoreCase) && missingHistoricalSwapData.Any(timeRange => timeRange.StartTime >= DataProviderContext.QueryStartTime) && missingHistoricalSwapData.Any(timeRange => timeRange.EndTime <= DataProviderContext.QueryEndTime))
+                    {
+                        DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. Swap historical data was purged for web app {siteName}({slotName})");
+                    }
+
+                    DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. No swap history data for web app {siteName}({slotMap.Key}) from {startTime} to {endTime}");
                 }
             }
 
@@ -213,7 +240,7 @@ namespace Diagnostics.DataProviders
         private async Task<string> Get(string path)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://support-bay-api.azurewebsites.net/observer/{path}?api-version=2.0");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _configuration.GetAccessToken(_configuration.RuntimeSiteSlotMapResourceUri));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await Configuration.GetAccessToken(Configuration.RuntimeSiteSlotMapResourceUri));
             var response = await GetObserverClient().SendAsync(request);
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadAsStringAsync();

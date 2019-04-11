@@ -13,17 +13,19 @@ namespace Diagnostics.DataProviders
 {
     public abstract class SupportObserverDataProviderBase : DiagnosticDataProvider, ISupportObserverDataProvider
     {
-        protected readonly SupportObserverDataProviderConfiguration _configuration;
+        protected readonly SupportObserverDataProviderConfiguration Configuration;
+        protected readonly DataProviderContext DataProviderContext;
         protected readonly string RequestId;
         private readonly HttpClient _httpClient;
 
-        public SupportObserverDataProviderBase(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, string requestId) : base(cache)
+        public SupportObserverDataProviderBase(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, DataProviderContext dataProviderContext) : base(cache)
         {
-            _configuration = configuration;
+            Configuration = configuration;
+            RequestId = dataProviderContext.RequestId;
+            DataProviderContext = dataProviderContext;
             _httpClient = GetObserverClient();
             _httpClient.BaseAddress = new Uri($"{configuration.Endpoint}/api/");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            RequestId = requestId;
         }
 
         public Task<dynamic> GetResource(string resourceUrl)
@@ -85,7 +87,7 @@ namespace Diagnostics.DataProviders
 
         private async Task<dynamic> GetSupportObserverResourceAsync(Uri uri)
         {
-            var response = await GetObserverResource(uri.AbsoluteUri, _configuration.RuntimeSiteSlotMapResourceUri);
+            var response = await GetObserverResource(uri.AbsoluteUri, Configuration.RuntimeSiteSlotMapResourceUri);
             var jObjectResponse = JsonConvert.DeserializeObject(response);
             return jObjectResponse;
         }
@@ -93,7 +95,7 @@ namespace Diagnostics.DataProviders
         protected async Task<string> GetObserverResource(string url, string resourceId = null)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _configuration.GetAccessToken(resourceId));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await Configuration.GetAccessToken(resourceId));
             var cancelToken = new CancellationToken();
             var response = await _httpClient.SendAsync(request, cancelToken);
             response.EnsureSuccessStatusCode();
@@ -123,6 +125,7 @@ namespace Diagnostics.DataProviders
         public abstract Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName);
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName);
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
+        public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName);
         public abstract HttpClient GetObserverClient();
 
         public DataProviderMetadata GetMetadata()

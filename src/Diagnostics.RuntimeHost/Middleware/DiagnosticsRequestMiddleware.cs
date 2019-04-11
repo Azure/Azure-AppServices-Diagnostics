@@ -67,11 +67,25 @@ namespace Diagnostics.RuntimeHost.Middleware
 
             httpContext.RequestAborted = cTokenSource.Token;
             httpContext.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values);
+            Dictionary<string, string> queryStringValues = new Dictionary<string, string>();
+            foreach (var query in httpContext.Request.Query)
+            {
+                queryStringValues.Add(query.Key.ToLower(), query.Value.FirstOrDefault());
+            }
+
+            DateTimeHelper.PrepareStartEndTimeWithTimeGrain(
+                queryStringValues.GetValueOrDefault("starttime", null),
+                queryStringValues.GetValueOrDefault("endtime", null),
+                queryStringValues.GetValueOrDefault("timegrain", null),
+                out DateTime startTimeUtc,
+                out DateTime endTimeUtc,
+                out TimeSpan timeGrainTimeSpan,
+                out string errorMessage);
 
             var dataSourcesConfigurationService = ((ServiceProvider)httpContext.RequestServices).GetService<IDataSourcesConfigurationService>();
 
             httpContext.Items.Add(HostConstants.ApiLoggerKey, logger);
-            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token));
+            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc));
         }
 
         private void EndRequest_Handle(HttpContext httpContext)
