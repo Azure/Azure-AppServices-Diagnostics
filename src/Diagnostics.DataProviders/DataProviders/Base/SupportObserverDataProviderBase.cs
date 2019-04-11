@@ -14,14 +14,16 @@ namespace Diagnostics.DataProviders
     public abstract class SupportObserverDataProviderBase : DiagnosticDataProvider, ISupportObserverDataProvider
     {
         protected readonly SupportObserverDataProviderConfiguration _configuration;
+        protected readonly string RequestId;
         private readonly HttpClient _httpClient;
 
-        public SupportObserverDataProviderBase(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration) : base(cache)
+        public SupportObserverDataProviderBase(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, string requestId) : base(cache)
         {
             _configuration = configuration;
             _httpClient = GetObserverClient();
             _httpClient.BaseAddress = new Uri($"{configuration.Endpoint}/api/");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            RequestId = requestId;
         }
 
         public Task<dynamic> GetResource(string resourceUrl)

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -14,7 +15,7 @@ namespace Diagnostics.DataProviders
     {
         private object _lockObject = new object();
 
-        public SupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration) : base(cache, configuration)
+        public SupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, string requestId) : base(cache, configuration, requestId)
         {
         }
 
@@ -69,6 +70,18 @@ namespace Diagnostics.DataProviders
             var result = await GetObserverResource($"stamps/{stampName}/sites/{siteName}/runtimesiteslotmap");
             var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);
             var slotTimeRange = new Dictionary<string, List<RuntimeSitenameTimeRange>>(slotTimeRangeCaseSensitiveDictionary, StringComparer.CurrentCultureIgnoreCase);
+
+            const string missinDataSignature = "SWAP HISTORY REMOVED";
+            foreach (var slotMap in slotTimeRange)
+            {
+                if (slotMap.Value.Any(swapInfo => swapInfo.RuntimeSitename.Equals(missinDataSignature, StringComparison.CurrentCultureIgnoreCase) && !swapInfo.RuntimeSitename.Equals(missinDataSignature, StringComparison.CurrentCultureIgnoreCase)))
+                {
+                    var startTime = slotMap.Value.First(x => x.RuntimeSitename.Equals(missinDataSignature, StringComparison.CurrentCultureIgnoreCase)).StartTime;
+                    var endTime = slotMap.Value.Last(x => x.RuntimeSitename.Equals(missinDataSignature, StringComparison.CurrentCultureIgnoreCase)).EndTime;
+                    DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. Missing swap history data for {slotMap.Key} from {startTime} to {endTime}");
+                }
+            }
+
             return slotTimeRange;
         }
 

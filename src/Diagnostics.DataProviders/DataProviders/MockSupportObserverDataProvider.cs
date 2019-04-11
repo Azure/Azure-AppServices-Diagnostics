@@ -15,7 +15,7 @@ namespace Diagnostics.DataProviders
     /// </summary>
     public class MockSupportObserverDataProvider : SupportObserverDataProviderBase
     {
-        public MockSupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration) : base(cache, configuration)
+        public MockSupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration) : base(cache, configuration, "")
         {
 
         }
