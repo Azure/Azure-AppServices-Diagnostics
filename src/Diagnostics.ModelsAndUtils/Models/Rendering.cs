@@ -204,6 +204,11 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// Data rendered as form with inputs fields and buttons.
         /// </summary>
         Form,
+
+        /// <summary>
+        /// Data rendered as Change Sets.
+        /// </summary>
+        ChangeSets
     }
 
     /// <summary>

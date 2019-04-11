@@ -1,7 +1,4 @@
-﻿using System;
-using Newtonsoft.Json;
-using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 namespace Diagnostics.ModelsAndUtils.Models.ChangeAnalysis
 {
     /// <summary>
@@ -15,14 +12,14 @@ namespace Diagnostics.ModelsAndUtils.Models.ChangeAnalysis
         public string TimeStamp;
 
         /// <summary>
-        /// Category of the change belonging to <see cref="ChangeCategory"/>.
+        /// Category of the change. It can be uncategorized, network, hostenv, appconfig, envvar, others.
         /// </summary>
-        public ChangeCategory Category;
+        public string Category;
 
         /// <summary>
-        /// Level of the change belonging to <see cref="ChangeLevel"/>.
+        /// Level of the change. It can be noisy, normal, important.
         /// </summary>
-        public ChangeLevel Level;
+        public string Level;
 
         /// <summary>
         /// Display name (property name).
@@ -53,22 +50,5 @@ namespace Diagnostics.ModelsAndUtils.Models.ChangeAnalysis
         /// Json path obtained from definition.
         /// </summary>
         public string JsonPath;
-    }
-
-    public enum ChangeCategory
-    {
-        Uncategorized = 0,
-        Network,
-        HostEnv,
-        AppConfig,
-        Envar,
-        Others
-    }
-
-    public enum ChangeLevel
-    {
-        Noise = 0,
-        Normal,
-        Important
     }
 }

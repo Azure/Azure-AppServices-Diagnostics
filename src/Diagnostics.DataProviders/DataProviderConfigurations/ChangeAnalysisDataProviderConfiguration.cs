@@ -24,7 +24,7 @@
         /// <summary>
         /// Resource to issue token.
         /// </summary>
-        [ConfigurationName("AADChangeAnalysisResource")]
+        [ConfigurationName("AADResource")]
         public string AADChangeAnalysisResource { get; set; }
 
         /// <summary>

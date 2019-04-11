@@ -11,6 +11,7 @@ using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
+using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -226,6 +227,26 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
             return await base.GetGist(app, gistId, startTime, endTime, timeGrain);
+        }
+
+        /// <summary>
+        /// List changes for a changesetId.
+        /// </summary>
+        /// <param name="subscriptionId">Subscription Id.</param>
+        /// <param name="resourceGroupName">Resource group name.</param>
+        /// <param name="siteName">Site name.</param>
+        /// <param name="changeRequest">Change Request body.</param>
+        /// <returns>Changes for a given changesetId.</returns>
+        [HttpPost(UriElements.ChangesQuery)]
+        public async Task<IActionResult> GetChangesByChangeId(string subscriptionId, string resourceGroupName, string siteName, [FromBody] ChangeRequest changeRequest)
+        {
+            if (changeRequest == null)
+            {
+                return BadRequest();
+            }
+
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+            return Ok(await dataProviders.ChangeAnalysis.GetChangesByChangeSetId(changeRequest.ChangeSetId, changeRequest.ResourceId));
         }
 
         private static bool IsPostBodyMissing(DiagnosticSiteData postBody)
