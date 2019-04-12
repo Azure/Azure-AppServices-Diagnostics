@@ -240,7 +240,7 @@ namespace Diagnostics.DataProviders
         private async Task<string> Get(string path)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://support-bay-api.azurewebsites.net/observer/{path}?api-version=2.0");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await Configuration.GetAccessToken(Configuration.RuntimeSiteSlotMapResourceUri));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await DataProviderContext.SupportBayApiObserverTokenService.GetAuthorizationTokenAsync());
             var response = await GetObserverClient().SendAsync(request);
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadAsStringAsync();

@@ -87,7 +87,7 @@ namespace Diagnostics.DataProviders
 
         private async Task<dynamic> GetSupportObserverResourceAsync(Uri uri)
         {
-            var response = await GetObserverResource(uri.AbsoluteUri, Configuration.RuntimeSiteSlotMapResourceUri);
+            var response = await GetObserverResource(uri.AbsoluteUri, Configuration.SupportBayApiObserverResourceId);
             var jObjectResponse = JsonConvert.DeserializeObject(response);
             return jObjectResponse;
         }
@@ -95,7 +95,7 @@ namespace Diagnostics.DataProviders
         protected async Task<string> GetObserverResource(string url, string resourceId = null)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await Configuration.GetAccessToken(resourceId));
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await DataProviderContext.WawsObserverTokenService.GetAuthorizationTokenAsync());
             var cancelToken = new CancellationToken();
             var response = await _httpClient.SendAsync(request, cancelToken);
             response.EnsureSuccessStatusCode();

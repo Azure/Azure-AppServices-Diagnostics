@@ -1,44 +1,45 @@
-﻿using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using System.Threading.Tasks;
+﻿// <copyright file="TokenServiceBase.cs" company="Microsoft Corporation">
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
+
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Diagnostics.Logger;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace Diagnostics.DataProviders.TokenService
 {
-    public class TokenServiceBase
+    public abstract class TokenServiceBase
     {
         private Task<AuthenticationResult> acquireTokenTask;
+        private bool tokenAcquiredAtleastOnce;
 
         /// <summary>
-        /// Class used to retreive auth tokens from AAD.
-        /// </summary>
-        public AuthenticationContext AuthenticationContext;
-
-        /// <summary>
-        /// AAD Client credentials that include client id and secret.
-        /// </summary>
-        public ClientCredential ClientCredential;
-
-        /// <summary>
-        /// AAD Resource.
-        /// </summary>
-        public string Resource;
-
-        /// <summary>
-        /// Token Service name used for logging to Kusto.
-        /// </summary>
-        public string TokenServiceName;
-
-        /// <summary>
-        /// Checks if token has been acquired atleast once.
-        /// </summary>
-        public bool TokenAcquiredAtleastOnce;
-
-        /// <summary>
-        /// AAD issued auth token.
+        /// Gets AAD issued auth token.
         /// </summary>
         public string AuthorizationToken { get; private set; }
+
+        /// <summary>
+        /// Gets or sets class used to retreive auth tokens from AAD.
+        /// </summary>
+        protected abstract AuthenticationContext AuthenticationContext { get; set; }
+
+        /// <summary>
+        /// Gets or sets AAD Client credentials that include client id and secret.
+        /// </summary>
+        protected abstract ClientCredential ClientCredential { get; set; }
+
+        /// <summary>
+        /// Gets or sets AAD Resource.
+        /// </summary>
+        protected abstract string Resource { get; set; }
+
+        /// <summary>
+        /// Gets or sets token service name used for logging to Kusto.
+        /// </summary>
+        protected abstract string TokenServiceName { get; set; }
 
         /// <summary>
         /// Acquires Security Token from AAD Authority for the given <see cref="ClientCredential"/> and <see cref="Resource"/>.
@@ -64,7 +65,7 @@ namespace Diagnostics.DataProviders.TokenService
                     acquireTokenTask = AuthenticationContext.AcquireTokenAsync(Resource, ClientCredential);
                     AuthenticationResult authResult = await acquireTokenTask;
                     AuthorizationToken = GetAuthTokenFromAuthenticationResult(authResult);
-                    TokenAcquiredAtleastOnce = true;
+                    tokenAcquiredAtleastOnce = true;
                     message = "Token Acquisition Status : Success";
                 }
                 catch (Exception ex)
@@ -96,7 +97,7 @@ namespace Diagnostics.DataProviders.TokenService
         /// </summary>
         public async Task<string> GetAuthorizationTokenAsync()
         {
-            if (!TokenAcquiredAtleastOnce)
+            if (!tokenAcquiredAtleastOnce)
             {
                 var authResult = await acquireTokenTask;
                 return GetAuthTokenFromAuthenticationResult(authResult);
