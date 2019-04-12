@@ -22,5 +22,12 @@ namespace Diagnostics.DataProviders.Interfaces
         /// Gets Changes for a ChangeSetId and ResourceId.
         /// </summary>
         Task<List<ResourceChangesResponseModel>> GetChangesAsync(ChangeRequest changeRequest);
+
+        /// <summary>
+        /// Gets the last scan time stamp for a resource.
+        /// </summary>
+        /// <param name="armResourceUri">Azure Resource Uri.</param>
+        /// <returns>Last scan information.</returns>
+        Task<LastScanResponseModel> GetLastScanInformation(string armResourceUri);
     }
 }

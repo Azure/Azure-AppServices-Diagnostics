@@ -403,6 +403,12 @@ namespace Diagnostics.DataProviders
         {
             return MakeDependencyCall(changeAnalysisDataProvider.GetChangesByChangeSetId(changeSetId, resourceUri));
         }
+
+        public Task<LastScanResponseModel> GetLastScanInformation(string armResourceUri)
+        {
+            return MakeDependencyCall(changeAnalysisDataProvider.GetLastScanInformation(armResourceUri));
+        }
+
         #endregion
 
         private async Task<T> MakeDependencyCall<T>(Task<T> dataProviderTask, [CallerMemberName]string dataProviderOperation = "")
@@ -454,5 +460,7 @@ namespace Diagnostics.DataProviders
                 }
             }
         }
+
+
     }
 }

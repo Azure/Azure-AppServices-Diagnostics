@@ -119,6 +119,21 @@ namespace Diagnostics.DataProviders
             return dependentResources;
         }
 
+        /// <summary>
+        /// Gets the last scan time stamp for a resource.
+        /// </summary>
+        /// <param name="armResourceUri">Azure Resource Uri.</param>
+        /// <returns>Last scan information.</returns>
+        public async Task<LastScanResponseModel> GetLastScanInformation(string armResourceUri)
+        {
+            if (string.IsNullOrWhiteSpace(armResourceUri))
+            {
+                throw new ArgumentNullException(nameof(armResourceUri));
+            }
+
+            return await changeAnalysisClient.GetLastScanInformation(armResourceUri);
+        }
+
         public DataProviderMetadata GetMetadata()
         {
             return new DataProviderMetadata

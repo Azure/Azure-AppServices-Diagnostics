@@ -73,7 +73,7 @@ namespace Diagnostics.DataProviders
                 changeRequest.ResourceId,
                 changeRequest.ChangeSetId
             };
-            string jsonString = await PrepareAndSendRequest(requestUri, postBody);
+            string jsonString = await PrepareAndSendRequest(requestUri, postBody, HttpMethod.Post);
             List<ResourceChangesResponseModel> resourceChangesResponse = JsonConvert.DeserializeObject<List<ResourceChangesResponseModel>>(jsonString);
             return resourceChangesResponse;
         }
@@ -88,7 +88,7 @@ namespace Diagnostics.DataProviders
                 StartTime = changeSetsRequest.StartTime.ToString(),
                 EndTime = changeSetsRequest.EndTime.ToString()
             };
-            string jsonString = await PrepareAndSendRequest(requestUri, postBody);
+            string jsonString = await PrepareAndSendRequest(requestUri, postBody, HttpMethod.Post);
             List<ChangeSetResponseModel> changeSetsResponse = JsonConvert.DeserializeObject<List<ChangeSetResponseModel>>(jsonString);
             return changeSetsResponse;
         }
@@ -102,7 +102,7 @@ namespace Diagnostics.DataProviders
                 hostNames = hostnames,
                 subscriptionId = subscription
             };
-            string jsonString = await PrepareAndSendRequest(requestUri, requestBody);
+            string jsonString = await PrepareAndSendRequest(requestUri, requestBody, HttpMethod.Post);
             if (!string.IsNullOrWhiteSpace(jsonString))
             {
                 ResourceIdResponseModel resourceIdResponse = JsonConvert.DeserializeObject<ResourceIdResponseModel>(jsonString);
@@ -113,14 +113,27 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
+        /// Gets the last scan time stamp for a resource.
+        /// </summary>
+        /// <param name="armResourceUri">Azure Resource Uri.</param>
+        /// <returns>Last scan information.</returns>
+        public async Task<LastScanResponseModel> GetLastScanInformation(string armResourceUri)
+        {
+            string requestUri = changeAnalysisEndPoint + $"lastscan/{armResourceUri}?api-version={apiVersion}";
+            string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: HttpMethod.Get);
+            return JsonConvert.DeserializeObject<LastScanResponseModel>(jsonString);
+        }
+
+        /// <summary>
         /// Prepares httpwebrequest to <paramref name="requestUri"/> with <paramref name="postBody"/> as body of the request.
         /// </summary>
         /// <param name="requestUri">Change Analysis Request URI</param>
         /// <param name="postBody">Body of the request</param>
         /// <returns>JSON string received from <paramref name="requestUri"/>.</returns>
-        private async Task<string> PrepareAndSendRequest(string requestUri, object postBody)
+        private async Task<string> PrepareAndSendRequest(string requestUri, object postBody = null, HttpMethod httpMethod = null)
         {
-            HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri);
+            HttpMethod requestedHttpMethod = httpMethod == null ? HttpMethod.Post : httpMethod;
+            HttpRequestMessage requestMessage = new HttpRequestMessage(requestedHttpMethod, requestUri);
             string authToken = await ChangeAnalysisTokenService.Instance.GetAuthorizationTokenAsync();
 
             // Add required headers.
@@ -133,7 +146,11 @@ namespace Diagnostics.DataProviders
                requestMessage.Headers.Add("x-ms-principal-name", clientPrincipalNameHeader);
             }
 
-            requestMessage.Content = new StringContent(JsonConvert.SerializeObject(postBody), Encoding.UTF8, "application/json");
+            if (postBody != null)
+            {
+               requestMessage.Content = new StringContent(JsonConvert.SerializeObject(postBody), Encoding.UTF8, "application/json");
+            }
+
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
             HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage, cancellationTokenSource.Token);
             string content = await responseMessage.Content.ReadAsStringAsync();
