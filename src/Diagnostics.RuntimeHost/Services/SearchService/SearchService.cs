@@ -14,7 +14,7 @@ namespace Diagnostics.RuntimeHost.Services
     {
         Task<HttpResponseMessage> SearchDetectors(string query, Dictionary<string, string> parameters);
 
-        Task<HttpResponseMessage> SearchUtterances(string query, string productId);
+        Task<HttpResponseMessage> SearchUtterances(string query, Dictionary<string, string> parameters);
     }
 
     public class SearchService : ISearchService
@@ -45,9 +45,11 @@ namespace Diagnostics.RuntimeHost.Services
             return Get(request);
         }
 
-        public Task<HttpResponseMessage> SearchUtterances(string query, string productId)
+        public Task<HttpResponseMessage> SearchUtterances(string query, Dictionary<string, string> parameters)
         {
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, AppendQueryStringParams(QueryUtterancesUrl, query, productId));
+            parameters.Add("text", query);
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryUtterancesUrl);
+            request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return Get(request);
         }
 

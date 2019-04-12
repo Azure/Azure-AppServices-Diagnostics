@@ -233,6 +233,18 @@ namespace Diagnostics.RuntimeHost.Controllers
                     List<DataProviderMetadata> dataProvidersMetadata = null;
                     Response invocationResponse = null;
                     bool isInternalCall = true;
+                    bool isPublic = !invoker.ResourceFilter.InternalOnly;
+                    QueryUtterancesResults utterancesResults = null;
+
+                    if (isPublic)
+                    {
+                        string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
+                        var resourceParams = GetResourceParams(invoker.ResourceFilter);
+                        var searchUtterances = await _searchService.SearchUtterances(description, resourceParams);
+                        string resultContent = await searchUtterances.Content.ReadAsStringAsync();
+                        utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
+                    }
+
                     try
                     {
                         if (detectorId == null)
@@ -267,7 +279,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         }
 
                         queryRes.RuntimeSucceeded = true;
-                        queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse, dataProvidersMetadata);
+                        queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse, dataProvidersMetadata, utterancesResults);
                     }
                     catch (Exception ex)
                     {
@@ -538,6 +550,23 @@ namespace Diagnostics.RuntimeHost.Controllers
             return invoker.EntityMetadata.ScriptText;
         }
 
+        private Dictionary<string, string> GetResourceParams(IResourceFilter gResourceFilter)
+        {
+            var resourceParams = new Dictionary<string, string>();
+            resourceParams.Add("ResourceType", gResourceFilter.ResourceType.ToString());
+            if (gResourceFilter.ResourceType.ToString() == "App")
+            {
+                var appFilter = JsonConvert.DeserializeObject<AppFilter>(JsonConvert.SerializeObject(gResourceFilter));
+                AppType appType = appFilter.AppType;
+                var appTypesList = Enum.GetValues(typeof(AppType)).Cast<AppType>().Where(p => appType.HasFlag(p)).Select(x => Enum.GetName(typeof(AppType), x));
+                resourceParams.Add("AppType", String.Join(",", appTypesList));
+                PlatformType platformType = appFilter.PlatformType;
+                var platformTypesList = Enum.GetValues(typeof(PlatformType)).Cast<PlatformType>().Where(p => platformType.HasFlag(p)).Select(x => Enum.GetName(typeof(PlatformType), x));
+                resourceParams.Add("PlatformType", String.Join(",", platformTypesList));
+            }
+            return resourceParams;
+        }
+
         private async Task<IEnumerable<DiagnosticApiResponse>> ListDetectorsInternal(RuntimeContext<TResource> context, string queryText=null)
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
@@ -546,17 +575,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             SearchResults searchResults = null;
             if (queryText != null)
             {
-                var resourceParams = new Dictionary<string, string>();
-                resourceParams.Add("ResourceType", context.OperationContext.Resource.ResourceType.ToString());
-                if (context.OperationContext.Resource.ResourceType.ToString() == "App")
-                {
-                    var appFilter = JsonConvert.DeserializeObject<AppFilter>(JsonConvert.SerializeObject(context.OperationContext.Resource));
-                    resourceParams.Add("AppType", appFilter.AppType.ToString());
-                    if (appFilter.AppType.ToString() == "WebApp")
-                    {
-                        resourceParams.Add("PlatformType", appFilter.PlatformType.ToString());
-                    }
-                }
+                var resourceParams = GetResourceParams(context.OperationContext.Resource as IResourceFilter);
                 var res = await _searchService.SearchDetectors(queryText, resourceParams);
                 string resultContent = await res.Content.ReadAsStringAsync();
                 searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
