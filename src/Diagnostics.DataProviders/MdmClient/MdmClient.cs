@@ -41,7 +41,7 @@ namespace Diagnostics.DataProviders
         /// Initializes a new instance of the <see cref="MdmClient" /> class.
         /// </summary>
         /// <param name="requestId">Request id.</param>
-        public MdmClient(MdmDataProviderConfiguration configuration, string requestId)
+        public MdmClient(IMdmDataProviderConfiguration configuration, string requestId)
         {
             try
             {

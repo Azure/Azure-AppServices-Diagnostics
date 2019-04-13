@@ -57,7 +57,7 @@ namespace Diagnostics.Logger
         public const string LogDataProviderMessage = "Data Provider Informational Details. Source : {1} Message : {2}";
         public const string LogDataProviderException = "An exception occurred in Source : {1}. ExceptionType : {5} ExceptionDetails : {6}";
         public const string LogDataProviderOperationSummary = "Data Provider Operation. Source : {1} StartTime : {2} EndTime : {3} LatencyInMilliseconds : {4}";
-        public const string LogKustoTokenRefreshSummary = "Kusto Token Refresh Summary";
+        public const string LogTokenRefreshSummary = "Token Refresh Summary";
         public const string LogKustoQueryInformation = "Kusto Query Information";
         #endregion
 
