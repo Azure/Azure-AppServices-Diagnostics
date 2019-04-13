@@ -29,7 +29,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
         internal static AzureSupportCenterInsight CreateInsight<TResource>(string title, InsightStatus status, Text description, Text recommendedAction, Text customerReadyContent, Definition detector, OperationContext<TResource> context)
             where TResource : IResource
         {
-            var category = detector.Name.Length > 32 ? context.Resource.ResourceTypeName : detector.Name;
+            var category = detector.Name;
             var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/{context.Resource.Provider}/{context.Resource.ResourceTypeName}/{context.Resource.Name}/detectors/{detector.Id}?startTime={context.StartTime}&endTime={context.EndTime}";
 
             string customerReadyContentText = customerReadyContent?.Value;
