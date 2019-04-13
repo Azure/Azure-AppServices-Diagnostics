@@ -130,7 +130,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return response == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata));
         }
 
-        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationPostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null, Form Form = null)
+        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationPostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null, Form Form = null, string detectorUtterances = null)
         {
             if (jsonBody == null)
             {
@@ -233,17 +233,23 @@ namespace Diagnostics.RuntimeHost.Controllers
                     List<DataProviderMetadata> dataProvidersMetadata = null;
                     Response invocationResponse = null;
                     bool isInternalCall = true;
-                    bool isPublic = !invoker.ResourceFilter.InternalOnly;
                     QueryUtterancesResults utterancesResults = null;
 
-                    if (isPublic)
+                    // Get suggested utterances for the detector
+                    string[] utterances = null;
+                    if (detectorUtterances != null)
                     {
-                        string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
-                        var resourceParams = GetResourceParams(invoker.ResourceFilter);
-                        var searchUtterances = await _searchService.SearchUtterances(description, resourceParams);
-                        string resultContent = await searchUtterances.Content.ReadAsStringAsync();
-                        utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
+                        utterances = JsonConvert.DeserializeObject<string[]>(detectorUtterances);
                     }
+                    string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
+                    var resourceParams = GetResourceParams(invoker.ResourceFilter);
+                    if (utterances != null)
+                    {
+                        description = description + " " + String.Join(". ", utterances);
+                    }
+                    var searchUtterances = await _searchService.SearchUtterances(description, resourceParams);
+                    string resultContent = await searchUtterances.Content.ReadAsStringAsync();
+                    utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
 
                     try
                     {
