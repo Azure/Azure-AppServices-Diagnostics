@@ -7,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using Diagnostics.RuntimeHost.Utilities;
 
 namespace Diagnostics.RuntimeHost.Services
 {
@@ -14,7 +15,7 @@ namespace Diagnostics.RuntimeHost.Services
     {
         Task<HttpResponseMessage> SearchDetectors(string query, Dictionary<string, string> parameters);
 
-        Task<HttpResponseMessage> SearchUtterances(string query, Dictionary<string, string> parameters);
+        Task<HttpResponseMessage> SearchUtterances(string query, string[] detectorUtterances, Dictionary<string, string> parameters);
     }
 
     public class SearchService : ISearchService
@@ -27,8 +28,8 @@ namespace Diagnostics.RuntimeHost.Services
         
         public SearchService()
         {
-            QueryDetectorsUrl = "http://localhost:8010/queryDetectors";
-            QueryUtterancesUrl = "http://localhost:8010/queryUtterances";
+            QueryDetectorsUrl = UriElements.SearchAPI + "/queryDetectors";
+            QueryUtterancesUrl = UriElements.SearchAPI + "/queryUtterances";
             InitializeHttpClient();
         }
 
@@ -45,9 +46,10 @@ namespace Diagnostics.RuntimeHost.Services
             return Get(request);
         }
 
-        public Task<HttpResponseMessage> SearchUtterances(string query, Dictionary<string, string> parameters)
+        public Task<HttpResponseMessage> SearchUtterances(string query, string[] detectorUtterances, Dictionary<string, string> parameters)
         {
-            parameters.Add("text", query);
+            parameters.Add("detector_description", query);
+            parameters.Add("detector_utterances", JsonConvert.SerializeObject(detectorUtterances));
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryUtterancesUrl);
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return Get(request);

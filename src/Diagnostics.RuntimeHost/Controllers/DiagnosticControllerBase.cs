@@ -130,7 +130,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return response == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata));
         }
 
-        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationPostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null, Form Form = null, string detectorUtterances = null)
+        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationPostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null, string detectorUtterances = null, Form Form = null)
         {
             if (jsonBody == null)
             {
@@ -243,11 +243,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     }
                     string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
                     var resourceParams = GetResourceParams(invoker.ResourceFilter);
-                    if (utterances != null)
-                    {
-                        description = description + " " + String.Join(". ", utterances);
-                    }
-                    var searchUtterances = await _searchService.SearchUtterances(description, resourceParams);
+                    var searchUtterances = await _searchService.SearchUtterances(description, utterances, resourceParams);
                     string resultContent = await searchUtterances.Content.ReadAsStringAsync();
                     utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
 

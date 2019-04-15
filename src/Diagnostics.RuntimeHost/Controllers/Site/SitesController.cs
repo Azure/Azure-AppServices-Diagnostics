@@ -38,7 +38,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="timeGrain">Time grain.</param>
         /// <returns>Task for handling post request.</returns>
         [HttpPost(UriElements.Query)]
-        public async Task<IActionResult> Post(string subscriptionId, string resourceGroupName, string siteName, [FromBody]CompilationPostBody<DiagnosticSiteData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
+        public async Task<IActionResult> Post(string subscriptionId, string resourceGroupName, string siteName, [FromBody]CompilationPostBody<DiagnosticSiteData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery(Name = "detectorUtterances")] string detectorUtterances = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
         {
             if (jsonBody == null)
             {
@@ -56,7 +56,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, jsonBody.Resource, startTimeUtc, endTimeUtc);
-            return await base.ExecuteQuery(app, jsonBody, startTime, endTime, timeGrain, Form: Form);
+            return await base.ExecuteQuery(app, jsonBody, startTime, endTime, timeGrain, null, null, null, detectorUtterances, Form: Form);
         }
 
         /// <summary>
