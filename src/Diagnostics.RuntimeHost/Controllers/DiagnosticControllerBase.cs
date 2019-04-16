@@ -237,15 +237,15 @@ namespace Diagnostics.RuntimeHost.Controllers
 
                     // Get suggested utterances for the detector
                     string[] utterances = null;
-                    if (detectorUtterances != null)
+                    if (detectorUtterances != null && invoker.EntryPointDefinitionAttribute.Description.ToString().Length > 3)
                     {
                         utterances = JsonConvert.DeserializeObject<string[]>(detectorUtterances);
+                        string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
+                        var resourceParams = GetResourceParams(invoker.ResourceFilter);
+                        var searchUtterances = await _searchService.SearchUtterances(description, utterances, resourceParams);
+                        string resultContent = await searchUtterances.Content.ReadAsStringAsync();
+                        utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
                     }
-                    string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
-                    var resourceParams = GetResourceParams(invoker.ResourceFilter);
-                    var searchUtterances = await _searchService.SearchUtterances(description, utterances, resourceParams);
-                    string resultContent = await searchUtterances.Content.ReadAsStringAsync();
-                    utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
 
                     try
                     {
