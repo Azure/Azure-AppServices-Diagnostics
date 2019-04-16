@@ -95,12 +95,24 @@ namespace Diagnostics.DataProviders
         protected async Task<string> GetObserverResource(string url, string resourceId = null)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await DataProviderContext.WawsObserverTokenService.GetAuthorizationTokenAsync());
+            request.Headers.TryAddWithoutValidation("Authorization", await GetToken(resourceId));
             var cancelToken = new CancellationToken();
             var response = await _httpClient.SendAsync(request, cancelToken);
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadAsStringAsync();
             return result;
+        }
+
+        private async Task<string> GetToken(string resourceId)
+        {
+            if (!string.IsNullOrWhiteSpace(resourceId) && resourceId.Equals(Configuration.SupportBayApiObserverResourceId))
+            {
+                return await DataProviderContext.SupportBayApiObserverTokenService.GetAuthorizationTokenAsync();
+            }
+            else
+            {
+                return await DataProviderContext.WawsObserverTokenService.GetAuthorizationTokenAsync();
+            }
         }
 
         public abstract Task<dynamic> GetSite(string siteName);

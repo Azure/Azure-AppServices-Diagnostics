@@ -38,7 +38,6 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// Gets or sets tenant to authenticate with.
         /// </summary>
-        [ConfigurationName("AADAuthority")]
         public string AADAuthority { get; set; }
 
         /// <summary>
