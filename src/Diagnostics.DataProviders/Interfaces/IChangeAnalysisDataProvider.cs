@@ -44,5 +44,11 @@ namespace Diagnostics.DataProviders.Interfaces
         Task<LastScanResponseModel> GetLastScanInformation(string armResourceUri);
 
         DataProviderMetadata GetMetadata();
+
+        /// <summary>
+        /// Checks if a subscription has registered the ChangeAnalysis RP.
+        /// </summary>
+        /// <param name="subscriptionId">Subscription Id.</param>
+        Task<SubscriptionOnboardingStatus> GetSubscriptionOnboardingStatus(string subscriptionId);
     }
 }

@@ -29,5 +29,11 @@ namespace Diagnostics.DataProviders.Interfaces
         /// <param name="armResourceUri">Azure Resource Uri.</param>
         /// <returns>Last scan information.</returns>
         Task<LastScanResponseModel> GetLastScanInformation(string armResourceUri);
+
+        /// <summary>
+        /// Checks if a subscription has registered the ChangeAnalysis RP.
+        /// </summary>
+        /// <param name="subscriptionId">Subscription Id.</param>
+        Task<SubscriptionOnboardingStatus> CheckSubscriptionOnboardingStatus(string subscriptionId);
     }
 }

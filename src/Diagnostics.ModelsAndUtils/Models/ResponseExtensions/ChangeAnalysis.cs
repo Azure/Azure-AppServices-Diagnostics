@@ -64,5 +64,36 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             response.Dataset.Add(diagData);
             return diagData;
         }
+
+        /// <summary>
+        /// Adds Change Analysis Onboarding view.
+        /// </summary>
+        /// <param name="response">Response object.</param>
+        /// <param name="onboardingText">Onboarding text given by author.</param>
+        /// <example>
+        /// This sample shows how to use <see cref="AddChangeSets(Response, List{ChangeSetResponseModel})"/> method to add list of changesets to response.
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        ///      res.AddOnboardingView("Enable change analysis");
+        /// }
+        /// </code>
+        /// </example>
+        /// <returns>Data with rendering type.</returns>
+        public static DiagnosticData AddOnboardingView(this Response response, string onboardingText = null)
+        {
+            var table = new DataTable();
+            table.Columns.Add(new DataColumn("OnboardingText", typeof(string)));
+            table.Rows.Add(new object[] { onboardingText });
+
+            var diagData = new DiagnosticData()
+            {
+                Table = table,
+                RenderingProperties = new Rendering(RenderingType.ChangeAnalysisOnboarding)
+            };
+
+            response.Dataset.Add(diagData);
+            return diagData;
+        }
     }
 }

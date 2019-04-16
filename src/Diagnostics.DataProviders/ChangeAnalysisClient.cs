@@ -125,6 +125,27 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
+        /// Checks if a subscription has registered the ChangeAnalysis RP.
+        /// </summary>
+        /// <param name="subscriptionId">Subscription Id.</param>
+        public async Task<SubscriptionOnboardingStatus> CheckSubscriptionOnboardingStatus(string subscriptionId)
+        {
+            string requestUri = changeAnalysisEndPoint + $"Subscription/{subscriptionId}";
+            try
+            {
+               string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: HttpMethod.Get);
+               return JsonConvert.DeserializeObject<SubscriptionOnboardingStatus>(jsonString);
+            }
+            catch (Exception)
+            {
+                return new SubscriptionOnboardingStatus
+                {
+                    IsRegistered = false
+                };
+            }
+        }
+
+        /// <summary>
         /// Prepares httpwebrequest to <paramref name="requestUri"/> with <paramref name="postBody"/> as body of the request.
         /// </summary>
         /// <param name="requestUri">Change Analysis Request URI</param>
@@ -156,7 +177,7 @@ namespace Diagnostics.DataProviders
             string content = await responseMessage.Content.ReadAsStringAsync();
             if (!responseMessage.IsSuccessStatusCode)
             {
-                throw new Exception(content);
+                throw new Exception(responseMessage.ReasonPhrase);
             }
 
             return content;

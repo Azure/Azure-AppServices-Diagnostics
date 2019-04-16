@@ -208,7 +208,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data rendered as Change Sets.
         /// </summary>
-        ChangeSets
+        ChangeSets,
+
+        /// <summary>
+        /// Data rendered for onboarding view
+        /// </summary>
+        ChangeAnalysisOnboarding
     }
 
     /// <summary>

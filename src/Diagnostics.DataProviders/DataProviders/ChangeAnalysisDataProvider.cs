@@ -134,6 +134,20 @@ namespace Diagnostics.DataProviders
             return await changeAnalysisClient.GetLastScanInformation(armResourceUri);
         }
 
+        /// <summary>
+        /// Checks if a subscription has registered the ChangeAnalysis RP.
+        /// </summary>
+        /// <param name="subscriptionId">Subscription Id.</param>
+        public async Task<SubscriptionOnboardingStatus> GetSubscriptionOnboardingStatus(string subscriptionId)
+        {
+            if (string.IsNullOrWhiteSpace(subscriptionId))
+            {
+                throw new ArgumentNullException(nameof(subscriptionId));
+            }
+
+            return await changeAnalysisClient.CheckSubscriptionOnboardingStatus(subscriptionId);
+        }
+
         public DataProviderMetadata GetMetadata()
         {
             return new DataProviderMetadata

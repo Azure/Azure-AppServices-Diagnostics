@@ -409,6 +409,11 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(changeAnalysisDataProvider.GetLastScanInformation(armResourceUri));
         }
 
+        public Task<SubscriptionOnboardingStatus> GetSubscriptionOnboardingStatus(string subscriptionId)
+        {
+            return MakeDependencyCall(changeAnalysisDataProvider.GetSubscriptionOnboardingStatus(subscriptionId));
+        }
+
         #endregion
 
         private async Task<T> MakeDependencyCall<T>(Task<T> dataProviderTask, [CallerMemberName]string dataProviderOperation = "")
@@ -460,7 +465,6 @@ namespace Diagnostics.DataProviders
                 }
             }
         }
-
 
     }
 }
