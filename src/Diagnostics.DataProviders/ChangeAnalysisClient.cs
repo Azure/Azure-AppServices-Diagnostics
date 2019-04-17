@@ -10,6 +10,7 @@ using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using Diagnostics.DataProviders.TokenService;
 using System.Collections.Generic;
 using System.Net;
+using System.Web;
 using Diagnostics.DataProviders.DataProviderConfigurations;
 
 namespace Diagnostics.DataProviders
@@ -134,14 +135,21 @@ namespace Diagnostics.DataProviders
             try
             {
                string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: HttpMethod.Get);
-               return JsonConvert.DeserializeObject<SubscriptionOnboardingStatus>(jsonString);
+               var result = JsonConvert.DeserializeObject<SubscriptionOnboardingStatus>(jsonString);
+               result.IsRegistered = true;
+               return result;
             }
-            catch (Exception)
+            catch (HttpRequestException httpexception)
             {
-                return new SubscriptionOnboardingStatus
+                if (httpexception.Data.Contains("Status Code") && (HttpStatusCode)httpexception.Data["Status Code"] == HttpStatusCode.NotFound)
                 {
-                    IsRegistered = false
-                };
+                    return new SubscriptionOnboardingStatus
+                    {
+                        IsRegistered = false
+                    };
+                }
+
+                throw httpexception;
             }
         }
 
@@ -175,9 +183,15 @@ namespace Diagnostics.DataProviders
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
             HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage, cancellationTokenSource.Token);
             string content = await responseMessage.Content.ReadAsStringAsync();
+            if (responseMessage.StatusCode == HttpStatusCode.NotFound)
+            {
+                HttpRequestException ex = new HttpRequestException($"Status Code : {responseMessage.StatusCode}, Content : {content}");
+                ex.Data.Add("Status Code", responseMessage.StatusCode);
+                throw ex;
+            }
             if (!responseMessage.IsSuccessStatusCode)
             {
-                throw new HttpRequestException($"Reason: {responseMessage.ReasonPhrase}, StatusCode: {responseMessage.StatusCode}");
+                throw new HttpRequestException($"Status Code: {responseMessage.StatusCode}, Content: {content}");
             }
 
             return content;
