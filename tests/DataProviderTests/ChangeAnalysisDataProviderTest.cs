@@ -20,7 +20,7 @@ namespace Diagnostics.Tests.DataProviderTests
             var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
 
             // Throws exception when querying for changes beyond last 14 days.
-            await Assert.ThrowsAsync<Exception>(async () =>
+            await Assert.ThrowsAsync<ArgumentException>(async () =>
              await dataProviders.ChangeAnalysis.GetChangeSetsForResource("/sites/test-site", DateTime.Now.AddDays(-15), DateTime.Now));
         }
     }
