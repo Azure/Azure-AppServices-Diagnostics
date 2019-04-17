@@ -19,7 +19,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string ResourceGroup { get; set; }
 
         /// <summary>
-        /// Name of the resource resides
+        /// Name of the resource
         /// </summary>
         public string Name { get; set; }
 

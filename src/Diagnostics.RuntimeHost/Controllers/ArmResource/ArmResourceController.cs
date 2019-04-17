@@ -85,7 +85,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// </summary>
         /// <param name="subscriptionId">Subscription id.</param>
         /// <param name="resourceGroupName">Resource group name.</param>
-        /// <param name="siteName">Site name.</param>
+        /// <param name="provider">Provider name.</param>
+        /// <param name="resourceTypeName">Resource type name.</param>
+        /// <param name="resourceName">Resource name.</param>
         /// <param name="gistId">Gist id.</param>
         /// <returns>Task for listing the gist.</returns>
         [HttpPost(UriElements.Gists + UriElements.GistResource)]
