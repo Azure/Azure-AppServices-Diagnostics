@@ -145,6 +145,11 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_observerDataProvider.GetRuntimeSiteSlotMap(stampName, siteName));
         }
 
+        public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName)
+        {
+            return MakeDependencyCall(_observerDataProvider.GetRuntimeSiteSlotMap(stampName, siteName, slotName));
+        }
+
         public Task<dynamic> GetServerFarmsInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
             return MakeDependencyCall(_observerDataProvider.GetServerFarmsInResourceGroupAsync(subscriptionName, resourceGroupName));

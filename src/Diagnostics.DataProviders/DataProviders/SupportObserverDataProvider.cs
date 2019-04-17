@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -14,7 +15,7 @@ namespace Diagnostics.DataProviders
     {
         private object _lockObject = new object();
 
-        public SupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration) : base(cache, configuration)
+        public SupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, DataProviderContext dataProviderContext) : base(cache, configuration, dataProviderContext)
         {
         }
 
@@ -53,22 +54,61 @@ namespace Diagnostics.DataProviders
         {
             if (string.IsNullOrWhiteSpace(stampName))
             {
-                throw new ArgumentNullException(stampName);
+                throw new ArgumentNullException(nameof(stampName));
             }
 
             if (string.IsNullOrWhiteSpace(siteName))
             {
-                throw new ArgumentNullException(siteName);
+                throw new ArgumentNullException(nameof(siteName));
             }
 
-            return await GetRuntimeSiteSlotMapInternal(stampName, siteName);
+            return await GetRuntimeSiteSlotMapInternal(stampName, siteName, null);
         }
 
-        private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName)
+        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName)
+        {
+            if (string.IsNullOrWhiteSpace(stampName))
+            {
+                throw new ArgumentNullException(nameof(stampName));
+            }
+
+            if (string.IsNullOrWhiteSpace(siteName))
+            {
+                throw new ArgumentNullException(nameof(siteName));
+            }
+
+            if (string.IsNullOrWhiteSpace(slotName))
+            {
+                throw new ArgumentNullException(nameof(slotName));
+            }
+
+            return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName);
+        }
+
+        private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName, string slotName)
         {
             var result = await GetObserverResource($"stamps/{stampName}/sites/{siteName}/runtimesiteslotmap");
             var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);
             var slotTimeRange = new Dictionary<string, List<RuntimeSitenameTimeRange>>(slotTimeRangeCaseSensitiveDictionary, StringComparer.CurrentCultureIgnoreCase);
+
+            const string missingDataSignature = "SWAP HISTORY REMOVED";
+            foreach (var slotMap in slotTimeRange)
+            {
+                var missingHistoricalSwapData = slotMap.Value.Where(swapInfo => swapInfo.RuntimeSitename.Equals(missingDataSignature, StringComparison.CurrentCultureIgnoreCase));
+                if (missingHistoricalSwapData.Any())
+                {
+                    var startTime = missingHistoricalSwapData.Min(x => x.StartTime);
+                    var endTime = missingHistoricalSwapData.Max(x => x.EndTime);
+
+                    if (!string.IsNullOrWhiteSpace(slotName) && slotMap.Key.Equals(slotName, StringComparison.CurrentCultureIgnoreCase) && missingHistoricalSwapData.Any(timeRange => timeRange.StartTime >= DataProviderContext.QueryStartTime) && missingHistoricalSwapData.Any(timeRange => timeRange.EndTime <= DataProviderContext.QueryEndTime))
+                    {
+                        DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. Swap historical data was purged for web app {siteName}({slotName})");
+                    }
+
+                    DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. No swap history data for web app {siteName}({slotMap.Key}) from {startTime} to {endTime}");
+                }
+            }
+
             return slotTimeRange;
         }
 
@@ -200,7 +240,7 @@ namespace Diagnostics.DataProviders
         private async Task<string> Get(string path)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://support-bay-api.azurewebsites.net/observer/{path}?api-version=2.0");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", await _configuration.GetAccessToken(_configuration.RuntimeSiteSlotMapResourceUri));
+            request.Headers.TryAddWithoutValidation("Authorization", await DataProviderContext.SupportBayApiObserverTokenService.GetAuthorizationTokenAsync());
             var response = await GetObserverClient().SendAsync(request);
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadAsStringAsync();
