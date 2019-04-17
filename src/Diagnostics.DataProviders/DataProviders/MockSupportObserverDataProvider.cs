@@ -15,7 +15,7 @@ namespace Diagnostics.DataProviders
     /// </summary>
     public class MockSupportObserverDataProvider : SupportObserverDataProviderBase
     {
-        public MockSupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration) : base(cache, configuration)
+        public MockSupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, DataProviderContext dataProviderContext) : base(cache, configuration, dataProviderContext)
         {
 
         }
@@ -51,6 +51,11 @@ namespace Diagnostics.DataProviders
             }
 
             return Task.FromResult(mock);
+        }
+
+        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName)
+        {
+            return GetRuntimeSiteSlotMap(stampName, siteName);
         }
 
         public override async Task<dynamic> GetSite(string siteName)
