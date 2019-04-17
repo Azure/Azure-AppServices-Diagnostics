@@ -54,12 +54,12 @@ namespace Diagnostics.DataProviders
         {
             if (string.IsNullOrWhiteSpace(stampName))
             {
-                throw new ArgumentNullException(stampName);
+                throw new ArgumentNullException(nameof(stampName));
             }
 
             if (string.IsNullOrWhiteSpace(siteName))
             {
-                throw new ArgumentNullException(siteName);
+                throw new ArgumentNullException(nameof(siteName));
             }
 
             return await GetRuntimeSiteSlotMapInternal(stampName, siteName, null);
@@ -69,17 +69,17 @@ namespace Diagnostics.DataProviders
         {
             if (string.IsNullOrWhiteSpace(stampName))
             {
-                throw new ArgumentNullException(stampName);
+                throw new ArgumentNullException(nameof(stampName));
             }
 
             if (string.IsNullOrWhiteSpace(siteName))
             {
-                throw new ArgumentNullException(siteName);
+                throw new ArgumentNullException(nameof(siteName));
             }
 
             if (string.IsNullOrWhiteSpace(slotName))
             {
-                throw new ArgumentNullException(slotName);
+                throw new ArgumentNullException(nameof(slotName));
             }
 
             return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName);
