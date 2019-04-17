@@ -35,11 +35,19 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IStampService, StampService>();
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
 
+            var servicesProvider = services.BuildServiceProvider();
+            var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
+            var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
+            observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
+            var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.WawsObserverResourceId, observerConfiguration);
+            var supportBayApiObserverTokenService = new ObserverTokenService(observerConfiguration.SupportBayApiObserverResourceId, observerConfiguration);
+
+            services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
+            services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
+
             // TODO : Not sure what's the right place for the following code piece.
             #region Custom Start up Code
 
-            var servicesProvider = services.BuildServiceProvider();
-            var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
             KustoTokenService.Instance.Initialize(dataSourcesConfigService.Config.KustoConfiguration);
 
             #endregion

@@ -13,16 +13,17 @@ namespace Diagnostics.DataProviders
     /// </summary>
     public class MdmDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IMdmDataProvider
     {
-        private MdmDataProviderConfiguration _configuration;
+        private IMdmDataProviderConfiguration _configuration;
         private IMdmClient _mdmClient;
 
         /// <summary>
-        /// Initialises a new instance of <see cref="MdmDataProvider"/> class.
+        /// Initializes a new instance of the <see cref="MdmDataProvider"/> class.
         /// </summary>
-        /// <param name="cache">Operation cache</param>
-        /// <param name="configuration">Data provider configuration</param>
+        /// <param name="cache">Operation cache.</param>
+        /// <param name="configuration">Data provider configuration.</param>
         /// <param name="requestId">Request id.</param>
-        public MdmDataProvider(OperationDataCache cache, MdmDataProviderConfiguration configuration, string requestId) : base(cache)
+        public MdmDataProvider(OperationDataCache cache, IMdmDataProviderConfiguration configuration, string requestId)
+            : base(cache)
         {
             _configuration = configuration;
             _mdmClient = MdmClientFactory.GetMdmClient(configuration, requestId);
