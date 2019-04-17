@@ -45,7 +45,7 @@ namespace Diagnostics.DataProviders
             DateTime maxDataRetentionDate = DateTime.Now.AddDays(-14);
             if (startTime < maxDataRetentionDate)
             {
-                throw new Exception("Changes beyond last 14 days are not available. Please provide dates within last 14 days");
+                throw new ArgumentException("Changes beyond last 14 days are not available. Please provide dates within last 14 days");
             }
 
             ChangeSetsRequest request = new ChangeSetsRequest
@@ -113,8 +113,8 @@ namespace Diagnostics.DataProviders
                     | where TIMESTAMP > (startTime - period) and TIMESTAMP < endTime 
                     | distinct QueryName 
                   ";
-            DataTable kustoResultsTask = await kustoDataProvider.ExecuteQuery(query, stamp);
-            List<string> hostnames = GetHostNamesFromTable(kustoResultsTask);
+            DataTable kustoResults = await kustoDataProvider.ExecuteQuery(query, stamp);
+            List<string> hostnames = GetHostNamesFromTable(kustoResults);
             ResourceIdResponseModel dependentResources = await changeAnalysisClient.GetResourceIdAsync(hostnames, subscriptionId);
             return dependentResources;
         }

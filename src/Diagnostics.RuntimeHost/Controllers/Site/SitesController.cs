@@ -11,7 +11,7 @@ using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
-using System.Net.Http;
+
 namespace Diagnostics.RuntimeHost.Controllers
 {
     /// <summary>

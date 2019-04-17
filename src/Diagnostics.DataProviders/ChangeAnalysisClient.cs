@@ -177,7 +177,7 @@ namespace Diagnostics.DataProviders
             string content = await responseMessage.Content.ReadAsStringAsync();
             if (!responseMessage.IsSuccessStatusCode)
             {
-                throw new Exception(responseMessage.ReasonPhrase);
+                throw new HttpRequestException($"Reason: {responseMessage.ReasonPhrase}, StatusCode: {responseMessage.StatusCode}");
             }
 
             return content;
