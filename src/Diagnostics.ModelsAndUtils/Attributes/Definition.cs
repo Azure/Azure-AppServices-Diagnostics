@@ -66,7 +66,14 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         {
             get
             {
-                return AnalysisType.Split(',').ToList();
+                if (string.IsNullOrWhiteSpace(AnalysisType))
+                {
+                    return null;
+                }
+                else
+                {
+                    return AnalysisType.Split(',').ToList();
+                }
             }
         }
 

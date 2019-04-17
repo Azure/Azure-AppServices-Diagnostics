@@ -304,12 +304,6 @@ namespace Diagnostics.Scripts
                     }
                 });
 
-                // Ensure that a detector marked as Analysis cannot be part of another analysis
-                if (_entryPointDefinitionAttribute.AnalysisTypes != null && _entryPointDefinitionAttribute.AnalysisTypes.Any() && _entryPointDefinitionAttribute.Type == ModelsAndUtils.Models.DetectorType.Analysis)
-                {
-                    throw new ScriptCompilationException($"A detector of type Analysis cannot be part of other Analysis. Remove the AnalysisType from the detector definition or change the DetectorType to DetectorType.Detector");
-                }
-
                 // Validate Support Topic Attributes
                 if (this._entryPointDefinitionAttribute.SupportTopicList != null)
                 {
