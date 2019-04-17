@@ -4,12 +4,13 @@ using System.Threading;
 private static string GetQuery(OperationContext<ArmResource> cxt)
 {
     return
-    $@
+    $@"
         let startTime = datetime({cxt.StartTime});
         let endTime = datetime({cxt.EndTime});
         cluster('ClusterName').database('DBName').YOUR_TABLE_NAME
          where Timestamp = startTime and Timestamp = endTime
-         YOUR_QUERY;
+         YOUR_QUERY
+	";
 }
 
 
