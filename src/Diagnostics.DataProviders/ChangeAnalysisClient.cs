@@ -131,7 +131,7 @@ namespace Diagnostics.DataProviders
         /// <param name="subscriptionId">Subscription Id.</param>
         public async Task<SubscriptionOnboardingStatus> CheckSubscriptionOnboardingStatus(string subscriptionId)
         {
-            string requestUri = changeAnalysisEndPoint + $"Subscription/{subscriptionId}";
+            string requestUri = changeAnalysisEndPoint + $"Subscription/{subscriptionId}/onboardingstate?api-version={apiVersion}";
             try
             {
                string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: HttpMethod.Get);
