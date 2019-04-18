@@ -1,35 +1,33 @@
-﻿using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+﻿// <copyright file="SupportObserverDataProviderConfiguration.cs" company="Microsoft Corporation">
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License. See LICENSE in the project root for license information.
+// </copyright>
+
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace Diagnostics.DataProviders
 {
     [DataSourceConfiguration("SupportObserver")]
     public class SupportObserverDataProviderConfiguration : IDataProviderConfiguration
     {
-        private static AuthenticationContext _authContext;
-        private static ClientCredential _aadCredentials;
-        private object _lockObject = new object();
         public SupportObserverDataProviderConfiguration()
         {
         }
 
         /// <summary>
-        /// Observer endpoint
+        /// Observer endpoint.
         /// </summary>
         [ConfigurationName("Endpoint")]
         public string Endpoint { get; set; }
 
         /// <summary>
-        /// Client Id
+        /// Gets or sets client Id.
         /// </summary>
         [ConfigurationName("ClientId")]
         public string ClientId { get; set; }
 
         /// <summary>
-        /// App Key
+        /// Gets or sets app key.
         /// </summary>
         [ConfigurationName("AppKey")]
         public string AppKey { get; set; }
@@ -38,39 +36,25 @@ namespace Diagnostics.DataProviders
         public bool IsMockConfigured { get; set; }
 
         /// <summary>
-        /// ResourceId for WAWSObserver AAD app
+        /// Gets or sets tenant to authenticate with.
         /// </summary>
-        public string ResourceId { get { return "d1abfd91-e19c-426e-802f-a6c55421a5ef"; } }
-        /// <summary>
-        /// Uri for SupportObserverResourceAAD app. 
-        /// We are only hitting this API to access runtime site slot map data
-        /// </summary>
-        public string RuntimeSiteSlotMapResourceUri { get { return "https://microsoft.onmicrosoft.com/SupportObserverResourceApp"; } }
+        public string AADAuthority { get; set; }
 
         /// <summary>
-        /// Bearer token for observer API call
+        /// Gets resourceId for WAWSObserver AAD app.
         /// </summary>
-        internal async Task<string> GetAccessToken(string resourceId = null)
+        public string WawsObserverResourceId
         {
-            if (IsMockConfigured)
-            {
-                return "abcdBearerToken";
-            }
+            get { return "d1abfd91-e19c-426e-802f-a6c55421a5ef"; }
+        }
 
-            if (_authContext == null)
-            {
-                lock (_lockObject)
-                {
-                    if (_authContext == null)
-                    {
-                        _aadCredentials = new ClientCredential(ClientId, AppKey);
-                        _authContext = new AuthenticationContext("https://login.microsoftonline.com/microsoft.onmicrosoft.com", TokenCache.DefaultShared);
-                    }
-                }
-            }
-
-            var authResult = await _authContext.AcquireTokenAsync(resourceId ?? ResourceId, _aadCredentials);
-            return authResult.AccessToken;
+        /// <summary>
+        /// Gets uri for SupportObserverResourceAAD app.
+        /// We are only hitting this API to access runtime site slot map data.
+        /// </summary>
+        public string SupportBayApiObserverResourceId
+        {
+            get { return "https://microsoft.onmicrosoft.com/SupportObserverResourceApp"; }
         }
 
         public void PostInitialize()

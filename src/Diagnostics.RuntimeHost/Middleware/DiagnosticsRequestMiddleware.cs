@@ -67,11 +67,53 @@ namespace Diagnostics.RuntimeHost.Middleware
 
             httpContext.RequestAborted = cTokenSource.Token;
             httpContext.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values);
+            Dictionary<string, string> queryStringValues = new Dictionary<string, string>();
+            foreach (var query in httpContext.Request.Query)
+            {
+                queryStringValues.Add(query.Key.ToLower(), query.Value.FirstOrDefault());
+            }
+
+            DateTimeHelper.PrepareStartEndTimeWithTimeGrain(
+                queryStringValues.GetValueOrDefault("starttime", null),
+                queryStringValues.GetValueOrDefault("endtime", null),
+                queryStringValues.GetValueOrDefault("timegrain", null),
+                out DateTime startTimeUtc,
+                out DateTime endTimeUtc,
+                out TimeSpan timeGrainTimeSpan,
+                out string errorMessage);
 
             var dataSourcesConfigurationService = ((ServiceProvider)httpContext.RequestServices).GetService<IDataSourcesConfigurationService>();
+            var wawsObserverTokenService = ((ServiceProvider)httpContext.RequestServices).GetService<IWawsObserverTokenService>();
+            var supportBayApiObserverTokenService = ((ServiceProvider)httpContext.RequestServices).GetService<ISupportBayApiObserverTokenService>();
 
             httpContext.Items.Add(HostConstants.ApiLoggerKey, logger);
-            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token));
+            string clientObjId = string.Empty;
+            StringValues internalClientHeader;
+            bool isInternalClient = false;
+
+            // For requests coming Applens, populate client object id with Applens App Id.
+            httpContext.Request.Headers.TryGetValue("x-ms-internal-client", out internalClientHeader);
+            if (internalClientHeader.Any())
+            {
+                bool.TryParse(internalClientHeader.First(), out isInternalClient);
+            }
+
+            if (isInternalClient)
+            {
+                clientObjId = dataSourcesConfigurationService.Config.ChangeAnalysisDataProviderConfiguration.ClientId;
+            }
+            else if (httpContext.Request.Headers.ContainsKey("x-ms-client-object-id"))
+            {
+                clientObjId = httpContext.Request.Headers["x-ms-client-object-id"];
+            }
+
+            string clientPrincipalName = string.Empty;
+            if (httpContext.Request.Headers.ContainsKey("x-ms-client-principal-name"))
+            {
+                clientPrincipalName = httpContext.Request.Headers["x-ms-client-principal-name"];
+            }
+
+            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName));
         }
 
         private void EndRequest_Handle(HttpContext httpContext)
