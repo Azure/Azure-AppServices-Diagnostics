@@ -81,8 +81,14 @@ namespace Diagnostics.DataProviders
             }
             catch (Exception ex)
             {
+                timeTakenStopWatch.Stop();
                 LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, ex, dataSet);
+
                 throw;
+            }
+            finally
+            {
+                timeTakenStopWatch.Stop();
             }
 
             LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, null, dataSet);
@@ -92,7 +98,6 @@ namespace Diagnostics.DataProviders
 
         private void LogKustoQuery(string query, string cluster, string operationName, Stopwatch timeTakenStopWatch, string kustoClientId, Exception kustoApiException, DataTableResponseObjectCollection dataSet)
         {
-            timeTakenStopWatch.Stop();
             var status = kustoApiException == null ? "Success" : "Failed";
 
             object stats = null;
