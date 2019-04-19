@@ -12,23 +12,18 @@ namespace Diagnostics.Tests.DataProviderTests
 {
     public class KustoDeserializationTests
     {
-        public class FakeRows
-        {
-            public dynamic[][] Rows;
-        }
-
         [Fact]
         public void TestKustoDataTableConverter()
         {
             var dt = new DataTable();
 
-            // When arrays or objects come from kusto they have column type 'object' 
+            // When arrays or objects come from kusto they have column type 'object'
             // and come as types JArray and JObject respectively
 
             dt.Columns.Add("String", typeof(string));
             dt.Columns.Add("Array", typeof(object));
             dt.Columns.Add("Object", typeof(object));
-            
+
             var arr = new JArray(new string[] { "test" });
             var obj = JObject.FromObject(new { Test = "Test" });
 
@@ -47,7 +42,6 @@ namespace Diagnostics.Tests.DataProviderTests
             Assert.Equal(((JArray)dt.Rows[0][1]).ToObject<string[]>(), ((JArray)dataTable.Rows[0][1]).ToObject<string[]>());
 
             Assert.Equal(dt.Rows[0][2], dataTable.Rows[0][2]);
-
         }
     }
 }
