@@ -22,8 +22,8 @@ public async static Task<Response> Run(DataProviders dp, OperationContext<ArmRes
     {
         Table = await dp.Kusto.ExecuteClusterQuery(GetQuery(cxt)),
         RenderingProperties = new Rendering(RenderingType.Table){
-            Title = Sample Table, 
-            Description = Some description here
+            Title = "Sample Table", 
+            Description = "Some description here"
         }
     });
 
