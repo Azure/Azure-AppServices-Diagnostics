@@ -18,8 +18,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.HostingEnvironmentResource)]
     public sealed class HostingEnvironmentController : DiagnosticControllerBase<HostingEnvironment>
     {
-        public HostingEnvironmentController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService, ISearchService searchService)
-            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, gistCache, dataSourcesConfigService, assemblyCacheService, searchService)
+        public HostingEnvironmentController(IServiceProvider services)
+            : base(services)
         {
         }
 

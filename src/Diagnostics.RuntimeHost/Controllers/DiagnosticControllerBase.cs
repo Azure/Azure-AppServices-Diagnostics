@@ -40,16 +40,16 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IAssemblyCacheService _assemblyCacheService;
         protected ISearchService _searchService;
 
-        public DiagnosticControllerBase(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService, ISearchService searchService)
+        public DiagnosticControllerBase(IServiceProvider services)
         {
-            this._compilerHostClient = compilerHostClient;
-            this._sourceWatcherService = sourceWatcherService;
-            this._invokerCache = invokerCache;
-            this._gistCache = gistCache;
-            this._dataSourcesConfigService = dataSourcesConfigService;
-            this._stampService = stampService;
-            this._assemblyCacheService = assemblyCacheService;
-            this._searchService = searchService;
+            this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));
+            this._sourceWatcherService = (ISourceWatcherService)services.GetService(typeof(ISourceWatcherService));
+            this._invokerCache = (IInvokerCacheService)services.GetService(typeof(IInvokerCacheService));
+            this._gistCache = (IGistCacheService)services.GetService(typeof(IGistCacheService));
+            this._dataSourcesConfigService = (IDataSourcesConfigurationService)services.GetService(typeof(IDataSourcesConfigurationService));
+            this._stampService = (IStampService)services.GetService(typeof(IStampService));
+            this._assemblyCacheService = (IAssemblyCacheService)services.GetService(typeof(IAssemblyCacheService));
+            this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
         }
 
         #region API Response Methods
