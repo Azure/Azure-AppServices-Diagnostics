@@ -217,7 +217,10 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </example>
         public static DiagnosticData AddInsight(this Response response, Insight insight, string title = null, string description = null)
         {
-            if (insight == null) return null;
+            if (insight == null)
+            {
+                return null;
+            }
 
             return AddInsights(response, new List<Insight>() { insight }, title, description);
         }

@@ -65,7 +65,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest(errorMessage);
             }
 
-            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: form);
+            var cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: form);
             var detectorResponse = await GetDetectorInternal(detectorId, cxt);
             return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2));
         }
@@ -152,15 +152,14 @@ namespace Diagnostics.RuntimeHost.Controllers
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
 
             var runtimeContext = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
-
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
 
-            foreach (var p in _gistCache.GetAllReferences(runtimeContext))
+            foreach (var gistRef in _gistCache.GetAllReferences(runtimeContext))
             {
-                if (!jsonBody.References.ContainsKey(p.Key))
+                if (!jsonBody.References.ContainsKey(gistRef.Key))
                 {
                     // Add latest version to references
-                    jsonBody.References.Add(p);
+                    jsonBody.References.Add(gistRef);
                 }
             }
 
@@ -169,26 +168,17 @@ namespace Diagnostics.RuntimeHost.Controllers
                 entityType = EntityType.Signal;
             }
 
-            QueryResponse<DiagnosticApiResponse> queryRes = new QueryResponse<DiagnosticApiResponse>
+            var queryRes = new QueryResponse<DiagnosticApiResponse>
             {
                 InvocationOutput = new DiagnosticApiResponse()
             };
 
-            string scriptETag = string.Empty;
-            if (Request.Headers.ContainsKey("diag-script-etag"))
-            {
-                scriptETag = Request.Headers["diag-script-etag"];
-            }
-
-            string assemblyFullName = string.Empty;
-            if (Request.Headers.ContainsKey("diag-assembly-name"))
-            {
-                assemblyFullName = HttpUtility.UrlDecode(Request.Headers["diag-assembly-name"]);
-            }
+            var scriptETag = Request.Headers.ContainsKey("diag-script-etag") ? (string)Request.Headers["diag-script-etag"] : string.Empty;
+            var assemblyFullName = Request.Headers.ContainsKey("diag-assembly-name") ? HttpUtility.UrlDecode(Request.Headers["diag-assembly-name"]) : string.Empty;
 
             Assembly tempAsm = null;
 
-            bool isCompilationNeeded = !ScriptCompilation.IsSameScript(jsonBody.Script, scriptETag) || !_assemblyCacheService.IsAssemblyLoaded(assemblyFullName, out tempAsm);
+            var isCompilationNeeded = !ScriptCompilation.IsSameScript(jsonBody.Script, scriptETag) || !_assemblyCacheService.IsAssemblyLoaded(assemblyFullName, out tempAsm);
             if (isCompilationNeeded)
             {
                 queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, jsonBody.EntityType, jsonBody.References, runtimeContext.OperationContext.RequestId);
@@ -196,9 +186,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             else
             {
                 // Setting compilation succeeded to be true as it has been successfully compiled before
-                queryRes.CompilationOutput = new CompilerResponse();
-                queryRes.CompilationOutput.CompilationSucceeded = true;
-                queryRes.CompilationOutput.CompilationTraces = new string[] { "No code changes were detected. Detector code was executed using previous compilation." };
+                queryRes.CompilationOutput = new CompilerResponse
+                {
+                    CompilationSucceeded = true,
+                    CompilationTraces = new string[] { "No code changes were detected. Detector code was executed using previous compilation." }
+                };
             }
 
             if (queryRes.CompilationOutput.CompilationSucceeded)
@@ -207,8 +199,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 {
                     if (isCompilationNeeded)
                     {
-                        byte[] asmData = Convert.FromBase64String(queryRes.CompilationOutput.AssemblyBytes);
-                        byte[] pdbData = Convert.FromBase64String(queryRes.CompilationOutput.PdbBytes);
+                        var asmData = Convert.FromBase64String(queryRes.CompilationOutput.AssemblyBytes);
+                        var pdbData = Convert.FromBase64String(queryRes.CompilationOutput.PdbBytes);
                         tempAsm = Assembly.Load(asmData, pdbData);
                         queryRes.CompilationOutput.AssemblyName = tempAsm.FullName;
                         _assemblyCacheService.AddAssemblyToCache(tempAsm.FullName, tempAsm);
@@ -221,7 +213,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     throw new Exception($"Problem while loading Assembly: {e.Message}");
                 }
 
-                EntityMetadata metaData = new EntityMetadata(jsonBody.Script, entityType);
+                var metaData = new EntityMetadata(jsonBody.Script, entityType);
                 using (var invoker = new EntityInvoker(metaData, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports(), jsonBody.References.ToImmutableDictionary()))
                 {
                     invoker.InitializeEntryPoint(tempAsm);
@@ -234,9 +226,12 @@ namespace Diagnostics.RuntimeHost.Controllers
                     {
                         if (detectorId == null)
                         {
-                            if (!VerifyEntity(invoker, ref queryRes)) return Ok(queryRes);
-                            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
+                            if (!VerifyEntity(invoker, ref queryRes))
+                            {
+                                return Ok(queryRes);
+                            }
 
+                            var cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
                             var responseInput = new Response()
                             {
                                 Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, cxt.ClientIsInternal),
@@ -248,7 +243,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         }
                         else
                         {
-                            Dictionary<string, dynamic> systemContext = PrepareSystemContext(resource, detectorId, dataSource, timeRange);
+                            var systemContext = PrepareSystemContext(resource, detectorId, dataSource, timeRange);
                             var responseInput = new Response()
                             {
                                 Metadata = invoker.EntryPointDefinitionAttribute,
@@ -319,7 +314,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             List<AzureSupportCenterInsight> insights = null;
             string error = null;
-            List<Definition> detectorsRun = new List<Definition>();
+            var detectorsRun = new List<Definition>();
             IEnumerable<Definition> allDetectors = null;
             try
             {
@@ -340,8 +335,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             var correlationId = Guid.NewGuid();
-
-            bool defaultInsightReturned = false;
+            var defaultInsightReturned = false;
 
             // Detectors Ran but no insights
             if (!insights.Any() && detectorsRun.Any())
@@ -398,7 +392,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return new HostingEnvironment(subscriptionId, resourceGroup, name);
             }
 
-            HostingEnvironment hostingEnv = new HostingEnvironment(subscriptionId, resourceGroup, name)
+            var hostingEnv = new HostingEnvironment(subscriptionId, resourceGroup, name)
             {
                 Name = stampPostBody.InternalName,
                 InternalName = stampPostBody.InternalName,
@@ -415,17 +409,15 @@ namespace Diagnostics.RuntimeHost.Controllers
                 case DiagnosticStampType.ASEV1:
                     hostingEnv.HostingEnvironmentType = HostingEnvironmentType.V1;
                     break;
-
                 case DiagnosticStampType.ASEV2:
                     hostingEnv.HostingEnvironmentType = HostingEnvironmentType.V2;
                     break;
-
                 default:
                     hostingEnv.HostingEnvironmentType = HostingEnvironmentType.None;
                     break;
             }
 
-            string stampName = !string.IsNullOrWhiteSpace(hostingEnv.InternalName) ? hostingEnv.InternalName : hostingEnv.Name;
+            var stampName = !string.IsNullOrWhiteSpace(hostingEnv.InternalName) ? hostingEnv.InternalName : hostingEnv.Name;
 
             var result = await this._stampService.GetTenantIdForStamp(stampName, hostingEnv.HostingEnvironmentType == HostingEnvironmentType.None, startTime, endTime, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
             hostingEnv.TenantIdList = result.Item1;
@@ -468,23 +460,25 @@ namespace Diagnostics.RuntimeHost.Controllers
                 definition = invoker.EntryPointDefinitionAttribute;
             }
 
-            Dictionary<string, dynamic> systemContext = new Dictionary<string, dynamic>();
-            systemContext.Add("detectorId", detectorId);
-            systemContext.Add("requestIds", requestIds);
-            systemContext.Add("isInternal", true);
-            systemContext.Add("dataSource", dataSource);
-            systemContext.Add("timeRange", timeRange);
-            systemContext.Add("supportTopicList", supportTopicList);
-            systemContext.Add("definition", definition);
+            var systemContext = new Dictionary<string, dynamic>
+            {
+                { "detectorId", detectorId },
+                { "requestIds", requestIds },
+                { "isInternal", true },
+                { "dataSource", dataSource },
+                { "timeRange", timeRange },
+                { "supportTopicList", supportTopicList },
+                { "definition", definition }
+            };
             return systemContext;
         }
 
         private RuntimeContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, SupportTopic supportTopic = null, Form Form = null)
         {
-            this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
-            this.Request.Headers.TryGetValue(HeaderConstants.InternalClientHeader, out StringValues internalCallHeader);
-            bool isInternalClient = false;
-            bool internalViewRequested = false;
+            Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
+            Request.Headers.TryGetValue(HeaderConstants.InternalClientHeader, out StringValues internalCallHeader);
+            var isInternalClient = false;
+            var internalViewRequested = false;
             if (internalCallHeader.Any())
             {
                 bool.TryParse(internalCallHeader.First(), out isInternalClient);
@@ -600,13 +594,13 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return null;
             }
 
-            List<AzureSupportCenterInsight> supportCenterInsights = new List<AzureSupportCenterInsight>();
+            var supportCenterInsights = new List<AzureSupportCenterInsight>();
 
             if (response.AscInsights.Any())
             {
                 foreach (var ascInsight in response.AscInsights)
                 {
-                    logAscInsight(context, detector, ascInsight);
+                    LogAscInsight(context, detector, ascInsight);
                     supportCenterInsights.Add(ascInsight);
                 }
             }
@@ -615,7 +609,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 var regularToAscInsights = response.Insights.Select(insight =>
                 {
                     var ascInsight = AzureSupportCenterInsightUtilites.CreateInsight(insight, context.OperationContext, detector);
-                    logAscInsight(context, detector, ascInsight);
+                    LogAscInsight(context, detector, ascInsight);
                     return ascInsight;
                 });
                 supportCenterInsights.AddRange(regularToAscInsights);
@@ -637,7 +631,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return supportCenterInsights;
         }
 
-        private void logAscInsight(RuntimeContext<TResource> context, Definition detector, AzureSupportCenterInsight ascInsight)
+        private void LogAscInsight(RuntimeContext<TResource> context, Definition detector, AzureSupportCenterInsight ascInsight)
         {
             var loggingContent = new
             {
@@ -723,9 +717,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// </summary>
         private void ValidateForms(List<DiagnosticData> diagnosticDataSet)
         {
-           HashSet<int> formIds = new HashSet<int>();
-           var detectorForms = diagnosticDataSet.Where(dataset => dataset.RenderingProperties.Type == RenderingType.Form).Select(d => d.Table);
-           foreach (DataTable table in detectorForms)
+            HashSet<int> formIds = new HashSet<int>();
+            var detectorForms = diagnosticDataSet.Where(dataset => dataset.RenderingProperties.Type == RenderingType.Form).Select(d => d.Table);
+            foreach (DataTable table in detectorForms)
             {
                 // Each row has FormID and FormInputs
                 foreach (DataRow row in table.Rows)
