@@ -16,14 +16,14 @@ namespace Diagnostics.ModelsAndUtils.Utilities
 
         private static readonly Text DefaultRecommendedAction = new Text("Go to applens to see more information about this insight.");
 
-        public static AzureSupportCenterInsight CreateInsight<TResource>(Insight insight, OperationContext<TResource> context,  Definition detector)
+        public static AzureSupportCenterInsight CreateInsight<TResource>(Insight insight, OperationContext<TResource> context, Definition detector)
             where TResource : IResource
         {
             var description = GetTextObjectFromData("description", insight.Body) ?? new Text(string.Format(DefaultDescription, detector.Name));
             var recommendedAction = GetTextObjectFromData("recommended action", insight.Body) ?? DefaultRecommendedAction;
             var customerReadyContent = GetTextObjectFromData("customer ready content", insight.Body);
 
-            return CreateInsight<TResource>(insight.Message, insight.Status, description, recommendedAction, customerReadyContent, detector, context);
+            return CreateInsight(insight.Message, insight.Status, description, recommendedAction, customerReadyContent, detector, context);
         }
 
         internal static AzureSupportCenterInsight CreateInsight<TResource>(string title, InsightStatus status, Text description, Text recommendedAction, Text customerReadyContent, Definition detector, OperationContext<TResource> context)
@@ -61,7 +61,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
                 CustomerReadyContent = customerReadyContent == null ? null :
                     new CustomerReadyContent()
                     {
-                        ArticleId = Guid.NewGuid(),                        
+                        ArticleId = Guid.NewGuid(),
                         ArticleContent = customerReadyContentText
                     },
                 ConfidenceLevel = InsightConfidenceLevel.High,
@@ -86,7 +86,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
             var description = new StringBuilder();
             description.AppendLine("The following detector(s) were run but no insights were found:");
             description.AppendLine();
-            foreach(var detector in detectorsRun)
+            foreach (var detector in detectorsRun)
             {
                 description.AppendLine($"* {detector.Name}");
             }
@@ -126,7 +126,6 @@ namespace Diagnostics.ModelsAndUtils.Utilities
 
         private static Guid GetDetectorGuid(string detector)
         {
-
             Encoding utf8 = Encoding.UTF8;
             int count = utf8.GetByteCount(detector);
             byte[] bytes = new byte[count > 16 ? count : 16];
@@ -150,7 +149,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
 
         public static Text ParseForMarkdown(string input)
         {
-            if(string.IsNullOrWhiteSpace(input))
+            if (string.IsNullOrWhiteSpace(input))
             {
                 return null;
             }

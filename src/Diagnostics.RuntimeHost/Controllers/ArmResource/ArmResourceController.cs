@@ -95,6 +95,5 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             return await base.GetGist(new ArmResource(subscriptionId, resourceGroupName, provider, resourceTypeName, resourceName), gistId, startTime, endTime, timeGrain);
         }
-
     }
 }

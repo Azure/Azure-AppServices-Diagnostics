@@ -95,7 +95,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
 
-            var systemInvokers = _invokerCache.GetSystemInvokerList<TResource>(context)
+            var systemInvokers = _invokerCache.GetSystemInvokerList(context)
                .Select(p => new DiagnosticApiResponse { Metadata = p.EntryPointDefinitionAttribute });
 
             return Ok(systemInvokers);
@@ -127,7 +127,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             return response == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata));
         }
 
-        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationPostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null, Form Form = null)
+        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationPostBody<TPostBodyResource> jsonBody,
+            string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null, Form Form = null)
         {
             if (jsonBody == null)
             {
@@ -235,7 +236,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                             var responseInput = new Response()
                             {
                                 Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, cxt.ClientIsInternal),
-                                IsInternalCall = cxt.OperationContext.IsInternalCall
+                                IsInternalCall = cxt.OperationContext.IsInternalCall,
+                                Tags = new HashSet<DetectorTag>() { DetectorTag.WaitingForValidation }
                             };
                             invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, cxt.OperationContext, responseInput });
                             invocationResponse.UpdateDetectorStatusFromInsights();
@@ -247,7 +249,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                             var responseInput = new Response()
                             {
                                 Metadata = invoker.EntryPointDefinitionAttribute,
-                                IsInternalCall = systemContext["isInternal"]
+                                IsInternalCall = systemContext["isInternal"],
+                                Tags = systemContext["definition"] == null ? new HashSet<DetectorTag>() { DetectorTag.WaitingForValidation } : null
                             };
                             invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, systemContext, responseInput });
                         }
@@ -447,7 +450,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 OperationContext = cxt
             };
 
-            var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, runtimeContext);
+            var invoker = this._invokerCache.GetEntityInvoker(detectorId, runtimeContext);
             IEnumerable<SupportTopic> supportTopicList = null;
             Definition definition = null;
             if (invoker != null && invoker.EntryPointDefinitionAttribute != null)
@@ -533,7 +536,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
 
-            return _invokerCache.GetEntityInvokerList<TResource>(context)
+            return _invokerCache.GetEntityInvokerList(context)
                 .Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
         }
 
@@ -541,7 +544,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
-            var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
+            var invoker = this._invokerCache.GetEntityInvoker(detectorId, context);
 
             if (invoker == null)
             {

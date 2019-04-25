@@ -41,7 +41,7 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         public string Author { get; set; }
 
         /// <summary>
-        /// Problem category. This serves as organizing group for detectors. 
+        /// Problem category. This serves as organizing group for detectors.
         /// </summary>
         /// <example>
         /// [Definition(Category = Categories.AvailabilityAndPerformance)]

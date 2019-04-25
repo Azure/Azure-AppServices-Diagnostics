@@ -1,5 +1,7 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -25,6 +27,11 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// Health of response
         /// </summary>
         public Status Status { get; set; }
+
+        /// <summary>
+        /// Used to mark a detector for a certain type of display or action.
+        /// </summary>
+        public ISet<DetectorTag> Tags { get; set; }
 
         /// <summary>
         /// Insight List - DO NOT ADD TO THIS DIRECTLY
@@ -90,6 +97,11 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public Status Status { get; set; }
 
+        /// <summary>
+        /// Used to mark a detector for a certain type of display or action.
+        /// </summary>
+        public ISet<DetectorTag> Tags { get; set; }
+
         public List<DataProviderMetadata> DataProvidersMetadata { get; set; }
 
         public static DiagnosticApiResponse FromCsxResponse(Response response, List<DataProviderMetadata> dataProvidersMetadata = null)
@@ -98,6 +110,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             {
                 Metadata = response.Metadata,
                 Status = response.Status,
+                Tags = response.Tags,
                 DataProvidersMetadata = dataProvidersMetadata,
                 Dataset = response.Dataset.Select(dataSet =>
                     new DiagnosticDataApiResponse()
