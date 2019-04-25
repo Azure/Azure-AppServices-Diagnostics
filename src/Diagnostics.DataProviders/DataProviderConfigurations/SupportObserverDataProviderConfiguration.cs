@@ -10,8 +10,6 @@ namespace Diagnostics.DataProviders
     [DataSourceConfiguration("SupportObserver")]
     public class SupportObserverDataProviderConfiguration : IDataProviderConfiguration
     {
-        private string cloudDomain;
-
         public SupportObserverDataProviderConfiguration()
         {
         }
@@ -38,25 +36,8 @@ namespace Diagnostics.DataProviders
         public bool IsMockConfigured { get; set; }
 
         /// <summary>
-        /// Gets or sets the cloud environment.
+        /// Is the local host version of observer enabled.
         /// </summary>
-        [ConfigurationName("CloudDomain", DefaultValue = false)]
-        public string CloudDomain
-        {
-            get
-            {
-                return cloudDomain;
-            }
-
-            set
-            {
-                if (string.IsNullOrWhiteSpace(value))
-                {
-                    cloudDomain = DataProviderConstants.AzureCloud;
-                }
-            }
-        }
-
         [ConfigurationName("ObserverLocalHostEnabled", DefaultValue = false)]
         public bool ObserverLocalHostEnabled { get; set; }
 
