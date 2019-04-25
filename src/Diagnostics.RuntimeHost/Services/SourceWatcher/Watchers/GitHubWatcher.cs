@@ -39,6 +39,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         // Load from configuration.
         private string _destinationCsxPath;
+
         private int _pollingIntervalInSeconds;
 
         protected override Task FirstTimeCompletionTask => _firstTimeCompletionTask;
@@ -74,7 +75,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 { detectorWorker.Name, detectorWorker }
             };
 
-            #endregion
+            #endregion Initialize Github Worker
 
             Start();
         }
@@ -100,7 +101,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 throw new ArgumentNullException(nameof(pkg));
             }
 
-            await _githubClient.CreateOrUpdateFiles(pkg.GetCommitContents(), pkg.GetCommitMessage());
+            await _githubClient.CreateOrUpdateFiles(pkg.CommitContents, pkg.CommitMessage);
         }
 
         /// <summary>
@@ -227,7 +228,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             {
                 await Task.Delay(_pollingIntervalInSeconds * 1000);
                 await StartWatcherInternal();
-
             } while (true);
         }
 
@@ -236,7 +236,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             var assemblyName = Guid.NewGuid().ToString();
             var csxFilePath = string.Empty;
             var confFilePath = string.Empty;
-            var lastCacheId = string.Empty;
             var cacheIdFilePath = Path.Combine(destDir.FullName, _cacheIdFileName);
 
             var response = await _githubClient.Get(parentGithubEntry.Url);
@@ -312,7 +311,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                         invoker.Dispose();
                     }
 
-                    if(!string.IsNullOrWhiteSpace(cacheId) && _gistCache.TryRemoveValue(cacheId, out var gist))
+                    if (!string.IsNullOrWhiteSpace(cacheId) && _gistCache.TryRemoveValue(cacheId, out var gist))
                     {
                         // No action.
                     }

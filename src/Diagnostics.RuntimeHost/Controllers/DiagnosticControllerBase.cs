@@ -223,6 +223,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                     List<DataProviderMetadata> dataProvidersMetadata = null;
                     Response invocationResponse = null;
                     bool isInternalCall = true;
+                    var defaultTags = await EntityExistsAsync(invoker) ? null : new HashSet<DetectorTag>() { DetectorTag.WaitingForValidation };
+
                     try
                     {
                         if (detectorId == null)
@@ -237,7 +239,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                             {
                                 Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, cxt.ClientIsInternal),
                                 IsInternalCall = cxt.OperationContext.IsInternalCall,
-                                Tags = new HashSet<DetectorTag>() { DetectorTag.WaitingForValidation }
+                                Tags = defaultTags
                             };
                             invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, cxt.OperationContext, responseInput });
                             invocationResponse.UpdateDetectorStatusFromInsights();
@@ -250,7 +252,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                             {
                                 Metadata = invoker.EntryPointDefinitionAttribute,
                                 IsInternalCall = systemContext["isInternal"],
-                                Tags = systemContext["definition"] == null ? new HashSet<DetectorTag>() { DetectorTag.WaitingForValidation } : null
+                                Tags = defaultTags
                             };
                             invocationResponse = (Response)await invoker.Invoke(new object[] { dataProviders, systemContext, responseInput });
                         }
@@ -682,6 +684,18 @@ namespace Diagnostics.RuntimeHost.Controllers
             return dataprovidersMetadata;
         }
 
+        protected async Task<bool> DetectorExistsAsync(string detectorId)
+        {
+            var allDetectors = this._invokerCache.GetAll().ToList();
+            return allDetectors.Any(x => x.EntryPointDefinitionAttribute.Id.Equals(detectorId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        protected async Task<bool> EntityExistsAsync(EntityInvoker invoker)
+        {
+            var allDetectors = this._invokerCache.GetAll().ToList();
+            return allDetectors.Any(x => x.EntryPointDefinitionAttribute.Id.Equals(invoker.EntryPointDefinitionAttribute.Id, StringComparison.OrdinalIgnoreCase));
+        }
+
         private bool VerifyEntity(EntityInvoker invoker, ref QueryResponse<DiagnosticApiResponse> queryRes)
         {
             List<EntityInvoker> allDetectors = this._invokerCache.GetAll().ToList();
@@ -689,7 +703,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             foreach (var topicId in invoker.EntryPointDefinitionAttribute.SupportTopicList)
             {
                 var existingDetector = allDetectors.FirstOrDefault(p =>
-                (!p.EntryPointDefinitionAttribute.Id.Equals(invoker.EntryPointDefinitionAttribute.Id, StringComparison.OrdinalIgnoreCase) && p.EntryPointDefinitionAttribute.SupportTopicList.Contains(topicId)));
+                    !p.EntryPointDefinitionAttribute.Id.Equals(invoker.EntryPointDefinitionAttribute.Id, StringComparison.OrdinalIgnoreCase) &&
+                    p.EntryPointDefinitionAttribute.SupportTopicList.Contains(topicId));
                 if (existingDetector != default(EntityInvoker))
                 {
                     // There exists a detector which has same support topic id.

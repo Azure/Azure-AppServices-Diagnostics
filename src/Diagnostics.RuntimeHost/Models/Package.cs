@@ -3,11 +3,8 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.ComponentModel;
-using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Utilities;
 using Newtonsoft.Json;
 using Octokit;
@@ -65,33 +62,39 @@ namespace Diagnostics.RuntimeHost.Models
         public string PdbBytes { get; set; }
 
         /// <summary>
-        /// Get commit for detector package.
+        /// Gets commit for detector package.
         /// </summary>
         /// <returns>The commit.</returns>
-        public IEnumerable<CommitContent> GetCommitContents()
+        public IEnumerable<CommitContent> CommitContents
         {
-            var filePath = $"{Id.ToLower()}/{Id.ToLower()}";
-            var csxFilePath = $"{filePath}.csx";
-            var dllFilePath = $"{filePath}.dll";
-            var pdbFilePath = $"{filePath}.pdb";
-            var configPath = $"{Id.ToLower()}/package.json";
-
-            return new List<CommitContent>
+            get
             {
-                new CommitContent(csxFilePath, CodeString),
-                new CommitContent(configPath, PackageConfig),
-                new CommitContent(dllFilePath, DllBytes, EncodingType.Base64),
-                new CommitContent(pdbFilePath, PdbBytes, EncodingType.Base64)
-            };
+                var filePath = $"{Id.ToLower()}/{Id.ToLower()}";
+                var csxFilePath = $"{filePath}.csx";
+                var dllFilePath = $"{filePath}.dll";
+                var pdbFilePath = $"{filePath}.pdb";
+                var configPath = $"{Id.ToLower()}/package.json";
+
+                return new List<CommitContent>
+                {
+                    new CommitContent(csxFilePath, CodeString),
+                    new CommitContent(configPath, PackageConfig),
+                    new CommitContent(dllFilePath, DllBytes, EncodingType.Base64),
+                    new CommitContent(pdbFilePath, PdbBytes, EncodingType.Base64)
+                };
+            }
         }
 
         /// <summary>
-        /// Get commit message.
+        /// Gets commit message.
         /// </summary>
         /// <returns>Commit message.</returns>
-        public string GetCommitMessage()
+        public string CommitMessage
         {
-            return $"Package : {Id.ToLower()}, CommittedBy : {CommittedByAlias}";
+            get
+            {
+                return $"Package : {Id.ToLower()}, CommittedBy : {CommittedByAlias}";
+            }
         }
     }
 }

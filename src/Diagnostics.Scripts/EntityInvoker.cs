@@ -36,7 +36,7 @@ namespace Diagnostics.Scripts
         private Definition _entryPointDefinitionAttribute;
         private IResourceFilter _resourceFilter;
         private SystemFilter _systemFilter;
- 
+
         public IEnumerable<string> References { get; private set; }
 
         public bool IsCompilationSuccessful { get; private set; }
@@ -110,21 +110,16 @@ namespace Diagnostics.Scripts
                     InitializeAttributes();
                     Validate();
                 }
-                catch (Exception ex)
+                catch (ScriptCompilationException ex)
                 {
-                    if (ex is ScriptCompilationException scriptEx)
+                    IsCompilationSuccessful = false;
+
+                    if (ex.CompilationOutput.Any())
                     {
-                        IsCompilationSuccessful = false;
-
-                        if (scriptEx.CompilationOutput.Any())
-                        {
-                            CompilationOutput = CompilationOutput.Concat(scriptEx.CompilationOutput);
-                        }
-
-                        return;
+                        CompilationOutput = CompilationOutput.Concat(ex.CompilationOutput);
                     }
 
-                    throw;
+                    return;
                 }
             }
         }
@@ -150,21 +145,16 @@ namespace Diagnostics.Scripts
                 memberInfo = _compilation.GetEntryPoint(asm);
                 InitializeAttributes();
             }
-            catch (Exception ex)
+            catch (ScriptCompilationException ex)
             {
-                if (ex is ScriptCompilationException scriptEx)
+                IsCompilationSuccessful = false;
+
+                if (ex.CompilationOutput.Any())
                 {
-                    IsCompilationSuccessful = false;
-
-                    if (scriptEx.CompilationOutput.Any())
-                    {
-                        CompilationOutput = CompilationOutput.Concat(scriptEx.CompilationOutput);
-                    }
-
-                    return;
+                    CompilationOutput = CompilationOutput.Concat(ex.CompilationOutput);
                 }
 
-                throw;
+                return;
             }
         }
 
@@ -271,7 +261,7 @@ namespace Diagnostics.Scripts
 
         private void Validate()
         {
-            if(this._entryPointDefinitionAttribute != null)
+            if (this._entryPointDefinitionAttribute != null)
             {
                 string id = this._entryPointDefinitionAttribute.Id;
                 if (string.IsNullOrWhiteSpace(id))

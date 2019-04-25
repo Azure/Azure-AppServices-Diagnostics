@@ -29,7 +29,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             LoadConfigurations();
             Start();
         }
-        
+
         public override void Start()
         {
             _firstTimeCompletionTask = StartWatcherInternal();
@@ -37,7 +37,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         public override Task CreateOrUpdatePackage(Package pkg)
         {
-            throw new NotImplementedException("Local Source Watcher Mode right now doesnt support live detector deployment.");
+            throw new NotImplementedException("Local Source Watcher Mode doesn't support live detector deployment.");
         }
 
         private async Task StartWatcherInternal()
@@ -85,7 +85,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 LogMessage("SourceWatcher : End");
             }
         }
-        
+
         private void LoadConfigurations()
         {
             if (_env.IsProduction())

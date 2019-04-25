@@ -14,7 +14,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="response">Response object</param>
         /// <param name="health">Detector Status</param>
         /// <param name="message">Detector status message</param>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="SetDetectorStatus"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
@@ -34,7 +34,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
         public static void UpdateDetectorStatusFromInsights(this Response response)
         {
-
             if (response.Status != null)
             {
                 return;
@@ -68,7 +67,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                         }
                         return (InsightStatus)lowestStatus;
                     }
-                    
                 }).OrderBy(st => st).FirstOrDefault();
 
             response.Status = new Status() { StatusId = status };

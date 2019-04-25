@@ -29,7 +29,7 @@ namespace Diagnostics.RuntimeHost.Services
 
         Task DownloadFile(string fileUrl, string destinationPath);
 
-        Task CreateOrUpdateFile(string destinationFilePath, string content, string commitMessage, bool convertContentToBase64 = true);
+        Task CreateOrUpdateFile(string filePath, string content, string commitMessage, bool convertContentToBase64 = true);
 
         Task CreateOrUpdateFiles(IEnumerable<CommitContent> commits, string commitMessage);
     }
@@ -108,21 +108,29 @@ namespace Diagnostics.RuntimeHost.Services
 
         public async Task CreateOrUpdateFile(string filePath, string content, string commitMessage, bool convertContentToBase64 = true)
         {
+            var existingFile = await GetFileIfExists(filePath);
+
+            if (existingFile != null)
+            {
+                await _octokitClient.Repository.Content.UpdateFile(_userName, _repoName, filePath,
+                    new UpdateFileRequest(commitMessage, content, existingFile.First().Sha, _branch, convertContentToBase64));
+            }
+            else
+            {
+                var createFileRequest = new CreateFileRequest(commitMessage, content, _branch, convertContentToBase64);
+                await _octokitClient.Repository.Content.CreateFile(_userName, _repoName, filePath, createFileRequest);
+            }
+        }
+
+        private async Task<IReadOnlyList<RepositoryContent>> GetFileIfExists(string filePath)
+        {
             try
             {
-                // try to get the file (and with the file the last commit sha)
-                var existingFile = await _octokitClient.Repository.Content.GetAllContentsByRef(_userName, _repoName, filePath, _branch);
-
-                // update the existing file
-                var updateChangeSet = await _octokitClient.Repository.Content.UpdateFile(_userName, _repoName, filePath,
-                   new UpdateFileRequest(commitMessage, content, existingFile.First().Sha, _branch, convertContentToBase64));
+                return await _octokitClient.Repository.Content.GetAllContentsByRef(_userName, _repoName, filePath, _branch);
             }
             catch (NotFoundException)
             {
-                var createFileRequest = new CreateFileRequest(commitMessage, content, _branch, convertContentToBase64);
-                // if file is not found, create it
-                var createChangeSet = await _octokitClient.Repository.Content.CreateFile(_userName, _repoName, filePath,
-                    createFileRequest);
+                return null;
             }
         }
 
