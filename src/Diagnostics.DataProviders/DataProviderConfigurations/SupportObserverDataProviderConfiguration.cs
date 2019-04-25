@@ -57,6 +57,9 @@ namespace Diagnostics.DataProviders
             }
         }
 
+        [ConfigurationName("ObserverLocalHostEnabled", DefaultValue = false)]
+        public bool ObserverLocalHostEnabled { get; set; }
+
         /// <summary>
         /// Gets or sets tenant to authenticate with.
         /// </summary>
