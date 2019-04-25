@@ -10,6 +10,8 @@ namespace Diagnostics.DataProviders
     [DataSourceConfiguration("SupportObserver")]
     public class SupportObserverDataProviderConfiguration : IDataProviderConfiguration
     {
+        private string cloudDomain;
+
         public SupportObserverDataProviderConfiguration()
         {
         }
@@ -34,6 +36,26 @@ namespace Diagnostics.DataProviders
 
         [ConfigurationName("IsMockConfigured", DefaultValue = false)]
         public bool IsMockConfigured { get; set; }
+
+        /// <summary>
+        /// Gets or sets the cloud environment.
+        /// </summary>
+        [ConfigurationName("CloudDomain", DefaultValue = false)]
+        public string CloudDomain
+        {
+            get
+            {
+                return cloudDomain;
+            }
+
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    cloudDomain = DataProviderConstants.AzureCloud;
+                }
+            }
+        }
 
         /// <summary>
         /// Gets or sets tenant to authenticate with.
