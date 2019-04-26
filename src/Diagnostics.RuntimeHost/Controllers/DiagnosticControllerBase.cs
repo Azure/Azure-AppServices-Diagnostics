@@ -40,6 +40,8 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IAssemblyCacheService _assemblyCacheService;
         protected ISearchService _searchService;
 
+        private InternalAPIHelper _internalApiHelper;
+
         public DiagnosticControllerBase(IServiceProvider services)
         {
             this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));
@@ -50,6 +52,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._stampService = (IStampService)services.GetService(typeof(IStampService));
             this._assemblyCacheService = (IAssemblyCacheService)services.GetService(typeof(IAssemblyCacheService));
             this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
+
+            this._internalApiHelper = new InternalAPIHelper();
         }
 
         #region API Response Methods
@@ -241,7 +245,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     {
                         utterances = JsonConvert.DeserializeObject<string[]>(detectorUtterances);
                         string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
-                        var resourceParams = GetResourceParams(invoker.ResourceFilter);
+                        var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
                         var searchUtterances = await _searchService.SearchUtterances(description, utterances, resourceParams);
                         string resultContent = await searchUtterances.Content.ReadAsStringAsync();
                         utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
@@ -552,23 +556,6 @@ namespace Diagnostics.RuntimeHost.Controllers
             return invoker.EntityMetadata.ScriptText;
         }
 
-        private Dictionary<string, string> GetResourceParams(IResourceFilter gResourceFilter)
-        {
-            var resourceParams = new Dictionary<string, string>();
-            resourceParams.Add("ResourceType", gResourceFilter.ResourceType.ToString());
-            if (gResourceFilter.ResourceType.ToString() == "App")
-            {
-                var appFilter = JsonConvert.DeserializeObject<AppFilter>(JsonConvert.SerializeObject(gResourceFilter));
-                AppType appType = appFilter.AppType;
-                var appTypesList = Enum.GetValues(typeof(AppType)).Cast<AppType>().Where(p => appType.HasFlag(p)).Select(x => Enum.GetName(typeof(AppType), x));
-                resourceParams.Add("AppType", String.Join(",", appTypesList));
-                PlatformType platformType = appFilter.PlatformType;
-                var platformTypesList = Enum.GetValues(typeof(PlatformType)).Cast<PlatformType>().Where(p => platformType.HasFlag(p)).Select(x => Enum.GetName(typeof(PlatformType), x));
-                resourceParams.Add("PlatformType", String.Join(",", platformTypesList));
-            }
-            return resourceParams;
-        }
-
         private async Task<IEnumerable<DiagnosticApiResponse>> ListDetectorsInternal(RuntimeContext<TResource> context, string queryText=null)
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
@@ -577,8 +564,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             SearchResults searchResults = null;
             if (queryText != null)
             {
-                var resourceParams = GetResourceParams(context.OperationContext.Resource as IResourceFilter);
-                var res = await _searchService.SearchDetectors(queryText, resourceParams);
+                var resourceParams = _internalApiHelper.GetResourceParams(context.OperationContext.Resource as IResourceFilter);
+                var res = await _searchService.SearchDetectors(context.OperationContext.RequestId, queryText, resourceParams);
                 string resultContent = await res.Content.ReadAsStringAsync();
                 searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
                 searchResults.Results = searchResults.Results.Where(x => x.Score > 0.3).ToArray();

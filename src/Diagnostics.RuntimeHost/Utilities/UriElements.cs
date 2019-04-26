@@ -46,6 +46,10 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string Statistics = "/statistics";
         public const string StatisticsResource = "/{invokerId}";
         public const string StatisticsQuery = "/statisticsQuery";
+
+        // Constants for internal api interactions
+        public const string Internal = "/internal";
+        public const string Logger = "logger";
         public const string SearchAPI = "http://localhost:8010";
     }
 

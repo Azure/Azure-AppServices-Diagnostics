@@ -13,7 +13,7 @@ namespace Diagnostics.RuntimeHost.Services
 {
     public interface ISearchService : IDisposable
     {
-        Task<HttpResponseMessage> SearchDetectors(string query, Dictionary<string, string> parameters);
+        Task<HttpResponseMessage> SearchDetectors(string requestId, string query, Dictionary<string, string> parameters);
 
         Task<HttpResponseMessage> SearchUtterances(string query, string[] detectorUtterances, Dictionary<string, string> parameters);
     }
@@ -38,9 +38,10 @@ namespace Diagnostics.RuntimeHost.Services
             return _httpClient.SendAsync(request);
         }
 
-        public Task<HttpResponseMessage> SearchDetectors(string query, Dictionary<string, string> parameters)
+        public Task<HttpResponseMessage> SearchDetectors(string requestId, string query, Dictionary<string, string> parameters)
         {
             parameters.Add("text", query);
+            parameters.Add("requestId", requestId ?? string.Empty);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryDetectorsUrl);
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return Get(request);

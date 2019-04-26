@@ -452,5 +452,128 @@ namespace Diagnostics.Logger
         }
 
         #endregion
+
+        #region Internal AI API Events (ID Range : 4000 - 4199)
+
+        /// <summary>
+        /// Log Internal AI API message.
+        /// </summary>
+        /// <param name="Message">The message.</param>
+        [Event(4000, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPIMessage)]
+        public void LogInternalAPIMessage(string Message)
+        {
+            WriteDiagnosticsEvent(4000, Message);
+        }
+
+        /// <summary>
+        /// Log Internal AI API unhandled exception.
+        /// </summary>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
+        [Event(4001, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPIUnhandledException)]
+        public void LogInternalAPIUnhandledException(string RequestId, string ExceptionType, string ExceptionDetails)
+        {
+            WriteDiagnosticsEvent(
+                4001,
+                RequestId,
+                ExceptionType,
+                ExceptionDetails);
+        }
+
+        /// <summary>
+        /// Log Internal API summary.
+        /// </summary>
+        /// <param name="RequestId">The request id.</param>
+        /// <param name="OperationName">Operation time.</param>
+        /// <param name="StatusCode">Status code.</param>
+        /// <param name="LatencyInMilliseconds">The latency.</param>
+        /// <param name="StartTime">The start time.</param>
+        /// <param name="EndTime">The end time.</param>
+        /// <param name="Content">The headers content received.</param>
+        [Event(4002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPISummary)]
+        public void LogInternalAPISummary(string RequestId, string OperationName, int StatusCode, long LatencyInMilliseconds, string StartTime, string EndTime, string Content)
+        {
+            WriteDiagnosticsEvent(
+                4002,
+                RequestId,
+                OperationName,
+                StatusCode,
+                LatencyInMilliseconds,
+                StartTime,
+                EndTime,
+                Content);
+        }
+
+        /// <summary>
+        /// Log Internal API Insights.
+        /// </summary>
+        /// <param name="RequestId">The request id.</param>
+        /// <param name="Message">The message.</param>
+        [Event(4005, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPIInsights, Version = 2)]
+        public void LogInternalAPIInsights(string RequestId, string Message)
+        {
+            WriteDiagnosticsEvent(
+                4005,
+                RequestId,
+                Message);
+        }
+
+        /// <summary>
+        /// Log Internal API handled exception.
+        /// </summary>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
+        [Event(4006, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPIHandledException)]
+        public void LogInternalAPIHandledException(string RequestId, string ExceptionType, string ExceptionDetails)
+        {
+            WriteDiagnosticsEvent(
+                4006,
+                RequestId,
+                ExceptionType,
+                ExceptionDetails);
+        }
+
+        /// <summary>
+        /// Log Internal API Training Exception.
+        /// </summary>
+        /// <param name="TrainingId">Training id.</param>
+        /// <param name="ProductId">Product id.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
+        [Event(4020, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPITrainingException)]
+        public void LogInternalAPITrainingException(string TrainingId, string ProductId, string ExceptionType, string ExceptionDetails)
+        {
+            WriteDiagnosticsEvent(
+                4020,
+                TrainingId,
+                ProductId,
+                ExceptionType,
+                ExceptionDetails);
+        }
+
+        /// <summary>
+        /// Log Internal API Training Summary.
+        /// </summary>
+        /// <param name="TrainingId">Training id.</param>
+        /// <param name="ProductId">Product id.</param>
+        /// <param name="LatencyInMilliseconds">The latency.</param>
+        /// <param name="StartTime">Start Time</param>
+        /// <param name="EndTime">End Time</param>
+        /// <param name="Content">Summary details.</param>
+        [Event(4021, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPITrainingSummary)]
+        public void LogInternalAPITrainingSummary(string TrainingId, string ProductId, long LatencyInMilliseconds, string StartTime, string EndTime, string Content)
+        {
+            WriteDiagnosticsEvent(
+                4021,
+                TrainingId,
+                ProductId,
+                LatencyInMilliseconds,
+                StartTime,
+                EndTime,
+                Content);
+        }
+        #endregion
     }
 }

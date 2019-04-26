@@ -1,0 +1,9 @@
+{
+    "App" : {
+        "WebApp": {
+            "Windows": "14748",
+            "Linux": "16170"
+        },
+        "FunctionApp": "16072"
+    }
+}
