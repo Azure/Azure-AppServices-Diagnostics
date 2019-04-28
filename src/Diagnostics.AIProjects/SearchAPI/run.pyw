@@ -236,8 +236,9 @@ def healthPing():
 def queryDetectorsMethod():
     startTime = getUTCTime()
     data = json.loads(request.data.decode('ascii'))
-    txt_data = data['text']
     requestId = data['requestId']
+
+    txt_data = data['text']
     if not txt_data:
         return ("No text provided for search", 400)
     productid = getProductId(data)
@@ -249,13 +250,17 @@ def queryDetectorsMethod():
     except FileNotFoundError:
         return json.dumps({"query": txt_data, "results": []})
     res = json.dumps(loaded_models[productid].queryDetectors(txt_data))
+
     endTime = getUTCTime()
     logApiSummary(getApiSummary(requestId, "queryDetectors", 200, getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res))
     return res
 
 @app.route('/queryUtterances', methods=["POST"])
 def queryUtterancesMethod():
+    startTime = getUTCTime()
     data = json.loads(request.data.decode('ascii'))
+    requestId = data["requestId"]
+
     txt_data = data['detector_description']
     existing_utterances = [str(x).lower() for x in json.loads(data['detector_utterances'])]
     if not txt_data:
@@ -271,8 +276,12 @@ def queryUtterancesMethod():
         except FileNotFoundError:
             res = {"query": txt_data, "results": None}
         if res:
-            results["results"] += res["results"] if res["results"] else []                
-    return json.dumps(results)
+            results["results"] += res["results"] if res["results"] else []
+    res = json.dumps(results)
+
+    endTime = getUTCTime()
+    logApiSummary(getApiSummary(requestId, "queryUtterances", 200, getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res))
+    return res
 
 @app.route('/freeModel')
 def freeModelMethod():
@@ -282,8 +291,14 @@ def freeModelMethod():
 
 @app.route('/refreshModel')
 def refreshModelMethod():
+    requestId = str(uuid.uuid4())
+    startTime = getUTCTime()
+
     productid = str(request.args.get('productid'))
-    res = refreshModel(productid)
+    res = "{0} - {1}".format(productid, refreshModel(productid))
+
+    endTime = getUTCTime()
+    logApiSummary(getApiSummary(requestId, "refreshModel", 200, getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res))
     return (res, 200)
 
 if __name__ == '__main__':

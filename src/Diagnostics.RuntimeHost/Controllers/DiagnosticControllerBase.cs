@@ -246,7 +246,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         utterances = JsonConvert.DeserializeObject<string[]>(detectorUtterances);
                         string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
                         var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
-                        var searchUtterances = await _searchService.SearchUtterances(description, utterances, resourceParams);
+                        var searchUtterances = await _searchService.SearchUtterances(runtimeContext.OperationContext.RequestId, description, utterances, resourceParams);
                         string resultContent = await searchUtterances.Content.ReadAsStringAsync();
                         utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
                     }
