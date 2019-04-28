@@ -8,6 +8,7 @@ from azure.storage.blob import BlockBlobService
 from Logger import *
 from datetime import datetime, timezone
 import json, itertools, nltk
+from functools import wraps
 
 try:
     nltk.data.find('tokenizers/punkt')
@@ -227,14 +228,46 @@ app = Flask(__name__)
 # Make the WSGI interface available at the top level so wfastcgi can get it.
 wsgi_app = app.wsgi_app
 
+def getRequestId(req):
+    if req.method == 'POST':
+        data = json.loads(request.data.decode('ascii'))
+        return data['requestId'] if 'requestId' in data else None
+    elif req.method == 'GET':
+        return request.args.get('requestId')
+    return None
+
+def loggingProvider(requestIdRequired=True):
+    def loggingWrapper(f):
+        @wraps(f)
+        def logger(*args, **kwargs):
+            startTime = getUTCTime()
+            res = None
+            requestId = getRequestId(request)
+            requestId = requestId if requestId else (str(uuid.uuid4()) if not requestIdRequired else None)
+            if not requestId:
+                res = ("BadRequest: Missing parameter requestId", 400)
+                endTime = getUTCTime()
+                logApiSummary("Null", request.url_rule, res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
+                return res
+            else:
+                try:
+                    res = f(*args, **kwargs)
+                except Exception as e:
+                    res = (str(e), 500)
+                    logUnhandledException(requestId, str(e))
+            endTime = getUTCTime()
+            logApiSummary("Null", request.url_rule, res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
+            return res
+        return logger
+    return loggingWrapper
 
 @app.route('/healthping')
 def healthPing():
-    return "I am alive!"
+    return ("I am alive!", 200)
 
 @app.route('/queryDetectors', methods=["POST"])
+@loggingProvider
 def queryDetectorsMethod():
-    startTime = getUTCTime()
     data = json.loads(request.data.decode('ascii'))
     requestId = data['requestId']
 
@@ -247,41 +280,39 @@ def queryDetectorsMethod():
     productid = productid[0]
     try:
         loadModel(productid)
-    except FileNotFoundError:
-        return json.dumps({"query": txt_data, "results": []})
+    except Exception as e:
+        logHandledException(requestId, e)
+        return (json.dumps({"query": txt_data, "results": []}), 200)
+    
     res = json.dumps(loaded_models[productid].queryDetectors(txt_data))
-
-    endTime = getUTCTime()
-    logApiSummary(getApiSummary(requestId, "queryDetectors", 200, getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res))
-    return res
+    return (res, 200)
 
 @app.route('/queryUtterances', methods=["POST"])
+@loggingProvider
 def queryUtterancesMethod():
-    startTime = getUTCTime()
     data = json.loads(request.data.decode('ascii'))
-    requestId = data["requestId"]
-
+    requestId = data['requestId']
+    
     txt_data = data['detector_description']
     existing_utterances = [str(x).lower() for x in json.loads(data['detector_utterances'])]
     if not txt_data:
         return ("No text provided for search", 400)
     productid = getProductId(data)
     if not productid:
-        return ('Resource data not available', 404)
+        return ('Resource type product data not available', 404)
     results = {"query": txt_data, "results": []}
     for product in productid:
         try:
             loadModel(product)
             res = loaded_models[product].queryUtterances(txt_data, existing_utterances)
-        except FileNotFoundError:
+        except Exception as e:
+            logHandledException(requestId, e)
             res = {"query": txt_data, "results": None}
         if res:
             results["results"] += res["results"] if res["results"] else []
     res = json.dumps(results)
 
-    endTime = getUTCTime()
-    logApiSummary(getApiSummary(requestId, "queryUtterances", 200, getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res))
-    return res
+    return (res, 200)
 
 @app.route('/freeModel')
 def freeModelMethod():
@@ -290,15 +321,10 @@ def freeModelMethod():
     return ('', 204)
 
 @app.route('/refreshModel')
-def refreshModelMethod():
-    requestId = str(uuid.uuid4())
-    startTime = getUTCTime()
-
+@loggingProvider(requestIdRequired=False)
+def refreshModelMethod(requestIdRequired=False):
     productid = str(request.args.get('productid'))
     res = "{0} - {1}".format(productid, refreshModel(productid))
-
-    endTime = getUTCTime()
-    logApiSummary(getApiSummary(requestId, "refreshModel", 200, getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res))
     return (res, 200)
 
 if __name__ == '__main__':
