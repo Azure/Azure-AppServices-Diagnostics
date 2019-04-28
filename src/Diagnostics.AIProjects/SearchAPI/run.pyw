@@ -322,7 +322,7 @@ def freeModelMethod():
 
 @app.route('/refreshModel')
 @loggingProvider(requestIdRequired=False)
-def refreshModelMethod(requestIdRequired=False):
+def refreshModelMethod():
     productid = str(request.args.get('productid'))
     res = "{0} - {1}".format(productid, refreshModel(productid))
     return (res, 200)
