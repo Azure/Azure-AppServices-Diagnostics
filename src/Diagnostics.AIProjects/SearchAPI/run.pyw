@@ -256,7 +256,7 @@ def loggingProvider(requestIdRequired=True):
                     res = (str(e), 500)
                     logUnhandledException(requestId, str(e))
             endTime = getUTCTime()
-            logApiSummary("Null", str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
+            logApiSummary(requestId, str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
             return res
         return logger
     return loggingOuter
