@@ -47,6 +47,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 
                     var mostRecentAssembly = GetMostRecentFileByExtension(subDir, ".dll");
                     var csxScriptFile = GetMostRecentFileByExtension(subDir, ".csx");
+                    var metadataFile = Path.Combine(subDir.FullName, "metadata.json");
                     if (mostRecentAssembly == default(FileInfo) || csxScriptFile == default(FileInfo))
                     {
                         LogWarning("No Assembly file (.dll) or Csx File found (.csx). Skipping cache update");
@@ -54,9 +55,15 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                     }
 
                     var scriptText = await FileHelper.GetFileContentAsync(csxScriptFile.FullName);
+                    var metadata = string.Empty;
+                    if (File.Exists(metadataFile))
+                    {
+                        metadata = await FileHelper.GetFileContentAsync(metadataFile);
+                    }
+
                     LogMessage($"Loading assembly : {mostRecentAssembly.FullName}");
                     var asm = Assembly.LoadFrom(mostRecentAssembly.FullName);
-                    invoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType()));
+                    invoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata));
                     invoker.InitializeEntryPoint(asm);
 
                     if (invoker.EntryPointDefinitionAttribute != null)
@@ -83,13 +90,14 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
         /// <param name="destDir">Destination directory.</param>
         /// <param name="scriptText">Script text.</param>
         /// <param name="assemblyPath">Assembly path.</param>
+        /// <param name="metadata">Metadata</param>
         /// <returns>Task for downloading and updating cache.</returns>
-        public async Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string scriptText, string assemblyPath)
+        public async Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string scriptText, string assemblyPath, string metadata)
         {
             LogMessage($"Loading assembly : {assemblyPath}");
             var asm = Assembly.LoadFrom(assemblyPath);
 
-            var newInvoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType()));
+            var newInvoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata));
             newInvoker.InitializeEntryPoint(asm);
 
             var cacheIdFilePath = Path.Combine(destDir.FullName, _cacheIdFileName);

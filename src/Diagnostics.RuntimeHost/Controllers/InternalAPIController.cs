@@ -94,7 +94,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 Name = detector.EntryPointDefinitionAttribute.Name,
                 Description = detector.EntryPointDefinitionAttribute.Description,
                 Author = detector.EntryPointDefinitionAttribute.Author,
-                Metadata = string.Empty
+                Metadata = detector.EntityMetadata.Metadata
             }).ToList();
             return filteredData;
         }

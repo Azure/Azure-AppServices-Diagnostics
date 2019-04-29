@@ -53,6 +53,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     var files = srcSubDirInfo.GetFiles().OrderByDescending(p => p.LastWriteTimeUtc);
                     var csxFile = files.FirstOrDefault(p => p.Extension.Equals(".csx", StringComparison.OrdinalIgnoreCase));
                     var asmFile = files.FirstOrDefault(p => p.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase));
+                    var metadataFile = files.FirstOrDefault(p => p.Name.Equals("metadata.json", StringComparison.OrdinalIgnoreCase));
 
                     string scriptText = string.Empty;
                     if (csxFile != default(FileInfo))
@@ -60,7 +61,13 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                         scriptText = await File.ReadAllTextAsync(csxFile.FullName);
                     }
 
-                    EntityMetadata scriptMetadata = new EntityMetadata(scriptText);
+                    string metadata = string.Empty;
+                    if (metadataFile != default(FileInfo))
+                    {
+                        metadata = await File.ReadAllTextAsync(metadataFile.FullName);
+                    }
+
+                    EntityMetadata scriptMetadata = new EntityMetadata(scriptText, EntityType.Signal, metadata);
                     EntityInvoker invoker = new EntityInvoker(scriptMetadata);
 
                     if (asmFile == default(FileInfo))
