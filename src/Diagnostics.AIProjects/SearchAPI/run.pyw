@@ -237,7 +237,7 @@ def getRequestId(req):
     return None
 
 def loggingProvider(requestIdRequired=True):
-    def loggingWrapper(f):
+    def loggingOuter(f):
         @wraps(f)
         def logger(*args, **kwargs):
             startTime = getUTCTime()
@@ -247,7 +247,7 @@ def loggingProvider(requestIdRequired=True):
             if not requestId:
                 res = ("BadRequest: Missing parameter requestId", 400)
                 endTime = getUTCTime()
-                logApiSummary("Null", request.url_rule, res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
+                logApiSummary("Null", str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
                 return res
             else:
                 try:
@@ -256,17 +256,17 @@ def loggingProvider(requestIdRequired=True):
                     res = (str(e), 500)
                     logUnhandledException(requestId, str(e))
             endTime = getUTCTime()
-            logApiSummary("Null", request.url_rule, res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
+            logApiSummary("Null", str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
             return res
         return logger
-    return loggingWrapper
+    return loggingOuter
 
 @app.route('/healthping')
 def healthPing():
     return ("I am alive!", 200)
 
 @app.route('/queryDetectors', methods=["POST"])
-@loggingProvider
+@loggingProvider(requestIdRequired=True)
 def queryDetectorsMethod():
     data = json.loads(request.data.decode('ascii'))
     requestId = data['requestId']
@@ -288,7 +288,7 @@ def queryDetectorsMethod():
     return (res, 200)
 
 @app.route('/queryUtterances', methods=["POST"])
-@loggingProvider
+@loggingProvider(requestIdRequired=True)
 def queryUtterancesMethod():
     data = json.loads(request.data.decode('ascii'))
     requestId = data['requestId']
