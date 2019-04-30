@@ -560,12 +560,20 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 var resourceUriFromQuery = queryParams.Where(s => s.Key.Equals("resourceUri")).Select(pair => pair.Value);
                 var resourceUri = context.OperationContext.Resource.ResourceUri;
+                var changeSetIdValue = changeSetId.First();
                 if (resourceUriFromQuery.Any())
                 {
                     resourceUri = resourceUriFromQuery.First();
                 }
 
-                var changesResponse = await GetChangesByChangeSetId(changeSetId.First(), resourceUri, dataProviders.ChangeAnalysis);
+                // Gets all change sets for the resource uri
+                if (changeSetIdValue.Equals("*"))
+                {
+                    var changesets = await GetAllChangeSets(resourceUri, DateTime.Parse(context.OperationContext.StartTime), DateTime.Parse(context.OperationContext.EndTime), dataProviders.ChangeAnalysis);
+                    return new Tuple<Response, List<DataProviderMetadata>>(changesets, dataProvidersMetadata);
+                }
+
+                var changesResponse = await GetChangesByChangeSetId(changeSetIdValue, resourceUri, dataProviders.ChangeAnalysis);
                 return new Tuple<Response, List<DataProviderMetadata>>(changesResponse, dataProvidersMetadata);
             }
 
@@ -862,6 +870,25 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             scanRequestData.Dataset.Add(diagData);
             return scanRequestData;
+        }
+
+        /// <summary>
+        /// Retreives all change sets for the resource id.
+        /// </summary>
+        /// <param name="resourceId">Resource Id.</param>
+        /// <param name="changeAnalysisDataProvider">Change Analysis Data Provider.</param>
+        /// <returns>All Changesets for the given resource id.</returns>
+        private async Task<Response> GetAllChangeSets(string resourceId, DateTime startTime, DateTime endTime, IChangeAnalysisDataProvider changeAnalysisDataProvider)
+        {
+            var changeSets = await changeAnalysisDataProvider.GetChangeSetsForResource(resourceId, startTime, endTime);
+            if (changeSets == null || changeSets.Count <= 0)
+            {
+                return new Response();
+            }
+
+            Response dataSetResponse = new Response();
+            dataSetResponse.AddChangeSets(changeSets);
+            return dataSetResponse;
         }
     }
 }
