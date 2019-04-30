@@ -34,6 +34,26 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SearchAPI", "SearchAPI", "{
 		src\Diagnostics.AIProjects\SearchAPI\run.pyw = src\Diagnostics.AIProjects\SearchAPI\run.pyw
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TrainingFactory", "TrainingFactory", "{F542FAE9-5CBA-4B7F-AD2A-54596E0004CA}"
+	ProjectSection(SolutionItems) = preProject
+		src\Diagnostics.AIProjects\TrainingFactory\credentials.json = src\Diagnostics.AIProjects\TrainingFactory\credentials.json
+		src\Diagnostics.AIProjects\TrainingFactory\DataProcessor.py = src\Diagnostics.AIProjects\TrainingFactory\DataProcessor.py
+		src\Diagnostics.AIProjects\TrainingFactory\DetectorsFetcher.py = src\Diagnostics.AIProjects\TrainingFactory\DetectorsFetcher.py
+		src\Diagnostics.AIProjects\TrainingFactory\ModelTrainer.py = src\Diagnostics.AIProjects\TrainingFactory\ModelTrainer.py
+		src\Diagnostics.AIProjects\TrainingFactory\ResourceFilterHelper.py = src\Diagnostics.AIProjects\TrainingFactory\ResourceFilterHelper.py
+		src\Diagnostics.AIProjects\TrainingFactory\SampleUtterancesFetcher.py = src\Diagnostics.AIProjects\TrainingFactory\SampleUtterancesFetcher.py
+		src\Diagnostics.AIProjects\TrainingFactory\TextSummarizer.py = src\Diagnostics.AIProjects\TrainingFactory\TextSummarizer.py
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "metadata", "metadata", "{837CE97F-30D7-4923-B0E8-1F9ABA325221}"
+	ProjectSection(SolutionItems) = preProject
+		src\Diagnostics.AIProjects\TrainingFactory\metadata\config.json = src\Diagnostics.AIProjects\TrainingFactory\metadata\config.json
+		src\Diagnostics.AIProjects\TrainingFactory\metadata\garbagePhrases.txt = src\Diagnostics.AIProjects\TrainingFactory\metadata\garbagePhrases.txt
+		src\Diagnostics.AIProjects\TrainingFactory\metadata\shortPhrasesList.txt = src\Diagnostics.AIProjects\TrainingFactory\metadata\shortPhrasesList.txt
+		src\Diagnostics.AIProjects\TrainingFactory\metadata\stripTrailers.txt = src\Diagnostics.AIProjects\TrainingFactory\metadata\stripTrailers.txt
+		src\Diagnostics.AIProjects\TrainingFactory\metadata\trainingConfig.json = src\Diagnostics.AIProjects\TrainingFactory\metadata\trainingConfig.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		data\samples\Diagnostics.Samples\Diagnostics.Samples.projitems*{99368f78-83b7-46d4-b49b-f26fe165f53c}*SharedItemsImports = 13
@@ -146,6 +166,8 @@ Global
 		{99368F78-83B7-46D4-B49B-F26FE165F53C} = {1923DCF1-54EE-40DA-AE0C-DE10647D3928}
 		{3A34997D-ECF8-4BA5-8BC7-6BA9A6DBDB3A} = {0F59F43E-D06C-4A0F-8D38-9538BA58FC6A}
 		{4991C2E8-75B2-46AE-9F0C-D9491028F6BE} = {3A34997D-ECF8-4BA5-8BC7-6BA9A6DBDB3A}
+		{F542FAE9-5CBA-4B7F-AD2A-54596E0004CA} = {3A34997D-ECF8-4BA5-8BC7-6BA9A6DBDB3A}
+		{837CE97F-30D7-4923-B0E8-1F9ABA325221} = {F542FAE9-5CBA-4B7F-AD2A-54596E0004CA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B4A19BFB-9A33-49E2-98AD-955E9472EFAD}

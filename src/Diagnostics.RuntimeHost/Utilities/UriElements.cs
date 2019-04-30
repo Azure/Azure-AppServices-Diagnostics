@@ -50,6 +50,8 @@ namespace Diagnostics.RuntimeHost.Utilities
         // Constants for internal api interactions
         public const string Internal = "/internal";
         public const string Logger = "logger";
+        public const string PublishModel = "publishmodel";
+        public const string FetchModel = "fetchmodel";
         public const string SearchAPI = "http://localhost:8010";
     }
 

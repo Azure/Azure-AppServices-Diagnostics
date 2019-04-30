@@ -1,8 +1,10 @@
 ﻿using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.RuntimeHost.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -32,6 +34,17 @@ namespace Diagnostics.RuntimeHost.Utilities
             {
                 return new Dictionary<string, string>();
             }
+        }
+
+        public IEnumerable<CommitContent> GetAllFilesInFolder(string folderpath)
+        {
+            string parentpath = Path.GetFileName(folderpath);
+            List<CommitContent> files = new List<CommitContent>();
+            foreach (string file in Directory.EnumerateFiles(folderpath, string.Empty))
+            {
+                 files.Add(new CommitContent(parentpath + "/" + Path.GetFileName(file), File.ReadAllText(file), Octokit.EncodingType.Utf8));
+            }
+            return files;
         }
     }
 }

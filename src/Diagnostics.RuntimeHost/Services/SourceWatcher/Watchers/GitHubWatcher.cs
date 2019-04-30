@@ -31,7 +31,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         private Task _firstTimeCompletionTask;
         private string _rootContentApiPath;
 
-        private readonly IGithubClient _githubClient;
+        public readonly IGithubClient _githubClient;
         private readonly string _workerIdFileName = "workerId.txt";
         private readonly string _lastModifiedMarkerName = "_lastModified.marker";
         private readonly string _deleteMarkerName = "_delete.marker";
@@ -270,6 +270,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 else if (githubFile.Name.Equals("metadata.json", StringComparison.OrdinalIgnoreCase))
                 {
                     metadataFilePath = downloadFilePath;
+                }
+                else if (githubFile.Name.Split(".").Last() == "model" || githubFile.Name.Split(".").Last() == "index" || githubFile.Name.Split(".").Last() == "dict" || githubFile.Name.Split(".").Last() == "json")
+                {
+                    downloadFilePath = Path.Combine(destDir.FullName, githubFile.Name);
                 }
                 else
                 {

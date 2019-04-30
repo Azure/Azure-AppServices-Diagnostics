@@ -11,6 +11,7 @@ using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Newtonsoft.Json;
+using System.IO;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -83,6 +84,23 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Uploads model files to github
+        /// </summary>
+        /// <param name="modelpath">Model path</param>
+        [HttpPost(UriElements.PublishModel)]
+        public async Task<IActionResult> PublishModel([FromBody]string modelpath)
+        {
+            var commits = _internalApiHelper.GetAllFilesInFolder(modelpath);
+            var watcher = _sourceWatcherService.Watcher as GitHubWatcher;
+            await watcher._githubClient.CreateOrUpdateFiles(commits, "Model update");
+            return Ok();
+        }
+
+        /// <summary>
+        /// Get the list of all detectors
+        /// </summary>
+        /// <returns>List of all detectors</returns>
         private async Task<List<DetectorMetadata>> ListDetectorsForTrainingInternal()
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
