@@ -211,7 +211,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 }
                 catch (Exception e)
                 {
-                    throw new Exception($"Problem while loading Assembly: {e.Message}");
+                    throw new AggregateException($"Problem while loading Assembly: {e.Message}", e);
                 }
 
                 var metaData = new EntityMetadata(jsonBody.Script, entityType);

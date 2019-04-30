@@ -12,6 +12,11 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Detector is waiting to be validated.
         /// </summary>
-        WaitingForValidation
+        WaitingForValidation,
+
+        /// <summary>
+        /// Detector validation is overridden.
+        /// </summary>
+        OverrideValidation
     }
 }
