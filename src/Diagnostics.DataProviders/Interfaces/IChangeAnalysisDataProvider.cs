@@ -50,5 +50,13 @@ namespace Diagnostics.DataProviders.Interfaces
         /// </summary>
         /// <param name="subscriptionId">Subscription Id.</param>
         Task<SubscriptionOnboardingStatus> GetSubscriptionOnboardingStatus(string subscriptionId);
+
+        /// <summary>
+        /// Submits scan request to Change Analysis RP or checks scan status.
+        /// </summary>
+        /// <param name="resourceId">Azure resource id</param>
+        /// <param name="scanAction">Scan action: It is "submitscan" or "checkscan".</param>
+        /// <returns>Contains info about the scan request with submissions state and time.</returns>
+        Task<ChangeScanModel> ScanActionRequest(string resourceId, string scanAction);
     }
 }
