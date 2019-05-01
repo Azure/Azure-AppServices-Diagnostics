@@ -83,6 +83,8 @@ namespace Diagnostics.DataProviders
         public async Task<List<ChangeSetResponseModel>> GetChangeSetsAsync(ChangeSetsRequest changeSetsRequest)
         {
             string requestUri = changeAnalysisEndPoint + $"changesets?api-version={apiVersion}";
+            changeSetsRequest.StartTime = changeSetsRequest.StartTime.ToUniversalTime();
+            changeSetsRequest.EndTime = changeSetsRequest.EndTime.ToUniversalTime();
             object postBody = new
             {
                 changeSetsRequest.ResourceId,
