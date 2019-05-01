@@ -1,4 +1,6 @@
-﻿namespace Diagnostics.ModelsAndUtils.Models.ChangeAnalysis
+﻿using System.Collections.Generic;
+
+namespace Diagnostics.ModelsAndUtils.Models.ChangeAnalysis
 {
     public class ChangeSetResponseModel
     {
@@ -31,5 +33,15 @@
         /// Change initiated by. It can be email address or Guid.
         /// </summary>
         public string InitiatedBy;
+
+        /// <summary>
+        /// Contains info about the last change scan.
+        /// </summary>
+        public LastScanResponseModel LastScanInformation;
+
+        /// <summary>
+        /// Gets the changes for the changeSetId.
+        /// </summary>
+        public List<ResourceChangesResponseModel> ResourceChanges;
     }
 }
