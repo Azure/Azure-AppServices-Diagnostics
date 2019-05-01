@@ -1,7 +1,7 @@
 from SampleUtterancesFetcher import SampleUtterancesFetcher
 from DetectorsFetcher import DetectorsFetcher
 import gc, os
-
+config = json.loads(open("config.json", "r").read())
 class DataProcessor:
     def __init__(self):
         pass
@@ -15,6 +15,6 @@ class DataProcessor:
             pass
         sampleUtterancesFetcher = SampleUtterancesFetcher()
         sampleUtterancesFetcher.run(productid, rawdatapath)
-        detectorsFetcher = DetectorsFetcher("http://localhost:{0}/internal/detectors".format("1743"))
+        detectorsFetcher = DetectorsFetcher("http://localhost:{0}/internal/detectors".format(config["internalApiPort"]))
         detectorsFetcher.fetchDetectors(productid, rawdatapath)
         gc.collect()

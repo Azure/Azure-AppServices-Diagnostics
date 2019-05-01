@@ -1,26 +1,10 @@
-import os, json, itertools, nltk
+import os, json, itertools, nltk, requests
 from nltk.corpus import stopwords
 from gensim.models import TfidfModel
 from nltk.stem.porter import *
 from gensim import corpora, similarities
-from azure.storage.blob import BlockBlobService
 from DataProcessor import DataProcessor
-
-credentials = json.loads(open("credentials.json", "r").read())
-STORAGE_ACCOUNT_NAME = credentials["STORAGE_ACCOUNT_NAME"]
-STORAGE_ACCOUNT_KEY = credentials["STORAGE_ACCOUNT_KEY"]
-blob_service = BlockBlobService(account_name=STORAGE_ACCOUNT_NAME, account_key=STORAGE_ACCOUNT_KEY)
-
-def downloadTrainingData():
-    container_name = 'trainingdata'
-    for blobname in list(map(lambda x: x.name, list(blob_service.list_blobs(container_name)))):
-        blob_service.get_blob_to_path(container_name, blobname, blobname)
-
-def uploadModels(productid, outpath):
-    container_name = "modelpackages"
-    for file in os.listdir(outpath):
-        blob_service.create_blob_from_path(container_name, "{0}/{1}".format(productid, file), outpath + "/{0}".format(file))
-
+config = json.loads(open("config.json", "r").read())
 try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
@@ -73,6 +57,11 @@ def trainModelM2(tests, detector_tokens, sampleUtterances_tokens, productid, out
     model.save(outpath + "/m2.model")
     index.save(outpath + "/m2.index")
 
+def publishModels(productid):
+    publishUrl = "http://localhost:{0}/internal/publishmodel".format(config["internalApiPort"])
+    modelPath = os.path.dirname(os.path.abspath(__file__)) + "/" + productid
+    requests.post(publishUrl, data=json.dumps(modelPath), headers={"Content-Type": "application/json"})
+
 def trainModels(productid):
     try:
         trainingConfig = json.loads(open("metadata/trainingConfig.json", "r").read())[productid]
@@ -108,8 +97,8 @@ def trainModels(productid):
     trainModelM2([], detector_tokens, sampleUtterances_tokens, productid, outpath)
     open(outpath + "/Detectors.json", "w").write(json.dumps(detectors))
     open(outpath + "/SampleUtterances.json", "w").write(json.dumps(sampleUtterances))
-    #uploadModels(productid, outpath)
+    publishModels(productid)
 
 trainModels("14748")
-import requests
-print(requests.get("http://localhost:8010/refreshModel?productid=14748").content)
+#import requests
+#print(requests.get("http://localhost:8010/refreshModel?productid=14748").content)

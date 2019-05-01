@@ -4,11 +4,12 @@ It contains the definition of routes and views for the application.
 """
 import os, gc, shutil, uuid
 from flask import Flask, request
-from azure.storage.blob import BlockBlobService
+from RegistryReader import githubFolderPath
 from Logger import *
 from datetime import datetime, timezone
 import json, itertools, nltk
 from functools import wraps
+config = json.loads(open("config.json", "r").read())
 
 try:
     nltk.data.find('tokenizers/punkt')
@@ -46,7 +47,7 @@ packageFileNames = {
     "sampleUtterancesFile": "SampleUtterances.json"
 }
 
-resourceConfig = json.loads(open("config.json", "r").read())
+resourceConfig = config["resourceConfig"]
 def getProductId(resourceObj):
     productids = []
     if resourceObj["ResourceType"] == "App":
@@ -64,25 +65,15 @@ def getProductId(resourceObj):
     else:
         return None
         
-credentials = json.loads(open("credentials.json", "r").read())
-STORAGE_ACCOUNT_NAME = credentials["STORAGE_ACCOUNT_NAME"]
-STORAGE_ACCOUNT_KEY = credentials["STORAGE_ACCOUNT_KEY"]
-blob_service = BlockBlobService(account_name=STORAGE_ACCOUNT_NAME, account_key=STORAGE_ACCOUNT_KEY)
-def downloadModels(productid, path=""):
-    try:
-        os.makedirs(path + productid)
-    except FileExistsError:
-        pass
-    container_name = 'modelpackages'
-    try:
-        for blobname in list(map(lambda x: x.name, list(blob_service.list_blobs(container_name, prefix=productid+"/")))):
-            blob_service.get_blob_to_path(container_name, blobname, path + blobname)
-    except Exception as e:
-        raise ModelDownloadFailed("Model can't be downloaded " + str(e))
-
+modelsPath = githubFolderPath
 def copyFolder(src, dst):
     if os.path.isdir(src):
         shutil.copytree(src, dst)
+def downloadModels(productid, path=""):
+    try:
+        copyFolder(modelsPath  +productid, path + productid)
+    except Exception as e:
+        raise ModelDownloadFailed("Model can't be downloaded " + str(e))
 #### Text Processing setup and Text Search model for Queries ####
 stemmer = PorterStemmer()
 stop = stopwords.words('english')

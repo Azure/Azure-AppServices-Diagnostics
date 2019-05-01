@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Utilities
@@ -42,7 +43,7 @@ namespace Diagnostics.RuntimeHost.Utilities
             List<CommitContent> files = new List<CommitContent>();
             foreach (string file in Directory.EnumerateFiles(folderpath, string.Empty))
             {
-                 files.Add(new CommitContent(parentpath + "/" + Path.GetFileName(file), File.ReadAllText(file), Octokit.EncodingType.Utf8));
+                 files.Add(new CommitContent(parentpath + "/" + Path.GetFileName(file), Convert.ToBase64String(File.ReadAllBytes(file)), Octokit.EncodingType.Base64));
             }
             return files;
         }

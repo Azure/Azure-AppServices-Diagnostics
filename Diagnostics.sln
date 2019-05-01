@@ -29,17 +29,18 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SearchAPI", "SearchAPI", "{4991C2E8-75B2-46AE-9F0C-D9491028F6BE}"
 	ProjectSection(SolutionItems) = preProject
 		src\Diagnostics.AIProjects\SearchAPI\config.json = src\Diagnostics.AIProjects\SearchAPI\config.json
-		src\Diagnostics.AIProjects\SearchAPI\credentials.json = src\Diagnostics.AIProjects\SearchAPI\credentials.json
 		src\Diagnostics.AIProjects\SearchAPI\Logger.py = src\Diagnostics.AIProjects\SearchAPI\Logger.py
+		src\Diagnostics.AIProjects\SearchAPI\RegistryReader.py = src\Diagnostics.AIProjects\SearchAPI\RegistryReader.py
 		src\Diagnostics.AIProjects\SearchAPI\run.pyw = src\Diagnostics.AIProjects\SearchAPI\run.pyw
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TrainingFactory", "TrainingFactory", "{F542FAE9-5CBA-4B7F-AD2A-54596E0004CA}"
 	ProjectSection(SolutionItems) = preProject
-		src\Diagnostics.AIProjects\TrainingFactory\credentials.json = src\Diagnostics.AIProjects\TrainingFactory\credentials.json
 		src\Diagnostics.AIProjects\TrainingFactory\DataProcessor.py = src\Diagnostics.AIProjects\TrainingFactory\DataProcessor.py
 		src\Diagnostics.AIProjects\TrainingFactory\DetectorsFetcher.py = src\Diagnostics.AIProjects\TrainingFactory\DetectorsFetcher.py
+		src\Diagnostics.AIProjects\TrainingFactory\Logger.py = src\Diagnostics.AIProjects\TrainingFactory\Logger.py
 		src\Diagnostics.AIProjects\TrainingFactory\ModelTrainer.py = src\Diagnostics.AIProjects\TrainingFactory\ModelTrainer.py
+		src\Diagnostics.AIProjects\TrainingFactory\RegistryReader.py = src\Diagnostics.AIProjects\TrainingFactory\RegistryReader.py
 		src\Diagnostics.AIProjects\TrainingFactory\ResourceFilterHelper.py = src\Diagnostics.AIProjects\TrainingFactory\ResourceFilterHelper.py
 		src\Diagnostics.AIProjects\TrainingFactory\SampleUtterancesFetcher.py = src\Diagnostics.AIProjects\TrainingFactory\SampleUtterancesFetcher.py
 		src\Diagnostics.AIProjects\TrainingFactory\TextSummarizer.py = src\Diagnostics.AIProjects\TrainingFactory\TextSummarizer.py

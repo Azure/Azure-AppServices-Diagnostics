@@ -1,6 +1,7 @@
 from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
+from RegistryReader import githubFolderPath, kustoClientId, kustoAuthority, kustoClientSecret
 import re, itertools, json, requests
 from TextSummarizer import retrieveSentences
 
@@ -60,11 +61,10 @@ class StackOverFlowFetcher:
 
 class CaseTitlesFetcher:
     def __init__(self):
-        credentials = json.loads(open("credentials.json", "r").read())
-        cluster = credentials["cluster"]
-        authority_id = credentials["authority_id"]
-        client_id = credentials["client_id"]
-        client_secret = credentials["client_secret"]
+        cluster = "https://usage360.kusto.windows.net"
+        authority_id = kustoAuthority
+        client_id = kustoClientId
+        client_secret = kustoClientSecret
         kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster, client_id, client_secret, authority_id)
         self.kustoClient = KustoClient(kcsb)
         self.garbageList = [x.strip() for x in open("metadata/garbagePhrases.txt", "r").readlines()]

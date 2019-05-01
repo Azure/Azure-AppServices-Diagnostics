@@ -1,6 +1,6 @@
 import json
 
-resourceConfig = json.loads(open("metadata/config.json", "r").read())
+resourceConfig = json.loads(open("metadata/config.json", "r").read())["resourceConfig"]
 def getProductId(resourceObj, refresh=False):
     global resourceConfig
     if refresh:
