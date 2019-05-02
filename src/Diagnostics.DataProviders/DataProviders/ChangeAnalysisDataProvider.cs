@@ -6,6 +6,7 @@ using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.ModelsAndUtils.Models;
+using System.Linq;
 
 namespace Diagnostics.DataProviders
 {
@@ -57,6 +58,7 @@ namespace Diagnostics.DataProviders
 
             // Get changeSet of the given arm resource uri
             List<ChangeSetResponseModel> changesets = await changeAnalysisClient.GetChangeSetsAsync(request);
+            changesets = changesets.OrderByDescending(change => change.ChangeSetTime).ToList();
             if (changesets.Count > 0)
             {
                 var latestChange = changesets[0];

@@ -129,7 +129,7 @@ namespace Diagnostics.DataProviders
                 var kustoQuery = new KustoQuery
                 {
                     Text = query,
-                    Url = string.Format("https://web.kusto.windows.net/clusters/{0}.kusto.windows.net/databases/{1}?q={2}", cluster, database, encodedQuery),
+                    Url = $"https://dataexplorer.azure.com/clusters/{cluster}/databases/{database}?query={encodedQuery}",
                     KustoDesktopUrl = $"https://{cluster}.kusto.windows.net:443/{database}?query={encodedQuery}&web=0"
                 };
                 return kustoQuery;
