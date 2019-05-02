@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 
 namespace Diagnostics.ModelsAndUtils.Models.ChangeAnalysis
 {
@@ -23,6 +24,17 @@ namespace Diagnostics.ModelsAndUtils.Models.ChangeAnalysis
         /// Timestamp of the snapshot when the change was detected.
         /// </summary>
         public string TimeStamp;
+
+        /// <summary>
+        /// Change Set time.
+        /// </summary>
+        public DateTime ChangeSetTime
+        {
+            get
+            {
+                return DateTime.Parse(TimeStamp);
+            }
+        }
 
         /// <summary>
         /// Interval of the change.
