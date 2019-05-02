@@ -36,6 +36,12 @@ namespace Diagnostics.DataProviders
         public bool IsMockConfigured { get; set; }
 
         /// <summary>
+        /// Is the local host version of observer enabled.
+        /// </summary>
+        [ConfigurationName("ObserverLocalHostEnabled", DefaultValue = false)]
+        public bool ObserverLocalHostEnabled { get; set; }
+
+        /// <summary>
         /// Gets or sets tenant to authenticate with.
         /// </summary>
         public string AADAuthority { get; set; }
