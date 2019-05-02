@@ -1,8 +1,8 @@
 from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
-from RegistryReader import githubFolderPath, kustoClientId, kustoAuthority, kustoClientSecret
-import re, itertools, json, requests
+from RegistryReader import githubFolderPath, kustoClientId, kustoClientSecret
+import re, itertools, json, requests, os
 from TextSummarizer import retrieveSentences
 
 class StackOverFlowFetcher:
@@ -45,24 +45,24 @@ class StackOverFlowFetcher:
             topn = 200
         #Fetch questions for tags
         try:
-            questions = json.loads(open(datapath + "/SampleUtterances.json", "r").read())["stackoverflowtitles"]
+            questions = json.loads(open(os.path.join(datapath, "SampleUtterances.json"), "r").read())["stackoverflowtitles"]
         except:
             questions = []
         for tag in tags:
             qids = [x["qid"] for x in questions]
             questions += [q for q in self.get_Tag_Questions(tag, topn) if q["qid"] not in qids]
         try:
-            sampleUtterances = json.loads(open(datapath + "/SampleUtterances.json", "r").read())
+            sampleUtterances = json.loads(open(os.path.join(datapath, "SampleUtterances.json"), "r").read())
             sampleUtterances["stackoverflowtitles"] = questions
-            open(datapath + "/SampleUtterances.json", "w").write(json.dumps(sampleUtterances))
+            open(os.path.join(datapath, "SampleUtterances.json"), "w").write(json.dumps(sampleUtterances))
         except (FileNotFoundError, ValueError):
             sampleUtterances = {"incidenttitles": [], "stackoverflowtitles": questions}
-            open(datapath + "/SampleUtterances.json", "w").write(json.dumps(sampleUtterances))
+            open(os.path.join(datapath, "SampleUtterances.json"), "w").write(json.dumps(sampleUtterances))
 
 class CaseTitlesFetcher:
     def __init__(self):
         cluster = "https://usage360.kusto.windows.net"
-        authority_id = kustoAuthority
+        authority_id = "72f988bf-86f1-41af-91ab-2d7cd011db47"
         client_id = kustoClientId
         client_secret = kustoClientSecret
         kcsb = KustoConnectionStringBuilder.with_aad_application_key_authentication(cluster, client_id, client_secret, authority_id)
@@ -107,7 +107,6 @@ class CaseTitlesFetcher:
             return s.lstrip()
 
     def extractor(self, key, group):
-        print("/", end="")
         category = key[0]+"--"+key[1]
         numsentences = group.shape[0]
         lines = [(self.endSentence(row["CleanCaseTitles"]), row["SupportCenterCaseLink"])  for ind, row in group.iterrows()]
@@ -122,7 +121,6 @@ class CaseTitlesFetcher:
                 caselinks = [x[1] for x in lines if re.sub('[^0-9a-zA-Z]+', '', sent)==re.sub('[^0-9a-zA-Z]+', '', x[0])]
             if caselinks:
                 combined.append({"text": sent, "links": caselinks, "category": category})
-        print("\r.", end="")
         return combined
 
     def runCaseTitlesExtraction(self, df, productid, datapath):
@@ -132,7 +130,7 @@ class CaseTitlesFetcher:
         print("Processing {0} case titles across {1} categories".format(df.shape[0], len(list(groups))))
         results = sorted(list(itertools.chain.from_iterable([self.extractor(key, group) for key, group in groups])), key=lambda x: x["text"])
         try:
-            sampleUtterances = json.loads(open(datapath + "/SampleUtterances.json", "r").read())
+            sampleUtterances = json.loads(open(os.path.join(datapath, "SampleUtterances.json"), "r").read())
             #sampleUtterances = list(set(sampleUtterances+results))
             for x in results:
                 found = False
@@ -146,9 +144,9 @@ class CaseTitlesFetcher:
                         break
                 if not found:
                     sampleUtterances["incidenttitles"].append(x)
-            open(datapath + "/SampleUtterances.json", "w").write(json.dumps(sampleUtterances, indent=4))
+            open(os.path.join(datapath, "SampleUtterances.json"), "w").write(json.dumps(sampleUtterances, indent=4))
         except (FileNotFoundError, ValueError) as e:
-            open(datapath + "/SampleUtterances.json", "w").write(json.dumps({"incidenttitles" : results, "stackoverflowtitles": []}, indent=4))
+            open(os.path.join(datapath, "SampleUtterances.json"), "w").write(json.dumps({"incidenttitles" : results, "stackoverflowtitles": []}, indent=4))
 
     def fetchCaseTitles(self, productid, datapath):
         try:

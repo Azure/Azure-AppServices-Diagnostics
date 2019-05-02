@@ -1,5 +1,5 @@
 import requests, json
-config = json.loads(open("config.json", "r").read())
+config = json.loads(open("metadata/config.json", "r").read())
 LOGGER_URL = "http://localhost:{0}/internal/logger".format(config["internalApiPort"])
 
 def logHandledException(requestId, exception):

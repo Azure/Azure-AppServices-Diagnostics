@@ -1,7 +1,7 @@
 from SampleUtterancesFetcher import SampleUtterancesFetcher
 from DetectorsFetcher import DetectorsFetcher
-import gc, os
-config = json.loads(open("config.json", "r").read())
+import gc, os, json
+config = json.loads(open("metadata/config.json", "r").read())
 class DataProcessor:
     def __init__(self):
         pass

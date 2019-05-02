@@ -71,7 +71,7 @@ def copyFolder(src, dst):
         shutil.copytree(src, dst)
 def downloadModels(productid, path=""):
     try:
-        copyFolder(modelsPath  +productid, path + productid)
+        copyFolder(os.path.join(modelsPath, productid), os.path.join(path, productid))
     except Exception as e:
         raise ModelDownloadFailed("Model can't be downloaded " + str(e))
 #### Text Processing setup and Text Search model for Queries ####
@@ -92,7 +92,7 @@ def verifyFile(filename):
 class TextSearchModel:
     def __init__(self, modelpackagepath, packageFiles):
         for key in packageFiles.keys():
-            packageFiles[key] = modelpackagepath + packageFiles[key]
+            packageFiles[key] = os.path.join(modelpackagepath, packageFiles[key])
         self.packageFiles = packageFiles
         self.models = {"dictionary": None, "m1Model": None, "m1Index": None, "m2Model": None, "m2Index": None, "detectors": None, "sampleUtterances": None}
         try:
@@ -180,18 +180,18 @@ def loadModel(productid, model=None):
         return
     if productid in loaded_models:
         return
-    modelpackagepath = productid + "/"
-    if not os.path.isdir(productid) or not all([verifyFile(modelpackagepath + x) for x in packageFileNames.values()]):
+    modelpackagepath = productid
+    if not os.path.isdir(productid) or not all([verifyFile(os.path.join(modelpackagepath, x)) for x in packageFileNames.values()]):
         downloadModels(productid)
-    if not all([verifyFile(modelpackagepath + x) for x in packageFileNames.values()]):
+    if not all([verifyFile(os.path.join(modelpackagepath, x)) for x in packageFileNames.values()]):
         raise FileNotFoundError("One or more of model file(s) are missing")
     loaded_models[productid] = TextSearchModel(modelpackagepath, dict(packageFileNames))
 
 def refreshModel(productid):
-    path = str(uuid.uuid4()) + "/"
+    path = str(uuid.uuid4())
     downloadModels(productid, path=path)
-    modelpackagepath = path + productid + "/"
-    if not all([verifyFile(modelpackagepath + x) for x in packageFileNames.values()]):
+    modelpackagepath = os.path.join(path, productid)
+    if not all([verifyFile(os.path.join(modelpackagepath, x)) for x in packageFileNames.values()]):
         return "Failed to refresh model because One or more of model file(s) are missing"
     try:
         temp = TextSearchModel(modelpackagepath, dict(packageFileNames))
@@ -204,7 +204,7 @@ def refreshModel(productid):
     except Exception as e:
         shutil.rmtree(path)
         return "Failed to refresh Model Exception:" + str(e)
-    loadModel(productid, model=TextSearchModel(productid + "/", dict(packageFileNames)))
+    loadModel(productid, model=TextSearchModel(productid, dict(packageFileNames)))
     return "Model Refreshed Successfully"
 
 def freeModel(productid):

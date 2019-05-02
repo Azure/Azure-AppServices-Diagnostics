@@ -134,7 +134,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return response == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata));
         }
 
-        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationPostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null, string detectorUtterances = null, Form Form = null)
+        protected async Task<IActionResult> ExecuteQuery<TPostBodyResource>(TResource resource, CompilationPostBody<TPostBodyResource> jsonBody, string startTime, string endTime, string timeGrain, string detectorId = null, string dataSource = null, string timeRange = null, Form Form = null)
         {
             if (jsonBody == null)
             {
@@ -241,9 +241,9 @@ namespace Diagnostics.RuntimeHost.Controllers
 
                     // Get suggested utterances for the detector
                     string[] utterances = null;
-                    if (detectorUtterances != null && invoker.EntryPointDefinitionAttribute.Description.ToString().Length > 3)
+                    if (jsonBody.DetectorUtterances != null && invoker.EntryPointDefinitionAttribute.Description.ToString().Length > 3)
                     {
-                        utterances = JsonConvert.DeserializeObject<string[]>(detectorUtterances);
+                        utterances = JsonConvert.DeserializeObject<string[]>(jsonBody.DetectorUtterances);
                         string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
                         var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
                         var searchUtterances = await _searchService.SearchUtterances(runtimeContext.OperationContext.RequestId, description, utterances, resourceParams);

@@ -1,6 +1,6 @@
 import os, json, requests
 from ResourceFilterHelper import getProductId
-config = json.loads(open("config.json", "r").read())
+config = json.loads(open("metadata/config.json", "r").read())
 class DetectorsFetcher:
     def __init__(self, detectorsUrl):
         self.detectorsUrl = detectorsUrl if detectorsUrl else "http://localhost:{0}/internal/detectors".format(config["internalApiPort"])
@@ -16,6 +16,6 @@ class DetectorsFetcher:
                 detector["utterances"] = []
         if len(content)>0:
             try:
-                open(datapath + "/Detectors.json", "w").write(json.dumps(detectors, indent=4))
+                open(os.path.join(datapath, "Detectors.json"), "w").write(json.dumps(detectors, indent=4))
             except:
                 pass

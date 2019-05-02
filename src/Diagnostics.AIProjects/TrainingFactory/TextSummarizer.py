@@ -2,7 +2,7 @@ import pytextrank, json, uuid, os, shutil
 
 def retrieveSentences(content, word_limit):
     currpath = os.getcwd()
-    folder = currpath + "/" + str(uuid.uuid4())
+    folder = os.path.join(currpath, str(uuid.uuid4()))
     os.mkdir(folder)
     fname = str(uuid.uuid4())
     with open("{0}/{1}.json".format(folder, fname), "w") as f:

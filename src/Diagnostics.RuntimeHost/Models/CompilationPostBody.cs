@@ -38,6 +38,11 @@ namespace Diagnostics.RuntimeHost.Models
         public string EntityType { get; set; }
 
         /// <summary>
+        /// Gets or sets the detector search terms
+        /// </summary>
+        public string DetectorUtterances { get; set; }
+
+        /// <summary>
         /// Gets or sets the resource.
         /// </summary>
         public T Resource { get; set; }
