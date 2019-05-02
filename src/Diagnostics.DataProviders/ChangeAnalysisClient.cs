@@ -83,6 +83,8 @@ namespace Diagnostics.DataProviders
         public async Task<List<ChangeSetResponseModel>> GetChangeSetsAsync(ChangeSetsRequest changeSetsRequest)
         {
             string requestUri = changeAnalysisEndPoint + $"changesets?api-version={apiVersion}";
+            changeSetsRequest.StartTime = changeSetsRequest.StartTime.ToUniversalTime();
+            changeSetsRequest.EndTime = changeSetsRequest.EndTime.ToUniversalTime();
             object postBody = new
             {
                 changeSetsRequest.ResourceId,
@@ -146,6 +148,39 @@ namespace Diagnostics.DataProviders
                     return new SubscriptionOnboardingStatus
                     {
                         IsRegistered = false
+                    };
+                }
+
+                throw httpexception;
+            }
+        }
+
+        /// <summary>
+        /// Submits scan request to Change Analysis RP or checks scan status.
+        /// </summary>
+        /// <param name="resourceId">Azure resource id</param>
+        /// <param name="scanAction">Scan action: It is "submitscan" or "checkscan".</param>
+        /// <returns>Contains info about the scan request with submissions state and time.</returns>
+        public async Task<ChangeScanModel> ScanActionRequest(string resourceId, string scanAction)
+        {
+            try
+            {
+                string requestUri = changeAnalysisEndPoint + $"{scanAction}/{resourceId}?api-version={apiVersion}";
+                HttpMethod httpMethod = scanAction.Equals("checkscan") ? HttpMethod.Get : HttpMethod.Post;
+                string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: httpMethod);
+                return JsonConvert.DeserializeObject<ChangeScanModel>(jsonString);
+            }
+            catch (HttpRequestException httpexception)
+            {
+                // 404 NotFound mean there are no active requests.
+                if (httpexception.Data.Contains("Status Code") && (HttpStatusCode)httpexception.Data["Status Code"] == HttpStatusCode.NotFound)
+                {
+                    return new ChangeScanModel
+                    {
+                        OperationId = string.Empty,
+                        State = "No active requests",
+                        SubmissionTime = null,
+                        CompletionTime = null
                     };
                 }
 

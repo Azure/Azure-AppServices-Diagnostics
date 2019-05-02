@@ -419,6 +419,11 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(changeAnalysisDataProvider.GetSubscriptionOnboardingStatus(subscriptionId));
         }
 
+        public Task<ChangeScanModel> ScanActionRequest(string resourceId, string scanAction)
+        {
+            return MakeDependencyCall(changeAnalysisDataProvider.ScanActionRequest(resourceId, scanAction));
+        }
+
         #endregion
 
         private async Task<T> MakeDependencyCall<T>(Task<T> dataProviderTask, [CallerMemberName]string dataProviderOperation = "")
