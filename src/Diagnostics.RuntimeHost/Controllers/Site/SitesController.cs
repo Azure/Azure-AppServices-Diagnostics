@@ -68,11 +68,11 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="postBody">Request json body.</param>
         /// <returns>Task for listing detectors.</returns>
         [HttpPost(UriElements.Detectors)]
-        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody, [FromQuery(Name = "text")] string text=null)
+        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody, [FromQuery(Name = "text")] string text = null)
         {
-            if (text != null && text.Length < 3)
+            if (text == null)
             {
-                return BadRequest("Search text should be at least 3 characters long.");
+                text = Request.Query["text"].ToString();
             }
             if (IsPostBodyMissing(postBody))
             {

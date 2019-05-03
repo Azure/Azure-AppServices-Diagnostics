@@ -562,7 +562,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             var allDetectors = _invokerCache.GetEntityInvokerList<TResource>(context).ToList();
 
             SearchResults searchResults = null;
-            if (queryText != null)
+            if (queryText != null && queryText.Length>3)
             {
                 var resourceParams = _internalApiHelper.GetResourceParams(context.OperationContext.Resource as IResourceFilter);
                 var res = await _searchService.SearchDetectors(context.OperationContext.RequestId, queryText, resourceParams);
