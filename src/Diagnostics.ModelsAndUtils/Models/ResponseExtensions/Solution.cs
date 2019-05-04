@@ -66,6 +66,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
         /// <summary>
         /// Instructions that will be sent to the customer by support staff. Rendered as Markdown.
+        /// Any instance of "{detectorLink}" will be replaced with a link to the detector.
+        /// If "{detectorLink}" is not present in the string, the detector link will be appended to the
+        /// end of the markdown.
         /// </summary>
         public string InternalMarkdown { get; set; }
 

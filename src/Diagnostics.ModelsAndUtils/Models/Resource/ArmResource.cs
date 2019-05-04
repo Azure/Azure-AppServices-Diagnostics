@@ -19,7 +19,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string ResourceGroup { get; set; }
 
         /// <summary>
-        /// Name of the resource resides
+        /// Name of the resource
         /// </summary>
         public string Name { get; set; }
 
@@ -41,10 +41,10 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <returns>True, if app resource passes the filter. False otherwise</returns>
         public bool IsApplicable(IResourceFilter filter)
         {
-            if (filter is ArmResource)
+            if (filter is ArmResourceFilter)
             {
                 ArmResourceFilter armFilter = filter as ArmResourceFilter;
-                return ((string.Compare(armFilter.Provider, this.Provider, true) == 0) && (string.Compare(armFilter.ResourceTypeName, this.ResourceTypeName) == 0));
+                return (string.Compare(armFilter.Provider, this.Provider, true) == 0) && (string.Compare(armFilter.ResourceTypeName, this.ResourceTypeName, true) == 0);
             }
             else
             {

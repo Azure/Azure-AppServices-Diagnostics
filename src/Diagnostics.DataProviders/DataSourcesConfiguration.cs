@@ -12,6 +12,8 @@ namespace Diagnostics.DataProviders
 
         public AppInsightsDataProviderConfiguration AppInsightsConfiguration { get; set; }
 
+        public ChangeAnalysisDataProviderConfiguration ChangeAnalysisDataProviderConfiguration { get; set; }
+        
         public AntaresMdmDataProviderConfiguration AntaresMdmConfiguration { get; set; }
 
         public NetworkingMdmDataProviderConfiguration NetworkingMdmConfiguration { get; set; }

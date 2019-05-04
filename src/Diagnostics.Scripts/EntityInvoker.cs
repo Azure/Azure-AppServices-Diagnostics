@@ -305,7 +305,7 @@ namespace Diagnostics.Scripts
                 });
 
                 // Validate Support Topic Attributes
-                if(this._entryPointDefinitionAttribute.SupportTopicList != null)
+                if (this._entryPointDefinitionAttribute.SupportTopicList != null)
                 {
                     this._entryPointDefinitionAttribute.SupportTopicList.ToList().ForEach(item =>
                     {

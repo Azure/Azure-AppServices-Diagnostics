@@ -2,6 +2,7 @@
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
+using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -200,6 +201,27 @@ namespace Diagnostics.Tests.ModelTests
             Assert.NotEmpty(res.Dataset);
             Assert.Equal<RenderingType>(RenderingType.Form, res.Dataset.FirstOrDefault().RenderingProperties.Type);
 
+        }
+
+        [Fact]
+        public void AddChangeSetsViewTest()
+        {
+            Response apiResponse = new Response();
+            ChangeSetResponseModel sampleChangeSet = new ChangeSetResponseModel();
+            sampleChangeSet.ChangeSetId = "XYZ";
+            sampleChangeSet.ResourceId = "/sites/test-site";
+            apiResponse.AddChangeSets(new List<ChangeSetResponseModel> { sampleChangeSet });
+            Assert.NotEmpty(apiResponse.Dataset);
+            Assert.Equal<RenderingType>(RenderingType.ChangeSets, apiResponse.Dataset.FirstOrDefault().RenderingProperties.Type);
+        }
+
+        [Fact]
+        public void AddOnBoardingViewTest()
+        {
+            Response apiResponse = new Response();
+            apiResponse.AddOnboardingView("Please enable change analysis");
+            Assert.NotEmpty(apiResponse.Dataset);
+            Assert.Equal<RenderingType>(RenderingType.ChangeAnalysisOnboarding, apiResponse.Dataset.FirstOrDefault().RenderingProperties.Type);
         }
     }
 }
