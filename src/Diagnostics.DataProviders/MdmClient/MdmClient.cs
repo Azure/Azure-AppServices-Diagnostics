@@ -19,7 +19,6 @@ namespace Diagnostics.DataProviders
 {
     public class MdmClient : IMdmClient
     {
-
         /// <summary>
         /// Gets the request id.
         /// </summary>
@@ -51,14 +50,14 @@ namespace Diagnostics.DataProviders
             }
             catch (Exception ex)
             {
-                // Log failure 
+                // Log failure
                 DiagnosticsETWProvider.Instance.LogDataProviderException(
-                    requestId, 
-                    "Initialize MDM data provider", 
+                    requestId,
+                    "Initialize MDM data provider",
                     DateTime.UtcNow.ToString("HH:mm:ss.fff"),
                     DateTime.UtcNow.ToString("HH:mm:ss.fff"),
                     0,
-                    ex.GetType().ToString(), 
+                    ex.GetType().ToString(),
                     ex.ToString());
             }
         }
@@ -130,7 +129,7 @@ namespace Diagnostics.DataProviders
             var config = json.dimensionConfigurations;
 
             var names = new List<string>();
-            foreach(dynamic token in config)
+            foreach (dynamic token in config)
             {
                 names.Add(token.id.Value);
             }
@@ -149,7 +148,6 @@ namespace Diagnostics.DataProviders
         /// <returns>Dimension values for dimensionName.</returns>
         public async Task<IEnumerable<string>> GetDimensionValuesAsync(MetricIdentifier metricId, List<Tuple<string, IEnumerable<string>>> filters, string dimensionName, DateTime startTimeUtc, DateTime endTimeUtc)
         {
-
             filters.Sort((item1, item2) => string.Compare(item1.Item1, item2.Item1, StringComparison.OrdinalIgnoreCase));
 
             var baseUrl = string.Format(
@@ -368,13 +366,13 @@ namespace Diagnostics.DataProviders
         }
 
         private async Task<Tuple<string, HttpResponseMessage>> GetResponseNoRetry(
-                    Uri url,
-                    HttpMethod method,
-                    HttpClient client,
-                    object httpContent,
-                    string clientId,
-                    string serializedContent,
-                    Guid? traceId)
+            Uri url,
+            HttpMethod method,
+            HttpClient client,
+            object httpContent,
+            string clientId,
+            string serializedContent,
+            Guid? traceId)
         {
             traceId = traceId ?? Guid.NewGuid();
 

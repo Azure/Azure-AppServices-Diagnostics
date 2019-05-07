@@ -41,7 +41,7 @@ namespace Diagnostics.DataProviders
         public TimeSeriesDefinition(TId id, IEnumerable<KeyValuePair<string, string>> dimensionCombination)
         {
             this.id = id;
-            this.dimensionCombination = dimensionCombination != null ? dimensionCombination.ToArray() : null;
+            this.dimensionCombination = dimensionCombination?.ToArray();
         }
 
         /// <summary>

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -16,6 +18,7 @@ namespace Diagnostics.DataProviders
         protected readonly SupportObserverDataProviderConfiguration Configuration;
         protected readonly DataProviderContext DataProviderContext;
         protected readonly string RequestId;
+        protected readonly DiagnosticsETWProvider Logger;
         private readonly HttpClient _httpClient;
 
         public SupportObserverDataProviderBase(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, DataProviderContext dataProviderContext) : base(cache)
@@ -23,6 +26,7 @@ namespace Diagnostics.DataProviders
             Configuration = configuration;
             RequestId = dataProviderContext.RequestId;
             DataProviderContext = dataProviderContext;
+            Logger = DiagnosticsETWProvider.Instance;
             _httpClient = GetObserverClient();
             _httpClient.BaseAddress = new Uri($"{configuration.Endpoint}/api/");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -96,8 +100,15 @@ namespace Diagnostics.DataProviders
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.TryAddWithoutValidation("Authorization", await GetToken(resourceId));
-            var cancelToken = new CancellationToken();
+
+            var cancelTokenSource = new CancellationTokenSource();
+            var cancelToken = cancelTokenSource.Token;
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             var response = await _httpClient.SendAsync(request, cancelToken);
+            stopwatch.Stop();
+            Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"url:{url};resourceId:{resourceId};latency:{stopwatch.Elapsed};statusCode:{response.StatusCode}");
+
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadAsStringAsync();
             return result;
