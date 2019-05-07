@@ -7,8 +7,14 @@ namespace Diagnostics.DataProviders
     public class DataProviderConstants
     {
         public const int TokenRefreshIntervalInMs = 15 * 60 * 1000;
-        
+
         public const int DefaultTimeoutInSeconds = 60;
+
+        public const string AzureCloud = "PublicAzure";
+
+        public const string AzureChinaCloud = "China";
+
+        public const string AzureUSGovernment = "Government";
 
         #region Kusto Constants
 
