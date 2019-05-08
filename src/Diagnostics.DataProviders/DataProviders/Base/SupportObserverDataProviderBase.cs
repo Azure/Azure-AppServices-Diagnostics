@@ -32,7 +32,7 @@ namespace Diagnostics.DataProviders
         {
             Uri uri;
 
-            var allowedHosts = new string[] { "wawsobserver.azurewebsites.windows.net", "wawsobserver-prod-staging.azurewebsites.net", "support-bay-api.azurewebsites.net", "support-bay-api-stage.azurewebsites.net"};
+            var allowedHosts = new string[] { "wawsobserver.azurewebsites.windows.net", "wawsobserver-prod-staging.azurewebsites.net", "support-bay-api.azurewebsites.net", "support-bay-api-stage.azurewebsites.net", "localhost" };
 
             try
             {
@@ -67,7 +67,7 @@ namespace Diagnostics.DataProviders
                 throw new FormatException(exceptionMessage);
             }
 
-            if (uri.Host.Contains(allowedHosts[0]) || uri.Host.Contains(allowedHosts[1]))
+            if (uri.Host.Contains(allowedHosts[0]) || uri.Host.Contains(allowedHosts[1]) || Configuration.ObserverLocalHostEnabled)
             {
                 return GetWawsObserverResourceAsync(uri);
             }
@@ -101,10 +101,21 @@ namespace Diagnostics.DataProviders
                 request.Headers.TryAddWithoutValidation("Authorization", await GetToken(resourceId));
             }
 
-            var cancelToken = new CancellationToken();
-            var response = await _httpClient.SendAsync(request, cancelToken);
-            response.EnsureSuccessStatusCode();
+            var response = await _httpClient.SendAsync(request);
+
             var result = await response.Content.ReadAsStringAsync();
+
+            try
+            {
+                response.EnsureSuccessStatusCode();
+            }
+            catch (HttpRequestException ex)
+            {
+                ex.Data.Add("StatusCode", response.StatusCode);
+                ex.Data.Add("ResponseContent", result);
+                throw;
+            }
+
             return result;
         }
 
