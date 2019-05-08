@@ -52,10 +52,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             catch (HttpRequestException observerHttpException)
             {
-                if (observerHttpException.Data.Contains("StatusCode"))
-                {
-                    observerStatusCode = (HttpStatusCode)observerHttpException.Data["StatusCode"];
-                }
+                observerStatusCode = (HttpStatusCode)observerHttpException.Data["StatusCode"];
+                result = (string)observerHttpException.Data["ResponseContent"];
             }
             finally
             {

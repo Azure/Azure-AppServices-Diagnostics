@@ -103,6 +103,8 @@ namespace Diagnostics.DataProviders
 
             var response = await _httpClient.SendAsync(request);
 
+            var result = await response.Content.ReadAsStringAsync();
+
             try
             {
                 response.EnsureSuccessStatusCode();
@@ -110,10 +112,10 @@ namespace Diagnostics.DataProviders
             catch (HttpRequestException ex)
             {
                 ex.Data.Add("StatusCode", response.StatusCode);
+                ex.Data.Add("ResponseContent", result);
                 throw;
             }
 
-            var result = await response.Content.ReadAsStringAsync();
             return result;
         }
 
