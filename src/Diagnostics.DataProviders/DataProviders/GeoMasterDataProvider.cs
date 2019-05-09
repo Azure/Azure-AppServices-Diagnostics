@@ -10,7 +10,6 @@ using Newtonsoft.Json;
 
 namespace Diagnostics.DataProviders
 {
-
     public class GeoMasterDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IGeoMasterDataProvider
     {
         const string SiteExtensionResource = "/extensions/{*extensionApiMethod}";
@@ -61,7 +60,7 @@ namespace Diagnostics.DataProviders
         ///     var rg = cxt.Resource.ResourceGroup;
         ///     var name = cxt.Resource.Name;
         ///     var slot = cxt.Resource.Slot;
-        ///     
+        ///
         ///     var appSettings = await dp.GeoMaster.GetAppSettings(subId, rg, name, slot);
         ///     foreach(var key in appSettings.Keys)
         ///     {
@@ -71,7 +70,7 @@ namespace Diagnostics.DataProviders
         /// }
         /// </code>
         /// </example>
-        public async Task<IDictionary<string,string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name, string slotName)
+        public async Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name, string slotName)
         {
             string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName)}/config/appsettings/list";
             var geoMasterResponse = await HttpPost<GeoMasterResponse, string>(path);
@@ -111,7 +110,7 @@ namespace Diagnostics.DataProviders
         ///     var subId = cxt.Resource.SubscriptionId;
         ///     var rg = cxt.Resource.ResourceGroup;
         ///     var name = cxt.Resource.Name;
-        ///     
+        ///
         ///     var stickySettings = await dp.GeoMaster.GetStickySlotSettingNames(subId, rg, name);
         ///     foreach(var key in stickySettings.Keys)
         ///     {
@@ -156,22 +155,22 @@ namespace Diagnostics.DataProviders
         /// <code>
         ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
-        ///     
+        ///
         ///     //Get VNET information from observer
         ///     var name = cxt.Resource.InternalName;
         ///     var url = $"https://wawsobserver.azurewebsites.windows.net/minienvironments/{name}"
-        ///     
+        ///
         ///     var hostingEnvironmentData = await dp.Observer.GetResource(url);
         ///     var vnetName = (string)hostingEnvironmentData.vnet_name;
         ///     var subnet = (string)hostingEnvironmentData.vnet_subnet_name;
-        ///     var vnetRg = (string)hostingEnvironmentData.vnet_resource_group;        
+        ///     var vnetRg = (string)hostingEnvironmentData.vnet_resource_group;
         ///     var subId = cxt.Resource.SubscriptionId;
-        ///     
-        ///     var results = await dp.GeoMaster.VerifyHostingEnvironmentVnet(subId, 
-        ///                   vnetRg, 
-        ///                   vnetName, 
+        ///
+        ///     var results = await dp.GeoMaster.VerifyHostingEnvironmentVnet(subId,
+        ///                   vnetRg,
+        ///                   vnetName,
         ///                   subnet);
-        ///                   
+        ///
         ///     foreach(var failedTest in results.FailedTests)
         ///     {
         ///         var testName = failedTest.TestName
@@ -180,7 +179,7 @@ namespace Diagnostics.DataProviders
         /// </code>
         /// </example>
         public async Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
-        {            
+        {
             var path = string.Format(@"subscriptions/{0}/providers/Microsoft.Web/verifyHostingEnvironmentVnet", subscriptionId);
             var vnetParameters = new VnetParameters { VnetResourceGroup = vnetResourceGroup, VnetName = vnetName, VnetSubnetName = vnetSubnetName };
             var result = await HttpPost<VnetValidationRespone, VnetParameters>(path, vnetParameters, "", GeoMasterConstants.March2016Version, cancellationToken);
@@ -188,7 +187,7 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
-        /// Gets a dictionary of all the deployments that were triggered for this Web App. The key of this dictionary 
+        /// Gets a dictionary of all the deployments that were triggered for this Web App. The key of this dictionary
         /// is the DeploymentId
         /// </summary>
         /// <param name="subscriptionId">Subscription Id for the resource</param>
@@ -205,17 +204,17 @@ namespace Diagnostics.DataProviders
         ///     var rg = cxt.Resource.ResourceGroup;
         ///     var name = cxt.Resource.Name;
         ///     var slot = cxt.Resource.Slot;
-        ///     
+        ///
         ///     var deployments = await dp.GeoMaster.GetAppDeployments(subId, rg, name, slot);
         ///     foreach(var deployment in deployments)
         ///     {
         ///         string deploymentId = deployment["id"].ToString();
         ///         var message = "DeploymentId = " +  deploymentId;
-        ///         
-        ///         // get a specific property like this (Hint - View all properties 
+        ///
+        ///         // get a specific property like this (Hint - View all properties
         ///         // at https://resources.azure.com)
         ///         string deployer = deployment["deployer"].ToString();
-        ///         
+        ///
         ///         // or just loop through all the keys
         ///         foreach(string key in deployment.Keys)
         ///         {
@@ -230,7 +229,7 @@ namespace Diagnostics.DataProviders
             string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName)}/deployments";
             GeoMasterResponseArray geoMasterResponse = null;
             geoMasterResponse = await HttpGet<GeoMasterResponseArray>(path);
-            var deployments = new List<IDictionary<string, dynamic>> ();
+            var deployments = new List<IDictionary<string, dynamic>>();
             foreach (var deployment in geoMasterResponse.Value)
             {
                 deployments.Add(deployment.Properties);
@@ -249,7 +248,7 @@ namespace Diagnostics.DataProviders
         /// <para>1) Response contains a Properties{} object.</para>
         /// <para>2) Reponse contains a Value[] array which has a properties object.</para>
         /// <para>3) Response contains a Value[] array that has no properties object. </para>
-        /// 
+        ///
         /// To invoke the right route, pass the right class to the method call i.e. GeoMasterResponse or GeoMasterResponseArray or GeoMasterResponseDynamicArray
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -263,27 +262,27 @@ namespace Diagnostics.DataProviders
         /// <code>
         ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
-        /// 
+        ///
         ///     var subId = cxt.Resource.SubscriptionId;
         ///     var rg = cxt.Resource.ResourceGroup;
         ///     var name = cxt.Resource.Name;
         ///     var slot = cxt.Resource.Slot;
-        ///     
-        ///     var resp = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponse>]]>(subId, 
-        ///                rg, 
+        ///
+        ///     var resp = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponse>]]>(subId,
+        ///                rg,
         ///                name,
         ///                slot,
         ///                "sourcecontrols/web");
-        ///     
+        ///
         ///     var repoUrl =  resp.Properties["repoUrl"];
         ///     var branch = resp.Properties["branch"];
         ///     var provisioningState = resp.Properties["provisioningState"];
-        ///             
-        ///     var respVal = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponseDynamicArray>]]>(subId, 
-        ///                   rg, 
-        ///                   name, 
+        ///
+        ///     var respVal = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponseDynamicArray>]]>(subId,
+        ///                   rg,
+        ///                   name,
         ///                   "usages");
-        ///     
+        ///
         ///     foreach(var val in respVal.Value)
         ///     {
         ///         var unit = val.unit;
@@ -291,10 +290,10 @@ namespace Diagnostics.DataProviders
         ///         var localizedValue = val.name.localizedValue;
         ///         var currentValue = val.currentValue;
         ///     }
-        ///     
+        ///
         ///     // To get properties on the site root path, just call the method like this
-        ///     var siteProperties = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponse>]]>(subId, 
-        ///                rg, 
+        ///     var siteProperties = await dp.GeoMaster.MakeHttpGetRequest<![CDATA[<GeoMasterResponse>]]>(subId,
+        ///                rg,
         ///                name,
         ///                slot);
         ///     foreach(var item in siteProperties.Properties)
@@ -331,11 +330,11 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// All the ARM or GeoMaster operations that are allowed over HTTP GET can be called via this method by passing the full path e.g. subscriptions/{subscriptionId}/providers/Microsoft.Web/certificates
         /// To get a list of all the HTTP GET based ARM operations, check out a WebApp on https://resources.azure.com
-        /// It should be noted that the response of the ARM operation is of 3 types 
+        /// It should be noted that the response of the ARM operation is of 3 types
         ///     1) Response contains a Properties{} object.
         ///     2) Reponse contains a Value[] array which has a properties object.
-        ///     3) Response contains a Value[] array that has no properties object. 
-        /// 
+        ///     3) Response contains a Value[] array that has no properties object.
+        ///
         /// To invoke the right route, pass the right class to the method call i.e. GeoMasterResponse or GeoMasterResponseArray or GeoMasterResponseDynamicArray
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -359,8 +358,8 @@ namespace Diagnostics.DataProviders
         ///  tblCertificates.Columns.Add("serialNumber");
         ///  tblCertificates.Columns.Add("autoRenew");
         ///  tblCertificates.Columns.Add("expirationTime");
-        ///  
-        /// 
+        ///
+        ///
         /// foreach(var cert in resp.value)
         /// {
         ///     DataRow dr = tblCertificates.NewRow();
@@ -371,15 +370,15 @@ namespace Diagnostics.DataProviders
         ///     dr["expirationTime"] = cert.properties.expirationTime;
         ///     tblCertificates.Rows.Add(dr);
         /// }
-        /// 
+        ///
         ///  // do something with tblCertificates
         ///  return res;
-        ///  
+        ///
         ///  }
         /// </code>
         /// </example>
         /// <returns></returns>
-        public async Task<T> MakeHttpGetRequestWithFullPath<T>(string fullPath, string queryString ="", string apiVersion = GeoMasterConstants.August2016Version)
+        public async Task<T> MakeHttpGetRequestWithFullPath<T>(string fullPath, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version)
         {
             if (string.IsNullOrWhiteSpace(fullPath))
             {
@@ -397,7 +396,7 @@ namespace Diagnostics.DataProviders
         /// <param name="resourceGroupName">The resource group that the resource is part of </param>
         /// <param name="name">Name of the resource</param>
         /// <param name="slotName">slot name (if querying for a slot, defaults to production slot)</param>
-        /// 
+        ///
         /// <example>
         /// The below example shows how you call <see cref="GetLinuxContainerLogs"/> to get container logs for this app.
         /// <code>
@@ -407,9 +406,9 @@ namespace Diagnostics.DataProviders
         ///     var rg = cxt.Resource.ResourceGroup;
         ///     var name = cxt.Resource.Name;
         ///     var slot = cxt.Resource.Slot;
-        ///     
+        ///
         ///     string containerLogs = await dp.GeoMaster.GetLinuxContainerLogs(subId, rg, name,slot);
-        ///         
+        ///
         ///     // do any processing on the string variable containerLogs
         /// }
         /// </code>
@@ -418,7 +417,7 @@ namespace Diagnostics.DataProviders
         public async Task<string> GetLinuxContainerLogs(string subscriptionId, string resourceGroupName, string name, string slotName)
         {
             string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName)}/containerlogs";
-            var geoMasterResponse = await HttpPost<string, string>(path);           
+            var geoMasterResponse = await HttpPost<string, string>(path);
             return geoMasterResponse;
         }
 
@@ -438,11 +437,11 @@ namespace Diagnostics.DataProviders
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
-        ///     var resp = await dp.GeoMaster.InvokeSiteExtension<![CDATA[<dynamic>]]>(cxt.Resource.SubscriptionId, 
-        ///                     cxt.Resource.ResourceGroup, 
-        ///                     cxt.Resource.Name, 
+        ///     var resp = await dp.GeoMaster.InvokeSiteExtension<![CDATA[<dynamic>]]>(cxt.Resource.SubscriptionId,
+        ///                     cxt.Resource.ResourceGroup,
+        ///                     cxt.Resource.Name,
         ///                     "loganalyzer/log/eventlogs");
-        /// 
+        ///
         ///     // do something with the response object
         ///     var responseFromSiteExtension = resp.ToString();
         ///     return res;
@@ -454,7 +453,7 @@ namespace Diagnostics.DataProviders
         {
             if (string.IsNullOrWhiteSpace(extension))
             {
-                throw new ArgumentNullException("extension");
+                throw new ArgumentNullException(nameof(extension));
             }
 
             string path = SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName) + SiteExtensionResource.Replace("{*extensionApiMethod}", extension);
@@ -478,12 +477,12 @@ namespace Diagnostics.DataProviders
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
-        ///     var resp = await dp.GeoMaster.InvokeDaasExtension<![CDATA[<dynamic>]]>(cxt.Resource.SubscriptionId, 
-        ///                     cxt.Resource.ResourceGroup, 
+        ///     var resp = await dp.GeoMaster.InvokeDaasExtension<![CDATA[<dynamic>]]>(cxt.Resource.SubscriptionId,
+        ///                     cxt.Resource.ResourceGroup,
         ///                     cxt.Resource.Name,
         ///                     cxt.Resource.Slot,
         ///                     "api/diagnosers");
-        /// 
+        ///
         ///     // do something with the response object
         ///     var responseFromDaaS = resp.ToString();
         ///     return res;
@@ -541,8 +540,8 @@ namespace Diagnostics.DataProviders
             R value = JsonConvert.DeserializeObject<R>(responseContent);
             return value;
         }
-        
-        private async Task<R> HttpPost<R, T>(string path, T content = default(T) , string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
+
+        private async Task<R> HttpPost<R, T>(string path, T content = default(T), string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
         {
             var query = SitePathUtility.CsmAnnotateQueryString(queryString, apiVersion);
             var response = new HttpResponseMessage();
@@ -568,7 +567,7 @@ namespace Diagnostics.DataProviders
             {
                 return (await response.Content.ReadAsStringAsync()).CastTo<R>();
             }
-           
+
             string responseContent = await response.Content.ReadAsStringAsync();
             R value = JsonConvert.DeserializeObject<R>(responseContent);
             return value;
@@ -579,8 +578,6 @@ namespace Diagnostics.DataProviders
             return null;
         }
 
-        #endregion
-
+        #endregion HttpMethods
     }
-
 }

@@ -61,11 +61,7 @@ namespace Diagnostics.CompilerHost.Middleware
 
         private void EndRequest_Handle(HttpContext httpContext)
         {
-            ApiMetricsLogger logger = (ApiMetricsLogger)httpContext.Items[_apiLoggerKey];
-            if (logger == null)
-            {
-                logger = new ApiMetricsLogger(httpContext);
-            }
+            var logger = (ApiMetricsLogger)httpContext.Items[_apiLoggerKey] ?? new ApiMetricsLogger(httpContext);
 
             logger.LogCompilerHostAPIMetrics(httpContext);
         }
