@@ -28,7 +28,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Diagnostics.AIProjects", "D
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SearchAPI", "SearchAPI", "{4991C2E8-75B2-46AE-9F0C-D9491028F6BE}"
 	ProjectSection(SolutionItems) = preProject
-		src\Diagnostics.AIProjects\SearchAPI\config.json = src\Diagnostics.AIProjects\SearchAPI\config.json
 		src\Diagnostics.AIProjects\SearchAPI\Logger.py = src\Diagnostics.AIProjects\SearchAPI\Logger.py
 		src\Diagnostics.AIProjects\SearchAPI\RegistryReader.py = src\Diagnostics.AIProjects\SearchAPI\RegistryReader.py
 		src\Diagnostics.AIProjects\SearchAPI\run.pyw = src\Diagnostics.AIProjects\SearchAPI\run.pyw
@@ -42,13 +41,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TrainingFactory", "Training
 		src\Diagnostics.AIProjects\TrainingFactory\ModelTrainer.py = src\Diagnostics.AIProjects\TrainingFactory\ModelTrainer.py
 		src\Diagnostics.AIProjects\TrainingFactory\RegistryReader.py = src\Diagnostics.AIProjects\TrainingFactory\RegistryReader.py
 		src\Diagnostics.AIProjects\TrainingFactory\ResourceFilterHelper.py = src\Diagnostics.AIProjects\TrainingFactory\ResourceFilterHelper.py
+		src\Diagnostics.AIProjects\TrainingFactory\run.pyw = src\Diagnostics.AIProjects\TrainingFactory\run.pyw
 		src\Diagnostics.AIProjects\TrainingFactory\SampleUtterancesFetcher.py = src\Diagnostics.AIProjects\TrainingFactory\SampleUtterancesFetcher.py
 		src\Diagnostics.AIProjects\TrainingFactory\TextSummarizer.py = src\Diagnostics.AIProjects\TrainingFactory\TextSummarizer.py
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "metadata", "metadata", "{837CE97F-30D7-4923-B0E8-1F9ABA325221}"
 	ProjectSection(SolutionItems) = preProject
-		src\Diagnostics.AIProjects\TrainingFactory\metadata\config.json = src\Diagnostics.AIProjects\TrainingFactory\metadata\config.json
 		src\Diagnostics.AIProjects\TrainingFactory\metadata\garbagePhrases.txt = src\Diagnostics.AIProjects\TrainingFactory\metadata\garbagePhrases.txt
 		src\Diagnostics.AIProjects\TrainingFactory\metadata\shortPhrasesList.txt = src\Diagnostics.AIProjects\TrainingFactory\metadata\shortPhrasesList.txt
 		src\Diagnostics.AIProjects\TrainingFactory\metadata\stripTrailers.txt = src\Diagnostics.AIProjects\TrainingFactory\metadata\stripTrailers.txt

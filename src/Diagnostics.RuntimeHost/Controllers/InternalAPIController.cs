@@ -12,6 +12,8 @@ using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Newtonsoft.Json;
 using System.IO;
+using Microsoft.Extensions.Primitives;
+using System.Text;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -23,10 +25,12 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected ISourceWatcherService _sourceWatcherService;
         protected IInvokerCacheService _invokerCache;
         private InternalAPIHelper _internalApiHelper;
+        private ISearchService _searchService;
         public InternalAPIController(IServiceProvider services)
         {
             this._sourceWatcherService = (ISourceWatcherService)services.GetService(typeof(ISourceWatcherService));
             this._invokerCache = (IInvokerCacheService)services.GetService(typeof(IInvokerCacheService));
+            this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
             _internalApiHelper = new InternalAPIHelper();
         }
 
@@ -62,7 +66,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     break;
                 case "TrainingException":
                     var trainingException = JsonConvert.DeserializeObject<InternalAPITrainingException>(eventContent);
-                    DiagnosticsETWProvider.Instance.LogInternalAPITrainingException(trainingException.TrainingId, trainingException.ProductId, trainingException.ExceptionType, trainingException.ExceptionDetails);
+                    DiagnosticsETWProvider.Instance.LogInternalAPITrainingException(trainingException.RequestId, trainingException.TrainingId, trainingException.ProductId, trainingException.ExceptionType, trainingException.ExceptionDetails);
                     break;
                 case "Insights":
                     var insights = JsonConvert.DeserializeObject<InternalAPIInsights>(eventContent);
@@ -74,7 +78,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     break;
                 case "TrainingSummary":
                     var trainingSummary = JsonConvert.DeserializeObject<InternalAPITrainingSummary>(eventContent);
-                    DiagnosticsETWProvider.Instance.LogInternalAPITrainingSummary(trainingSummary.TrainingId, trainingSummary.ProductId, trainingSummary.LatencyInMilliseconds, trainingSummary.StartTime, trainingSummary.EndTime, trainingSummary.Content);
+                    DiagnosticsETWProvider.Instance.LogInternalAPITrainingSummary(trainingSummary.RequestId, trainingSummary.TrainingId, trainingSummary.ProductId, trainingSummary.LatencyInMilliseconds, trainingSummary.StartTime, trainingSummary.EndTime, trainingSummary.Content);
                     break;
                 default:
                     DiagnosticsETWProvider.Instance.LogInternalAPIMessage(eventContent);
@@ -95,6 +99,34 @@ namespace Diagnostics.RuntimeHost.Controllers
             var watcher = _sourceWatcherService.Watcher as GitHubWatcher;
             await watcher._githubClient.CreateOrUpdateFiles(commits, "Model update");
             return Ok();
+        }
+
+        [HttpPost(UriElements.UpdateResourceConfig)]
+        public async Task<IActionResult> UpdateResourceConfig([FromBody]string resourceConfig)
+        {
+            var commits = new List<CommitContent>()
+            {
+                new CommitContent("resourceConfig/config.json", Convert.ToBase64String(Encoding.ASCII.GetBytes(resourceConfig)), Octokit.EncodingType.Base64)
+            };
+            var watcher = _sourceWatcherService.Watcher as GitHubWatcher;
+            await watcher._githubClient.CreateOrUpdateFiles(commits, "Resource config updated");
+            return Ok();
+        }
+
+        /// <summary>
+        /// Trains model defined by model information.
+        /// </summary>
+        /// <param name="productId">Product Id.</param>
+        /// <param name="trainingConfig">Training Config.</param>
+        [HttpPost(UriElements.TrainModel)]
+        public async Task<IActionResult> TrainModel(string productId, [FromBody]string trainingConfig)
+        {
+            Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
+            var requestId = requestIds.FirstOrDefault();
+            var parameters = new Dictionary<string, string>();
+            parameters.Add("productId", productId);
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
+            return Ok(await _searchService.TriggerTraining(requestId, trainingConfig, parameters));
         }
 
         /// <summary>

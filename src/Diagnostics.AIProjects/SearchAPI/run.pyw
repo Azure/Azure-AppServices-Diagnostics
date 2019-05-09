@@ -9,6 +9,7 @@ from Logger import *
 from datetime import datetime, timezone
 import json, itertools, nltk
 from functools import wraps
+downloadResourceConfig()
 config = json.loads(open("config.json", "r").read())
 
 try:
@@ -30,7 +31,8 @@ class ModelFileConfigFailed(Exception):
     pass
 class ModelFileLoadFailed(Exception):
     pass
-
+class ResourceConfigDownloadFailed(Exception):
+    pass
 def getUTCTime():
     return datetime.now(timezone.utc)
 
@@ -68,12 +70,19 @@ def getProductId(resourceObj):
 modelsPath = githubFolderPath
 def copyFolder(src, dst):
     if os.path.isdir(src):
+        if os.path.isdir(dst):
+            shutil.rmtree(dst)
         shutil.copytree(src, dst)
 def downloadModels(productid, path=""):
     try:
         copyFolder(os.path.join(modelsPath, productid), os.path.join(path, productid))
     except Exception as e:
         raise ModelDownloadFailed("Model can't be downloaded " + str(e))
+def downloadResourceConfig():
+    try:
+        copyFolder(os.path.join(modelsPath, "resourceConfig"), os.path.join(os.path.dirname(os.path.abspath(__file__)), "resourceConfig"))
+    except Exception as e:
+        raise ResourceConfigDownloadFailed("Resource config can't be downloaded " + str(e))
 #### Text Processing setup and Text Search model for Queries ####
 stemmer = PorterStemmer()
 stop = stopwords.words('english')
@@ -231,6 +240,7 @@ def loggingProvider(requestIdRequired=True):
     def loggingOuter(f):
         @wraps(f)
         def logger(*args, **kwargs):
+            downloadResourceConfig()
             startTime = getUTCTime()
             res = None
             requestId = getRequestId(request)

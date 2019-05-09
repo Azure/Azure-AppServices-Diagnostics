@@ -4,7 +4,12 @@ from gensim.models import TfidfModel
 from nltk.stem.porter import *
 from gensim import corpora, similarities
 from DataProcessor import DataProcessor
-config = json.loads(open("metadata/config.json", "r").read())
+from Logger import *
+from RegistryReader import *
+
+class TrainingException(Exception):
+    pass
+
 try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
@@ -28,7 +33,6 @@ def testModelForSearch(model, dictionary, index, query):
             return True
         return False
     except Exception as e:
-        print(e)
         return False
 
 def trainDictionary(alltokens, productid, outpath):
@@ -58,18 +62,11 @@ def trainModelM2(tests, detector_tokens, sampleUtterances_tokens, productid, out
     index.save(os.path.join(outpath, "m2.index"))
 
 def publishModels(productid, modelPath):
+    config = json.loads(open("resourceConfig/config.json", "r").read())
     publishUrl = "http://localhost:{0}/internal/publishmodel".format(config["internalApiPort"])
     requests.post(publishUrl, data=json.dumps(modelPath), headers={"Content-Type": "application/json"})
 
-def trainModels(productid):
-    try:
-        trainingConfig = json.loads(open("metadata/trainingConfig.json", "r").read())[productid]
-    except (FileNotFoundError, KeyError, ValueError):
-        trainingConfig = {
-            "include-casetitles": True,
-            "include-softitles": True,
-            "ndays": 7
-        }
+def trainModel(trainingId, productid, trainingConfig):
     datapath = "rawdata_{0}".format(productid)
     outpath = "{0}".format(productid)
     try:
@@ -80,25 +77,55 @@ def trainModels(productid):
         os.mkdir(outpath)
     except FileExistsError:
         pass
-    dataProcessor = DataProcessor()
-    dataProcessor.prepareDataForTraining(productid)
-    detectorsdata = open(os.path.join(datapath, "Detectors.json"), "r").read()
-    detectors = json.loads(detectorsdata)
-    detector_tokens = [tokenize_text(x["name"] + " " + x["description"] + " " + " ".join([y["text"] for y in x["utterances"]])) for x in detectors]
-
-    #Stackoverflow and Case Incidents data load
-    sampleUtterancesContent = json.loads(open(os.path.join(datapath, "SampleUtterances.json"), "r").read())
-    sampleUtterances = (sampleUtterancesContent["incidenttitles"] if trainingConfig["include-casetitles"] else []) + (sampleUtterancesContent["stackoverflowtitles"] if trainingConfig["include-softitles"] else [])
-    sampleUtterances_tokens = [tokenize_text(sampleUtterances[i]["text"]) for i in range(len(sampleUtterances))]
-
-    trainDictionary(detector_tokens + sampleUtterances_tokens, productid, outpath)
-    trainModelM1([], detector_tokens, sampleUtterances_tokens, productid, outpath)
-    trainModelM2([], detector_tokens, sampleUtterances_tokens, productid, outpath)
+    logToFile("{0}.log".format(trainingId), "Created folders for raw data and processed models")
+    try:
+        dataProcessor = DataProcessor(trainingConfig, trainingId)
+        dataProcessor.prepareDataForTraining(productid)
+        logToFile("{0}.log".format(trainingId), "DataFetcher: Sucessfully fetched and processed for training")
+    except Exception as e:
+        logToFile("{0}.log".format(trainingId), "[ERROR]DataFetcher: " + str(e))
+        raise TrainingException("DataFetcher: " + str(e))
+    try:
+        detectorsdata = open(os.path.join(datapath, "Detectors.json"), "r").read()
+        detectors = json.loads(detectorsdata)
+        detector_tokens = [tokenize_text(x["name"] + " " + x["description"] + " " + " ".join([y["text"] for y in x["utterances"]])) for x in detectors]
+        logToFile("{0}.log".format(trainingId), "DetectorProcessor: Sucessfully processed detectors data into tokens")
+    except Exception as e:
+        logToFile("{0}.log".format(trainingId), "[ERROR]DetectorProcessor: " + str(e))
+        raise TrainingException("DetectorProcessor: " + str(e))
+    try:
+        #Stackoverflow and Case Incidents data load
+        sampleUtterancesContent = json.loads(open(os.path.join(datapath, "SampleUtterances.json"), "r").read())
+        sampleUtterances = (sampleUtterancesContent["incidenttitles"] if trainingConfig["include-casetitles"] else []) + (sampleUtterancesContent["stackoverflowtitles"] if trainingConfig["include-softitles"] else [])
+        sampleUtterances_tokens = [tokenize_text(sampleUtterances[i]["text"]) for i in range(len(sampleUtterances))]
+        logToFile("{0}.log".format(trainingId), "CaseTitlesProcessor: Sucessfully processed sample utterances into tokens")
+    except Exception as e:
+        logToFile("{0}.log".format(trainingId), "[ERROR]CaseTitlesProcessor: " + str(e))
+        raise TrainingException("CaseTitlesProcessor: " + str(e))
+    try:
+        trainDictionary(detector_tokens + sampleUtterances_tokens, productid, outpath)
+        logToFile("{0}.log".format(trainingId), "DictionaryTrainer: Sucessfully trained dictionary")
+    except Exception as e:
+        logToFile("{0}.log".format(trainingId), "[ERROR]DictionaryTrainer: " + str(e))
+        raise TrainingException("DictionaryTrainer: " + str(e))
+    try:
+        trainModelM1([], detector_tokens, sampleUtterances_tokens, productid, outpath)
+        logToFile("{0}.log".format(trainingId), "ModelM1Trainer: Sucessfully trained model m1")
+    except Exception as e:
+        logToFile("{0}.log".format(trainingId), "[ERROR]ModelM1Trainer: " + str(e))
+        raise TrainingException("ModelM1Trainer: " + str(e))
+    try:
+        trainModelM2([], detector_tokens, sampleUtterances_tokens, productid, outpath)
+        logToFile("{0}.log".format(trainingId), "ModelM2Trainer: Sucessfully trained model m2")
+    except Exception as e:
+        logToFile("{0}.log".format(trainingId), "[ERROR]ModelM2Trainer: " + str(e))
+        raise TrainingException("ModelM2Trainer: " + str(e))
     open(os.path.join(outpath, "Detectors.json"), "w").write(json.dumps(detectors))
     open(os.path.join(outpath, "SampleUtterances.json"), "w").write(json.dumps(sampleUtterances))
     modelPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), outpath)
-    publishModels(productid, modelPath)
-
-trainModels("14748")
-#import requests
-#print(requests.get("http://localhost:8010/refreshModel?productid=14748").content)
+    try:
+        publishModels(productid, modelPath)
+        logToFile("{0}.log".format(trainingId), "ModelPublisher: Sucessfully published models")
+    except Exception as e:
+        logToFile("{0}.log".format(trainingId), "[ERROR]ModelPublisher: " + str(e))
+        raise TrainingException("ModelPublisher: " + str(e))

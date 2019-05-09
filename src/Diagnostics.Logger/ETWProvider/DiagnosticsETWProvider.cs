@@ -538,12 +538,13 @@ namespace Diagnostics.Logger
         /// <summary>
         /// Log Internal API Training Exception.
         /// </summary>
+        /// <param name="RequestId">Request Id.</param>
         /// <param name="TrainingId">Training id.</param>
         /// <param name="ProductId">Product id.</param>
         /// <param name="ExceptionType">Exception type.</param>
         /// <param name="ExceptionDetails">Exception details.</param>
         [Event(4020, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPITrainingException)]
-        public void LogInternalAPITrainingException(string TrainingId, string ProductId, string ExceptionType, string ExceptionDetails)
+        public void LogInternalAPITrainingException(string RequestId, string TrainingId, string ProductId, string ExceptionType, string ExceptionDetails)
         {
             WriteDiagnosticsEvent(
                 4020,
@@ -556,6 +557,7 @@ namespace Diagnostics.Logger
         /// <summary>
         /// Log Internal API Training Summary.
         /// </summary>
+        /// <param name="RequestId">Request Id.</param>
         /// <param name="TrainingId">Training id.</param>
         /// <param name="ProductId">Product id.</param>
         /// <param name="LatencyInMilliseconds">The latency.</param>
@@ -563,7 +565,7 @@ namespace Diagnostics.Logger
         /// <param name="EndTime">End Time</param>
         /// <param name="Content">Summary details.</param>
         [Event(4021, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPITrainingSummary)]
-        public void LogInternalAPITrainingSummary(string TrainingId, string ProductId, long LatencyInMilliseconds, string StartTime, string EndTime, string Content)
+        public void LogInternalAPITrainingSummary(string RequestId, string TrainingId, string ProductId, long LatencyInMilliseconds, string StartTime, string EndTime, string Content)
         {
             WriteDiagnosticsEvent(
                 4021,

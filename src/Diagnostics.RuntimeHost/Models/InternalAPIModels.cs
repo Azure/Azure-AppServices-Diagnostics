@@ -176,12 +176,16 @@ namespace Diagnostics.RuntimeHost.Models
     public class InternalAPITrainingEvent
     {
         /// <summary>
-        /// Gets or sets TrainingId
+        /// Gets or sets RequestId.
+        /// </summary>
+        public string RequestId { get; set; }
+        /// <summary>
+        /// Gets or sets TrainingId..
         /// </summary>
         public string TrainingId { get; set; }
 
         /// <summary>
-        /// Gets or sets TrainingId
+        /// Gets or sets TrainingId.
         /// </summary>
         public string ProductId { get; set; }
     }

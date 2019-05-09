@@ -16,6 +16,8 @@ namespace Diagnostics.RuntimeHost.Services
         Task<HttpResponseMessage> SearchDetectors(string requestId, string query, Dictionary<string, string> parameters);
 
         Task<HttpResponseMessage> SearchUtterances(string requestId, string query, string[] detectorUtterances, Dictionary<string, string> parameters);
+
+        Task<HttpResponseMessage> TriggerTraining(string requestId, string trainingConfig, Dictionary<string, string> parameters);
     }
 
     public class SearchService : ISearchService
@@ -24,12 +26,14 @@ namespace Diagnostics.RuntimeHost.Services
         private string QueryUtterancesUrl;
         private string RefreshModelUrl;
         private string FreeModelUrl;
+        private string TriggerTrainingUrl;
         private HttpClient _httpClient;
         
         public SearchService()
         {
             QueryDetectorsUrl = UriElements.SearchAPI + "/queryDetectors";
             QueryUtterancesUrl = UriElements.SearchAPI + "/queryUtterances";
+            TriggerTrainingUrl = UriElements.TrainingAPI + "/triggerTraining";
             InitializeHttpClient();
         }
 
@@ -53,6 +57,15 @@ namespace Diagnostics.RuntimeHost.Services
             parameters.Add("detector_utterances", JsonConvert.SerializeObject(detectorUtterances));
             parameters.Add("requestId", requestId);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryUtterancesUrl);
+            request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
+            return Get(request);
+        }
+
+        public Task<HttpResponseMessage> TriggerTraining(string requestId, string trainingConfig, Dictionary<string, string> parameters)
+        {
+            parameters.Add("trainingConfig", trainingConfig);
+            parameters.Add("requestId", requestId);
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, TriggerTrainingUrl);
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return Get(request);
         }
