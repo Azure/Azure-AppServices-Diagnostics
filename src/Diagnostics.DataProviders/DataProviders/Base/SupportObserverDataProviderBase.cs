@@ -36,7 +36,7 @@ namespace Diagnostics.DataProviders
         {
             Uri uri;
 
-            var allowedHosts = new string[] { "wawsobserver.azurewebsites.windows.net", "wawsobserver-prod-staging.azurewebsites.net", "support-bay-api.azurewebsites.net", "support-bay-api-stage.azurewebsites.net"};
+            var allowedHosts = new string[] { "wawsobserver.azurewebsites.windows.net", "wawsobserver-prod-staging.azurewebsites.net", "support-bay-api.azurewebsites.net", "support-bay-api-stage.azurewebsites.net" };
 
             try
             {
@@ -53,22 +53,15 @@ namespace Diagnostics.DataProviders
             }
             catch (UriFormatException ex)
             {
-                string exceptionMessage = null;
-
-                if (ex.Message.Contains("The URI is empty"))
-                {
-                    exceptionMessage = "ResourceUrl is empty. Please pass a non empty string for resourceUrl";
-                }
-
-                //fix for travis ci
+                // TODO: Fix for travis ci
                 if (!allowedHosts.Any(h => resourceUrl.StartsWith($"https://{h}") || resourceUrl.StartsWith($"http://{h}")))
                 {
                     throw new FormatException($"Please use a URL that points to one of the hosts: {string.Join(',', allowedHosts)}");
                 }
 
-                exceptionMessage = "ResourceUrl is badly formatted. Please use correct format eg., https://wawsobserver.azurewebsites.windows.net/Sites/mySite";
+                var exceptionMessage = "ResourceUrl is badly formatted. Please use correct format eg., https://wawsobserver.azurewebsites.windows.net/Sites/mySite";
 
-                throw new FormatException(exceptionMessage);
+                throw new FormatException(exceptionMessage, ex);
             }
 
             if (uri.Host.Contains(allowedHosts[0]) || uri.Host.Contains(allowedHosts[1]))
@@ -105,13 +98,8 @@ namespace Diagnostics.DataProviders
                 request.Headers.TryAddWithoutValidation("Authorization", await GetToken(resourceId));
             }
 
-            var cancelTokenSource = new CancellationTokenSource();
-            var cancelToken = cancelTokenSource.Token;
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
-            var response = await _httpClient.SendAsync(request, cancelToken);
-            stopwatch.Stop();
-            Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"url:{url};resourceId:{resourceId};latency:{stopwatch.Elapsed};statusCode:{response.StatusCode}");
+            var response = await _httpClient.SendAsync(request);
+            Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"url:{url};statusCode:{response.StatusCode}");
 
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadAsStringAsync();
@@ -131,28 +119,51 @@ namespace Diagnostics.DataProviders
         }
 
         public abstract Task<dynamic> GetSite(string siteName);
+
         public abstract Task<dynamic> GetSite(string stampName, string siteName);
+
         public abstract Task<dynamic> GetSite(string stampName, string siteName, string slotName);
+
         public abstract Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName);
+
         public abstract Task<dynamic> GetHostNames(string stampName, string siteName);
+
         public abstract Task<dynamic> GetSitePostBody(string stampName, string siteName);
+
         public abstract Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName);
+
         public abstract Task<string> GetSiteResourceGroupNameAsync(string siteName);
+
         public abstract Task<dynamic> GetSitesInResourceGroupAsync(string subscriptionName, string resourceGroupName);
+
         public abstract Task<dynamic> GetServerFarmsInResourceGroupAsync(string subscriptionName, string resourceGroupName);
+
         public abstract Task<dynamic> GetCertificatesInResourceGroupAsync(string subscriptionName, string resourceGroupName);
+
         public abstract Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName);
+
         public abstract Task<string> GetServerFarmWebspaceName(string subscriptionId, string serverFarm);
+
         public abstract Task<string> GetSiteWebSpaceNameAsync(string subscriptionId, string siteName);
+
         public abstract Task<dynamic> GetSitesInServerFarmAsync(string subscriptionId, string serverFarmName);
+
         public abstract Task<JObject> GetAppServiceEnvironmentDetailsAsync(string hostingEnvironmentName);
+
         public abstract Task<IEnumerable<object>> GetAppServiceEnvironmentDeploymentsAsync(string hostingEnvironmentName);
+
         public abstract Task<JObject> GetAdminSitesBySiteNameAsync(string stampName, string siteName);
+
         public abstract Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames);
+
         public abstract Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName);
+
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName);
+
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
+
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName);
+
         public abstract HttpClient GetObserverClient();
 
         public DataProviderMetadata GetMetadata()

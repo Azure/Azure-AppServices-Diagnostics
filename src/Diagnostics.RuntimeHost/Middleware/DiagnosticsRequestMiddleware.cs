@@ -67,7 +67,8 @@ namespace Diagnostics.RuntimeHost.Middleware
 
             httpContext.RequestAborted = cTokenSource.Token;
             httpContext.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values);
-            var queryStringValues = httpContext.Request.Query.ToDictionary(query => query.Key.ToLower(), query => query.Value.FirstOrDefault());
+            var queryStringValues = httpContext.Request.Query?.ToDictionary(query => query.Key.ToLower(), query => query.Value.FirstOrDefault())
+                ?? new Dictionary<string, string>();
 
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(
                 queryStringValues.GetValueOrDefault("starttime", null),
@@ -87,8 +88,7 @@ namespace Diagnostics.RuntimeHost.Middleware
             var isInternalClient = false;
 
             // For requests coming Applens, populate client object id with Applens App Id.
-            httpContext.Request.Headers.TryGetValue("x-ms-internal-client", out var internalClientHeader);
-            if (internalClientHeader.Any())
+            if (httpContext.Request.Headers.TryGetValue("x-ms-internal-client", out var internalClientHeader) && internalClientHeader.Any())
             {
                 bool.TryParse(internalClientHeader.First(), out isInternalClient);
             }
