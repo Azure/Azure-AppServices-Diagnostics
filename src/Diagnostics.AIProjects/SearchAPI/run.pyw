@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 import json, itertools, nltk
 from functools import wraps
 downloadResourceConfig()
-config = json.loads(open("config.json", "r").read())
+config = json.loads(open("resourceConfig/config.json", "r").read())
 
 try:
     nltk.data.find('tokenizers/punkt')
