@@ -28,6 +28,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Diagnostics.AIProjects", "D
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SearchAPI", "SearchAPI", "{4991C2E8-75B2-46AE-9F0C-D9491028F6BE}"
 	ProjectSection(SolutionItems) = preProject
+		src\Diagnostics.AIProjects\SearchAPI\resourceConfig\config.json = src\Diagnostics.AIProjects\SearchAPI\resourceConfig\config.json
 		src\Diagnostics.AIProjects\SearchAPI\Logger.py = src\Diagnostics.AIProjects\SearchAPI\Logger.py
 		src\Diagnostics.AIProjects\SearchAPI\RegistryReader.py = src\Diagnostics.AIProjects\SearchAPI\RegistryReader.py
 		src\Diagnostics.AIProjects\SearchAPI\run.pyw = src\Diagnostics.AIProjects\SearchAPI\run.pyw
@@ -35,6 +36,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SearchAPI", "SearchAPI", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TrainingFactory", "TrainingFactory", "{F542FAE9-5CBA-4B7F-AD2A-54596E0004CA}"
 	ProjectSection(SolutionItems) = preProject
+		src\Diagnostics.AIProjects\TrainingFactory\resourceConfig\config.json = src\Diagnostics.AIProjects\TrainingFactory\resourceConfig\config.json
 		src\Diagnostics.AIProjects\TrainingFactory\DataProcessor.py = src\Diagnostics.AIProjects\TrainingFactory\DataProcessor.py
 		src\Diagnostics.AIProjects\TrainingFactory\DetectorsFetcher.py = src\Diagnostics.AIProjects\TrainingFactory\DetectorsFetcher.py
 		src\Diagnostics.AIProjects\TrainingFactory\Logger.py = src\Diagnostics.AIProjects\TrainingFactory\Logger.py
