@@ -9,8 +9,6 @@ from Logger import *
 from datetime import datetime, timezone
 import json, itertools, nltk
 from functools import wraps
-downloadResourceConfig()
-config = json.loads(open("resourceConfig/config.json", "r").read())
 
 try:
     nltk.data.find('tokenizers/punkt')
@@ -49,6 +47,25 @@ packageFileNames = {
     "sampleUtterancesFile": "SampleUtterances.json"
 }
 
+modelsPath = githubFolderPath
+def copyFolder(src, dst):
+    if os.path.isdir(src):
+        if os.path.isdir(dst):
+            shutil.rmtree(dst)
+        shutil.copytree(src, dst)
+def downloadModels(productid, path=""):
+    try:
+        copyFolder(os.path.join(modelsPath, productid), os.path.join(path, productid))
+    except Exception as e:
+        raise ModelDownloadFailed("Model can't be downloaded " + str(e))
+def downloadResourceConfig():
+    try:
+        copyFolder(os.path.join(modelsPath, "resourceConfig"), os.path.join(os.path.dirname(os.path.abspath(__file__)), "resourceConfig"))
+    except Exception as e:
+        raise ResourceConfigDownloadFailed("Resource config can't be downloaded " + str(e))
+
+downloadResourceConfig()
+config = json.loads(open("resourceConfig/config.json", "r").read())
 resourceConfig = config["resourceConfig"]
 def getProductId(resourceObj):
     productids = []
@@ -67,22 +84,6 @@ def getProductId(resourceObj):
     else:
         return None
         
-modelsPath = githubFolderPath
-def copyFolder(src, dst):
-    if os.path.isdir(src):
-        if os.path.isdir(dst):
-            shutil.rmtree(dst)
-        shutil.copytree(src, dst)
-def downloadModels(productid, path=""):
-    try:
-        copyFolder(os.path.join(modelsPath, productid), os.path.join(path, productid))
-    except Exception as e:
-        raise ModelDownloadFailed("Model can't be downloaded " + str(e))
-def downloadResourceConfig():
-    try:
-        copyFolder(os.path.join(modelsPath, "resourceConfig"), os.path.join(os.path.dirname(os.path.abspath(__file__)), "resourceConfig"))
-    except Exception as e:
-        raise ResourceConfigDownloadFailed("Resource config can't be downloaded " + str(e))
 #### Text Processing setup and Text Search model for Queries ####
 stemmer = PorterStemmer()
 stop = stopwords.words('english')
