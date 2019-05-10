@@ -46,6 +46,13 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string Statistics = "/statistics";
         public const string StatisticsResource = "/{invokerId}";
         public const string StatisticsQuery = "/statisticsQuery";
+
+        #region Observer Urls
+        public const string Observer = "observer";
+        public const string ObserverGetSites = "/sites/{siteName}";
+        public const string ObserverGetSiteWithStamp = "/stamps/{stampName}/sites/{siteName}";
+        public const string ObserverGetHostingEnvironment = "/hostingEnvironments/{hostingEnvironmentName}";
+        #endregion
     }
 
     /// <summary>

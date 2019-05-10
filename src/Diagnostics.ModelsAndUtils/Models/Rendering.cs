@@ -213,7 +213,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data rendered for onboarding view
         /// </summary>
-        ChangeAnalysisOnboarding
+        ChangeAnalysisOnboarding,
+
+        /// <summary>
+        /// Data rendered as Changes
+        /// </summary>
+        ChangesView
     }
 
     /// <summary>

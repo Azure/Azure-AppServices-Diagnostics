@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
+
 namespace Diagnostics.Logger
 {
     /// <summary>
@@ -159,32 +160,31 @@ namespace Diagnostics.Logger
             verb = context.Request.Method;
             address = context.Request.Path.ToString();
 
-            ParseFromAddress(context);
+            try
+            {
+                ParseFromAddress(context);
+            }
+            catch (Exception ex)
+            {
+            }
         }
 
         private void ParseFromAddress(HttpContext httpContext)
         {
-            try
+            if (string.IsNullOrWhiteSpace(httpContext.Request.Path.ToString()))
             {
-                if (string.IsNullOrWhiteSpace(httpContext.Request.Path.ToString()))
-                {
-                    return;
-                }
-
-                Regex csmResourceRegEx = new Regex("(.*)subscriptions/(.*)/resourcegroups/(.*)/providers/(.*)/(.*)/(.*)/diagnostics/(.*)");
-
-                string addressPath = httpContext.Request.Path.ToString().ToLower(CultureInfo.CurrentCulture);
-                Match match = csmResourceRegEx.Match(addressPath);
-
-                if (match.Success)
-                {
-                    subscriptionId = match.Groups[2].Value;
-                    resourceGroupName = match.Groups[3].Value;
-                    resourceName = match.Groups[6].Value;
-                }
+                return;
             }
-            catch
+
+            var csmResourceRegEx = new Regex("(.*)subscriptions/(.*)/resourcegroups/(.*)/providers/(.*)/(.*)/(.*)/diagnostics/(.*)");
+            var addressPath = httpContext.Request.Path.ToString().ToLower(CultureInfo.CurrentCulture);
+            var match = csmResourceRegEx.Match(addressPath);
+
+            if (match.Success)
             {
+                subscriptionId = match.Groups[2].Value;
+                resourceGroupName = match.Groups[3].Value;
+                resourceName = match.Groups[6].Value;
             }
         }
     }

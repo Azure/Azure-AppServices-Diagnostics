@@ -102,5 +102,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
             return this;
         }
+
+        /// <summary>
+        /// Set the ResourceUri and optionally set the ActionOptions for the Solution to use.
+        /// </summary>
+        public Solution Using(OperationContext context, Dictionary<string, object> actionOptions = null)
+        {
+            return Using(context.Resource.ResourceUri, actionOptions);
+        }
     }
 }

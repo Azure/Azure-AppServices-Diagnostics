@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Web;
 using Diagnostics.DataProviders;
+using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
@@ -546,7 +547,45 @@ namespace Diagnostics.RuntimeHost.Controllers
         private async Task<Tuple<Response, List<DataProviderMetadata>>> GetDetectorInternal(string detectorId, RuntimeContext<TResource> context)
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+            var queryParams = Request.Query;           
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+            List<DataProviderMetadata> dataProvidersMetadata = null;
+            if (context.ClientIsInternal)
+            {
+                dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
+            }
+
+            var changeSetId = queryParams.Where(s => s.Key.Equals("changeSetId")).Select(pair => pair.Value);
+            if (changeSetId.Any())
+            {
+                var resourceUriFromQuery = queryParams.Where(s => s.Key.Equals("resourceUri")).Select(pair => pair.Value);
+                var resourceUri = context.OperationContext.Resource.ResourceUri;
+                var changeSetIdValue = changeSetId.First();
+                if (resourceUriFromQuery.Any())
+                {
+                    resourceUri = resourceUriFromQuery.First();
+                }
+
+                // Gets all change sets for the resource uri
+                if (changeSetIdValue.Equals("*"))
+                {
+                    var changesets = await GetAllChangeSets(resourceUri, DateTime.Parse(context.OperationContext.StartTime), DateTime.Parse(context.OperationContext.EndTime), dataProviders.ChangeAnalysis);
+                    return new Tuple<Response, List<DataProviderMetadata>>(changesets, dataProvidersMetadata);
+                }
+
+                var changesResponse = await GetChangesByChangeSetId(changeSetIdValue, resourceUri, dataProviders.ChangeAnalysis);
+                return new Tuple<Response, List<DataProviderMetadata>>(changesResponse, dataProvidersMetadata);
+            }
+
+            var actionQuery = queryParams.Where(s => s.Key.Equals("scanAction")).Select(pair => pair.Value); 
+            if (actionQuery.Any())
+            {
+                var scanActionResponse = await HandleScanActionRequest(context.OperationContext.Resource.ResourceUri, 
+                                                actionQuery.First(),
+                                                dataProviders.ChangeAnalysis);
+                return new Tuple<Response, List<DataProviderMetadata>>(scanActionResponse, dataProvidersMetadata);
+            } 
+
             var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
 
             if (invoker == null)
@@ -559,16 +598,10 @@ namespace Diagnostics.RuntimeHost.Controllers
                 Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, context.ClientIsInternal),
                 IsInternalCall = context.OperationContext.IsInternalCall
             };
-
+            
             var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
-
-            List<DataProviderMetadata> dataProvidersMetadata = null;
             response.UpdateDetectorStatusFromInsights();
 
-            if (context.ClientIsInternal)
-            {
-                dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
-            }
 
             return new Tuple<Response, List<DataProviderMetadata>>(response, dataProvidersMetadata);
         }
@@ -748,6 +781,114 @@ namespace Diagnostics.RuntimeHost.Controllers
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Retreives Changes and returns the data in rows and columns format.
+        /// </summary>
+        /// <param name="changeSetId">changeSet Id.</param>
+        /// <param name="resourceId">Resource Id.</param>
+        /// <param name="changeAnalysisDataProvider">Change Analysis Data Provider.</param>
+        /// <returns>Changes for given change set id.</returns>
+        private async Task<Response> GetChangesByChangeSetId(string changeSetId, string resourceId, IChangeAnalysisDataProvider changeAnalysisDataProvider) 
+        {
+            var changes = await changeAnalysisDataProvider.GetChangesByChangeSetId(changeSetId, resourceId);
+            if (changes == null || changes.Count <= 0)
+            {
+                return new Response();
+            }
+
+            Response changesResponse = new Response();
+            var table = new DataTable();
+            table.TableName = "Changes";
+            table.Columns.Add(new DataColumn("TimeStamp", typeof(string)));
+            table.Columns.Add(new DataColumn("Category", typeof(string)));
+            table.Columns.Add(new DataColumn("Level", typeof(string)));
+            table.Columns.Add(new DataColumn("DisplayName", typeof(string)));
+            table.Columns.Add(new DataColumn("Description", typeof(string)));
+            table.Columns.Add(new DataColumn("OldValue", typeof(string)));
+            table.Columns.Add(new DataColumn("NewValue", typeof(string)));
+            table.Columns.Add(new DataColumn("InitiatedBy", typeof(string)));
+            table.Columns.Add(new DataColumn("JsonPath", typeof(string)));
+            changes.ForEach(change =>
+            {
+                table.Rows.Add(new object[]
+                {
+                        change.TimeStamp,
+                        change.Category,
+                        change.Level,
+                        change.DisplayName,
+                        change.Description,
+                        change.OldValue,
+                        change.NewValue,
+                        change.InitiatedBy,
+                        change.JsonPath
+                });
+            });
+
+            var diagData = new DiagnosticData()
+            {
+                Table = table,
+                RenderingProperties = new Rendering(RenderingType.ChangesView)
+            };
+
+            changesResponse.Dataset.Add(diagData);
+            return changesResponse;
+        }
+
+        /// <summary>
+        /// Submits request to scan for changes and returns response in <see cref="DataTable"/> format.
+        /// </summary>
+        private async Task<Response> HandleScanActionRequest(string resourceId, string action, IChangeAnalysisDataProvider changeAnalysisDataProvider)
+        {
+            var scanRequest = await changeAnalysisDataProvider.ScanActionRequest(resourceId, action);
+            if (scanRequest == null)
+            {
+                return new Response();
+            }
+
+            Response scanRequestData = new Response();
+            var table = new DataTable();
+            table.TableName = action;
+            table.Columns.Add(new DataColumn("Operation Id", typeof(string)));
+            table.Columns.Add(new DataColumn("State", typeof(string)));
+            table.Columns.Add(new DataColumn("SubmissionTime", typeof(string)));
+            table.Columns.Add(new DataColumn("CompletionTime", typeof(string)));
+            table.Rows.Add(new object[]
+            {
+                scanRequest.OperationId,
+                scanRequest.State,
+                scanRequest.SubmissionTime,
+                scanRequest.CompletionTime
+            });
+
+            var diagData = new DiagnosticData()
+            {
+                Table = table,
+                RenderingProperties = new Rendering(RenderingType.ChangesView)
+            };
+
+            scanRequestData.Dataset.Add(diagData);
+            return scanRequestData;
+        }
+
+        /// <summary>
+        /// Retreives all change sets for the resource id.
+        /// </summary>
+        /// <param name="resourceId">Resource Id.</param>
+        /// <param name="changeAnalysisDataProvider">Change Analysis Data Provider.</param>
+        /// <returns>All Changesets for the given resource id.</returns>
+        private async Task<Response> GetAllChangeSets(string resourceId, DateTime startTime, DateTime endTime, IChangeAnalysisDataProvider changeAnalysisDataProvider)
+        {
+            var changeSets = await changeAnalysisDataProvider.GetChangeSetsForResource(resourceId, startTime, endTime);
+            if (changeSets == null || changeSets.Count <= 0)
+            {
+                return new Response();
+            }
+
+            Response dataSetResponse = new Response();
+            dataSetResponse.AddChangeSets(changeSets);
+            return dataSetResponse;
         }
     }
 }
