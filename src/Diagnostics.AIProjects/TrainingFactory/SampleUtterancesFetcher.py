@@ -34,7 +34,7 @@ class StackOverFlowFetcher:
                 #print("\r" + str(pagenum),end='')
             except Exception as e:
                 logToFile("{0}.log".format(trainingId), "[ERROR]StackOverFlowFetcher: Tag " + str(tag) + " - " + str(e))
-                break
+                raise TrainingException("StackOverFlowFetcher: " + str(e))
         logToFile("{0}.log".format(trainingId), "StackOverFlowFetcher: Fetched " + str(len(items)) + " questions for tag " + str(tag))
         return items
 
@@ -246,9 +246,12 @@ class SampleUtterancesFetcher:
             logToFile("{0}.log".format(trainingId), "[ERROR]CaseTitlesFetcher: " + str(e))
             raise TrainingException("CaseTitlesFetcher: " + str(e))
         try:
-            sfFetcher = StackOverFlowFetcher("U4DMV*8nvpm3EOpvf69Rxw((", self.trainingConfig, self.trainingId)
-            sfFetcher.fetchStackOverflowTitles(productid, datapath)
-            logToFile("{0}.log".format(trainingId), "StackOverFlowFetcher: Successfully fetched stack overflow question titles")
+            if self.trainingConfig["download-softitles"] and self.trainingConfig["sof-key"]:
+                sfFetcher = StackOverFlowFetcher(self.trainingConfig["sof-key"], self.trainingConfig, self.trainingId)
+                sfFetcher.fetchStackOverflowTitles(productid, datapath)
+                logToFile("{0}.log".format(trainingId), "StackOverFlowFetcher: Successfully fetched stack overflow question titles")
+            else:
+                logToFile("{0}.log".format(trainingId), "StackOverFlowFetcher: Disabled")
         except Exception as e:
             logToFile("{0}.log".format(trainingId), "[ERROR]StackOverFlowFetcher: " + str(e))
             raise TrainingException("StackOverFlowFetcher: " + str(e))
