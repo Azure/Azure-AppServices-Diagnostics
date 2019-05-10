@@ -10,6 +10,9 @@ from RegistryReader import *
 class TrainingException(Exception):
     pass
 
+class PublishingException(Exception):
+    pass
+
 try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
@@ -64,7 +67,11 @@ def trainModelM2(tests, detector_tokens, sampleUtterances_tokens, productid, out
 def publishModels(productid, modelPath):
     config = json.loads(open("resourceConfig/config.json", "r").read())
     publishUrl = "http://localhost:{0}/internal/publishmodel".format(config["internalApiPort"])
-    requests.post(publishUrl, data=json.dumps(modelPath), headers={"Content-Type": "application/json"})
+    req = requests.post(publishUrl, data=json.dumps(modelPath), headers={"Content-Type": "application/json"})
+    if req.status_code == 200:
+        pass
+    else:
+        raise PublishingException("ModelPublisher: " + str(req.content))
 
 def trainModel(trainingId, productid, trainingConfig):
     datapath = "rawdata_{0}".format(productid)
