@@ -189,4 +189,9 @@ namespace Diagnostics.RuntimeHost.Models
         /// </summary>
         public string ProductId { get; set; }
     }
+
+    public class TrainingConfigModel
+    {
+        public string TrainingConfig { get; set; }
+    }
 }

@@ -119,14 +119,14 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="productId">Product Id.</param>
         /// <param name="trainingConfig">Training Config.</param>
         [HttpPost(UriElements.TrainModel)]
-        public async Task<IActionResult> TrainModel(string productId, [FromBody]string trainingConfig)
+        public async Task<IActionResult> TrainModel(string productId, [FromBody]TrainingConfigModel trainingConfigModel)
         {
             Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
             var requestId = requestIds.FirstOrDefault();
             var parameters = new Dictionary<string, string>();
             parameters.Add("productId", productId);
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
-            return Ok(await _searchService.TriggerTraining(requestId, trainingConfig, parameters));
+            return Ok(await _searchService.TriggerTraining(requestId, trainingConfigModel.TrainingConfig, parameters));
         }
 
         /// <summary>
