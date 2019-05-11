@@ -26,9 +26,20 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </example>
         public static DiagnosticData AddChangeSets(this Response response, List<ChangeSetResponseModel> changeSets)
         {
+            // Even if there are no change sets found, we want to add the rendering type to UI so the user has option to scan for changes.
             if (changeSets == null || changeSets.Count <= 0)
             {
-                return null;
+                var emptyData = new DiagnosticData
+                {
+                    Table = new DataTable(),
+                    RenderingProperties = new Rendering(RenderingType.ChangeSets)
+                    {
+                        Title = string.Empty
+                    }
+                };
+
+                response.Dataset.Add(emptyData);
+                return emptyData;
             }
 
             DataTable results = new DataTable();

@@ -68,15 +68,27 @@ namespace Diagnostics.DataProviders
         /// <inheritdoc/>
         public async Task<List<ResourceChangesResponseModel>> GetChangesAsync(ChangeRequest changeRequest)
         {
-            string requestUri = changeAnalysisEndPoint + $"changes?api-version={apiVersion}";
-            object postBody = new
+            try
             {
-                changeRequest.ResourceId,
-                changeRequest.ChangeSetId
-            };
-            string jsonString = await PrepareAndSendRequest(requestUri, postBody, HttpMethod.Post);
-            List<ResourceChangesResponseModel> resourceChangesResponse = JsonConvert.DeserializeObject<List<ResourceChangesResponseModel>>(jsonString);
-            return resourceChangesResponse;
+                string requestUri = changeAnalysisEndPoint + $"changes?api-version={apiVersion}";
+                object postBody = new
+                {
+                    changeRequest.ResourceId,
+                    changeRequest.ChangeSetId
+                };
+                string jsonString = await PrepareAndSendRequest(requestUri, postBody, HttpMethod.Post);
+                List<ResourceChangesResponseModel> resourceChangesResponse = JsonConvert.DeserializeObject<List<ResourceChangesResponseModel>>(jsonString);
+                return resourceChangesResponse;
+            } catch (HttpRequestException httpException)
+            {
+                // Its possible that users dont have access to view the change details
+                if ((HttpStatusCode)httpException.Data["Status Code"] == HttpStatusCode.Forbidden)
+                {
+                    return new List<ResourceChangesResponseModel>();
+                }
+
+                throw httpException;
+            }
         }
 
         /// <inheritdoc/>
@@ -122,9 +134,26 @@ namespace Diagnostics.DataProviders
         /// <returns>Last scan information.</returns>
         public async Task<LastScanResponseModel> GetLastScanInformation(string armResourceUri)
         {
-            string requestUri = changeAnalysisEndPoint + $"lastscan/{armResourceUri}?api-version={apiVersion}";
-            string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: HttpMethod.Get);
-            return JsonConvert.DeserializeObject<LastScanResponseModel>(jsonString);
+            try
+            {
+                string requestUri = changeAnalysisEndPoint + $"lastscan/{armResourceUri}?api-version={apiVersion}";
+                string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: HttpMethod.Get);
+                return JsonConvert.DeserializeObject<LastScanResponseModel>(jsonString);
+            } 
+            catch (HttpRequestException httpException)
+            {
+                if (httpException.Data.Contains("Status Code") && (HttpStatusCode)httpException.Data["Status Code"] == HttpStatusCode.NotFound)
+                {
+                    return new LastScanResponseModel
+                    {
+                        ResourceId = string.Empty,
+                        TimeStamp = string.Empty,
+                        Source = string.Empty
+                    };
+                }
+
+                throw httpException;
+            }
         }
 
         /// <summary>
@@ -184,6 +213,17 @@ namespace Diagnostics.DataProviders
                     };
                 }
 
+                if(httpexception.Data.Contains("Status Code") && (HttpStatusCode)httpexception.Data["StatusCode"] == HttpStatusCode.Forbidden)
+                {
+                    return new ChangeScanModel
+                    {
+                        OperationId = string.Empty,
+                        State = "NotEnabled",
+                        SubmissionTime = null,
+                        CompletionTime = null
+                    };
+                }
+
                 throw httpexception;
             }
         }
@@ -204,10 +244,10 @@ namespace Diagnostics.DataProviders
             requestMessage.Headers.Add("Authorization", authToken);
             requestMessage.Headers.Add("x-ms-client-object-id", clientObjectIdHeader);
 
-            // For requests coming from Diagnose and Solve, add x-ms-principal-name header.
+            // For requests coming from Diagnose and Solve, add x-ms-client-principal-name header.
             if (!string.IsNullOrWhiteSpace(clientPrincipalNameHeader))
             {
-               requestMessage.Headers.Add("x-ms-principal-name", clientPrincipalNameHeader);
+               requestMessage.Headers.Add("x-ms-client-principal-name", clientPrincipalNameHeader);
             }
 
             if (postBody != null)
@@ -218,15 +258,11 @@ namespace Diagnostics.DataProviders
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
             HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage, cancellationTokenSource.Token);
             string content = await responseMessage.Content.ReadAsStringAsync();
-            if (responseMessage.StatusCode == HttpStatusCode.NotFound)
+            if (!responseMessage.IsSuccessStatusCode)
             {
                 HttpRequestException ex = new HttpRequestException($"Status Code : {responseMessage.StatusCode}, Content : {content}");
                 ex.Data.Add("Status Code", responseMessage.StatusCode);
                 throw ex;
-            }
-            if (!responseMessage.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException($"Status Code: {responseMessage.StatusCode}, Content: {content}");
             }
 
             return content;
