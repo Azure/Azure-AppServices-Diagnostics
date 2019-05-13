@@ -64,9 +64,9 @@ def trainModelM2(tests, detector_tokens, sampleUtterances_tokens, productid, out
     model.save(os.path.join(outpath, "m2.model"))
     index.save(os.path.join(outpath, "m2.index"))
 
-def publishModels(productid, modelPath):
+def publishModels(productid, modelPath, trainingId):
     config = json.loads(open("resourceConfig/config.json", "r").read())
-    publishUrl = "http://localhost:{0}/internal/publishmodel".format(config["internalApiPort"])
+    publishUrl = "http://localhost:{0}/internal/publishmodel?trainingId={1}".format(config["internalApiPort"], trainingId)
     req = requests.post(publishUrl, data=json.dumps(modelPath), headers={"Content-Type": "application/json"})
     if req.status_code == 200:
         pass
@@ -131,7 +131,7 @@ def trainModel(trainingId, productid, trainingConfig):
     open(os.path.join(outpath, "SampleUtterances.json"), "w").write(json.dumps(sampleUtterances))
     modelPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), outpath)
     try:
-        publishModels(productid, modelPath)
+        publishModels(productid, modelPath, trainingId)
         logToFile("{0}.log".format(trainingId), "ModelPublisher: Sucessfully published models")
     except Exception as e:
         logToFile("{0}.log".format(trainingId), "[ERROR]ModelPublisher: " + str(e))

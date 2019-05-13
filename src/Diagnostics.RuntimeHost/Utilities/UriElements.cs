@@ -51,8 +51,8 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string Internal = "/internal";
         public const string Logger = "logger";
         public const string PublishModel = "publishmodel";
-        public const string FetchModel = "fetchmodel";
-        public const string TrainModel = "trainModel";
+        public const string TrainModel = "trainmodel";
+        public const string RefreshModel = "refreshmodel";
         public const string UpdateResourceConfig = "updateResourceConfig";
         public const string SearchAPI = "http://localhost:8010";
         public const string TrainingAPI = "http://localhost:8011";

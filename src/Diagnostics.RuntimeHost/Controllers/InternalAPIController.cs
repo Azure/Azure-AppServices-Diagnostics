@@ -93,12 +93,23 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// </summary>
         /// <param name="modelpath">Model path</param>
         [HttpPost(UriElements.PublishModel)]
-        public async Task<IActionResult> PublishModel([FromBody]string modelpath)
+        public async Task<IActionResult> PublishModel(string trainingId, [FromBody]string modelpath)
         {
             var commits = _internalApiHelper.GetAllFilesInFolder(modelpath);
             var watcher = _sourceWatcherService.Watcher as GitHubWatcher;
-            await watcher._githubClient.CreateOrUpdateFiles(commits, "Model update");
-            return Ok();
+            await watcher._githubClient.CreateOrUpdateFiles(commits, $"Model update trainingId {trainingId}");
+            return Ok("Model published Successfully");
+        }
+
+        [HttpPost(UriElements.RefreshModel)]
+        public async Task<IActionResult> RefreshModel(string productId)
+        {
+            Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
+            var requestId = requestIds.FirstOrDefault();
+            var parameters = new Dictionary<string, string>();
+            parameters.Add("productId", productId);
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
+            return Ok(await _searchService.TriggerModelRefresh(requestId, parameters));
         }
 
         [HttpPost(UriElements.UpdateResourceConfig)]

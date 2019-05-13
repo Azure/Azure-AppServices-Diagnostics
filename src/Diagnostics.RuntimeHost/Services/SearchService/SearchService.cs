@@ -18,6 +18,8 @@ namespace Diagnostics.RuntimeHost.Services
         Task<HttpResponseMessage> SearchUtterances(string requestId, string query, string[] detectorUtterances, Dictionary<string, string> parameters);
 
         Task<HttpResponseMessage> TriggerTraining(string requestId, string trainingConfig, Dictionary<string, string> parameters);
+
+        Task<HttpResponseMessage> TriggerModelRefresh(string requestId, Dictionary<string, string> parameters);
     }
 
     public class SearchService : ISearchService
@@ -27,6 +29,7 @@ namespace Diagnostics.RuntimeHost.Services
         private string RefreshModelUrl;
         private string FreeModelUrl;
         private string TriggerTrainingUrl;
+        private string TriggerModelRefreshUrl;
         private HttpClient _httpClient;
         
         public SearchService()
@@ -34,6 +37,7 @@ namespace Diagnostics.RuntimeHost.Services
             QueryDetectorsUrl = UriElements.SearchAPI + "/queryDetectors";
             QueryUtterancesUrl = UriElements.SearchAPI + "/queryUtterances";
             TriggerTrainingUrl = UriElements.TrainingAPI + "/triggerTraining";
+            TriggerModelRefreshUrl = UriElements.SearchAPI + "/refreshModel";
             InitializeHttpClient();
         }
 
@@ -66,6 +70,14 @@ namespace Diagnostics.RuntimeHost.Services
             parameters.Add("trainingConfig", trainingConfig);
             parameters.Add("requestId", requestId);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, TriggerTrainingUrl);
+            request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
+            return Get(request);
+        }
+
+        public Task<HttpResponseMessage> TriggerModelRefresh(string requestId, Dictionary<string, string> parameters)
+        {
+            parameters.Add("requestId", requestId);
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, TriggerModelRefreshUrl);
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return Get(request);
         }

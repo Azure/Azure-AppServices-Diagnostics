@@ -318,14 +318,14 @@ def queryUtterancesMethod():
 
 @app.route('/freeModel')
 def freeModelMethod():
-    productid = str(request.args.get('productid'))
+    productid = str(request.args.get('productId'))
     freeModel(productid)
     return ('', 204)
 
 @app.route('/refreshModel')
 @loggingProvider(requestIdRequired=False)
 def refreshModelMethod():
-    productid = str(request.args.get('productid'))
+    productid = str(request.args.get('productId'))
     res = "{0} - {1}".format(productid, refreshModel(productid))
     return (res, 200)
 
