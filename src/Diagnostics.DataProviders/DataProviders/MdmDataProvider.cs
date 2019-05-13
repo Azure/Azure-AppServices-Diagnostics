@@ -83,7 +83,7 @@ namespace Diagnostics.DataProviders
             var contain = false;
             foreach (var f in filter)
             {
-                if(f.Item1.Equals(dimensionName, StringComparison.OrdinalIgnoreCase))
+                if (f.Item1.Equals(dimensionName, StringComparison.OrdinalIgnoreCase))
                 {
                     contain = true;
                     break;
@@ -173,13 +173,13 @@ namespace Diagnostics.DataProviders
                 ));
             }
 
-            var series = (await _mdmClient.GetMultipleTimeSeriesAsync(
+            var series = await _mdmClient.GetMultipleTimeSeriesAsync(
                 startTimeUtc,
                 endTimeUtc,
                 samplingType.ToArray(),
                 _definitions,
                 seriesResolutionInMinutes,
-                aggregationType));
+                aggregationType);
 
             var result = new List<DataTable>();
 

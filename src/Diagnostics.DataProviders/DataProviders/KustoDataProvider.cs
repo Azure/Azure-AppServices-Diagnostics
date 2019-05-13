@@ -6,7 +6,6 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
-
 namespace Diagnostics.DataProviders
 {
     public class KustoQuery
@@ -15,7 +14,8 @@ namespace Diagnostics.DataProviders
         public string Url;
         public string KustoDesktopUrl;
     }
-    public class KustoDataProvider: DiagnosticDataProvider, IDiagnosticDataProvider, IKustoDataProvider
+
+    public class KustoDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IKustoDataProvider
     {
         private KustoDataProviderConfiguration _configuration;
         private IKustoClient _kustoClient;
@@ -38,7 +38,7 @@ namespace Diagnostics.DataProviders
         }
 
         public async Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
-        {           
+        {
             await AddQueryInformationToMetadata(query, stampName);
             var cluster = GetClusterNameFromStamp(stampName);
             return await _kustoClient.ExecuteQueryAsync(query, cluster, _configuration.DBName, requestId, operationName);
@@ -57,7 +57,7 @@ namespace Diagnostics.DataProviders
         }
 
         public DataProviderMetadata GetMetadata()
-        {            
+        {
             return Metadata;
         }
 
@@ -66,7 +66,7 @@ namespace Diagnostics.DataProviders
             var cluster = GetClusterNameFromStamp(stampName);
             var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, cluster, _configuration.DBName);
             bool queryExists = false;
-            
+
             queryExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&
                                                         x.Value.GetType() == typeof(KustoQuery) &&
                                                         x.Value.CastTo<KustoQuery>().Url.Equals(kustoQuery.Url, StringComparison.OrdinalIgnoreCase));
@@ -95,7 +95,7 @@ namespace Diagnostics.DataProviders
         {
             if (string.IsNullOrWhiteSpace(stampName))
             {
-                throw new ArgumentNullException("stampName");
+                throw new ArgumentNullException(nameof(stampName));
             }
 
             var stampParts = stampName.Split(new char[] { '-' });

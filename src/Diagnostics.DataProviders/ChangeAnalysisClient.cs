@@ -203,10 +203,10 @@ namespace Diagnostics.DataProviders
             string requestUri = changeAnalysisEndPoint + $"Subscription/{subscriptionId}/onboardingstate?api-version={apiVersion}";
             try
             {
-               string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: HttpMethod.Get);
-               var result = JsonConvert.DeserializeObject<SubscriptionOnboardingStatus>(jsonString);
-               result.IsRegistered = true;
-               return result;
+                string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: HttpMethod.Get);
+                var result = JsonConvert.DeserializeObject<SubscriptionOnboardingStatus>(jsonString);
+                result.IsRegistered = true;
+                return result;
             }
             catch (HttpRequestException httpexception)
             {
@@ -225,7 +225,7 @@ namespace Diagnostics.DataProviders
                     };
                 }
 
-                throw httpexception;
+                throw;
             }
         }
 
@@ -310,7 +310,7 @@ namespace Diagnostics.DataProviders
 
             if (postBody != null)
             {
-               requestMessage.Content = new StringContent(JsonConvert.SerializeObject(postBody), Encoding.UTF8, "application/json");
+                requestMessage.Content = new StringContent(JsonConvert.SerializeObject(postBody), Encoding.UTF8, "application/json");
             }
 
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));

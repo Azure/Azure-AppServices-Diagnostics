@@ -23,7 +23,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpPost(UriElements.Query)]
         public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string serviceName, [FromBody]CompilationPostBody<dynamic> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
         {
-            return await base.ExecuteQuery(GetResource(subscriptionId, resourceGroupName, serviceName), jsonBody, startTime, endTime, timeGrain,  Form: Form);
+            return await base.ExecuteQuery(GetResource(subscriptionId, resourceGroupName, serviceName), jsonBody, startTime, endTime, timeGrain, Form: Form);
         }
 
         [HttpPost(UriElements.Detectors)]
@@ -82,7 +82,6 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// </summary>
         /// <param name="subscriptionId">Subscription id.</param>
         /// <param name="resourceGroupName">Resource group name.</param>
-        /// <param name="siteName">Site name.</param>
         /// <param name="gistId">Gist id.</param>
         /// <returns>Task for listing the gist.</returns>
         [HttpPost(UriElements.Gists + UriElements.GistResource)]
