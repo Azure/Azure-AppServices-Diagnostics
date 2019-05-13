@@ -41,10 +41,11 @@ namespace Diagnostics.RuntimeHost.Utilities
         {
             string parentpath = Path.GetFileName(folderpath);
             List<CommitContent> files = new List<CommitContent>();
-            foreach (string file in Directory.EnumerateFiles(folderpath, string.Empty))
+            foreach (string file in Directory.EnumerateFiles(folderpath))
             {
                  files.Add(new CommitContent(parentpath + "/" + Path.GetFileName(file), Convert.ToBase64String(File.ReadAllBytes(file)), Octokit.EncodingType.Base64));
             }
+
             return files;
         }
     }
