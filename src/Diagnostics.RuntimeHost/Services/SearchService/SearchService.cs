@@ -77,8 +77,7 @@ namespace Diagnostics.RuntimeHost.Services
         public Task<HttpResponseMessage> TriggerModelRefresh(string requestId, Dictionary<string, string> parameters)
         {
             parameters.Add("requestId", requestId);
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, TriggerModelRefreshUrl);
-            request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, AppendQueryStringParams(TriggerModelRefreshUrl, parameters));
             return Get(request);
         }
 
@@ -101,12 +100,15 @@ namespace Diagnostics.RuntimeHost.Services
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        private string AppendQueryStringParams(string url, string query, string productid)
+        private string AppendQueryStringParams(string url, Dictionary<string, string> additionalQueryParams)
         {
             var uriBuilder = new UriBuilder(url);
             var queryParams = HttpUtility.ParseQueryString(uriBuilder.Query);
-            queryParams.Add("text", query);
-            queryParams.Add("productid", productid);
+            foreach (string key in additionalQueryParams.Keys)
+            {
+                queryParams.Add(key, additionalQueryParams.GetValueOrDefault(key));
+            }
+
             uriBuilder.Query = queryParams.ToString();
             return uriBuilder.ToString();
         }

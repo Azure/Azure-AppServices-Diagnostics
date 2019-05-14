@@ -1,7 +1,3 @@
-"""
-This script runs the application using a development server.
-It contains the definition of routes and views for the application.
-"""
 import os, gc, shutil, uuid
 from flask import Flask, request
 from RegistryReader import githubFolderPath
@@ -241,7 +237,10 @@ def loggingProvider(requestIdRequired=True):
     def loggingOuter(f):
         @wraps(f)
         def logger(*args, **kwargs):
-            downloadResourceConfig()
+            try:
+                downloadResourceConfig()
+            except:
+                pass
             startTime = getUTCTime()
             res = None
             requestId = getRequestId(request)
@@ -322,10 +321,10 @@ def freeModelMethod():
     freeModel(productid)
     return ('', 204)
 
-@app.route('/refreshModel')
-@loggingProvider(requestIdRequired=False)
+@app.route('/refreshModel', methods=["GET"])
+@loggingProvider(requestIdRequired=True)
 def refreshModelMethod():
-    productid = str(request.args.get('productId'))
+    productid = str(request.args.get('productId')).strip()
     res = "{0} - {1}".format(productid, refreshModel(productid))
     return (res, 200)
 
