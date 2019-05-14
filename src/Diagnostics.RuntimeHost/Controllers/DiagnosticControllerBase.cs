@@ -560,16 +560,16 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 var resourceUriFromQuery = queryParams.Where(s => s.Key.Equals("resourceUri")).Select(pair => pair.Value);
                 var resourceUri = context.OperationContext.Resource.ResourceUri;
-                var changeSetIdValue = changeSetId.First();
+                var changeSetIdValue = HttpUtility.UrlDecode(changeSetId.First());
                 if (resourceUriFromQuery.Any())
                 {
-                    resourceUri = resourceUriFromQuery.First();
+                    resourceUri = HttpUtility.UrlDecode(resourceUriFromQuery.First());
                 }
 
                 // Gets all change sets for the resource uri
                 if (changeSetIdValue.Equals("*"))
                 {
-                    var changesets = await GetAllChangeSets(resourceUri, DateTime.Parse(context.OperationContext.StartTime), DateTime.Parse(context.OperationContext.EndTime), dataProviders.ChangeAnalysis);
+                    var changesets = await GetAllChangeSets(resourceUri, DateTime.Now.AddDays(-13), DateTime.Now, dataProviders.ChangeAnalysis);
                     return new Tuple<Response, List<DataProviderMetadata>>(changesets, dataProvidersMetadata);
                 }
 
@@ -881,11 +881,6 @@ namespace Diagnostics.RuntimeHost.Controllers
         private async Task<Response> GetAllChangeSets(string resourceId, DateTime startTime, DateTime endTime, IChangeAnalysisDataProvider changeAnalysisDataProvider)
         {
             var changeSets = await changeAnalysisDataProvider.GetChangeSetsForResource(resourceId, startTime, endTime);
-            if (changeSets == null || changeSets.Count <= 0)
-            {
-                return new Response();
-            }
-
             Response dataSetResponse = new Response();
             dataSetResponse.AddChangeSets(changeSets);
             return dataSetResponse;
