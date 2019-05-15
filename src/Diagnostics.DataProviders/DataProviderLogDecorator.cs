@@ -12,13 +12,14 @@ using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.DataProviders
 {
-    internal class DataProviderLogDecorator : IKustoDataProvider, IGeoMasterDataProvider, ISupportObserverDataProvider, IAppInsightsDataProvider, IMdmDataProvider, IChangeAnalysisDataProvider
+    internal class DataProviderLogDecorator : IKustoDataProvider, IGeoMasterDataProvider, ISupportObserverDataProvider, IAppInsightsDataProvider, IMdmDataProvider, IChangeAnalysisDataProvider, IAscDataProvider
     {
         private IKustoDataProvider _kustoDataProvider;
         private IGeoMasterDataProvider _geomasterDataProvider;
         private ISupportObserverDataProvider _observerDataProvider;
         private IAppInsightsDataProvider _appInsightsDataProvider;
         private IChangeAnalysisDataProvider changeAnalysisDataProvider;
+        private IAscDataProvider _ascDataProvider;
         private IMdmDataProvider _mdmDataProvider;
         private DataProviderMetadata _currentMetadataProvider;
         private string _requestId;
@@ -52,6 +53,11 @@ namespace Diagnostics.DataProviders
         public DataProviderLogDecorator(DataProviderContext context, IChangeAnalysisDataProvider dataProvider) : this(context, dataProvider.GetMetadata())
         {
             changeAnalysisDataProvider = dataProvider;
+        }
+
+        public DataProviderLogDecorator(DataProviderContext context, IAscDataProvider dataProvider) : this(context, dataProvider.GetMetadata())
+        {
+            _ascDataProvider = dataProvider;
         }
 
         private DataProviderLogDecorator(DataProviderContext context, DataProviderMetadata metaData)
@@ -426,6 +432,34 @@ namespace Diagnostics.DataProviders
 
         #endregion
 
+        #region ASC_DataProvider
+        Task<T> IAscDataProvider.MakeHttpPostRequest<T>(string jsonPostBody, string apiVersion, CancellationToken cancellationToken)
+        {
+            return MakeDependencyCall(_ascDataProvider.MakeHttpPostRequest<T>(jsonPostBody, apiVersion, cancellationToken));
+        }
+
+        Task<T> IAscDataProvider.MakeHttpPostRequest<T>(string jsonPostBody, CancellationToken cancellationToken)
+        {
+            return MakeDependencyCall(_ascDataProvider.MakeHttpPostRequest<T>(jsonPostBody, cancellationToken));
+        }
+
+        Task<T> IAscDataProvider.MakeHttpGetRequest<T>(string queryString, string apiVersion, CancellationToken cancellationToken)
+        {
+            return MakeDependencyCall(_ascDataProvider.MakeHttpGetRequest<T>(queryString, apiVersion, cancellationToken));
+        }
+
+        Task<T> IAscDataProvider.MakeHttpGetRequest<T>(string queryString, CancellationToken cancellationToken)
+        {
+            return MakeDependencyCall(_ascDataProvider.MakeHttpGetRequest<T>(queryString, cancellationToken));
+        }
+
+        Task<T> IAscDataProvider.GetInsightFromBlob<T>(string blobUri, CancellationToken cancellationToken)
+        {
+            return MakeDependencyCall(_ascDataProvider.GetInsightFromBlob<T>(blobUri, cancellationToken));
+        }
+
+        #endregion
+
         private async Task<T> MakeDependencyCall<T>(Task<T> dataProviderTask, [CallerMemberName]string dataProviderOperation = "")
         {
             Exception dataProviderException = null;
@@ -474,7 +508,6 @@ namespace Diagnostics.DataProviders
                         endTime.ToString("HH:mm:ss.fff"), latencyMilliseconds);
                 }
             }
-        }
-
+        }        
     }
 }
