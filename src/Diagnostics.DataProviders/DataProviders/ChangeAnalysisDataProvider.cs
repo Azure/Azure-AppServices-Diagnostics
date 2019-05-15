@@ -163,10 +163,7 @@ namespace Diagnostics.DataProviders
 
         public DataProviderMetadata GetMetadata()
         {
-            return new DataProviderMetadata
-            {
-                ProviderName = "ChangeAnalysis"
-            };
+            return null;
         }
 
         /// <summary>
