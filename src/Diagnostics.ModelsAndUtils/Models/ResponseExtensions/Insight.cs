@@ -44,7 +44,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
-        /// <param name="solutions">Solutions to problems identified by the Insight.</param>
         public Insight(InsightStatus status, string message)
         {
             this.Status = status;
@@ -59,7 +58,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
         /// <param name="body">Insights Body.</param>
-        /// <param name="solutions">Solutions to problems identified by the Insight.</param>
         public Insight(InsightStatus status, string message, Dictionary<string, string> body)
         {
             this.Status = status;
@@ -74,7 +72,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
         /// <param name="body">Insights Body.</param>
-        /// <param name="solutions">Solutions to problems identified by the Insight.</param>
         public Insight(InsightStatus status, string message, Dictionary<string, string> body, bool isExpanded) :
             this(status, message, body)
         {

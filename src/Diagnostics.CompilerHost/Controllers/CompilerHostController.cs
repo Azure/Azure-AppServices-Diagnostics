@@ -6,6 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
@@ -54,14 +55,7 @@ namespace Diagnostics.CompilerHost.Controllers
                 return BadRequest("Missing script from body");
             }
 
-            var references = new Dictionary<string, string>();
-            try
-            {
-                references = jsonBody["reference"].ToObject<Dictionary<string, string>>();
-            }
-            catch
-            {
-            }
+            var references = TryExtract(jsonBody, "reference") ?? new Dictionary<string, string>();
 
             if (!Enum.TryParse(jsonBody.Value<string>("entityType"), true, out EntityType entityType))
             {
@@ -86,6 +80,18 @@ namespace Diagnostics.CompilerHost.Controllers
             }
 
             return Ok(compilerResponse);
+        }
+
+        private static Dictionary<string, string> TryExtract(JToken jsonBody, string key)
+        {
+            try
+            {
+                return jsonBody[key].ToObject<Dictionary<string, string>>();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
     }
 }

@@ -234,7 +234,6 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// Temporary solution
         /// </summary>
-        /// <typeparam name="T"></typeparam>
         /// <param name="path"></param>
         /// <returns></returns>
         private async Task<string> Get(string path)

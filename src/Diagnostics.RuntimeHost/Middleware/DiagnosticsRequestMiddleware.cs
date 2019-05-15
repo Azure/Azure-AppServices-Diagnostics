@@ -67,11 +67,8 @@ namespace Diagnostics.RuntimeHost.Middleware
 
             httpContext.RequestAborted = cTokenSource.Token;
             httpContext.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values);
-            Dictionary<string, string> queryStringValues = new Dictionary<string, string>();
-            foreach (var query in httpContext.Request.Query)
-            {
-                queryStringValues.Add(query.Key.ToLower(), query.Value.FirstOrDefault());
-            }
+            var queryStringValues = httpContext.Request.Query?.ToDictionary(query => query.Key.ToLower(), query => query.Value.FirstOrDefault())
+                ?? new Dictionary<string, string>();
 
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(
                 queryStringValues.GetValueOrDefault("starttime", null),
@@ -87,13 +84,11 @@ namespace Diagnostics.RuntimeHost.Middleware
             var supportBayApiObserverTokenService = ((ServiceProvider)httpContext.RequestServices).GetService<ISupportBayApiObserverTokenService>();
 
             httpContext.Items.Add(HostConstants.ApiLoggerKey, logger);
-            string clientObjId = string.Empty;
-            StringValues internalClientHeader;
-            bool isInternalClient = false;
+            var clientObjId = string.Empty;
+            var isInternalClient = false;
 
             // For requests coming Applens, populate client object id with Applens App Id.
-            httpContext.Request.Headers.TryGetValue("x-ms-internal-client", out internalClientHeader);
-            if (internalClientHeader.Any())
+            if (httpContext.Request.Headers.TryGetValue("x-ms-internal-client", out var internalClientHeader) && internalClientHeader.Any())
             {
                 bool.TryParse(internalClientHeader.First(), out isInternalClient);
             }
@@ -118,11 +113,7 @@ namespace Diagnostics.RuntimeHost.Middleware
 
         private void EndRequest_Handle(HttpContext httpContext)
         {
-            ApiMetricsLogger logger = (ApiMetricsLogger)httpContext.Items[HostConstants.ApiLoggerKey];
-            if (logger == null)
-            {
-                logger = new ApiMetricsLogger(httpContext);
-            }
+            var logger = (ApiMetricsLogger)httpContext.Items[HostConstants.ApiLoggerKey] ?? new ApiMetricsLogger(httpContext);
 
             logger.LogRuntimeHostAPIMetrics(httpContext);
         }
@@ -131,11 +122,7 @@ namespace Diagnostics.RuntimeHost.Middleware
         {
             try
             {
-                ApiMetricsLogger logger = (ApiMetricsLogger)context.Items[HostConstants.ApiLoggerKey];
-                if (logger == null)
-                {
-                    logger = new ApiMetricsLogger(context);
-                }
+                var logger = (ApiMetricsLogger)context.Items[HostConstants.ApiLoggerKey] ?? new ApiMetricsLogger(context);
 
                 logger.LogRuntimeHostUnhandledException(context, ex);
             }
