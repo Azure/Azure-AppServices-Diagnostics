@@ -49,9 +49,9 @@ namespace Diagnostics.RuntimeHost.Utilities
 
         #region Observer Urls
         public const string Observer = "observer";
-        public const string ObserverGetSites = "/sites/{siteName}";
-        public const string ObserverGetSiteWithStamp = "/stamps/{stampName}/sites/{siteName}";
-        public const string ObserverGetHostingEnvironment = "/hostingEnvironments/{hostingEnvironmentName}";
+        public const string ObserverGetSites = "sites/{siteName}";
+        public const string ObserverGetSiteWithStamp = "stamps/{stampName}/sites/{siteName}";
+        public const string ObserverGetHostingEnvironment = "hostingEnvironments/{hostingEnvironmentName}";
         #endregion
     }
 
