@@ -13,7 +13,7 @@ namespace Diagnostics.DataProviders
                 return new MockKustoClient();
             }
 
-            return new KustoClient(requestId);
+            return new KustoClient(config, requestId);
         }
     }
 }
