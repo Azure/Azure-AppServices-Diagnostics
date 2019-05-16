@@ -1,4 +1,7 @@
-﻿namespace Diagnostics.ModelsAndUtils.Models.ChangeAnalysis
+﻿using System.Collections.Generic;
+using System;
+
+namespace Diagnostics.ModelsAndUtils.Models.ChangeAnalysis
 {
     public class ChangeSetResponseModel
     {
@@ -23,6 +26,17 @@
         public string TimeStamp;
 
         /// <summary>
+        /// Change Set time.
+        /// </summary>
+        public DateTime ChangeSetTime
+        {
+            get
+            {
+                return DateTime.Parse(TimeStamp);
+            }
+        }
+
+        /// <summary>
         /// Interval of the change.
         /// </summary>
         public string TimeWindow;
@@ -31,5 +45,15 @@
         /// Change initiated by. It can be email address or Guid.
         /// </summary>
         public string InitiatedBy;
+
+        /// <summary>
+        /// Contains info about the last change scan.
+        /// </summary>
+        public LastScanResponseModel LastScanInformation;
+
+        /// <summary>
+        /// Gets the changes for the changeSetId.
+        /// </summary>
+        public List<ResourceChangesResponseModel> ResourceChanges;
     }
 }

@@ -36,7 +36,7 @@ namespace Diagnostics.RuntimeHost.Services
             DataTable stackTable = null;
             
             try{
-                if (dataProviderContext.Configuration.KustoConfiguration.CloudDomain == KustoDataProviderConfiguration.AzureCloud)
+                if (dataProviderContext.Configuration.KustoConfiguration.CloudDomain == DataProviderConstants.AzureCloud)
                 {
                     stackTable = await dp.Kusto.ExecuteQuery(queryTemplate, DataProviderConstants.FakeStampForAnalyticsCluster, operationName: "GetApplicationStack");
                 }

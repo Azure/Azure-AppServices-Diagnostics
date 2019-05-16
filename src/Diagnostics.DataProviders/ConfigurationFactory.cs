@@ -17,6 +17,7 @@ namespace Diagnostics.DataProviders
     public class AppSettingsDataProviderConfigurationFactory : DataProviderConfigurationFactory
     {
         private IConfigurationRoot _configuration;
+
         public AppSettingsDataProviderConfigurationFactory(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -72,7 +73,7 @@ namespace Diagnostics.DataProviders
                         return "mockstamp";
                     default: return string.Empty;
                 }
-            }           
+            }
             else if (prefix == "SupportObserver")
             {
                 switch (name)
@@ -108,11 +109,12 @@ namespace Diagnostics.DataProviders
         {
             var dataSourcesConfiguration = new DataSourcesConfiguration();
             var configurationProperties = dataSourcesConfiguration.GetType().GetProperties()
-                    .Where(property => {
-                        return property.PropertyType.GetInterfaces().Contains(typeof(IDataProviderConfiguration));
-                     });
+                .Where(property =>
+                {
+                    return property.PropertyType.GetInterfaces().Contains(typeof(IDataProviderConfiguration));
+                });
 
-            foreach(var configProperty in configurationProperties)
+            foreach (var configProperty in configurationProperties)
             {
                 var instance = Activator.CreateInstance(configProperty.PropertyType) as IDataProviderConfiguration;
                 LoadConfigurationValues(instance);

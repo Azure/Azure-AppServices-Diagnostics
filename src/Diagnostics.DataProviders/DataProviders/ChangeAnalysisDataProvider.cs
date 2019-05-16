@@ -6,6 +6,7 @@ using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.ModelsAndUtils.Models;
+using System.Linq;
 
 namespace Diagnostics.DataProviders
 {
@@ -23,7 +24,7 @@ namespace Diagnostics.DataProviders
         {
             dataProviderConfiguration = configuration;
             dataProviderRequestId = requestId;
-            changeAnalysisClient = new ChangeAnalysisClient(configuration, clientObjectId, principalName);
+            changeAnalysisClient = new ChangeAnalysisClient(configuration, requestId, clientObjectId, principalName);
             kustoDataProvider = new KustoDataProvider(cache, kustoConfig, requestId);
         }
 
@@ -56,7 +57,19 @@ namespace Diagnostics.DataProviders
             };
 
             // Get changeSet of the given arm resource uri
-            return await changeAnalysisClient.GetChangeSetsAsync(request);
+            List<ChangeSetResponseModel> changesets = await changeAnalysisClient.GetChangeSetsAsync(request);
+            changesets = changesets.OrderByDescending(change => change.ChangeSetTime).ToList();
+            if (changesets.Count > 0)
+            {
+                var latestChange = changesets[0];
+                latestChange.LastScanInformation = await changeAnalysisClient.GetLastScanInformation(armResourceUri);
+                latestChange.ResourceChanges = await changeAnalysisClient.GetChangesAsync(new ChangeRequest
+                {
+                    ChangeSetId = latestChange.ChangeSetId,
+                    ResourceId = latestChange.ResourceId
+                });
+            }
+            return changesets;
         }
 
         /// <summary>
@@ -150,10 +163,27 @@ namespace Diagnostics.DataProviders
 
         public DataProviderMetadata GetMetadata()
         {
-            return new DataProviderMetadata
+            return null;
+        }
+
+        /// <summary>
+        /// Submits a scan request to Change Analysis RP.
+        /// </summary>
+        /// <param name="resourceId">Azure resource id</param>
+        /// <returns>Contains info about the scan request with submissions state and time.</returns>
+        public async Task<ChangeScanModel> ScanActionRequest(string resourceId, string scanAction)
+        {
+            if (string.IsNullOrWhiteSpace(resourceId))
             {
-                ProviderName = "ChangeAnalysis"
-            };
+                throw new ArgumentNullException(nameof(resourceId));
+            }
+
+            if (string.IsNullOrWhiteSpace(scanAction))
+            {
+                throw new ArgumentNullException(nameof(scanAction));
+            }
+
+            return await changeAnalysisClient.ScanActionRequest(resourceId, scanAction);
         }
 
         private List<string> GetHostNamesFromTable(DataTable kustoTable)

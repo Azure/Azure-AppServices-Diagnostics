@@ -56,6 +56,13 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string UpdateResourceConfig = "updateResourceConfig";
         public const string SearchAPI = "http://localhost:8010";
         public const string TrainingAPI = "http://localhost:8011";
+
+        #region Observer Urls
+        public const string Observer = "observer";
+        public const string ObserverGetSites = "sites/{siteName}";
+        public const string ObserverGetSiteWithStamp = "stamps/{stampName}/sites/{siteName}";
+        public const string ObserverGetHostingEnvironment = "hostingEnvironments/{hostingEnvironmentName}";
+        #endregion
     }
 
     /// <summary>

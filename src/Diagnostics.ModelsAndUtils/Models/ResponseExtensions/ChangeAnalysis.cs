@@ -26,9 +26,20 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </example>
         public static DiagnosticData AddChangeSets(this Response response, List<ChangeSetResponseModel> changeSets)
         {
-            if (changeSets == null)
+            // Even if there are no change sets found, we want to add the rendering type to UI so the user has option to scan for changes.
+            if (changeSets == null || changeSets.Count <= 0)
             {
-                return null;
+                var emptyData = new DiagnosticData
+                {
+                    Table = new DataTable(),
+                    RenderingProperties = new Rendering(RenderingType.ChangeSets)
+                    {
+                        Title = string.Empty
+                    }
+                };
+
+                response.Dataset.Add(emptyData);
+                return emptyData;
             }
 
             DataTable results = new DataTable();
@@ -39,6 +50,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             results.Columns.Add(new DataColumn("TimeStamp"));
             results.Columns.Add(new DataColumn("TimeWindow"));
             results.Columns.Add(new DataColumn("InitiatedBy"));
+            results.Columns.Add(new DataColumn("LastScanTime"));
+            results.Columns.Add(new DataColumn("Inputs", typeof(List<ResourceChangesResponseModel>)));
             changeSets.ForEach(changeSet =>
             {
                 results.Rows.Add(new object[]
@@ -52,6 +65,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 });
             });
 
+            var latestRow = results.Rows[0];
+            latestRow[6] = changeSets[0].LastScanInformation != null ? changeSets[0].LastScanInformation.TimeStamp : string.Empty;
+            latestRow[7] = changeSets[0].ResourceChanges ?? changeSets[0].ResourceChanges;
             var diagData = new DiagnosticData()
             {
                 Table = results,

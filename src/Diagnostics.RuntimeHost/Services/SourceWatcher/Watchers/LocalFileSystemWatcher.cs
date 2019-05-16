@@ -6,6 +6,7 @@ using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
+using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
@@ -53,12 +54,21 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     var files = srcSubDirInfo.GetFiles().OrderByDescending(p => p.LastWriteTimeUtc);
                     var csxFile = files.FirstOrDefault(p => p.Extension.Equals(".csx", StringComparison.OrdinalIgnoreCase));
                     var asmFile = files.FirstOrDefault(p => p.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase));
+                    var packageJsonFile = files.FirstOrDefault(p => p.Name.Equals("package.json", StringComparison.CurrentCultureIgnoreCase));
                     var metadataFile = files.FirstOrDefault(p => p.Name.Equals("metadata.json", StringComparison.OrdinalIgnoreCase));
 
                     string scriptText = string.Empty;
                     if (csxFile != default(FileInfo))
                     {
                         scriptText = await File.ReadAllTextAsync(csxFile.FullName);
+                    }
+
+                    EntityType entityType = EntityType.Signal;
+                    if (packageJsonFile != null)
+                    {
+                        var configFile = await FileHelper.GetFileContentAsync(packageJsonFile.FullName);
+                        var config = JsonConvert.DeserializeObject<PackageConfig>(configFile);
+                        entityType = string.Equals(config.Type, "gist", StringComparison.OrdinalIgnoreCase) ? EntityType.Gist : EntityType.Signal;
                     }
 
                     string metadata = string.Empty;
@@ -78,6 +88,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
                     LogMessage($"Loading assembly : {asmFile.FullName}");
                     Assembly asm = Assembly.LoadFrom(asmFile.FullName);
+
                     invoker.InitializeEntryPoint(asm);
                     LogMessage($"Updating cache with  new invoker with id : {invoker.EntryPointDefinitionAttribute.Id}");
                     _invokerCache.AddOrUpdate(invoker.EntryPointDefinitionAttribute.Id, invoker);
