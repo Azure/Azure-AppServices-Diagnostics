@@ -169,7 +169,7 @@ namespace Diagnostics.RuntimeHost.Models
         /// </summary>
         public string RequestId { get; set; }
     }
-    
+
     /// <summary>
     /// Internal API Training Event
     /// </summary>
@@ -179,6 +179,7 @@ namespace Diagnostics.RuntimeHost.Models
         /// Gets or sets RequestId.
         /// </summary>
         public string RequestId { get; set; }
+
         /// <summary>
         /// Gets or sets TrainingId..
         /// </summary>
@@ -190,8 +191,14 @@ namespace Diagnostics.RuntimeHost.Models
         public string ProductId { get; set; }
     }
 
+    /// <summary>
+    /// Model to receive training config.
+    /// </summary>
     public class TrainingConfigModel
     {
+        /// <summary>
+        /// Gets or sets the training config string.
+        /// </summary>
         public string TrainingConfig { get; set; }
     }
 }

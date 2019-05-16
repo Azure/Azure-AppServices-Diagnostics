@@ -70,10 +70,6 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpPost(UriElements.Detectors)]
         public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody, [FromQuery(Name = "text")] string text = null)
         {
-            if (text == null)
-            {
-                text = Request.Query["text"].ToString();
-            }
             if (IsPostBodyMissing(postBody))
             {
                 postBody = await GetSitePostBody(subscriptionId, resourceGroupName, siteName);

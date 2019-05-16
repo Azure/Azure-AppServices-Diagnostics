@@ -249,7 +249,14 @@ namespace Diagnostics.RuntimeHost.Controllers
                         var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
                         var searchUtterances = await _searchService.SearchUtterances(runtimeContext.OperationContext.RequestId, description, utterances, resourceParams);
                         string resultContent = await searchUtterances.Content.ReadAsStringAsync();
-                        utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
+                        try
+                        {
+                            utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
+                        }
+                        catch
+                        {
+                            utterancesResults = null;
+                        }
                     }
 
                     try
@@ -570,7 +577,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 string resultContent = await res.Content.ReadAsStringAsync();
                 searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
                 searchResults.Results = searchResults.Results.Where(x => x.Score > 0.3).ToArray();
-                allDetectors.ForEach(p => {
+                allDetectors.ForEach(p =>
+                {
                     var det = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == p.EntryPointDefinitionAttribute.Id) : null;
                     if (det != null)
                     {
