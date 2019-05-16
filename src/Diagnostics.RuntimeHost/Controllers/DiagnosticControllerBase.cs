@@ -664,7 +664,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             // Check if the detector is of type analysis and if yes, get all the detectors associated with the analysis
             if (detector.Type == DetectorType.Analysis)
             {
-                var detectorListAnalysis = allDetectors.Where(detectorResponse => detectorResponse.Metadata.AnalysisTypes != null && detectorResponse.Metadata.AnalysisTypes.Contains(detector.Id)).Select(d => d.Metadata.Id);
+                var detectorListAnalysis = allDetectors.Where(detectorResponse => detectorResponse.Metadata.AnalysisTypes != null && detectorResponse.Metadata.AnalysisTypes.Contains(detector.Id, StringComparer.OrdinalIgnoreCase)).Select(d => d.Metadata.Id);
                 if (detectorListAnalysis.Any())
                 {
                     detectorLists = detectorLists.Union(detectorListAnalysis);
