@@ -659,9 +659,21 @@ namespace Diagnostics.RuntimeHost.Controllers
                 .SelectMany(diagnosticData => ((DetectorCollectionRendering)diagnosticData.RenderingProperties).DetectorIds)
                 .Distinct();
 
+            var allDetectors = await ListDetectorsInternal(context);
+
+            // Check if the detector is of type analysis and if yes, get all the detectors associated with the analysis
+            if (detector.Type == DetectorType.Analysis)
+            {
+                var detectorListAnalysis = allDetectors.Where(detectorResponse => detectorResponse.Metadata.AnalysisTypes != null && detectorResponse.Metadata.AnalysisTypes.Contains(detector.Id, StringComparer.OrdinalIgnoreCase)).Select(d => d.Metadata.Id);
+                if (detectorListAnalysis.Any())
+                {
+                    detectorLists = detectorLists.Union(detectorListAnalysis);
+                }
+            }
+
             if (detectorLists.Any())
             {
-                var applicableDetectorMetaData = (await this.ListDetectorsInternal(context)).Where(detectorResponse => detectorLists.Contains(detectorResponse.Metadata.Id));
+                var applicableDetectorMetaData = allDetectors.Where(detectorResponse => detectorLists.Contains(detectorResponse.Metadata.Id));
                 var detectorListResponses = await Task.WhenAll(applicableDetectorMetaData.Select(detectorResponse => GetInsightsFromDetector(context, detectorResponse.Metadata, detectorsRun)));
 
                 supportCenterInsights.AddRange(detectorListResponses.Where(detectorInsights => detectorInsights != null).SelectMany(detectorInsights => detectorInsights));
