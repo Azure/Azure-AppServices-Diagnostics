@@ -72,6 +72,16 @@ namespace Diagnostics.DataProviders
             }
         }
 
+        public string KustoApiEndpoint
+        {
+            get
+            {
+                var uri = new Uri(AADKustoResource);
+                var host = uri.Host;
+                return uri.OriginalString.Replace(host, "{cluster}");
+            }
+        }
+
         public KustoDataProviderConfiguration()
         {
 
