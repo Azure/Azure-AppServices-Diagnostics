@@ -34,6 +34,7 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<ISiteService, SiteService>();
             services.AddSingleton<IStampService, StampService>();
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
+            services.AddSingleton<ISearchService, SearchService>();
 
             var servicesProvider = services.BuildServiceProvider();
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();

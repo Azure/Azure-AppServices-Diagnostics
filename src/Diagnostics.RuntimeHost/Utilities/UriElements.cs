@@ -47,6 +47,16 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string StatisticsResource = "/{invokerId}";
         public const string StatisticsQuery = "/statisticsQuery";
 
+        // Constants for internal api interactions
+        public const string Internal = "/internal";
+        public const string Logger = "logger";
+        public const string PublishModel = "publishmodel";
+        public const string TrainModel = "trainmodel";
+        public const string RefreshModel = "refreshmodel";
+        public const string UpdateResourceConfig = "updateResourceConfig";
+        public const string SearchAPI = "http://localhost:8010";
+        public const string TrainingAPI = "http://localhost:8011";
+
         #region Observer Urls
         public const string Observer = "observer";
         public const string ObserverGetSites = "sites/{siteName}";

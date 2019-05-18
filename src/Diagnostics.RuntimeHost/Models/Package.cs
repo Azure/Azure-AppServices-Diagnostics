@@ -42,6 +42,7 @@ namespace Diagnostics.RuntimeHost.Models
         /// </summary>
         public string Id { get; set; }
 
+        public string Metadata { get; set; }
         /// <summary>
         /// Gets or sets the committed alias.
         /// </summary>
@@ -74,6 +75,7 @@ namespace Diagnostics.RuntimeHost.Models
             var csxFilePath = $"{filePath}.csx";
             var dllFilePath = $"{filePath}.dll";
             var pdbFilePath = $"{filePath}.pdb";
+            var metadataFilePath = $"{Id.ToLower()}/metadata.json";
             var configPath = $"{Id.ToLower()}/package.json";
 
             return new List<CommitContent>
@@ -81,7 +83,8 @@ namespace Diagnostics.RuntimeHost.Models
                 new CommitContent(csxFilePath, CodeString),
                 new CommitContent(configPath, PackageConfig),
                 new CommitContent(dllFilePath, DllBytes, EncodingType.Base64),
-                new CommitContent(pdbFilePath, PdbBytes, EncodingType.Base64)
+                new CommitContent(pdbFilePath, PdbBytes, EncodingType.Base64),
+                new CommitContent(metadataFilePath, Metadata)
             };
         }
 

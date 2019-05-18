@@ -20,10 +20,10 @@ namespace Diagnostics.RuntimeHost.Controllers
     {
         protected ISiteService _siteService;
 
-        public SiteControllerBase(IStampService stampService, ISiteService siteService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
-            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, gistCache, dataSourcesConfigService, assemblyCacheService)
+        public SiteControllerBase(IServiceProvider services)
+            : base(services)
         {
-            this._siteService = siteService;
+            this._siteService = (ISiteService)services.GetService(typeof(ISiteService));
         }
 
         protected async Task<App> GetAppResource(string subscriptionId, string resourceGroup, string appName, DiagnosticSiteData postBody, DateTime startTime, DateTime endTime)

@@ -61,6 +61,17 @@ namespace Diagnostics.Logger
         public const string LogKustoQueryInformation = "Kusto Query Information";
         #endregion
 
+        #region Internal AI API Event Message Templates
+
+        public const string LogInternalAPIMessage = "Internal API Message";
+        public const string LogInternalAPIInsights = "Internal API Insights";
+        public const string LogInternalAPISummary = "Internal API Response Code";
+        public const string LogInternalAPIHandledException = "Internal API Handled Exception";
+        public const string LogInternalAPIUnhandledException = "Internal API Unhandled Exception";
+        public const string LogInternalAPITrainingException = "Internal API Training Exception";
+        public const string LogInternalAPITrainingSummary = "Internal API Training Summary";
+
+        #endregion
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }

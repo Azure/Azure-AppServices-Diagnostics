@@ -26,6 +26,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
+using System.Net.Http;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -38,25 +39,31 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IDataSourcesConfigurationService _dataSourcesConfigService;
         protected IStampService _stampService;
         protected IAssemblyCacheService _assemblyCacheService;
+        protected ISearchService _searchService;
 
-        public DiagnosticControllerBase(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
+        private InternalAPIHelper _internalApiHelper;
+
+        public DiagnosticControllerBase(IServiceProvider services)
         {
-            this._compilerHostClient = compilerHostClient;
-            this._sourceWatcherService = sourceWatcherService;
-            this._invokerCache = invokerCache;
-            this._gistCache = gistCache;
-            this._dataSourcesConfigService = dataSourcesConfigService;
-            this._stampService = stampService;
-            this._assemblyCacheService = assemblyCacheService;
+            this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));
+            this._sourceWatcherService = (ISourceWatcherService)services.GetService(typeof(ISourceWatcherService));
+            this._invokerCache = (IInvokerCacheService)services.GetService(typeof(IInvokerCacheService));
+            this._gistCache = (IGistCacheService)services.GetService(typeof(IGistCacheService));
+            this._dataSourcesConfigService = (IDataSourcesConfigurationService)services.GetService(typeof(IDataSourcesConfigurationService));
+            this._stampService = (IStampService)services.GetService(typeof(IStampService));
+            this._assemblyCacheService = (IAssemblyCacheService)services.GetService(typeof(IAssemblyCacheService));
+            this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
+
+            this._internalApiHelper = new InternalAPIHelper();
         }
 
         #region API Response Methods
 
-        protected async Task<IActionResult> ListDetectors(TResource resource)
+        protected async Task<IActionResult> ListDetectors(TResource resource, string queryText = null)
         {
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
-            return Ok(await this.ListDetectorsInternal(cxt));
+            return Ok(await this.ListDetectorsInternal(cxt, queryText));
         }
 
         protected async Task<IActionResult> GetDetector(TResource resource, string detectorId, string startTime, string endTime, string timeGrain, Form form = null)
@@ -231,6 +238,27 @@ namespace Diagnostics.RuntimeHost.Controllers
                     List<DataProviderMetadata> dataProvidersMetadata = null;
                     Response invocationResponse = null;
                     bool isInternalCall = true;
+                    QueryUtterancesResults utterancesResults = null;
+
+                    // Get suggested utterances for the detector
+                    string[] utterances = null;
+                    if (jsonBody.DetectorUtterances != null && invoker.EntryPointDefinitionAttribute.Description.ToString().Length > 3)
+                    {
+                        utterances = JsonConvert.DeserializeObject<string[]>(jsonBody.DetectorUtterances);
+                        string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
+                        var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
+                        var searchUtterances = await _searchService.SearchUtterances(runtimeContext.OperationContext.RequestId, description, utterances, resourceParams);
+                        string resultContent = await searchUtterances.Content.ReadAsStringAsync();
+                        try
+                        {
+                            utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
+                        }
+                        catch
+                        {
+                            utterancesResults = null;
+                        }
+                    }
+
                     try
                     {
                         if (detectorId == null)
@@ -265,7 +293,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         }
 
                         queryRes.RuntimeSucceeded = true;
-                        queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse, dataProvidersMetadata);
+                        queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse, dataProvidersMetadata, utterancesResults);
                     }
                     catch (Exception ex)
                     {
@@ -536,12 +564,35 @@ namespace Diagnostics.RuntimeHost.Controllers
             return invoker.EntityMetadata.ScriptText;
         }
 
-        private async Task<IEnumerable<DiagnosticApiResponse>> ListDetectorsInternal(RuntimeContext<TResource> context)
+        private async Task<IEnumerable<DiagnosticApiResponse>> ListDetectorsInternal(RuntimeContext<TResource> context, string queryText=null)
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+            var allDetectors = _invokerCache.GetEntityInvokerList<TResource>(context).ToList();
 
-            return _invokerCache.GetEntityInvokerList<TResource>(context)
-                .Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
+            SearchResults searchResults = null;
+            if (queryText != null && queryText.Length>3)
+            {
+                var resourceParams = _internalApiHelper.GetResourceParams(context.OperationContext.Resource as IResourceFilter);
+                var res = await _searchService.SearchDetectors(context.OperationContext.RequestId, queryText, resourceParams);
+                string resultContent = await res.Content.ReadAsStringAsync();
+                searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
+                searchResults.Results = searchResults.Results.Where(x => x.Score > 0.3).ToArray();
+                allDetectors.ForEach(p =>
+                {
+                    var det = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == p.EntryPointDefinitionAttribute.Id) : null;
+                    if (det != null)
+                    {
+                        p.EntryPointDefinitionAttribute.Score = det.Score;
+                    }
+                    else
+                    {
+                        p.EntryPointDefinitionAttribute.Score = 0;
+                    }
+                });
+                allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
+            }
+
+            return allDetectors.Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
         }
 
         private async Task<Tuple<Response, List<DataProviderMetadata>>> GetDetectorInternal(string detectorId, RuntimeContext<TResource> context)
