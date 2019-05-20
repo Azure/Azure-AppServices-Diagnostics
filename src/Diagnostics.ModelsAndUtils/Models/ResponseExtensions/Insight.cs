@@ -145,7 +145,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 foreach (var solution in insight.Solutions ?? Enumerable.Empty<Solution>())
                 {
                     solution.DetectorId = response.Metadata.Id;
-                    solution.IsInternal = response.IsInternalCall;
+                    solution.IsInternal = !response.IsInternalCall;
                 }
 
                 if (insight.Body == null || !insight.Body.Keys.Any())

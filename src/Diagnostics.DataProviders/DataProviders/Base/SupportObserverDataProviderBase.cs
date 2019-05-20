@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -175,6 +176,8 @@ namespace Diagnostics.DataProviders
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
 
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName);
+
+        public abstract Task<string> ExecuteSqlQueryAsync(string cloudServiceName, string query);
 
         public abstract HttpClient GetObserverClient();
 

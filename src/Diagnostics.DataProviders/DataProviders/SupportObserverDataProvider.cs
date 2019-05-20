@@ -6,6 +6,8 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -226,8 +228,27 @@ namespace Diagnostics.DataProviders
             return hostingEnvironmentPostBody;
         }
 
+        public override async Task<string> ExecuteSqlQueryAsync(string cloudServiceName, string query)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, $"https://support-bay-api.azurewebsites.net/observer/service/{cloudServiceName}/invokesql?api-version=2.0")
+            {
+                Content = new StringContent(query)
+            };
+            request.Headers.TryAddWithoutValidation("Content-Type", "application/json");
+            request.Headers.TryAddWithoutValidation("Authorization",
+                await DataProviderContext.SupportBayApiObserverTokenService.GetAuthorizationTokenAsync());
+
+            var response = await GetObserverClient().SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadAsStringAsync();
+            return result;
+        }
+
         public override HttpClient GetObserverClient()
         {
+            // Instantiating an HttpClient class for every request will exhaust the number of sockets available under heavy loads
+            // TODO: Use HttpClientFactory
             return new HttpClient();
         }
 

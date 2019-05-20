@@ -78,7 +78,7 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_appInsightsDataProvider.SetAppInsightsKey(appId, apiKey));
         }
 
-        #endregion
+        #endregion AppInsight_DataProvider
 
         #region Kusto_DataProvider
 
@@ -96,12 +96,13 @@ namespace Diagnostics.DataProviders
         {
             return MakeDependencyCall(_kustoDataProvider.GetKustoQuery(query, stampName));
         }
+
         public Task<KustoQuery> GetKustoClusterQuery(string query)
         {
             return MakeDependencyCall(_kustoDataProvider.GetKustoClusterQuery(query));
         }
 
-        #endregion
+        #endregion Kusto_DataProvider
 
         #region Observer_DataProvider
 
@@ -225,7 +226,12 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_observerDataProvider.GetWebspaceResourceGroupName(subscriptionId, webSpaceName));
         }
 
-        #endregion
+        public Task<string> ExecuteSqlQueryAsync(string cloudServiceName, string query)
+        {
+            return MakeDependencyCall(_observerDataProvider.ExecuteSqlQueryAsync(cloudServiceName, query));
+        }
+
+        #endregion Observer_DataProvider
 
         #region GeoMaster_DataProvider
 
@@ -284,7 +290,7 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_geomasterDataProvider.VerifyHostingEnvironmentVnet(subscriptionId, vnetResourceGroup, vnetName, vnetSubnetName, cancellationToken));
         }
 
-        #endregion
+        #endregion GeoMaster_DataProvider
 
         #region MDM_DataProvider
 
@@ -391,9 +397,10 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_mdmDataProvider.GetMultipleTimeSeriesAsync(startTimeUtc, endTimeUtc, sampling, definitions, seriesResolutionInMinutes, aggregationType));
         }
 
-        #endregion
+        #endregion MDM_DataProvider
 
         #region ChangeAnalysisDataProvider
+
         public Task<ResourceIdResponseModel> GetDependentResourcesAsync(string sitename, string subscriptionId, string stamp, string startTime, string endTime)
         {
             return MakeDependencyCall(changeAnalysisDataProvider.GetDependentResourcesAsync(sitename, subscriptionId, stamp, startTime, endTime));
@@ -424,7 +431,7 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(changeAnalysisDataProvider.ScanActionRequest(resourceId, scanAction));
         }
 
-        #endregion
+        #endregion ChangeAnalysisDataProvider
 
         private async Task<T> MakeDependencyCall<T>(Task<T> dataProviderTask, [CallerMemberName]string dataProviderOperation = "")
         {
@@ -464,17 +471,16 @@ namespace Diagnostics.DataProviders
 
                 if (dataProviderException != null)
                 {
-                    DiagnosticsETWProvider.Instance.LogDataProviderException(_requestId, dataProviderOperation, 
-                        startTime.ToString("HH:mm:ss.fff"), endTime.ToString("HH:mm:ss.fff"), 
+                    DiagnosticsETWProvider.Instance.LogDataProviderException(_requestId, dataProviderOperation,
+                        startTime.ToString("HH:mm:ss.fff"), endTime.ToString("HH:mm:ss.fff"),
                         latencyMilliseconds, dataProviderException.GetType().ToString(), dataProviderException.ToString());
                 }
                 else
                 {
-                    DiagnosticsETWProvider.Instance.LogDataProviderOperationSummary(_requestId, dataProviderOperation, startTime.ToString("HH:mm:ss.fff"), 
+                    DiagnosticsETWProvider.Instance.LogDataProviderOperationSummary(_requestId, dataProviderOperation, startTime.ToString("HH:mm:ss.fff"),
                         endTime.ToString("HH:mm:ss.fff"), latencyMilliseconds);
                 }
             }
         }
-
     }
 }
