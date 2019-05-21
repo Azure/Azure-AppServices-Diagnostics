@@ -2,12 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -230,18 +228,24 @@ namespace Diagnostics.DataProviders
 
         public override async Task<string> ExecuteSqlQueryAsync(string cloudServiceName, string query)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, $"https://support-bay-api.azurewebsites.net/observer/service/{cloudServiceName}/invokesql?api-version=2.0")
+            if (!query.StartsWith("\""))
             {
-                Content = new StringContent(query)
-            };
-            request.Headers.TryAddWithoutValidation("Content-Type", "application/json");
-            request.Headers.TryAddWithoutValidation("Authorization",
-                await DataProviderContext.SupportBayApiObserverTokenService.GetAuthorizationTokenAsync());
+                // BUG: Passing as JSON requires query to be wrapped in quotes, fix API expected content type
+                query = $"\"{query}\"";
+            }
 
-            var response = await GetObserverClient().SendAsync(request);
+            var request = new HttpRequestMessage(HttpMethod.Post, $"/api/service/{cloudServiceName}/invokesql?api-version=2.0")
+            {
+                Content = new StringContent(query, Encoding.Default, "application/json")
+            };
+
+            request.Headers.TryAddWithoutValidation("Accept", "*/*");
+
+            var response = await SendObserverRequestAsync(request);
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadAsStringAsync();
+
             return result;
         }
 
@@ -253,10 +257,9 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
-        /// Temporary solution
+        /// Temporary solution.
+        /// Remove when the following detectors don't use this codepath: Migration, ResourceGroupHealthCheck, SwapAnalysis.
         /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
         private async Task<string> Get(string path)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://support-bay-api.azurewebsites.net/observer/{path}?api-version=2.0");
