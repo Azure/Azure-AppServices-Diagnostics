@@ -16,7 +16,7 @@ App Service Diagnostics can diagnose issues on these types of resources:
 - [Understanding the diagnostic reports](https://docs.microsoft.com/en-us/azure/app-service/overview-diagnostics#diagnostic-report)
 - [Health checkup Graphs](https://docs.microsoft.com/en-us/azure/app-service/overview-diagnostics#health-checkup)
 - [Diagnotics tools for Windows Web app](https://docs.microsoft.com/en-us/azure/app-service/overview-diagnostics#diagnostic-tools-only-for-windows-app)
-- [Change analytics: Correlate code changes to application issues](https://docs.microsoft.com/en-us/azure/app-service/overview-diagnostics#change-analysis)
+- [Change analysis: Correlate code changes to application issues](https://docs.microsoft.com/en-us/azure/app-service/overview-diagnostics#change-analysis)
 
 # Contributing
 
