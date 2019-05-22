@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -226,7 +228,7 @@ namespace Diagnostics.DataProviders
             return hostingEnvironmentPostBody;
         }
 
-        public override async Task<string> ExecuteSqlQueryAsync(string cloudServiceName, string query)
+        public override async Task<DataTable> ExecuteSqlQueryAsync(string cloudServiceName, string query)
         {
             if (!query.StartsWith("\""))
             {
@@ -239,14 +241,22 @@ namespace Diagnostics.DataProviders
                 Content = new StringContent(query, Encoding.Default, "application/json")
             };
 
-            request.Headers.TryAddWithoutValidation("Accept", "*/*");
-
             var response = await SendObserverRequestAsync(request);
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadAsStringAsync();
 
-            return result;
+            DataTable datatable;
+            try
+            {
+                datatable = (DataTable)JsonConvert.DeserializeObject(result, typeof(DataTable));
+            }
+            catch (JsonReaderException ex)
+            {
+                throw new Exception($"SQL Query did not return parsable JSON; response: \"{result}\"", ex);
+            }
+
+            return datatable;
         }
 
         public override HttpClient GetObserverClient()

@@ -226,7 +226,7 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_observerDataProvider.GetWebspaceResourceGroupName(subscriptionId, webSpaceName));
         }
 
-        public Task<string> ExecuteSqlQueryAsync(string cloudServiceName, string query)
+        public Task<DataTable> ExecuteSqlQueryAsync(string cloudServiceName, string query)
         {
             return MakeDependencyCall(_observerDataProvider.ExecuteSqlQueryAsync(cloudServiceName, query));
         }

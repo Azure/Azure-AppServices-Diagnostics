@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
 using Microsoft.AspNetCore.Http;
@@ -56,6 +57,6 @@ namespace Diagnostics.DataProviders
 
         Task<dynamic> GetResource(string wawsObserverUrl);
 
-        Task<string> ExecuteSqlQueryAsync(string cloudServiceName, string query);
+        Task<DataTable> ExecuteSqlQueryAsync(string cloudServiceName, string query);
     }
 }

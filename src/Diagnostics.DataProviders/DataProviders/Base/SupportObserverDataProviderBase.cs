@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
@@ -182,7 +183,7 @@ namespace Diagnostics.DataProviders
 
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName);
 
-        public abstract Task<string> ExecuteSqlQueryAsync(string cloudServiceName, string query);
+        public abstract Task<DataTable> ExecuteSqlQueryAsync(string cloudServiceName, string query);
 
         public abstract HttpClient GetObserverClient();
 

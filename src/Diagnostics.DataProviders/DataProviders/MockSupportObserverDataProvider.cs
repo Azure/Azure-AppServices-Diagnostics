@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
@@ -57,7 +58,7 @@ namespace Diagnostics.DataProviders
             return GetRuntimeSiteSlotMap(stampName, siteName);
         }
 
-        public override Task<string> ExecuteSqlQueryAsync(string cloudServiceName, string query)
+        public override Task<DataTable> ExecuteSqlQueryAsync(string cloudServiceName, string query)
         {
             throw new NotImplementedException();
         }
