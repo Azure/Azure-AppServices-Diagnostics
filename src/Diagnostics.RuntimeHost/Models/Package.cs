@@ -43,6 +43,7 @@ namespace Diagnostics.RuntimeHost.Models
         public string Id { get; set; }
 
         public string Metadata { get; set; }
+
         /// <summary>
         /// Gets or sets the committed alias.
         /// </summary>
@@ -77,6 +78,7 @@ namespace Diagnostics.RuntimeHost.Models
             var pdbFilePath = $"{filePath}.pdb";
             var metadataFilePath = $"{Id.ToLower()}/metadata.json";
             var configPath = $"{Id.ToLower()}/package.json";
+            Metadata = Metadata ?? string.Empty;
 
             return new List<CommitContent>
             {
