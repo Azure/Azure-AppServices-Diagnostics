@@ -77,6 +77,7 @@ namespace Diagnostics.RuntimeHost.Models
             var pdbFilePath = $"{filePath}.pdb";
             var metadataFilePath = $"{Id.ToLower()}/metadata.json";
             var configPath = $"{Id.ToLower()}/package.json";
+            Metadata = Metadata ?? string.Empty;
 
             return new List<CommitContent>
             {
