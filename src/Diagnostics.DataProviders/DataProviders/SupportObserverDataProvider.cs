@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -104,10 +103,10 @@ namespace Diagnostics.DataProviders
 
                     if (!string.IsNullOrWhiteSpace(slotName) && slotMap.Key.Equals(slotName, StringComparison.CurrentCultureIgnoreCase) && missingHistoricalSwapData.Any(timeRange => timeRange.StartTime >= DataProviderContext.QueryStartTime) && missingHistoricalSwapData.Any(timeRange => timeRange.EndTime <= DataProviderContext.QueryEndTime))
                     {
-                        DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. Swap historical data was purged for web app {siteName}({slotName})");
+                        Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. Swap historical data was purged for web app {siteName}({slotName})");
                     }
 
-                    DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. No swap history data for web app {siteName}({slotMap.Key}) from {startTime} to {endTime}");
+                    Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. No swap history data for web app {siteName}({slotMap.Key}) from {startTime} to {endTime}");
                 }
             }
 
@@ -242,18 +241,32 @@ namespace Diagnostics.DataProviders
             };
 
             var response = await SendObserverRequestAsync(request);
-            response.EnsureSuccessStatusCode();
+
+            try
+            {
+                response.EnsureSuccessStatusCode();
+            }
+            catch (HttpRequestException ex)
+            {
+                Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"message:Observer SQL query request failed, query:{query}, error:{ex.Message}");
+                throw;
+            }
 
             var result = await response.Content.ReadAsStringAsync();
 
+            return TryDeserializeDataTable(result);
+        }
+
+        private static DataTable TryDeserializeDataTable(string json)
+        {
             DataTable datatable;
             try
             {
-                datatable = (DataTable)JsonConvert.DeserializeObject(result, typeof(DataTable));
+                datatable = (DataTable)JsonConvert.DeserializeObject(json, typeof(DataTable));
             }
             catch (JsonReaderException ex)
             {
-                throw new Exception($"SQL Query did not return parsable JSON; response: \"{result}\"", ex);
+                throw new Exception($"SQL Query did not return parsable JSON; response: \"{json}\"", ex);
             }
 
             return datatable;
