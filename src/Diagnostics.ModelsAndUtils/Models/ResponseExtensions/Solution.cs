@@ -38,6 +38,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Options pertaining to <see cref="ActionType.GoToBlade"/>.
         /// This is ignored if <see cref="Action"/> is not <see cref="ActionType.GoToBlade"/>.
+        ///
+        /// Configuring BladeOptions:
+        /// Navigate to the the blade you would like to configure in Azure Portal.
+        /// Press ctrl+alt+d to open the Ibiza debugging context. Open the debugger in your browser as well.
+        /// Click on the link with the blade name in the yellow popup debug window.
+        /// A console event will show the BladeName and BladeInputs passed to Ibiza for the blade.
+        /// Copy these into the DetailBlade and DetailBladeInputs of the GoToBladeOptions object.
         /// </summary>
         public GoToBladeOptions BladeOptions { get; set; }
 
