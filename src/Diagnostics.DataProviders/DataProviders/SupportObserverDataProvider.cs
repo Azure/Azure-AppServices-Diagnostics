@@ -241,18 +241,18 @@ namespace Diagnostics.DataProviders
             };
 
             var response = await SendObserverRequestAsync(request);
+            var result = await response.Content.ReadAsStringAsync();
 
             try
             {
                 response.EnsureSuccessStatusCode();
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException)
             {
-                Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"message:Observer SQL query request failed, query:{query}, error:{ex.Message}");
+                Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider",
+                    $"message:Observer SQL query request failed, query:{query}, statusCode:{response.StatusCode}, response:{result}");
                 throw;
             }
-
-            var result = await response.Content.ReadAsStringAsync();
 
             return TryDeserializeDataTable(result);
         }
