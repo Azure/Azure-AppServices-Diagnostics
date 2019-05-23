@@ -102,14 +102,14 @@ namespace Diagnostics.RuntimeHost.Middleware
             {
                 clientObjId = httpContext.Request.Headers[ClientObjectIdHeader];
             }
-            clientObjId = "c69011b1-46f4-4fcc-a760-0d3819d76a8a";
+
 
             string clientPrincipalName = string.Empty;
             if (httpContext.Request.Headers.ContainsKey(ClientPrincipalNameHeader))
             {
                 clientPrincipalName = httpContext.Request.Headers[ClientPrincipalNameHeader];
             }
-            clientPrincipalName = "reswamin@microsoft.com";
+
             httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName));
         }
 
