@@ -12,6 +12,7 @@ using Diagnostics.DataProviders.TokenService;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using Newtonsoft.Json;
+using static Diagnostics.Logger.HeaderConstants;
 
 namespace Diagnostics.DataProviders
 {
@@ -265,7 +266,7 @@ namespace Diagnostics.DataProviders
                     };
                 }
 
-                if(httpexception.Data.Contains(ExceptionStatusCode) && (HttpStatusCode)httpexception.Data[ExceptionStatusCode] == HttpStatusCode.Forbidden)
+                if (httpexception.Data.Contains(ExceptionStatusCode) && (HttpStatusCode)httpexception.Data[ExceptionStatusCode] == HttpStatusCode.Forbidden)
                 {
                     return new ChangeScanModel
                     {
@@ -279,7 +280,7 @@ namespace Diagnostics.DataProviders
                 return new ChangeScanModel
                 {
                     OperationId = string.Empty,
-                    State = "",
+                    State = string.Empty,
                     SubmissionTime = null,
                     CompletionTime = null
                 };
@@ -300,12 +301,12 @@ namespace Diagnostics.DataProviders
 
             // Add required headers.
             requestMessage.Headers.Add("Authorization", authToken);
-            requestMessage.Headers.Add("x-ms-client-object-id", clientObjectIdHeader);
+            requestMessage.Headers.Add(ClientObjectIdHeader, clientObjectIdHeader);
 
             // For requests coming from Diagnose and Solve, add x-ms-client-principal-name header.
             if (!string.IsNullOrWhiteSpace(clientPrincipalNameHeader))
             {
-               requestMessage.Headers.Add("x-ms-client-principal-name", clientPrincipalNameHeader);
+                requestMessage.Headers.Add(ClientPrincipalNameHeader, clientPrincipalNameHeader);
             }
 
             if (postBody != null)

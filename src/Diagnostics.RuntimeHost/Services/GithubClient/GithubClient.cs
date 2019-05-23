@@ -1,10 +1,4 @@
-﻿using Diagnostics.RuntimeHost.Models;
-using Diagnostics.RuntimeHost.Utilities;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Win32;
-using Octokit;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,6 +6,14 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web;
+using Diagnostics.Logger;
+using Diagnostics.RuntimeHost.Models;
+using Diagnostics.RuntimeHost.Utilities;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Win32;
+using Octokit;
+using static Diagnostics.Logger.HeaderConstants;
 
 namespace Diagnostics.RuntimeHost.Services
 {
@@ -77,7 +79,7 @@ namespace Diagnostics.RuntimeHost.Services
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, AppendQueryStringParams(url));
             if (!string.IsNullOrWhiteSpace(etag))
             {
-                request.Headers.Add("If-None-Match", etag);
+                request.Headers.Add(IfNoneMatchHeaderName, etag);
             }
 
             return Get(request);
@@ -196,10 +198,10 @@ namespace Diagnostics.RuntimeHost.Services
             }
             else
             {
-                _userName = (_config[$"SourceWatcher:Github:{RegistryConstants.GithubUserNameKey}"]).ToString();
-                _repoName = (_config[$"SourceWatcher:Github:{RegistryConstants.GithubRepoNameKey}"]).ToString();
-                _branch = (_config[$"SourceWatcher:Github:{RegistryConstants.GithubBranchKey}"]).ToString();
-                _accessToken = (_config[$"SourceWatcher:Github:{RegistryConstants.GithubAccessTokenKey}"]).ToString();
+                _userName = _config[$"SourceWatcher:Github:{RegistryConstants.GithubUserNameKey}"];
+                _repoName = _config[$"SourceWatcher:Github:{RegistryConstants.GithubRepoNameKey}"];
+                _branch = _config[$"SourceWatcher:Github:{RegistryConstants.GithubBranchKey}"];
+                _accessToken = _config[$"SourceWatcher:Github:{RegistryConstants.GithubAccessTokenKey}"];
             }
 
             _branch = !string.IsNullOrWhiteSpace(_branch) ? _branch : "master";
@@ -223,12 +225,12 @@ namespace Diagnostics.RuntimeHost.Services
         {
             _httpClient = new HttpClient
             {
-                MaxResponseContentBufferSize = Int32.MaxValue,
+                MaxResponseContentBufferSize = int.MaxValue,
                 Timeout = TimeSpan.FromSeconds(30)
             };
 
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.DefaultRequestHeaders.Add("User-Agent", _userName);
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonContentType));
+            _httpClient.DefaultRequestHeaders.Add(UserAgentHeaderName, _userName);
         }
 
         private void InitializeOctokitClient()

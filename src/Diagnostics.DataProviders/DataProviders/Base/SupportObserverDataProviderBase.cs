@@ -113,7 +113,7 @@ namespace Diagnostics.DataProviders
 
         protected async Task<HttpResponseMessage> SendObserverRequestAsync(HttpRequestMessage request, string resourceId = null)
         {
-            request.Headers.TryAddWithoutValidation("x-ms-requestid", RequestId);
+            request.Headers.TryAddWithoutValidation(HeaderConstants.RequestIdHeaderName, RequestId);
             if (!Configuration.ObserverLocalHostEnabled)
             {
                 request.Headers.TryAddWithoutValidation("Authorization", await GetToken(resourceId));
