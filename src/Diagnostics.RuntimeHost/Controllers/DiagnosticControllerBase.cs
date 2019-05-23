@@ -611,10 +611,10 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 var resourceUriFromQuery = queryParams.Where(s => s.Key.Equals("resourceUri")).Select(pair => pair.Value);
                 var resourceUri = context.OperationContext.Resource.ResourceUri;
-                var changeSetIdValue = HttpUtility.UrlDecode(changeSetId.First());
+                var changeSetIdValue = changeSetId.First();
                 if (resourceUriFromQuery.Any())
                 {
-                    resourceUri = HttpUtility.UrlDecode(resourceUriFromQuery.First());
+                    resourceUri = resourceUriFromQuery.First();
                 }
 
                 // Gets all change sets for the resource uri
