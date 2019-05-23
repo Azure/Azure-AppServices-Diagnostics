@@ -36,7 +36,7 @@ namespace Diagnostics.Scripts
         private Definition _entryPointDefinitionAttribute;
         private IResourceFilter _resourceFilter;
         private SystemFilter _systemFilter;
- 
+
         public IEnumerable<string> References { get; private set; }
 
         public bool IsCompilationSuccessful { get; private set; }
@@ -271,7 +271,7 @@ namespace Diagnostics.Scripts
 
         private void Validate()
         {
-            if(this._entryPointDefinitionAttribute != null)
+            if (this._entryPointDefinitionAttribute != null)
             {
                 string id = this._entryPointDefinitionAttribute.Id;
                 if (string.IsNullOrWhiteSpace(id))

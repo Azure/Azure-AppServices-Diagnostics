@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.DataProviders.TokenService;
+
 namespace Diagnostics.RuntimeHost
 {
     public class Startup
@@ -49,12 +50,8 @@ namespace Diagnostics.RuntimeHost
                 services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
             }
 
-            // TODO : Not sure what's the right place for the following code piece.
-            #region Custom Start up Code
-
             KustoTokenService.Instance.Initialize(dataSourcesConfigService.Config.KustoConfiguration);
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
-            #endregion
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

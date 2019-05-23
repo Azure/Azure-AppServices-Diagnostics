@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
@@ -102,10 +103,10 @@ namespace Diagnostics.DataProviders
 
                     if (!string.IsNullOrWhiteSpace(slotName) && slotMap.Key.Equals(slotName, StringComparison.CurrentCultureIgnoreCase) && missingHistoricalSwapData.Any(timeRange => timeRange.StartTime >= DataProviderContext.QueryStartTime) && missingHistoricalSwapData.Any(timeRange => timeRange.EndTime <= DataProviderContext.QueryEndTime))
                     {
-                        DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. Swap historical data was purged for web app {siteName}({slotName})");
+                        Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. Swap historical data was purged for web app {siteName}({slotName})");
                     }
 
-                    DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. No swap history data for web app {siteName}({slotMap.Key}) from {startTime} to {endTime}");
+                    Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. No swap history data for web app {siteName}({slotMap.Key}) from {startTime} to {endTime}");
                 }
             }
 
@@ -226,16 +227,62 @@ namespace Diagnostics.DataProviders
             return hostingEnvironmentPostBody;
         }
 
+        public override async Task<DataTable> ExecuteSqlQueryAsync(string cloudServiceName, string query)
+        {
+            if (!query.StartsWith("\""))
+            {
+                // BUG: Passing as JSON requires query to be wrapped in quotes, fix API expected content type
+                query = $"\"{query}\"";
+            }
+
+            var request = new HttpRequestMessage(HttpMethod.Post, $"/api/service/{cloudServiceName}/invokesql?api-version=2.0")
+            {
+                Content = new StringContent(query, Encoding.Default, "application/json")
+            };
+
+            var response = await SendObserverRequestAsync(request);
+            var result = await response.Content.ReadAsStringAsync();
+
+            try
+            {
+                response.EnsureSuccessStatusCode();
+            }
+            catch (HttpRequestException)
+            {
+                Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider",
+                    $"message:Observer SQL query request failed, query:{query}, statusCode:{response.StatusCode}, response:{result}");
+                throw;
+            }
+
+            return TryDeserializeDataTable(result);
+        }
+
+        private static DataTable TryDeserializeDataTable(string json)
+        {
+            DataTable datatable;
+            try
+            {
+                datatable = (DataTable)JsonConvert.DeserializeObject(json, typeof(DataTable));
+            }
+            catch (JsonReaderException ex)
+            {
+                throw new Exception($"SQL Query did not return parsable JSON; response: \"{json}\"", ex);
+            }
+
+            return datatable;
+        }
+
         public override HttpClient GetObserverClient()
         {
+            // Instantiating an HttpClient class for every request will exhaust the number of sockets available under heavy loads
+            // TODO: Use HttpClientFactory
             return new HttpClient();
         }
 
         /// <summary>
-        /// Temporary solution
+        /// Temporary solution.
+        /// Remove when the following detectors don't use this codepath: Migration, ResourceGroupHealthCheck, SwapAnalysis.
         /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
         private async Task<string> Get(string path)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://support-bay-api.azurewebsites.net/observer/{path}?api-version=2.0");
