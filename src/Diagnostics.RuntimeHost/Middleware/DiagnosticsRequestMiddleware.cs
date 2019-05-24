@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
+using static Diagnostics.Logger.HeaderConstants;
 
 namespace Diagnostics.RuntimeHost.Middleware
 {
@@ -66,7 +67,7 @@ namespace Diagnostics.RuntimeHost.Middleware
             var cTokenSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(HostConstants.TimeoutInMilliSeconds));
 
             httpContext.RequestAborted = cTokenSource.Token;
-            httpContext.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values);
+            httpContext.Request.Headers.TryGetValue(RequestIdHeaderName, out StringValues values);
             var queryStringValues = httpContext.Request.Query?.ToDictionary(query => query.Key.ToLower(), query => query.Value.FirstOrDefault())
                 ?? new Dictionary<string, string>();
 
@@ -88,7 +89,7 @@ namespace Diagnostics.RuntimeHost.Middleware
             var isInternalClient = false;
 
             // For requests coming Applens, populate client object id with Applens App Id.
-            if (httpContext.Request.Headers.TryGetValue("x-ms-internal-client", out var internalClientHeader) && internalClientHeader.Any())
+            if (httpContext.Request.Headers.TryGetValue(InternalClientHeader, out var internalClientHeader) && internalClientHeader.Any())
             {
                 bool.TryParse(internalClientHeader.First(), out isInternalClient);
             }
@@ -97,15 +98,15 @@ namespace Diagnostics.RuntimeHost.Middleware
             {
                 clientObjId = dataSourcesConfigurationService.Config.ChangeAnalysisDataProviderConfiguration.ClientId;
             }
-            else if (httpContext.Request.Headers.ContainsKey("x-ms-client-object-id"))
+            else if (httpContext.Request.Headers.ContainsKey(ClientObjectIdHeader))
             {
-                clientObjId = httpContext.Request.Headers["x-ms-client-object-id"];
+                clientObjId = httpContext.Request.Headers[ClientObjectIdHeader];
             }
 
             string clientPrincipalName = string.Empty;
-            if (httpContext.Request.Headers.ContainsKey("x-ms-client-principal-name"))
+            if (httpContext.Request.Headers.ContainsKey(ClientPrincipalNameHeader))
             {
-                clientPrincipalName = httpContext.Request.Headers["x-ms-client-principal-name"];
+                clientPrincipalName = httpContext.Request.Headers[ClientPrincipalNameHeader];
             }
 
             httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName));
@@ -129,7 +130,7 @@ namespace Diagnostics.RuntimeHost.Middleware
             catch (Exception logEx)
             {
                 string requestId = string.Empty;
-                if (context.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values) && values != default(StringValues) && values.Any())
+                if (context.Request.Headers.TryGetValue(RequestIdHeaderName, out StringValues values) && values != default(StringValues) && values.Any())
                 {
                     requestId = values.First().ToString();
                 }
@@ -147,10 +148,10 @@ namespace Diagnostics.RuntimeHost.Middleware
 
         private void GenerateMissingRequestHeaders(ref HttpContext httpContext)
         {
-            if (!httpContext.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values)
+            if (!httpContext.Request.Headers.TryGetValue(RequestIdHeaderName, out StringValues values)
                 || values == default(StringValues) || !values.Any() || string.IsNullOrWhiteSpace(values.First()))
             {
-                httpContext.Request.Headers[HeaderConstants.RequestIdHeaderName] = Guid.NewGuid().ToString();
+                httpContext.Request.Headers[RequestIdHeaderName] = Guid.NewGuid().ToString();
             }
         }
     }

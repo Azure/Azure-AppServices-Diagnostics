@@ -564,13 +564,13 @@ namespace Diagnostics.RuntimeHost.Controllers
             return invoker.EntityMetadata.ScriptText;
         }
 
-        private async Task<IEnumerable<DiagnosticApiResponse>> ListDetectorsInternal(RuntimeContext<TResource> context, string queryText=null)
+        private async Task<IEnumerable<DiagnosticApiResponse>> ListDetectorsInternal(RuntimeContext<TResource> context, string queryText = null)
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var allDetectors = _invokerCache.GetEntityInvokerList<TResource>(context).ToList();
 
             SearchResults searchResults = null;
-            if (queryText != null && queryText.Length>3)
+            if (queryText != null && queryText.Length > 3)
             {
                 var resourceParams = _internalApiHelper.GetResourceParams(context.OperationContext.Resource as IResourceFilter);
                 var res = await _searchService.SearchDetectors(context.OperationContext.RequestId, queryText, resourceParams);
@@ -598,7 +598,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         private async Task<Tuple<Response, List<DataProviderMetadata>>> GetDetectorInternal(string detectorId, RuntimeContext<TResource> context)
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
-            var queryParams = Request.Query;           
+            var queryParams = Request.Query;
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
             List<DataProviderMetadata> dataProvidersMetadata = null;
             if (context.ClientIsInternal)
@@ -628,14 +628,14 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return new Tuple<Response, List<DataProviderMetadata>>(changesResponse, dataProvidersMetadata);
             }
 
-            var actionQuery = queryParams.Where(s => s.Key.Equals("scanAction")).Select(pair => pair.Value); 
+            var actionQuery = queryParams.Where(s => s.Key.Equals("scanAction")).Select(pair => pair.Value);
             if (actionQuery.Any())
             {
-                var scanActionResponse = await HandleScanActionRequest(context.OperationContext.Resource.ResourceUri, 
+                var scanActionResponse = await HandleScanActionRequest(context.OperationContext.Resource.ResourceUri,
                                                 actionQuery.First(),
                                                 dataProviders.ChangeAnalysis);
                 return new Tuple<Response, List<DataProviderMetadata>>(scanActionResponse, dataProvidersMetadata);
-            } 
+            }
 
             var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
 
@@ -649,10 +649,9 @@ namespace Diagnostics.RuntimeHost.Controllers
                 Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, context.ClientIsInternal),
                 IsInternalCall = context.OperationContext.IsInternalCall
             };
-            
+
             var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
             response.UpdateDetectorStatusFromInsights();
-
 
             return new Tuple<Response, List<DataProviderMetadata>>(response, dataProvidersMetadata);
         }
@@ -819,9 +818,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// </summary>
         private void ValidateForms(List<DiagnosticData> diagnosticDataSet)
         {
-           HashSet<int> formIds = new HashSet<int>();
-           var detectorForms = diagnosticDataSet.Where(dataset => dataset.RenderingProperties.Type == RenderingType.Form).Select(d => d.Table);
-           foreach (DataTable table in detectorForms)
+            HashSet<int> formIds = new HashSet<int>();
+            var detectorForms = diagnosticDataSet.Where(dataset => dataset.RenderingProperties.Type == RenderingType.Form).Select(d => d.Table);
+            foreach (DataTable table in detectorForms)
             {
                 // Each row has FormID and FormInputs
                 foreach (DataRow row in table.Rows)
@@ -853,7 +852,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="resourceId">Resource Id.</param>
         /// <param name="changeAnalysisDataProvider">Change Analysis Data Provider.</param>
         /// <returns>Changes for given change set id.</returns>
-        private async Task<Response> GetChangesByChangeSetId(string changeSetId, string resourceId, IChangeAnalysisDataProvider changeAnalysisDataProvider) 
+        private async Task<Response> GetChangesByChangeSetId(string changeSetId, string resourceId, IChangeAnalysisDataProvider changeAnalysisDataProvider)
         {
             var changes = await changeAnalysisDataProvider.GetChangesByChangeSetId(changeSetId, resourceId);
             if (changes == null || changes.Count <= 0)

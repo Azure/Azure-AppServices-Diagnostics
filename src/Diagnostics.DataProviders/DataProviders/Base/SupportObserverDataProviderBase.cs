@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
@@ -8,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -92,16 +94,7 @@ namespace Diagnostics.DataProviders
         protected async Task<string> GetObserverResource(string url, string resourceId = null)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.TryAddWithoutValidation("x-ms-requestid", RequestId);
-            if (!Configuration.ObserverLocalHostEnabled)
-            {
-                request.Headers.TryAddWithoutValidation("Authorization", await GetToken(resourceId));
-            }
-
-            var response = await _httpClient.SendAsync(request);
-            Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"url:{url};statusCode:{response.StatusCode}");
-
-            response.EnsureSuccessStatusCode();
+            var response = await SendObserverRequestAsync(request, resourceId);
             var result = await response.Content.ReadAsStringAsync();
 
             try
@@ -116,6 +109,20 @@ namespace Diagnostics.DataProviders
             }
 
             return result;
+        }
+
+        protected async Task<HttpResponseMessage> SendObserverRequestAsync(HttpRequestMessage request, string resourceId = null)
+        {
+            request.Headers.TryAddWithoutValidation(HeaderConstants.RequestIdHeaderName, RequestId);
+            if (!Configuration.ObserverLocalHostEnabled)
+            {
+                request.Headers.TryAddWithoutValidation("Authorization", await GetToken(resourceId));
+            }
+
+            var response = await _httpClient.SendAsync(request);
+            Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"url:{new Uri(_httpClient.BaseAddress, request.RequestUri)}, statusCode:{response.StatusCode}");
+
+            return response;
         }
 
         private async Task<string> GetToken(string resourceId)
@@ -175,6 +182,8 @@ namespace Diagnostics.DataProviders
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
 
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName);
+
+        public abstract Task<DataTable> ExecuteSqlQueryAsync(string cloudServiceName, string query);
 
         public abstract HttpClient GetObserverClient();
 

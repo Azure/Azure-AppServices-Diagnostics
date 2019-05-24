@@ -7,11 +7,9 @@ using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Diagnostics.Logger;
-using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Newtonsoft.Json;
-using System.IO;
 using Microsoft.Extensions.Primitives;
 using System.Text;
 
@@ -26,6 +24,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IInvokerCacheService _invokerCache;
         private InternalAPIHelper _internalApiHelper;
         private ISearchService _searchService;
+
         public InternalAPIController(IServiceProvider services)
         {
             this._sourceWatcherService = (ISourceWatcherService)services.GetService(typeof(ISourceWatcherService));

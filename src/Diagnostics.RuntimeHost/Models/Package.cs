@@ -43,6 +43,7 @@ namespace Diagnostics.RuntimeHost.Models
         public string Id { get; set; }
 
         public string Metadata { get; set; }
+
         /// <summary>
         /// Gets or sets the committed alias.
         /// </summary>
