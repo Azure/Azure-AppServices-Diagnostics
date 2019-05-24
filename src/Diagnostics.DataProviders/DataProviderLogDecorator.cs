@@ -433,9 +433,14 @@ namespace Diagnostics.DataProviders
         #endregion
 
         #region ASC_DataProvider
-        Task<T> IAscDataProvider.MakeHttpPostRequest<T>(string jsonPostBody, string apiVersion, CancellationToken cancellationToken)
+        Task<T> IAscDataProvider.MakeHttpPostRequest<T>(string jsonPostBody, string apiUri, string apiVersion, CancellationToken cancellationToken)
         {
-            return MakeDependencyCall(_ascDataProvider.MakeHttpPostRequest<T>(jsonPostBody, apiVersion, cancellationToken));
+            return MakeDependencyCall(_ascDataProvider.MakeHttpPostRequest<T>(jsonPostBody, apiUri, apiVersion, cancellationToken));
+        }
+
+        Task<T> IAscDataProvider.MakeHttpPostRequest<T>(string jsonPostBody, string apiUri, CancellationToken cancellationToken)
+        {
+            return MakeDependencyCall(_ascDataProvider.MakeHttpPostRequest<T>(jsonPostBody, apiUri, cancellationToken));
         }
 
         Task<T> IAscDataProvider.MakeHttpPostRequest<T>(string jsonPostBody, CancellationToken cancellationToken)
@@ -443,9 +448,14 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_ascDataProvider.MakeHttpPostRequest<T>(jsonPostBody, cancellationToken));
         }
 
-        Task<T> IAscDataProvider.MakeHttpGetRequest<T>(string queryString, string apiVersion, CancellationToken cancellationToken)
+        Task<T> IAscDataProvider.MakeHttpGetRequest<T>(string queryString, string apiUri, string apiVersion, CancellationToken cancellationToken)
         {
-            return MakeDependencyCall(_ascDataProvider.MakeHttpGetRequest<T>(queryString, apiVersion, cancellationToken));
+            return MakeDependencyCall(_ascDataProvider.MakeHttpGetRequest<T>(queryString, apiUri, apiVersion, cancellationToken));
+        }
+
+        Task<T> IAscDataProvider.MakeHttpGetRequest<T>(string queryString, string apiUri, CancellationToken cancellationToken)
+        {
+            return MakeDependencyCall(_ascDataProvider.MakeHttpGetRequest<T>(queryString, apiUri, cancellationToken));
         }
 
         Task<T> IAscDataProvider.MakeHttpGetRequest<T>(string queryString, CancellationToken cancellationToken)

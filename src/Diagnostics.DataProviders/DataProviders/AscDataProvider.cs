@@ -51,27 +51,39 @@ namespace Diagnostics.DataProviders
         }
 
         /// <inheritdoc/>
-        public Task<T> MakeHttpGetRequest<T>(string queryString, string apiVersion, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<T> MakeHttpGetRequest<T>(string queryString, string apiUri, string apiVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return ascClient.MakeHttpGetRequest<T>(queryString, apiVersion, cancellationToken);
+            return ascClient.MakeHttpGetRequest<T>(queryString, apiUri, apiVersion, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public Task<T> MakeHttpGetRequest<T>(string queryString, string apiUri, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return ascClient.MakeHttpGetRequest<T>(queryString, apiUri, string.Empty, cancellationToken);
         }
 
         /// <inheritdoc/>
         public Task<T> MakeHttpGetRequest<T>(string queryString, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return MakeHttpGetRequest<T>(queryString, string.Empty, cancellationToken);
+            return MakeHttpGetRequest<T>(queryString, string.Empty, string.Empty, cancellationToken);
         }
 
         /// <inheritdoc/>
-        public Task<T> MakeHttpPostRequest<T>(string jsonPostBody, string apiVersion, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<T> MakeHttpPostRequest<T>(string jsonPostBody, string apiUri, string apiVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return MakeHttpPostRequest<T>(jsonPostBody, apiVersion, cancellationToken);
+            return ascClient.MakeHttpPostRequest<T>(jsonPostBody, apiUri, apiVersion, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public Task<T> MakeHttpPostRequest<T>(string jsonPostBody, string apiUri, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return ascClient.MakeHttpPostRequest<T>(jsonPostBody, apiUri, string.Empty, cancellationToken);
         }
 
         /// <inheritdoc/>
         public Task<T> MakeHttpPostRequest<T>(string jsonPostBody, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return MakeHttpPostRequest<T>(jsonPostBody, string.Empty, cancellationToken);
+            return MakeHttpPostRequest<T>(jsonPostBody, string.Empty, string.Empty, cancellationToken);
         }
     }
 }

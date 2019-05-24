@@ -74,17 +74,22 @@ namespace Diagnostics.DataProviders
         }
 
         /// <inheritdoc/>
-        public async Task<T> MakeHttpPostRequest<T>(string jsonPostBody, string apiVersion, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<T> MakeHttpPostRequest<T>(string jsonPostBody, string apiUri, string apiVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
             string authToken = await AscTokenService.Instance.GetAuthorizationTokenAsync();
             try
             {
+                if (string.IsNullOrEmpty(apiUri))
+                {
+                    apiUri = this.apiUri;
+                }
+
                 if (string.IsNullOrEmpty(apiVersion))
                 {
                     apiVersion = this.apiVersion;
                 }
 
-                string requestUri = baseUri + apiUri + "?" + apiVersion.Replace("?", string.Empty);
+                string requestUri = baseUri + apiUri + "?api-version=" + apiVersion.Replace("?", string.Empty).Replace("api-version=", string.Empty);
 
                 httpClient.DefaultRequestHeaders.UserAgent.Clear();
                 httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(new ProductHeaderValue(userAgent)));
@@ -105,7 +110,16 @@ namespace Diagnostics.DataProviders
                         }
                         else
                         {
-                            T value = JsonConvert.DeserializeObject<T>(responseContent);
+                            T value;
+                            try
+                            {
+                                value = JsonConvert.DeserializeObject<T>(responseContent);
+                            }
+                            catch (Exception serializeException)
+                            {
+                                throw new Exception($" Failed to serialize ASC response to type {typeof(T).ToString()} : Response from ASC ==> {responseContent}", serializeException);
+                            }
+
                             return value;
                         }
                     }
@@ -130,9 +144,14 @@ namespace Diagnostics.DataProviders
         }
 
         /// <inheritdoc/>
-        public async Task<T> MakeHttpGetRequest<T>(string queryString, string apiVersion, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<T> MakeHttpGetRequest<T>(string queryString,string apiUri, string apiVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
             string requestUri = string.Empty;
+
+            if (string.IsNullOrEmpty(apiUri))
+            {
+                apiUri = this.apiUri;
+            }
 
             if (string.IsNullOrEmpty(apiVersion))
             {
@@ -144,11 +163,11 @@ namespace Diagnostics.DataProviders
             {
                 if (string.IsNullOrEmpty(queryString))
                 {
-                    requestUri = baseUri + apiUri + "?" + apiVersion.Replace("?", string.Empty);
+                    requestUri = baseUri + apiUri + "?api-version=" + apiVersion.Replace("?", string.Empty).Replace("api-version=", string.Empty);
                 }
                 else
                 {
-                    requestUri = baseUri + apiUri + "?" + queryString.Replace("?", string.Empty) + " &" + apiVersion.Replace("?", string.Empty);
+                    requestUri = baseUri + apiUri + "?" + queryString.Replace("?", string.Empty) + "&api-version=" + apiVersion.Replace("?", string.Empty).Replace("api-version=", string.Empty);
                 }
 
                 httpClient.DefaultRequestHeaders.UserAgent.Clear();
@@ -170,7 +189,16 @@ namespace Diagnostics.DataProviders
                         }
                         else
                         {
-                            T value = JsonConvert.DeserializeObject<T>(responseContent);
+                            T value;
+                            try
+                            {
+                                value = JsonConvert.DeserializeObject<T>(responseContent);
+                            }
+                            catch (Exception serializeException)
+                            {
+                                throw new Exception($" Failed to serialize ASC response to type {typeof(T).ToString()} : Response from ASC ==> {responseContent}", serializeException);
+                            }
+
                             return value;
                         }
                     }
@@ -202,6 +230,12 @@ namespace Diagnostics.DataProviders
                 httpClient.DefaultRequestHeaders.Remove("Authorization");
                 httpClient.DefaultRequestHeaders.UserAgent.Clear();
                 httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(new ProductHeaderValue(userAgent)));
+                Uri blobUriObj;
+                if (string.IsNullOrEmpty(blobUri) || !Uri.TryCreate(blobUri, UriKind.RelativeOrAbsolute, out blobUriObj))
+                {
+                    throw new Exception($"Invalid blob uri {blobUri}.");
+                }
+
                 var response = await httpClient.GetAsync(blobUri);
                 string responseContent = await response.Content.ReadAsStringAsync();
                 if (response.IsSuccessStatusCode)
@@ -212,7 +246,16 @@ namespace Diagnostics.DataProviders
                     }
                     else
                     {
-                        T value = JsonConvert.DeserializeObject<T>(responseContent);
+                        T value;
+                        try
+                        {
+                            value = JsonConvert.DeserializeObject<T>(responseContent);
+                        }
+                        catch (Exception serializeException)
+                        {
+                            throw new Exception($" Failed to serialize ASC response to type {typeof(T).ToString()} : Response from ASC ==> {responseContent}", serializeException);
+                        }
+
                         return value;
                     }
                 }
