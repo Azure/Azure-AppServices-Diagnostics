@@ -6,16 +6,6 @@ namespace Diagnostics.DataProviders.Interfaces
     public interface IAscClient
     {
         /// <summary>
-        /// Submit a request for ADS insight, keep polling and then retrieve the Insight result once insight processing is complete.
-        /// </summary>
-        /// <param name="jsonPostBody">POST body in JSON format to submit to Azure Support Center ADS insight.</param>
-        /// <param name="apiVersion">Api version to use which calling Azure Support Center.</param>
-        /// <param name="cancellationToken">Cancellation Token for this operation.</param>
-        /// <returns>Result of the Asc Insight.</returns>
-        //Task<T> SubmitAndGetInsight<T>(string jsonPostBody, string apiVersion, CancellationToken cancellationToken = default(CancellationToken));
-        /*------------------Move SubmitAndGetInsight to the dataProvider class*/
-
-        /// <summary>
         /// Gets the ARM Resource Id for given hostnames.
         /// </summary>
         /// <param name="jsonPostBody">POST body in JSON format to submit to Azure Support Center ADS insight.</param>
