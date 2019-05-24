@@ -100,34 +100,7 @@ namespace Diagnostics.DataProviders
                 {
                     requestMessage.Headers.Add("Authorization", await AscTokenService.Instance.GetAuthorizationTokenAsync());
                     requestMessage.Content = new StringContent(jsonPostBody, Encoding.UTF8, "application/json");
-                    var response = await SendAscRequestAsync(requestMessage, false, cancellationToken);
-                    string responseContent = await response.Content.ReadAsStringAsync();
-                    if (response.IsSuccessStatusCode)
-                    {
-                        if (typeof(T).Equals(typeof(string)))
-                        {
-                            return CastTo<T>(responseContent);
-                        }
-                        else
-                        {
-                            T value;
-                            try
-                            {
-                                value = JsonConvert.DeserializeObject<T>(responseContent);
-                            }
-                            catch (JsonSerializationException serializeException)
-                            {
-                                throw new JsonSerializationException($" Failed to serialize ASC response to type {typeof(T).ToString()} : Response from ASC ==> {responseContent}", serializeException);
-                            }
-
-                            return value;
-                        }
-                    }
-                    else
-                    {
-                        string responseLogBody = await GetRequestDetailsForLogging(response);
-                        throw new HttpRequestException(string.Format("HTTP POST request to ASC failed. AppLens request Id : {0} ==> Details : {1}", this.requestId, responseLogBody));
-                    }
+                    return await GetAscResponse<T>(requestMessage, false, cancellationToken);
                 }
             }
             catch (TaskCanceledException ex)
@@ -172,34 +145,7 @@ namespace Diagnostics.DataProviders
                 using (HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri))
                 {
                     requestMessage.Headers.Add("Authorization", await AscTokenService.Instance.GetAuthorizationTokenAsync());
-                    var response = await SendAscRequestAsync(requestMessage, false, cancellationToken);
-                    string responseContent = await response.Content.ReadAsStringAsync();
-                    if (response.IsSuccessStatusCode)
-                    {
-                        if (typeof(T).Equals(typeof(string)))
-                        {
-                            return CastTo<T>(responseContent);
-                        }
-                        else
-                        {
-                            T value;
-                            try
-                            {
-                                value = JsonConvert.DeserializeObject<T>(responseContent);
-                            }
-                            catch (JsonSerializationException serializeException)
-                            {
-                                throw new JsonSerializationException($" Failed to serialize ASC response to type {typeof(T).ToString()} : Response from ASC ==> {responseContent}", serializeException);
-                            }
-
-                            return value;
-                        }
-                    }
-                    else
-                    {
-                        string responseLogBody = await GetRequestDetailsForLogging(response);
-                        throw new HttpRequestException(string.Format("HTTP GET request to ASC failed. AppLens request Id : {0} ==> Details : {1}", requestId, responseLogBody));
-                    }
+                    return await GetAscResponse<T>(requestMessage, false, cancellationToken);
                 }
             }
             catch (TaskCanceledException ex)
@@ -233,34 +179,7 @@ namespace Diagnostics.DataProviders
 
                 using (HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, blobUriObj))
                 {
-                    var response = await SendAscRequestAsync(requestMessage, true, cancellationToken);
-                    string responseContent = await response.Content.ReadAsStringAsync();
-                    if (response.IsSuccessStatusCode)
-                    {
-                        if (typeof(T).Equals(typeof(string)))
-                        {
-                            return CastTo<T>(responseContent);
-                        }
-                        else
-                        {
-                            T value;
-                            try
-                            {
-                                value = JsonConvert.DeserializeObject<T>(responseContent);
-                            }
-                            catch (JsonSerializationException serializeException)
-                            {
-                                throw new JsonSerializationException($" Failed to serialize ASC response to type {typeof(T).ToString()} : Response from ASC ==> {responseContent}", serializeException);
-                            }
-
-                            return value;
-                        }
-                    }
-                    else
-                    {
-                        string responseLogBody = await GetRequestDetailsForLogging(response);
-                        throw new HttpRequestException(string.Format("Request to fetch content from blob for ASC failed. AppLens request Id : {0} ==> Details : {1}", requestId, responseLogBody));
-                    }
+                    return await GetAscResponse<T>(requestMessage, true, cancellationToken);
                 }
             }
             catch (TaskCanceledException ex)
@@ -288,7 +207,39 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        private async Task<HttpResponseMessage> SendAscRequestAsync(HttpRequestMessage request, bool isBlobRequest, CancellationToken cancellation = default(CancellationToken))
+        private async Task<T> GetAscResponse<T>(HttpRequestMessage requestMessage, bool isBlobRequest, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var response = await SendAscRequestAsync(requestMessage, isBlobRequest, cancellationToken);
+            string responseContent = await response.Content.ReadAsStringAsync();
+            if (response.IsSuccessStatusCode)
+            {
+                if (typeof(T).Equals(typeof(string)))
+                {
+                    return CastTo<T>(responseContent);
+                }
+                else
+                {
+                    T value;
+                    try
+                    {
+                        value = JsonConvert.DeserializeObject<T>(responseContent);
+                    }
+                    catch (JsonSerializationException serializeException)
+                    {
+                        throw new JsonSerializationException($" Failed to serialize ASC response to type {typeof(T).ToString()} : Response from ASC ==> {responseContent}", serializeException);
+                    }
+
+                    return value;
+                }
+            }
+            else
+            {
+                string responseLogBody = await GetRequestDetailsForLogging(response);
+                throw new HttpRequestException(string.Format("Request to fetch content from blob for ASC failed. AppLens request Id : {0} ==> Details : {1}", requestId, responseLogBody));
+            }
+        }
+
+        private async Task<HttpResponseMessage> SendAscRequestAsync(HttpRequestMessage request, bool isBlobRequest, CancellationToken cancellationToken = default(CancellationToken))
         {
             httpClient.DefaultRequestHeaders.UserAgent.Clear();
             httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(new ProductHeaderValue(userAgent)));
@@ -298,7 +249,7 @@ namespace Diagnostics.DataProviders
                 httpClient.DefaultRequestHeaders.Remove("Authorization");
             }
 
-            var response = await httpClient.SendAsync(request);
+            var response = await httpClient.SendAsync(request, cancellationToken);
             logger.LogDataProviderMessage(requestId, "AscDataProvider", $"url:{request.RequestUri}, statusCode:{response.StatusCode}");
             return response;
         }
