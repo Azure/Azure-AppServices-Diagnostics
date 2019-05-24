@@ -83,6 +83,11 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         [DataMember]
         public DetectorType Type { get; set; }
 
+        /// <summary>
+        /// Gets or sets the score of a detector.
+        /// </summary>
+        public float Score { get; set; }
+
         public bool Equals(Definition other)
         {
             return Id == other.Id;

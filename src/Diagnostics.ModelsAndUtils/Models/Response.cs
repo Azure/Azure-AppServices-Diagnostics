@@ -92,12 +92,15 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public List<DataProviderMetadata> DataProvidersMetadata { get; set; }
 
-        public static DiagnosticApiResponse FromCsxResponse(Response response, List<DataProviderMetadata> dataProvidersMetadata = null)
+        public QueryUtterancesResults SuggestedUtterances { get; set; }
+
+        public static DiagnosticApiResponse FromCsxResponse(Response response, List<DataProviderMetadata> dataProvidersMetadata = null, QueryUtterancesResults suggestedUtterances = null)
         {
             return new DiagnosticApiResponse()
             {
                 Metadata = response.Metadata,
                 Status = response.Status,
+                SuggestedUtterances = suggestedUtterances,
                 DataProvidersMetadata = dataProvidersMetadata,
                 Dataset = response.Dataset.Select(dataSet =>
                     new DiagnosticDataApiResponse()

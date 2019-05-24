@@ -30,6 +30,11 @@ echo "------------------- Publishing Runtime Host to build directory -----------
 echo\
 dotnet publish src\\Diagnostics.RuntimeHost\\Diagnostics.RuntimeHost.csproj -c Release -o ..\\..\\build\\antares.external.diagnostics.runtimehost.1.0.0
 
+echo\
+echo "------------------- Publishing AI Projects to build directory --------------------"
+echo\
+xcopy /E src\\Diagnostics.AIProjects build\\antares.external.diagnostics.runtimehost.1.0.0
+
 IF %ERRORLEVEL% NEQ 0 (
 echo "Diagnostics.RuntimeHost Publish Failed."
 exit /b %errorlevel%

@@ -1,17 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Diagnostics.DataProviders.Interfaces;
-using Newtonsoft.Json;
-using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
-using Diagnostics.DataProviders.TokenService;
-using System.Collections.Generic;
-using System.Net;
-using System.Web;
 using Diagnostics.DataProviders.DataProviderConfigurations;
+using Diagnostics.DataProviders.Interfaces;
+using Diagnostics.DataProviders.TokenService;
+using Diagnostics.Logger;
+using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
+using Newtonsoft.Json;
+using static Diagnostics.Logger.HeaderConstants;
 
 namespace Diagnostics.DataProviders
 {
@@ -37,6 +38,10 @@ namespace Diagnostics.DataProviders
         /// </summary>
         private string apiVersion;
 
+        private const string ExceptionStatusCode = "StatusCode";
+
+        private string requestId;
+
         private readonly Lazy<HttpClient> client = new Lazy<HttpClient>(() =>
         {
             var client = new HttpClient();
@@ -57,62 +62,106 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// Initializes a new instance of the <see cref="ChangeAnalysisClient"/> class.
         /// </summary>
-        public ChangeAnalysisClient(ChangeAnalysisDataProviderConfiguration configuration, string clientObjectId, string clientPrincipalName = "")
+        public ChangeAnalysisClient(ChangeAnalysisDataProviderConfiguration configuration, string requestTrackingId, string clientObjectId, string clientPrincipalName = "")
         {
             clientObjectIdHeader = clientObjectId;
             clientPrincipalNameHeader = clientPrincipalName;
             changeAnalysisEndPoint = configuration.Endpoint;
             apiVersion = configuration.Apiversion;
+            requestId = requestTrackingId;
         }
 
         /// <inheritdoc/>
         public async Task<List<ResourceChangesResponseModel>> GetChangesAsync(ChangeRequest changeRequest)
         {
-            string requestUri = changeAnalysisEndPoint + $"changes?api-version={apiVersion}";
-            object postBody = new
+            try
             {
-                changeRequest.ResourceId,
-                changeRequest.ChangeSetId
-            };
-            string jsonString = await PrepareAndSendRequest(requestUri, postBody, HttpMethod.Post);
-            List<ResourceChangesResponseModel> resourceChangesResponse = JsonConvert.DeserializeObject<List<ResourceChangesResponseModel>>(jsonString);
-            return resourceChangesResponse;
+                string requestUri = changeAnalysisEndPoint + $"changes?api-version={apiVersion}";
+                object postBody = new
+                {
+                    changeRequest.ResourceId,
+                    changeRequest.ChangeSetId
+                };
+                string jsonString = await PrepareAndSendRequest(requestUri, postBody, HttpMethod.Post);
+                List<ResourceChangesResponseModel> resourceChangesResponse = JsonConvert.DeserializeObject<List<ResourceChangesResponseModel>>(jsonString);
+                return resourceChangesResponse;
+            }
+            catch (HttpRequestException httpException)
+            {
+                // Its possible that users dont have access to view the change details, log the exception and send empty list of change details.
+                string message = $"HttpRequestException in GetChangesAsync, Message: {httpException.Message} ";
+                if (httpException.Data.Contains(ExceptionStatusCode))
+                {
+                    message += $"Status Code: {httpException.Data[ExceptionStatusCode]}";
+                }
+
+                DiagnosticsETWProvider.Instance.LogDataProviderMessage(requestId, "ChangeAnalysisClient", message);
+                return new List<ResourceChangesResponseModel>();
+            }
         }
 
         /// <inheritdoc/>
         public async Task<List<ChangeSetResponseModel>> GetChangeSetsAsync(ChangeSetsRequest changeSetsRequest)
         {
-            string requestUri = changeAnalysisEndPoint + $"changesets?api-version={apiVersion}";
-            changeSetsRequest.StartTime = changeSetsRequest.StartTime.ToUniversalTime();
-            changeSetsRequest.EndTime = changeSetsRequest.EndTime.ToUniversalTime();
-            object postBody = new
+            try
             {
-                changeSetsRequest.ResourceId,
-                StartTime = changeSetsRequest.StartTime.ToString(),
-                EndTime = changeSetsRequest.EndTime.ToString()
-            };
-            string jsonString = await PrepareAndSendRequest(requestUri, postBody, HttpMethod.Post);
-            List<ChangeSetResponseModel> changeSetsResponse = JsonConvert.DeserializeObject<List<ChangeSetResponseModel>>(jsonString);
-            return changeSetsResponse;
+                string requestUri = changeAnalysisEndPoint + $"changesets?api-version={apiVersion}";
+                changeSetsRequest.StartTime = changeSetsRequest.StartTime.ToUniversalTime();
+                changeSetsRequest.EndTime = changeSetsRequest.EndTime.ToUniversalTime();
+                object postBody = new
+                {
+                    changeSetsRequest.ResourceId,
+                    StartTime = changeSetsRequest.StartTime.ToString(),
+                    EndTime = changeSetsRequest.EndTime.ToString()
+                };
+                string jsonString = await PrepareAndSendRequest(requestUri, postBody, HttpMethod.Post);
+                List<ChangeSetResponseModel> changeSetsResponse = JsonConvert.DeserializeObject<List<ChangeSetResponseModel>>(jsonString);
+                return changeSetsResponse;
+            }
+            catch (HttpRequestException httpException)
+            {
+                string message = $"HttpRequestException in GetChangeSetsAsync, Message: {httpException.Message} ";
+                if (httpException.Data.Contains(ExceptionStatusCode))
+                {
+                    message += $"Status Code: {httpException.Data[ExceptionStatusCode]}";
+                }
+
+                DiagnosticsETWProvider.Instance.LogDataProviderMessage(requestId, "ChangeAnalysisClient", message);
+                return new List<ChangeSetResponseModel>();
+            }
         }
 
         /// <inheritdoc/>
         public async Task<ResourceIdResponseModel> GetResourceIdAsync(List<string> hostnames, string subscription)
         {
-            string requestUri = changeAnalysisEndPoint + $"resourceId?api-version={apiVersion}";
-            object requestBody = new
+            try
             {
-                hostNames = hostnames,
-                subscriptionId = subscription
-            };
-            string jsonString = await PrepareAndSendRequest(requestUri, requestBody, HttpMethod.Post);
-            if (!string.IsNullOrWhiteSpace(jsonString))
-            {
-                ResourceIdResponseModel resourceIdResponse = JsonConvert.DeserializeObject<ResourceIdResponseModel>(jsonString);
-                return resourceIdResponse;
-            }
+                string requestUri = changeAnalysisEndPoint + $"resourceId?api-version={apiVersion}";
+                object requestBody = new
+                {
+                    hostNames = hostnames,
+                    subscriptionId = subscription
+                };
+                string jsonString = await PrepareAndSendRequest(requestUri, requestBody, HttpMethod.Post);
+                if (!string.IsNullOrWhiteSpace(jsonString))
+                {
+                    ResourceIdResponseModel resourceIdResponse = JsonConvert.DeserializeObject<ResourceIdResponseModel>(jsonString);
+                    return resourceIdResponse;
+                }
 
-            return null;
+                return new ResourceIdResponseModel();
+            }
+            catch (HttpRequestException httpException)
+            {
+                string message = $"HttpRequestException in GetResourceIdAsync, Message: {httpException.Message} ";
+                if (httpException.Data.Contains(ExceptionStatusCode))
+                {
+                    message += $"Status Code: {httpException.Data[ExceptionStatusCode]}";
+                }
+
+                DiagnosticsETWProvider.Instance.LogDataProviderMessage(requestId, "ChangeAnalysisClient", message);
+                return new ResourceIdResponseModel();
+            }
         }
 
         /// <summary>
@@ -122,9 +171,28 @@ namespace Diagnostics.DataProviders
         /// <returns>Last scan information.</returns>
         public async Task<LastScanResponseModel> GetLastScanInformation(string armResourceUri)
         {
-            string requestUri = changeAnalysisEndPoint + $"lastscan/{armResourceUri}?api-version={apiVersion}";
-            string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: HttpMethod.Get);
-            return JsonConvert.DeserializeObject<LastScanResponseModel>(jsonString);
+            try
+            {
+                string requestUri = changeAnalysisEndPoint + $"lastscan/{armResourceUri}?api-version={apiVersion}";
+                string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: HttpMethod.Get);
+                return JsonConvert.DeserializeObject<LastScanResponseModel>(jsonString);
+            }
+            catch (HttpRequestException httpException)
+            {
+                string message = $"HttpRequestException in GetLastScanInformation, Message: {httpException.Message} ";
+                if (httpException.Data.Contains(ExceptionStatusCode))
+                {
+                    message += $"Status Code: {httpException.Data[ExceptionStatusCode]}";
+                }
+
+                DiagnosticsETWProvider.Instance.LogDataProviderMessage(requestId, "ChangeAnalysisClient", message);
+                return new LastScanResponseModel
+                {
+                    ResourceId = string.Empty,
+                    TimeStamp = string.Empty,
+                    Source = string.Empty
+                };
+            }
         }
 
         /// <summary>
@@ -143,7 +211,14 @@ namespace Diagnostics.DataProviders
             }
             catch (HttpRequestException httpexception)
             {
-                if (httpexception.Data.Contains("Status Code") && (HttpStatusCode)httpexception.Data["Status Code"] == HttpStatusCode.NotFound)
+                string message = $"HttpRequestException in CheckSubscriptionOnboardingStatus, Message: {httpexception.Message} ";
+                if (httpexception.Data.Contains(ExceptionStatusCode))
+                {
+                    message += $"Status Code: {httpexception.Data[ExceptionStatusCode]}";
+                }
+
+                DiagnosticsETWProvider.Instance.LogDataProviderMessage(requestId, "ChangeAnalysisClient", message);
+                if (httpexception.Data.Contains(ExceptionStatusCode) && (HttpStatusCode)httpexception.Data[ExceptionStatusCode] == HttpStatusCode.NotFound)
                 {
                     return new SubscriptionOnboardingStatus
                     {
@@ -172,8 +247,15 @@ namespace Diagnostics.DataProviders
             }
             catch (HttpRequestException httpexception)
             {
+                string message = $"HttpRequestException in ScanActionRequest, Message: {httpexception.Message}, Scan Action: {scanAction}  ";
+                if (httpexception.Data.Contains(ExceptionStatusCode))
+                {
+                    message += $"Status Code: {httpexception.Data[ExceptionStatusCode]}";
+                }
+
+                DiagnosticsETWProvider.Instance.LogDataProviderMessage(requestId, "ChangeAnalysisClient", message);
                 // 404 NotFound mean there are no active requests.
-                if (httpexception.Data.Contains("Status Code") && (HttpStatusCode)httpexception.Data["Status Code"] == HttpStatusCode.NotFound)
+                if (httpexception.Data.Contains(ExceptionStatusCode) && (HttpStatusCode)httpexception.Data[ExceptionStatusCode] == HttpStatusCode.NotFound)
                 {
                     return new ChangeScanModel
                     {
@@ -184,7 +266,24 @@ namespace Diagnostics.DataProviders
                     };
                 }
 
-                throw httpexception;
+                if (httpexception.Data.Contains(ExceptionStatusCode) && (HttpStatusCode)httpexception.Data[ExceptionStatusCode] == HttpStatusCode.Forbidden)
+                {
+                    return new ChangeScanModel
+                    {
+                        OperationId = string.Empty,
+                        State = "NotEnabled",
+                        SubmissionTime = null,
+                        CompletionTime = null
+                    };
+                }
+
+                return new ChangeScanModel
+                {
+                    OperationId = string.Empty,
+                    State = string.Empty,
+                    SubmissionTime = null,
+                    CompletionTime = null
+                };
             }
         }
 
@@ -202,12 +301,12 @@ namespace Diagnostics.DataProviders
 
             // Add required headers.
             requestMessage.Headers.Add("Authorization", authToken);
-            requestMessage.Headers.Add("x-ms-client-object-id", clientObjectIdHeader);
+            requestMessage.Headers.Add(ClientObjectIdHeader, clientObjectIdHeader);
 
-            // For requests coming from Diagnose and Solve, add x-ms-principal-name header.
+            // For requests coming from Diagnose and Solve, add x-ms-client-principal-name header.
             if (!string.IsNullOrWhiteSpace(clientPrincipalNameHeader))
             {
-                requestMessage.Headers.Add("x-ms-principal-name", clientPrincipalNameHeader);
+                requestMessage.Headers.Add(ClientPrincipalNameHeader, clientPrincipalNameHeader);
             }
 
             if (postBody != null)
@@ -218,15 +317,11 @@ namespace Diagnostics.DataProviders
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
             HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage, cancellationTokenSource.Token);
             string content = await responseMessage.Content.ReadAsStringAsync();
-            if (responseMessage.StatusCode == HttpStatusCode.NotFound)
-            {
-                HttpRequestException ex = new HttpRequestException($"Status Code : {responseMessage.StatusCode}, Content : {content}");
-                ex.Data.Add("Status Code", responseMessage.StatusCode);
-                throw ex;
-            }
             if (!responseMessage.IsSuccessStatusCode)
             {
-                throw new HttpRequestException($"Status Code: {responseMessage.StatusCode}, Content: {content}");
+                HttpRequestException ex = new HttpRequestException($"Status Code : {responseMessage.StatusCode}, Content : {content}");
+                ex.Data.Add(ExceptionStatusCode, responseMessage.StatusCode);
+                throw ex;
             }
 
             return content;

@@ -7,6 +7,7 @@ using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using System;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 
 namespace Diagnostics.RuntimeHost.Controllers
@@ -15,8 +16,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.AppServiceCertResource)]
     public sealed class AppServiceCertificateController : DiagnosticControllerBase<AppServiceCertificate>
     {
-        public AppServiceCertificateController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
-            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, gistCache, dataSourcesConfigService, assemblyCacheService)
+        public AppServiceCertificateController(IServiceProvider services)
+            : base(services)
         {
         }
 

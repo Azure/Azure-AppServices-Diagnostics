@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 
 namespace Diagnostics.DataProviders
 {
@@ -68,6 +69,22 @@ namespace Diagnostics.DataProviders
                 else
                 {
                     return DataProviderConstants.AzureUSGovernment;
+                }
+            }
+        }
+
+        public string KustoApiEndpoint
+        {
+            get
+            {
+                var m = Regex.Match(AADKustoResource, @"https://(?<cluster>\w+).");
+                if (m.Success)
+                {
+                    return AADKustoResource.Replace(m.Groups["cluster"].Value, "{cluster}");
+                }
+                else
+                {
+                    throw new ArgumentException(nameof(AADKustoResource) + " not correctly formatted.");
                 }
             }
         }

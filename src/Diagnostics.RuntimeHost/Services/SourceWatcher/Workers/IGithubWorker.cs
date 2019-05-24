@@ -27,6 +27,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
         /// <param name="scriptText">Script text.</param>
         /// <param name="assemblyPath">Assembly path.</param>
         /// <returns>Task for downloading and updating cache.</returns>
-        Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string scriptText, string assemblyPath);
+        Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string scriptText, string assemblyPath, string metadata);
     }
 }

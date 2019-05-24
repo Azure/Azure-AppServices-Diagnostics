@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Diagnostics.Logger;
 
 namespace Diagnostics.DataProviders
 {
@@ -19,13 +20,13 @@ namespace Diagnostics.DataProviders
 
         public GeoMasterCertClient(GeoMasterDataProviderConfiguration configuration)
         {
-            var handler = new HttpClientHandler();                       
+            var handler = new HttpClientHandler();
 
             if (_geoMasterCertificate == null)
             {
                 _geoMasterCertificate = GetCertificate(configuration.GeoCertThumbprint);
             }
-            
+
             if (_geoMasterCertificate != null)
             {
                 handler.ClientCertificates.Add(_geoMasterCertificate);
@@ -41,8 +42,8 @@ namespace Diagnostics.DataProviders
 
             Client = new HttpClient(handler);
             Client.DefaultRequestHeaders.Accept.Clear();
-            Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            Client.DefaultRequestHeaders.Add("User-Agent", "appservice-diagnostics");
+            Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(HeaderConstants.JsonContentType));
+            Client.DefaultRequestHeaders.Add(HeaderConstants.UserAgentHeaderName, "appservice-diagnostics");
             Client.Timeout = TimeSpan.FromSeconds(30);
             Client.BaseAddress = BaseUri;
         }
@@ -56,8 +57,9 @@ namespace Diagnostics.DataProviders
                 X509Certificate2Collection certificates = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, true);
                 if (certificates.Count == 0)
                 {
-                    throw new InvalidOperationException(String.Format("Cannot find certificate with thumbprint {0}", thumbprint));
+                    throw new InvalidOperationException($"Cannot find certificate with thumbprint {thumbprint}");
                 }
+
                 return certificates[0];
             }
             finally
@@ -68,6 +70,5 @@ namespace Diagnostics.DataProviders
                 }
             }
         }
-
     }
 }

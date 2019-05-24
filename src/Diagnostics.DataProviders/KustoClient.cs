@@ -21,7 +21,7 @@ namespace Diagnostics.DataProviders
     public class KustoClient : IKustoClient
     {
         private string _requestId;
-        private const string KustoApiEndpoint = "https://{0}.kusto.windows.net:443/v1/rest/query";
+        private string KustoApiQueryEndpoint;
 
         private readonly Lazy<HttpClient> _client = new Lazy<HttpClient>(() =>
         {
@@ -40,9 +40,10 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        public KustoClient(string requestId)
+        public KustoClient(KustoDataProviderConfiguration config, string requestId)
         {
             _requestId = requestId;
+            KustoApiQueryEndpoint = config.KustoApiEndpoint + ":443/v1/rest/query";
         }
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
@@ -51,9 +52,9 @@ namespace Diagnostics.DataProviders
             var authorizationToken = await KustoTokenService.Instance.GetAuthorizationTokenAsync();
             var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId}##{0}";
             var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
-            var request = new HttpRequestMessage(HttpMethod.Post, string.Format(KustoApiEndpoint, cluster));
+            var request = new HttpRequestMessage(HttpMethod.Post, KustoApiQueryEndpoint.Replace("{cluster}", cluster));
             request.Headers.Add("Authorization", authorizationToken);
-            request.Headers.Add("x-ms-client-request-id", requestId ?? Guid.NewGuid().ToString());
+            request.Headers.Add(HeaderConstants.ClientRequestIdHeader, requestId ?? Guid.NewGuid().ToString());
             request.Headers.UserAgent.ParseAdd("appservice-diagnostics");
             var requestPayload = new
             {
