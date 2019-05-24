@@ -359,6 +359,7 @@ namespace Diagnostics.DataProviders
                 {
                     requestUri = response.RequestMessage.RequestUri.ToString();
                     method = response.RequestMessage.Method;
+                    response.RequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "WW91IHdpc2ggSSdkIGxvZyB0aGF0Lg==");
                     requestHeaders = response.RequestMessage.Headers;
                     responseStatusCode = response.StatusCode;
                     responseHeaders = response.Headers;
