@@ -1,0 +1,60 @@
+the value changed because an agent is working on the incident.
+sr closed through msaas
+web apps
+webapp
+web app
+[webapp]
+>>ist shift is over hence transferring case to next available queue<<
+app service
+asp.net
+asp.net app
+asp.net web app
+asp.net core
+azure app service
+azure web app
+azure web app (windows)
+azure web apps
+azure webapp
+backup
+duplicate
+misroute
+misroute to asms
+notes added
+os/webapps
+out of asms scope
+performance:
+prodirect advisory
+scope
+ta review in sd
+v-waabar
+us business hours
+88235294
+<add problem description here...>
+<utc+5:30, non24x7>
+app services
+backup
+app service
+migration
+other
+see sr task
+short issue description
+authentication
+<<app service>>
+<<php>>
+<appsvc>
+<crit>
+<non aip>
+<portuguese>
+cx needs assistance with app service
+function app
+need se assignment
+non aip
+non-quota case
+tl approved
+vnet
+utc+1, non24x7
+<Misroute to VM Team>
+cx using ase
+ta note added
+<utc+1 non 24x7>
+ta review <utc+5:30, non24x7>

@@ -13,36 +13,56 @@ namespace Diagnostics.Logger
         /// <summary>
         /// Request id header name.
         /// </summary>
-        public const string RequestIdHeaderName = "x-ms-request-id";
+        public static readonly string RequestIdHeaderName = "x-ms-request-id";
 
         /// <summary>
         /// Internal view header.
         /// </summary>
-        public const string InternalViewHeader = "x-ms-internal-view";
+        public static readonly string InternalViewHeader = "x-ms-internal-view";
 
         /// <summary>
         /// Internal client header.
         /// </summary>
-        public const string InternalClientHeader = "x-ms-internal-client";
+        public static readonly string InternalClientHeader = "x-ms-internal-client";
+
+        /// <summary>
+        /// Client Request ID header.
+        /// </summary>
+        public static readonly string ClientRequestIdHeader = "x-ms-client-request-id";
+
+        /// <summary>
+        /// Client Object ID header.
+        /// </summary>
+        public static readonly string ClientObjectIdHeader = "x-ms-client-object-id";
+
+        /// <summary>
+        /// Client Principal Name header.
+        /// </summary>
+        public static readonly string ClientPrincipalNameHeader = "x-ms-client-principal-name";
 
         /// <summary>
         /// Etag header name.
         /// </summary>
-        public const string EtagHeaderName = "ETag";
+        public static readonly string EtagHeaderName = "ETag";
 
         /// <summary>
         /// If-match header name.
         /// </summary>
-        public const string IfMatchHeaderName = "If-Match";
+        public static readonly string IfMatchHeaderName = "If-Match";
 
         /// <summary>
         /// If-none header name.
         /// </summary>
-        public const string IfNoneMatchHeaderName = "If-None-Match";
+        public static readonly string IfNoneMatchHeaderName = "If-None-Match";
 
         /// <summary>
         /// User agent header name.
         /// </summary>
-        public const string UserAgentHeaderName = "User-Agent";
+        public static readonly string UserAgentHeaderName = "User-Agent";
+
+        /// <summary>
+        /// Json Content type header.
+        /// </summary>
+        public static readonly string JsonContentType = "application/json";
     }
 }

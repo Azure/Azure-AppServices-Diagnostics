@@ -21,8 +21,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.SitesResource)]
     public sealed class SitesController : SiteControllerBase
     {
-        public SitesController(IStampService stampService, ISiteService siteService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
-            : base(stampService, siteService, compilerHostClient, sourceWatcherService, invokerCache, gistCache, dataSourcesConfigService, assemblyCacheService)
+        public SitesController(IServiceProvider services)
+            : base(services)
         {
         }
 
@@ -68,7 +68,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="postBody">Request json body.</param>
         /// <returns>Task for listing detectors.</returns>
         [HttpPost(UriElements.Detectors)]
-        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody)
+        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody, [FromQuery(Name = "text")] string text = null)
         {
             if (IsPostBodyMissing(postBody))
             {
@@ -77,7 +77,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
-            return await base.ListDetectors(app);
+            return await base.ListDetectors(app, text);
         }
 
         /// <summary>

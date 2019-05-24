@@ -31,11 +31,12 @@ namespace Diagnostics.RuntimeHost.Services
 
         public async Task<Tuple<List<string>, PlatformType>> GetTenantIdForStamp(string stamp, bool isPublicStamp, DateTime startTime, DateTime endTime, DataProviderContext dataProviderContext)
         {
-            var dp = new DataProviders.DataProviders(dataProviderContext);
             if (string.IsNullOrWhiteSpace(stamp))
             {
-                throw new ArgumentNullException("stamp");
+                throw new ArgumentNullException(nameof(stamp));
             }
+
+            var dp = new DataProviders.DataProviders(dataProviderContext);
 
             if (_tenantCache.TryGetValue(stamp.ToLower(), out Tuple<List<string>, PlatformType> result))
             {
@@ -90,7 +91,6 @@ namespace Diagnostics.RuntimeHost.Services
             }
 
             return tenantIds;
-
         }
 
         private string GetTenantIdQuery(string stamp, DateTime startTime, DateTime endTime, PlatformType type)
@@ -105,7 +105,7 @@ namespace Diagnostics.RuntimeHost.Services
 
             return
                 $@"{tableName}
-                | where TIMESTAMP >= datetime({startTimeStr}) and TIMESTAMP <= datetime({endTimeStr}) 
+                | where TIMESTAMP >= datetime({startTimeStr}) and TIMESTAMP <= datetime({endTimeStr})
                 | where PublicHost =~ ""{stamp}.cloudapp.net"" or PublicHost matches regex ""{stamp}([a-z{{1}}]).cloudapp.net""
                 | summarize by Tenant, PublicHost";
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
@@ -17,7 +18,6 @@ namespace Diagnostics.DataProviders
     {
         public MockSupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, DataProviderContext dataProviderContext) : base(cache, configuration, dataProviderContext)
         {
-
         }
 
         public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
@@ -58,6 +58,11 @@ namespace Diagnostics.DataProviders
             return GetRuntimeSiteSlotMap(stampName, siteName);
         }
 
+        public override Task<DataTable> ExecuteSqlQueryAsync(string cloudServiceName, string query)
+        {
+            throw new NotImplementedException();
+        }
+
         public override async Task<dynamic> GetSite(string siteName)
         {
             throw new NotImplementedException();
@@ -87,6 +92,7 @@ namespace Diagnostics.DataProviders
         {
             throw new NotImplementedException();
         }
+
         public override Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName)
         {
             throw new NotImplementedException();

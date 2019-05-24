@@ -6,6 +6,7 @@ using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using System;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 
@@ -15,8 +16,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.ApiManagementServiceResource)]
     public sealed class ApiManagementController : DiagnosticControllerBase<ApiManagementService>
     {
-        public ApiManagementController(IStampService stampService, ICompilerHostClient compilerHostClient, ISourceWatcherService sourceWatcherService, IInvokerCacheService invokerCache, IGistCacheService gistCache, IDataSourcesConfigurationService dataSourcesConfigService, IAssemblyCacheService assemblyCacheService)
-            : base(stampService, compilerHostClient, sourceWatcherService, invokerCache, gistCache, dataSourcesConfigService, assemblyCacheService)
+        public ApiManagementController(IServiceProvider services)
+            : base(services)
         {
         }
 

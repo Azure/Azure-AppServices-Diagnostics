@@ -1,0 +1,18 @@
+{
+  "14748": {
+    "sof-tags": [
+      "azure-web-app-service",
+      "azure-webapps",
+      "azure-app-service",
+      "azure-web-app-for-containers",
+      "azure-app-service-plans",
+      "azure-app-service-envrmnt",
+      "azure-web-sites"
+    ],
+    "include-casetitles": true,
+    "download-softitles": false,
+    "topn-sof": 500,
+    "include-softitles": false,
+    "ndays": "7"
+  }
+}

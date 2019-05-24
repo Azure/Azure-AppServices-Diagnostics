@@ -24,7 +24,7 @@ namespace Diagnostics.DataProviders
         {
             dataProviderConfiguration = configuration;
             dataProviderRequestId = requestId;
-            changeAnalysisClient = new ChangeAnalysisClient(configuration, clientObjectId, principalName);
+            changeAnalysisClient = new ChangeAnalysisClient(configuration, requestId, clientObjectId, principalName);
             kustoDataProvider = new KustoDataProvider(cache, kustoConfig, requestId);
         }
 
@@ -163,10 +163,7 @@ namespace Diagnostics.DataProviders
 
         public DataProviderMetadata GetMetadata()
         {
-            return new DataProviderMetadata
-            {
-                ProviderName = "ChangeAnalysis"
-            };
+            return null;
         }
 
         /// <summary>

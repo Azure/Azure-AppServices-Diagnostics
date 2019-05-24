@@ -31,7 +31,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         private Task _firstTimeCompletionTask;
         private string _rootContentApiPath;
 
-        private readonly IGithubClient _githubClient;
+        public readonly IGithubClient _githubClient;
         private readonly string _workerIdFileName = "workerId.txt";
         private readonly string _lastModifiedMarkerName = "_lastModified.marker";
         private readonly string _deleteMarkerName = "_delete.marker";
@@ -236,6 +236,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             var assemblyName = Guid.NewGuid().ToString();
             var csxFilePath = string.Empty;
             var confFilePath = string.Empty;
+            var metadataFilePath = string.Empty;
             var lastCacheId = string.Empty;
             var cacheIdFilePath = Path.Combine(destDir.FullName, _cacheIdFileName);
 
@@ -262,9 +263,17 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 {
                     csxFilePath = downloadFilePath;
                 }
-                else if (fileExtension.Equals("json", StringComparison.OrdinalIgnoreCase))
+                else if (githubFile.Name.Equals("package.json", StringComparison.OrdinalIgnoreCase))
                 {
                     confFilePath = downloadFilePath;
+                }
+                else if (githubFile.Name.Equals("metadata.json", StringComparison.OrdinalIgnoreCase))
+                {
+                    metadataFilePath = downloadFilePath;
+                }
+                else if (githubFile.Name.Split(".").Last() == "model" || githubFile.Name.Split(".").Last() == "index" || githubFile.Name.Split(".").Last() == "dict" || githubFile.Name.Split(".").Last() == "json")
+                {
+                    downloadFilePath = Path.Combine(destDir.FullName, githubFile.Name);
                 }
                 else
                 {
@@ -281,12 +290,15 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
             var configFile = await FileHelper.GetFileContentAsync(confFilePath);
             var config = JsonConvert.DeserializeObject<PackageConfig>(configFile);
+
+            var metadata = await FileHelper.GetFileContentAsync(metadataFilePath);
+
             var workerId = string.Equals(config?.Type, "gist", StringComparison.OrdinalIgnoreCase) ? "GistWorker" : "DetectorWorker";
             await FileHelper.WriteToFileAsync(destDir.FullName, _workerIdFileName, workerId);
 
             if (GithubWorkers.ContainsKey(workerId))
             {
-                await GithubWorkers[workerId].CreateOrUpdateCacheAsync(destDir, scriptText, assemblyPath);
+                await GithubWorkers[workerId].CreateOrUpdateCacheAsync(destDir, scriptText, assemblyPath, metadata);
             }
             else
             {
