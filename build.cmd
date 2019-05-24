@@ -33,7 +33,7 @@ dotnet publish src\\Diagnostics.RuntimeHost\\Diagnostics.RuntimeHost.csproj -c R
 echo\
 echo "------------------- Publishing AI Projects to build directory --------------------"
 echo\
-xcopy /E src\\Diagnostics.AIProjects build\\antares.external.diagnostics.runtimehost.1.0.0
+echo D | xcopy /E /Y src\\Diagnostics.AIProjects build\\antares.external.diagnostics.aiprojects.1.0.0
 
 IF %ERRORLEVEL% NEQ 0 (
 echo "Diagnostics.RuntimeHost Publish Failed."
