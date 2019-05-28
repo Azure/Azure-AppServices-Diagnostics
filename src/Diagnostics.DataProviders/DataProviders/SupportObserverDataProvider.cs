@@ -236,7 +236,7 @@ namespace Diagnostics.DataProviders
                 query = $"\"{query}\"";
             }
 
-            var route = $"/api/service/{cloudServiceName}/invokesql?api-version=2.0";
+            var route = $"/api/service/{cloudServiceName}/invokesql";
 
             var request = new HttpRequestMessage(HttpMethod.Post, route)
             {
@@ -253,19 +253,10 @@ namespace Diagnostics.DataProviders
             {
                 response.EnsureSuccessStatusCode();
             }
-            catch (HttpRequestException)
+            finally
             {
-                var logMessage = $"message:Observer SQL query request failed, route:{route}, query:{query}, " +
-                    $"statusCode:{response.StatusCode}, response:{result}, latencyMs:{timer.ElapsedMilliseconds}";
-                Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", logMessage);
-                throw;
-            }
-
-            if (timer.ElapsedMilliseconds > 1000)
-            {
-                var logMessage = $"message:Observer SQL query ran for longer than one second, route:{route}, " +
-                    $"query:{query}, statusCode:{response.StatusCode}, response:{result}, " +
-                    $"latencyMs:{timer.ElapsedMilliseconds}";
+                var logMessage = $"message:Observer SQL query sent, route:{route}, " +
+                    $"query:{query}, statusCode:{response.StatusCode}, response:{result}";
                 Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", logMessage);
             }
 
