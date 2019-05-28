@@ -22,8 +22,12 @@ class StackOverFlowFetcher:
         items = []
         while True:
             try:
-                url = "http://api.stackexchange.com/2.2/questions?key={0}((&site=stackoverflow&page={1}&order=desc&sort=votes&tagged={2}&filter=default".format(self.key, pagenum, tag)
-                content = requests.get(url=url).json()
+                url = "http://api.stackexchange.com/2.2/questions?key={0}&site=stackoverflow&page={1}&order=desc&sort=votes&tagged={2}&filter=default".format(self.key, pagenum, tag)
+                req = requests.get(url=url)
+                if not (req.status_code == 200):
+                    logToFile("{0}.log".format(trainingId), "[ERROR]TagDownloader: Tag " + str(tag) + " - " + str(req.json()['error_message']))
+                    raise TrainingException("TagDownloader: Tag " + str(tag) + " - " + str(req.json()['error_message']))
+                content = req.json()
                 items += [{"text": x["title"], "links": [x["link"]], "qid": x["question_id"]} for x in content["items"] if (x["score"]>0 or x["answer_count"]>0)]
                 #print(txt)
                 if len(items)>topn:
