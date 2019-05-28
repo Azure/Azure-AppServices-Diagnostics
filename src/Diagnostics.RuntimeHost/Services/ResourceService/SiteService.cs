@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Services
@@ -17,36 +18,45 @@ namespace Diagnostics.RuntimeHost.Services
 
     public class SiteService : ISiteService
     {
-        public SiteService(IDataSourcesConfigurationService dataSourcesConfigService){ }
+        private IHttpClientFactory HttpClientFactory;
+
+        public SiteService(IDataSourcesConfigurationService dataSourcesConfigService,
+            IHttpClientFactory httpClientFactory)
+        {
+            HttpClientFactory = httpClientFactory;
+        }
 
         public async Task<StackType> GetApplicationStack(string subscriptionId, string resourceGroup, string siteName, DataProviderContext dataProviderContext)
         {
-            var dp = new DataProviders.DataProviders(dataProviderContext);
+            var dp = new DataProviders.DataProviders(dataProviderContext, HttpClientFactory);
             if (string.IsNullOrWhiteSpace(subscriptionId)) throw new ArgumentNullException("subscriptionId");
             if (string.IsNullOrWhiteSpace(resourceGroup)) throw new ArgumentNullException("resourceGroup");
             if (string.IsNullOrWhiteSpace(siteName)) throw new ArgumentNullException("siteName");
 
             string queryTemplate =
                 $@"WawsAn_dailyentity
-                | where pdate >= ago(5d) and sitename =~ ""{siteName}"" and sitesubscription =~ ""{subscriptionId}"" and resourcegroup =~ ""{resourceGroup}"" 
+                | where pdate >= ago(5d) and sitename =~ ""{siteName}"" and sitesubscription =~ ""{subscriptionId}"" and resourcegroup =~ ""{resourceGroup}""
                 | where sitestack !contains ""unknown"" and sitestack !contains ""no traffic"" and sitestack  !contains ""undefined""
                 | top 1 by pdate desc
                 | project sitestack";
 
             DataTable stackTable = null;
-            
-            try{
+
+            try
+            {
                 if (dataProviderContext.Configuration.KustoConfiguration.CloudDomain == DataProviderConstants.AzureCloud)
                 {
                     stackTable = await dp.Kusto.ExecuteQuery(queryTemplate, DataProviderConstants.FakeStampForAnalyticsCluster, operationName: "GetApplicationStack");
                 }
-            }catch(Exception ex){
+            }
+            catch (Exception ex)
+            {
                 //swallow the exception. Since Mooncake does not have an analytics cluster
                 DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(dataProviderContext.RequestId, "GetApplicationStack", subscriptionId,
                     resourceGroup, siteName, ex.GetType().ToString(), ex.ToString());
             }
-            
-            if(stackTable == null || stackTable.Rows == null || stackTable.Rows.Count == 0)
+
+            if (stackTable == null || stackTable.Rows == null || stackTable.Rows.Count == 0)
             {
                 return StackType.None;
             }

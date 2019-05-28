@@ -1,10 +1,10 @@
-﻿using Diagnostics.ModelsAndUtils;
-using Diagnostics.ModelsAndUtils.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Models;
 
 namespace Diagnostics.DataProviders
 {
@@ -21,10 +21,10 @@ namespace Diagnostics.DataProviders
         private IKustoClient _kustoClient;
         private string _requestId;
 
-        public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration, string requestId) : base(cache)
+        public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration, string requestId, IHttpClientFactory httpClientFactory) : base(cache)
         {
             _configuration = configuration;
-            _kustoClient = KustoClientFactory.GetKustoClient(configuration, requestId);
+            _kustoClient = KustoClientFactory.GetKustoClient(configuration, requestId, httpClientFactory);
             _requestId = requestId;
             Metadata = new DataProviderMetadata
             {

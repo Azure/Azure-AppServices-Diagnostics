@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders;
 using Diagnostics.ModelsAndUtils;
@@ -23,10 +24,12 @@ namespace Diagnostics.RuntimeHost.Services
     public class StampService : IStampService
     {
         private ConcurrentDictionary<string, Tuple<List<string>, PlatformType>> _tenantCache;
+        private IHttpClientFactory _httpClientFactory;
 
-        public StampService()
+        public StampService(IHttpClientFactory httpClientFactory)
         {
             _tenantCache = new ConcurrentDictionary<string, Tuple<List<string>, PlatformType>>();
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<Tuple<List<string>, PlatformType>> GetTenantIdForStamp(string stamp, bool isPublicStamp, DateTime startTime, DateTime endTime, DataProviderContext dataProviderContext)
@@ -36,7 +39,7 @@ namespace Diagnostics.RuntimeHost.Services
                 throw new ArgumentNullException(nameof(stamp));
             }
 
-            var dp = new DataProviders.DataProviders(dataProviderContext);
+            var dp = new DataProviders.DataProviders(dataProviderContext, _httpClientFactory);
 
             if (_tenantCache.TryGetValue(stamp.ToLower(), out Tuple<List<string>, PlatformType> result))
             {

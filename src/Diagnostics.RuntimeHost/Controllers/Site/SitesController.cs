@@ -233,9 +233,9 @@ namespace Diagnostics.RuntimeHost.Controllers
             return postBody == null || string.IsNullOrWhiteSpace(postBody.Name);
         }
 
-        private async Task<DiagnosticSiteData> GetSitePostBody (string subscriptionId, string resourceGroupName, string siteName)
+        private async Task<DiagnosticSiteData> GetSitePostBody(string subscriptionId, string resourceGroupName, string siteName)
         {
-            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey], HttpClientFactory);
             string stampName = await dataProviders.Observer.GetStampName(subscriptionId, resourceGroupName, siteName);
             dynamic postBody = await dataProviders.Observer.GetSitePostBody(stampName, siteName);
             JObject bodyObject = (JObject)postBody;

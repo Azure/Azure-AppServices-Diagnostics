@@ -1,5 +1,6 @@
-﻿using Diagnostics.DataProviders.Interfaces;
-using System;
+﻿using System;
+using System.Net.Http;
+using Diagnostics.DataProviders.Interfaces;
 
 namespace Diagnostics.DataProviders
 {
@@ -15,13 +16,13 @@ namespace Diagnostics.DataProviders
         public IAscDataProvider Asc;
         public Func<MdmDataSource, IMdmDataProvider> Mdm;
 
-        public DataProviders(DataProviderContext context)
+        public DataProviders(DataProviderContext context, IHttpClientFactory httpClientFactory)
         {
-            Kusto = new DataProviderLogDecorator(context, new KustoDataProvider(_cache, context.Configuration.KustoConfiguration, context.RequestId));
+            Kusto = new DataProviderLogDecorator(context, new KustoDataProvider(_cache, context.Configuration.KustoConfiguration, context.RequestId, httpClientFactory));
             Observer = new DataProviderLogDecorator(context, SupportObserverDataProviderFactory.GetDataProvider(_cache, context.Configuration, context));
             GeoMaster = new DataProviderLogDecorator(context, new GeoMasterDataProvider(_cache, context.Configuration.GeoMasterConfiguration));
             AppInsights = new DataProviderLogDecorator(context, new AppInsightsDataProvider(_cache, context.Configuration.AppInsightsConfiguration));
-            ChangeAnalysis = new DataProviderLogDecorator(context, new ChangeAnalysisDataProvider(_cache, context.Configuration.ChangeAnalysisDataProviderConfiguration, context.Configuration.KustoConfiguration, context.RequestId, context.clientObjectId, context.clientPrincipalName));
+            ChangeAnalysis = new DataProviderLogDecorator(context, new ChangeAnalysisDataProvider(_cache, context.Configuration.ChangeAnalysisDataProviderConfiguration, context.Configuration.KustoConfiguration, context.RequestId, context.clientObjectId, context.clientPrincipalName, httpClientFactory));
             Asc = new DataProviderLogDecorator(context, new AscDataProvider(_cache, context.Configuration.AscDataProviderConfiguration, context.RequestId));
             Mdm = (MdmDataSource ds) =>
             {

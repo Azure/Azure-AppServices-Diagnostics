@@ -1,20 +1,17 @@
-﻿using Diagnostics.Logger;
-using Diagnostics.ModelsAndUtils;
-using Diagnostics.ModelsAndUtils.Models;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using Diagnostics.Logger;
+using Diagnostics.ModelsAndUtils.Models;
+using Newtonsoft.Json;
 
 namespace Diagnostics.DataProviders
 {
@@ -22,27 +19,12 @@ namespace Diagnostics.DataProviders
     {
         private string _requestId;
         private string KustoApiQueryEndpoint;
+        private HttpClient _httpClient;
 
-        private readonly Lazy<HttpClient> _client = new Lazy<HttpClient>(() =>
-        {
-            var client = new HttpClient();
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-            return client;
-        });
-
-        private HttpClient _httpClient
-        {
-            get
-            {
-                return _client.Value;
-            }
-        }
-
-        public KustoClient(KustoDataProviderConfiguration config, string requestId)
+        public KustoClient(KustoDataProviderConfiguration config, string requestId, IHttpClientFactory httpClientFactory)
         {
             _requestId = requestId;
+            _httpClient = httpClientFactory.CreateClient("Kusto");
             KustoApiQueryEndpoint = config.KustoApiEndpoint + ":443/v1/rest/query";
         }
 

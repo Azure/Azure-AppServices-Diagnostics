@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Data;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Web;
@@ -40,6 +41,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IStampService _stampService;
         protected IAssemblyCacheService _assemblyCacheService;
         protected ISearchService _searchService;
+        protected IHttpClientFactory HttpClientFactory;
 
         private InternalAPIHelper _internalApiHelper;
 
@@ -53,6 +55,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._stampService = (IStampService)services.GetService(typeof(IStampService));
             this._assemblyCacheService = (IAssemblyCacheService)services.GetService(typeof(IAssemblyCacheService));
             this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
+            this.HttpClientFactory = (IHttpClientFactory)services.GetService(typeof(IHttpClientFactory));
 
             this._internalApiHelper = new InternalAPIHelper();
         }
@@ -114,7 +117,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             Dictionary<string, dynamic> systemContext = PrepareSystemContext(resource, detectorId, dataSource, timeRange);
 
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
-            var dataProviders = new DataProviders.DataProviders((DataProviderContext)this.HttpContext.Items[HostConstants.DataProviderContextKey]);
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)this.HttpContext.Items[HostConstants.DataProviderContextKey], HttpClientFactory);
             var invoker = this._invokerCache.GetSystemInvoker(invokerId);
 
             if (invoker == null)
@@ -161,7 +164,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             var runtimeContext = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
 
-            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey], HttpClientFactory);
 
             foreach (var p in _gistCache.GetAllReferences(runtimeContext))
             {
@@ -599,7 +602,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var queryParams = Request.Query;
-            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey], HttpClientFactory);
             List<DataProviderMetadata> dataProvidersMetadata = null;
             if (context.ClientIsInternal)
             {

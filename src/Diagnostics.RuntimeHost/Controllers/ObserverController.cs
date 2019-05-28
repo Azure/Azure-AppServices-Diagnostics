@@ -15,6 +15,13 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.Observer)]
     public class ObserverController : Controller
     {
+        private IHttpClientFactory httpClientFactory;
+
+        public ObserverController(IHttpClientFactory httpClientFactory)
+        {
+            this.httpClientFactory = httpClientFactory;
+        }
+
         [HttpGet(UriElements.ObserverGetSites)]
         public async Task<IActionResult> GetSiteDetails(string siteName)
         {
@@ -38,7 +45,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             ActionResult apiResponse;
             HttpStatusCode observerStatusCode = default(HttpStatusCode);
             var dataProviderContext = (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey];
-            var dataProviders = new DataProviders.DataProviders(dataProviderContext);
+            var dataProviders = new DataProviders.DataProviders(dataProviderContext, httpClientFactory);
 
             var uriBuilder = new UriBuilder(dataProviderContext.Configuration.SupportObserverConfiguration.Endpoint)
             {

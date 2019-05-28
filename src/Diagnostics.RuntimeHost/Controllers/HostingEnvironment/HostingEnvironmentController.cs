@@ -25,7 +25,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private async Task<DiagnosticStampData> GetHostingEnvironmentPostBody(string hostingEnvironmentName)
         {
-            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey], HttpClientFactory);
             dynamic postBody = await dataProviders.Observer.GetHostingEnvironmentPostBody(hostingEnvironmentName);
             JObject bodyObject = (JObject)postBody;
             return bodyObject.ToObject<DiagnosticStampData>();

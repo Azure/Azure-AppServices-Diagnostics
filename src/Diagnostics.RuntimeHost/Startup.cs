@@ -1,15 +1,16 @@
-﻿using Diagnostics.DataProviders;
+﻿using System;
+using Diagnostics.DataProviders;
+using Diagnostics.DataProviders.TokenService;
 using Diagnostics.RuntimeHost.Middleware;
-using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
+using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
-using Diagnostics.DataProviders.TokenService;
+using Polly;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -36,6 +37,17 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IStampService, StampService>();
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
             services.AddSingleton<ISearchService, SearchService>();
+
+            services.AddHttpClient("Kusto", client =>
+            {
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+            })
+            .AddTransientHttpErrorPolicy(builder => builder.WaitAndRetryAsync(new[]
+            {
+                TimeSpan.FromSeconds(1),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(4)
+            }));
 
             var servicesProvider = services.BuildServiceProvider();
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
