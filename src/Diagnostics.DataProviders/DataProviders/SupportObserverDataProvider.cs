@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -235,12 +236,17 @@ namespace Diagnostics.DataProviders
                 query = $"\"{query}\"";
             }
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"/api/service/{cloudServiceName}/invokesql?api-version=2.0")
+            var route = $"/api/service/{cloudServiceName}/invokesql?api-version=2.0";
+
+            var request = new HttpRequestMessage(HttpMethod.Post, route)
             {
                 Content = new StringContent(query, Encoding.Default, "application/json")
             };
 
+            var timer = new Stopwatch();
+            timer.Start();
             var response = await SendObserverRequestAsync(request);
+            timer.Stop();
             var result = await response.Content.ReadAsStringAsync();
 
             try
@@ -249,9 +255,18 @@ namespace Diagnostics.DataProviders
             }
             catch (HttpRequestException)
             {
-                Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider",
-                    $"message:Observer SQL query request failed, query:{query}, statusCode:{response.StatusCode}, response:{result}");
+                var logMessage = $"message:Observer SQL query request failed, route:{route}, query:{query}, " +
+                    $"statusCode:{response.StatusCode}, response:{result}, latencyMs:{timer.ElapsedMilliseconds}";
+                Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", logMessage);
                 throw;
+            }
+
+            if (timer.ElapsedMilliseconds > 1000)
+            {
+                var logMessage = $"message:Observer SQL query ran for longer than one second, route:{route}, " +
+                    $"query:{query}, statusCode:{response.StatusCode}, response:{result}, " +
+                    $"latencyMs:{timer.ElapsedMilliseconds}";
+                Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", logMessage);
             }
 
             return TryDeserializeDataTable(result);
