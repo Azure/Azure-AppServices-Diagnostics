@@ -103,7 +103,6 @@ namespace Diagnostics.RuntimeHost.Middleware
                 clientObjId = httpContext.Request.Headers[ClientObjectIdHeader];
             }
 
-
             string clientPrincipalName = string.Empty;
             if (httpContext.Request.Headers.ContainsKey(ClientPrincipalNameHeader))
             {
