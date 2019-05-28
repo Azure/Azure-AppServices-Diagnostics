@@ -236,6 +236,7 @@ namespace Diagnostics.DataProviders
                 query = $"\"{query}\"";
             }
 
+            var loggingResponse = "Request succeeded";
             var route = $"/api/service/{cloudServiceName}/invokesql";
 
             var request = new HttpRequestMessage(HttpMethod.Post, route)
@@ -250,10 +251,14 @@ namespace Diagnostics.DataProviders
             {
                 response.EnsureSuccessStatusCode();
             }
+            catch (HttpRequestException)
+            {
+                loggingResponse = result;
+            }
             finally
             {
                 var logMessage = $"message:Observer SQL query sent, route:{route}, " +
-                    $"query:{query}, statusCode:{response.StatusCode}, response:{result}";
+                    $"query:{query}, statusCode:{response.StatusCode}, response:{loggingResponse}";
                 Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", logMessage);
             }
 
