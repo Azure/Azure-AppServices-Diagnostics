@@ -84,12 +84,12 @@ namespace Diagnostics.DataProviders
         {
             try
             {
-                if (string.IsNullOrEmpty(apiUri))
+                if (string.IsNullOrWhiteSpace(apiUri))
                 {
                     apiUri = this.apiUri;
                 }
 
-                if (string.IsNullOrEmpty(apiVersion))
+                if (string.IsNullOrWhiteSpace(apiVersion))
                 {
                     apiVersion = this.apiVersion;
                 }
@@ -121,19 +121,19 @@ namespace Diagnostics.DataProviders
         {
             string requestUri = string.Empty;
 
-            if (string.IsNullOrEmpty(apiUri))
+            if (string.IsNullOrWhiteSpace(apiUri))
             {
                 apiUri = this.apiUri;
             }
 
-            if (string.IsNullOrEmpty(apiVersion))
+            if (string.IsNullOrWhiteSpace(apiVersion))
             {
                 apiVersion = this.apiVersion;
             }
 
             try
             {
-                if (string.IsNullOrEmpty(queryString))
+                if (string.IsNullOrWhiteSpace(queryString))
                 {
                     requestUri = baseUri + apiUri + "?api-version=" + apiVersion.Replace("?", string.Empty).Replace("api-version=", string.Empty);
                 }
@@ -167,7 +167,7 @@ namespace Diagnostics.DataProviders
             try
             {
                 Uri blobUriObj;
-                if (string.IsNullOrEmpty(blobUri))
+                if (string.IsNullOrWhiteSpace(blobUri))
                 {
                     throw new ArgumentNullException($"Empty blob uri {blobUri}.");
                 }
@@ -323,7 +323,7 @@ namespace Diagnostics.DataProviders
                 {
                     requestUri = response.RequestMessage.RequestUri.ToString();
                     method = response.RequestMessage.Method;
-                    response.RequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "WW91IHdpc2ggSSdkIGxvZyB0aGF0Lg==");
+                    response.RequestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "XXXX");
                     requestHeaders = response.RequestMessage.Headers;
                     responseStatusCode = response.StatusCode;
                     responseHeaders = response.Headers;
