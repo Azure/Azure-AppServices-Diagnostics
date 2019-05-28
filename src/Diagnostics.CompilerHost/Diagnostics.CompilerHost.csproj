@@ -16,10 +16,6 @@
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <AdditionalFiles Include="../../stylecop.json" Link="stylecop.json" />
-  </ItemGroup>
-
   <PropertyGroup>
     <CodeAnalysisRuleSet>../../ca.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
