@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -254,6 +252,7 @@ namespace Diagnostics.DataProviders
             catch (HttpRequestException)
             {
                 loggingResponse = result;
+                throw;
             }
             finally
             {
