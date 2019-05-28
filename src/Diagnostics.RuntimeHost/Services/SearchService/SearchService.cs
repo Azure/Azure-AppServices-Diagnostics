@@ -31,7 +31,7 @@ namespace Diagnostics.RuntimeHost.Services
         private string TriggerTrainingUrl;
         private string TriggerModelRefreshUrl;
         private HttpClient _httpClient;
-        
+
         public SearchService()
         {
             QueryDetectorsUrl = UriElements.SearchAPI + "/queryDetectors";
@@ -94,7 +94,7 @@ namespace Diagnostics.RuntimeHost.Services
             _httpClient = new HttpClient
             {
                 MaxResponseContentBufferSize = Int32.MaxValue,
-                Timeout = TimeSpan.FromSeconds(30)
+                Timeout = TimeSpan.FromSeconds(90)
             };
 
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
