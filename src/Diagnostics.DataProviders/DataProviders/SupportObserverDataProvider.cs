@@ -243,10 +243,7 @@ namespace Diagnostics.DataProviders
                 Content = new StringContent(query, Encoding.Default, "application/json")
             };
 
-            var timer = new Stopwatch();
-            timer.Start();
             var response = await SendObserverRequestAsync(request);
-            timer.Stop();
             var result = await response.Content.ReadAsStringAsync();
 
             try
