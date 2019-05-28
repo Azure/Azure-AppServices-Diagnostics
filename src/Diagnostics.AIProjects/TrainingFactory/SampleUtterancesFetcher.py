@@ -22,12 +22,8 @@ class StackOverFlowFetcher:
         items = []
         while True:
             try:
-                url = "http://api.stackexchange.com/2.2/questions?key={0}&site=stackoverflow&page={1}&order=desc&sort=votes&tagged={2}&filter=default".format(self.key, pagenum, tag)
-                req = requests.get(url=url)
-                if not (req.status_code == 200):
-                    logToFile("{0}.log".format(trainingId), "[ERROR]TagDownloader: Tag " + str(tag) + " - " + str(req.json()['error_message']))
-                    raise TrainingException("TagDownloader: Tag " + str(tag) + " - " + str(req.json()['error_message']))
-                content = req.json()
+                url = "http://api.stackexchange.com/2.2/questions?key={0}((&site=stackoverflow&page={1}&order=desc&sort=votes&tagged={2}&filter=default".format(self.key, pagenum, tag)
+                content = requests.get(url=url).json()
                 items += [{"text": x["title"], "links": [x["link"]], "qid": x["question_id"]} for x in content["items"] if (x["score"]>0 or x["answer_count"]>0)]
                 #print(txt)
                 if len(items)>topn:
@@ -178,12 +174,12 @@ class CaseTitlesFetcher:
         try:
             db = "Product360"
             query = """cluster('usage360').database('Product360').
-           AllCloudSupportIncidentDataWithP360MetadataMapping
-           | where DerivedProductIDStr in ('{0}')
-           | where Incidents_CreatedTime >= ago({1}d)
-           | summarize IncidentTime = any(Incidents_CreatedTime) by Incidents_IncidentId , Incidents_Severity , Incidents_ProductName , Incidents_SupportTopicL2Current , Incidents_SupportTopicL3Current, Incidents_Title  
-           | extend SupportCenterCaseLink = strcat('https://azuresupportcenter.msftcloudes.com/caseoverview?srId=', Incidents_IncidentId)
-           | order by Incidents_SupportTopicL3Current asc""".format(productid, ndays)
+	       AllCloudSupportIncidentDataWithP360MetadataMapping
+	       | where DerivedProductIDStr in ('{0}')
+	       | where Incidents_CreatedTime >= ago({1}d)
+	       | summarize IncidentTime = any(Incidents_CreatedTime) by Incidents_IncidentId , Incidents_Severity , Incidents_ProductName , Incidents_SupportTopicL2Current , Incidents_SupportTopicL3Current, Incidents_Title  
+	       | extend SupportCenterCaseLink = strcat('https://azuresupportcenter.msftcloudes.com/caseoverview?srId=', Incidents_IncidentId)
+	       | order by Incidents_SupportTopicL3Current asc""".format(productid, ndays)
             response = self.kustoClient.execute(db, query)
         except Exception as e:
             raise TrainingException("KustoFetcher: " + str(e))
@@ -192,7 +188,7 @@ class CaseTitlesFetcher:
             df = dataframe_from_result_table(response.primary_results[0])
             logToFile("{0}.log".format(trainingId), "DataCleansing: " + str(df.shape[0]) + " incidents fetched")
         
-            #Remove all non english cases
+    	    #Remove all non english cases
             df["isEnglish"] = df["Incidents_Title"].map(self.isEnglish)
             df_eng = df[df["isEnglish"]==True]
             del df_eng["isEnglish"]
