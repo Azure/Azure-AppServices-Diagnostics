@@ -43,10 +43,10 @@ namespace Diagnostics.RuntimeHost.Services
             _env = env;
             _configuration = configuration;
             _semaphoreObject = new SemaphoreSlim(1, 1);
-            
+
             _httpClient = new HttpClient
             {
-                MaxResponseContentBufferSize = Int32.MaxValue
+                MaxResponseContentBufferSize = int.MaxValue
             };
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
@@ -66,7 +66,7 @@ namespace Diagnostics.RuntimeHost.Services
 
             StartProcessMonitor();
         }
-        
+
         public async Task<CompilerResponse> GetCompilationResponse(string script, string entityType, IDictionary<string, string> references, string requestId = "")
         {
             DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(requestId, _eventSource, "Get Compilation : Waiting on semaphore ...");
@@ -143,7 +143,7 @@ namespace Diagnostics.RuntimeHost.Services
                 DiagnosticsETWProvider.Instance.LogCompilerHostClientException(requestId, _eventSource, $"Failed to start Compiler Host Process. Standard Output : {standardOutput}", string.Empty, string.Empty);
             }
         }
-        
+
         private async Task WaitForCompilerHostToBeReady(string requestId)
         {
             await RetryHelper.RetryAsync(() => CheckForHealthPing(requestId), _eventSource, requestId, 5, 1000);
@@ -230,7 +230,6 @@ namespace Diagnostics.RuntimeHost.Services
                             _semaphoreObject.Release();
                             DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(string.Empty, _eventSource, "Start Compiler Host : semaphore released.");
                         }
-
                     }
 
                     await Task.Delay(_pollingIntervalInSeconds * 1000);
@@ -276,12 +275,12 @@ namespace Diagnostics.RuntimeHost.Services
 
         public void Dispose()
         {
-            if(_semaphoreObject != null)
+            if (_semaphoreObject != null)
             {
                 _semaphoreObject.Dispose();
             }
 
-            if(_httpClient != null)
+            if (_httpClient != null)
             {
                 _httpClient.Dispose();
             }

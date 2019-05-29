@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Data;
 using System.Linq;
-using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Web;
@@ -18,16 +18,16 @@ using Diagnostics.ModelsAndUtils.Utilities;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
+using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Scripts.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
-using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
-using System.Net.Http;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -41,11 +41,12 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IStampService _stampService;
         protected IAssemblyCacheService _assemblyCacheService;
         protected ISearchService _searchService;
-        protected IHttpClientFactory HttpClientFactory;
+        protected IHttpClientFactory _httpClientFactory;
+        private IConfiguration _configuration;
 
         private InternalAPIHelper _internalApiHelper;
 
-        public DiagnosticControllerBase(IServiceProvider services)
+        protected DiagnosticControllerBase(IServiceProvider services)
         {
             this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));
             this._sourceWatcherService = (ISourceWatcherService)services.GetService(typeof(ISourceWatcherService));
@@ -55,7 +56,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._stampService = (IStampService)services.GetService(typeof(IStampService));
             this._assemblyCacheService = (IAssemblyCacheService)services.GetService(typeof(IAssemblyCacheService));
             this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
-            this.HttpClientFactory = (IHttpClientFactory)services.GetService(typeof(IHttpClientFactory));
+            this._httpClientFactory = (IHttpClientFactory)services.GetService(typeof(IHttpClientFactory));
+            this._configuration = (IConfiguration)services.GetService(typeof(IConfiguration));
 
             this._internalApiHelper = new InternalAPIHelper();
         }
@@ -117,7 +119,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             Dictionary<string, dynamic> systemContext = PrepareSystemContext(resource, detectorId, dataSource, timeRange);
 
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
-            var dataProviders = new DataProviders.DataProviders((DataProviderContext)this.HttpContext.Items[HostConstants.DataProviderContextKey], HttpClientFactory);
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)this.HttpContext.Items[HostConstants.DataProviderContextKey], _httpClientFactory);
             var invoker = this._invokerCache.GetSystemInvoker(invokerId);
 
             if (invoker == null)
@@ -164,7 +166,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             var runtimeContext = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
 
-            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey], HttpClientFactory);
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey], _httpClientFactory);
 
             foreach (var p in _gistCache.GetAllReferences(runtimeContext))
             {
@@ -185,13 +187,13 @@ namespace Diagnostics.RuntimeHost.Controllers
                 InvocationOutput = new DiagnosticApiResponse()
             };
 
-            string scriptETag = string.Empty;
+            var scriptETag = string.Empty;
             if (Request.Headers.ContainsKey("diag-script-etag"))
             {
                 scriptETag = Request.Headers["diag-script-etag"];
             }
 
-            string assemblyFullName = string.Empty;
+            var assemblyFullName = string.Empty;
             if (Request.Headers.ContainsKey("diag-assembly-name"))
             {
                 assemblyFullName = HttpUtility.UrlDecode(Request.Headers["diag-assembly-name"]);
@@ -239,37 +241,41 @@ namespace Diagnostics.RuntimeHost.Controllers
 
                     // Verify Detector with other detectors in the system in case of conflicts
                     List<DataProviderMetadata> dataProvidersMetadata = null;
-                    Response invocationResponse = null;
-                    bool isInternalCall = true;
+                    var isInternalCall = true;
                     QueryUtterancesResults utterancesResults = null;
 
-                    // Get suggested utterances for the detector
-                    string[] utterances = null;
-                    if (jsonBody.DetectorUtterances != null && invoker.EntryPointDefinitionAttribute.Description.ToString().Length > 3)
+                    if (!(bool.TryParse(_configuration["SearchService:SkipSearchService"], out var skipSearch) && skipSearch))
                     {
-                        utterances = JsonConvert.DeserializeObject<string[]>(jsonBody.DetectorUtterances);
-                        string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
-                        var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
-                        var searchUtterances = await _searchService.SearchUtterances(runtimeContext.OperationContext.RequestId, description, utterances, resourceParams);
-                        string resultContent = await searchUtterances.Content.ReadAsStringAsync();
-                        try
+                        if (jsonBody.DetectorUtterances != null &&
+                            invoker.EntryPointDefinitionAttribute.Description.Length > 3)
                         {
-                            utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
-                        }
-                        catch
-                        {
-                            utterancesResults = null;
+                            var utterances = JsonConvert.DeserializeObject<string[]>(jsonBody.DetectorUtterances);
+                            var description = invoker.EntryPointDefinitionAttribute.Description;
+                            var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
+                            var searchUtterances = await _searchService.SearchUtterances(
+                                runtimeContext.OperationContext.RequestId, description, utterances, resourceParams);
+                            var resultContent = await searchUtterances.Content.ReadAsStringAsync();
+                            try
+                            {
+                                utterancesResults =
+                                    JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
+                            }
+                            catch (JsonException)
+                            {
+                                utterancesResults = null;
+                            }
                         }
                     }
 
                     try
                     {
+                        Response invocationResponse;
                         if (detectorId == null)
                         {
                             if (!VerifyEntity(invoker, ref queryRes)) return Ok(queryRes);
                             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
 
-                            var responseInput = new Response()
+                            var responseInput = new Response
                             {
                                 Metadata = RemovePIIFromDefinition(invoker.EntryPointDefinitionAttribute, cxt.ClientIsInternal),
                                 IsInternalCall = cxt.OperationContext.IsInternalCall
@@ -281,7 +287,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         else
                         {
                             Dictionary<string, dynamic> systemContext = PrepareSystemContext(resource, detectorId, dataSource, timeRange);
-                            var responseInput = new Response()
+                            var responseInput = new Response
                             {
                                 Metadata = invoker.EntryPointDefinitionAttribute,
                                 IsInternalCall = systemContext["isInternal"]
@@ -602,7 +608,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var queryParams = Request.Query;
-            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey], HttpClientFactory);
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey], _httpClientFactory);
             List<DataProviderMetadata> dataProvidersMetadata = null;
             if (context.ClientIsInternal)
             {

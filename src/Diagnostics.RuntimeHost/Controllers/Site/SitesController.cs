@@ -235,7 +235,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private async Task<DiagnosticSiteData> GetSitePostBody(string subscriptionId, string resourceGroupName, string siteName)
         {
-            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey], HttpClientFactory);
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey], _httpClientFactory);
             string stampName = await dataProviders.Observer.GetStampName(subscriptionId, resourceGroupName, siteName);
             dynamic postBody = await dataProviders.Observer.GetSitePostBody(stampName, siteName);
             JObject bodyObject = (JObject)postBody;
