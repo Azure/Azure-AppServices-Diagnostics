@@ -1,6 +1,7 @@
-﻿using Diagnostics.DataProviders;
+﻿using System;
+using Diagnostics.DataProviders;
 using Diagnostics.DataProviders.DataProviderConfigurations;
-using System;
+using Diagnostics.Tests.Helpers;
 using Xunit;
 
 namespace Diagnostics.Tests.DataProviderTests
@@ -17,11 +18,11 @@ namespace Diagnostics.Tests.DataProviderTests
                 AppKey = string.Empty,
                 ClientId = string.Empty,
             };
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config), new MockHttpClientFactory());
 
             // Throws exception when querying for changes beyond last 14 days.
             await Assert.ThrowsAsync<ArgumentException>(async () =>
-             await dataProviders.ChangeAnalysis.GetChangeSetsForResource("/sites/test-site", DateTime.Now.AddDays(-15), DateTime.Now));
+                await dataProviders.ChangeAnalysis.GetChangeSetsForResource("/sites/test-site", DateTime.Now.AddDays(-15), DateTime.Now));
         }
     }
 }

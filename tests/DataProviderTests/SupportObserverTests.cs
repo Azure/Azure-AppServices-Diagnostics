@@ -32,7 +32,7 @@ namespace Diagnostics.Tests.DataProviderTests
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
 
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config), new MockHttpClientFactory());
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -65,7 +65,7 @@ namespace Diagnostics.Tests.DataProviderTests
             //read a sample csx file from local directory
             metadata.ScriptText = await File.ReadAllTextAsync("BackupCheckDetector.csx");
 
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config), new MockHttpClientFactory());
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -91,7 +91,7 @@ namespace Diagnostics.Tests.DataProviderTests
                 }
                 catch (ScriptCompilationException ex)
                 {
-                    foreach(var output in ex.CompilationOutput)
+                    foreach (var output in ex.CompilationOutput)
                     {
                         Trace.WriteLine(output);
                     }
@@ -104,27 +104,29 @@ namespace Diagnostics.Tests.DataProviderTests
         {
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config), new MockHttpClientFactory());
 
             try
             {
                 var data = await dataProviders.Observer.GetResource("https://not-wawsobserver.azurewebsites.windows.net/Sites/thor-api");
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 Assert.Contains("Please use a URL that points to one of the hosts", ex.Message);
             }
 
-            await Assert.ThrowsAsync<FormatException>(async() => await dataProviders.Observer.GetResource("/sites/hawfor-site"));
+            await Assert.ThrowsAsync<FormatException>(async () => await dataProviders.Observer.GetResource("/sites/hawfor-site"));
 
             try
             {
                 var data3 = await dataProviders.Observer.GetResource("/not-a-route/hawfor-site/not-resource");
-            }catch(FormatException ex)
+            }
+            catch (FormatException ex)
             {
                 Assert.Contains("Please use a URL that points to one of the hosts", ex.Message);
             }
-            
-            await Assert.ThrowsAsync<ArgumentNullException>(async() => await dataProviders.Observer.GetResource(null));
+
+            await Assert.ThrowsAsync<ArgumentNullException>(async () => await dataProviders.Observer.GetResource(null));
         }
 
         internal async void TestObserver()
@@ -138,7 +140,7 @@ namespace Diagnostics.Tests.DataProviderTests
                 IsMockConfigured = false
             };
 
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config), new MockHttpClientFactory());
             var wawsObserverData = await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/sites/highcpuscenario");
             var supportBayData = await dataProviders.Observer.GetResource("https://support-bay-api.azurewebsites.net/observer/stamps/waws-prod-bay-073/sites/highcpuscenario/postbody");
 

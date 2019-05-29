@@ -43,7 +43,7 @@ namespace Diagnostics.Tests.DataProviderTests
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
 
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString()));
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString()), new MockHttpClientFactory());
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -70,7 +70,7 @@ namespace Diagnostics.Tests.DataProviderTests
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
 
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString()));
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString()), new MockHttpClientFactory());
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -97,7 +97,7 @@ namespace Diagnostics.Tests.DataProviderTests
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
 
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString()));
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString()), new MockHttpClientFactory());
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -129,7 +129,7 @@ namespace Diagnostics.Tests.DataProviderTests
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
 
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString()));
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString()), new MockHttpClientFactory());
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -157,7 +157,7 @@ namespace Diagnostics.Tests.DataProviderTests
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
 
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString()));
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString()), new MockHttpClientFactory());
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -183,7 +183,7 @@ namespace Diagnostics.Tests.DataProviderTests
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
 
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString()));
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString()), new MockHttpClientFactory());
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {

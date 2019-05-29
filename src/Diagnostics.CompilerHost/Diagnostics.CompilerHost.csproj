@@ -25,6 +25,12 @@
     <CodeAnalysisRuleSet>../../ca.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Diagnostics.DataProviders\Diagnostics.DataProviders.csproj" />
     <ProjectReference Include="..\Diagnostics.Logger\Diagnostics.Logger.csproj" />

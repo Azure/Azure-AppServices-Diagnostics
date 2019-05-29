@@ -21,6 +21,6 @@ namespace Diagnostics.DataProviders.TokenService
             ClientCredential = new ClientCredential(ascDataProviderConfiguration.ClientId, ascDataProviderConfiguration.AppKey);
             TokenServiceName = "AscTokenRefresh";
             StartTokenRefresh();
-        }        
+        }
     }
 }
