@@ -244,13 +244,13 @@ namespace Diagnostics.RuntimeHost.Controllers
                     string[] utterances = null;
                     if (jsonBody.DetectorUtterances != null && invoker.EntryPointDefinitionAttribute.Description.ToString().Length > 3)
                     {
-                        utterances = JsonConvert.DeserializeObject<string[]>(jsonBody.DetectorUtterances);
-                        string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
-                        var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
-                        var searchUtterances = await _searchService.SearchUtterances(runtimeContext.OperationContext.RequestId, description, utterances, resourceParams);
-                        string resultContent = await searchUtterances.Content.ReadAsStringAsync();
                         try
                         {
+                            utterances = JsonConvert.DeserializeObject<string[]>(jsonBody.DetectorUtterances);
+                            string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
+                            var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
+                            var searchUtterances = await _searchService.SearchUtterances(runtimeContext.OperationContext.RequestId, description, utterances, resourceParams);
+                            string resultContent = await searchUtterances.Content.ReadAsStringAsync();
                             utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
                         }
                         catch
