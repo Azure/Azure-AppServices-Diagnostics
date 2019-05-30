@@ -5,7 +5,7 @@ using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 
 namespace Diagnostics.RuntimeHost.Services.CacheService
 {
-    public class AssemblyCacheService: IAssemblyCacheService
+    public class AssemblyCacheService : IAssemblyCacheService
     {
         /// <summary>
         /// Queue to maintain top <see cref="MaxQueueSize"/> assemblies
@@ -20,7 +20,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
         /// <summary>
         /// Maximum number of Assemblies to maintain in cache
         /// </summary>
-        const int MaxQueueSize = 100;
+        private const int MaxQueueSize = 100;
 
         /// <summary>
         /// Creates instance of AssemblyCacheService class and initializes the cache
@@ -41,7 +41,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
         {
             AssemblyCache.Add(assemblyName, assemblyDll);
             string oldAssembly = null;
-            if(AssemblyQueue.Count == MaxQueueSize && AssemblyQueue.TryDequeue(out oldAssembly))
+            if (AssemblyQueue.Count == MaxQueueSize && AssemblyQueue.TryDequeue(out oldAssembly))
             {
                 AssemblyCache.Remove(oldAssembly);
             }

@@ -1,6 +1,6 @@
-﻿using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 
 namespace Diagnostics.DataProviders.Interfaces
 {

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Diagnostics.Scripts.Models
+﻿namespace Diagnostics.Scripts.Models
 {
     public enum AssemblyInitType
     {

@@ -1,12 +1,4 @@
-﻿using Diagnostics.Logger;
-using Diagnostics.ModelsAndUtils.Models;
-using Diagnostics.RuntimeHost.Utilities;
-using Diagnostics.Scripts.Models;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Win32;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
@@ -14,6 +6,13 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.Logger;
+using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.RuntimeHost.Utilities;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Win32;
+using Newtonsoft.Json;
 
 namespace Diagnostics.RuntimeHost.Services
 {
@@ -43,7 +42,7 @@ namespace Diagnostics.RuntimeHost.Services
             _env = env;
             _configuration = configuration;
             _semaphoreObject = new SemaphoreSlim(1, 1);
-            
+
             _httpClient = new HttpClient
             {
                 MaxResponseContentBufferSize = Int32.MaxValue
@@ -66,7 +65,7 @@ namespace Diagnostics.RuntimeHost.Services
 
             StartProcessMonitor();
         }
-        
+
         public async Task<CompilerResponse> GetCompilationResponse(string script, string entityType, IDictionary<string, string> references, string requestId = "")
         {
             DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(requestId, _eventSource, "Get Compilation : Waiting on semaphore ...");
@@ -143,7 +142,7 @@ namespace Diagnostics.RuntimeHost.Services
                 DiagnosticsETWProvider.Instance.LogCompilerHostClientException(requestId, _eventSource, $"Failed to start Compiler Host Process. Standard Output : {standardOutput}", string.Empty, string.Empty);
             }
         }
-        
+
         private async Task WaitForCompilerHostToBeReady(string requestId)
         {
             await RetryHelper.RetryAsync(() => CheckForHealthPing(requestId), _eventSource, requestId, 5, 1000);
@@ -230,7 +229,6 @@ namespace Diagnostics.RuntimeHost.Services
                             _semaphoreObject.Release();
                             DiagnosticsETWProvider.Instance.LogCompilerHostClientMessage(string.Empty, _eventSource, "Start Compiler Host : semaphore released.");
                         }
-
                     }
 
                     await Task.Delay(_pollingIntervalInSeconds * 1000);
@@ -276,12 +274,12 @@ namespace Diagnostics.RuntimeHost.Services
 
         public void Dispose()
         {
-            if(_semaphoreObject != null)
+            if (_semaphoreObject != null)
             {
                 _semaphoreObject.Dispose();
             }
 
-            if(_httpClient != null)
+            if (_httpClient != null)
             {
                 _httpClient.Dispose();
             }

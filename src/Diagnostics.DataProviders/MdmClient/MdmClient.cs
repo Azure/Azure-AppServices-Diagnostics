@@ -1,9 +1,4 @@
-﻿using Diagnostics.DataProviders.DataProviderConfigurations;
-using Diagnostics.DataProviders.Interfaces;
-using Diagnostics.DataProviders.Utility;
-using Diagnostics.Logger;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -14,6 +9,11 @@ using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders.DataProviderConfigurations;
+using Diagnostics.DataProviders.Interfaces;
+using Diagnostics.DataProviders.Utility;
+using Diagnostics.Logger;
+using Newtonsoft.Json;
 
 namespace Diagnostics.DataProviders
 {

@@ -1,8 +1,8 @@
-﻿using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {

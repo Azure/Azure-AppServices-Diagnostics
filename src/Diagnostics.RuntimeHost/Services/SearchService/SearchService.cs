@@ -1,5 +1,3 @@
-using Diagnostics.ModelsAndUtils.Models;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -8,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using Diagnostics.RuntimeHost.Utilities;
+using Newtonsoft.Json;
 
 namespace Diagnostics.RuntimeHost.Services
 {
@@ -31,7 +30,7 @@ namespace Diagnostics.RuntimeHost.Services
         private string TriggerTrainingUrl;
         private string TriggerModelRefreshUrl;
         private HttpClient _httpClient;
-        
+
         public SearchService()
         {
             QueryDetectorsUrl = UriElements.SearchAPI + "/queryDetectors";

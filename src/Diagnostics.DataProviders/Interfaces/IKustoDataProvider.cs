@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Diagnostics.DataProviders
 {
-    public interface IKustoDataProvider: IMetadataProvider
+    public interface IKustoDataProvider : IMetadataProvider
     {
         Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null);
 

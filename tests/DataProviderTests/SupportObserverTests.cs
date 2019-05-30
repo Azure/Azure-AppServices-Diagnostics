@@ -1,17 +1,16 @@
-﻿using Diagnostics.DataProviders;
-using Diagnostics.ModelsAndUtils;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Diagnostics.DataProviders;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Tests.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using Xunit;
 
 namespace Diagnostics.Tests.DataProviderTests
@@ -91,7 +90,7 @@ namespace Diagnostics.Tests.DataProviderTests
                 }
                 catch (ScriptCompilationException ex)
                 {
-                    foreach(var output in ex.CompilationOutput)
+                    foreach (var output in ex.CompilationOutput)
                     {
                         Trace.WriteLine(output);
                     }
@@ -109,22 +108,24 @@ namespace Diagnostics.Tests.DataProviderTests
             try
             {
                 var data = await dataProviders.Observer.GetResource("https://not-wawsobserver.azurewebsites.windows.net/Sites/thor-api");
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 Assert.Contains("Please use a URL that points to one of the hosts", ex.Message);
             }
 
-            await Assert.ThrowsAsync<FormatException>(async() => await dataProviders.Observer.GetResource("/sites/hawfor-site"));
+            await Assert.ThrowsAsync<FormatException>(async () => await dataProviders.Observer.GetResource("/sites/hawfor-site"));
 
             try
             {
                 var data3 = await dataProviders.Observer.GetResource("/not-a-route/hawfor-site/not-resource");
-            }catch(FormatException ex)
+            }
+            catch (FormatException ex)
             {
                 Assert.Contains("Please use a URL that points to one of the hosts", ex.Message);
             }
-            
-            await Assert.ThrowsAsync<ArgumentNullException>(async() => await dataProviders.Observer.GetResource(null));
+
+            await Assert.ThrowsAsync<ArgumentNullException>(async () => await dataProviders.Observer.GetResource(null));
         }
 
         internal async void TestObserver()

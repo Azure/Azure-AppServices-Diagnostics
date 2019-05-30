@@ -1,12 +1,13 @@
-﻿using Diagnostics.DataProviders;
-using Diagnostics.ModelsAndUtils.ScriptUtilities;
-using Diagnostics.Scripts;
-using Diagnostics.Tests.Helpers;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using Diagnostics.DataProviders;
+using Diagnostics.ModelsAndUtils.ScriptUtilities;
+using Diagnostics.Scripts;
+using Diagnostics.Tests.Helpers;
+
 using Xunit;
 using Xunit.Abstractions;
 
@@ -210,7 +211,6 @@ namespace Diagnostics.Tests.DataProviderTests
                 foreach (DataColumn column in dt.Columns)
                 {
                     sb.Append($"{row[column.ColumnName]}\t");
-
                 }
 
                 output.WriteLine(sb.ToString());

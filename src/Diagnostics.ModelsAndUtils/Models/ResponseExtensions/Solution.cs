@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;

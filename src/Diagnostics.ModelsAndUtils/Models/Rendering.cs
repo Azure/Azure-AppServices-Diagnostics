@@ -1,5 +1,5 @@
-﻿using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {
@@ -89,7 +89,7 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public string SelectedInstance { get; set; }
 
-        public TimeSeriesPerInstanceRendering(): base(RenderingType.TimeSeriesPerInstance)
+        public TimeSeriesPerInstanceRendering() : base(RenderingType.TimeSeriesPerInstance)
         {
             DefaultValue = 0;
             GraphType = TimeSeriesType.LineGraph;
@@ -104,7 +104,7 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public bool Expanded { get; set; }
 
-        public DynamicInsightRendering(): base(RenderingType.DynamicInsight)
+        public DynamicInsightRendering() : base(RenderingType.DynamicInsight)
         {
             Expanded = true;
         }

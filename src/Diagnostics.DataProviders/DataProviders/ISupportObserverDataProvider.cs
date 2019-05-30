@@ -2,7 +2,6 @@
 using System.Data;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
-using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.DataProviders

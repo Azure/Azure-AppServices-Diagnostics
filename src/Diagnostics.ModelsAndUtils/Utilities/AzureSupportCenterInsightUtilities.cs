@@ -1,11 +1,10 @@
-﻿using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.ModelsAndUtils.Models;
-using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 
 namespace Diagnostics.ModelsAndUtils.Utilities
 {
@@ -16,7 +15,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
 
         private static readonly Text DefaultRecommendedAction = new Text("Go to applens to see more information about this insight.");
 
-        public static AzureSupportCenterInsight CreateInsight<TResource>(Insight insight, OperationContext<TResource> context,  Definition detector)
+        public static AzureSupportCenterInsight CreateInsight<TResource>(Insight insight, OperationContext<TResource> context, Definition detector)
             where TResource : IResource
         {
             var description = GetTextObjectFromData("description", insight.Body) ?? new Text(string.Format(DefaultDescription, detector.Name));
@@ -61,7 +60,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
                 CustomerReadyContent = customerReadyContent == null ? null :
                     new CustomerReadyContent()
                     {
-                        ArticleId = Guid.NewGuid(),                        
+                        ArticleId = Guid.NewGuid(),
                         ArticleContent = customerReadyContentText
                     },
                 ConfidenceLevel = InsightConfidenceLevel.High,
@@ -86,7 +85,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
             var description = new StringBuilder();
             description.AppendLine("The following detector(s) were run but no insights were found:");
             description.AppendLine();
-            foreach(var detector in detectorsRun)
+            foreach (var detector in detectorsRun)
             {
                 description.AppendLine($"* {detector.Name}");
             }
@@ -126,7 +125,6 @@ namespace Diagnostics.ModelsAndUtils.Utilities
 
         private static Guid GetDetectorGuid(string detector)
         {
-
             Encoding utf8 = Encoding.UTF8;
             int count = utf8.GetByteCount(detector);
             byte[] bytes = new byte[count > 16 ? count : 16];
@@ -150,7 +148,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
 
         public static Text ParseForMarkdown(string input)
         {
-            if(string.IsNullOrWhiteSpace(input))
+            if (string.IsNullOrWhiteSpace(input))
             {
                 return null;
             }

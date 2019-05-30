@@ -1,19 +1,15 @@
-﻿using Diagnostics.ModelsAndUtils.Attributes;
+﻿using System.Collections.Immutable;
+using System.IO;
+using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.Scripts.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
-using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Diagnostics.Tests.Helpers
 {
     public static class ScriptTestDataHelper
     {
-
         public static EntityMetadata GetRandomMetadata(EntityType type = EntityType.Signal)
         {
             return new EntityMetadata()
@@ -61,7 +57,7 @@ namespace Diagnostics.Tests.Helpers
         public static async Task<string> GetDetectorScript(Definition def, ResourceType resourceType = ResourceType.App, string kustoTableName = "MockTable", string queryPart = "take 1")
         {
             string kustoTemplate = string.Empty;
-            if(resourceType == ResourceType.HostingEnvironment)
+            if (resourceType == ResourceType.HostingEnvironment)
             {
                 kustoTemplate = await File.ReadAllTextAsync(@"templates/Detector_HostingEnvironment.csx");
             }

@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace Diagnostics.DataProviders
-{   
+{
     /// <summary>
     /// A class representing a datapoint of time-value pair.
     /// </summary>

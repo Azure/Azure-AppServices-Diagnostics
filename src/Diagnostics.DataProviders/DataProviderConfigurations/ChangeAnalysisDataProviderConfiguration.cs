@@ -1,7 +1,7 @@
 ﻿namespace Diagnostics.DataProviders.DataProviderConfigurations
 {
     [DataSourceConfiguration("ChangeAnalysis")]
-    public class ChangeAnalysisDataProviderConfiguration: IDataProviderConfiguration
+    public class ChangeAnalysisDataProviderConfiguration : IDataProviderConfiguration
     {
         /// <summary>
         /// Client Id.
@@ -41,7 +41,6 @@
 
         public void PostInitialize()
         {
-
         }
     }
 }

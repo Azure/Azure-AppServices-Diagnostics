@@ -1,12 +1,11 @@
-﻿using Diagnostics.ModelsAndUtils.Models;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Models;
 
 namespace Diagnostics.DataProviders
 {
-    public interface IGeoMasterDataProvider: IMetadataProvider
+    public interface IGeoMasterDataProvider : IMetadataProvider
     {
         Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name);
 

@@ -16,6 +16,7 @@ namespace Diagnostics.DataProviders
             _configuration = configuration;
             _appInsightsClient = new AppInsightsClient(_configuration);
         }
+
         public Task<bool> SetAppInsightsKey(string appId, string apiKey)
         {
             _appInsightsClient.SetAppInsightsKey(appId, apiKey);

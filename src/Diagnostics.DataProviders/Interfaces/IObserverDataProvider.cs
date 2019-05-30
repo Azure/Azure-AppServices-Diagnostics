@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Diagnostics.DataProviders
+﻿namespace Diagnostics.DataProviders
 {
-    interface IObserverDataProvider
+    internal interface IObserverDataProvider
     {
     }
 }

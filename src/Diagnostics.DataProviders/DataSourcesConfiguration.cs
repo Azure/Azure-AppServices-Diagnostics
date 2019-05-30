@@ -8,7 +8,7 @@ namespace Diagnostics.DataProviders
 
         public SupportObserverDataProviderConfiguration SupportObserverConfiguration { get; set; }
 
-        public GeoMasterDataProviderConfiguration GeoMasterConfiguration  { get; set; }
+        public GeoMasterDataProviderConfiguration GeoMasterConfiguration { get; set; }
 
         public AppInsightsDataProviderConfiguration AppInsightsConfiguration { get; set; }
 

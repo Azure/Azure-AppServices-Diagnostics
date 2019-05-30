@@ -1,13 +1,9 @@
-﻿using Diagnostics.RuntimeHost.Services.CacheService;
+﻿using System;
+using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Utilities;
-using Diagnostics.Scripts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -24,7 +20,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             if (env.IsProduction())
             {
                 string watcherTypeRegistryValue = Registry.GetValue(RegistryConstants.SourceWatcherRegistryPath, RegistryConstants.WatcherTypeKey, 0).ToString();
-                if(!Enum.TryParse<SourceWatcherType>(watcherTypeRegistryValue, out watcherType))
+                if (!Enum.TryParse<SourceWatcherType>(watcherTypeRegistryValue, out watcherType))
                 {
                     throw new NotSupportedException($"Source Watcher Type : {watcherTypeRegistryValue} not supported.");
                 }

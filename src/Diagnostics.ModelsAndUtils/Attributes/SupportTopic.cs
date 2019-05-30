@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Runtime.Serialization;
-using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Attributes
 {
@@ -9,7 +6,7 @@ namespace Diagnostics.ModelsAndUtils.Attributes
     /// Defines a unique Support Topic
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-    public class SupportTopic: Attribute, IEquatable<SupportTopic>
+    public class SupportTopic : Attribute, IEquatable<SupportTopic>
     {
         /// <summary>
         /// Support Topic Id

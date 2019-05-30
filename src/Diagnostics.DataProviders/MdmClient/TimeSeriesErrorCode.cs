@@ -1,5 +1,5 @@
 ﻿namespace Diagnostics.DataProviders
-{ 
+{
     /// <summary>
     /// Error codes to indicate how the query on the time series fails.
     /// </summary>

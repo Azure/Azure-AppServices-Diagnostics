@@ -91,7 +91,6 @@ namespace Diagnostics.DataProviders
 
         public KustoDataProviderConfiguration()
         {
-
         }
 
         public void PostInitialize()
@@ -126,6 +125,5 @@ namespace Diagnostics.DataProviders
                 }
             }
         }
-
     }
 }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
+﻿namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
     /// <summary>
     /// Class representing Dynamic Insight. This is an insight that has any rendering type inside of it.
@@ -67,14 +63,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
     public static partial class ResponseInsightsExtension
     {
-
         /// <summary>
         /// Adds a single dynamic insight to response
         /// </summary>
         /// <param name="response">Response object</param>
         /// <param name="insight">Dynamic Insight</param>
         /// <returns>Diagnostic Data object that represents dynamic insight</returns>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="AddDynamicInsight"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
@@ -83,9 +78,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///         Table = table //This is where you would execute kusto query
         ///         RenderingProperties = new TimeSeriesRendering()
         ///     }
-        /// 
+        ///
         ///     DynamicInsight insight = new DynamicInsight(InsightStatus.Critical, "This insight will expand to show a graph", diagnosticData);
-        ///     
+        ///
         ///     res.AddDynamicInsight(insight);
         /// }
         /// </code>

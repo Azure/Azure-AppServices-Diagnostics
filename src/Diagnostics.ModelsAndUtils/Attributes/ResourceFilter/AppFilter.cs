@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Diagnostics.ModelsAndUtils.Attributes
+﻿namespace Diagnostics.ModelsAndUtils.Attributes
 {
     /// <summary>
     /// Class representing Filter for App Resource
     /// </summary>
-    public class AppFilter: ResourceFilterBase
+    public class AppFilter : ResourceFilterBase
     {
         /// <summary>
         /// Application Type (Web App, Function App, Api App ...)
@@ -23,7 +19,7 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// App Stack (ASP.NET/Core, Node, PHP ...)
         /// </summary>
         public StackType StackType;
-        
+
         /// <summary>
         /// App Stamp (Public Stamp, ASE V1, ASE V2 ...)
         /// </summary>
