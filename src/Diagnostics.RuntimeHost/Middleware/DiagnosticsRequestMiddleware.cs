@@ -80,9 +80,10 @@ namespace Diagnostics.RuntimeHost.Middleware
                 out TimeSpan timeGrainTimeSpan,
                 out string errorMessage);
 
-            var dataSourcesConfigurationService = ((ServiceProvider)httpContext.RequestServices).GetService<IDataSourcesConfigurationService>();
-            var wawsObserverTokenService = ((ServiceProvider)httpContext.RequestServices).GetService<IWawsObserverTokenService>();
-            var supportBayApiObserverTokenService = ((ServiceProvider)httpContext.RequestServices).GetService<ISupportBayApiObserverTokenService>();
+            // TODO: Remove service locator usage
+            var dataSourcesConfigurationService = httpContext.RequestServices.GetService<IDataSourcesConfigurationService>();
+            var wawsObserverTokenService = httpContext.RequestServices.GetService<IWawsObserverTokenService>();
+            var supportBayApiObserverTokenService = httpContext.RequestServices.GetService<ISupportBayApiObserverTokenService>();
 
             httpContext.Items.Add(HostConstants.ApiLoggerKey, logger);
             var clientObjId = string.Empty;
