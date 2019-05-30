@@ -89,10 +89,6 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        public KustoDataProviderConfiguration()
-        {
-        }
-
         public void PostInitialize()
         {
             RegionSpecificClusterNameCollection = new ConcurrentDictionary<string, string>();

@@ -14,10 +14,6 @@ namespace Diagnostics.RuntimeHost.Services
 
     public class SiteService : ISiteService
     {
-        public SiteService(IDataSourcesConfigurationService dataSourcesConfigService)
-        {
-        }
-
         public async Task<StackType> GetApplicationStack(string subscriptionId, string resourceGroup, string siteName, DataProviderContext dataProviderContext)
         {
             var dp = new DataProviders.DataProviders(dataProviderContext);

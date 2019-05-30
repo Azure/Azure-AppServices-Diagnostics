@@ -11,7 +11,6 @@ using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
-
 using Newtonsoft.Json;
 
 namespace Diagnostics.RuntimeHost.Controllers

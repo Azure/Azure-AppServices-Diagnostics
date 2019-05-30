@@ -7,7 +7,6 @@ using Diagnostics.DataProviders;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using Diagnostics.Scripts;
 using Diagnostics.Tests.Helpers;
-
 using Xunit;
 using Xunit.Abstractions;
 

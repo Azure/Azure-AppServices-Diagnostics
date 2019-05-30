@@ -10,17 +10,12 @@ using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Tests.Helpers;
-
 using Xunit;
 
 namespace Diagnostics.Tests.DataProviderTests
 {
     public class SupportObserverTests
     {
-        public SupportObserverTests()
-        {
-        }
-
         [Fact]
         public async void E2E_Test_RuntimeSlotMapData()
         {
