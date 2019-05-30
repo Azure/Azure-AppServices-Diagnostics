@@ -120,7 +120,6 @@ namespace Diagnostics.DataProviders
             }
 
             var response = await _httpClient.SendAsync(request);
-            Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"url:{new Uri(_httpClient.BaseAddress, request.RequestUri)}, statusCode:{response.StatusCode}");
 
             return response;
         }
