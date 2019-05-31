@@ -38,6 +38,12 @@ namespace Diagnostics.DataProviders
         public string KustoClusterNameGroupings { get; set; }
 
         /// <summary>
+        /// DB Name
+        /// </summary>
+        [ConfigurationName("KustoClusterFailoverGroupings")]
+        public string KustoClusterFailoverGroupings { get; set; }
+
+        /// <summary>
         /// Tenant to authenticate with
         /// </summary>
         [ConfigurationName("AADAuthority")]
@@ -53,6 +59,11 @@ namespace Diagnostics.DataProviders
         /// Region Specific Cluster Names.
         /// </summary>
         public ConcurrentDictionary<string, string> RegionSpecificClusterNameCollection { get; set; }
+
+        /// <summary>
+        /// Failover Cluster Names.
+        /// </summary>
+        public ConcurrentDictionary<string, string> FailoverClusterNameCollection { get; set; }
 
         public string CloudDomain
         {
@@ -97,6 +108,7 @@ namespace Diagnostics.DataProviders
         public void PostInitialize()
         {
             RegionSpecificClusterNameCollection = new ConcurrentDictionary<string, string>();
+            FailoverClusterNameCollection = new ConcurrentDictionary<string, string>();
 
             if (string.IsNullOrWhiteSpace(KustoRegionGroupings) && string.IsNullOrWhiteSpace(KustoClusterNameGroupings))
             {
@@ -106,6 +118,7 @@ namespace Diagnostics.DataProviders
             var separator = new char[] { ',' };
             var regionGroupingParts = KustoRegionGroupings.Split(separator);
             var clusterNameGroupingParts = KustoClusterNameGroupings.Split(separator);
+            var clusterFailoverGroupingParts = KustoClusterFailoverGroupings.Split(separator);
 
             if (regionGroupingParts.Length != clusterNameGroupingParts.Length)
             {
@@ -123,6 +136,11 @@ namespace Diagnostics.DataProviders
                     {
                         RegionSpecificClusterNameCollection.TryAdd(region.ToLower(), clusterNameGroupingParts[iterator]);
                     }
+                }
+
+                if (iterator < clusterFailoverGroupingParts.Length && !String.IsNullOrWhiteSpace(clusterFailoverGroupingParts[iterator]))
+                {
+                    FailoverClusterNameCollection.TryAdd(clusterNameGroupingParts[iterator], clusterFailoverGroupingParts[iterator]);
                 }
             }
         }

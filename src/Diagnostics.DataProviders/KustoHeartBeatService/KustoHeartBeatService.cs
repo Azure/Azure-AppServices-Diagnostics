@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
 using Diagnostics.Logger;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace Diagnostics.DataProviders
 {
@@ -25,23 +26,14 @@ namespace Diagnostics.DataProviders
             _heartbeats = new Dictionary<string, KustoHeartBeat>();
             _kustoDataProvider = new KustoDataProvider(new OperationDataCache(), _configuration, Guid.NewGuid().ToString(), this);
             _threads = new List<Thread>();
-            foreach (string value in _configuration.RegionSpecificClusterNameCollection.Values)
+            foreach (var value in _configuration.FailoverClusterNameCollection)
             {
-                // anything with the suffix follower has a failover to the cluster minus the suffix
-                // TODO specifying the failover cluster should be done in the config file.
-                if (value.EndsWith("follower"))
-                {
-                    if (!_heartbeats.ContainsKey(value))
-                    {
-                        string failoverCluster = value.Substring(0, value.Length - "follower".Length);
-                        _heartbeats[value] = new KustoHeartBeat(value, failoverCluster, _kustoDataProvider);
-                        // Start threads for each heartbeat 
-                        ThreadStart threadStart = new ThreadStart(_heartbeats[value].RunHeartBeatThread);
-                        Thread thread = new Thread(threadStart);
-                        thread.Start();
-                        _threads.Add(thread);
-                    }
-                }
+                _heartbeats[value.Key] = new KustoHeartBeat(value.Key, value.Value, _kustoDataProvider);
+                // Start threads for each heartbeat
+                ThreadStart threadStart = new ThreadStart(_heartbeats[value.Key].RunHeartBeatThread);
+                Thread thread = new Thread(threadStart);
+                thread.Start();
+                _threads.Add(thread);
             }
         }
 
@@ -123,19 +115,22 @@ namespace Diagnostics.DataProviders
         {
             while (true) {
                 bool heartBeatSuccess = false;
+                Exception exceptionForLog = null;
+                string requestID = Guid.NewGuid().ToString();
                 try
                 {
                     // Run kusto query with  10 second time out
                     string query = "RoleInstanceHeartbeat | where TIMESTAMP >= ago(30m) | take 1";
-                    var result = await _kustoDataProvider.ExecuteQueryDirect(query, PrimaryCluster, 10);
+                    var result = await _kustoDataProvider.ExecuteQueryDirect(query, PrimaryCluster, 10, requestID);
 
                     if (result.Rows.Count == 1)
                     {
                         heartBeatSuccess = true;
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    exceptionForLog = ex;
                 }
 
                 if (heartBeatSuccess)
@@ -160,9 +155,22 @@ namespace Diagnostics.DataProviders
                     UsePrimaryCluster = true;
                 }
 
+                LogHeartBeatInformation(heartBeatSuccess, PrimaryCluster, FailoverCluster, requestID, _ConsecutiveSuccessCount, _ConsecutiveFailureCount, exceptionForLog);
+
                 Thread.Sleep(TimeSpan.FromSeconds(20));
             }
         }
 
+        private void LogHeartBeatInformation(bool success, string cluster, string failoverCluster, string requestID, int successCount, int failureCount, Exception exception)
+        {
+            var status = success ? "Success" : "Failed";
+
+
+            DiagnosticsETWProvider.Instance.LogKustoHeartbeatInformation(
+               requestID,
+               $"Status:{status},PriamryCluster:{cluster},FasiloverCluster:{failoverCluster},ConsecutiveSuccessCount:{successCount},ConsecutiveFailureCount:{failureCount}",
+               exception != null ? exception.GetType().ToString() : string.Empty,
+               exception != null ? exception.ToString() : string.Empty);
+        }
     }
 }

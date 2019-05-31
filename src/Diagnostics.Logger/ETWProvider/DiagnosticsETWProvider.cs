@@ -451,6 +451,24 @@ namespace Diagnostics.Logger
                 ExceptionDetails);
         }
 
+        /// <summary>
+        /// Log kusto query information.
+        /// </summary>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Message">The message.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
+        [Event(3004, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogKustoQueryInformation)]
+        public void LogKustoHeartbeatInformation(string RequestId, string Message, string ExceptionType, string ExceptionDetails)
+        {
+            WriteDiagnosticsEvent(
+                3005,
+                RequestId,
+                Message,
+                ExceptionType,
+                ExceptionDetails);
+        }
+
         #endregion
 
         #region Internal AI API Events (ID Range : 4000 - 4199)
