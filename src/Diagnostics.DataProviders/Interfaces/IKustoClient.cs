@@ -1,9 +1,4 @@
-﻿using Diagnostics.ModelsAndUtils;
-using Diagnostics.ModelsAndUtils.Models;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Text;
+﻿using System.Data;
 using System.Threading.Tasks;
 
 namespace Diagnostics.DataProviders
