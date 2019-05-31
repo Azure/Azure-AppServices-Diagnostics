@@ -10,7 +10,12 @@ namespace Diagnostics.DataProviders
 {
     class MockKustoClient: IKustoClient
     {
-        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
+        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, int timeoutSeconds, string requestId = null, string operationName = null)
+        {
+            return await ExecuteQueryAsync(query, cluster, database, requestId, operationName);
+        }
+
+            public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
         {
             if (string.IsNullOrWhiteSpace(cluster))
             {

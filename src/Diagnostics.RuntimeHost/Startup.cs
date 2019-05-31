@@ -36,10 +36,13 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IStampService, StampService>();
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
             services.AddSingleton<ISearchService, SearchService>();
-
+            
             var servicesProvider = services.BuildServiceProvider();
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
             var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
+            var kustoConfiguration = dataSourcesConfigService.Config.KustoConfiguration;
+
+            services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
 
             if (!observerConfiguration.ObserverLocalHostEnabled)
             {
