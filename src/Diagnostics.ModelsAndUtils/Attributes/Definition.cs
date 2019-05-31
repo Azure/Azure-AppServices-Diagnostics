@@ -92,5 +92,22 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         {
             return Id == other.Id;
         }
+
+        public Definition()
+        {
+        }
+
+        public Definition(Definition definition)
+        {
+            Id = definition.Id;
+            Name = definition.Name;
+            Description = definition.Description;
+            Author = definition.Author;
+            Category = definition.Category;
+            SupportTopicList = definition.SupportTopicList;
+            AnalysisType = definition.AnalysisType;
+            Score = definition.Score;
+            Type = definition.Type;
+        }
     }
 }
