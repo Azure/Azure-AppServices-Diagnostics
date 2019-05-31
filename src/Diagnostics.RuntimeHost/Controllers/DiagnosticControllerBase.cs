@@ -808,9 +808,13 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         private Definition RemovePIIFromDefinition(Definition definition, bool isInternal)
-        {
-            Definition definitionCopy = new Definition(definition);
-            if (!isInternal) definitionCopy.Author = string.Empty;
+        { 
+            string definitionString = JsonConvert.SerializeObject(definition);
+            Definition definitionCopy = JsonConvert.DeserializeObject<Definition>(definitionString);
+            if (!isInternal)
+            {
+                definitionCopy.Author = string.Empty;
+            }
             return definitionCopy;
         }
 
