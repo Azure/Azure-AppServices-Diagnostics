@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -235,7 +234,10 @@ namespace Diagnostics.DataProviders
                 query = $"\"{query}\"";
             }
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"/api/service/{cloudServiceName}/invokesql?api-version=2.0")
+            var loggingResponse = "Request succeeded";
+            var route = $"/api/service/{cloudServiceName}/invokesql";
+
+            var request = new HttpRequestMessage(HttpMethod.Post, route)
             {
                 Content = new StringContent(query, Encoding.Default, "application/json")
             };
@@ -249,9 +251,14 @@ namespace Diagnostics.DataProviders
             }
             catch (HttpRequestException)
             {
-                Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider",
-                    $"message:Observer SQL query request failed, query:{query}, statusCode:{response.StatusCode}, response:{result}");
+                loggingResponse = result;
                 throw;
+            }
+            finally
+            {
+                var logMessage = $"message:Observer SQL query sent, route:{route}, " +
+                    $"query:{query}, statusCode:{response.StatusCode}, response:{loggingResponse}";
+                Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", logMessage);
             }
 
             return TryDeserializeDataTable(result);

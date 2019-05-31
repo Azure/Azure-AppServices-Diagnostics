@@ -55,6 +55,7 @@ namespace Diagnostics.RuntimeHost
 
             KustoTokenService.Instance.Initialize(dataSourcesConfigService.Config.KustoConfiguration);
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
+            AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

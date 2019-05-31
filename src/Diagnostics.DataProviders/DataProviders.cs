@@ -12,6 +12,7 @@ namespace Diagnostics.DataProviders
         public IGeoMasterDataProvider GeoMaster { get; }
         public IAppInsightsDataProvider AppInsights { get; }
         public IChangeAnalysisDataProvider ChangeAnalysis { get; }
+        public IAscDataProvider Asc { get; }
         public Func<MdmDataSource, IMdmDataProvider> Mdm { get; }
 
         public DataProviders(DataProviderContext context)
@@ -21,6 +22,7 @@ namespace Diagnostics.DataProviders
             GeoMaster = new DataProviderLogDecorator(context, new GeoMasterDataProvider(_cache, context.Configuration.GeoMasterConfiguration));
             AppInsights = new DataProviderLogDecorator(context, new AppInsightsDataProvider(_cache, context.Configuration.AppInsightsConfiguration));
             ChangeAnalysis = new DataProviderLogDecorator(context, new ChangeAnalysisDataProvider(_cache, context.Configuration.ChangeAnalysisDataProviderConfiguration, context.RequestId, context.clientObjectId, context.clientPrincipalName, Kusto));
+            Asc = new DataProviderLogDecorator(context, new AscDataProvider(_cache, context.Configuration.AscDataProviderConfiguration, context.RequestId));
             Mdm = (MdmDataSource ds) =>
             {
                 switch (ds)
