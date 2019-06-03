@@ -1,19 +1,14 @@
-﻿using Diagnostics.ModelsAndUtils;
-using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.ModelsAndUtils.Models;
-using Diagnostics.ModelsAndUtils.ScriptUtilities;
-using Diagnostics.RuntimeHost.Models;
-using Diagnostics.Scripts;
-using Diagnostics.Scripts.Models;
-using Diagnostics.Tests.Helpers;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
+using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.ScriptUtilities;
+using Diagnostics.Scripts;
+using Diagnostics.Scripts.Models;
+using Diagnostics.Tests.Helpers;
 using Xunit;
 
 namespace Diagnostics.Tests.ScriptsTests
@@ -40,7 +35,7 @@ namespace Diagnostics.Tests.ScriptsTests
             {
                 Id = "TestId"
             };
-            
+
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
             metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute, resType);
 
@@ -345,7 +340,7 @@ namespace Diagnostics.Tests.ScriptsTests
             Definition def = new Definition() { Id = idValue };
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
             metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(def, ResourceType.App);
-            
+
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
                 await invoker.InitializeEntryPointAsync();

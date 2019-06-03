@@ -1,4 +1,9 @@
-﻿using Diagnostics.RuntimeHost.Models;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
@@ -7,11 +12,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
 using Newtonsoft.Json;
-using System;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -30,7 +30,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             LoadConfigurations();
             Start();
         }
-        
+
         public override void Start()
         {
             _firstTimeCompletionTask = StartWatcherInternal();
@@ -103,7 +103,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 LogMessage("SourceWatcher : End");
             }
         }
-        
+
         private void LoadConfigurations()
         {
             if (_env.IsProduction())

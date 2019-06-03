@@ -1,8 +1,8 @@
-﻿using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
-using System.Threading.Tasks;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 
 namespace Diagnostics.DataProviders.Interfaces
 {

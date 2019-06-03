@@ -70,7 +70,7 @@ namespace Diagnostics.DataProviders
         Count = 0x800
     }
 
-    static class SamplingExtensions
+    internal static class SamplingExtensions
     {
         public static List<SamplingType> ToSamplingType(this Sampling sampling)
         {

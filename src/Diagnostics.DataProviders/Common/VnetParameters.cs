@@ -7,7 +7,6 @@
         /// </summary>
         public VnetParameters()
         {
-
         }
 
         /// <summary>
@@ -25,5 +24,4 @@
         /// </summary>
         public string VnetSubnetName { get; set; }
     }
-
 }

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders.DataProviderConfigurations;
-using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.ModelsAndUtils.Models;
-using System.Linq;
+using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 
 namespace Diagnostics.DataProviders
 {
@@ -118,13 +118,13 @@ namespace Diagnostics.DataProviders
                     let period = 30m;
                     let sitename = ""{sitename}"";
                     AntaresRuntimeWorkerSandboxEvents
-                    | where TIMESTAMP  < endTime and TIMESTAMP >= ago(20d) and Sandbox =~ sitename and EventId == 60011 
+                    | where TIMESTAMP  < endTime and TIMESTAMP >= ago(20d) and Sandbox =~ sitename and EventId == 60011
                     | extend CustomProcessId = iff(ImagePath == 'w3wp.exe' , Pid , NewProcessId )
-                    | summarize by Role, RoleInstance, CustomProcessId , EventStampName, Tenant  
-                    | join (DNSQueryThirtyMinuteTable | extend CustomProcessId = Pid) 
+                    | summarize by Role, RoleInstance, CustomProcessId , EventStampName, Tenant
+                    | join (DNSQueryThirtyMinuteTable | extend CustomProcessId = Pid)
                      on Role, RoleInstance, EventStampName, CustomProcessId, Tenant
-                    | where TIMESTAMP > (startTime - period) and TIMESTAMP < endTime 
-                    | distinct QueryName 
+                    | where TIMESTAMP > (startTime - period) and TIMESTAMP < endTime
+                    | distinct QueryName
                   ";
             DataTable kustoResults = await kustoDataProvider.ExecuteQuery(query, stamp);
             List<string> hostnames = GetHostNamesFromTable(kustoResults);

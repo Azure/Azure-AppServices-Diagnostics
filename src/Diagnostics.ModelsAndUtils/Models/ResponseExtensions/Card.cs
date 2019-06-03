@@ -65,7 +65,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="response">Response</param>
         /// <param name="cards">List<![CDATA[<Card>]]></param>
         /// <returns></returns>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="AddCards"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
@@ -79,7 +79,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///                     icon: "fa-circle",
         ///                     actionType: CardActionType.Detector,
         ///                     actionValue: "http4xx"));
-        ///     
+        ///
         ///     cards.Add(new Card(
         ///                     title: "HTTP Server Errors",
         ///                     descriptions: new List<![CDATA[<string>]]> { "App failing with 502, 503, 500 error","The Page cannot be displayed","App failing with a server error" },

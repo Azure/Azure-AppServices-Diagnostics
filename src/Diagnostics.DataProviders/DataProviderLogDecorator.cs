@@ -440,6 +440,7 @@ namespace Diagnostics.DataProviders
         #endregion ChangeAnalysisDataProvider
 
         #region ASC_DataProvider
+
         Task<T> IAscDataProvider.MakeHttpPostRequest<T>(string jsonPostBody, string apiUri, string apiVersion, CancellationToken cancellationToken)
         {
             return MakeDependencyCall(_ascDataProvider.MakeHttpPostRequest<T>(jsonPostBody, apiUri, apiVersion, cancellationToken));
@@ -475,7 +476,7 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_ascDataProvider.GetInsightFromBlob<T>(blobUri, cancellationToken));
         }
 
-        #endregion
+        #endregion ASC_DataProvider
 
         private async Task<T> MakeDependencyCall<T>(Task<T> dataProviderTask, [CallerMemberName]string dataProviderOperation = "")
         {

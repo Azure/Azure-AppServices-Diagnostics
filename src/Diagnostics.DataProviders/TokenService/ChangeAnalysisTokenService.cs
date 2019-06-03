@@ -1,9 +1,10 @@
 ﻿using System;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Diagnostics.DataProviders.DataProviderConfigurations;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
+
 namespace Diagnostics.DataProviders.TokenService
 {
-    public class ChangeAnalysisTokenService: TokenServiceBase
+    public class ChangeAnalysisTokenService : TokenServiceBase
     {
         private static readonly Lazy<ChangeAnalysisTokenService> instance = new Lazy<ChangeAnalysisTokenService>(() => new ChangeAnalysisTokenService());
 

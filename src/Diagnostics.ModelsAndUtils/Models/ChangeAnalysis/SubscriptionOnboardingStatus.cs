@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Diagnostics.ModelsAndUtils.Models.ChangeAnalysis
+﻿namespace Diagnostics.ModelsAndUtils.Models.ChangeAnalysis
 {
     /// <summary>
     /// This class captures whether a given subscription has registered ChangeAnalysis RP.

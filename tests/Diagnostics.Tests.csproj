@@ -25,10 +25,6 @@
     <Folder Include="RuntimeHostTests\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <AdditionalFiles Include="../stylecop.json" Link="stylecop.json" />
-  </ItemGroup>
-
   <PropertyGroup>
     <CodeAnalysisRuleSet>../ca.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
@@ -37,10 +33,6 @@
     <None Update="TestData\TestDetectorWithSupportTopic.csx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="../stylecop.json" Link="stylecop.json" />
   </ItemGroup>
 
   <PropertyGroup>

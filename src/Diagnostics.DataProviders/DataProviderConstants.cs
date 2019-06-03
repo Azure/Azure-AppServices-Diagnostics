@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Diagnostics.DataProviders
 {
@@ -28,7 +27,7 @@ namespace Diagnostics.DataProviders
 
         public const string FakeStampForAnalyticsCluster = "waws-prod-blu-000";
 
-        #endregion
+        #endregion Kusto Constants
 
         #region Time Grain Constants
 
@@ -39,12 +38,12 @@ namespace Diagnostics.DataProviders
 
                 // 30 minute grain - max time range 3 days
                 new Tuple<TimeSpan, TimeSpan, bool>(TimeSpan.FromMinutes(30), TimeSpan.FromDays(3),  false),
-                
+
                 // 1 hour grain - max time range 7 days
                 new Tuple<TimeSpan, TimeSpan, bool>(TimeSpan.FromHours(1), TimeSpan.FromDays(7), false),
             };
 
-        #endregion
+        #endregion Time Grain Constants
     }
 
     public class KustoOperations

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Data;
+﻿using System.Data;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
@@ -31,7 +30,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="response">Response object</param>
         /// <param name="email">Email object</param>
         /// <returns>Diagnostic Data Object that represents email</returns>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="AddEmail"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
@@ -52,7 +51,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 new DataColumn("Content", typeof(string))
             });
 
-
             table.Rows.Add(new string[]
             {
                 email.Content
@@ -67,7 +65,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             response.Dataset.Add(diagnosticData);
 
             return diagnosticData;
-
         }
 
         /// <summary>
@@ -76,7 +73,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="response">Response object</param>
         /// <param name="content">Email content</param>
         /// <returns>Diagnostic Data Object that represents email</returns>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="AddEmail"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)

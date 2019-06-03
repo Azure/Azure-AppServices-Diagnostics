@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -13,7 +12,7 @@ namespace Diagnostics.Scripts.Utilities
         /// </summary>
         public static bool IsSameScript(string script, string scriptHash)
         {
-            if(string.IsNullOrWhiteSpace(script))
+            if (string.IsNullOrWhiteSpace(script))
             {
                 return true;
             }
@@ -27,7 +26,7 @@ namespace Diagnostics.Scripts.Utilities
         /// </summary>
         public static byte[] GetHashFromScript(string script)
         {
-           return new MD5CryptoServiceProvider().ComputeHash(ASCIIEncoding.ASCII.GetBytes(script));
+            return new MD5CryptoServiceProvider().ComputeHash(ASCIIEncoding.ASCII.GetBytes(script));
         }
     }
 }

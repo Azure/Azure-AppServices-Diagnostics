@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {
@@ -10,6 +8,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// The name of the test that failed.
         /// </summary>
         public string TestName { get; set; }
+
         /// <summary>
         /// The details of what caused the failure, e.g. the blocking rule name, etc.
         /// </summary>

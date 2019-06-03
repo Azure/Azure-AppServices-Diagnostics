@@ -5,9 +5,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders;
-using Diagnostics.ModelsAndUtils;
 using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Utilities;
 
 namespace Diagnostics.RuntimeHost.Services

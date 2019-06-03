@@ -1,14 +1,10 @@
-﻿using Diagnostics.ModelsAndUtils.Models;
+﻿using System;
+using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.RuntimeHost.Models;
-using Diagnostics.RuntimeHost.Services;
-using Diagnostics.RuntimeHost.Services.CacheService;
-using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
-using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using System;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -96,6 +92,5 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             return await base.GetGist(new ArmResource(subscriptionId, resourceGroupName, provider, resourceTypeName, resourceName), gistId, startTime, endTime, timeGrain);
         }
-
     }
 }

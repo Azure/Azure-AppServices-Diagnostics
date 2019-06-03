@@ -1,6 +1,5 @@
 ﻿namespace Diagnostics.DataProviders.DataProviderConfigurations
 {
-
     [DataSourceConfiguration("AzureSupportCenter")]
     public class AscDataProviderConfiguration : IDataProviderConfiguration
     {

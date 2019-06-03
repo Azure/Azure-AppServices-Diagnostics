@@ -1,14 +1,10 @@
-﻿using Diagnostics.ModelsAndUtils;
-using Diagnostics.ModelsAndUtils.Models;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Data;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Diagnostics.DataProviders
 {
-    class MockKustoClient: IKustoClient
+    internal class MockKustoClient : IKustoClient
     {
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
         {
@@ -36,7 +32,7 @@ namespace Diagnostics.DataProviders
                 }
             }
 
-            switch(query)
+            switch (query)
             {
                 case "TestA":
                     return await GetTestA();

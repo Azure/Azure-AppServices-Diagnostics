@@ -39,6 +39,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         // Load from configuration.
         private string _destinationCsxPath;
+
         private int _pollingIntervalInSeconds;
 
         protected override Task FirstTimeCompletionTask => _firstTimeCompletionTask;
@@ -74,7 +75,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 { detectorWorker.Name, detectorWorker }
             };
 
-            #endregion
+            #endregion Initialize Github Worker
 
             Start();
         }
@@ -227,7 +228,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             {
                 await Task.Delay(_pollingIntervalInSeconds * 1000);
                 await StartWatcherInternal();
-
             } while (true);
         }
 
@@ -324,7 +324,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                         invoker.Dispose();
                     }
 
-                    if(!string.IsNullOrWhiteSpace(cacheId) && _gistCache.TryRemoveValue(cacheId, out var gist))
+                    if (!string.IsNullOrWhiteSpace(cacheId) && _gistCache.TryRemoveValue(cacheId, out var gist))
                     {
                         // No action.
                     }
