@@ -152,11 +152,11 @@ namespace Diagnostics.DataProviders
 
                 // if not in failover state
                 //  should failover?
-                if (UsePrimaryCluster && _ConsecutiveFailureCount >= 5)
+                if (UsePrimaryCluster && _ConsecutiveFailureCount >= _configuration.HeartBeatConsecutiveFailureLimit)
                 {
                     UsePrimaryCluster = false;
                 } // else should stop failover
-                else if (!UsePrimaryCluster && _ConsecutiveSuccessCount >= 5)
+                else if (!UsePrimaryCluster && _ConsecutiveSuccessCount >= _configuration.HeartBeatConsecutiveFailureLimit)
                 {
                     UsePrimaryCluster = true;
                 }
