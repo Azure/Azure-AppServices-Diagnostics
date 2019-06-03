@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Text;
+﻿using System.Data;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
@@ -13,7 +10,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="response">Response object</param>
         /// <param name="markdown">String that will be translated to markdown in UI</param>
         /// <param name="title">Title of markdown section</param>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="AddMarkdownView"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
@@ -21,7 +18,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///     var markdown = @"
         ///     ## This is header
         ///     ";
-        ///     
+        ///
         ///     res.AddMarkdownView(markdown, "Title of markdown section");
         /// }
         /// </code>
@@ -38,7 +35,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="markdown">String that will be translated to markdown in UI</param>
         /// <param name="title">Title of markdown section</param>
         /// <param name="enableEmailButtons">If true, will display copy and open in email button in Applens</param>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="AddMarkdownView"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
@@ -46,7 +43,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///     var markdown = @"
         ///     ## This is header
         ///     ";
-        ///     
+        ///
         ///     res.AddMarkdownView(markdown, "Title of markdown section", enableEmailButtons = true);
         /// }
         /// </code>
@@ -64,7 +61,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="title">Title of markdown section</param>
         /// <param name="enableEmailButtons">If true, will display copy and open in email button in Applens</param>
         /// <param name="isContainerNeeded">If true, will add the container for the markdown</param>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="AddMarkdownView"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
@@ -72,7 +69,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///     var markdown = @"
         ///     ## This is header
         ///     ";
-        ///     
+        ///
         ///     res.AddMarkdownView(markdown, "Title of markdown section", enableEmailButtons = true);
         /// }
         /// </code>

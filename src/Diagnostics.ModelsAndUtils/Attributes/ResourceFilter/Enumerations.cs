@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Diagnostics.ModelsAndUtils.Attributes
+﻿namespace Diagnostics.ModelsAndUtils.Attributes
 {
     /// <summary>
     /// Enum representing Resource type or collection of Resource Types

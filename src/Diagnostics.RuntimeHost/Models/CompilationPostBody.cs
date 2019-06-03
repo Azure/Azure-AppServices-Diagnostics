@@ -1,6 +1,5 @@
-﻿using Diagnostics.RuntimeHost.Utilities;
-using Diagnostics.Scripts.Models;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using Diagnostics.RuntimeHost.Utilities;
 
 namespace Diagnostics.RuntimeHost.Models
 {

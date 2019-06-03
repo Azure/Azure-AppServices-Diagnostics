@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
     public class Form
@@ -11,7 +12,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public int FormId;
 
         /// <summary>
-        /// Title for the form 
+        /// Title for the form
         /// </summary>
         public string FormTitle;
 
@@ -45,14 +46,14 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public void AddFormInput(FormInputBase input)
         {
             // Returns true if we are able to add the input id to hashset
-            if(CurrentInputIds.Add(input.InputId))
+            if (CurrentInputIds.Add(input.InputId))
             {
-                FormInputs.Add(input);             
+                FormInputs.Add(input);
             }
             else
             {
                 throw new Exception($"Input ID {input.InputId} already exists for Form {FormId}. Please give a unique ID for the input");
-            }          
+            }
         }
 
         /// <summary>
@@ -86,7 +87,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public bool IsRequired;
 
         /// <summary>
-        /// Represents the label of the input 
+        /// Represents the label of the input
         /// </summary>
         public string Label;
 
@@ -115,7 +116,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     /// Textbox input1 = new Textbox(1, "Role Instance name", true);
     /// </code>
     /// </example>
-    public class Textbox: FormInputBase
+    public class Textbox : FormInputBase
     {
         /// <summary>
         /// Value of the textbox
@@ -128,7 +129,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="id">Unique id for the input</param>
         /// <param name="label">Label for the textbox</param>
         /// <param name="isRequired">Indicates if it is a required input</param>
-        public Textbox(int id, string label, bool isRequired = false): base(id, FormInputTypes.TextBox, label, isRequired)
+        public Textbox(int id, string label, bool isRequired = false) : base(id, FormInputTypes.TextBox, label, isRequired)
         {
         }
     }
@@ -142,7 +143,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     /// Button saveButton = new Button(1, "Save");
     /// </code>
     /// </example>
-    public class Button: FormInputBase
+    public class Button : FormInputBase
     {
         /// <summary>
         /// Sets the bootstrap button style
@@ -150,16 +151,15 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public ButtonStyles ButtonStyle;
 
         /// <summary>
-        /// Creates an instance of button class 
+        /// Creates an instance of button class
         /// </summary>
         /// <param name="id">Unique id for the button</param>
         /// <param name="label">Label to display on the button</param>
         /// <param name="buttonStyle">Bootstrap button style for the button</param>
-        public Button(int id, string label, ButtonStyles buttonStyle = ButtonStyles.Primary): base(id, FormInputTypes.Button, label, false)
+        public Button(int id, string label, ButtonStyles buttonStyle = ButtonStyles.Primary) : base(id, FormInputTypes.Button, label, false)
         {
             this.ButtonStyle = buttonStyle;
         }
-
     }
 
     public enum FormInputTypes
@@ -194,7 +194,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <example>
         /// This sample shows how to use <see cref="AddForms"/> method to add a list of Form to the response.
         /// <code>
-        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res) 
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
         ///     Form myform1 = new Form(1);
         ///     Textbox input1 = new Textbox(1, "Enter input 1", true);
@@ -210,7 +210,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </example>
         public static DiagnosticData AddForms(this Response response, List<Form> forms)
         {
-            if(forms == null)
+            if (forms == null)
             {
                 return null;
             }
@@ -221,13 +221,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             table.Columns.Add(new DataColumn("FormTitle", typeof(string)));
             table.Columns.Add(new DataColumn("Inputs", typeof(List<FormInputBase>)));
             forms.ForEach(form =>
-            {               
+            {
                 table.Rows.Add(new object[]
                 {
                     form.FormId,
                     form.FormTitle,
                     form.FormInputs,
-                });              
+                });
             });
 
             var diagData = new DiagnosticData()
@@ -250,7 +250,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <example>
         /// This sample shows how to use <see cref="AddForm"/> method to add a Form to the response.
         /// <code>
-        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res) 
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
         ///     Form myform = new Form(1);
         ///     Textbox input1 = new Textbox(1, "Enter input", true);

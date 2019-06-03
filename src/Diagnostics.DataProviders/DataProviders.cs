@@ -1,5 +1,5 @@
-﻿using Diagnostics.DataProviders.Interfaces;
-using System;
+﻿using System;
+using Diagnostics.DataProviders.Interfaces;
 
 namespace Diagnostics.DataProviders
 {

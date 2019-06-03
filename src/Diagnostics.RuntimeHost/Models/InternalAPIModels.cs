@@ -94,7 +94,7 @@ namespace Diagnostics.RuntimeHost.Models
     /// <summary>
     /// Internal API Summary.
     /// </summary>
-    public class InternalAPISummary: InternalAPIEvent
+    public class InternalAPISummary : InternalAPIEvent
     {
         /// <summary>
         /// Gets or sets OperationName.
@@ -130,7 +130,7 @@ namespace Diagnostics.RuntimeHost.Models
     /// <summary>
     /// Internal API Exception.
     /// </summary>
-    public class InternalAPIException: InternalAPIEvent
+    public class InternalAPIException : InternalAPIEvent
     {
         /// <summary>
         /// Gets or sets Exception Type.

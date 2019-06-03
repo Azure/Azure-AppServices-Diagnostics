@@ -1,7 +1,7 @@
-﻿using Diagnostics.Scripts.Models;
+﻿using System.Collections.Immutable;
+using Diagnostics.Scripts.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
-using System.Collections.Immutable;
 
 namespace Diagnostics.Scripts.CompilationService
 {

@@ -88,7 +88,8 @@ public async static Task<Response> Run(DataProviders dp, OperationContext cxt, R
         }
 
         res.AddDataSummary(dataSummaries);
-    }catch(Exception ex)
+    }
+    catch (Exception ex)
     {
         Console.WriteLine(ex);
         throw;

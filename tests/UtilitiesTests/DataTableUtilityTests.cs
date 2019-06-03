@@ -1,8 +1,8 @@
-﻿using Diagnostics.ModelsAndUtils.Models;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Data;
 using System.Linq;
+using Diagnostics.ModelsAndUtils.Models;
+
 using Xunit;
 
 namespace Diagnostics.Tests
@@ -54,7 +54,7 @@ namespace Diagnostics.Tests
 
             var dataTableConvertedBack = dataTableResponseObject.ToDataTable();
 
-            for(int i = 0; i < table.Columns.Count; i++)
+            for (int i = 0; i < table.Columns.Count; i++)
             {
                 Assert.Equal(table.Columns[i].ColumnName, dataTableConvertedBack.Columns[i].ColumnName);
                 Assert.Equal(table.Columns[i].DataType, dataTableConvertedBack.Columns[i].DataType);

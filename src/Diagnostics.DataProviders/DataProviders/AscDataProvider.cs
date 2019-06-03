@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders.DataProviderConfigurations;
-using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.ModelsAndUtils.Models;
-using System.Linq;
-using System.Threading;
 
 namespace Diagnostics.DataProviders
 {

@@ -63,7 +63,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             Value = value;
         }
 
-        public Text(string value, bool isMarkdown): this(value)
+        public Text(string value, bool isMarkdown) : this(value)
         {
             IsMarkdown = isMarkdown;
         }
@@ -100,8 +100,6 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         SubscriptionLevel = 1,
     }
-
-
 
     public enum InsightConfidenceLevel
     {

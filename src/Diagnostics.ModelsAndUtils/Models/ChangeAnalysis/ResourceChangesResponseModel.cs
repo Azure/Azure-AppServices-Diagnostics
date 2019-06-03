@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+
 namespace Diagnostics.ModelsAndUtils.Models.ChangeAnalysis
 {
     /// <summary>

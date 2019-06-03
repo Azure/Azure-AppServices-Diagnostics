@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
+﻿using System.Collections.Generic;
 using System.Data;
+using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {

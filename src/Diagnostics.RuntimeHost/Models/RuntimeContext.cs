@@ -1,10 +1,9 @@
-﻿using Diagnostics.DataProviders;
-using Diagnostics.ModelsAndUtils.Models;
+﻿using Diagnostics.ModelsAndUtils.Models;
 
 namespace Diagnostics.RuntimeHost.Models
 {
     public class RuntimeContext<TResource>
-        where TResource: IResource
+        where TResource : IResource
     {
         public bool ClientIsInternal { get; set; }
 

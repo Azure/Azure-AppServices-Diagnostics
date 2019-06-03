@@ -117,7 +117,7 @@ namespace Diagnostics.DataProviders
         }
 
         /// <inheritdoc/>
-        public async Task<T> MakeHttpGetRequest<T>(string queryString,string apiUri, string apiVersion, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<T> MakeHttpGetRequest<T>(string queryString, string apiUri, string apiVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
             string requestUri = string.Empty;
 
