@@ -68,6 +68,8 @@ namespace Diagnostics.DataProviders
                     case "DBName":
                         return "Mock";
                     case "KustoClusterNameGroupings":
+                        return "wawsmockfollower";
+                    case "KustoClusterFailoverGroupings":
                         return "wawsmock";
                     case "KustoRegionGroupings":
                         return "mockstamp";
