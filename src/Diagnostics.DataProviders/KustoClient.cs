@@ -20,6 +20,9 @@ namespace Diagnostics.DataProviders
     {
         private string _requestId;
         private string KustoApiQueryEndpoint;
+        private static readonly string _dataSizeExceededMessage = "Query result set has exceeded the internal data size limit";
+        private static readonly string _recordCountExceededMessage = "Query result set has exceeded the internal record count limit";
+        private static readonly string _queryLimitDocsLink = "https://docs.microsoft.com/en-us/azure/kusto/concepts/querylimits";
 
         private readonly Lazy<HttpClient> _client = new Lazy<HttpClient>(() =>
         {
@@ -75,7 +78,7 @@ namespace Diagnostics.DataProviders
                 }
                 else
                 {
-                    dataSet = JsonConvert.DeserializeObject<DataTableResponseObjectCollection>(responseContent);
+                    dataSet = ProcessKustoResponse(responseContent);
                 }
             }
             catch (Exception ex)
@@ -93,6 +96,20 @@ namespace Diagnostics.DataProviders
             LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, null, dataSet);
 
             return dataSet?.Tables == null ? new DataTable() : dataSet.Tables.FirstOrDefault().ToDataTable();
+        }
+
+        private DataTableResponseObjectCollection ProcessKustoResponse(string responseContent)
+        {
+            if (responseContent.Contains(_dataSizeExceededMessage))
+            {
+                throw new Exception($"Kusto query response exceeded the Kusto data size limit: {_queryLimitDocsLink}");
+            }
+            else if (responseContent.Contains(_recordCountExceededMessage))
+            {
+                throw new Exception($"Kusto query response exceeded the Kusto record count limit: {_queryLimitDocsLink}");
+            }
+
+            return JsonConvert.DeserializeObject<DataTableResponseObjectCollection>(responseContent);
         }
 
         private void LogKustoQuery(string query, string cluster, string operationName, Stopwatch timeTakenStopWatch, string kustoClientId, Exception kustoApiException, DataTableResponseObjectCollection dataSet)
