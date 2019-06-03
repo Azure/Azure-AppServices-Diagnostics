@@ -1,11 +1,6 @@
 ﻿using Diagnostics.RuntimeHost.Services.CacheService;
-using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
-using System;
-using System.IO;
-using System.Reflection;
-using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 {

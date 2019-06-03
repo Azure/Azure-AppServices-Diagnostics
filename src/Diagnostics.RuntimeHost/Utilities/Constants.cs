@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Diagnostics.RuntimeHost.Utilities
+﻿namespace Diagnostics.RuntimeHost.Utilities
 {
     internal class HostConstants
     {
@@ -12,13 +7,14 @@ namespace Diagnostics.RuntimeHost.Utilities
         internal const string DataProviderContextKey = "DATA_PROVIDER_CONTEXT";
         internal const int TimeoutInMilliSeconds = 60 * 1000;
     }
-    
+
     internal class RegistryConstants
     {
         internal const string RegistryRootPath = @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\IIS Extensions\Web Hosting Framework";
 
         // Compiler Host Registry Settings
         internal const string CompilerHostRegistryPath = RegistryRootPath + @"\CompilerHost";
+
         internal const string CompilerHostBinaryLocationKey = "CompilerHostBinaryLocation";
         internal const string CompilerHostPortKey = "CompilerHostPort";
         internal const string CompilerHostPollingIntervalKey = "PollingIntervalInSeconds";
@@ -26,6 +22,7 @@ namespace Diagnostics.RuntimeHost.Utilities
 
         // Source Watcher Registry Settings
         internal const string SourceWatcherRegistryPath = RegistryRootPath + @"\SourceWatcher";
+
         internal const string WatcherTypeKey = "WatcherType";
         internal const string PollingIntervalInSecondsKey = "PollingIntervalInSeconds";
         internal const string LocalWatcherRegistryPath = SourceWatcherRegistryPath + @"\Local";

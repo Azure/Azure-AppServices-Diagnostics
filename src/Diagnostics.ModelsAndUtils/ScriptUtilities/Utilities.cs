@@ -1,9 +1,9 @@
-﻿using Diagnostics.ModelsAndUtils.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
+using Diagnostics.ModelsAndUtils.Models;
+
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 
 namespace Diagnostics.ModelsAndUtils.ScriptUtilities
@@ -17,7 +17,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         /// <param name="endTime">end time</param>
         /// <param name="timeColumnName">Name of the Time Column</param>
         /// <returns>Kusto time filter query part</returns>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="TimeFilterQuery"/> method.
         /// <code>
         /// public string GetKustoQuery(<![CDATA[OperationContext<App> cxt]]>)
@@ -51,11 +51,11 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         public static string TenantFilterQuery(IResource resource)
         {
             List<string> tenantIds = new List<string>();
-            if(resource is App app)
+            if (resource is App app)
             {
                 tenantIds = app.Stamp.TenantIdList.ToList();
             }
-            else if(resource is HostingEnvironment env)
+            else if (resource is HostingEnvironment env)
             {
                 tenantIds = env.TenantIdList.ToList();
             }
@@ -117,7 +117,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 
             if (wildCardHostNames.Any())
             {
-                string wildCardQuery = string.Join("or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w.Replace("*.",".")}"""));
+                string wildCardQuery = string.Join("or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w.Replace("*.", ".")}"""));
                 hostNameQuery = $"{hostNameQuery} or {wildCardQuery}";
             }
 
@@ -174,7 +174,8 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
                         }
                     }
                 }
-            }catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 throw new Exception("Failed to get runtime slotmap table.", ex);
             }

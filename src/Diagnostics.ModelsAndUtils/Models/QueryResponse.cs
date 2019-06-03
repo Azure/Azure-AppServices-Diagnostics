@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Diagnostics.ModelsAndUtils.Models
+﻿namespace Diagnostics.ModelsAndUtils.Models
 {
     public class QueryResponse<T>
     {

@@ -1,8 +1,8 @@
-﻿using Diagnostics.Scripts.CompilationService.Interfaces;
+﻿using System.Threading.Tasks;
+using Diagnostics.Scripts.CompilationService.Interfaces;
 using Diagnostics.Scripts.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
-using System.Threading.Tasks;
 
 namespace Diagnostics.Scripts.CompilationService
 {

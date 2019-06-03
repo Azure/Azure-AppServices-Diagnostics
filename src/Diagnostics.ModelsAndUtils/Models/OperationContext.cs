@@ -1,8 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {

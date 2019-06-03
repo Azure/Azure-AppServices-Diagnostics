@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using Diagnostics.Logger;
 
 namespace Diagnostics.DataProviders
 {
-    class GeoMasterCertClient : IGeoMasterClient
+    internal class GeoMasterCertClient : IGeoMasterClient
     {
         private const int GeoMasterCsmApiPort = 444;
         private const int GeoMasterAdminApiPort = 443;

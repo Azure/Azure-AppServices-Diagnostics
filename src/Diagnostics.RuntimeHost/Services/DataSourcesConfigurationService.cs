@@ -1,10 +1,6 @@
 ﻿using Diagnostics.DataProviders;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Hosting;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Services
 {
@@ -31,7 +27,7 @@ namespace Diagnostics.RuntimeHost.Services
             {
                 return new RegistryDataProviderConfigurationFactory(RegistryConstants.RegistryRootPath);
             }
-            
+
             switch (env.EnvironmentName.ToLower())
             {
                 case "mock":

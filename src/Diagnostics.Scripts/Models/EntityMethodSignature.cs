@@ -1,10 +1,8 @@
-﻿using Microsoft.CodeAnalysis;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
-using System.Text;
+using Microsoft.CodeAnalysis;
 
 namespace Diagnostics.Scripts.Models
 {
@@ -55,10 +53,10 @@ namespace Diagnostics.Scripts.Models
 
             //return assembly.DefinedTypes.FirstOrDefault(t => t.DeclaringType == null)?.GetMethod(MethodName);
 
-            foreach(var type in assembly.DefinedTypes.Where(t => t.DeclaringType == null))
+            foreach (var type in assembly.DefinedTypes.Where(t => t.DeclaringType == null))
             {
                 var method = type.GetMethod(MethodName);
-                if(method != null)
+                if (method != null)
                 {
                     return method;
                 }

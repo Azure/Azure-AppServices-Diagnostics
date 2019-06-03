@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Diagnostics.RuntimeHost.Models
 {
@@ -22,26 +21,26 @@ namespace Diagnostics.RuntimeHost.Models
             var inputIdProvider = bindingContext.ValueProvider.GetValue("inpId");
             var inputValueProvider = bindingContext.ValueProvider.GetValue("val");
             var btnIdProvider = bindingContext.ValueProvider.GetValue("btnId");
-            if (formIdValueProvider == ValueProviderResult.None || 
-                inputIdProvider == ValueProviderResult.None || 
+            if (formIdValueProvider == ValueProviderResult.None ||
+                inputIdProvider == ValueProviderResult.None ||
                 inputValueProvider == ValueProviderResult.None ||
                 btnIdProvider == ValueProviderResult.None)
             {
                 return Task.CompletedTask;
             }
-            if(!IsInt(formIdValueProvider.FirstValue))
+            if (!IsInt(formIdValueProvider.FirstValue))
             {
                 bindingContext.ModelState.TryAddModelError("fId", "Form Id must be an integer.");
                 return Task.CompletedTask;
             }
-            if(!IsInt(btnIdProvider.FirstValue))
+            if (!IsInt(btnIdProvider.FirstValue))
             {
                 bindingContext.ModelState.TryAddModelError("btnId", "Button Id must be an integer.");
                 return Task.CompletedTask;
             }
             var result = new Form(Convert.ToInt32(formIdValueProvider.FirstValue));
             result.AddFormInput(new Button(Convert.ToInt32(btnIdProvider.FirstValue), ""));
-            if(inputIdProvider.Length != inputValueProvider.Length)
+            if (inputIdProvider.Length != inputValueProvider.Length)
             {
                 bindingContext.ModelState.TryAddModelError(
                                        "InputId",
@@ -50,14 +49,14 @@ namespace Diagnostics.RuntimeHost.Models
             }
             var inputIds = inputIdProvider.Values.ToArray();
             var inputValues = inputValueProvider.Values.ToArray();
-            for(int i = 0; i<inputIds.Length; i++)
+            for (int i = 0; i < inputIds.Length; i++)
             {
-                if(!IsInt(inputIds[i]))
+                if (!IsInt(inputIds[i]))
                 {
                     bindingContext.ModelState.TryAddModelError("inpId", "Input Id must be an integer.");
                     return Task.CompletedTask;
                 }
-                if(inputValues[i].Length > 50)
+                if (inputValues[i].Length > 50)
                 {
                     bindingContext.ModelState.TryAddModelError("val", "Length of val cannot exceed 50 characters.");
                     return Task.CompletedTask;

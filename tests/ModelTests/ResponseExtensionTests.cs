@@ -1,13 +1,11 @@
-﻿using Diagnostics.ModelsAndUtils;
-using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.ModelsAndUtils.Models;
-using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
-using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
+using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Xunit;
 
 namespace Diagnostics.Tests.ModelTests
@@ -145,7 +143,6 @@ namespace Diagnostics.Tests.ModelTests
                     Id = "detectorid",
                     Name = "detector Name"
                 },
-
             };
 
             var description = new Text("description", true);
@@ -168,7 +165,7 @@ namespace Diagnostics.Tests.ModelTests
             {
                 Assert.Null(nativeInsightAdded);
             }
-            else if(!ascOnly && isInternal)
+            else if (!ascOnly && isInternal)
             {
                 Assert.NotNull(nativeInsightAdded);
                 Assert.Equal(nativeInsightAdded.Body["Description"], $"<markdown>{description.Value}</markdown>");
@@ -200,7 +197,6 @@ namespace Diagnostics.Tests.ModelTests
             res.AddForm(myform);
             Assert.NotEmpty(res.Dataset);
             Assert.Equal<RenderingType>(RenderingType.Form, res.Dataset.FirstOrDefault().RenderingProperties.Type);
-
         }
 
         [Fact]

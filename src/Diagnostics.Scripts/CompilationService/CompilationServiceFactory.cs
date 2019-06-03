@@ -1,8 +1,8 @@
-﻿using Diagnostics.Scripts.CompilationService.Gist;
+﻿using System;
+using Diagnostics.Scripts.CompilationService.Gist;
 using Diagnostics.Scripts.CompilationService.Interfaces;
 using Diagnostics.Scripts.Models;
 using Microsoft.CodeAnalysis.Scripting;
-using System;
 
 namespace Diagnostics.Scripts.CompilationService
 {
@@ -10,12 +10,12 @@ namespace Diagnostics.Scripts.CompilationService
     {
         public static ICompilationService CreateService(EntityMetadata metaData, ScriptOptions scriptOptions)
         {
-            if(metaData == null)
+            if (metaData == null)
             {
                 throw new ArgumentNullException("Entity Metadata cannot be null.");
             }
 
-            if(scriptOptions == null)
+            if (scriptOptions == null)
             {
                 throw new ArgumentNullException("ScriptOptions cannot be null.");
             }

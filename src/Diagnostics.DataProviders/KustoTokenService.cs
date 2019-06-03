@@ -1,6 +1,7 @@
 ﻿using System;
 using Diagnostics.DataProviders.TokenService;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
+
 namespace Diagnostics.DataProviders
 {
     public class KustoTokenService : TokenServiceBase

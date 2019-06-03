@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 
@@ -22,6 +21,7 @@ namespace Diagnostics.DataProviders
         public const string ResourceProviderDisplayName = "Microsoft Web Apps";
         public const string ResourceGroupSegment = "resourceGroups";
         public const string ResourceGroupRoot = "subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}";
+
         public const string ResourceRoot =
                 "subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/" + ResourceProviderName;
     }
@@ -59,6 +59,7 @@ namespace Diagnostics.DataProviders
                 {"resourceGroupName", resourceGroupName}
             });
         }
+
         public static string CsmAnnotateQueryString(string queryString, string apiVersion)
         {
             var nameValues = HttpUtility.ParseQueryString(queryString);
@@ -75,10 +76,10 @@ namespace Diagnostics.DataProviders
     {
         private static readonly Regex SiteWithSlotNameRegexp =
             new Regex(@"^(?<siteName>[^\(]+)\((?<slotName>[^\)]+)\)$");
+
         private const string FmtSiteWithSlotName = "{0}({1})";
         private const string FmtHostPrefixWithSlotName = "{0}-{1}";
         private const string FmtHostname = "{0}.{1}";
-
 
         public static void ParseSiteWithSlotName(string siteWithSlotName, out string siteName, out string slotName)
         {

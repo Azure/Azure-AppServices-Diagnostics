@@ -1,9 +1,4 @@
-﻿using Diagnostics.Logger;
-using Diagnostics.ModelsAndUtils;
-using Diagnostics.ModelsAndUtils.Models;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
@@ -15,6 +10,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using Diagnostics.Logger;
+using Diagnostics.ModelsAndUtils.Models;
+using Newtonsoft.Json;
 
 namespace Diagnostics.DataProviders
 {

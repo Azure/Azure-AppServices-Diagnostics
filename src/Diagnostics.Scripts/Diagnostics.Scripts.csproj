@@ -14,10 +14,6 @@
     <Folder Include="CompilationService\Signal\CodeAnalyzers\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <AdditionalFiles Include="../../stylecop.json" Link="stylecop.json" />
-  </ItemGroup>
-
   <PropertyGroup>
     <CodeAnalysisRuleSet>../../ca.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
