@@ -58,9 +58,8 @@ namespace Diagnostics.DataProviders
             return kustoQuery;
         }
 
-        internal async Task<DataTable> ExecuteQueryDirect(string query, string cluster, int timeoutSeconds, string requestId = null, string operationName = null)
+        internal async Task<DataTable> ExecuteQueryForHeartbeat(string query, string cluster, int timeoutSeconds, string requestId = null, string operationName = null)
         {
-            await AddQueryInformationToMetadata(query, cluster);
             return await _kustoClient.ExecuteQueryAsync(query, cluster, _configuration.DBName, timeoutSeconds, requestId, operationName);
         }
 

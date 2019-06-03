@@ -454,16 +454,16 @@ namespace Diagnostics.Logger
         /// <summary>
         /// Log kusto query information.
         /// </summary>
-        /// <param name="RequestId">Request id.</param>
+        /// <param name="ActivityId">Activity id.</param>
         /// <param name="Message">The message.</param>
         /// <param name="ExceptionType">Exception type.</param>
         /// <param name="ExceptionDetails">Exception details.</param>
-        [Event(3004, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogKustoQueryInformation)]
-        public void LogKustoHeartbeatInformation(string RequestId, string Message, string ExceptionType, string ExceptionDetails)
+        [Event(3005, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogKustoHeartbeatInformation)]
+        public void LogKustoHeartbeatInformation(string ActivityId, string Message, string ExceptionType, string ExceptionDetails)
         {
             WriteDiagnosticsEvent(
                 3005,
-                RequestId,
+                ActivityId,
                 Message,
                 ExceptionType,
                 ExceptionDetails);

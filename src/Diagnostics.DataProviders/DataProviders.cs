@@ -7,13 +7,13 @@ namespace Diagnostics.DataProviders
     {
         private OperationDataCache _cache = new OperationDataCache();
 
-        public IKustoDataProvider Kusto { get; }
-        public ISupportObserverDataProvider Observer { get; }
-        public IGeoMasterDataProvider GeoMaster { get; }
-        public IAppInsightsDataProvider AppInsights { get; }
-        public IChangeAnalysisDataProvider ChangeAnalysis { get; }
-        public IAscDataProvider Asc { get; }
-        public Func<MdmDataSource, IMdmDataProvider> Mdm { get; }
+        public IKustoDataProvider Kusto;
+        public ISupportObserverDataProvider Observer;
+        public IGeoMasterDataProvider GeoMaster;
+        public IAppInsightsDataProvider AppInsights;
+        public IChangeAnalysisDataProvider ChangeAnalysis;
+        public IAscDataProvider Asc;
+        public Func<MdmDataSource, IMdmDataProvider> Mdm;
 
         public DataProviders(DataProviderContext context)
         {

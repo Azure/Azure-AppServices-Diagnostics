@@ -59,6 +59,7 @@ namespace Diagnostics.Logger
         public const string LogDataProviderOperationSummary = "Data Provider Operation. Source : {1} StartTime : {2} EndTime : {3} LatencyInMilliseconds : {4}";
         public const string LogTokenRefreshSummary = "Token Refresh Summary";
         public const string LogKustoQueryInformation = "Kusto Query Information";
+        public const string LogKustoHeartbeatInformation = "Kusto Heart Beat Information";
         #endregion
 
         #region Internal AI API Event Message Templates

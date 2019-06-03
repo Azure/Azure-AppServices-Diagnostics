@@ -16,34 +16,28 @@ namespace Diagnostics.DataProviders
     public class KustoHeartBeatService : IKustoHeartBeatService
     {
         private KustoDataProviderConfiguration _configuration;
-        Dictionary<string, KustoHeartBeat> _heartbeats;
-        KustoDataProvider _kustoDataProvider;
-
-        List<Thread> _threads;
+        private Dictionary<string, KustoHeartBeat> _heartbeats;
+        private KustoDataProvider _kustoDataProvider;
+        private CancellationTokenSource _cancellationToken;
 
         private void Initialize()
         {
             _heartbeats = new Dictionary<string, KustoHeartBeat>();
             _kustoDataProvider = new KustoDataProvider(new OperationDataCache(), _configuration, Guid.NewGuid().ToString(), this);
-            _threads = new List<Thread>();
+            _cancellationToken = new CancellationTokenSource();
+
             foreach (var value in _configuration.FailoverClusterNameCollection)
             {
-                _heartbeats[value.Key] = new KustoHeartBeat(value.Key, value.Value, _kustoDataProvider);
-                // Start threads for each heartbeat
-                ThreadStart threadStart = new ThreadStart(_heartbeats[value.Key].RunHeartBeatThread);
-                Thread thread = new Thread(threadStart);
-                thread.Start();
-                _threads.Add(thread);
+                _heartbeats[value.Key] = new KustoHeartBeat(value.Key, value.Value, _kustoDataProvider, _configuration);
+                // Start threads for each heartbeat on the thread pool
+                Task.Run(() => _heartbeats[value.Key].RunHeartBeatTask(_cancellationToken.Token));
             }
         }
 
 
         public void Dispose()
         {
-            foreach (var thread in _threads)
-            {
-                thread.Abort();
-            }
+            _cancellationToken.Cancel();
         }
 
         public KustoHeartBeatService(KustoDataProviderConfiguration configuration)
@@ -102,38 +96,50 @@ namespace Diagnostics.DataProviders
         private int _ConsecutiveFailureCount = 0;
         private int _ConsecutiveSuccessCount = 0;
         private KustoDataProvider _kustoDataProvider;
+        private KustoDataProviderConfiguration _configuration;
 
-        public KustoHeartBeat(string primaryCluster, string failoverCluster, KustoDataProvider kustoDataProvider)
+        public KustoHeartBeat(string primaryCluster, string failoverCluster, KustoDataProvider kustoDataProvider, KustoDataProviderConfiguration configuration)
         {
             PrimaryCluster = primaryCluster;
             FailoverCluster = failoverCluster;
             UsePrimaryCluster = true;
             _kustoDataProvider = kustoDataProvider;
+            _configuration = configuration;
         }
 
-        public async void RunHeartBeatThread()
+        public async Task RunHeartBeatTask(CancellationToken cancellationToken)
         {
-            while (true) {
-                bool heartBeatSuccess = false;
+            while (!cancellationToken.IsCancellationRequested) {
+                bool primaryHeartBeatSuccess = false;
+                bool failoverHeartBeatSuccess = false;
                 Exception exceptionForLog = null;
-                string requestID = Guid.NewGuid().ToString();
+                string activityId = Guid.NewGuid().ToString();
                 try
                 {
-                    // Run kusto query with  10 second time out
-                    string query = "RoleInstanceHeartbeat | where TIMESTAMP >= ago(30m) | take 1";
-                    var result = await _kustoDataProvider.ExecuteQueryDirect(query, PrimaryCluster, 10, requestID);
+                    // Run kusto query with time out
+                    var primaryTask = _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, PrimaryCluster, _configuration.HeartBeatTimeOut, activityId);
+                    var failoverTask = _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, FailoverCluster, _configuration.HeartBeatTimeOut, activityId);
+                    await Task.WhenAll(new Task[] { primaryTask, failoverTask });
 
-                    if (result.Rows.Count == 1)
+                    var result = await primaryTask;
+                    if (result.Rows.Count >= 1)
                     {
-                        heartBeatSuccess = true;
+                        primaryHeartBeatSuccess = true;
                     }
+
+                    var failoverResult = await failoverTask;
+                    if (failoverResult.Rows.Count >= 1)
+                    {
+                        failoverHeartBeatSuccess = true;
+                    }
+
                 }
                 catch (Exception ex)
                 {
                     exceptionForLog = ex;
                 }
 
-                if (heartBeatSuccess)
+                if (primaryHeartBeatSuccess)
                 {
                     _ConsecutiveFailureCount = 0;
                     _ConsecutiveSuccessCount++;
@@ -155,20 +161,21 @@ namespace Diagnostics.DataProviders
                     UsePrimaryCluster = true;
                 }
 
-                LogHeartBeatInformation(heartBeatSuccess, PrimaryCluster, FailoverCluster, requestID, _ConsecutiveSuccessCount, _ConsecutiveFailureCount, exceptionForLog);
+                LogHeartBeatInformation(primaryHeartBeatSuccess, failoverHeartBeatSuccess, PrimaryCluster, FailoverCluster, activityId, _ConsecutiveSuccessCount, _ConsecutiveFailureCount, exceptionForLog);
 
-                Thread.Sleep(TimeSpan.FromSeconds(20));
+                await Task.Delay(TimeSpan.FromSeconds(_configuration.HeartBeatDelay), cancellationToken);
             }
         }
 
-        private void LogHeartBeatInformation(bool success, string cluster, string failoverCluster, string requestID, int successCount, int failureCount, Exception exception)
+        private void LogHeartBeatInformation(bool primaryClustersuccess, bool failoverClusterSuccess, string cluster, string failoverCluster, string invocationId, int successCount, int failureCount, Exception exception)
         {
-            var status = success ? "Success" : "Failed";
+            var primaryClusterStatus = primaryClustersuccess ? "Success" : "Failed";
+            var failoverClusterStatus = failoverClusterSuccess ? "Success" : "Failed";
 
 
             DiagnosticsETWProvider.Instance.LogKustoHeartbeatInformation(
-               requestID,
-               $"Status:{status},PriamryCluster:{cluster},FasiloverCluster:{failoverCluster},ConsecutiveSuccessCount:{successCount},ConsecutiveFailureCount:{failureCount}",
+               invocationId,
+               $"PrimaryClusterStatus:{primaryClusterStatus},FailoverClusterStatus:{failoverClusterStatus},PrimaryCluster:{cluster},FailoverCluster:{failoverCluster},PrimaryClusterConsecutiveSuccessCount:{successCount},PrimaryClusterConsecutiveFailureCount:{failureCount}",
                exception != null ? exception.GetType().ToString() : string.Empty,
                exception != null ? exception.ToString() : string.Empty);
         }

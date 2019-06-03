@@ -56,6 +56,30 @@ namespace Diagnostics.DataProviders
         public string AADKustoResource { get; set; }
 
         /// <summary>
+        /// Number of consecutive failures before failing over to the fail over cluster.
+        /// </summary>
+        [ConfigurationName("HeartBeatConsecutiveFailureLimit")]
+        public int HeartBeatConsecutiveFailureLimit { get; set; }
+
+        /// <summary>
+        /// Query to run against each cluster to check health
+        /// </summary>
+        [ConfigurationName("HeartBeatQuery")]
+        public string HeartBeatQuery { get; set; }
+
+        /// <summary>
+        /// Timeout of the query
+        /// </summary>
+        [ConfigurationName("HeartBeatTimeOut")]
+        public int HeartBeatTimeOut { get; set; }
+
+        /// <summary>
+        /// Delay between each heart beat
+        /// </summary>
+        [ConfigurationName("HeartBeatDelay")]
+        public int HeartBeatDelay { get; set; }
+
+        /// <summary>
         /// Region Specific Cluster Names.
         /// </summary>
         public ConcurrentDictionary<string, string> RegionSpecificClusterNameCollection { get; set; }
