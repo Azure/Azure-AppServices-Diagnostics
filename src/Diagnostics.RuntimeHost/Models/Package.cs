@@ -3,11 +3,8 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
-using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.ComponentModel;
-using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Utilities;
 using Newtonsoft.Json;
 using Octokit;

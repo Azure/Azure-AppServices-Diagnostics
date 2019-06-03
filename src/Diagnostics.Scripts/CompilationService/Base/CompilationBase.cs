@@ -1,8 +1,4 @@
-﻿using Diagnostics.Scripts.CompilationService.Interfaces;
-using Diagnostics.Scripts.Models;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Diagnostics;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
@@ -10,6 +6,10 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Diagnostics.Scripts.CompilationService.Interfaces;
+using Diagnostics.Scripts.Models;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Diagnostics.Scripts.CompilationService
 {
@@ -41,7 +41,7 @@ namespace Diagnostics.Scripts.CompilationService
 
         public Task<ImmutableArray<Diagnostic>> GetDiagnosticsAsync()
         {
-            if(_compilation == null)
+            if (_compilation == null)
             {
                 throw new ArgumentException("Compilation Object not initialized.");
             }
@@ -187,7 +187,6 @@ namespace Diagnostics.Scripts.CompilationService
                 pdbPath = assemblyPath.Replace(".dll", ".pdb");
             }
 
-
             if (File.Exists(assemblyPath))
             {
                 throw new IOException($"Assembly File already exists : {assemblyPath}");
@@ -273,7 +272,5 @@ namespace Diagnostics.Scripts.CompilationService
                 ? type.ToDisplayString()
                 : string.Format(CultureInfo.InvariantCulture, "{0}, {1}", type.ToDisplayString(), type.ContainingAssembly.ToDisplayString());
         }
-
-        
     }
 }

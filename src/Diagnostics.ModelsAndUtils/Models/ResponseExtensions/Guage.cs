@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Linq;
 using System.Data;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -28,15 +27,17 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
         public InsightStatus Status { get; set; }
-      
+
         private double _percentFilled;
 
         /// <summary>
         /// Decides the percentage up to which the Guage should be filled
         /// </summary>
-        public double PercentFilled {
+        public double PercentFilled
+        {
             get { return _percentFilled; }
-            set {
+            set
+            {
                 if (value < 0)
                     throw new ArgumentException("Supplied value for PercentFilled should be a non negetive number");
 
@@ -46,7 +47,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 _percentFilled = value;
             }
         }
-      
+
         /// <summary>
         /// Text to show within the Guage, typically a number representation. Can be a markdown string. No need to decorate the string with the <markdown> tag
         /// </summary>
@@ -67,9 +68,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// Any additional information that needs to be shown to describe the value and its significance in detail. This appears to the right of the guage. Can be a markdown string. No need to decorate the string with the <markdown> tag
         /// </summary>
         public string Description { get; set; }
-
     }
-
 
     /// <summary>
     /// The direction in which to render multiple guages. To be used only with the Response.AddGuages extension method.
@@ -100,7 +99,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="guages">List<![CDATA[<Guage>]]></param>
         /// <param name="renderDirection">GuageRenderDirection</param>
         /// <returns></returns>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="AddGuages"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
@@ -120,14 +119,14 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///|__More Info__| Value2
         ///";
         ///             Guage g = new Guage(InsightStatus.Warning, util, "`" + util.ToString() + " %`", "`" + util.ToString() + "% Utilized`", GuageSize.Medium, markdownString);
-        ///             guages.Add(g);             
+        ///             guages.Add(g);
         ///         }
         ///         else
         ///         {
         ///             if(util == 21)
         ///             {
         ///                 Guage g = new Guage(InsightStatus.Critical, util, "`" + util.ToString() + " %`", "`" + util.ToString() + "% Utilized`", GuageSize.Medium, "`Some markdown string`");
-        ///                 guages.Add(g);                
+        ///                 guages.Add(g);
         ///             }
         ///             else
         ///             {
@@ -148,39 +147,36 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             if (guages == null || !guages.Any())
                 throw new ArgumentNullException("Paramter List<Guage> is null or contains no elements.");
 
-                var table = new DataTable();
-                table.Columns.Add("RenderDirection", typeof(int));
-                table.Columns.Add("Size", typeof(int));
-                table.Columns.Add("FillColor", typeof(int));
-                table.Columns.Add("PercentFilled", typeof(double));
-                table.Columns.Add("DisplayValue", typeof(string));
-                table.Columns.Add("Label", typeof(string));
-                table.Columns.Add("Description", typeof(string));
+            var table = new DataTable();
+            table.Columns.Add("RenderDirection", typeof(int));
+            table.Columns.Add("Size", typeof(int));
+            table.Columns.Add("FillColor", typeof(int));
+            table.Columns.Add("PercentFilled", typeof(double));
+            table.Columns.Add("DisplayValue", typeof(string));
+            table.Columns.Add("Label", typeof(string));
+            table.Columns.Add("Description", typeof(string));
 
+            foreach (Guage g in guages)
+            {
+                table.Rows.Add(
+                    JsonConvert.SerializeObject(renderDirection),
+                    JsonConvert.SerializeObject(g.Size),
+                    g.Status,
+                    g.PercentFilled,
+                    g.DisplayValue,
+                    g.Label,
+                    g.Description
+                    );
+            }
 
-                foreach (Guage g in guages)
-                {
-                    table.Rows.Add(
-                        JsonConvert.SerializeObject(renderDirection),
-                        JsonConvert.SerializeObject(g.Size),
-                        g.Status,
-                        g.PercentFilled,
-                        g.DisplayValue,
-                        g.Label,
-                        g.Description
-                        );
-
-                }
-
-                var diagData = new DiagnosticData()
-                {
-                    Table = table,
-                    RenderingProperties = new Rendering(RenderingType.Guage)
-                };
-                response.Dataset.Add(diagData);
-                return diagData;
+            var diagData = new DiagnosticData()
+            {
+                Table = table,
+                RenderingProperties = new Rendering(RenderingType.Guage)
+            };
+            response.Dataset.Add(diagData);
+            return diagData;
         }
-
 
         /// <summary>
         /// Adds a Guage to Response
@@ -188,7 +184,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="response">Response</param>
         /// <param name="guage">Guage</param>
         /// <returns></returns>
-        /// <example> 
+        /// <example>
         /// This sample shows how to use <see cref="AddGuage"/> method.
         /// <code>
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
@@ -202,7 +198,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public static DiagnosticData AddGuage(this Response response, Guage guage)
         {
             if (guage == null) return null;
-            return AddGuages(response, new List<Guage>() { guage}, GuageRenderDirection.Vertical);
+            return AddGuages(response, new List<Guage>() { guage }, GuageRenderDirection.Vertical);
         }
 
         public static DiagnosticData AddGuage(this Response response, InsightStatus status, double percentFilled, string displayValue, string label, GuageSize size = GuageSize.Medium, string description = "")

@@ -1,6 +1,6 @@
 ﻿using System;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Diagnostics.DataProviders.DataProviderConfigurations;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace Diagnostics.DataProviders.TokenService
 {
@@ -21,6 +21,6 @@ namespace Diagnostics.DataProviders.TokenService
             ClientCredential = new ClientCredential(ascDataProviderConfiguration.ClientId, ascDataProviderConfiguration.AppKey);
             TokenServiceName = "AscTokenRefresh";
             StartTokenRefresh();
-        }        
+        }
     }
 }

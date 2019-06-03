@@ -17,6 +17,7 @@ using Diagnostics.ModelsAndUtils.Utilities;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
+using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
@@ -25,8 +26,6 @@ using Diagnostics.Scripts.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
-using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
-using System.Net.Http;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -808,9 +807,14 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         private Definition RemovePIIFromDefinition(Definition definition, bool isInternal)
-        {
-            if (!isInternal) definition.Author = string.Empty;
-            return definition;
+        { 
+            string definitionString = JsonConvert.SerializeObject(definition);
+            Definition definitionCopy = JsonConvert.DeserializeObject<Definition>(definitionString);
+            if (!isInternal)
+            {
+                definitionCopy.Author = string.Empty;
+            }
+            return definitionCopy;
         }
 
         /// <summary>

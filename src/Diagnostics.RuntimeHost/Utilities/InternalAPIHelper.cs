@@ -1,13 +1,10 @@
-﻿using Diagnostics.Logger;
-using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.RuntimeHost.Models;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.RuntimeHost.Models;
+using Newtonsoft.Json;
 
 namespace Diagnostics.RuntimeHost.Utilities
 {
@@ -43,7 +40,7 @@ namespace Diagnostics.RuntimeHost.Utilities
             List<CommitContent> files = new List<CommitContent>();
             foreach (string file in Directory.EnumerateFiles(folderpath))
             {
-                 files.Add(new CommitContent(parentpath + "/" + Path.GetFileName(file), Convert.ToBase64String(File.ReadAllBytes(file)), Octokit.EncodingType.Base64));
+                files.Add(new CommitContent(parentpath + "/" + Path.GetFileName(file), Convert.ToBase64String(File.ReadAllBytes(file)), Octokit.EncodingType.Base64));
             }
 
             return files;

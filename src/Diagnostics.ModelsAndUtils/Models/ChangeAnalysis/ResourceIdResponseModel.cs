@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Newtonsoft.Json;
+
 namespace Diagnostics.ModelsAndUtils.Models.ChangeAnalysis
 {
     public class ResourceIdResponseModel

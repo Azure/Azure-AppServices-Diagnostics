@@ -1,7 +1,6 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using Newtonsoft.Json;
 
 namespace Diagnostics.DataProviders
 {
@@ -17,6 +16,7 @@ namespace Diagnostics.DataProviders
 
         // The pre-defined sampling types.
         private static readonly SamplingType CountSamplingType = new SamplingType("Count");
+
         private static readonly SamplingType SumSamplingType = new SamplingType("Sum");
         private static readonly SamplingType MinSamplingType = new SamplingType("Min");
         private static readonly SamplingType MaxSamplingType = new SamplingType("Max");

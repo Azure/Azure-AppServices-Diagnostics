@@ -100,6 +100,5 @@ namespace Diagnostics.DataProviders
             IEnumerable<TimeSeries<MetricIdentifier, double?>> series = new TimeSeries<MetricIdentifier, double?>[] { };
             return Task.FromResult(series);
         }
-
     }
 }

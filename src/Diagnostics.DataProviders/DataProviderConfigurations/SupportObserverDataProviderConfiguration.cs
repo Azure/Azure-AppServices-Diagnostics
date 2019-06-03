@@ -3,8 +3,6 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
-
 namespace Diagnostics.DataProviders
 {
     [DataSourceConfiguration("SupportObserver")]

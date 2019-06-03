@@ -1,9 +1,7 @@
-﻿using Diagnostics.DataProviders;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Globalization;
 using System.Linq;
-using System.Threading.Tasks;
+using Diagnostics.DataProviders;
 
 namespace Diagnostics.RuntimeHost.Utilities
 {
@@ -209,7 +207,7 @@ namespace Diagnostics.RuntimeHost.Utilities
             var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             return epoch.AddSeconds(unixTime);
         }
-        
+
         internal static long DateTimeToEpochTime(DateTime date)
         {
             var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);

@@ -1,7 +1,7 @@
-﻿using Diagnostics.DataProviders.Utility;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using Diagnostics.DataProviders.Utility;
 
 namespace Diagnostics.DataProviders
 { /// <summary>

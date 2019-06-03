@@ -1,8 +1,7 @@
-﻿using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.ModelsAndUtils.ScriptUtilities;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.ScriptUtilities;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {

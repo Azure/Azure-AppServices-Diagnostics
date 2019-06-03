@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Models
 {
@@ -27,7 +25,6 @@ namespace Diagnostics.RuntimeHost.Models
     {
         public string Name { get; set; }
         public int Type { get; set; }
-
     }
 
     public class DiagnosticStampData
@@ -41,6 +38,7 @@ namespace Diagnostics.RuntimeHost.Models
         public string Tags { get; set; }
         public DateTime? UnhealthySince { get; set; }
         public DateTime? SuspendedOn { get; set; }
+
         public bool IsUnhealthy
         {
             get

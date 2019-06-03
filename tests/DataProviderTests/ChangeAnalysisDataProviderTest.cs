@@ -1,6 +1,7 @@
-﻿using Diagnostics.DataProviders;
+﻿using System;
+using Diagnostics.DataProviders;
 using Diagnostics.DataProviders.DataProviderConfigurations;
-using System;
+
 using Xunit;
 
 namespace Diagnostics.Tests.DataProviderTests

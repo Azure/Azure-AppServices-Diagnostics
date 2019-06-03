@@ -1,9 +1,9 @@
-﻿using Diagnostics.Scripts.Models;
-using Microsoft.CodeAnalysis;
-using System;
+﻿using System;
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Threading.Tasks;
+using Diagnostics.Scripts.Models;
+using Microsoft.CodeAnalysis;
 
 namespace Diagnostics.Scripts.CompilationService.Interfaces
 {

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Diagnostics.ModelsAndUtils.Attributes
+﻿namespace Diagnostics.ModelsAndUtils.Attributes
 {
     /// <summary>
     /// Class representing Filter for Hosting Environment Resource
@@ -18,8 +14,8 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// Hosting Environment Type (ASE V1, ASE V2 ...)
         /// </summary>
         public HostingEnvironmentType HostingEnvironmentType;
-        
-        public HostingEnvironmentFilter(bool internalOnly = true): base(ResourceType.HostingEnvironment, internalOnly)
+
+        public HostingEnvironmentFilter(bool internalOnly = true) : base(ResourceType.HostingEnvironment, internalOnly)
         {
             this.PlatformType = PlatformType.Windows;
             this.HostingEnvironmentType = HostingEnvironmentType.All;

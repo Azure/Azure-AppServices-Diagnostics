@@ -1,8 +1,7 @@
-﻿using Diagnostics.Logger;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using Diagnostics.Logger;
 
 namespace Diagnostics.RuntimeHost.Utilities
 {
@@ -62,7 +61,6 @@ namespace Diagnostics.RuntimeHost.Utilities
                 }
 
                 if (retryCount < maxRetries) await Task.Delay(retryDelayInMs);
-
             } while (retryCount < maxRetries);
 
             if (taskProviderTask.IsCompleted && !taskProviderTask.IsFaulted && !taskProviderTask.IsCanceled)

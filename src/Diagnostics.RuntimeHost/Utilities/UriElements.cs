@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Diagnostics.RuntimeHost.Utilities
+﻿namespace Diagnostics.RuntimeHost.Utilities
 {
     public class UriElements
     {
@@ -17,14 +12,14 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string SitesResource = WebResourceRoot + "/sites/{siteName}";
         public const string HostingEnvironmentResource = WebResourceRoot + "/hostingEnvironments/{hostingEnvironmentName}";
 
-        #endregion
+        #endregion Microsoft.Web Urls
 
         #region Microsoft.Cert and Domain Urls
 
         public const string AppServiceCertResource = ResourceProvidersRoot + ResourceProviders.AppServiceCert + "/certificateOrders/{certificateName}";
         public const string AppServiceDomainResource = ResourceProvidersRoot + ResourceProviders.AppServiceDomain + "/domains/{domainName}";
 
-        #endregion
+        #endregion Microsoft.Cert and Domain Urls
 
         #region Other Resource Urls
 
@@ -33,7 +28,7 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string AzureKubernetesServiceResource = ResourceProvidersRoot + ResourceProviders.AzureKubernetesService + "/managedClusters/{clusterName}";
         public const string ArmResource = ResourceProvidersRoot + "{provider}/{resourceTypeName}/{resourceName}";
 
-        #endregion
+        #endregion Other Resource Urls
 
         public const string Query = "diagnostics/query";
         public const string Publish = "diagnostics/publish";
@@ -49,6 +44,7 @@ namespace Diagnostics.RuntimeHost.Utilities
 
         // Constants for internal api interactions
         public const string Internal = "/internal";
+
         public const string Logger = "logger";
         public const string PublishModel = "publishmodel";
         public const string TrainModel = "trainmodel";
@@ -58,11 +54,13 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string TrainingAPI = "http://localhost:8011";
 
         #region Observer Urls
+
         public const string Observer = "observer";
         public const string ObserverGetSites = "sites/{siteName}";
         public const string ObserverGetSiteWithStamp = "stamps/{stampName}/sites/{siteName}";
         public const string ObserverGetHostingEnvironment = "hostingEnvironments/{hostingEnvironmentName}";
-        #endregion
+
+        #endregion Observer Urls
     }
 
     /// <summary>
@@ -76,6 +74,5 @@ namespace Diagnostics.RuntimeHost.Utilities
         public const string LogicApp = "Microsoft.Logic";
         public const string ApiManagement = "Microsoft.ApiManagement";
         public const string AzureKubernetesService = "Microsoft.ContainerService";
-
     }
 }

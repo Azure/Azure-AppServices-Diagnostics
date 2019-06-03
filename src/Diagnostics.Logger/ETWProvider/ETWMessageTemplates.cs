@@ -21,7 +21,7 @@ namespace Diagnostics.Logger
         public const string LogCompilerHostUnhandledException = "Compiler Host Unhandled Exception : {3}";
         public const string LogCompilerHostAPISummary = "Compiler Host API Response Code : {3}";
 
-        #endregion
+        #endregion Compile Host Event Message Templates
 
         #region Runtime Host Event Message Templates
 
@@ -35,7 +35,7 @@ namespace Diagnostics.Logger
         public const string LogRuntimeHostDetectorAscInsight = "ASC Insight Detail for Detector";
         public const string LogRuntimeHostSupportTopicAscInsight = "ASC Insight Detail for Detector";
 
-        #endregion
+        #endregion Runtime Host Event Message Templates
 
         #region Source Watcher Event Message Templates
 
@@ -43,7 +43,7 @@ namespace Diagnostics.Logger
         public const string LogSourceWatcherWarning = "Source Watcher : {0},  Warning : {1}";
         public const string LogSourceWatcherException = "Source Watcher : {0},  Exception : {3}";
 
-        #endregion
+        #endregion Source Watcher Event Message Templates
 
         #region Compiler Host Client Event Message Templates
 
@@ -51,16 +51,18 @@ namespace Diagnostics.Logger
         public const string LogCompilerHostClientException = "Compiler Host Client Exception : {4}";
         public const string LogCompilerHostClientWarning = "Compiler Host Client Warnings";
 
-        #endregion
+        #endregion Compiler Host Client Event Message Templates
 
         #region Data Provider Event Message Templates
+
         public const string LogDataProviderMessage = "Data Provider Informational Details. Source : {1} Message : {2}";
         public const string LogDataProviderException = "An exception occurred in Source : {1}. ExceptionType : {5} ExceptionDetails : {6}";
         public const string LogDataProviderOperationSummary = "Data Provider Operation. Source : {1} StartTime : {2} EndTime : {3} LatencyInMilliseconds : {4}";
         public const string LogTokenRefreshSummary = "Token Refresh Summary";
         public const string LogKustoQueryInformation = "Kusto Query Information";
         public const string LogKustoHeartbeatInformation = "Kusto Heart Beat Information";
-        #endregion
+
+        #endregion Data Provider Event Message Templates
 
         #region Internal AI API Event Message Templates
 
@@ -72,7 +74,8 @@ namespace Diagnostics.Logger
         public const string LogInternalAPITrainingException = "Internal API Training Exception";
         public const string LogInternalAPITrainingSummary = "Internal API Training Summary";
 
-        #endregion
+        #endregion Internal AI API Event Message Templates
+
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Globalization;
 using System.Linq;
 
 namespace Diagnostics.ModelsAndUtils.Models
@@ -87,7 +86,7 @@ namespace Diagnostics.ModelsAndUtils.Models
                 var row = dataTable.NewRow();
                 for (int j = 0; j < dataTable.Columns.Count; j++)
                 {
-                    row[j] = appInsightsDataTableResponse.Rows[i,j] ?? DBNull.Value;
+                    row[j] = appInsightsDataTableResponse.Rows[i, j] ?? DBNull.Value;
                 }
 
                 dataTable.Rows.Add(row);
@@ -110,10 +109,10 @@ namespace Diagnostics.ModelsAndUtils.Models
             }
 
             var rows = new dynamic[table.Rows.Count, table.Columns.Count];
-            
-            for(int i = 0; i < table.Rows.Count; i++)
+
+            for (int i = 0; i < table.Rows.Count; i++)
             {
-                for(int j = 0; j < table.Columns.Count; j++)
+                for (int j = 0; j < table.Columns.Count; j++)
                 {
                     rows[i, j] = table.Rows[i][j] == DBNull.Value ? null : table.Rows[i][j];
                 }

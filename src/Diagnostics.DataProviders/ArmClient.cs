@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 
 namespace Diagnostics.DataProviders
 {
-    class ArmClient : IGeoMasterClient
+    internal class ArmClient : IGeoMasterClient
     {
         private const string CsmEndpointUrl = "https://management.azure.com/";
         public HttpClient Client { get; }

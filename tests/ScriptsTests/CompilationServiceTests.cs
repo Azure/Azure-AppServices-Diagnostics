@@ -4,7 +4,6 @@
 // </copyright>
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
@@ -12,7 +11,6 @@ using Diagnostics.Scripts;
 using Diagnostics.Scripts.CompilationService;
 using Diagnostics.Scripts.CompilationService.Gist;
 using Diagnostics.Scripts.CompilationService.Interfaces;
-using Diagnostics.Scripts.CompilationService.ReferenceResolver;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Tests.Helpers;
 using Microsoft.CodeAnalysis;
@@ -96,7 +94,7 @@ namespace Diagnostics.Tests.ScriptsTests
 
             Assert.Null(ex);
         }
-        
+
         [Theory]
         [InlineData(ScriptErrorType.DuplicateEntryPoint)]
         [InlineData(ScriptErrorType.MissingEntryPoint)]
@@ -116,7 +114,7 @@ namespace Diagnostics.Tests.ScriptsTests
             Assert.NotEmpty(ex.CompilationOutput);
         }
 
-        #endregion
+        #endregion Compilation Service Tests
 
         #region Compilation Service Factory Tests
 
@@ -159,6 +157,6 @@ namespace Diagnostics.Tests.ScriptsTests
             });
         }
 
-        #endregion
+        #endregion Compilation Service Factory Tests
     }
 }

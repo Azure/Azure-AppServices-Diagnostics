@@ -74,7 +74,7 @@ namespace Diagnostics.Logger
                 EndTime);
         }
 
-        #endregion
+        #endregion Compile Host Events (ID Range : 1000 - 1999)
 
         #region Runtime Host Events (ID Range : 2000 - 2499)
 
@@ -254,7 +254,7 @@ namespace Diagnostics.Logger
                 Details);
         }
 
-        #endregion
+        #endregion Runtime Host Events (ID Range : 2000 - 2499)
 
         #region SourceWatcher Events (ID Range : 2500 - 2599)
 
@@ -293,7 +293,7 @@ namespace Diagnostics.Logger
             WriteDiagnosticsEvent(2502, Source, Message, ExceptionType, ExceptionDetails);
         }
 
-        #endregion
+        #endregion SourceWatcher Events (ID Range : 2500 - 2599)
 
         #region Compiler Host Client Events (ID Range: 2600 - 2699)
 
@@ -337,7 +337,7 @@ namespace Diagnostics.Logger
             WriteDiagnosticsEvent(2602, RequestId, Source, Message, ExceptionType, ExceptionDetails);
         }
 
-        #endregion
+        #endregion Compiler Host Client Events (ID Range: 2600 - 2699)
 
         #region Data Provider Events (ID Range : 3000 - 3999)
 
@@ -469,7 +469,7 @@ namespace Diagnostics.Logger
                 ExceptionDetails);
         }
 
-        #endregion
+        #endregion Data Provider Events (ID Range : 3000 - 3999)
 
         #region Internal AI API Events (ID Range : 4000 - 4199)
 
@@ -594,6 +594,7 @@ namespace Diagnostics.Logger
                 EndTime,
                 Content);
         }
-        #endregion
+
+        #endregion Internal AI API Events (ID Range : 4000 - 4199)
     }
 }
