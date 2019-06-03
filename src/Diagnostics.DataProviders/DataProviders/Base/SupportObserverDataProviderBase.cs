@@ -102,6 +102,8 @@ namespace Diagnostics.DataProviders
             {
                 ex.Data.Add("StatusCode", response.StatusCode);
                 ex.Data.Add("ResponseContent", result);
+                Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider",
+                    $"url:{new Uri(_httpClient.BaseAddress, request.RequestUri)}, response:{result}, statusCode:{(int)response.StatusCode}");
                 throw;
             }
 
