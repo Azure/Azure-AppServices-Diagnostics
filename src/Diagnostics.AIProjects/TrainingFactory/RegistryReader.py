@@ -15,7 +15,7 @@ try:
 			githubKey = OpenKey(sourceWatcherKey,"Local")
 			githubFolderPath = QueryValueEx(githubKey, "LocalScriptsPath")[0]
 		except:
-			raise Exception("Detector path not found")
+			raise Exception("RegistryError: Detector path not found")
 	kustoKey = OpenKey(dataProvidersKey, "Kusto")
 	kustoClientId = QueryValueEx(kustoKey, "ClientId")[0]
 	kustoClientSecret = QueryValueEx(kustoKey, "AppKey")[0]
