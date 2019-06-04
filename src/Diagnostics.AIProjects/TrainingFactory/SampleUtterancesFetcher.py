@@ -1,7 +1,7 @@
 from azure.kusto.data.request import KustoClient, KustoConnectionStringBuilder, ClientRequestProperties
 from azure.kusto.data.exceptions import KustoServiceError
 from azure.kusto.data.helpers import dataframe_from_result_table
-from RegistryReader import githubFolderPath, kustoClientId, kustoClientSecret
+from RegistryReader import detectorsFolderPath, kustoClientId, kustoClientSecret
 import re, itertools, json, requests, os
 from TextSummarizer import retrieveSentences
 from Logger import *

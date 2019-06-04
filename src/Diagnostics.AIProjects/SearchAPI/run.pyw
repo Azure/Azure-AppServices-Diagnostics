@@ -1,6 +1,6 @@
 import os, gc, shutil, uuid
 from flask import Flask, request
-from RegistryReader import githubFolderPath
+from RegistryReader import detectorsFolderPath
 from Logger import *
 from datetime import datetime, timezone
 import json, itertools, nltk
@@ -43,7 +43,7 @@ packageFileNames = {
     "sampleUtterancesFile": "SampleUtterances.json"
 }
 
-modelsPath = githubFolderPath
+modelsPath = detectorsFolderPath
 def copyFolder(src, dst):
     if os.path.isdir(src):
         if os.path.isdir(dst):
