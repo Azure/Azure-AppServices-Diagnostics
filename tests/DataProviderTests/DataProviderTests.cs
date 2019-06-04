@@ -4,11 +4,11 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Diagnostics.DataProviders;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using Diagnostics.Scripts;
 using Diagnostics.Tests.Helpers;
-using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -209,11 +209,11 @@ namespace Diagnostics.Tests.DataProviderTests
             var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString(), kustoHeartBeatService: kustoHeartBeatService));
 
             MockKustoClient.ShouldHeartbeatSucceed = false;
-            Thread.Sleep(100);
+            await Task.Delay(200);
             Assert.Equal(config.KustoConfiguration.KustoClusterFailoverGroupings, kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
 
             MockKustoClient.ShouldHeartbeatSucceed = true;
-            Thread.Sleep(100);
+            await Task.Delay(200);
             Assert.Equal(config.KustoConfiguration.KustoClusterNameGroupings, kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
 
         }
