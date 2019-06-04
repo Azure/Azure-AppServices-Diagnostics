@@ -206,14 +206,13 @@ namespace Diagnostics.Tests.DataProviderTests
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
             var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration);
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString(), kustoHeartBeatService: kustoHeartBeatService));
-
+            
             MockKustoClient.ShouldHeartbeatSucceed = false;
-            await Task.Delay(200);
+            await Task.Delay(5000);
             Assert.Equal(config.KustoConfiguration.KustoClusterFailoverGroupings, kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
 
             MockKustoClient.ShouldHeartbeatSucceed = true;
-            await Task.Delay(200);
+            await Task.Delay(5000);
             Assert.Equal(config.KustoConfiguration.KustoClusterNameGroupings, kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
 
         }
