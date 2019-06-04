@@ -271,7 +271,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 {
                     metadataFilePath = downloadFilePath;
                 }
-                else if (githubFile.Name.Split(".").Last() == "model" || githubFile.Name.Split(".").Last() == "index" || githubFile.Name.Split(".").Last() == "dict" || githubFile.Name.Split(".").Last() == "json")
+                else if (githubFile.Name.Split(".").Last() == "model" || githubFile.Name.Split(".").Last() == "index" || githubFile.Name.Split(".").Last() == "dict" || githubFile.Name.Split(".").Last() == "json" || githubFile.Name.Split(".").Last() == "npy")
                 {
                     downloadFilePath = Path.Combine(destDir.FullName, githubFile.Name);
                 }
