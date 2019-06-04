@@ -7,6 +7,7 @@ using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
+using System.Net.Http;
 
 namespace Diagnostics.DataProviders
 {
@@ -198,6 +199,18 @@ namespace Diagnostics.DataProviders
             }
 
             return hostnames;
+        }
+
+        /// <summary>
+        /// Forwards the request to Change Analysis Client
+        /// </summary>
+        /// <param name="requestUri">Request URI</param>
+        /// <param name="postBody">Post body</param>
+        /// <param name="method">HTTP Method.</param>
+        /// <returns>JSON string</returns>
+        public async Task<string> ForwardRequestToClient(string requestUri, object postBody = null, HttpMethod method = null)
+        {
+            return await changeAnalysisClient.PrepareAndSendRequest(requestUri, postBody, method);
         }
     }
 }
