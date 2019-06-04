@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Data;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
+[assembly: InternalsVisibleTo("Diagnostics.Tests")]
 namespace Diagnostics.DataProviders
 {
     internal class MockKustoClient : IKustoClient
     {
+        public static bool ShouldHeartbeatSucceed = false;
+
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, int timeoutSeconds, string requestId = null, string operationName = null)
         {
             return await ExecuteQueryAsync(query, cluster, database, requestId, operationName);
@@ -41,6 +45,11 @@ namespace Diagnostics.DataProviders
             {
                 case "TestA":
                     return await GetTestA();
+                case "Heartbeat":
+                    if (ShouldHeartbeatSucceed) {
+                        return await GetFakeTenantIdResults();
+                    }
+                    break;
             }
 
             return new DataTable();

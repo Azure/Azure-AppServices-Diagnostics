@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Diagnostics.DataProviders;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using Diagnostics.Scripts;
 using Diagnostics.Tests.Helpers;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -183,7 +185,8 @@ namespace Diagnostics.Tests.DataProviderTests
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
 
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString()));
+            var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration);
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString(), kustoHeartBeatService: kustoHeartBeatService));
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -192,6 +195,27 @@ namespace Diagnostics.Tests.DataProviderTests
 
                 Assert.NotNull(result);
             }
+        }
+
+        /// <summary>
+        /// Kusto data provider test
+        /// </summary>
+        [Fact]
+        public async void DataProvders_TestKustoFailover()
+        {
+            var configFactory = new MockDataProviderConfigurationFactory();
+            var config = configFactory.LoadConfigurations();
+            var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration);
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString(), kustoHeartBeatService: kustoHeartBeatService));
+
+            MockKustoClient.ShouldHeartbeatSucceed = false;
+            Thread.Sleep(100);
+            Assert.Equal(config.KustoConfiguration.KustoClusterFailoverGroupings, kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
+
+            MockKustoClient.ShouldHeartbeatSucceed = true;
+            Thread.Sleep(100);
+            Assert.Equal(config.KustoConfiguration.KustoClusterNameGroupings, kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
+
         }
 
         private void PrintDataTable(DataTable dt)

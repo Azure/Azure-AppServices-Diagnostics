@@ -83,10 +83,6 @@ namespace Diagnostics.DataProviders
 
         private string GetClusterNameFromStamp(string stampName)
         {
-            if (_configuration.DBName == "Mock")
-            {
-                return "wawsmock";
-            }
             return _kustoHeartBeatService.GetClusterNameFromStamp(stampName);
         }
     }

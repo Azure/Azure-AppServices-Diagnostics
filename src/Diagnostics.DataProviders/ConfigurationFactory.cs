@@ -73,6 +73,12 @@ namespace Diagnostics.DataProviders
                         return "wawsmock";
                     case "KustoRegionGroupings":
                         return "mockstamp";
+                    case "HeartBeatConsecutiveFailureLimit":
+                        return "1";
+                    case "HeartBeatQuery":
+                        return "Heartbeat";
+                    case "HeartBeatDelay":
+                        return "0";
                     default: return string.Empty;
                 }
             }
