@@ -1,5 +1,5 @@
 from winreg import *
-githubFolderPath = ""
+githubFolderPath = None
 kustoClientId = ""
 kustoClientSecret = ""
 try:
@@ -11,8 +11,11 @@ try:
 		githubKey = OpenKey(sourceWatcherKey,"Github")
 		githubFolderPath = QueryValueEx(githubKey, "DestinationScriptsPath")[0]
 	except:
-		githubKey = OpenKey(sourceWatcherKey,"Local")
-		githubFolderPath = QueryValueEx(githubKey, "DestinationScriptsPath")[0]
+		try:
+			githubKey = OpenKey(sourceWatcherKey,"Local")
+			githubFolderPath = QueryValueEx(githubKey, "LocalScriptsPath")[0]
+		except:
+			raise Exception("Detector path not found")
 	kustoKey = OpenKey(dataProvidersKey, "Kusto")
 	kustoClientId = QueryValueEx(kustoKey, "ClientId")[0]
 	kustoClientSecret = QueryValueEx(kustoKey, "AppKey")[0]
