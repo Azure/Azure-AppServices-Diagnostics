@@ -56,7 +56,7 @@ namespace Diagnostics.RuntimeHost.Models
                     bindingContext.ModelState.TryAddModelError("inpId", "Input Id must be an integer.");
                     return Task.CompletedTask;
                 }
-                if (inputValues[i].Length > 50)
+                if (inputValues[i].Length > 150)
                 {
                     bindingContext.ModelState.TryAddModelError("val", "Length of val cannot exceed 50 characters.");
                     return Task.CompletedTask;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
@@ -58,5 +59,14 @@ namespace Diagnostics.DataProviders.Interfaces
         /// <param name="scanAction">Scan action: It is "submitscan" or "checkscan".</param>
         /// <returns>Contains info about the scan request with submissions state and time.</returns>
         Task<ChangeScanModel> ScanActionRequest(string resourceId, string scanAction);
+
+        /// <summary>
+        /// Forwards the request to Change Analysis Client
+        /// </summary>
+        /// <param name="requestUri">Request URI</param>
+        /// <param name="postBody">Post body</param>
+        /// <param name="method">HTTP Method.</param>
+        /// <returns>JSON string</returns>
+        Task<string> InvokeChangeAnalysisRequest(string requestUri, object postBody = null, HttpMethod method = null);
     }
 }
