@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -437,6 +438,11 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(changeAnalysisDataProvider.ScanActionRequest(resourceId, scanAction));
         }
 
+        public Task<string> InvokeChangeAnalysisRequest(string requestUri, object postBody = null, HttpMethod method = null)
+        {
+            return MakeDependencyCall(changeAnalysisDataProvider.InvokeChangeAnalysisRequest(requestUri, postBody, method));
+        }
+
         #endregion ChangeAnalysisDataProvider
 
         #region ASC_DataProvider
@@ -527,5 +533,6 @@ namespace Diagnostics.DataProviders
                 }
             }
         }
+
     }
 }
