@@ -438,9 +438,9 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(changeAnalysisDataProvider.ScanActionRequest(resourceId, scanAction));
         }
 
-        public Task<string> ForwardRequestToClient(string requestUri, object postBody = null, HttpMethod method = null)
+        public Task<string> InvokeChangeAnalysisRequest(string requestUri, object postBody = null, HttpMethod method = null)
         {
-            return MakeDependencyCall(changeAnalysisDataProvider.ForwardRequestToClient(requestUri, postBody, method));
+            return MakeDependencyCall(changeAnalysisDataProvider.InvokeChangeAnalysisRequest(requestUri, postBody, method));
         }
 
         #endregion ChangeAnalysisDataProvider

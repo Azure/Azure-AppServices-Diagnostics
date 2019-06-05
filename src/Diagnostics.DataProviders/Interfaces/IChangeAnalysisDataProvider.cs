@@ -67,6 +67,6 @@ namespace Diagnostics.DataProviders.Interfaces
         /// <param name="postBody">Post body</param>
         /// <param name="method">HTTP Method.</param>
         /// <returns>JSON string</returns>
-        Task<string> ForwardRequestToClient(string requestUri, object postBody = null, HttpMethod method = null);
+        Task<string> InvokeChangeAnalysisRequest(string requestUri, object postBody = null, HttpMethod method = null);
     }
 }

@@ -208,7 +208,7 @@ namespace Diagnostics.DataProviders
         /// <param name="postBody">Post body</param>
         /// <param name="method">HTTP Method.</param>
         /// <returns>JSON string</returns>
-        public async Task<string> ForwardRequestToClient(string requestUri, object postBody = null, HttpMethod method = null)
+        public async Task<string> InvokeChangeAnalysisRequest(string requestUri, object postBody = null, HttpMethod method = null)
         {
             return await changeAnalysisClient.PrepareAndSendRequest(requestUri, postBody, method);
         }
