@@ -46,6 +46,7 @@ namespace Diagnostics.RuntimeHost.Services
             QueryUtterancesUrl = UriElements.SearchAPI + "/queryUtterances";
             TriggerTrainingUrl = UriElements.TrainingAPI + "/triggerTraining";
             TriggerModelRefreshUrl = UriElements.SearchAPI + "/refreshModel";
+            isEnabled = false;
             LoadConfigurations();
             if (isEnabled)
             {
