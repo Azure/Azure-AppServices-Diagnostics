@@ -216,6 +216,7 @@ namespace Diagnostics.Tests.DataProviderTests
             Assert.Equal(config.KustoConfiguration.KustoClusterFailoverGroupings, kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
 
             MockKustoClient.ShouldHeartbeatSucceed = true;
+            startingHeartBeatRuns = MockKustoClient.HeartBeatRuns;
             do
             {
                 await Task.Delay(100);
