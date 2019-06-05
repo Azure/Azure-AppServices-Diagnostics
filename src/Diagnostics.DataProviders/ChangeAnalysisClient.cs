@@ -287,13 +287,14 @@ namespace Diagnostics.DataProviders
             }
         }
 
+
         /// <summary>
         /// Prepares httpwebrequest to <paramref name="requestUri"/> with <paramref name="postBody"/> as body of the request.
         /// </summary>
         /// <param name="requestUri">Change Analysis Request URI</param>
         /// <param name="postBody">Body of the request</param>
         /// <returns>JSON string received from <paramref name="requestUri"/>.</returns>
-        private async Task<string> PrepareAndSendRequest(string requestUri, object postBody = null, HttpMethod httpMethod = null)
+        public async Task<string> PrepareAndSendRequest(string requestUri, object postBody = null, HttpMethod httpMethod = null)
         {
             HttpMethod requestedHttpMethod = httpMethod == null ? HttpMethod.Post : httpMethod;
             HttpRequestMessage requestMessage = new HttpRequestMessage(requestedHttpMethod, requestUri);
@@ -319,6 +320,8 @@ namespace Diagnostics.DataProviders
             string content = await responseMessage.Content.ReadAsStringAsync();
             if (!responseMessage.IsSuccessStatusCode)
             {
+                var message = $"HTTP Request failed endpoint: {requestUri}, StatusCode : {responseMessage.StatusCode}, Content: {content}";
+                DiagnosticsETWProvider.Instance.LogDataProviderMessage(requestId, "ChangeAnalysisClient", message);
                 HttpRequestException ex = new HttpRequestException($"Status Code : {responseMessage.StatusCode}, Content : {content}");
                 ex.Data.Add(ExceptionStatusCode, responseMessage.StatusCode);
                 throw ex;
