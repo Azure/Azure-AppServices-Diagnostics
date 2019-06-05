@@ -83,6 +83,7 @@ namespace Diagnostics.RuntimeHost.Middleware
             var dataSourcesConfigurationService = ((ServiceProvider)httpContext.RequestServices).GetService<IDataSourcesConfigurationService>();
             var wawsObserverTokenService = ((ServiceProvider)httpContext.RequestServices).GetService<IWawsObserverTokenService>();
             var supportBayApiObserverTokenService = ((ServiceProvider)httpContext.RequestServices).GetService<ISupportBayApiObserverTokenService>();
+            var kustoHeartBeatService = ((ServiceProvider)httpContext.RequestServices).GetService<IKustoHeartBeatService>();
 
             httpContext.Items.Add(HostConstants.ApiLoggerKey, logger);
             var clientObjId = string.Empty;
@@ -109,7 +110,7 @@ namespace Diagnostics.RuntimeHost.Middleware
                 clientPrincipalName = httpContext.Request.Headers[ClientPrincipalNameHeader];
             }
 
-            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName));
+            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName, kustoHeartBeatService));
         }
 
         private void EndRequest_Handle(HttpContext httpContext)
