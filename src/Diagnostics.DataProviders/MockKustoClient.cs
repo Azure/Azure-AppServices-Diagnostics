@@ -8,7 +8,8 @@ namespace Diagnostics.DataProviders
 {
     internal class MockKustoClient : IKustoClient
     {
-        public static bool ShouldHeartbeatSucceed = false;
+        internal static bool ShouldHeartbeatSucceed = false;
+        internal static int HeartBeatRuns = 0;
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, int timeoutSeconds, string requestId = null, string operationName = null)
         {
@@ -46,6 +47,7 @@ namespace Diagnostics.DataProviders
                 case "TestA":
                     return await GetTestA();
                 case "Heartbeat":
+                    ++HeartBeatRuns;
                     if (ShouldHeartbeatSucceed) {
                         return await GetFakeTenantIdResults();
                     }

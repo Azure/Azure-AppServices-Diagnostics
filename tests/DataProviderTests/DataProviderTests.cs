@@ -208,11 +208,18 @@ namespace Diagnostics.Tests.DataProviderTests
             var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration);
             
             MockKustoClient.ShouldHeartbeatSucceed = false;
-            await Task.Delay(2000);
+            int startingHeartBeatRuns = MockKustoClient.HeartBeatRuns;
+            do
+            {
+                await Task.Delay(100);
+            } while (startingHeartBeatRuns == MockKustoClient.HeartBeatRuns);
             Assert.Equal(config.KustoConfiguration.KustoClusterFailoverGroupings, kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
 
             MockKustoClient.ShouldHeartbeatSucceed = true;
-            await Task.Delay(2000);
+            do
+            {
+                await Task.Delay(100);
+            } while (startingHeartBeatRuns == MockKustoClient.HeartBeatRuns);
             Assert.Equal(config.KustoConfiguration.KustoClusterNameGroupings, kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
 
         }
