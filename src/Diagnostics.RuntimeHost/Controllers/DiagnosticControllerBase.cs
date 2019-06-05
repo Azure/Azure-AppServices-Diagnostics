@@ -239,22 +239,25 @@ namespace Diagnostics.RuntimeHost.Controllers
                     bool isInternalCall = true;
                     QueryUtterancesResults utterancesResults = null;
 
-                    // Get suggested utterances for the detector
-                    string[] utterances = null;
-                    if (jsonBody.DetectorUtterances != null && invoker.EntryPointDefinitionAttribute.Description.ToString().Length > 3)
+                    if (_searchService.IsEnabled())
                     {
-                        utterances = JsonConvert.DeserializeObject<string[]>(jsonBody.DetectorUtterances);
-                        string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
-                        var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
-                        var searchUtterances = await _searchService.SearchUtterances(runtimeContext.OperationContext.RequestId, description, utterances, resourceParams);
-                        string resultContent = await searchUtterances.Content.ReadAsStringAsync();
-                        try
+                        // Get suggested utterances for the detector
+                        string[] utterances = null;
+                        if (jsonBody.DetectorUtterances != null && invoker.EntryPointDefinitionAttribute.Description.ToString().Length > 3)
                         {
-                            utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
-                        }
-                        catch
-                        {
-                            utterancesResults = null;
+                            utterances = JsonConvert.DeserializeObject<string[]>(jsonBody.DetectorUtterances);
+                            string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
+                            var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
+                            var searchUtterances = await _searchService.SearchUtterances(runtimeContext.OperationContext.RequestId, description, utterances, resourceParams);
+                            string resultContent = await searchUtterances.Content.ReadAsStringAsync();
+                            try
+                            {
+                                utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
+                            }
+                            catch
+                            {
+                                utterancesResults = null;
+                            }
                         }
                     }
 
@@ -571,24 +574,38 @@ namespace Diagnostics.RuntimeHost.Controllers
             SearchResults searchResults = null;
             if (queryText != null && queryText.Length > 3)
             {
-                var resourceParams = _internalApiHelper.GetResourceParams(context.OperationContext.Resource as IResourceFilter);
-                var res = await _searchService.SearchDetectors(context.OperationContext.RequestId, queryText, resourceParams);
-                string resultContent = await res.Content.ReadAsStringAsync();
-                searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
-                searchResults.Results = searchResults.Results.Where(x => x.Score > 0.3).ToArray();
-                allDetectors.ForEach(p =>
+                if (_searchService.IsEnabled())
                 {
-                    var det = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == p.EntryPointDefinitionAttribute.Id) : null;
-                    if (det != null)
+                    var resourceParams = _internalApiHelper.GetResourceParams(context.OperationContext.Resource as IResourceFilter);
+                    var res = await _searchService.SearchDetectors(context.OperationContext.RequestId, queryText, resourceParams);
+                    if (res != null && res.Content != null)
                     {
-                        p.EntryPointDefinitionAttribute.Score = det.Score;
+                        string resultContent = await res.Content.ReadAsStringAsync();
+                        searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
+                        searchResults.Results = searchResults.Results.Where(x => x.Score > 0.3).ToArray();
+                        allDetectors.ForEach(p =>
+                        {
+                            var det = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == p.EntryPointDefinitionAttribute.Id) : null;
+                            if (det != null)
+                            {
+                                p.EntryPointDefinitionAttribute.Score = det.Score;
+                            }
+                            else
+                            {
+                                p.EntryPointDefinitionAttribute.Score = 0;
+                            }
+                        });
+                        allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
                     }
                     else
                     {
-                        p.EntryPointDefinitionAttribute.Score = 0;
+                        throw new Exception("Search API returned null");
                     }
-                });
-                allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
+                }
+                else
+                {
+                    throw new Exception("Search service is disabled.");
+                }
             }
 
             return allDetectors.Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
