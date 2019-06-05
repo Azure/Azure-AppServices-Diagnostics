@@ -19,14 +19,14 @@ namespace Diagnostics.DataProviders
 
         private string dataProviderRequestId;
 
-        private KustoDataProvider kustoDataProvider;
+        private IKustoDataProvider kustoDataProvider;
 
-        public ChangeAnalysisDataProvider(OperationDataCache cache, ChangeAnalysisDataProviderConfiguration configuration, KustoDataProviderConfiguration kustoConfig, string requestId, string clientObjectId, string principalName) : base(cache)
+        public ChangeAnalysisDataProvider(OperationDataCache cache, ChangeAnalysisDataProviderConfiguration configuration, string requestId, string clientObjectId, string principalName, IKustoDataProvider kustoDataProvider) : base(cache)
         {
             dataProviderConfiguration = configuration;
             dataProviderRequestId = requestId;
             changeAnalysisClient = new ChangeAnalysisClient(configuration, requestId, clientObjectId, principalName);
-            kustoDataProvider = new KustoDataProvider(cache, kustoConfig, requestId);
+            this.kustoDataProvider = kustoDataProvider;
         }
 
         /// <summary>
