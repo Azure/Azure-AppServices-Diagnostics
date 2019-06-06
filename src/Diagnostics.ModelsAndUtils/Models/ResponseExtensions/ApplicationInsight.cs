@@ -25,9 +25,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public string Description { get; set; }
     }
 
-    public class ApplicationInsightOperationContext
+    public class AppInsightsOperationContext
     {
-        public ApplicationInsightOperationContext(string title, string description, string query, BladeInfo portalBladeInfo, Rendering renderingProperties)
+        public AppInsightsOperationContext(string title, string description, string query, BladeInfo portalBladeInfo, Rendering renderingProperties)
         {
             this.Title = title;
             this.Description = description;
@@ -112,7 +112,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </code>
         /// </example>
 
-        public static DiagnosticData AddApplicationInsightsViewList(this Response response, List<ApplicationInsightOperationContext> applicationInsightsList)
+        public static DiagnosticData AddApplicationInsightsViewList(this Response response, List<AppInsightsOperationContext> applicationInsightsList)
         {
             if (applicationInsightsList == null || !applicationInsightsList.Any())
                 throw new ArgumentNullException("Paramter List<Guage> is null or contains no elements.");
@@ -124,7 +124,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             table.Columns.Add("PortalBladeInfo", typeof(BladeInfo));
             table.Columns.Add("RenderingProperties", typeof(Rendering));
 
-            foreach (ApplicationInsightOperationContext context in applicationInsightsList)
+            foreach (AppInsightsOperationContext context in applicationInsightsList)
             {
                 table.Rows.Add(
                     context.Title,
