@@ -218,7 +218,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data rendered as Changes
         /// </summary>
-        ChangesView
+        ChangesView,
+
+        /// <summary>
+        /// Data rendered for appliation insight
+        /// </summary>
+        AppInsight
     }
 
     /// <summary>
