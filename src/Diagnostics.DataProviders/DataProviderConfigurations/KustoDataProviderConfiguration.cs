@@ -137,7 +137,7 @@ namespace Diagnostics.DataProviders
             var separator = new char[] { ',' };
             var regionGroupingParts = KustoRegionGroupings.Split(separator);
             var clusterNameGroupingParts = KustoClusterNameGroupings.Split(separator);
-            var clusterFailoverGroupingParts = KustoClusterFailoverGroupings.Split(separator);
+            var clusterFailoverGroupingParts = string.IsNullOrWhiteSpace(KustoClusterFailoverGroupings) ? new string[0] : KustoClusterFailoverGroupings.Split(separator);
 
             if (regionGroupingParts.Length != clusterNameGroupingParts.Length)
             {

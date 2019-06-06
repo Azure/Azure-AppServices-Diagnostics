@@ -26,11 +26,17 @@ namespace Diagnostics.DataProviders
             _kustoDataProvider = new KustoDataProvider(new OperationDataCache(), _configuration, Guid.NewGuid().ToString(), this);
             _cancellationToken = new CancellationTokenSource();
 
-            foreach (var value in _configuration.FailoverClusterNameCollection)
+
+            foreach (var primaryCluster in _configuration.RegionSpecificClusterNameCollection.Values)
             {
-                _heartbeats[value.Key] = new KustoHeartBeat(value.Key, value.Value, _kustoDataProvider, _configuration);
+                string failoverCluster = null;
+                if  (_configuration.FailoverClusterNameCollection.ContainsKey(primaryCluster))
+                {
+                    failoverCluster = _configuration.FailoverClusterNameCollection[primaryCluster];
+                }
+                _heartbeats[primaryCluster] = new KustoHeartBeat(primaryCluster, failoverCluster, _kustoDataProvider, _configuration);
                 // Start threads for each heartbeat on the thread pool
-                Task.Run(() => _heartbeats[value.Key].RunHeartBeatTask(_cancellationToken.Token));
+                Task.Run(() => _heartbeats[primaryCluster].RunHeartBeatTask(_cancellationToken.Token));
             }
         }
 
@@ -59,7 +65,7 @@ namespace Diagnostics.DataProviders
                 }
             }
 
-            if (_heartbeats.ContainsKey(kustoClusterName))
+            if (!string.IsNullOrEmpty(_heartbeats[kustoClusterName].FailoverCluster))
             {
                 if (!_heartbeats[kustoClusterName].UsePrimaryCluster)
                 {
@@ -117,22 +123,33 @@ namespace Diagnostics.DataProviders
                 try
                 {
                     // Run kusto query with time out
-                    var primaryTask = _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, PrimaryCluster, _configuration.HeartBeatTimeOut, activityId);
-                    var failoverTask = _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, FailoverCluster, _configuration.HeartBeatTimeOut, activityId);
-                    await Task.WhenAll(new Task[] { primaryTask, failoverTask });
-
-                    var result = await primaryTask;
-                    if (result.Rows.Count >= 1)
+                    if (string.IsNullOrEmpty(FailoverCluster))
                     {
-                        primaryHeartBeatSuccess = true;
-                    }
+                        var primaryTask = await _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, PrimaryCluster, _configuration.HeartBeatTimeOut, activityId);
 
-                    var failoverResult = await failoverTask;
-                    if (failoverResult.Rows.Count >= 1)
+                        if (primaryTask.Rows.Count >= 1)
+                        {
+                            primaryHeartBeatSuccess = true;
+                        }
+                    }
+                    else
                     {
-                        failoverHeartBeatSuccess = true;
-                    }
+                        var primaryTask = _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, PrimaryCluster, _configuration.HeartBeatTimeOut, activityId);
+                        var failoverTask = _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, FailoverCluster, _configuration.HeartBeatTimeOut, activityId);
+                        await Task.WhenAll(new Task[] { primaryTask, failoverTask });
 
+                        var result = await primaryTask;
+                        if (result.Rows.Count >= 1)
+                        {
+                            primaryHeartBeatSuccess = true;
+                        }
+
+                        var failoverResult = await failoverTask;
+                        if (failoverResult.Rows.Count >= 1)
+                        {
+                            failoverHeartBeatSuccess = true;
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
