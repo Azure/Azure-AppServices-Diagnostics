@@ -49,10 +49,16 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
         {
+
+            return await ExecuteQueryAsync(query, cluster, database, DataProviderConstants.DefaultTimeoutInSeconds, requestId, operationName);
+        }
+
+        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, int timeoutSeconds, string requestId = null, string operationName = null)
+        {
             var timeTakenStopWatch = new Stopwatch();
             var authorizationToken = await KustoTokenService.Instance.GetAuthorizationTokenAsync();
             var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId}##{0}";
-            var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
+            var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
             var request = new HttpRequestMessage(HttpMethod.Post, KustoApiQueryEndpoint.Replace("{cluster}", cluster));
             request.Headers.Add("Authorization", authorizationToken);
             request.Headers.Add(HeaderConstants.ClientRequestIdHeader, requestId ?? Guid.NewGuid().ToString());

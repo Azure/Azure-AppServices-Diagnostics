@@ -33,7 +33,7 @@ def removeLogFile(fileName):
     except OSError:
         pass
 
-modelsPath = githubFolderPath
+modelsPath = detectorsFolderPath
 def copyFolder(src, dst):
     if os.path.isdir(src):
         if os.path.isdir(dst):
