@@ -8,6 +8,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
     public class BladeInfo
     {
+        public BladeInfo(string bladeName, string description)
+        {
+            this.BladeName = bladeName;
+            this.Description = description;
+        }
+
         /// <summary>
         /// Application insights blade name
         /// </summary>
@@ -21,6 +27,14 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
     public class ApplicationInsightOperationContext
     {
+        public ApplicationInsightOperationContext(string title, string description, string query, BladeInfo portalBladeInfo, Rendering renderingProperties)
+        {
+            this.Title = title;
+            this.Description = description;
+            this.Query = query;
+            this.PortalBladeInfo = portalBladeInfo;
+            this.RenderingProperties = renderingProperties;
+        }
         /// <summary>
         /// Application Insights rendering title
         /// </summary>
