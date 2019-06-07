@@ -15,7 +15,6 @@ namespace Diagnostics.RuntimeHost.Services
 {
     public interface ISearchService : IDisposable
     {
-        bool IsEnabled();
         Task<HttpResponseMessage> SearchDetectors(string requestId, string query, Dictionary<string, string> parameters);
 
         Task<HttpResponseMessage> SearchUtterances(string requestId, string query, string[] detectorUtterances, Dictionary<string, string> parameters);
@@ -34,97 +33,54 @@ namespace Diagnostics.RuntimeHost.Services
         private string TriggerTrainingUrl;
         private string TriggerModelRefreshUrl;
         private HttpClient _httpClient;
-        private IConfiguration _config;
-        private IHostingEnvironment _env;
-        private bool isEnabled;
 
-        public SearchService(IHostingEnvironment environment, IConfiguration configuration)
+        public SearchService()
         {
-            _config = configuration;
-            _env = environment;
             QueryDetectorsUrl = UriElements.SearchAPI + "/queryDetectors";
             QueryUtterancesUrl = UriElements.SearchAPI + "/queryUtterances";
             TriggerTrainingUrl = UriElements.TrainingAPI + "/triggerTraining";
             TriggerModelRefreshUrl = UriElements.SearchAPI + "/refreshModel";
-            isEnabled = false;
-            LoadConfigurations();
-            if (isEnabled)
-            {
-                InitializeHttpClient();
-            }
+            InitializeHttpClient();
         }
 
-        public bool IsEnabled()
+        public Task<HttpResponseMessage> Get(HttpRequestMessage request)
         {
-            return isEnabled;
+            return _httpClient.SendAsync(request);
         }
 
-        public void LoadConfigurations()
+        public Task<HttpResponseMessage> SearchDetectors(string requestId, string query, Dictionary<string, string> parameters)
         {
-            if (_env.IsProduction())
-            {
-                isEnabled = Convert.ToBoolean(Registry.GetValue(RegistryConstants.SearchAPIRegistryPath, RegistryConstants.SearchAPIEnabledKey, string.Empty));
-            }
-            else
-            {
-                isEnabled = Convert.ToBoolean(_config[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
-            }
+            parameters.Add("text", query);
+            parameters.Add("requestId", requestId ?? string.Empty);
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryDetectorsUrl);
+            request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
+            return Get(request);
         }
 
-        public async Task<HttpResponseMessage> Get(HttpRequestMessage request)
+        public Task<HttpResponseMessage> SearchUtterances(string requestId, string query, string[] detectorUtterances, Dictionary<string, string> parameters)
         {
-            return await _httpClient.SendAsync(request);
-        }
-
-        public async Task<HttpResponseMessage> SearchDetectors(string requestId, string query, Dictionary<string, string> parameters)
-        {
-            if (isEnabled)
-            {
-                parameters.Add("text", query);
-                parameters.Add("requestId", requestId ?? string.Empty);
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryDetectorsUrl);
-                request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
-                return await Get(request);
-            }
-            return null;
-        }
-
-        public async Task<HttpResponseMessage> SearchUtterances(string requestId, string query, string[] detectorUtterances, Dictionary<string, string> parameters)
-        {
-            if (isEnabled)
-            {
-                parameters.Add("detector_description", query);
-                parameters.Add("detector_utterances", JsonConvert.SerializeObject(detectorUtterances));
-                parameters.Add("requestId", requestId);
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryUtterancesUrl);
-                request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
-                return await Get(request);
-            }
-            return null;
+            parameters.Add("detector_description", query);
+            parameters.Add("detector_utterances", JsonConvert.SerializeObject(detectorUtterances));
+            parameters.Add("requestId", requestId);
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryUtterancesUrl);
+            request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
+            return Get(request);
         }
 
         public Task<HttpResponseMessage> TriggerTraining(string requestId, string trainingConfig, Dictionary<string, string> parameters)
         {
-            if (isEnabled)
-            {
-                parameters.Add("trainingConfig", trainingConfig);
-                parameters.Add("requestId", requestId);
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, TriggerTrainingUrl);
-                request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
-                return Get(request);
-            }
-            return null;
+            parameters.Add("trainingConfig", trainingConfig);
+            parameters.Add("requestId", requestId);
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, TriggerTrainingUrl);
+            request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
+            return Get(request);
         }
 
         public Task<HttpResponseMessage> TriggerModelRefresh(string requestId, Dictionary<string, string> parameters)
         {
-            if (isEnabled)
-            {
-                parameters.Add("requestId", requestId);
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, AppendQueryStringParams(TriggerModelRefreshUrl, parameters));
-                return Get(request);
-            }
-            return null;
+            parameters.Add("requestId", requestId);
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, AppendQueryStringParams(TriggerModelRefreshUrl, parameters));
+            return Get(request);
         }
 
         public void Dispose()

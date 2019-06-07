@@ -103,16 +103,12 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpPost(UriElements.RefreshModel)]
         public async Task<IActionResult> RefreshModel(string productId)
         {
-            if (_searchService.IsEnabled())
-            {
-                Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
-                var requestId = requestIds.FirstOrDefault();
-                var parameters = new Dictionary<string, string>();
-                parameters.Add("productId", productId);
-                await _sourceWatcherService.Watcher.WaitForFirstCompletion();
-                return Ok(await _searchService.TriggerModelRefresh(requestId, parameters));
-            }
-            return BadRequest("Search service is disabled");
+            Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
+            var requestId = requestIds.FirstOrDefault();
+            var parameters = new Dictionary<string, string>();
+            parameters.Add("productId", productId);
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
+            return Ok(await _searchService.TriggerModelRefresh(requestId, parameters));
         }
 
         [HttpPost(UriElements.UpdateResourceConfig)]
@@ -135,16 +131,12 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpPost(UriElements.TrainModel)]
         public async Task<IActionResult> TrainModel(string productId, [FromBody]TrainingConfigModel trainingConfigModel)
         {
-            if (_searchService.IsEnabled())
-            {
-                Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
-                var requestId = requestIds.FirstOrDefault();
-                var parameters = new Dictionary<string, string>();
-                parameters.Add("productId", productId);
-                await _sourceWatcherService.Watcher.WaitForFirstCompletion();
-                return Ok(await _searchService.TriggerTraining(requestId, trainingConfigModel.TrainingConfig, parameters));
-            }
-            return BadRequest("Search service is disabled");
+            Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
+            var requestId = requestIds.FirstOrDefault();
+            var parameters = new Dictionary<string, string>();
+            parameters.Add("productId", productId);
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
+            return Ok(await _searchService.TriggerTraining(requestId, trainingConfigModel.TrainingConfig, parameters));
         }
 
         /// <summary>

@@ -239,25 +239,22 @@ namespace Diagnostics.RuntimeHost.Controllers
                     bool isInternalCall = true;
                     QueryUtterancesResults utterancesResults = null;
 
-                    if (_searchService.IsEnabled())
+                    // Get suggested utterances for the detector
+                    string[] utterances = null;
+                    if (jsonBody.DetectorUtterances != null && invoker.EntryPointDefinitionAttribute.Description.ToString().Length > 3)
                     {
-                        // Get suggested utterances for the detector
-                        string[] utterances = null;
-                        if (jsonBody.DetectorUtterances != null && invoker.EntryPointDefinitionAttribute.Description.ToString().Length > 3)
+                        try
                         {
                             utterances = JsonConvert.DeserializeObject<string[]>(jsonBody.DetectorUtterances);
                             string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
                             var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
                             var searchUtterances = await _searchService.SearchUtterances(runtimeContext.OperationContext.RequestId, description, utterances, resourceParams);
                             string resultContent = await searchUtterances.Content.ReadAsStringAsync();
-                            try
-                            {
-                                utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
-                            }
-                            catch
-                            {
-                                utterancesResults = null;
-                            }
+                            utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
+                        }
+                        catch
+                        {
+                            utterancesResults = null;
                         }
                     }
 
@@ -574,37 +571,30 @@ namespace Diagnostics.RuntimeHost.Controllers
             SearchResults searchResults = null;
             if (queryText != null && queryText.Length > 3)
             {
-                if (_searchService.IsEnabled())
+                var resourceParams = _internalApiHelper.GetResourceParams(context.OperationContext.Resource as IResourceFilter);
+                var res = await _searchService.SearchDetectors(context.OperationContext.RequestId, queryText, resourceParams);
+                if (res != null && res.Content != null)
                 {
-                    var resourceParams = _internalApiHelper.GetResourceParams(context.OperationContext.Resource as IResourceFilter);
-                    var res = await _searchService.SearchDetectors(context.OperationContext.RequestId, queryText, resourceParams);
-                    if (res != null && res.Content != null)
+                    string resultContent = await res.Content.ReadAsStringAsync();
+                    searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
+                    searchResults.Results = searchResults.Results.Where(x => x.Score > 0.3).ToArray();
+                    allDetectors.ForEach(p =>
                     {
-                        string resultContent = await res.Content.ReadAsStringAsync();
-                        searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
-                        searchResults.Results = searchResults.Results.Where(x => x.Score > 0.3).ToArray();
-                        allDetectors.ForEach(p =>
+                        var det = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == p.EntryPointDefinitionAttribute.Id) : null;
+                        if (det != null)
                         {
-                            var det = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == p.EntryPointDefinitionAttribute.Id) : null;
-                            if (det != null)
-                            {
-                                p.EntryPointDefinitionAttribute.Score = det.Score;
-                            }
-                            else
-                            {
-                                p.EntryPointDefinitionAttribute.Score = 0;
-                            }
-                        });
-                        allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
-                    }
-                    else
-                    {
-                        throw new Exception("Search API returned null");
-                    }
+                            p.EntryPointDefinitionAttribute.Score = det.Score;
+                        }
+                        else
+                        {
+                            p.EntryPointDefinitionAttribute.Score = 0;
+                        }
+                    });
+                    allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
                 }
                 else
                 {
-                    throw new Exception("Search service is disabled.");
+                    throw new Exception("Search API returned null");
                 }
             }
 
