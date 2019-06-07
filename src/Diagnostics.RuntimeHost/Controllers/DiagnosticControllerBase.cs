@@ -239,21 +239,29 @@ namespace Diagnostics.RuntimeHost.Controllers
                     bool isInternalCall = true;
                     QueryUtterancesResults utterancesResults = null;
 
-                    // Get suggested utterances for the detector
-                    string[] utterances = null;
                     if (jsonBody.DetectorUtterances != null && invoker.EntryPointDefinitionAttribute.Description.ToString().Length > 3)
                     {
                         try
                         {
+                            // Get suggested utterances for the detector
+                            string[] utterances = null;
                             utterances = JsonConvert.DeserializeObject<string[]>(jsonBody.DetectorUtterances);
                             string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
                             var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
                             var searchUtterances = await _searchService.SearchUtterances(runtimeContext.OperationContext.RequestId, description, utterances, resourceParams);
-                            string resultContent = await searchUtterances.Content.ReadAsStringAsync();
-                            utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
+                            if (searchUtterances != null && searchUtterances.Content != null)
+                            {
+                                string resultContent = await searchUtterances.Content.ReadAsStringAsync();
+                                utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
+                            }
+                            else
+                            {
+                                DiagnosticsETWProvider.Instance.LogInternalAPIHandledException(runtimeContext.OperationContext.RequestId, "SearchServiceReturnedNull", "Search service returned null. This might be because search api is disabled in the project");
+                            }
                         }
-                        catch
+                        catch (Exception ex)
                         {
+                            DiagnosticsETWProvider.Instance.LogInternalAPIHandledException(runtimeContext.OperationContext.RequestId, "SearchAPICallException: QueryUtterances: " + ex.GetType().ToString(), ex.Message);
                             utterancesResults = null;
                         }
                     }
@@ -568,33 +576,42 @@ namespace Diagnostics.RuntimeHost.Controllers
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var allDetectors = _invokerCache.GetEntityInvokerList<TResource>(context).ToList();
 
-            SearchResults searchResults = null;
             if (queryText != null && queryText.Length > 3)
             {
+                SearchResults searchResults = null;
                 var resourceParams = _internalApiHelper.GetResourceParams(context.OperationContext.Resource as IResourceFilter);
-                var res = await _searchService.SearchDetectors(context.OperationContext.RequestId, queryText, resourceParams);
-                if (res != null && res.Content != null)
+                try
                 {
-                    string resultContent = await res.Content.ReadAsStringAsync();
-                    searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
-                    searchResults.Results = searchResults.Results.Where(x => x.Score > 0.3).ToArray();
-                    allDetectors.ForEach(p =>
+                    var res = await _searchService.SearchDetectors(context.OperationContext.RequestId, queryText, resourceParams);
+                    if (res != null && res.Content != null)
                     {
-                        var det = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == p.EntryPointDefinitionAttribute.Id) : null;
-                        if (det != null)
+                        string resultContent = await res.Content.ReadAsStringAsync();
+                        searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
+                        searchResults.Results = searchResults.Results.Where(x => x.Score > 0.3).ToArray();
+                        allDetectors.ForEach(p =>
                         {
-                            p.EntryPointDefinitionAttribute.Score = det.Score;
-                        }
-                        else
-                        {
-                            p.EntryPointDefinitionAttribute.Score = 0;
-                        }
-                    });
-                    allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
+                            var det = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == p.EntryPointDefinitionAttribute.Id) : null;
+                            if (det != null)
+                            {
+                                p.EntryPointDefinitionAttribute.Score = det.Score;
+                            }
+                            else
+                            {
+                                p.EntryPointDefinitionAttribute.Score = 0;
+                            }
+                        });
+                        allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
+                    }
+                    else
+                    {
+                        DiagnosticsETWProvider.Instance.LogInternalAPIHandledException(context.OperationContext.RequestId, "SearchServiceReturnedNull", "Search service returned null. This might be because search api is disabled in the project" );
+                        return new List<DiagnosticApiResponse>();
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    throw new Exception("Search API returned null");
+                    DiagnosticsETWProvider.Instance.LogInternalAPIHandledException(context.OperationContext.RequestId, "SearchAPICallException: QueryDetectors: " + ex.GetType().ToString(), ex.Message);
+                    return new List<DiagnosticApiResponse>();
                 }
             }
 

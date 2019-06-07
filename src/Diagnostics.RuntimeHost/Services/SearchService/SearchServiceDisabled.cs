@@ -28,22 +28,22 @@ namespace Diagnostics.RuntimeHost.Services
 
         public Task<HttpResponseMessage> SearchDetectors(string requestId, string query, Dictionary<string, string> parameters)
         {
-            return null;
+            return Task.FromResult<HttpResponseMessage>(null);
         }
 
         public Task<HttpResponseMessage> SearchUtterances(string requestId, string query, string[] detectorUtterances, Dictionary<string, string> parameters)
         {
-            return null;
+            return Task.FromResult<HttpResponseMessage>(null);
         }
 
         public Task<HttpResponseMessage> TriggerTraining(string requestId, string trainingConfig, Dictionary<string, string> parameters)
         {
-            return null;
+            return Task.FromResult<HttpResponseMessage>(null);
         }
 
         public Task<HttpResponseMessage> TriggerModelRefresh(string requestId, Dictionary<string, string> parameters)
         {
-            return null;
+            return Task.FromResult<HttpResponseMessage>(null);
         }
 
         public void Dispose()
