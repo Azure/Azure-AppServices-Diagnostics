@@ -20,3 +20,5 @@ steps:
     command: test
     projects: 'tests/Diagnostics.Tests.csproj'
     arguments: '--configuration $(buildConfiguration)'
+# do this near the end of your pipeline in most cases
+- task: PublishBuildArtifacts@1
