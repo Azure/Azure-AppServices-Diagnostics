@@ -218,7 +218,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data rendered as Changes
         /// </summary>
-        ChangesView
+        ChangesView,
+
+        /// <summary>
+        /// Dependent resources of web app rendered as graph.
+        /// </summary>
+        DependencyGraph
     }
 
     /// <summary>
