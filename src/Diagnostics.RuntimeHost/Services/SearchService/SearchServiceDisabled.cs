@@ -1,15 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
-using System.Web;
-using Diagnostics.RuntimeHost.Utilities;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Win32;
-using Newtonsoft.Json;
 
 namespace Diagnostics.RuntimeHost.Services
 {
