@@ -65,7 +65,7 @@ namespace Diagnostics.DataProviders
                 }
             }
 
-            if (!string.IsNullOrEmpty(_heartbeats[kustoClusterName].FailoverCluster))
+            if (!string.IsNullOrWhiteSpace(_heartbeats[kustoClusterName].FailoverCluster))
             {
                 if (!_heartbeats[kustoClusterName].UsePrimaryCluster)
                 {
@@ -183,7 +183,7 @@ namespace Diagnostics.DataProviders
                 
                 string activityId = Guid.NewGuid().ToString();
 
-                if (string.IsNullOrEmpty(FailoverCluster))
+                if (string.IsNullOrWhiteSpace(FailoverCluster))
                 {
                     await RunHeartBeatPrimary(activityId);
                 }
