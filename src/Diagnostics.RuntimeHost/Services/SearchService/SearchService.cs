@@ -6,9 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using Diagnostics.RuntimeHost.Utilities;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Win32;
 using Newtonsoft.Json;
 
 namespace Diagnostics.RuntimeHost.Services
