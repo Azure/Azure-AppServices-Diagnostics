@@ -62,6 +62,12 @@ namespace Diagnostics.DataProviders
         public int HeartBeatConsecutiveFailureLimit { get; set; }
 
         /// <summary>
+        /// Number of consecutive successes before returning to the primary cluster.
+        /// </summary>
+        [ConfigurationName("HeartBeatConsecutiveSuccessLimit")]
+        public int HeartBeatConsecutiveSuccessLimit { get; set; }
+
+        /// <summary>
         /// Query to run against each cluster to check health
         /// </summary>
         [ConfigurationName("HeartBeatQuery")]
@@ -70,14 +76,14 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// Timeout of the query
         /// </summary>
-        [ConfigurationName("HeartBeatTimeOut")]
-        public int HeartBeatTimeOut { get; set; }
+        [ConfigurationName("HeartBeatTimeOutInSeconds")]
+        public int HeartBeatTimeOutInSeconds { get; set; }
 
         /// <summary>
         /// Delay between each heart beat
         /// </summary>
-        [ConfigurationName("HeartBeatDelay")]
-        public int HeartBeatDelay { get; set; }
+        [ConfigurationName("HeartBeatDelayInSeconds")]
+        public int HeartBeatDelayInSeconds { get; set; }
 
         /// <summary>
         /// Region Specific Cluster Names.

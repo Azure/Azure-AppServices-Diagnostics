@@ -119,7 +119,7 @@ namespace Diagnostics.DataProviders
             Exception exceptionForLog = null;
             try
             {
-                var primaryHeartBeat = await _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, PrimaryCluster, _configuration.HeartBeatTimeOut, activityId);
+                var primaryHeartBeat = await _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, PrimaryCluster, _configuration.HeartBeatTimeOutInSeconds, activityId);
 
                 if (primaryHeartBeat.Rows.Count >= 1)
                 {
@@ -148,7 +148,7 @@ namespace Diagnostics.DataProviders
             {
                 UsePrimaryCluster = false;
             } // else should stop failover
-            else if (!UsePrimaryCluster && _ConsecutiveSuccessCount >= _configuration.HeartBeatConsecutiveFailureLimit)
+            else if (!UsePrimaryCluster && _ConsecutiveSuccessCount >= _configuration.HeartBeatConsecutiveSuccessLimit)
             {
                 UsePrimaryCluster = true;
             }
@@ -162,7 +162,7 @@ namespace Diagnostics.DataProviders
             Exception exceptionForLog = null;
             try
             {
-                var failoverHeartBeat = await _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, PrimaryCluster, _configuration.HeartBeatTimeOut, activityId);
+                var failoverHeartBeat = await _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, PrimaryCluster, _configuration.HeartBeatTimeOutInSeconds, activityId);
 
                 if (failoverHeartBeat.Rows.Count >= 1)
                 {
@@ -193,13 +193,13 @@ namespace Diagnostics.DataProviders
                     var failoverTask = RunHeartBeatFailover(activityId);
                     await Task.WhenAll(new Task[] { primaryTask, failoverTask });
                 }
-                await Task.Delay(TimeSpan.FromSeconds(_configuration.HeartBeatDelay), cancellationToken);
+                await Task.Delay(TimeSpan.FromSeconds(_configuration.HeartBeatDelayInSeconds), cancellationToken);
             }
         }
 
-        private void LogHeartBeatInformation(string primaryOrFailover, bool clustersuccess, string cluster, string activityId, bool usingPrimaryCluster, Exception exception)
+        private void LogHeartBeatInformation(string primaryOrFailover, bool clusterSuccess, string cluster, string activityId, bool usingPrimaryCluster, Exception exception)
         {
-            var clusterStatus = clustersuccess ? "Success" : "Failed";
+            var clusterStatus = clusterSuccess ? "Success" : "Failed";
 
             DiagnosticsETWProvider.Instance.LogKustoHeartbeatInformation(
                activityId,
