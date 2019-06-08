@@ -206,9 +206,18 @@ namespace Diagnostics.Tests.DataProviderTests
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
             var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration);
-            
-            MockKustoClient.ShouldHeartbeatSucceed = false;
+
+            MockKustoClient.ShouldHeartbeatSucceed = true;
             int startingHeartBeatRuns = MockKustoClient.HeartBeatRuns;
+            do
+            {
+                await Task.Delay(100);
+            } while (startingHeartBeatRuns == MockKustoClient.HeartBeatRuns);
+            Assert.Equal(config.KustoConfiguration.KustoClusterNameGroupings, kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
+
+
+            MockKustoClient.ShouldHeartbeatSucceed = false;
+            startingHeartBeatRuns = MockKustoClient.HeartBeatRuns;
             do
             {
                 await Task.Delay(100);
