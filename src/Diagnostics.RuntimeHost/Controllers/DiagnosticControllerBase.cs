@@ -587,19 +587,23 @@ namespace Diagnostics.RuntimeHost.Controllers
                     {
                         string resultContent = await res.Content.ReadAsStringAsync();
                         searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
-                        searchResults.Results = searchResults.Results.Where(x => x.Score > 0.3).ToArray();
-                        allDetectors.ForEach(p =>
+                        // Select search results (Detectors) whose score is greater than 0.3 (considering anything below that should not be relevant for the search query)
+                        searchResults.Results = searchResults.Results.Where(result => result.Score > 0.3).ToArray();
+
+                        allDetectors.ForEach(detector =>
                         {
-                            var det = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == p.EntryPointDefinitionAttribute.Id) : null;
-                            if (det != null)
+                            // Assign the score to detector if it exists in search results, else default to 0
+                            var detectorWithScore = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == detector.EntryPointDefinitionAttribute.Id) : null;
+                            if (detectorWithScore != null)
                             {
-                                p.EntryPointDefinitionAttribute.Score = det.Score;
+                                detector.EntryPointDefinitionAttribute.Score = detectorWithScore.Score;
                             }
                             else
                             {
-                                p.EntryPointDefinitionAttribute.Score = 0;
+                                detector.EntryPointDefinitionAttribute.Score = 0;
                             }
                         });
+                        // Finally select only those detectors that have a positive score value
                         allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
                     }
                     else
