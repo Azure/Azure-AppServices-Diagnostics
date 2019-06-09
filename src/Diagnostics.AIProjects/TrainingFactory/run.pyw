@@ -1,4 +1,5 @@
 import os, gc, shutil, uuid
+from argparse import ArgumentParser
 from flask import Flask, request
 from Logger import *
 from datetime import datetime, timezone
@@ -7,6 +8,10 @@ from functools import wraps
 from ResourceFilterHelper import getProductId, findProductId
 from ModelTrainer import trainModel
 from RegistryReader import *
+
+argparser = ArgumentParser()
+argparser.add_argument("-d", "--debug", default=False, help="flag for debug mode")
+args = vars(argparser.parse_args())
 
 class ResourceConfigDownloadFailed(Exception):
     pass
@@ -118,4 +123,4 @@ def triggerTrainingMethod():
 if __name__ == '__main__':
     HOST = os.environ.get('SERVER_HOST', '0.0.0.0')
     PORT = 8011
-    app.run(HOST, PORT)
+    app.run(HOST, PORT, debug=args['debug'])
