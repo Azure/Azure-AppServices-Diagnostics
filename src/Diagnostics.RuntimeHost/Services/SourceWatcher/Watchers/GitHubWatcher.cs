@@ -320,13 +320,14 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         {
             Dictionary<string, string> parameters = new Dictionary<string, string>();
             parameters.Add("productId", productId);
+            var requestId = Guid.NewGuid().ToString();
             try
             {
-                _searchService.TriggerModelRefresh("InternalSourceWatcherRequest" + productId, parameters);
+                _searchService.TriggerModelRefresh(requestId, parameters);
             }
             catch (Exception ex)
             {
-                DiagnosticsETWProvider.Instance.LogInternalAPIHandledException("InternalSourceWatcherRequest" + productId, "SearchAPICallException: RefreshModel: " + ex.GetType().ToString(), ex.Message);
+                DiagnosticsETWProvider.Instance.LogInternalAPIHandledException(requestId, "SearchAPICallException: RefreshModel: " + ex.GetType().ToString(), ex.Message);
             }
             return;
         }
