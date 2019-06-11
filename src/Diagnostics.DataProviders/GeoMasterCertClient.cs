@@ -15,7 +15,7 @@ namespace Diagnostics.DataProviders
         public HttpClient Client { get; }
         public Uri BaseUri { get; }
 
-        public GeoMasterCertClient(GeoMasterDataProviderConfiguration configuration)
+        public GeoMasterCertClient(GeoMasterDataProviderConfiguration configuration, string geoMasterName)
         {
             var handler = new HttpClientHandler();
 
@@ -30,8 +30,9 @@ namespace Diagnostics.DataProviders
                 handler.ServerCertificateCustomValidationCallback = delegate { return true; };
             }
 
-            var geoEndpoint = new UriBuilder(configuration.GeoEndpointAddress)
+            var geoEndpoint = new UriBuilder(geoMasterName ?? configuration.GeoEndpointAddress)
             {
+                Scheme = "https",
                 Port = GeoMasterCsmApiPort
             };
 
