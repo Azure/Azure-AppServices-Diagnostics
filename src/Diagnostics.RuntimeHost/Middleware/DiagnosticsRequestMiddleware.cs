@@ -110,13 +110,13 @@ namespace Diagnostics.RuntimeHost.Middleware
                 clientPrincipalName = httpContext.Request.Headers[ClientPrincipalNameHeader];
             }
 
-            string geomasterName = string.Empty;
-            if (httpContext.Request.Headers.ContainsKey(GeomasterNameHeader))
+            string geomasterHostName = string.Empty;
+            if (httpContext.Request.Headers.ContainsKey(GeomasterHostNameHeader))
             {
-                geomasterName = httpContext.Request.Headers[GeomasterNameHeader];
+                geomasterHostName = httpContext.Request.Headers[GeomasterHostNameHeader];
             }
 
-            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName, kustoHeartBeatService, geomasterName));
+            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName, kustoHeartBeatService, geomasterHostName));
         }
 
         private void EndRequest_Handle(HttpContext httpContext)

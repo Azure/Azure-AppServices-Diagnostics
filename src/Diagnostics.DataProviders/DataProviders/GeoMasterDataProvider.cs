@@ -16,7 +16,7 @@ namespace Diagnostics.DataProviders
 
         private readonly IGeoMasterClient _geoMasterClient;
         private GeoMasterDataProviderConfiguration _configuration;
-        private string _geoMasterName;
+        private string _geoMasterHostName;
 
         private string[] AllowedlistAppSettingsStartingWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType" };
 
@@ -24,7 +24,7 @@ namespace Diagnostics.DataProviders
 
         public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache)
         {
-            _geoMasterName = context.GeomasterName;
+            _geoMasterHostName = context.GeomasterHostName;
             _configuration = context.Configuration.GeoMasterConfiguration;
             _geoMasterClient = InitClient();
         }
@@ -35,7 +35,7 @@ namespace Diagnostics.DataProviders
             bool onDiagRole = !string.IsNullOrWhiteSpace(_configuration.GeoCertThumbprint);
             if (onDiagRole)
             {
-                geoMasterClient = new GeoMasterCertClient(_configuration, _geoMasterName);
+                geoMasterClient = new GeoMasterCertClient(_configuration, _geoMasterHostName);
             }
             else
             {
