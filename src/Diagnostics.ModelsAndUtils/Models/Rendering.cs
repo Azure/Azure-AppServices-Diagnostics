@@ -221,6 +221,10 @@ namespace Diagnostics.ModelsAndUtils.Models
         ChangesView,
 
         /// <summary>
+        /// Data rendered for appliation insight
+        /// </summary>
+        AppInsight,
+        
         /// Dependent resources of web app rendered as graph.
         /// </summary>
         DependencyGraph
