@@ -108,7 +108,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public static DiagnosticData AddApplicationInsightsViewList(this Response response, List<AppInsightsOperationContext> applicationInsightsList)
         {
             if (applicationInsightsList == null || !applicationInsightsList.Any())
-                throw new ArgumentNullException("Paramter List<Guage> is null or contains no elements.");
+                throw new ArgumentNullException("Paramter applicationInsightsList is null or contains no elements.");
 
             var table = new DataTable();
             table.Columns.Add("Title", typeof(string));
