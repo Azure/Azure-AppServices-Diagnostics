@@ -223,7 +223,11 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data rendered for appliation insight
         /// </summary>
-        AppInsight
+        AppInsight,
+        
+        /// Dependent resources of web app rendered as graph.
+        /// </summary>
+        DependencyGraph
     }
 
     /// <summary>

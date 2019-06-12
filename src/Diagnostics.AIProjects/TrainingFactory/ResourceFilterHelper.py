@@ -6,9 +6,10 @@ def findProductIdRecursive(configDict, productid):
         if configDict==productid:
             return True
         return False
-    for key in configDict.keys():
-        return any([findProductIdRecursive(configDict[key], productid)])
-    return False
+    try:
+        return any([findProductIdRecursive(configDict[key], productid) for key in configDict.keys()])
+    except:
+        return False
 
 def findProductId(productid):
     global resourceConfig
