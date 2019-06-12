@@ -75,6 +75,18 @@ namespace Diagnostics.ModelsAndUtils.Attributes
                     return AnalysisType.Split(',').ToList();
                 }
             }
+
+            set
+            {
+                if (value == null)
+                {
+                    AnalysisType = string.Empty;
+                }
+                else
+                {
+                    AnalysisType = string.Join(",", value);
+                }
+            }
         }
 
         /// <summary>
