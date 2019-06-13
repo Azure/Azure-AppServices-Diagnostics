@@ -90,6 +90,7 @@ namespace Diagnostics.DataProviders
                     case "KustoRegionGroupings":
                         return "mockstamp";
                     case "HeartBeatConsecutiveFailureLimit":
+                    case "HeartBeatConsecutiveSuccessLimit":
                         return "1";
                     case "HeartBeatQuery":
                         return "Heartbeat";
