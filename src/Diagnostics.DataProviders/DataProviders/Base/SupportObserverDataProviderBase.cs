@@ -63,14 +63,36 @@ namespace Diagnostics.DataProviders
                 throw new FormatException(exceptionMessage, ex);
             }
 
-            if (uri.Host.Contains(allowedHosts[0]) || uri.Host.Contains(allowedHosts[1]) || Configuration.ObserverLocalHostEnabled)
+            if (uri.Host.Contains(allowedHosts[0]) || uri.Host.Contains(allowedHosts[1]))
             {
                 return GetWawsObserverResourceAsync(uri);
+            }
+            else if (Configuration.ObserverLocalHostEnabled && TryGetLocalObserverRoute(uri, out var newUri))
+            {
+                return GetWawsObserverResourceAsync(newUri);
             }
             else
             {
                 return GetSupportObserverResourceAsync(uri);
             }
+        }
+
+        private static bool TryGetLocalObserverRoute(Uri uri, out Uri localObserverUri)
+        {
+            localObserverUri = uri;
+
+            if (!uri.AbsolutePath.StartsWith("/observer"))
+            {
+                return true;
+            }
+
+            if (uri.AbsolutePath.Contains("subscriptions") && (uri.AbsolutePath.EndsWith("webspaces") || uri.AbsolutePath.EndsWith("sites")))
+            {
+                localObserverUri = new Uri(uri, uri.AbsolutePath.Remove(0, "/observer".Length));
+                return true;
+            }
+
+            return false;
         }
 
         private async Task<dynamic> GetWawsObserverResourceAsync(Uri uri)
