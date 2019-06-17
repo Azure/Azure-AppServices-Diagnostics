@@ -23,8 +23,6 @@ namespace Diagnostics.DataProviders
 
         public AppSettingsDataProviderConfigurationFactory(IHostingEnvironment env)
         {
-            
-
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);

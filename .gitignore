@@ -314,6 +314,3 @@ build/
 dist/
 aot/
 **/Diagnostics.AIProjects/run/**
-
-# Appsettings file that may contain secrets
-appsettings.*.json
