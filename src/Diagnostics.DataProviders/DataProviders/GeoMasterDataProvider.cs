@@ -12,18 +12,20 @@ namespace Diagnostics.DataProviders
 {
     public class GeoMasterDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IGeoMasterDataProvider
     {
-        private const string SiteExtensionResource = "/extensions/{*extensionApiMethod}";
+        const string SiteExtensionResource = "/extensions/{*extensionApiMethod}";
 
         private readonly IGeoMasterClient _geoMasterClient;
         private GeoMasterDataProviderConfiguration _configuration;
+        private string _geoMasterHostName;
 
         private string[] AllowedlistAppSettingsStartingWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType" };
 
         private string[] SensitiveAppSettingsEndingWith = new string[] { "CONNECTIONSTRING", "_SECRET", "_KEY", "_ID", "_CONTENTSHARE", "TOKEN_STORE", "TOKEN" };
 
-        public GeoMasterDataProvider(OperationDataCache cache, GeoMasterDataProviderConfiguration configuration) : base(cache)
+        public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache)
         {
-            _configuration = configuration;
+            _geoMasterHostName = context.GeomasterHostName;
+            _configuration = context.Configuration.GeoMasterConfiguration;
             _geoMasterClient = InitClient();
         }
 
@@ -33,7 +35,7 @@ namespace Diagnostics.DataProviders
             bool onDiagRole = !string.IsNullOrWhiteSpace(_configuration.GeoCertThumbprint);
             if (onDiagRole)
             {
-                geoMasterClient = new GeoMasterCertClient(_configuration);
+                geoMasterClient = new GeoMasterCertClient(_configuration, _geoMasterHostName);
             }
             else
             {
