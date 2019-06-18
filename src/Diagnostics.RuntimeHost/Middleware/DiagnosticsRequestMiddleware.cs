@@ -8,7 +8,6 @@ using Diagnostics.DataProviders;
 using Diagnostics.Logger;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Utilities;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
@@ -29,8 +28,8 @@ namespace Diagnostics.RuntimeHost.Middleware
         {
             Exception exception = null;
             int statusCode = 0;
-            GenerateMissingRequestHeaders(ref httpContext);
-            BeginRequest_Handle(httpContext);
+            GenerateMissingRequestHeaders(httpContext);
+            BeginRequestHandle(httpContext);
 
             try
             {
@@ -55,13 +54,13 @@ namespace Diagnostics.RuntimeHost.Middleware
                     LogException(httpContext, exception);
                 }
 
-                EndRequest_Handle(httpContext);
+                EndRequestHandle(httpContext);
             }
 
             return;
         }
 
-        private void BeginRequest_Handle(HttpContext httpContext)
+        private void BeginRequestHandle(HttpContext httpContext)
         {
             var logger = new ApiMetricsLogger(httpContext);
             var cTokenSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(HostConstants.TimeoutInMilliSeconds));
@@ -110,10 +109,16 @@ namespace Diagnostics.RuntimeHost.Middleware
                 clientPrincipalName = httpContext.Request.Headers[ClientPrincipalNameHeader];
             }
 
-            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName, kustoHeartBeatService));
+            httpContext.Items.Add(HostConstants.DataProviderContextKey,
+                new DataProviderContext(dataSourcesConfigurationService.Config,
+                    values.FirstOrDefault() ?? string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc,
+                    wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName,
+                    kustoHeartBeatService
+                )
+            );
         }
 
-        private void EndRequest_Handle(HttpContext httpContext)
+        private void EndRequestHandle(HttpContext httpContext)
         {
             var logger = (ApiMetricsLogger)httpContext.Items[HostConstants.ApiLoggerKey] ?? new ApiMetricsLogger(httpContext);
 
@@ -147,22 +152,13 @@ namespace Diagnostics.RuntimeHost.Middleware
             }
         }
 
-        private void GenerateMissingRequestHeaders(ref HttpContext httpContext)
+        private void GenerateMissingRequestHeaders(HttpContext httpContext)
         {
             if (!httpContext.Request.Headers.TryGetValue(RequestIdHeaderName, out StringValues values)
                 || values == default(StringValues) || !values.Any() || string.IsNullOrWhiteSpace(values.First()))
             {
                 httpContext.Request.Headers[RequestIdHeaderName] = Guid.NewGuid().ToString();
             }
-        }
-    }
-
-    // Extension method used to add the middleware to the HTTP request pipeline.
-    public static class DiagnosticsRequestMiddlewareExtensions
-    {
-        public static IApplicationBuilder UseDiagnosticsRequestMiddleware(this IApplicationBuilder builder)
-        {
-            return builder.UseMiddleware<DiagnosticsRequestMiddleware>();
         }
     }
 }

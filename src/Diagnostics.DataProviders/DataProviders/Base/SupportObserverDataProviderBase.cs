@@ -31,7 +31,7 @@ namespace Diagnostics.DataProviders
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        public Task<dynamic> GetResource(string resourceUrl)
+        public async Task<dynamic> GetResource(string resourceUrl)
         {
             Uri uri;
 
@@ -63,13 +63,14 @@ namespace Diagnostics.DataProviders
                 throw new FormatException(exceptionMessage, ex);
             }
 
+            // BUG: If selfhost observer is enabled, uri /observer/subscriptions is sent to it which does not exist, creating many 404 errors
             if (uri.Host.Contains(allowedHosts[0]) || uri.Host.Contains(allowedHosts[1]) || Configuration.ObserverLocalHostEnabled)
             {
-                return GetWawsObserverResourceAsync(uri);
+                return await GetWawsObserverResourceAsync(uri);
             }
             else
             {
-                return GetSupportObserverResourceAsync(uri);
+                return await GetSupportObserverResourceAsync(uri);
             }
         }
 
@@ -90,9 +91,14 @@ namespace Diagnostics.DataProviders
 
         protected async Task<string> GetObserverResource(string url, string resourceId = null)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
-            var response = await SendObserverRequestAsync(request, resourceId);
-            var result = await response.Content.ReadAsStringAsync();
+            HttpResponseMessage response;
+            string result;
+
+            using (var request = new HttpRequestMessage(HttpMethod.Get, url))
+            using (response = await SendObserverRequestAsync(request, resourceId))
+            {
+                result = await response.Content.ReadAsStringAsync();
+            }
 
             try
             {

@@ -21,7 +21,6 @@ namespace Diagnostics.RuntimeHost
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
@@ -35,7 +34,7 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IStampService, StampService>();
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
             services.AddSingleton<ISearchService, SearchService>();
-            
+
             var servicesProvider = services.BuildServiceProvider();
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
             var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
@@ -57,7 +56,6 @@ namespace Diagnostics.RuntimeHost
             AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
@@ -65,7 +63,7 @@ namespace Diagnostics.RuntimeHost
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseDiagnosticsRequestMiddleware();
+            app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseMvc();
         }
     }
