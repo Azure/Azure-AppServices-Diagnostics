@@ -32,7 +32,7 @@ namespace Diagnostics.DataProviders
                 cTokenRegistration = _dataSourceCancellationToken.Register(() => tcs.TrySetResult(true));
                 var completedTask = await Task.WhenAny(new Task[] { dataProviderTask, tcs.Task });
 
-                if (completedTask.Id != dataProviderTask.Id)
+                if (completedTask.Id == dataProviderTask.Id)
                 {
                     return await dataProviderTask;
                 }

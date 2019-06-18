@@ -91,14 +91,9 @@ namespace Diagnostics.DataProviders
 
         protected async Task<string> GetObserverResource(string url, string resourceId = null)
         {
-            HttpResponseMessage response;
-            string result;
-
-            using (var request = new HttpRequestMessage(HttpMethod.Get, url))
-            using (response = await SendObserverRequestAsync(request, resourceId))
-            {
-                result = await response.Content.ReadAsStringAsync();
-            }
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            var response = await SendObserverRequestAsync(request, resourceId);
+            var result = await response.Content.ReadAsStringAsync();
 
             var loggingMessage = "Request succeeded";
             try
@@ -116,6 +111,9 @@ namespace Diagnostics.DataProviders
             {
                 Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider",
                     $"url:{new Uri(_httpClient.BaseAddress, request.RequestUri)}, response:{loggingMessage}, statusCode:{(int)response.StatusCode}");
+
+                request.Dispose();
+                response.Dispose();
             }
 
             return result;
