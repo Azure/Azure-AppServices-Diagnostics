@@ -79,6 +79,12 @@ namespace Diagnostics.RuntimeHost.Controllers
                     var trainingSummary = JsonConvert.DeserializeObject<InternalAPITrainingSummary>(eventContent);
                     DiagnosticsETWProvider.Instance.LogInternalAPITrainingSummary(trainingSummary.RequestId, trainingSummary.TrainingId, trainingSummary.ProductId, trainingSummary.LatencyInMilliseconds, trainingSummary.StartTime, trainingSummary.EndTime, trainingSummary.Content);
                     break;
+                case "FreshChatMessage":
+                    DiagnosticsETWProvider.Instance.LogFreshChatMessage(eventContent);
+                    break;
+                case "FreshChatLoggingUnhandledException":
+                    DiagnosticsETWProvider.Instance.LogFreshChatLoggingUnhandledException(eventContent);
+                    break;
                 default:
                     DiagnosticsETWProvider.Instance.LogInternalAPIMessage(eventContent);
                     break;

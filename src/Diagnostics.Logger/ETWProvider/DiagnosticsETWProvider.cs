@@ -578,5 +578,29 @@ namespace Diagnostics.Logger
         }
 
         #endregion Internal AI API Events (ID Range : 4000 - 4199)
+
+        #region Fresh Chat Message (ID Range : 4500 - 4549)
+        /// <summary>
+        /// Log fresh chat message.
+        /// </summary>
+        /// <param name="Message">The message.</param>
+        [Event(4500, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogFreshChatMessage)]
+        public void LogFreshChatMessage(string Message)
+        {
+            WriteDiagnosticsEvent(4500, Message);
+        }
+
+
+        /// <summary>
+        /// Log fresh chat message.
+        /// </summary>
+        /// <param name="Message">The message.</param>
+        [Event(4501, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogFreshChatLoggingUnhandledException)]
+        public void LogFreshChatLoggingUnhandledException(string Message)
+        {
+            WriteDiagnosticsEvent(4501, Message);
+        }
+
+        #endregion
     }
 }

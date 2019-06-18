@@ -75,6 +75,11 @@ namespace Diagnostics.Logger
 
         #endregion Internal AI API Event Message Templates
 
+        #region Fresh Chat Message Templates
+        public const string LogFreshChatMessage = "Fresh Chat Message";
+        public const string LogFreshChatLoggingUnhandledException = "Fresh Chat Logging Unhandled Exception";
+        #endregion
+
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
