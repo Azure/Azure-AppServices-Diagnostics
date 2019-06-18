@@ -34,7 +34,7 @@ namespace Diagnostics.DataProviders
                 )
             );
 
-            builder.AddAzureKeyVault("https://appservicediagnostics.vault.azure.net/",
+            builder.AddAzureKeyVault(DataProviderConstants.KeyVaultURL,
                                      keyVaultClient,
                                      new DefaultKeyVaultSecretManager());
 

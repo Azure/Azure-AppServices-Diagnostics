@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
+using Diagnostics.DataProviders;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -31,7 +32,7 @@ namespace Diagnostics.RuntimeHost
                                 azureServiceTokenProvider.KeyVaultTokenCallback));
 
                         config.AddAzureKeyVault(
-                            $"https://appservicediagnostics.vault.azure.net/",
+                            DataProviderConstants.KeyVaultURL,
                             keyVaultClient,
                             new DefaultKeyVaultSecretManager());
                     }

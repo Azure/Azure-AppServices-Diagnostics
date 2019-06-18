@@ -15,6 +15,8 @@ namespace Diagnostics.DataProviders
 
         public const string AzureUSGovernment = "Government";
 
+        public const string KeyVaultURL = "https://appservicediagnostics.vault.azure.net/";
+
         #region Kusto Constants
 
         public static TimeSpan KustoDataRetentionPeriod = TimeSpan.FromDays(-30);
