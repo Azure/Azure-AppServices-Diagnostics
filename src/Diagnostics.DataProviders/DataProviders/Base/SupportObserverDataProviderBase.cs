@@ -100,6 +100,7 @@ namespace Diagnostics.DataProviders
                 result = await response.Content.ReadAsStringAsync();
             }
 
+            var loggingMessage = "Request succeeded";
             try
             {
                 response.EnsureSuccessStatusCode();
@@ -108,7 +109,13 @@ namespace Diagnostics.DataProviders
             {
                 ex.Data.Add("StatusCode", response.StatusCode);
                 ex.Data.Add("ResponseContent", result);
+                loggingMessage = result;
                 throw;
+            }
+            finally
+            {
+                Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider",
+                    $"url:{new Uri(_httpClient.BaseAddress, request.RequestUri)}, response:{loggingMessage}, statusCode:{(int)response.StatusCode}");
             }
 
             return result;
