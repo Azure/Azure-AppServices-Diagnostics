@@ -94,7 +94,9 @@ namespace Diagnostics.DataProviders
             const string missingDataSignature = "SWAP HISTORY REMOVED";
             foreach (var slotMap in slotTimeRange)
             {
-                var missingHistoricalSwapData = slotMap.Value.Where(swapInfo => swapInfo.RuntimeSitename.Equals(missingDataSignature, StringComparison.CurrentCultureIgnoreCase));
+                var missingHistoricalSwapData = slotMap.Value.Where(swapInfo =>
+                    swapInfo?.RuntimeSitename != null && swapInfo.RuntimeSitename.Equals(missingDataSignature, StringComparison.CurrentCultureIgnoreCase)
+                );
                 if (missingHistoricalSwapData.Any())
                 {
                     var startTime = missingHistoricalSwapData.Min(x => x.StartTime);
