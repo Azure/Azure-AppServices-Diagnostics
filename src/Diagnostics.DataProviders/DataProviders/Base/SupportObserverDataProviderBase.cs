@@ -95,15 +95,16 @@ namespace Diagnostics.DataProviders
                 throw new ArgumentNullException(nameof(url));
             }
 
-            var uri = new Uri(url);
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
 
             // TODO: remove redirect to wawsobserver when Geomaster API implements GeoRegion connection strings
-            if (url.Contains("/api/minienvironments/"))
+            if (url.StartsWith("minienvironments/"))
             {
-                uri = new Uri(new Uri("https://wawsobserver.azurewebsites.windows.net"), uri.PathAndQuery);
+                url = $"api/{url}";
+                var uri = new Uri(new Uri("https://wawsobserver.azurewebsites.windows.net"), url);
+                request = new HttpRequestMessage(HttpMethod.Get, uri);
             }
 
-            var request = new HttpRequestMessage(HttpMethod.Get, uri);
             var response = await SendObserverRequestAsync(request, resourceId);
             var result = await response.Content.ReadAsStringAsync();
 
@@ -123,6 +124,8 @@ namespace Diagnostics.DataProviders
             {
                 Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider",
                     $"url:{new Uri(_httpClient.BaseAddress, request.RequestUri)}, response:{loggingMessage}, statusCode:{(int)response.StatusCode}");
+
+                request.Dispose();
             }
 
             return result;
