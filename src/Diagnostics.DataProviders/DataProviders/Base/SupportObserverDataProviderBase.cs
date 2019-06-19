@@ -90,7 +90,20 @@ namespace Diagnostics.DataProviders
 
         protected async Task<string> GetObserverResource(string url, string resourceId = null)
         {
-            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                throw new ArgumentNullException(nameof(url));
+            }
+
+            var uri = new Uri(url);
+
+            // TODO: remove redirect to wawsobserver when Geomaster API implements GeoRegion connection strings
+            if (url.Contains("/api/minienvironments/"))
+            {
+                uri = new Uri(new Uri("https://wawsobserver.azurewebsites.windows.net"), uri.PathAndQuery);
+            }
+
+            var request = new HttpRequestMessage(HttpMethod.Get, uri);
             var response = await SendObserverRequestAsync(request, resourceId);
             var result = await response.Content.ReadAsStringAsync();
 
