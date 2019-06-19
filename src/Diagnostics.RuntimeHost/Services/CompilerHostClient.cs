@@ -90,33 +90,6 @@ namespace Diagnostics.RuntimeHost.Services
             }
         }
 
-        private async Task WaitForCompilerHostToBeReady(string requestId)
-        {
-            await RetryHelper.RetryAsync(() => CheckForHealthPing(requestId), _eventSource, requestId, 5, 1000);
-        }
-
-        private async Task<bool> CheckForHealthPing(string requestId)
-        {
-            HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, $"{_compilerHostUrl}/api/compilerhost/healthping");
-
-            if (!string.IsNullOrWhiteSpace(requestId))
-            {
-                requestMessage.Headers.Add(HeaderConstants.RequestIdHeaderName, requestId);
-            }
-
-            HttpResponseMessage responseMessage = await _httpClient.SendAsync(requestMessage);
-
-            if (!responseMessage.IsSuccessStatusCode)
-            {
-                string errorResponse = await responseMessage.Content.ReadAsStringAsync();
-                HttpRequestException ex = new HttpRequestException($"Status Code : {responseMessage.StatusCode}, Content : {errorResponse}");
-                DiagnosticsETWProvider.Instance.LogCompilerHostClientWarning(requestId, _eventSource, "Compiler host health ping failed", ex.GetType().ToString(), ex.ToString());
-                throw ex;
-            }
-
-            return true;
-        }
-
         private object PrepareRequestBody(string scriptText, string entityType, IDictionary<string, string> references)
         {
             return new
