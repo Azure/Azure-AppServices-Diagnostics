@@ -639,6 +639,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 var resourceUriFromQuery = queryParams.Where(s => s.Key.Equals("resourceUri")).Select(pair => pair.Value);
                 var resourceUri = context.OperationContext.Resource.ResourceUri;
                 var changeSetIdValue = changeSetId.First();
+                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Change set id received - {changeSetIdValue}");
                 if (resourceUriFromQuery.Any())
                 {
                     resourceUri = resourceUriFromQuery.First();
@@ -886,6 +887,8 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <returns>Changes for given change set id.</returns>
         private async Task<Response> GetChangesByChangeSetId(string changeSetId, string resourceId, IChangeAnalysisDataProvider changeAnalysisDataProvider)
         {
+            changeSetId = changeSetId.Replace(" ", "+");
+            DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Changeset id before calling api : {changeSetId}");
             var changes = await changeAnalysisDataProvider.GetChangesByChangeSetId(changeSetId, resourceId);
             if (changes == null || changes.Count <= 0)
             {
