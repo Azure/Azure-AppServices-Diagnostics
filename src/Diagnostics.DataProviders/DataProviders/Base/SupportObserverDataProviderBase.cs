@@ -96,16 +96,19 @@ namespace Diagnostics.DataProviders
             }
 
             var request = new HttpRequestMessage(HttpMethod.Get, url);
+            HttpResponseMessage response;
 
             // TODO: remove redirect to wawsobserver when Geomaster API implements GeoRegion connection strings
-            if (url.StartsWith("minienvironments/"))
+            if (url.StartsWith("minienvironments/") && Configuration.ObserverLocalHostEnabled)
             {
-                url = $"api/{url}";
-                var uri = new Uri(new Uri("https://wawsobserver.azurewebsites.windows.net"), url);
-                request = new HttpRequestMessage(HttpMethod.Get, uri);
+                request = new HttpRequestMessage(HttpMethod.Get, $"/api/{url}");
+                response = await SendWawsObserverRequestAsync(request, resourceId);
+            }
+            else
+            {
+                response = await SendObserverRequestAsync(request, resourceId);
             }
 
-            var response = await SendObserverRequestAsync(request, resourceId);
             var result = await response.Content.ReadAsStringAsync();
 
             var loggingMessage = "Request succeeded";
@@ -131,17 +134,35 @@ namespace Diagnostics.DataProviders
             return result;
         }
 
-        protected async Task<HttpResponseMessage> SendObserverRequestAsync(HttpRequestMessage request, string resourceId = null)
+        protected async Task<HttpResponseMessage> SendObserverRequestAsync(HttpRequestMessage request, string resourceId = null, HttpClient httpClient = null)
         {
+            if (httpClient == null)
+            {
+                httpClient = _httpClient;
+            }
+
             request.Headers.TryAddWithoutValidation(HeaderConstants.RequestIdHeaderName, RequestId);
             if (!Configuration.ObserverLocalHostEnabled)
             {
                 request.Headers.TryAddWithoutValidation("Authorization", await GetToken(resourceId));
             }
 
-            var response = await _httpClient.SendAsync(request);
+            var response = await httpClient.SendAsync(request);
 
             return response;
+        }
+
+        protected async Task<HttpResponseMessage> SendWawsObserverRequestAsync(HttpRequestMessage request, string resourceId = null)
+        {
+            var httpClient = new HttpClient
+            {
+                BaseAddress = new Uri("https://wawsobserver.azurewebsites.windows.net/api")
+            };
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            request.Headers.TryAddWithoutValidation("Authorization", await GetToken(resourceId));
+
+            return await SendObserverRequestAsync(request, resourceId, httpClient);
         }
 
         private async Task<string> GetToken(string resourceId)
