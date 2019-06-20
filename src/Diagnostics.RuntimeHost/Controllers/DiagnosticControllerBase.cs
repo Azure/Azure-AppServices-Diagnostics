@@ -888,7 +888,6 @@ namespace Diagnostics.RuntimeHost.Controllers
         private async Task<Response> GetChangesByChangeSetId(string changeSetId, string resourceId, IChangeAnalysisDataProvider changeAnalysisDataProvider)
         {
             changeSetId = changeSetId.Replace(" ", "+");
-            DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Changeset id before calling api : {changeSetId}");
             var changes = await changeAnalysisDataProvider.GetChangesByChangeSetId(changeSetId, resourceId);
             if (changes == null || changes.Count <= 0)
             {
