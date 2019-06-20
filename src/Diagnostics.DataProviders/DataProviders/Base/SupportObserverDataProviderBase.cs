@@ -156,7 +156,7 @@ namespace Diagnostics.DataProviders
         {
             var httpClient = new HttpClient
             {
-                BaseAddress = new Uri("https://wawsobserver.azurewebsites.windows.net/api")
+                BaseAddress = new Uri("https://wawsobserver.azurewebsites.windows.net")
             };
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
