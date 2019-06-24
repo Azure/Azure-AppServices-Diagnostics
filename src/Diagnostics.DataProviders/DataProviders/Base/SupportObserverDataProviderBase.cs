@@ -63,14 +63,28 @@ namespace Diagnostics.DataProviders
                 throw new FormatException(exceptionMessage, ex);
             }
 
-            if (uri.Host.Contains(allowedHosts[0]) || uri.Host.Contains(allowedHosts[1]) || Configuration.ObserverLocalHostEnabled)
+            if (uri.Host.Contains(allowedHosts[0]) || uri.Host.Contains(allowedHosts[1]))
             {
                 return GetWawsObserverResourceAsync(uri);
+            }
+            else if (Configuration.ObserverLocalHostEnabled)
+            {
+                return GetWawsObserverResourceAsync(ConvertToLocalObserverRoute(uri));
             }
             else
             {
                 return GetSupportObserverResourceAsync(uri);
             }
+        }
+
+        private static Uri ConvertToLocalObserverRoute(Uri uri)
+        {
+            if (!uri.AbsolutePath.StartsWith("/observer"))
+            {
+                return uri;
+            }
+
+            return new Uri(uri, uri.AbsolutePath.Remove(0, "/observer".Length));
         }
 
         private async Task<dynamic> GetWawsObserverResourceAsync(Uri uri)
