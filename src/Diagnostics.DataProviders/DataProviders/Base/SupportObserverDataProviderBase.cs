@@ -67,9 +67,9 @@ namespace Diagnostics.DataProviders
             {
                 return GetWawsObserverResourceAsync(uri);
             }
-            else if (Configuration.ObserverLocalHostEnabled && TryGetLocalObserverRoute(uri, out var newUri))
+            else if (Configuration.ObserverLocalHostEnabled)
             {
-                return GetWawsObserverResourceAsync(newUri);
+                return GetWawsObserverResourceAsync(ConvertToLocalObserverRoute(uri));
             }
             else
             {
@@ -77,22 +77,14 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        private static bool TryGetLocalObserverRoute(Uri uri, out Uri localObserverUri)
+        private static Uri ConvertToLocalObserverRoute(Uri uri)
         {
-            localObserverUri = uri;
-
             if (!uri.AbsolutePath.StartsWith("/observer"))
             {
-                return true;
+                return uri;
             }
 
-            if (uri.AbsolutePath.Contains("subscriptions") && (uri.AbsolutePath.EndsWith("webspaces") || uri.AbsolutePath.EndsWith("sites")))
-            {
-                localObserverUri = new Uri(uri, uri.AbsolutePath.Remove(0, "/observer".Length));
-                return true;
-            }
-
-            return false;
+            return new Uri(uri, uri.AbsolutePath.Remove(0, "/observer".Length));
         }
 
         private async Task<dynamic> GetWawsObserverResourceAsync(Uri uri)
