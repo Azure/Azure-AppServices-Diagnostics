@@ -25,6 +25,7 @@ namespace Diagnostics.RuntimeHost
 
         public IConfiguration Configuration { get; }
         public IHostingEnvironment Environment { get; }
+
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
@@ -56,7 +57,7 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
-            
+
             var servicesProvider = services.BuildServiceProvider();
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
             var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
@@ -64,14 +65,11 @@ namespace Diagnostics.RuntimeHost
 
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
 
-            if (!observerConfiguration.ObserverLocalHostEnabled)
-            {
-                observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
-                var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.WawsObserverResourceId, observerConfiguration);
-                var supportBayApiObserverTokenService = new ObserverTokenService(observerConfiguration.SupportBayApiObserverResourceId, observerConfiguration);
-                services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
-                services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
-            }
+            observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
+            var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.WawsObserverResourceId, observerConfiguration);
+            var supportBayApiObserverTokenService = new ObserverTokenService(observerConfiguration.SupportBayApiObserverResourceId, observerConfiguration);
+            services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
+            services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
 
             KustoTokenService.Instance.Initialize(dataSourcesConfigService.Config.KustoConfiguration);
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
