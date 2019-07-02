@@ -2,7 +2,7 @@ import os, gc, shutil, uuid
 from argparse import ArgumentParser
 from flask import Flask, request
 from RegistryReader import detectorsFolderPath
-from Logger import *
+from Logger import loggerInstance
 from datetime import datetime, timezone
 import json, itertools, nltk
 from functools import wraps
@@ -10,6 +10,7 @@ from functools import wraps
 argparser = ArgumentParser()
 argparser.add_argument("-d", "--debug", default=False, help="flag for debug mode")
 args = vars(argparser.parse_args())
+loggerInstance.isLogToKustoEnabled = (not args['debug'])
 
 try:
     nltk.data.find('tokenizers/punkt')
@@ -253,16 +254,16 @@ def loggingProvider(requestIdRequired=True):
             if not requestId:
                 res = ("BadRequest: Missing parameter requestId", 400)
                 endTime = getUTCTime()
-                logApiSummary("Null", str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
+                loggerInstance.logApiSummary("Null", str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
                 return res
             else:
                 try:
                     res = f(*args, **kwargs)
                 except Exception as e:
                     res = (str(e), 500)
-                    logUnhandledException(requestId, str(e))
+                    loggerInstance.logUnhandledException(requestId, str(e))
             endTime = getUTCTime()
-            logApiSummary(requestId, str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
+            loggerInstance.logApiSummary(requestId, str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
             return res
         return logger
     return loggingOuter
@@ -287,7 +288,7 @@ def queryDetectorsMethod():
     try:
         loadModel(productid)
     except Exception as e:
-        logHandledException(requestId, e)
+        loggerInstance.logHandledException(requestId, e)
         return (json.dumps({"query": txt_data, "results": []}), 200)
     
     res = json.dumps(loaded_models[productid].queryDetectors(txt_data))
@@ -312,7 +313,7 @@ def queryUtterancesMethod():
             loadModel(product)
             res = loaded_models[product].queryUtterances(txt_data, existing_utterances)
         except Exception as e:
-            logHandledException(requestId, e)
+            loggerInstance.logHandledException(requestId, e)
             res = {"query": txt_data, "results": None}
         if res:
             results["results"] += res["results"] if res["results"] else []

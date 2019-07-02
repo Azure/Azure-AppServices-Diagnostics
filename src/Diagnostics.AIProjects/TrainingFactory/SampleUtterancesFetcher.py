@@ -4,7 +4,7 @@ from azure.kusto.data.helpers import dataframe_from_result_table
 from RegistryReader import detectorsFolderPath, kustoClientId, kustoClientSecret
 import re, itertools, json, requests, os
 from TextSummarizer import retrieveSentences
-from Logger import *
+from Logger import loggerInstance
 
 class TrainingException(Exception):
     pass
@@ -25,7 +25,7 @@ class StackOverFlowFetcher:
                 url = "http://api.stackexchange.com/2.2/questions?key={0}&site=stackoverflow&page={1}&order=desc&sort=votes&tagged={2}&filter=default".format(self.key, pagenum, tag)
                 req = requests.get(url=url)
                 if not (req.status_code == 200):
-                    logToFile("{0}.log".format(trainingId), "[ERROR]TagDownloader: Tag " + str(tag) + " - " + str(req.json()['error_message']))
+                    loggerInstance.logToFile("{0}.log".format(trainingId), "[ERROR]TagDownloader: Tag " + str(tag) + " - " + str(req.json()['error_message']))
                     raise TrainingException("TagDownloader: Tag " + str(tag) + " - " + str(req.json()['error_message']))
                 content = req.json()
                 items += [{"text": x["title"], "links": [x["link"]], "qid": x["question_id"]} for x in content["items"] if (x["score"]>0 or x["answer_count"]>0)]
@@ -37,9 +37,9 @@ class StackOverFlowFetcher:
                 pagenum += 1
                 #print("\r" + str(pagenum),end='')
             except Exception as e:
-                logToFile("{0}.log".format(trainingId), "[ERROR]StackOverFlowFetcher: Tag " + str(tag) + " - " + str(e))
+                loggerInstance.logToFile("{0}.log".format(trainingId), "[ERROR]StackOverFlowFetcher: Tag " + str(tag) + " - " + str(e))
                 raise TrainingException("StackOverFlowFetcher: " + str(e))
-        logToFile("{0}.log".format(trainingId), "StackOverFlowFetcher: Fetched " + str(len(items)) + " questions for tag " + str(tag))
+        loggerInstance.logToFile("{0}.log".format(trainingId), "StackOverFlowFetcher: Fetched " + str(len(items)) + " questions for tag " + str(tag))
         return items
 
     def fetchStackOverflowTitles(self, productid, datapath):
@@ -67,9 +67,9 @@ class StackOverFlowFetcher:
             sampleUtterances = json.loads(open(os.path.join(datapath, "SampleUtterances.json"), "r").read())
             sampleUtterances["stackoverflowtitles"] = questions
             open(os.path.join(datapath, "SampleUtterances.json"), "w").write(json.dumps(sampleUtterances))
-            logToFile("{0}.log".format(trainingId), "StackOverFlowFetcher: Successfully written stackoverflow questions to file SampleUtterances.json")
+            loggerInstance.logToFile("{0}.log".format(trainingId), "StackOverFlowFetcher: Successfully written stackoverflow questions to file SampleUtterances.json")
         except (FileNotFoundError):
-            logToFile("{0}.log".format(trainingId), "[ERROR]StackOverFlowFetcher: File SampleUtterances.json does not exist, creating new file.")
+            loggerInstance.logToFile("{0}.log".format(trainingId), "[ERROR]StackOverFlowFetcher: File SampleUtterances.json does not exist, creating new file.")
             sampleUtterances = {"incidenttitles": [], "stackoverflowtitles": questions}
             open(os.path.join(datapath, "SampleUtterances.json"), "w").write(json.dumps(sampleUtterances))
 
@@ -125,11 +125,11 @@ class CaseTitlesFetcher:
         trainingId = self.trainingId
         category = key[0]+"--"+key[1]
         numsentences = group.shape[0]
-        logToFile("{0}.log".format(trainingId), "Extractor: Running extractor on category " + category + " containing " + str(numsentences) + " case titles")
+        loggerInstance.logToFile("{0}.log".format(trainingId), "Extractor: Running extractor on category " + category + " containing " + str(numsentences) + " case titles")
         lines = [(self.endSentence(row["CleanCaseTitles"]), row["SupportCenterCaseLink"])  for ind, row in group.iterrows()]
         doc = " ".join([x[0] for x in lines])
         keysentences = retrieveSentences(doc, max([10, int(numsentences/10)])*10)
-        logToFile("{0}.log".format(trainingId), "Extractor: Extracted " + str(len(keysentences)) + " sentences.")
+        loggerInstance.logToFile("{0}.log".format(trainingId), "Extractor: Extracted " + str(len(keysentences)) + " sentences.")
         combined = []
         for sent in keysentences:
             caselinks = [x[1] for x in lines if self.squeeze(x[0])==self.squeeze(sent)]
@@ -146,7 +146,7 @@ class CaseTitlesFetcher:
         df["Incidents_SupportTopicL2Current"]=df["Incidents_SupportTopicL2Current"].fillna("NOSELECTION")
         df["Incidents_SupportTopicL3Current"]=df["Incidents_SupportTopicL3Current"].fillna("NOSELECTION")
         groups = df.groupby(["Incidents_SupportTopicL2Current", "Incidents_SupportTopicL3Current"])
-        logToFile("{0}.log".format(trainingId), "RunCaseTitlesExtraction: Processing " + str(df.shape[0]) + " case titles across " + str(len(list(groups))) + " categories")
+        loggerInstance.logToFile("{0}.log".format(trainingId), "RunCaseTitlesExtraction: Processing " + str(df.shape[0]) + " case titles across " + str(len(list(groups))) + " categories")
         results = sorted(list(itertools.chain.from_iterable([self.extractor(key, group) for key, group in groups])), key=lambda x: x["text"])
         try:
             sampleUtterances = json.loads(open(os.path.join(datapath, "SampleUtterances.json"), "r").read())
@@ -164,9 +164,9 @@ class CaseTitlesFetcher:
                 if not found:
                     sampleUtterances["incidenttitles"].append(x)
             open(os.path.join(datapath, "SampleUtterances.json"), "w").write(json.dumps(sampleUtterances, indent=4))
-            logToFile("{0}.log".format(trainingId), "RunCaseTitlesExtraction: Successfully written extracted case titles to file SampleUtterances.json")
+            loggerInstance.logToFile("{0}.log".format(trainingId), "RunCaseTitlesExtraction: Successfully written extracted case titles to file SampleUtterances.json")
         except (FileNotFoundError) as e:
-            logToFile("{0}.log".format(trainingId), "[ERROR]RunCaseTitlesExtraction: File SampleUtterances.json does not exist, creating new file.")
+            loggerInstance.logToFile("{0}.log".format(trainingId), "[ERROR]RunCaseTitlesExtraction: File SampleUtterances.json does not exist, creating new file.")
             open(os.path.join(datapath, "SampleUtterances.json"), "w").write(json.dumps({"incidenttitles" : results, "stackoverflowtitles": []}, indent=4))
 
     def fetchCaseTitles(self, productid, datapath):
@@ -190,13 +190,13 @@ class CaseTitlesFetcher:
         
         try:
             df = dataframe_from_result_table(response.primary_results[0])
-            logToFile("{0}.log".format(trainingId), "DataCleansing: " + str(df.shape[0]) + " incidents fetched")
+            loggerInstance.logToFile("{0}.log".format(trainingId), "DataCleansing: " + str(df.shape[0]) + " incidents fetched")
         
     	    #Remove all non english cases
             df["isEnglish"] = df["Incidents_Title"].map(self.isEnglish)
             df_eng = df[df["isEnglish"]==True]
             del df_eng["isEnglish"]
-            logToFile("{0}.log".format(trainingId), "DataCleansing: " + str(df.shape[0] - df_eng.shape[0]) + " non English language cases removed")
+            loggerInstance.logToFile("{0}.log".format(trainingId), "DataCleansing: " + str(df.shape[0] - df_eng.shape[0]) + " non English language cases removed")
         
             #all cases with character length 3 or less
             mask = (df_eng["Incidents_Title"].str.len()>3)
@@ -215,7 +215,7 @@ class CaseTitlesFetcher:
             #Remove any garbage phrases (defined in garbage list)
             mask = (df_eng_2["Incidents_Title_PipeCleansed"].isin(self.garbageList))
             df_eng_clean = df_eng_2[~mask]
-            logToFile("{0}.log".format(trainingId), "DataCleansing: " + str(df_eng.shape[0] - df_eng_clean.shape[0]) + " garbage case title incidents removed")
+            loggerInstance.logToFile("{0}.log".format(trainingId), "DataCleansing: " + str(df_eng.shape[0] - df_eng_clean.shape[0]) + " garbage case title incidents removed")
             
             #Remove any cases with two or less words (Except for short phrases that make sense)
             df_eng_clean["wordcount"] = df_eng_clean["Incidents_Title_PipeCleansed"].map(lambda x: len([a for a in x.split() if len(a)>2]))
@@ -226,7 +226,7 @@ class CaseTitlesFetcher:
         
             df_eng_clean["CleanCaseTitles"] = df_eng_clean["Incidents_Title_PipeCleansed"]
             del df_eng_clean["Incidents_Title_PipeCleansed"]
-            logToFile("{0}.log".format(trainingId), "DataCleansing: " + str(df_eng_clean.shape[0]) + " incidents will be processed for summarization")
+            loggerInstance.logToFile("{0}.log".format(trainingId), "DataCleansing: " + str(df_eng_clean.shape[0]) + " incidents will be processed for summarization")
         except Exception as e:
             raise TrainingException("DataCleansing: " + str(e))
         try:
@@ -245,17 +245,17 @@ class SampleUtterancesFetcher:
         try:
             caseTitlesFetcher = CaseTitlesFetcher(self.trainingConfig, self.trainingId)
             caseTitlesFetcher.fetchCaseTitles(productid, datapath)
-            logToFile("{0}.log".format(trainingId), "CaseTitlesFetcher: Successfully fetched & extracted case titles from Kusto")
+            loggerInstance.logToFile("{0}.log".format(trainingId), "CaseTitlesFetcher: Successfully fetched & extracted case titles from Kusto")
         except Exception as e:
-            logToFile("{0}.log".format(trainingId), "[ERROR]CaseTitlesFetcher: " + str(e))
+            loggerInstance.logToFile("{0}.log".format(trainingId), "[ERROR]CaseTitlesFetcher: " + str(e))
             raise TrainingException("CaseTitlesFetcher: " + str(e))
         try:
             if self.trainingConfig["download-softitles"] and self.trainingConfig["sof-key"]:
                 sfFetcher = StackOverFlowFetcher(self.trainingConfig["sof-key"], self.trainingConfig, self.trainingId)
                 sfFetcher.fetchStackOverflowTitles(productid, datapath)
-                logToFile("{0}.log".format(trainingId), "StackOverFlowFetcher: Successfully fetched stack overflow question titles")
+                loggerInstance.logToFile("{0}.log".format(trainingId), "StackOverFlowFetcher: Successfully fetched stack overflow question titles")
             else:
-                logToFile("{0}.log".format(trainingId), "StackOverFlowFetcher: Disabled")
+                loggerInstance.logToFile("{0}.log".format(trainingId), "StackOverFlowFetcher: Disabled")
         except Exception as e:
-            logToFile("{0}.log".format(trainingId), "[ERROR]StackOverFlowFetcher: " + str(e))
+            loggerInstance.logToFile("{0}.log".format(trainingId), "[ERROR]StackOverFlowFetcher: " + str(e))
             raise TrainingException("StackOverFlowFetcher: " + str(e))

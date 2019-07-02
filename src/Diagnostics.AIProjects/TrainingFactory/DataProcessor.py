@@ -1,7 +1,7 @@
 from SampleUtterancesFetcher import SampleUtterancesFetcher
 from DetectorsFetcher import DetectorsFetcher
 import gc, os, json
-from Logger import *
+from Logger import loggerInstance
 
 class TrainingException(Exception):
     pass
@@ -20,19 +20,19 @@ class DataProcessor:
             os.makedirs(rawdatapath)
         except FileExistsError:
             pass
-        logToFile("{0}.log".format(trainingId), "Created folders for raw data")
+        loggerInstance.logToFile("{0}.log".format(trainingId), "Created folders for raw data")
         try:
             sampleUtterancesFetcher = SampleUtterancesFetcher(self.trainingConfig, self.trainingId)
             sampleUtterancesFetcher.run(productid, rawdatapath)
-            logToFile("{0}.log".format(trainingId), "SampleUtterancesFetcher: Successfully fetched & extracted sample utterances")
+            loggerInstance.logToFile("{0}.log".format(trainingId), "SampleUtterancesFetcher: Successfully fetched & extracted sample utterances")
         except Exception as e:
-            logToFile("{0}.log".format(trainingId), "[ERROR]SampleUtterancesFetcher: " + str(e))
+            loggerInstance.logToFile("{0}.log".format(trainingId), "[ERROR]SampleUtterancesFetcher: " + str(e))
             raise TrainingException("SampleUtterancesFetcher: " + str(e))
         try:
             detectorsFetcher = DetectorsFetcher("http://localhost:{0}/internal/detectors".format(config["internalApiPort"]), self.trainingId)
             detectorsFetcher.fetchDetectors(productid, rawdatapath)
-            logToFile("{0}.log".format(trainingId), "DetectorsFetcher: Successfully fetched detectors")
+            loggerInstance.logToFile("{0}.log".format(trainingId), "DetectorsFetcher: Successfully fetched detectors")
         except Exception as e:
-            logToFile("{0}.log".format(trainingId), "[ERROR]DetectorsFetcher: " + str(e))
+            loggerInstance.logToFile("{0}.log".format(trainingId), "[ERROR]DetectorsFetcher: " + str(e))
             raise TrainingException("DetectorsFetcher: " + str(e))
         gc.collect()
