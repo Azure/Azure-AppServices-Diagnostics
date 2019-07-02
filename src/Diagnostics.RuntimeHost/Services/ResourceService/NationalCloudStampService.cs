@@ -24,7 +24,7 @@ namespace Diagnostics.RuntimeHost.Services
         {
             return
                 $@"{RoleInstanceHeartBeatTableName}
-                | where TIMESTAMP >= datetime({startTimeStr}) and TIMESTAMP <= datetime({endTimeStr}) and where EventStampName =~ ""{stamp}""
+                | where TIMESTAMP >= datetime({startTimeStr}) and TIMESTAMP <= datetime({endTimeStr}) and EventStampName =~ ""{stamp}""
                 | summarize by Tenant, PublicHost";
         }
     }
