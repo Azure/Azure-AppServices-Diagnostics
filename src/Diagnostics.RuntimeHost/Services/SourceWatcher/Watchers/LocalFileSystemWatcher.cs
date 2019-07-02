@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -19,6 +20,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
     {
         private string _localScriptsPath;
         private Task _firstTimeCompletionTask;
+        private Dictionary<EntityType, ICache<string, EntityInvoker>> _invokerDictionary;
 
         protected override Task FirstTimeCompletionTask => _firstTimeCompletionTask;
 
@@ -29,6 +31,12 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         {
             LoadConfigurations();
             Start();
+            _invokerDictionary = new Dictionary<EntityType, ICache<string, EntityInvoker>>
+            {
+                { EntityType.Detector, invokerCache},
+                { EntityType.Signal, invokerCache},
+                { EntityType.Gist, gistCache}
+            };
         }
 
         public override void Start()
@@ -77,7 +85,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                         metadata = await File.ReadAllTextAsync(metadataFile.FullName);
                     }
 
-                    EntityMetadata scriptMetadata = new EntityMetadata(scriptText, EntityType.Signal, metadata);
+                    EntityMetadata scriptMetadata = new EntityMetadata(scriptText, entityType, metadata);
                     EntityInvoker invoker = new EntityInvoker(scriptMetadata);
 
                     if (asmFile == default(FileInfo))
@@ -89,9 +97,16 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     LogMessage($"Loading assembly : {asmFile.FullName}");
                     Assembly asm = Assembly.LoadFrom(asmFile.FullName);
 
-                    invoker.InitializeEntryPoint(asm);
-                    LogMessage($"Updating cache with  new invoker with id : {invoker.EntryPointDefinitionAttribute.Id}");
-                    _invokerCache.AddOrUpdate(invoker.EntryPointDefinitionAttribute.Id, invoker);
+                    if (_invokerDictionary.TryGetValue(entityType, out ICache<string, EntityInvoker> cache))
+                    {
+                        invoker.InitializeEntryPoint(asm);
+                        LogMessage($"Updating cache with  new invoker with id : {invoker.EntryPointDefinitionAttribute.Id}");
+                        cache.AddOrUpdate(invoker.EntryPointDefinitionAttribute.Id, invoker);
+                    }
+                    else
+                    {
+                        LogMessage($"No invoker cache exist for {entityType}");
+                    }
                 }
             }
             catch (Exception ex)
