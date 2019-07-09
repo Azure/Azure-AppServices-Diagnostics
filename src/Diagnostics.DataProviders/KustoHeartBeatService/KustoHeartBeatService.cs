@@ -162,7 +162,7 @@ namespace Diagnostics.DataProviders
             Exception exceptionForLog = null;
             try
             {
-                var failoverHeartBeat = await _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, PrimaryCluster, _configuration.HeartBeatTimeOutInSeconds, activityId);
+                var failoverHeartBeat = await _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, FailoverCluster, _configuration.HeartBeatTimeOutInSeconds, activityId);
 
                 if (failoverHeartBeat.Rows.Count >= 1)
                 {
