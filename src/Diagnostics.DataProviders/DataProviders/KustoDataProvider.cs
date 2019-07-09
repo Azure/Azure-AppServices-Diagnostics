@@ -12,6 +12,7 @@ namespace Diagnostics.DataProviders
         public string Text;
         public string Url;
         public string KustoDesktopUrl;
+        public string OperationName;
     }
 
     public class KustoDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IKustoDataProvider
@@ -41,7 +42,7 @@ namespace Diagnostics.DataProviders
         public async Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
         {
             var cluster = GetClusterNameFromStamp(stampName);
-            await AddQueryInformationToMetadata(query, cluster);
+            await AddQueryInformationToMetadata(query, cluster, operationName);
             return await _kustoClient.ExecuteQueryAsync(query, cluster, _configuration.DBName, requestId, operationName);
         }
 
@@ -50,10 +51,15 @@ namespace Diagnostics.DataProviders
             return GetKustoQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster);
         }
 
-        public async Task<KustoQuery> GetKustoQuery(string query, string stampName)
+        public Task<KustoQuery> GetKustoQuery(string query, string stampName)
+        {
+            return GetKustoQuery(query, stampName, null);
+        }
+
+        public async Task<KustoQuery> GetKustoQuery(string query, string stampName, string operationName)
         {
             var cluster = GetClusterNameFromStamp(stampName);
-            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, cluster, _configuration.DBName);
+            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, cluster, _configuration.DBName, operationName);
             return kustoQuery;
         }
 
@@ -67,9 +73,9 @@ namespace Diagnostics.DataProviders
             return Metadata;
         }
 
-        private async Task AddQueryInformationToMetadata(string query, string cluster)
+        private async Task AddQueryInformationToMetadata(string query, string cluster, string operationName = null)
         {
-            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, cluster, _configuration.DBName);
+            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, cluster, _configuration.DBName, operationName);
             bool queryExists = false;
 
             queryExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&
