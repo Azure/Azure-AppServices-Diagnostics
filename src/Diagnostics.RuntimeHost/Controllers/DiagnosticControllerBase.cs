@@ -576,7 +576,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var allDetectors = _invokerCache.GetEntityInvokerList<TResource>(context).ToList();
 
-            if (queryText != null && queryText.Length > 3)
+            if (queryText != null && queryText.Length > 1)
             {
                 SearchResults searchResults = null;
                 var resourceParams = _internalApiHelper.GetResourceParams(context.OperationContext.Resource as IResourceFilter);
