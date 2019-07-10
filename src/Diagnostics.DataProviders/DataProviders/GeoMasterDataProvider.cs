@@ -23,7 +23,7 @@ namespace Diagnostics.DataProviders
 
         private string[] SensitiveAppSettingsEndingWith = new string[] { "CONNECTIONSTRING", "_SECRET", "_KEY", "_ID", "_CONTENTSHARE", "TOKEN_STORE", "TOKEN" };
 
-        private string[] RegexMatchingPatterns = new string[] { @"^AzureWebJobs\.[a-zA-Z][a-zA-Z0-9\_\-]*\.Disabled$" };
+        private string[] RegexMatchingPatterns = new string[] { @"^AzureWebJobs\.[a-zA-Z][_a-zA-Z0-9-]*\.Disabled$" };
         public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache)
         {
             _geoMasterHostName = context.GeomasterHostName;
