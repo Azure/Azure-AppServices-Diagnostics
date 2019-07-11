@@ -7,6 +7,8 @@ using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
+using System.Net.Http;
+using Diagnostics.Logger;
 
 namespace Diagnostics.DataProviders
 {
@@ -18,14 +20,14 @@ namespace Diagnostics.DataProviders
 
         private string dataProviderRequestId;
 
-        private KustoDataProvider kustoDataProvider;
+        private IKustoDataProvider kustoDataProvider;
 
-        public ChangeAnalysisDataProvider(OperationDataCache cache, ChangeAnalysisDataProviderConfiguration configuration, KustoDataProviderConfiguration kustoConfig, string requestId, string clientObjectId, string principalName) : base(cache)
+        public ChangeAnalysisDataProvider(OperationDataCache cache, ChangeAnalysisDataProviderConfiguration configuration, string requestId, string clientObjectId, string principalName, IKustoDataProvider kustoDataProvider) : base(cache)
         {
             dataProviderConfiguration = configuration;
             dataProviderRequestId = requestId;
             changeAnalysisClient = new ChangeAnalysisClient(configuration, requestId, clientObjectId, principalName);
-            kustoDataProvider = new KustoDataProvider(cache, kustoConfig, requestId);
+            this.kustoDataProvider = kustoDataProvider;
         }
 
         /// <summary>
@@ -90,6 +92,7 @@ namespace Diagnostics.DataProviders
                 throw new ArgumentNullException(nameof(resourceUri));
             }
 
+            DiagnosticsETWProvider.Instance.LogDataProviderMessage(dataProviderRequestId, "ChangeAnalysisDataProvider", $"Changeset id before calling api : {changeSetId}");
             ChangeRequest request = new ChangeRequest
             {
                 ResourceId = resourceUri,
@@ -198,6 +201,18 @@ namespace Diagnostics.DataProviders
             }
 
             return hostnames;
+        }
+
+        /// <summary>
+        /// Forwards the request to Change Analysis Client
+        /// </summary>
+        /// <param name="requestUri">Request URI</param>
+        /// <param name="postBody">Post body</param>
+        /// <param name="method">HTTP Method.</param>
+        /// <returns>JSON string</returns>
+        public async Task<string> InvokeChangeAnalysisRequest(string requestUri, object postBody = null, HttpMethod method = null)
+        {
+            return await changeAnalysisClient.PrepareAndSendRequest(requestUri, postBody, method);
         }
     }
 }

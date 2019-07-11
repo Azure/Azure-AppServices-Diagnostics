@@ -239,21 +239,29 @@ namespace Diagnostics.RuntimeHost.Controllers
                     bool isInternalCall = true;
                     QueryUtterancesResults utterancesResults = null;
 
-                    // Get suggested utterances for the detector
-                    string[] utterances = null;
                     if (jsonBody.DetectorUtterances != null && invoker.EntryPointDefinitionAttribute.Description.ToString().Length > 3)
                     {
-                        utterances = JsonConvert.DeserializeObject<string[]>(jsonBody.DetectorUtterances);
-                        string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
-                        var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
-                        var searchUtterances = await _searchService.SearchUtterances(runtimeContext.OperationContext.RequestId, description, utterances, resourceParams);
-                        string resultContent = await searchUtterances.Content.ReadAsStringAsync();
                         try
                         {
-                            utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
+                            // Get suggested utterances for the detector
+                            string[] utterances = null;
+                            utterances = JsonConvert.DeserializeObject<string[]>(jsonBody.DetectorUtterances);
+                            string description = invoker.EntryPointDefinitionAttribute.Description.ToString();
+                            var resourceParams = _internalApiHelper.GetResourceParams(invoker.ResourceFilter);
+                            var searchUtterances = await _searchService.SearchUtterances(runtimeContext.OperationContext.RequestId, description, utterances, resourceParams);
+                            if (searchUtterances != null && searchUtterances.Content != null)
+                            {
+                                string resultContent = await searchUtterances.Content.ReadAsStringAsync();
+                                utterancesResults = JsonConvert.DeserializeObject<QueryUtterancesResults>(resultContent);
+                            }
+                            else
+                            {
+                                DiagnosticsETWProvider.Instance.LogInternalAPIHandledException(runtimeContext.OperationContext.RequestId, "SearchServiceReturnedNull", "Search service returned null. This might be because search api is disabled in the project");
+                            }
                         }
-                        catch
+                        catch (Exception ex)
                         {
+                            DiagnosticsETWProvider.Instance.LogInternalAPIHandledException(runtimeContext.OperationContext.RequestId, "SearchAPICallException: QueryUtterances: " + ex.GetType().ToString(), ex.Message);
                             utterancesResults = null;
                         }
                     }
@@ -568,27 +576,47 @@ namespace Diagnostics.RuntimeHost.Controllers
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var allDetectors = _invokerCache.GetEntityInvokerList<TResource>(context).ToList();
 
-            SearchResults searchResults = null;
-            if (queryText != null && queryText.Length > 3)
+            if (queryText != null && queryText.Length > 1)
             {
+                SearchResults searchResults = null;
                 var resourceParams = _internalApiHelper.GetResourceParams(context.OperationContext.Resource as IResourceFilter);
-                var res = await _searchService.SearchDetectors(context.OperationContext.RequestId, queryText, resourceParams);
-                string resultContent = await res.Content.ReadAsStringAsync();
-                searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
-                searchResults.Results = searchResults.Results.Where(x => x.Score > 0.3).ToArray();
-                allDetectors.ForEach(p =>
+                try
                 {
-                    var det = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == p.EntryPointDefinitionAttribute.Id) : null;
-                    if (det != null)
+                    var res = await _searchService.SearchDetectors(context.OperationContext.RequestId, queryText, resourceParams);
+                    if (res != null && res.Content != null)
                     {
-                        p.EntryPointDefinitionAttribute.Score = det.Score;
+                        string resultContent = await res.Content.ReadAsStringAsync();
+                        searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
+                        // Select search results (Detectors) whose score is greater than 0.3 (considering anything below that should not be relevant for the search query)
+                        searchResults.Results = searchResults.Results.Where(result => result.Score > 0.3).ToArray();
+
+                        allDetectors.ForEach(detector =>
+                        {
+                            // Assign the score to detector if it exists in search results, else default to 0
+                            var detectorWithScore = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == detector.EntryPointDefinitionAttribute.Id) : null;
+                            if (detectorWithScore != null)
+                            {
+                                detector.EntryPointDefinitionAttribute.Score = detectorWithScore.Score;
+                            }
+                            else
+                            {
+                                detector.EntryPointDefinitionAttribute.Score = 0;
+                            }
+                        });
+                        // Finally select only those detectors that have a positive score value
+                        allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
                     }
                     else
                     {
-                        p.EntryPointDefinitionAttribute.Score = 0;
+                        DiagnosticsETWProvider.Instance.LogInternalAPIHandledException(context.OperationContext.RequestId, "SearchServiceReturnedNull", "Search service returned null. This might be because search api is disabled in the project" );
+                        return new List<DiagnosticApiResponse>();
                     }
-                });
-                allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
+                }
+                catch (Exception ex)
+                {
+                    DiagnosticsETWProvider.Instance.LogInternalAPIHandledException(context.OperationContext.RequestId, "SearchAPICallException: QueryDetectors: " + ex.GetType().ToString(), ex.Message);
+                    return new List<DiagnosticApiResponse>();
+                }
             }
 
             return allDetectors.Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
@@ -611,6 +639,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 var resourceUriFromQuery = queryParams.Where(s => s.Key.Equals("resourceUri")).Select(pair => pair.Value);
                 var resourceUri = context.OperationContext.Resource.ResourceUri;
                 var changeSetIdValue = changeSetId.First();
+                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Change set id received - {changeSetIdValue}");
                 if (resourceUriFromQuery.Any())
                 {
                     resourceUri = resourceUriFromQuery.First();
@@ -858,6 +887,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <returns>Changes for given change set id.</returns>
         private async Task<Response> GetChangesByChangeSetId(string changeSetId, string resourceId, IChangeAnalysisDataProvider changeAnalysisDataProvider)
         {
+            changeSetId = changeSetId.Replace(" ", "+");
             var changes = await changeAnalysisDataProvider.GetChangesByChangeSetId(changeSetId, resourceId);
             if (changes == null || changes.Count <= 0)
             {

@@ -1,12 +1,22 @@
 ﻿using System;
 using System.Data;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
+[assembly: InternalsVisibleTo("Diagnostics.Tests")]
 namespace Diagnostics.DataProviders
 {
     internal class MockKustoClient : IKustoClient
     {
-        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
+        internal static bool ShouldHeartbeatSucceed = false;
+        internal static int HeartBeatRuns = 0;
+
+        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, int timeoutSeconds, string requestId = null, string operationName = null)
+        {
+            return await ExecuteQueryAsync(query, cluster, database, requestId, operationName);
+        }
+
+            public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
         {
             if (string.IsNullOrWhiteSpace(cluster))
             {
@@ -36,6 +46,12 @@ namespace Diagnostics.DataProviders
             {
                 case "TestA":
                     return await GetTestA();
+                case "Heartbeat":
+                    ++HeartBeatRuns;
+                    if (ShouldHeartbeatSucceed) {
+                        return await GetFakeTenantIdResults();
+                    }
+                    break;
             }
 
             return new DataTable();
@@ -83,6 +99,11 @@ namespace Diagnostics.DataProviders
         }
 
         public Task<KustoQuery> GetKustoQueryAsync(string query, string cluster, string database)
+        {
+            return GetKustoQueryAsync(query, cluster, database, null);
+        }
+
+        public Task<KustoQuery> GetKustoQueryAsync(string query, string cluster, string database, string operationName)
         {
             if (string.IsNullOrWhiteSpace(cluster))
             {

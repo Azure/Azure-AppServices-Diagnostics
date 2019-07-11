@@ -158,7 +158,7 @@ namespace Diagnostics.Logger
 
             startTime = DateTime.UtcNow;
             verb = context.Request.Method;
-            address = context.Request.Path.ToString();
+            address = context.Request.Path.ToString() + context.Request.QueryString;
 
             try
             {

@@ -7,23 +7,27 @@ using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 
 namespace Diagnostics.DataProviders
 {
     public class GeoMasterDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IGeoMasterDataProvider
     {
-        private const string SiteExtensionResource = "/extensions/{*extensionApiMethod}";
+        const string SiteExtensionResource = "/extensions/{*extensionApiMethod}";
 
         private readonly IGeoMasterClient _geoMasterClient;
         private GeoMasterDataProviderConfiguration _configuration;
+        private string _geoMasterHostName;
 
-        private string[] AllowedlistAppSettingsStartingWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType" };
+        private string[] AllowedlistAppSettingsStartingWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType"};
 
         private string[] SensitiveAppSettingsEndingWith = new string[] { "CONNECTIONSTRING", "_SECRET", "_KEY", "_ID", "_CONTENTSHARE", "TOKEN_STORE", "TOKEN" };
 
-        public GeoMasterDataProvider(OperationDataCache cache, GeoMasterDataProviderConfiguration configuration) : base(cache)
+        private string[] RegexMatchingPatterns = new string[] { @"^AzureWebJobs\.[a-zA-Z][_a-zA-Z0-9-]*\.Disabled$" };
+        public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache)
         {
-            _configuration = configuration;
+            _geoMasterHostName = context.GeomasterHostName;
+            _configuration = context.Configuration.GeoMasterConfiguration;
             _geoMasterClient = InitClient();
         }
 
@@ -33,7 +37,7 @@ namespace Diagnostics.DataProviders
             bool onDiagRole = !string.IsNullOrWhiteSpace(_configuration.GeoCertThumbprint);
             if (onDiagRole)
             {
-                geoMasterClient = new GeoMasterCertClient(_configuration);
+                geoMasterClient = new GeoMasterCertClient(_configuration, _geoMasterHostName);
             }
             else
             {
@@ -78,12 +82,11 @@ namespace Diagnostics.DataProviders
             Dictionary<string, string> appSettings = new Dictionary<string, string>();
             foreach (var item in properties)
             {
-                if (AllowedlistAppSettingsStartingWith.Any(x => item.Key.StartsWith(x)))
+                if (AllowedlistAppSettingsStartingWith.Any(x => item.Key.StartsWith(x)) && !SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x))
+                    || RegexMatchingPatterns.Any(x => (Regex.Match(item.Key, x).Success)))
                 {
-                    if (!SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x)))
-                    {
-                        appSettings.Add(item.Key, item.Value);
-                    }
+                    
+                    appSettings.Add(item.Key, item.Value);
                 }
             }
 

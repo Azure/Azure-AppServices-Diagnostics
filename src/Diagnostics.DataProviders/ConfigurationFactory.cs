@@ -68,9 +68,18 @@ namespace Diagnostics.DataProviders
                     case "DBName":
                         return "Mock";
                     case "KustoClusterNameGroupings":
+                        return "wawsmockfollower";
+                    case "KustoClusterFailoverGroupings":
                         return "wawsmock";
                     case "KustoRegionGroupings":
                         return "mockstamp";
+                    case "HeartBeatConsecutiveFailureLimit":
+                    case "HeartBeatConsecutiveSuccessLimit":
+                        return "1";
+                    case "HeartBeatQuery":
+                        return "Heartbeat";
+                    case "HeartBeatDelay":
+                        return "0";
                     default: return string.Empty;
                 }
             }

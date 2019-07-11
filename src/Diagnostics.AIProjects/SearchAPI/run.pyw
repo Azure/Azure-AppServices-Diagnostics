@@ -1,10 +1,15 @@
 import os, gc, shutil, uuid
+from argparse import ArgumentParser
 from flask import Flask, request
-from RegistryReader import githubFolderPath
+from RegistryReader import detectorsFolderPath
 from Logger import *
 from datetime import datetime, timezone
 import json, itertools, nltk
 from functools import wraps
+
+argparser = ArgumentParser()
+argparser.add_argument("-d", "--debug", default=False, help="flag for debug mode")
+args = vars(argparser.parse_args())
 
 try:
     nltk.data.find('tokenizers/punkt')
@@ -43,7 +48,7 @@ packageFileNames = {
     "sampleUtterancesFile": "SampleUtterances.json"
 }
 
-modelsPath = githubFolderPath
+modelsPath = detectorsFolderPath
 def copyFolder(src, dst):
     if os.path.isdir(src):
         if os.path.isdir(dst):
@@ -331,4 +336,4 @@ def refreshModelMethod():
 if __name__ == '__main__':
     HOST = os.environ.get('SERVER_HOST', '0.0.0.0')
     PORT = 8010
-    app.run(HOST, PORT)
+    app.run(HOST, PORT, debug=args['debug'])

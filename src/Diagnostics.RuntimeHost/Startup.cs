@@ -5,21 +5,26 @@ using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Win32;
+using System;
 
 namespace Diagnostics.RuntimeHost
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostingEnvironment environment)
         {
             Configuration = configuration;
+            Environment = environment;
         }
 
         public IConfiguration Configuration { get; }
+        public IHostingEnvironment Environment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -32,22 +37,50 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
             services.AddSingleton<IGistCacheService, GistCacheService>();
             services.AddSingleton<ISiteService, SiteService>();
-            services.AddSingleton<IStampService, StampService>();
+            services.AddSingleton<IStampService>((serviceProvider) =>
+            {
+                var cloudDomain = serviceProvider.GetService<IDataSourcesConfigurationService>().Config.KustoConfiguration.CloudDomain;
+                switch (cloudDomain)
+                {
+                    case DataProviderConstants.AzureChinaCloud:
+                    case DataProviderConstants.AzureUSGovernment:
+                        return new NationalCloudStampService();
+                    default:
+                        return new StampService();
+                }
+            });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
-            services.AddSingleton<ISearchService, SearchService>();
+
+            bool searchIsEnabled = false;
+            if (Environment.IsProduction())
+            {
+                searchIsEnabled = Convert.ToBoolean(Registry.GetValue(RegistryConstants.SearchAPIRegistryPath, RegistryConstants.SearchAPIEnabledKey, string.Empty));
+            }
+            else
+            {
+                searchIsEnabled = Convert.ToBoolean(Configuration[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
+            }
+            if (searchIsEnabled)
+            {
+                services.AddSingleton<ISearchService, SearchService>();
+            }
+            else
+            {
+                services.AddSingleton<ISearchService, SearchServiceDisabled>();
+            }
 
             var servicesProvider = services.BuildServiceProvider();
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
             var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
+            var kustoConfiguration = dataSourcesConfigService.Config.KustoConfiguration;
 
-            if (!observerConfiguration.ObserverLocalHostEnabled)
-            {
-                observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
-                var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.WawsObserverResourceId, observerConfiguration);
-                var supportBayApiObserverTokenService = new ObserverTokenService(observerConfiguration.SupportBayApiObserverResourceId, observerConfiguration);
-                services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
-                services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
-            }
+            services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
+
+            observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
+            var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.WawsObserverResourceId, observerConfiguration);
+            var supportBayApiObserverTokenService = new ObserverTokenService(observerConfiguration.SupportBayApiObserverResourceId, observerConfiguration);
+            services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
+            services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
 
             KustoTokenService.Instance.Initialize(dataSourcesConfigService.Config.KustoConfiguration);
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
