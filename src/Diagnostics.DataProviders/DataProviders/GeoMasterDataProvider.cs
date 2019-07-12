@@ -24,6 +24,8 @@ namespace Diagnostics.DataProviders
         private string[] SensitiveAppSettingsEndingWith = new string[] { "CONNECTIONSTRING", "_SECRET", "_KEY", "_ID", "_CONTENTSHARE", "TOKEN_STORE", "TOKEN" };
 
         private string[] RegexMatchingPatterns = new string[] { @"^AzureWebJobs\.[a-zA-Z][_a-zA-Z0-9-]*\.Disabled$" };
+
+        private string[] AppSettingsExistenceCheckList = new string[] { "APPINSIGHTS_INSTRUMENTATIONKEY" };
         public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache)
         {
             _geoMasterHostName = context.GeomasterHostName;
@@ -87,6 +89,10 @@ namespace Diagnostics.DataProviders
                 {
                     
                     appSettings.Add(item.Key, item.Value);
+                }
+                else if (AppSettingsExistenceCheckList.Any(x => String.Compare(item.Key, x, true) == 0))
+                {
+                    appSettings.Add(item.Key, "******");
                 }
             }
 
