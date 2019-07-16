@@ -13,12 +13,14 @@ using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diagnostics.CompilerHost.Controllers
 {
     /// <summary>
     /// Compiler host controller.
     /// </summary>
+    [Authorize]
     [Route("api/[controller]")]
     public class CompilerHostController : Controller
     {
@@ -79,7 +81,7 @@ namespace Diagnostics.CompilerHost.Controllers
 
             return Ok(compilerResponse);
         }
-
+       
         private static Dictionary<string, string> TryExtract(JToken jsonBody, string key)
         {
             try

@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
 using Newtonsoft.Json;
-
+using Diagnostics.DataProviders.TokenService;
 namespace Diagnostics.RuntimeHost.Services
 {
     public interface ICompilerHostClient
@@ -71,6 +71,8 @@ namespace Diagnostics.RuntimeHost.Services
                     requestMessage.Headers.Add(HeaderConstants.RequestIdHeaderName, requestId);
                 }
 
+                string authToken = await CompilerHostTokenService.Instance.GetAuthorizationTokenAsync();
+                requestMessage.Headers.Add("Authorization", authToken);
                 HttpResponseMessage responseMessage = await _httpClient.SendAsync(requestMessage);
 
                 if (!responseMessage.IsSuccessStatusCode)
