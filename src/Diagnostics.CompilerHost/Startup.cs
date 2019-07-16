@@ -74,12 +74,12 @@ namespace Diagnostics.CompilerHost
                     {
                         OnTokenValidated = context =>
                         {
-                            var allowedPartnerAppIds = Configuration["AzureAd:AllowedAppIds"].Split(",").ToList();
+                            var allowedAppIds = Configuration["AzureAd:AllowedAppIds"].Split(",").ToList();
                             var claimPrincipal = context.Principal;
                             var appId = claimPrincipal.Claims.FirstOrDefault(c => c.Type.Equals("appid", StringComparison.CurrentCultureIgnoreCase));
-                            if (appId == null || !allowedPartnerAppIds.Exists(p => p.Equals(appId.Value, StringComparison.OrdinalIgnoreCase)))
+                            if (appId == null || !allowedAppIds.Exists(p => p.Equals(appId.Value, StringComparison.OrdinalIgnoreCase)))
                             {
-                                context.Fail($"App Client Id : {appId.Value} is not in the allowed list of applications");
+                                context.Fail($"App Id : {appId.Value} is not in the allowed list of App Ids");
                             }
                             return Task.CompletedTask;
                         }
