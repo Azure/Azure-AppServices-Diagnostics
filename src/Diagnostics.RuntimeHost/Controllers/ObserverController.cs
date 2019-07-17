@@ -5,12 +5,14 @@ using System.Threading.Tasks;
 using Diagnostics.DataProviders;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
     /// <summary>
     /// This API is used to get resource informatio directly from the observer data provider.
     /// </summary>
+    [Authorize]
     [Produces("application/json")]
     [Route(UriElements.Observer)]
     public class ObserverController : Controller

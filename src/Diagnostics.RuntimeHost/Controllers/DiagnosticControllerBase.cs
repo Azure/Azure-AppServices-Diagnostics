@@ -26,9 +26,11 @@ using Diagnostics.Scripts.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
+    [Authorize]
     public abstract class DiagnosticControllerBase<TResource> : Controller where TResource : IResource
     {
         protected ICompilerHostClient _compilerHostClient;

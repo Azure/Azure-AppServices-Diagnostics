@@ -5,12 +5,14 @@ using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
     /// <summary>
     /// Arm resource controller.
     /// </summary>
+    [Authorize]
     [Produces("application/json")]
     [Route(UriElements.ArmResource)]
     public class ArmResourceController : DiagnosticControllerBase<ArmResource>

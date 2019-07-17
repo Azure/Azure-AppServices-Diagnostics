@@ -41,17 +41,31 @@ namespace Diagnostics.RuntimeHost
             var signingKeys = config.SigningKeys;
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateAudience = true,
-                    ValidAudience = Configuration["AzureAd:ClientId"],
-                    ValidateIssuer = true,
-                    ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
-                    ValidateLifetime = true,
-                    RequireSignedTokens = true,
-                    IssuerSigningKeys = signingKeys
-                };
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateAudience = true,
+                ValidAudience = Configuration["AzureAd:ClientId"],
+                ValidateIssuer = true,
+                ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
+                ValidateLifetime = true,
+                RequireSignedTokens = true,
+                IssuerSigningKeys = signingKeys
+            };
 
+            options.Events = new JwtBearerEvents
+            {
+                OnTokenValidated = context =>
+                {
+                var allowedAppIds = Configuration["AzureAd:AllowedAppIds"].Split(",").Select(p => p.Trim()).ToList();
+                var claimPrincipal = context.Principal;
+                var incomingAppId = claimPrincipal.Claims.FirstOrDefault(c => c.Type.Equals("appid", StringComparison.CurrentCultureIgnoreCase));
+                if(incomingAppId == null || !allowedAppIds.Exists(p => p.Equals(incomingAppId.Value, StringComparison.OrdinalIgnoreCase)))
+                {
+                    context.Fail("Unauthorized Request");
+                }
+                    return Task.CompletedTask;
+                }
+                };
             });
 
             services.AddMvc();
