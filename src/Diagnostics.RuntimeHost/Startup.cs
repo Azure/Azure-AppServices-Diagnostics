@@ -12,6 +12,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Win32;
 using System;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -28,6 +34,26 @@ namespace Diagnostics.RuntimeHost
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var openIdConfigEndpoint = $"{Configuration["AzureAd:AADAuthority"]}/.well-known/openid-configuration";
+            var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(openIdConfigEndpoint, new OpenIdConnectConfigurationRetriever());
+            var config = configManager.GetConfigurationAsync().Result;
+            var issuer = config.Issuer;
+            var signingKeys = config.SigningKeys;
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateAudience = true,
+                    ValidAudience = Configuration["AzureAd:ClientId"],
+                    ValidateIssuer = true,
+                    ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
+                    ValidateLifetime = true,
+                    RequireSignedTokens = true,
+                    IssuerSigningKeys = signingKeys
+                };
+
+            });
+
             services.AddMvc();
 
             services.AddSingleton<IDataSourcesConfigurationService, DataSourcesConfigurationService>();
@@ -85,7 +111,7 @@ namespace Diagnostics.RuntimeHost
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            app.UseAuthentication();
             app.UseDiagnosticsRequestMiddleware();
             app.UseMvc();
         }
