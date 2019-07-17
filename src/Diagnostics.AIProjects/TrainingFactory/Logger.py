@@ -8,6 +8,7 @@ class Logger:
 		self.isLogToKustoEnabled = kustoEnabled
 
 	def logToFile(self, fileName, logvalue):
+		print(logvalue)
 		try:
 			fp = open(fileName, "a")
 			fp.write(logvalue + "\r\n")
