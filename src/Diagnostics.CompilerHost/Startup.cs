@@ -33,8 +33,8 @@ namespace Diagnostics.CompilerHost
         {
             var builder = new ConfigurationBuilder()
               .SetBasePath(Directory.GetCurrentDirectory())
-              .AddJsonFile($"appsettings.json", optional: false, reloadOnChange: true)
-              .AddEnvironmentVariables();
+              .AddEnvironmentVariables()
+              .AddJsonFile($"appsettings.json", optional: false, reloadOnChange: true);
 
             Configuration = builder.Build();
         }
@@ -74,12 +74,12 @@ namespace Diagnostics.CompilerHost
                     {
                         OnTokenValidated = context =>
                         {
-                            var allowedAppIds = Configuration["AzureAd:AllowedAppIds"].Split(",").ToList();
+                            var allowedAppIds = Configuration["AzureAd:AllowedAppIds"].Split(",").Select(p => p.Trim()).ToList();
                             var claimPrincipal = context.Principal;
                             var appId = claimPrincipal.Claims.FirstOrDefault(c => c.Type.Equals("appid", StringComparison.CurrentCultureIgnoreCase));
                             if (appId == null || !allowedAppIds.Exists(p => p.Equals(appId.Value, StringComparison.OrdinalIgnoreCase)))
                             {
-                                context.Fail($"App Id : {appId.Value} is not in the allowed list of App Ids");
+                                context.Fail("Unauthorized Request");
                             }
                             return Task.CompletedTask;
                         }

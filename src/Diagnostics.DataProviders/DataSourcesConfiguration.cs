@@ -18,8 +18,6 @@ namespace Diagnostics.DataProviders
 
         public AntaresMdmDataProviderConfiguration AntaresMdmConfiguration { get; set; }
 
-        public NetworkingMdmDataProviderConfiguration NetworkingMdmConfiguration { get; set; }
-
-        public CompilerHostAuthConfiguration CompilerHostAuthConfiguration { get; set; }
+        public NetworkingMdmDataProviderConfiguration NetworkingMdmConfiguration { get; set; }      
     }
 }
