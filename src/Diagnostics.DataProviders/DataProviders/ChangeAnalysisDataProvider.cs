@@ -8,6 +8,7 @@ using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using System.Net.Http;
+using Diagnostics.Logger;
 
 namespace Diagnostics.DataProviders
 {
@@ -91,6 +92,7 @@ namespace Diagnostics.DataProviders
                 throw new ArgumentNullException(nameof(resourceUri));
             }
 
+            DiagnosticsETWProvider.Instance.LogDataProviderMessage(dataProviderRequestId, "ChangeAnalysisDataProvider", $"Changeset id before calling api : {changeSetId}");
             ChangeRequest request = new ChangeRequest
             {
                 ResourceId = resourceUri,

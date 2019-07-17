@@ -2,6 +2,7 @@
 {
     public enum ActionType
     {
+        Markdown,
         ArmApi,
         OpenTab,
         GoToBlade
