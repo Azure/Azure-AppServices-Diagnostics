@@ -25,7 +25,10 @@ namespace Diagnostics.DataProviders
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile($"appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
+            var builtConfig = builder.Build();
 
             var tokenProvider = new AzureServiceTokenProvider();
             var keyVaultClient = new KeyVaultClient(
@@ -34,7 +37,7 @@ namespace Diagnostics.DataProviders
                 )
             );
 
-            builder.AddAzureKeyVault(DataProviderConstants.KeyVaultURL,
+            builder.AddAzureKeyVault($"https://{builtConfig["DevKeyVaultName"]}.vault.azure.net/",
                                      keyVaultClient,
                                      new DefaultKeyVaultSecretManager());
 

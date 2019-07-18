@@ -32,7 +32,7 @@ namespace Diagnostics.RuntimeHost
                                 azureServiceTokenProvider.KeyVaultTokenCallback));
 
                         config.AddAzureKeyVault(
-                            DataProviderConstants.KeyVaultURL,
+                            $"https://{builtConfig["DevKeyVaultName"]}.vault.azure.net/",
                             keyVaultClient,
                             new DefaultKeyVaultSecretManager());
                     }
