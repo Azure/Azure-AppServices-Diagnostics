@@ -16,7 +16,7 @@
         internal const string CompilerHostRegistryPath = RegistryRootPath + @"\CompilerHost";
 
         internal const string CompilerHostBinaryLocationKey = "CompilerHostBinaryLocation";
-        internal const string CompilerHostPortKey = "CompilerHostPort";
+        internal const string CompilerHostUrlKey = "CompilerHostUrl";
         internal const string CompilerHostPollingIntervalKey = "PollingIntervalInSeconds";
         internal const string CompilerHostProcessMemoryThresholdInMBKey = "ProcessMemoryThresholdInMB";
 

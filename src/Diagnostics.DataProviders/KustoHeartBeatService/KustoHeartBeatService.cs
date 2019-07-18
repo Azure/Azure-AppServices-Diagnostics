@@ -202,10 +202,10 @@ namespace Diagnostics.DataProviders
             var clusterStatus = clusterSuccess ? "Success" : "Failed";
 
             DiagnosticsETWProvider.Instance.LogKustoHeartbeatInformation(
-               activityId,
-               $"ClusterType:{primaryOrFailover},ClusterStatus:{clusterStatus},Cluster:{cluster},UsingPrimaryCluster:{usingPrimaryCluster}",
-               exception != null ? exception.GetType().ToString() : string.Empty,
-               exception != null ? exception.ToString() : string.Empty);
+                activityId,
+                $"ClusterType:{primaryOrFailover},ClusterStatus:{clusterStatus},Cluster:{cluster},UsingPrimaryCluster:{usingPrimaryCluster}",
+                exception != null ? exception.GetType().ToString() : string.Empty,
+                exception != null ? exception.ToString() : string.Empty);
         }
     }
 }
