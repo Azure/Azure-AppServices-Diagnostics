@@ -80,8 +80,7 @@ namespace Diagnostics.CompilerHost.Controllers
             }
 
             return Ok(compilerResponse);
-        }
-       
+        }       
         private static Dictionary<string, string> TryExtract(JToken jsonBody, string key)
         {
             try

@@ -112,7 +112,6 @@ namespace Diagnostics.CompilerHost
         {
             // Execute a basic script to load roslyn successfully.
             var result = CSharpScript.EvaluateAsync<int>("1 + 2").Result;
-        }
-     
+        }   
     }
 }
