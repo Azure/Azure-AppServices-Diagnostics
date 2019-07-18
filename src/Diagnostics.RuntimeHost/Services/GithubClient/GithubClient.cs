@@ -188,20 +188,10 @@ namespace Diagnostics.RuntimeHost.Services
 
         private void LoadConfigurations()
         {
-            if (_env.IsProduction())
-            {
-                _userName = (string)Registry.GetValue(RegistryConstants.GithubWatcherRegistryPath, RegistryConstants.GithubUserNameKey, string.Empty);
-                _repoName = (string)Registry.GetValue(RegistryConstants.GithubWatcherRegistryPath, RegistryConstants.GithubRepoNameKey, string.Empty);
-                _branch = (string)Registry.GetValue(RegistryConstants.GithubWatcherRegistryPath, RegistryConstants.GithubBranchKey, string.Empty);
-                _accessToken = (string)Registry.GetValue(RegistryConstants.GithubWatcherRegistryPath, RegistryConstants.GithubAccessTokenKey, string.Empty);
-            }
-            else
-            {
-                _userName = _config[$"SourceWatcher:Github:{RegistryConstants.GithubUserNameKey}"];
-                _repoName = _config[$"SourceWatcher:Github:{RegistryConstants.GithubRepoNameKey}"];
-                _branch = _config[$"SourceWatcher:Github:{RegistryConstants.GithubBranchKey}"];
-                _accessToken = _config[$"SourceWatcher:Github:{RegistryConstants.GithubAccessTokenKey}"];
-            }
+            _userName = _config[$"SourceWatcher:Github:{RegistryConstants.GithubUserNameKey}"];
+            _repoName = _config[$"SourceWatcher:Github:{RegistryConstants.GithubRepoNameKey}"];
+            _branch = _config[$"SourceWatcher:Github:{RegistryConstants.GithubBranchKey}"];
+            _accessToken = _config[$"SourceWatcher:Github:{RegistryConstants.GithubAccessTokenKey}"];
 
             _branch = !string.IsNullOrWhiteSpace(_branch) ? _branch : "master";
             _accessToken = _accessToken ?? string.Empty;

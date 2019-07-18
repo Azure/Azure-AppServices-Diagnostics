@@ -23,11 +23,6 @@ namespace Diagnostics.RuntimeHost.Services
 
         public static IConfigurationFactory GetDataProviderConfigurationFactory(IHostingEnvironment env)
         {
-            if (env.IsProduction())
-            {
-                return new RegistryDataProviderConfigurationFactory(RegistryConstants.RegistryRootPath);
-            }
-
             switch (env.EnvironmentName.ToLower())
             {
                 case "mock":

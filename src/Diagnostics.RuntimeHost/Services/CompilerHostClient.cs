@@ -102,15 +102,7 @@ namespace Diagnostics.RuntimeHost.Services
 
         private void LoadConfigurations()
         {
-            // TODO : Probably needs a better way to manage configurations accross various services.
-            if (_env.IsProduction())
-            {
-                _compilerHostUrl = (string)Registry.GetValue(RegistryConstants.CompilerHostRegistryPath, RegistryConstants.CompilerHostUrlKey, string.Empty);
-            }
-            else
-            {
-                _compilerHostUrl = (_configuration[$"CompilerHost:{RegistryConstants.CompilerHostUrlKey}"]).ToString();
-            }
+            _compilerHostUrl = (_configuration[$"CompilerHost:{RegistryConstants.CompilerHostUrlKey}"]).ToString();
         }
 
         public void Dispose()

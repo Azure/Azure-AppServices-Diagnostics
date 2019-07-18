@@ -385,16 +385,9 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         {
             _rootContentApiPath = $@"https://api.github.com/repos/{_githubClient.UserName}/{_githubClient.RepoName}/contents?ref={_githubClient.Branch}";
             var pollingIntervalvalue = string.Empty;
-            if (_env.IsProduction())
-            {
-                _destinationCsxPath = (string)Registry.GetValue(RegistryConstants.GithubWatcherRegistryPath, RegistryConstants.DestinationScriptsPathKey, string.Empty);
-                pollingIntervalvalue = (string)Registry.GetValue(RegistryConstants.SourceWatcherRegistryPath, RegistryConstants.PollingIntervalInSecondsKey, string.Empty);
-            }
-            else
-            {
-                _destinationCsxPath = (_config[$"SourceWatcher:Github:{RegistryConstants.DestinationScriptsPathKey}"]).ToString();
-                pollingIntervalvalue = (_config[$"SourceWatcher:{RegistryConstants.PollingIntervalInSecondsKey}"]).ToString();
-            }
+            
+            _destinationCsxPath = (_config[$"SourceWatcher:Github:{RegistryConstants.DestinationScriptsPathKey}"]).ToString();
+            pollingIntervalvalue = (_config[$"SourceWatcher:{RegistryConstants.PollingIntervalInSecondsKey}"]).ToString();
 
             if (!int.TryParse(pollingIntervalvalue, out _pollingIntervalInSeconds))
             {
