@@ -145,6 +145,11 @@ namespace Diagnostics.DataProviders
 
         public async Task<KustoQuery> GetKustoQueryAsync(string query, string cluster, string database)
         {
+            return await GetKustoQueryAsync(query, cluster, database, null);
+        }
+
+        public async Task<KustoQuery> GetKustoQueryAsync(string query, string cluster, string database, string operationName)
+        {
             try
             {
                 var encodedQuery = await EncodeQueryAsBase64UrlAsync(query);
@@ -152,7 +157,8 @@ namespace Diagnostics.DataProviders
                 {
                     Text = query,
                     Url = $"https://dataexplorer.azure.com/clusters/{cluster}/databases/{database}?query={encodedQuery}",
-                    KustoDesktopUrl = $"https://{cluster}.kusto.windows.net:443/{database}?query={encodedQuery}&web=0"
+                    KustoDesktopUrl = $"https://{cluster}.kusto.windows.net:443/{database}?query={encodedQuery}&web=0",
+                    OperationName = operationName
                 };
                 return kustoQuery;
             }
