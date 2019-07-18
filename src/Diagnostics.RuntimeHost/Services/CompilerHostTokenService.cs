@@ -1,8 +1,9 @@
-﻿using Microsoft.IdentityModel.Clients.ActiveDirectory;
-using System;
-using Diagnostics.DataProviders.DataProviderConfigurations;
+﻿using System;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Extensions.Configuration;
-namespace Diagnostics.DataProviders.TokenService
+using Diagnostics.DataProviders.TokenService;
+
+namespace Diagnostics.RuntimeHost.Services
 {
     // Class that acquires token to authenticate with CompilerHost
     public class CompilerHostTokenService : TokenServiceBase
@@ -17,9 +18,9 @@ namespace Diagnostics.DataProviders.TokenService
 
         public void Initialize(IConfiguration configuration)
         {
-            Resource = configuration["CompilerHostAuth:AADResource"];
-            AuthenticationContext = new AuthenticationContext(configuration["CompilerHostAuth:AADAuthority"]);
-            ClientCredential = new ClientCredential(configuration["CompilerHostAuth:ClientId"], configuration["CompilerHostAuth:AppKey"]);
+            Resource = configuration["CompilerHost:AADResource"];
+            AuthenticationContext = new AuthenticationContext(configuration["CompilerHost:AADAuthority"]);
+            ClientCredential = new ClientCredential(configuration["CompilerHost:ClientId"], configuration["CompilerHost:AppKey"]);
             TokenServiceName = "CompilerHostTokenService";
             StartTokenRefresh();
         }
