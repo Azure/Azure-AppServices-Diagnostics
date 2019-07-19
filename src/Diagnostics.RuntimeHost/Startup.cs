@@ -35,7 +35,7 @@ namespace Diagnostics.RuntimeHost
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var openIdConfigEndpoint = $"{Configuration["AzureAd:AADAuthority"]}/.well-known/openid-configuration";
+            var openIdConfigEndpoint = $"{Configuration["SecuritySettings:AADAuthority"]}/.well-known/openid-configuration";
             var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(openIdConfigEndpoint, new OpenIdConnectConfigurationRetriever());
             var config = configManager.GetConfigurationAsync().Result;
             var issuer = config.Issuer;
@@ -45,7 +45,7 @@ namespace Diagnostics.RuntimeHost
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateAudience = true,
-                ValidAudience = Configuration["AzureAd:ClientId"],
+                ValidAudience = Configuration["SecuritySettings:ClientId"],
                 ValidateIssuer = true,
                 ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
                 ValidateLifetime = true,
@@ -57,7 +57,7 @@ namespace Diagnostics.RuntimeHost
             {
                 OnTokenValidated = context =>
                 {
-                var allowedAppIds = Configuration["AzureAd:AllowedAppIds"].Split(",").Select(p => p.Trim()).ToList();
+                var allowedAppIds = Configuration["SecuritySettings:AllowedAppIds"].Split(",").Select(p => p.Trim()).ToList();
                 var claimPrincipal = context.Principal;
                 var incomingAppId = claimPrincipal.Claims.FirstOrDefault(c => c.Type.Equals("appid", StringComparison.CurrentCultureIgnoreCase));
                 if(incomingAppId == null || !allowedAppIds.Exists(p => p.Equals(incomingAppId.Value, StringComparison.OrdinalIgnoreCase)))
