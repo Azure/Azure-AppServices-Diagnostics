@@ -37,18 +37,11 @@ namespace Diagnostics.DataProviders
                 )
             );
 
-            if (env.IsProduction())
-            {
-                builder.AddAzureKeyVault($"https://{builtConfig["Secrets:ProdKeyVaultName"]}.vault.azure.net/",
+            string keyVaultConfig = env.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
+
+            builder.AddAzureKeyVault($"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
                                          keyVaultClient,
                                          new DefaultKeyVaultSecretManager());
-            }
-            else
-            {
-                builder.AddAzureKeyVault($"https://{builtConfig["Secrets:DevKeyVaultName"]}.vault.azure.net/",
-                                         keyVaultClient,
-                                         new DefaultKeyVaultSecretManager());
-            }
 
             _configuration = builder.Build();
         }

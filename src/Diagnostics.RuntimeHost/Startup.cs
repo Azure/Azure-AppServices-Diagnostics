@@ -51,9 +51,7 @@ namespace Diagnostics.RuntimeHost
             });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
 
-            bool searchIsEnabled = false;
-            
-            searchIsEnabled = Convert.ToBoolean(Configuration[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
+            bool searchIsEnabled = Convert.ToBoolean(Configuration[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
 
             if (searchIsEnabled)
             {
