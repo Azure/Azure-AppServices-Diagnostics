@@ -7,12 +7,14 @@ using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
     /// <summary>
     /// Sites controller.
     /// </summary>
+    [Authorize]
     [Produces("application/json")]
     [Route(UriElements.SitesResource)]
     public sealed class SitesController : SiteControllerBase
