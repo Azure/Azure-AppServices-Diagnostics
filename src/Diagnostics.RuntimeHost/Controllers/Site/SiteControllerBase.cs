@@ -8,11 +8,9 @@ using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Utilities;
-using Microsoft.AspNetCore.Authorization;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
-    [Authorize]
     public abstract class SiteControllerBase : DiagnosticControllerBase<App>
     {
         protected ISiteService _siteService;
