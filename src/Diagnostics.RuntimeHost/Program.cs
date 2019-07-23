@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Azure.KeyVault;
+using Microsoft.Azure.Services.AppAuthentication;
+using Microsoft.Extensions.Configuration.AzureKeyVault;
+using Diagnostics.DataProviders;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -13,12 +17,26 @@ namespace Diagnostics.RuntimeHost
 
         public static IWebHost BuildWebHost(string[] args)
         {
-            var config = new ConfigurationBuilder()
-                .AddCommandLine(args)
-                .Build();
-
             return WebHost.CreateDefaultBuilder(args)
-                .UseConfiguration(config)
+                .ConfigureAppConfiguration((context, config) =>
+                {
+                    var builtConfig = config
+                        .AddCommandLine(args)
+                        .Build();
+
+                    if (context.HostingEnvironment.IsDevelopment())
+                    {
+                        var azureServiceTokenProvider = new AzureServiceTokenProvider();
+                        var keyVaultClient = new KeyVaultClient(
+                            new KeyVaultClient.AuthenticationCallback(
+                                azureServiceTokenProvider.KeyVaultTokenCallback));
+
+                        config.AddAzureKeyVault(
+                            $"https://{builtConfig["DevKeyVaultName"]}.vault.azure.net/",
+                            keyVaultClient,
+                            new DefaultKeyVaultSecretManager());
+                    }
+                })
                 .UseStartup<Startup>()
                 .Build();
         }

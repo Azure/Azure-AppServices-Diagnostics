@@ -6,6 +6,9 @@ using System.Reflection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
+using Microsoft.Azure.KeyVault;
+using Microsoft.Azure.Services.AppAuthentication;
+using Microsoft.Extensions.Configuration.AzureKeyVault;
 
 namespace Diagnostics.DataProviders
 {
@@ -22,7 +25,21 @@ namespace Diagnostics.DataProviders
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile($"appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
+            var builtConfig = builder.Build();
+
+            var tokenProvider = new AzureServiceTokenProvider();
+            var keyVaultClient = new KeyVaultClient(
+                new KeyVaultClient.AuthenticationCallback(
+                    tokenProvider.KeyVaultTokenCallback
+                )
+            );
+
+            builder.AddAzureKeyVault($"https://{builtConfig["DevKeyVaultName"]}.vault.azure.net/",
+                                     keyVaultClient,
+                                     new DefaultKeyVaultSecretManager());
 
             _configuration = builder.Build();
         }

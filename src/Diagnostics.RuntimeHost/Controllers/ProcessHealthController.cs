@@ -12,11 +12,11 @@ namespace Diagnostics.RuntimeHost.Controllers
         private ISourceWatcherService _sourceWatcherService;
         private ICompilerHostClient _compilerHostClient;
 
-        public ProcessHealthController(IServiceProvider services)
+        public ProcessHealthController(ISourceWatcherService sourceWatcherService, ICompilerHostClient compilerHostClient)
         {
             // These dependencies are injected for the services to start.
-            _sourceWatcherService = (ISourceWatcherService)services.GetService(typeof(ISourceWatcherService));
-            _compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));
+            _sourceWatcherService = sourceWatcherService;
+            _compilerHostClient = compilerHostClient;
         }
 
         [HttpGet(UriElements.HealthPing)]
