@@ -36,6 +36,7 @@ namespace Diagnostics.RuntimeHost
                             $"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
                             keyVaultClient,
                             new DefaultKeyVaultSecretManager());
+                    }
                 })
                 .UseStartup<Startup>()
                 .Build();
