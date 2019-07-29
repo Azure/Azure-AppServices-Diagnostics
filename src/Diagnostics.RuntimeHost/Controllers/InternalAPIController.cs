@@ -12,10 +12,12 @@ using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
     // Internal API to be used to communicate with internal processes on the diag role e.g. python processes for Search API
+    [Authorize]
     [Produces("application/json")]
     [Route(UriElements.Internal)]
     public class InternalAPIController : Controller
