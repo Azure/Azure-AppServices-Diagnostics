@@ -3,12 +3,13 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
+using System.Threading.Tasks;
 using Diagnostics.DataProviders.TokenService;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace Diagnostics.DataProviders
 {
-    public class ObserverTokenService : TokenServiceBase, IWawsObserverTokenService, ISupportBayApiObserverTokenService
+    public class ObserverTokenService : ITokenService, IWawsObserverTokenService, ISupportBayApiObserverTokenService
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ObserverTokenService"/> class.
@@ -21,17 +22,25 @@ namespace Diagnostics.DataProviders
             Initialize(configuration);
         }
 
-        protected override AuthenticationContext AuthenticationContext { get; set; }
-        protected override ClientCredential ClientCredential { get; set; }
-        protected override string Resource { get; set; }
-        protected override string TokenServiceName { get; set; }
+        public TokenRefresher TokenRefresher { get; private set; }
+        protected AuthenticationContext AuthenticationContext { get; set; }
+        protected ClientCredential ClientCredential { get; set; }
+        protected string Resource { get; set; }
+        protected string TokenServiceName { get; set; }
+
+        public async Task<string> GetAuthorizationTokenAsync()
+        {
+            return await TokenRefresher.GetAuthorizationTokenAsync().ConfigureAwait(false);
+        }
 
         private void Initialize(SupportObserverDataProviderConfiguration configuration)
         {
-            AuthenticationContext = new AuthenticationContext(configuration.AADAuthority);
-            ClientCredential = new ClientCredential(configuration.ClientId, configuration.AppKey);
-            TokenServiceName = "ObserverTokenRefresh";
-            StartTokenRefresh();
+            TokenRefresher = new TokenRefresher(
+                configuration.AADAuthority,
+                configuration.ClientId,
+                configuration.AppKey,
+                Resource,
+                "ObserverTokenRefresh");
         }
     }
 }

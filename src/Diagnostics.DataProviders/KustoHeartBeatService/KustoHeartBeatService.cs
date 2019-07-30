@@ -4,52 +4,53 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
 using Diagnostics.Logger;
-using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Extensions.Hosting;
 
 namespace Diagnostics.DataProviders
 {
-    public interface IKustoHeartBeatService : IDisposable
+    public interface IKustoHeartBeatService
     {
         string GetClusterNameFromStamp(string stampName);
     }
 
-    public class KustoHeartBeatService : IKustoHeartBeatService
+    public class KustoHeartBeatService : BackgroundService, IKustoHeartBeatService
     {
         private KustoDataProviderConfiguration _configuration;
         private Dictionary<string, KustoHeartBeat> _heartbeats;
         private KustoDataProvider _kustoDataProvider;
-        private CancellationTokenSource _cancellationToken;
-
-        private void Initialize()
-        {
-            _heartbeats = new Dictionary<string, KustoHeartBeat>();
-            _kustoDataProvider = new KustoDataProvider(new OperationDataCache(), _configuration, Guid.NewGuid().ToString(), this);
-            _cancellationToken = new CancellationTokenSource();
-
-
-            foreach (var primaryCluster in _configuration.RegionSpecificClusterNameCollection.Values)
-            {
-                string failoverCluster = null;
-                if  (_configuration.FailoverClusterNameCollection.ContainsKey(primaryCluster))
-                {
-                    failoverCluster = _configuration.FailoverClusterNameCollection[primaryCluster];
-                }
-                _heartbeats[primaryCluster] = new KustoHeartBeat(primaryCluster, failoverCluster, _kustoDataProvider, _configuration);
-                // Start threads for each heartbeat on the thread pool
-                Task.Run(() => _heartbeats[primaryCluster].RunHeartBeatTask(_cancellationToken.Token));
-            }
-        }
-
-
-        public void Dispose()
-        {
-            _cancellationToken.Cancel();
-        }
 
         public KustoHeartBeatService(KustoDataProviderConfiguration configuration)
         {
             _configuration = configuration;
             Initialize();
+        }
+
+        private void Initialize()
+        {
+            _heartbeats = new Dictionary<string, KustoHeartBeat>();
+            _kustoDataProvider = new KustoDataProvider(new OperationDataCache(), _configuration, Guid.NewGuid().ToString(), this);
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            await Task.Delay(2000);
+
+            var tasks = new List<Task>();
+            foreach (var primaryCluster in _configuration.RegionSpecificClusterNameCollection.Values)
+            {
+                string failoverCluster = null;
+                if (_configuration.FailoverClusterNameCollection.ContainsKey(primaryCluster))
+                {
+                    failoverCluster = _configuration.FailoverClusterNameCollection[primaryCluster];
+                }
+
+                var currentHeartbeat = new KustoHeartBeat(primaryCluster, failoverCluster, _kustoDataProvider, _configuration);
+                _heartbeats[primaryCluster] = currentHeartbeat;
+
+                tasks.Add(currentHeartbeat.RunHeartBeatTaskAsync(stoppingToken));
+            }
+
+            await Task.WhenAll(tasks).ConfigureAwait(false);
         }
 
         public string GetClusterNameFromStamp(string stampName)
@@ -177,10 +178,10 @@ namespace Diagnostics.DataProviders
             LogHeartBeatInformation("Failover", failoverHeartBeatSuccess, FailoverCluster, activityId, UsePrimaryCluster, exceptionForLog);
         }
 
-        public async Task RunHeartBeatTask(CancellationToken cancellationToken)
+        public async Task RunHeartBeatTaskAsync(CancellationToken cancellationToken)
         {
-            while (!cancellationToken.IsCancellationRequested) {
-                
+            while (!cancellationToken.IsCancellationRequested)
+            {
                 string activityId = Guid.NewGuid().ToString();
 
                 if (string.IsNullOrWhiteSpace(FailoverCluster))
@@ -191,8 +192,9 @@ namespace Diagnostics.DataProviders
                 {
                     var primaryTask = RunHeartBeatPrimary(activityId);
                     var failoverTask = RunHeartBeatFailover(activityId);
-                    await Task.WhenAll(new Task[] { primaryTask, failoverTask });
+                    await Task.WhenAll(primaryTask, failoverTask);
                 }
+
                 await Task.Delay(TimeSpan.FromSeconds(_configuration.HeartBeatDelayInSeconds), cancellationToken);
             }
         }

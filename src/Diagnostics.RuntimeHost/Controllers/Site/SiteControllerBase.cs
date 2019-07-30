@@ -23,16 +23,25 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         protected async Task<App> GetAppResource(string subscriptionId, string resourceGroup, string appName, DiagnosticSiteData postBody, DateTime startTime, DateTime endTime)
         {
+            var defaultHostName = postBody.DefaultHostName;
+            var hostnames = postBody.HostNames != null ? postBody.HostNames.Select(p => p.Name) : new List<string>();
+            var webSpace = postBody.WebSpace;
+            var scmSiteHostname = postBody.ScmSiteHostname;
+            var stamp = await GetHostingEnvironment(postBody.Stamp.Subscription, postBody.Stamp.ResourceGroup, postBody.Stamp != null ? postBody.Stamp.Name : string.Empty, postBody.Stamp, startTime, endTime);
+            var appType = GetApplicationType(postBody.Kind);
+            var platformType = (!string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Kind.ToLower().Contains("linux")) ? PlatformType.Linux : PlatformType.Windows;
+            var stackType = await this._siteService.GetApplicationStack(subscriptionId, resourceGroup, appName, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+
             App app = new App(subscriptionId, resourceGroup, appName)
             {
-                DefaultHostName = postBody.DefaultHostName,
-                Hostnames = postBody.HostNames != null ? postBody.HostNames.Select(p => p.Name) : new List<string>(),
-                WebSpace = postBody.WebSpace,
-                ScmSiteHostname = postBody.ScmSiteHostname,
-                Stamp = await GetHostingEnvironment(postBody.Stamp.Subscription, postBody.Stamp.ResourceGroup, postBody.Stamp != null ? postBody.Stamp.Name : string.Empty, postBody.Stamp, startTime, endTime),
-                AppType = GetApplicationType(postBody.Kind),
-                PlatformType = (!string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Kind.ToLower().Contains("linux")) ? PlatformType.Linux : PlatformType.Windows,
-                StackType = await this._siteService.GetApplicationStack(subscriptionId, resourceGroup, appName, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey])
+                DefaultHostName = defaultHostName,
+                Hostnames = hostnames,
+                WebSpace = webSpace,
+                ScmSiteHostname = scmSiteHostname,
+                Stamp = stamp,
+                AppType = appType,
+                PlatformType = platformType,
+                StackType = stackType
             };
 
             switch (app.Stamp.HostingEnvironmentType)

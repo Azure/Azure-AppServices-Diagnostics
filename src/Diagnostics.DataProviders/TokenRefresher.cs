@@ -1,20 +1,28 @@
-﻿// <copyright file="TokenServiceBase.cs" company="Microsoft Corporation">
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See LICENSE in the project root for license information.
-// </copyright>
-
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Diagnostics.Logger;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
-namespace Diagnostics.DataProviders.TokenService
+namespace Diagnostics.DataProviders
 {
-    public abstract class TokenServiceBase
+    public class TokenRefresher
     {
         private Task<AuthenticationResult> _acquireTokenTask;
         private bool tokenAcquiredAtleastOnce;
+
+        public TokenRefresher(string aadAuthority, string clientId, string appKey, string aadResource, string tokenServiceName)
+        {
+            AuthenticationContext = new AuthenticationContext(aadAuthority);
+            ClientCredential = new ClientCredential(clientId, appKey);
+            Resource = aadResource;
+            TokenServiceName = tokenServiceName;
+
+            Task.Run(async () =>
+            {
+                await StartTokenRefresh().ConfigureAwait(false);
+            }).ConfigureAwait(false);
+        }
 
         /// <summary>
         /// Gets AAD issued auth token.
@@ -24,22 +32,22 @@ namespace Diagnostics.DataProviders.TokenService
         /// <summary>
         /// Gets or sets class used to retreive auth tokens from AAD.
         /// </summary>
-        protected abstract AuthenticationContext AuthenticationContext { get; set; }
+        public AuthenticationContext AuthenticationContext { get; set; }
 
         /// <summary>
         /// Gets or sets AAD Client credentials that include client id and secret.
         /// </summary>
-        protected abstract ClientCredential ClientCredential { get; set; }
+        public ClientCredential ClientCredential { get; set; }
 
         /// <summary>
         /// Gets or sets AAD Resource.
         /// </summary>
-        protected abstract string Resource { get; set; }
+        public string Resource { get; set; }
 
         /// <summary>
         /// Gets or sets token service name used for logging to Kusto.
         /// </summary>
-        protected abstract string TokenServiceName { get; set; }
+        public string TokenServiceName { get; set; }
 
         public async Task<string> PullNewTokenAsync()
         {
@@ -107,6 +115,11 @@ namespace Diagnostics.DataProviders.TokenService
         {
             if (!tokenAcquiredAtleastOnce)
             {
+                if (_acquireTokenTask == null)
+                {
+                    return await PullNewTokenAsync().ConfigureAwait(false);
+                }
+
                 var authResult = await _acquireTokenTask;
                 return GetAuthTokenFromAuthenticationResult(authResult);
             }
