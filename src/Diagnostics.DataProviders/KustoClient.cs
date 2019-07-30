@@ -152,6 +152,7 @@ namespace Diagnostics.DataProviders
         {
             try
             {
+                cluster = cluster.Replace("follower", "");
                 var encodedQuery = await EncodeQueryAsBase64UrlAsync(query);
                 var kustoQuery = new KustoQuery
                 {
