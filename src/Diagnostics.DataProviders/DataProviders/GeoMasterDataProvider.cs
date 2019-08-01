@@ -51,7 +51,7 @@ namespace Diagnostics.DataProviders
         public string RemovePIIFromSettings(string content)
         {
             // Mask SAS Uri
-            if (Regex.Match(content, @"https*:\/\/.*\.core\.windows\.net.*sig=.*", RegexOptions.IgnoreCase).Success)
+            if (Regex.Match(content, @"https*:\/\/[\w.]*[\w]+.core.windows.net?.*sig=.*", RegexOptions.IgnoreCase).Success)
             {
                 content = "https://*.core.windows.net/*";
             }
