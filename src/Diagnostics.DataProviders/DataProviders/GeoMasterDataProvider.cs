@@ -24,6 +24,8 @@ namespace Diagnostics.DataProviders
         private string[] SensitiveAppSettingsEndingWith = new string[] { "CONNECTIONSTRING", "_SECRET", "_KEY", "_ID", "_CONTENTSHARE", "TOKEN_STORE", "TOKEN" };
 
         private string[] RegexMatchingPatterns = new string[] { @"^AzureWebJobs\.[a-zA-Z][_a-zA-Z0-9-]*\.Disabled$" };
+
+        private string[] AppSettingsExistenceCheckList = new string[] { "APPINSIGHTS_INSTRUMENTATIONKEY" };
         public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache)
         {
             _geoMasterHostName = context.GeomasterHostName;
@@ -44,6 +46,17 @@ namespace Diagnostics.DataProviders
                 geoMasterClient = new ArmClient(_configuration);
             }
             return geoMasterClient;
+        }
+
+        public string RemovePIIFromSettings(string content)
+        {
+            // Mask SAS Uri
+            if (Regex.Match(content, @"https*:\/\/[\w.]*[\w]+.core.windows.net?.*sig=.*", RegexOptions.IgnoreCase).Success)
+            {
+                content = "https://*.core.windows.net/*";
+            }
+
+            return content;
         }
 
         /// <summary>
@@ -85,8 +98,12 @@ namespace Diagnostics.DataProviders
                 if (AllowedlistAppSettingsStartingWith.Any(x => item.Key.StartsWith(x)) && !SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x))
                     || RegexMatchingPatterns.Any(x => (Regex.Match(item.Key, x).Success)))
                 {
-                    
-                    appSettings.Add(item.Key, item.Value);
+                    string value = RemovePIIFromSettings(item.Value);
+                    appSettings.Add(item.Key, value);
+                }
+                else if (AppSettingsExistenceCheckList.Any(x => String.Compare(item.Key, x, true) == 0))
+                {
+                    appSettings.Add(item.Key, "******");
                 }
             }
 

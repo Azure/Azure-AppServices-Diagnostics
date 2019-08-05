@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
@@ -23,6 +24,11 @@ namespace Diagnostics.DataProviders
         private static readonly string _dataSizeExceededMessage = "Query result set has exceeded the internal data size limit";
         private static readonly string _recordCountExceededMessage = "Query result set has exceeded the internal record count limit";
         private static readonly string _queryLimitDocsLink = "https://docs.microsoft.com/en-us/azure/kusto/concepts/querylimits";
+       
+        /// <summary>
+        /// Failover Cluster Mapping.
+        /// </summary>
+        public ConcurrentDictionary<string, string> FailoverClusterMapping { get; set; }
 
         private readonly Lazy<HttpClient> _client = new Lazy<HttpClient>(() =>
         {
@@ -45,6 +51,7 @@ namespace Diagnostics.DataProviders
         {
             _requestId = requestId;
             KustoApiQueryEndpoint = config.KustoApiEndpoint + ":443/v1/rest/query";
+            FailoverClusterMapping = config.FailoverClusterNameCollection;
         }
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
@@ -152,6 +159,10 @@ namespace Diagnostics.DataProviders
         {
             try
             {
+                if(FailoverClusterMapping.ContainsKey(cluster))
+                {
+                    cluster = FailoverClusterMapping[cluster];
+                }
                 var encodedQuery = await EncodeQueryAsBase64UrlAsync(query);
                 var kustoQuery = new KustoQuery
                 {
