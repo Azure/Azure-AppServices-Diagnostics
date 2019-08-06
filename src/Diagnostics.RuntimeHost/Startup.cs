@@ -36,7 +36,18 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
             services.AddSingleton<IGistCacheService, GistCacheService>();
             services.AddSingleton<ISiteService, SiteService>();
-            services.AddSingleton<IStampService, StampService>();
+            services.AddSingleton<IStampService>((serviceProvider) =>
+            {
+                var cloudDomain = serviceProvider.GetService<IDataSourcesConfigurationService>().Config.KustoConfiguration.CloudDomain;
+                switch (cloudDomain)
+                {
+                    case DataProviderConstants.AzureChinaCloud:
+                    case DataProviderConstants.AzureUSGovernment:
+                        return new NationalCloudStampService();
+                    default:
+                        return new StampService();
+                }
+            });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
             services.AddSingleton<ISearchService, SearchService>();
 
@@ -67,14 +78,11 @@ namespace Diagnostics.RuntimeHost
 
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
 
-            if (!observerConfiguration.ObserverLocalHostEnabled)
-            {
-                observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
-                var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.WawsObserverResourceId, observerConfiguration);
-                var supportBayApiObserverTokenService = new ObserverTokenService(observerConfiguration.SupportBayApiObserverResourceId, observerConfiguration);
-                services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
-                services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
-            }
+            observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
+            var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.WawsObserverResourceId, observerConfiguration);
+            var supportBayApiObserverTokenService = new ObserverTokenService(observerConfiguration.SupportBayApiObserverResourceId, observerConfiguration);
+            services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
+            services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
 
             KustoTokenService.Instance.Initialize(dataSourcesConfigService.Config.KustoConfiguration);
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);

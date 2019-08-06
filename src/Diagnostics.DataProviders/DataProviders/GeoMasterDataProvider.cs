@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 
 namespace Diagnostics.DataProviders
 {
@@ -18,10 +19,13 @@ namespace Diagnostics.DataProviders
         private GeoMasterDataProviderConfiguration _configuration;
         private string _geoMasterHostName;
 
-        private string[] AllowedlistAppSettingsStartingWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType" };
+        private string[] AllowedlistAppSettingsStartingWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType"};
 
         private string[] SensitiveAppSettingsEndingWith = new string[] { "CONNECTIONSTRING", "_SECRET", "_KEY", "_ID", "_CONTENTSHARE", "TOKEN_STORE", "TOKEN" };
 
+        private string[] RegexMatchingPatterns = new string[] { @"^AzureWebJobs\.[a-zA-Z][_a-zA-Z0-9-]*\.Disabled$" };
+
+        private string[] AppSettingsExistenceCheckList = new string[] { "APPINSIGHTS_INSTRUMENTATIONKEY" };
         public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache)
         {
             _geoMasterHostName = context.GeomasterHostName;
@@ -42,6 +46,17 @@ namespace Diagnostics.DataProviders
                 geoMasterClient = new ArmClient(_configuration);
             }
             return geoMasterClient;
+        }
+
+        public string RemovePIIFromSettings(string content)
+        {
+            // Mask SAS Uri
+            if (Regex.Match(content, @"https*:\/\/[\w.]*[\w]+.core.windows.net?.*sig=.*", RegexOptions.IgnoreCase).Success)
+            {
+                content = "https://*.core.windows.net/*";
+            }
+
+            return content;
         }
 
         /// <summary>
@@ -80,12 +95,15 @@ namespace Diagnostics.DataProviders
             Dictionary<string, string> appSettings = new Dictionary<string, string>();
             foreach (var item in properties)
             {
-                if (AllowedlistAppSettingsStartingWith.Any(x => item.Key.StartsWith(x)))
+                if (AllowedlistAppSettingsStartingWith.Any(x => item.Key.StartsWith(x)) && !SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x))
+                    || RegexMatchingPatterns.Any(x => (Regex.Match(item.Key, x).Success)))
                 {
-                    if (!SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x)))
-                    {
-                        appSettings.Add(item.Key, item.Value);
-                    }
+                    string value = RemovePIIFromSettings(item.Value);
+                    appSettings.Add(item.Key, value);
+                }
+                else if (AppSettingsExistenceCheckList.Any(x => String.Compare(item.Key, x, true) == 0))
+                {
+                    appSettings.Add(item.Key, "******");
                 }
             }
 
