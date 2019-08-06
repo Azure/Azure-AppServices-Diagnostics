@@ -17,18 +17,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         {
             SourceWatcherType watcherType;
 
-            if (env.IsProduction())
-            {
-                string watcherTypeRegistryValue = Registry.GetValue(RegistryConstants.SourceWatcherRegistryPath, RegistryConstants.WatcherTypeKey, 0).ToString();
-                if (!Enum.TryParse<SourceWatcherType>(watcherTypeRegistryValue, out watcherType))
-                {
-                    throw new NotSupportedException($"Source Watcher Type : {watcherTypeRegistryValue} not supported.");
-                }
-            }
-            else
-            {
-                watcherType = Enum.Parse<SourceWatcherType>(configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]);
-            }
+            
+            watcherType = Enum.Parse<SourceWatcherType>(configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]);
 
             switch (watcherType)
             {

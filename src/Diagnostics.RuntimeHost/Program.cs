@@ -24,18 +24,18 @@ namespace Diagnostics.RuntimeHost
                         .AddCommandLine(args)
                         .Build();
 
-                    if (context.HostingEnvironment.IsDevelopment())
-                    {
+                    
                         var azureServiceTokenProvider = new AzureServiceTokenProvider();
                         var keyVaultClient = new KeyVaultClient(
                             new KeyVaultClient.AuthenticationCallback(
                                 azureServiceTokenProvider.KeyVaultTokenCallback));
 
-                        config.AddAzureKeyVault(
-                            $"https://{builtConfig["DevKeyVaultName"]}.vault.azure.net/",
+                    string keyVaultConfig = context.HostingEnvironment.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
+
+                    config.AddAzureKeyVault(
+                            $"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
                             keyVaultClient,
                             new DefaultKeyVaultSecretManager());
-                    }
                 })
                 .UseStartup<Startup>()
                 .Build();

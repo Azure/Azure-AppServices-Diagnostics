@@ -121,14 +121,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         private void LoadConfigurations()
         {
-            if (_env.IsProduction())
-            {
-                _localScriptsPath = (string)Registry.GetValue(RegistryConstants.LocalWatcherRegistryPath, RegistryConstants.LocalScriptsPathKey, string.Empty);
-            }
-            else
-            {
-                _localScriptsPath = (_config[$"SourceWatcher:Local:{RegistryConstants.LocalScriptsPathKey}"]).ToString();
-            }
+            _localScriptsPath = (_config[$"SourceWatcher:Local:{RegistryConstants.LocalScriptsPathKey}"]).ToString();
 
             if (!Directory.Exists(_localScriptsPath))
             {
