@@ -33,6 +33,9 @@ namespace Diagnostics.DataProviders
 
         public async Task<dynamic> GetResource(string resourceUrl)
         {
+            if (string.IsNullOrWhiteSpace(resourceUrl))
+                throw new ArgumentNullException(nameof(resourceUrl));
+
             Uri uri;
 
             var allowedHosts = new string[] { "wawsobserver.azurewebsites.windows.net", "wawsobserver-prod-staging.azurewebsites.net", "support-bay-api.azurewebsites.net", "support-bay-api-stage.azurewebsites.net", "localhost" };
@@ -45,10 +48,6 @@ namespace Diagnostics.DataProviders
                 {
                     throw new FormatException($"Cannot make a call to {uri.Host}. Please use a URL that points to one of the hosts: {string.Join(',', allowedHosts)}");
                 }
-            }
-            catch (ArgumentNullException)
-            {
-                throw new ArgumentNullException("resourceUrl");
             }
             catch (UriFormatException ex)
             {
@@ -69,7 +68,7 @@ namespace Diagnostics.DataProviders
             }
             else if (Configuration.ObserverLocalHostEnabled)
             {
-                return GetWawsObserverResourceAsync(ConvertToLocalObserverRoute(uri));
+                return await GetWawsObserverResourceAsync(ConvertToLocalObserverRoute(uri));
             }
             else
             {
