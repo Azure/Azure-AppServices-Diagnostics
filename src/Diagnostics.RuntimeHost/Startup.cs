@@ -49,8 +49,6 @@ namespace Diagnostics.RuntimeHost
                 }
             });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
-            services.AddSingleton<ISearchService, SearchService>();
-
 
             bool searchIsEnabled = false;
             if (Environment.IsProduction())
