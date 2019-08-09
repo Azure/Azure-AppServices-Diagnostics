@@ -122,7 +122,7 @@ namespace Diagnostics.RuntimeHost
 
             if(Environment.IsProduction())
             {
-                GeoCertLoader.Instance.LoadCertFromKeyVault(Configuration);
+                GeoCertLoader.Instance.LoadCertFromKeyVaultAsync(Configuration);
             }
         }
 

@@ -14,13 +14,13 @@ namespace Diagnostics.DataProviders
 
         public X509Certificate2 GeoCert { get; private set; }
         
-        public void LoadCertFromKeyVault(IConfiguration configuration)
+        public async void LoadCertFromKeyVaultAsync(IConfiguration configuration)
         {
             try
             {
                 var azureServiceTokenProvider = new AzureServiceTokenProvider();
                 var prodKeyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
-                var certificateSecret = prodKeyVaultClient.GetSecretAsync($"https://{configuration["Secrets:ProdKeyVaultName"]}.vault.azure.net", configuration["GeoMaster:CertificateName"]).Result;
+                var certificateSecret = await prodKeyVaultClient.GetSecretAsync($"https://{configuration["Secrets:ProdKeyVaultName"]}.vault.azure.net", configuration["GeoMaster:CertificateName"]);
                 var privateKeyBytes = Convert.FromBase64String(certificateSecret.Value);
                 GeoCert = new X509Certificate2(privateKeyBytes);
             }
