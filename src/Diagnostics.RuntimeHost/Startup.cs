@@ -119,6 +119,11 @@ namespace Diagnostics.RuntimeHost
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
             AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
             CompilerHostTokenService.Instance.Initialize(Configuration);
+
+            if(Environment.IsProduction())
+            {
+                GeoCertLoader.Instance.LoadCertFromKeyVaultAsync(Configuration);
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
