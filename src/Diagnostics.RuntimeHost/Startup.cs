@@ -120,11 +120,11 @@ namespace Diagnostics.RuntimeHost
             AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
             CompilerHostTokenService.Instance.Initialize(Configuration);
 
-            if(Environment.IsProduction())
+            if (Environment.IsProduction())
             {
-                GeoCertLoader.Instance.LoadCertFromKeyVaultAsync(Configuration);
+                KeyVaultCertLoader.Instance.LoadCertFromKeyVaultAsync(Configuration);
             }
-        }
+    }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)

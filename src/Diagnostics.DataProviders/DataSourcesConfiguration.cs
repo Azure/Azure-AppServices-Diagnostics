@@ -17,7 +17,5 @@ namespace Diagnostics.DataProviders
         public AscDataProviderConfiguration AscDataProviderConfiguration { get; set; }
 
         public AntaresMdmDataProviderConfiguration AntaresMdmConfiguration { get; set; }
-
-        public NetworkingMdmDataProviderConfiguration NetworkingMdmConfiguration { get; set; }
     }
 }

@@ -9,25 +9,25 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
     /// Mdm data provider configuration.
     /// </summary>
     [DataSourceConfiguration(@"Mdm")]
-    public class AntaresMdmDataProviderConfiguration : IDataProviderConfiguration, IMdmDataProviderConfiguration
+    public class AntaresMdmDataProviderConfiguration : IDataProviderConfiguration
     {
         /// <summary>
         /// Gets or sets the base endpoint.
         /// </summary>
         [ConfigurationName("MdmShoeboxEndpoint")]
         public string Endpoint { get; set; }
-
-        /// <summary>
-        /// Gets or sets the certificate thumbprint.
-        /// </summary>
-        [ConfigurationName("MdmRegistrationCertThumbprint")]
-        public string CertificateThumbprint { get; set; }
-
+        
         /// <summary>
         /// Gets or sets monitoring account.
         /// </summary>
         [ConfigurationName("MdmShoeboxAccount")]
         public string MonitoringAccount { get; set; }
+
+        /// <summary>
+        /// Name of certificate in prod key vault.
+        /// </summary>
+        [ConfigurationName("CertificateName")]
+        public string CertificateName { get; set; }
 
         /// <summary>
         /// Post initialize.

@@ -40,12 +40,12 @@ namespace Diagnostics.DataProviders
         /// Initializes a new instance of the <see cref="MdmClient" /> class.
         /// </summary>
         /// <param name="requestId">Request id.</param>
-        public MdmClient(IMdmDataProviderConfiguration configuration, string requestId)
+        public MdmClient(AntaresMdmDataProviderConfiguration configuration, string requestId)
         {
             try
             {
                 Endpoint = new Uri(configuration.Endpoint);
-                HttpClient = CreateHttpClient(configuration.CertificateThumbprint);
+                HttpClient = CreateHttpClient();
                 RequestId = requestId;
             }
             catch (Exception ex)
@@ -283,11 +283,11 @@ namespace Diagnostics.DataProviders
         /// <returns>
         /// An instance of <see cref="HttpClient" />
         /// </returns>
-        private static HttpClient CreateHttpClient(string thumbprint)
+        private static HttpClient CreateHttpClient()
         {
             var handler = new HttpClientHandler();
 
-            var certificate = CertificateHelper.FindAndValidateCertificate(thumbprint, StoreLocation.LocalMachine);
+            var certificate = KeyVaultCertLoader.Instance.MdmCert;
 
             if (certificate != null)
             {

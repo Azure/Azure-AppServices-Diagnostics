@@ -13,7 +13,7 @@ namespace Diagnostics.DataProviders
     /// </summary>
     public class MdmDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IMdmDataProvider
     {
-        private IMdmDataProviderConfiguration _configuration;
+        private AntaresMdmDataProviderConfiguration _configuration;
         private IMdmClient _mdmClient;
 
         /// <summary>
@@ -22,7 +22,7 @@ namespace Diagnostics.DataProviders
         /// <param name="cache">Operation cache.</param>
         /// <param name="configuration">Data provider configuration.</param>
         /// <param name="requestId">Request id.</param>
-        public MdmDataProvider(OperationDataCache cache, IMdmDataProviderConfiguration configuration, string requestId)
+        public MdmDataProvider(OperationDataCache cache, AntaresMdmDataProviderConfiguration configuration, string requestId)
             : base(cache)
         {
             _configuration = configuration;

@@ -8,7 +8,7 @@ namespace Diagnostics.DataProviders
     /// </summary>
     internal static class MdmClientFactory
     {
-        internal static IMdmClient GetMdmClient(IMdmDataProviderConfiguration config, string requestId)
+        internal static IMdmClient GetMdmClient(AntaresMdmDataProviderConfiguration config, string requestId)
         {
             if (config.MonitoringAccount == "Mock")
             {
