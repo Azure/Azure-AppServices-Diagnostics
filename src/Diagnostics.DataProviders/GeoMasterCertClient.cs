@@ -24,7 +24,7 @@ namespace Diagnostics.DataProviders
 
             if (_geoMasterCertificate == null)
             {
-                _geoMasterCertificate = KeyVaultCertLoader.Instance.GeoCert;
+                _geoMasterCertificate = GeoCertLoader.Instance.GeoCert;
             }
 
             if (_geoMasterCertificate != null)

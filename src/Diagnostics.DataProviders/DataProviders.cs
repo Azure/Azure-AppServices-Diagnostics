@@ -28,7 +28,9 @@ namespace Diagnostics.DataProviders
                 switch (ds)
                 {
                     case MdmDataSource.Antares:
-                        return new DataProviderLogDecorator(context, new MdmDataProvider(_cache, context.Configuration.AntaresMdmConfiguration, context.RequestId));             
+                        return new DataProviderLogDecorator(context, new MdmDataProvider(_cache, context.Configuration.AntaresMdmConfiguration, context.RequestId));
+                    case MdmDataSource.Networking:
+                        return new DataProviderLogDecorator(context, new MdmDataProvider(_cache, context.Configuration.NetworkingMdmConfiguration, context.RequestId));
                     default:
                         throw new NotSupportedException($"{ds} is not supported.");
                 }
