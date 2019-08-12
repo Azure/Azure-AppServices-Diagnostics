@@ -45,7 +45,7 @@ namespace Diagnostics.DataProviders
             try
             {
                 Endpoint = new Uri(configuration.Endpoint);
-                HttpClient = CreateHttpClient(configuration.CertificateThumbprint);
+                HttpClient = CreateHttpClient();
                 RequestId = requestId;
             }
             catch (Exception ex)
@@ -279,15 +279,14 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// Creates the HTTP client
         /// </summary>
-        /// <param name="thumbprint">The certificate thumbprint</param>
         /// <returns>
         /// An instance of <see cref="HttpClient" />
         /// </returns>
-        private static HttpClient CreateHttpClient(string thumbprint)
+        private static HttpClient CreateHttpClient()
         {
             var handler = new HttpClientHandler();
 
-            var certificate = CertificateHelper.FindAndValidateCertificate(thumbprint, StoreLocation.LocalMachine);
+            var certificate = MdmCertLoader.Instance.Cert;
 
             if (certificate != null)
             {
