@@ -21,7 +21,7 @@ namespace Diagnostics.DataProviders.KeyVaultCertLoader
                 var prodKeyVaultClient = new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(azureServiceTokenProvider.KeyVaultTokenCallback));
                 var certificateSecret = await prodKeyVaultClient.GetSecretAsync($"https://{KeyVault}.vault.azure.net", CertificateName);
                 var privateKeyBytes = Convert.FromBase64String(certificateSecret.Value);
-                Cert = new X509Certificate2(privateKeyBytes);
+                Cert = new X509Certificate2(privateKeyBytes, string.Empty, X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
             }
             catch (Exception ex)
             {
