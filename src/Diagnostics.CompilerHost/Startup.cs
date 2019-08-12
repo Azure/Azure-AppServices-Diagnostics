@@ -105,6 +105,8 @@ namespace Diagnostics.CompilerHost
                     };
 
                 });
+            // Enable app insights telemetry
+            services.AddApplicationInsightsTelemetry();
             services.AddMvc();
             CustomStartup();
         }
