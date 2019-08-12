@@ -68,7 +68,8 @@ namespace Diagnostics.RuntimeHost
                 }
                 };
             });
-
+            // Enable App Insights telemetry
+            services.AddApplicationInsightsTelemetry();
             services.AddMvc();
 
             services.AddSingleton<IDataSourcesConfigurationService, DataSourcesConfigurationService>();
