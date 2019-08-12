@@ -123,7 +123,8 @@ namespace Diagnostics.RuntimeHost
 
             if(Environment.IsProduction())
             {
-                GeoCertLoader.Instance.LoadCertFromKeyVaultAsync(Configuration);
+                GeoCertLoader.Instance.Initialize(Configuration);
+                MdmCertLoader.Instance.Initialize(Configuration);
             }
         }
 

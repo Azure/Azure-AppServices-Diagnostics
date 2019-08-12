@@ -18,10 +18,10 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
         public string Endpoint { get; set; }
 
         /// <summary>
-        /// Gets or sets the certificate thumbprint.
+        /// Gets or sets the name of certificate in keyvault.
         /// </summary>
-        [ConfigurationName("MdmRegistrationCertThumbprint")]
-        public string CertificateThumbprint { get; set; }
+        [ConfigurationName("CertificateName")]
+        public string CertificateName { get; set; }
 
         /// <summary>
         /// Gets or sets monitoring account.
