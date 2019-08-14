@@ -37,7 +37,18 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
             services.AddSingleton<IGistCacheService, GistCacheService>();
             services.AddSingleton<ISiteService, SiteService>();
-            services.AddSingleton<IStampService, StampService>();
+            services.AddSingleton<IStampService>((serviceProvider) =>
+            {
+                var cloudDomain = serviceProvider.GetService<IDataSourcesConfigurationService>().Config.KustoConfiguration.CloudDomain;
+                switch (cloudDomain)
+                {
+                    case DataProviderConstants.AzureChinaCloud:
+                    case DataProviderConstants.AzureUSGovernment:
+                        return new NationalCloudStampService();
+                    default:
+                        return new StampService();
+                }
+            });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
 
             bool searchIsEnabled = false;

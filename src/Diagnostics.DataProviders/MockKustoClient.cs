@@ -100,6 +100,11 @@ namespace Diagnostics.DataProviders
 
         public Task<KustoQuery> GetKustoQueryAsync(string query, string cluster, string database)
         {
+            return GetKustoQueryAsync(query, cluster, database, null);
+        }
+
+        public Task<KustoQuery> GetKustoQueryAsync(string query, string cluster, string database, string operationName)
+        {
             if (string.IsNullOrWhiteSpace(cluster))
             {
                 throw new ArgumentNullException("cluster");

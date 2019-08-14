@@ -21,6 +21,9 @@ namespace Diagnostics.RuntimeHost.Services
     public class StampService : IStampService
     {
         private ConcurrentDictionary<string, Tuple<List<string>, PlatformType>> _tenantCache;
+        protected const string RoleInstanceHeartBeatTableName = "RoleInstanceHeartbeat";
+        protected const string LinuxRoleInstanceHeartBeatTableName = "LinuxRoleInstanceHeartBeats";
+        
 
         public StampService()
         {
@@ -41,17 +44,10 @@ namespace Diagnostics.RuntimeHost.Services
                 return result;
             }
 
-            List<string> windowsTenantIds = new List<string>();
-            List<string> linuxTenantIds = new List<string>();
-
-            string windowsQuery = GetTenantIdQuery(stamp, startTime, endTime, PlatformType.Windows);
-            string linuxQuery = GetTenantIdQuery(stamp, startTime, endTime, PlatformType.Linux);
-
-            var windowsTask = dp.Kusto.ExecuteQuery(windowsQuery, stamp, operationName: KustoOperations.GetTenantIdForWindows);
-            var linuxTask = dp.Kusto.ExecuteQuery(linuxQuery, stamp, operationName: KustoOperations.GetTenantIdForLinux);
-
-            windowsTenantIds = GetTenantIdsFromTable(await windowsTask);
-            linuxTenantIds = GetTenantIdsFromTable(await linuxTask);
+            var windowsTenantIdsTask = GetTenantIdsAsync(stamp, startTime, endTime, dataProviderContext, PlatformType.Windows);
+            var linuxTenantIdsTask = GetTenantIdsAsync(stamp, startTime, endTime, dataProviderContext, PlatformType.Linux);
+            var windowsTenantIds = await windowsTenantIdsTask;
+            var linuxTenantIds = await linuxTenantIdsTask;
 
             PlatformType type = PlatformType.Windows;
             List<string> tenantIds = windowsTenantIds.Union(linuxTenantIds).ToList();
@@ -76,6 +72,16 @@ namespace Diagnostics.RuntimeHost.Services
             return result;
         }
 
+        protected virtual async Task<List<string>> GetTenantIdsAsync(string stamp, DateTime startTime, DateTime endTime, DataProviderContext dataProviderContext, PlatformType platformType)
+        {
+            var dp = new DataProviders.DataProviders(dataProviderContext);
+            var tenantIds = new List<string>();
+            var kustoQuery = GetTenantIdQuery(stamp, startTime, endTime, platformType);
+            var kustoTask = dp.Kusto.ExecuteQuery(kustoQuery, stamp, operationName: platformType == PlatformType.Windows ? KustoOperations.GetTenantIdForWindows : KustoOperations.GetTenantIdForLinux);
+            tenantIds = GetTenantIdsFromTable(await kustoTask);
+            return tenantIds;
+        }
+
         private List<string> GetTenantIdsFromTable(DataTable dt)
         {
             List<string> tenantIds = new List<string>();
@@ -95,16 +101,23 @@ namespace Diagnostics.RuntimeHost.Services
         {
             string startTimeStr = DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(DataProviderConstants.KustoTimeFormat);
             string endTimeStr = DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(DataProviderConstants.KustoTimeFormat);
-            string tableName = "RoleInstanceHeartbeat";
+            string tableName = RoleInstanceHeartBeatTableName;
             if (type == PlatformType.Linux)
             {
-                tableName = "LinuxRoleInstanceHeartBeats";
+                tableName = LinuxRoleInstanceHeartBeatTableName;
             }
 
+            return GetTenantIdQuery(stamp, startTimeStr, endTimeStr, tableName);
+        }
+
+        protected virtual string GetTenantIdQuery(string stamp, string startTimeStr, string endTimeStr, string tableName)
+        {
+            string megaStampRegexPublicHost = $"{stamp}([a-z{{1}}]).cloudapp.net";
+            string vmssRegexPublicHost = $"{stamp}-([a-z0-9\\.]+).cloudapp.azure.com";
             return
                 $@"{tableName}
                 | where TIMESTAMP >= datetime({startTimeStr}) and TIMESTAMP <= datetime({endTimeStr})
-                | where PublicHost =~ ""{stamp}.cloudapp.net"" or PublicHost matches regex ""{stamp}([a-z{{1}}]).cloudapp.net""
+                | where PublicHost =~ ""{stamp}.cloudapp.net"" or PublicHost matches regex ""{megaStampRegexPublicHost}"" or PublicHost matches regex ""{vmssRegexPublicHost}""
                 | summarize by Tenant, PublicHost";
         }
     }
