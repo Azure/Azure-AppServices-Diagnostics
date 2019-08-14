@@ -68,7 +68,8 @@ namespace Diagnostics.RuntimeHost
                 }
                 };
             });
-
+            // Enable App Insights telemetry
+            services.AddApplicationInsightsTelemetry();
             services.AddMvc();
 
             services.AddSingleton<IDataSourcesConfigurationService, DataSourcesConfigurationService>();
@@ -91,15 +92,8 @@ namespace Diagnostics.RuntimeHost
             });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
 
-            bool searchIsEnabled = false;
-            if (Environment.IsProduction())
-            {
-                searchIsEnabled = Convert.ToBoolean(Registry.GetValue(RegistryConstants.SearchAPIRegistryPath, RegistryConstants.SearchAPIEnabledKey, string.Empty));
-            }
-            else
-            {
-                searchIsEnabled = Convert.ToBoolean(Configuration[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
-            }
+            bool searchIsEnabled = Convert.ToBoolean(Configuration[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
+
             if (searchIsEnabled)
             {
                 services.AddSingleton<ISearchService, SearchService>();
@@ -127,7 +121,13 @@ namespace Diagnostics.RuntimeHost
             AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
             CompilerHostTokenService.Instance.Initialize(Configuration);
 
-            // Initialize on startup
+            if(Environment.IsProduction())
+            {
+                GeoCertLoader.Instance.Initialize(Configuration);
+                MdmCertLoader.Instance.Initialize(Configuration);
+            }
+			
+			// Initialize on startup
             servicesProvider.GetService<ISourceWatcherService>();
         }
 

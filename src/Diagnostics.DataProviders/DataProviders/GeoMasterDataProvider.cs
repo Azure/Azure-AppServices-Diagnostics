@@ -26,6 +26,7 @@ namespace Diagnostics.DataProviders
         private string[] RegexMatchingPatterns = new string[] { @"^AzureWebJobs\.[a-zA-Z][_a-zA-Z0-9-]*\.Disabled$" };
 
         private string[] AppSettingsExistenceCheckList = new string[] { "APPINSIGHTS_INSTRUMENTATIONKEY" };
+
         public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache)
         {
             _geoMasterHostName = context.GeomasterHostName;
@@ -36,8 +37,8 @@ namespace Diagnostics.DataProviders
         private IGeoMasterClient InitClient()
         {
             IGeoMasterClient geoMasterClient;
-            bool onDiagRole = !string.IsNullOrWhiteSpace(_configuration.GeoCertThumbprint);
-            if (onDiagRole)
+            bool isAppService = !string.IsNullOrWhiteSpace(_configuration.CertificateName);
+            if (isAppService)
             {
                 geoMasterClient = new GeoMasterCertClient(_configuration, _geoMasterHostName);
             }

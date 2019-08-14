@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 using Diagnostics.Logger;
+using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.DataProviders
 {
@@ -15,13 +16,15 @@ namespace Diagnostics.DataProviders
         public HttpClient Client { get; }
         public Uri BaseUri { get; }
 
+        public IConfiguration Configuration { get; set; }
+
         public GeoMasterCertClient(GeoMasterDataProviderConfiguration configuration, string geoMasterHostName)
         {
             var handler = new HttpClientHandler();
 
             if (_geoMasterCertificate == null)
             {
-                _geoMasterCertificate = GetCertificate(configuration.GeoCertThumbprint);
+                _geoMasterCertificate = GeoCertLoader.Instance.Cert;
             }
 
             if (_geoMasterCertificate != null)
@@ -44,29 +47,6 @@ namespace Diagnostics.DataProviders
             Client.DefaultRequestHeaders.Add(HeaderConstants.UserAgentHeaderName, "appservice-diagnostics");
             Client.Timeout = TimeSpan.FromSeconds(30);
             Client.BaseAddress = BaseUri;
-        }
-
-        private X509Certificate2 GetCertificate(string thumbprint)
-        {
-            X509Store store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
-            try
-            {
-                store.Open(OpenFlags.ReadOnly);
-                X509Certificate2Collection certificates = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, true);
-                if (certificates.Count == 0)
-                {
-                    throw new InvalidOperationException($"Cannot find certificate with thumbprint {thumbprint}");
-                }
-
-                return certificates[0];
-            }
-            finally
-            {
-                if (store != null)
-                {
-                    store.Close();
-                }
-            }
         }
     }
 }

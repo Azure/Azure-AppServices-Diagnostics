@@ -37,9 +37,11 @@ namespace Diagnostics.DataProviders
                 )
             );
 
-            builder.AddAzureKeyVault($"https://{builtConfig["DevKeyVaultName"]}.vault.azure.net/",
-                                     keyVaultClient,
-                                     new DefaultKeyVaultSecretManager());
+            string keyVaultConfig = env.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
+
+            builder.AddAzureKeyVault($"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
+                                         keyVaultClient,
+                                         new DefaultKeyVaultSecretManager());
 
             _configuration = builder.Build();
         }
@@ -54,23 +56,6 @@ namespace Diagnostics.DataProviders
         private string GetAppSettingName(string prefix, string name)
         {
             return string.Format("{0}_{1}", prefix, name);
-        }
-    }
-
-    public class RegistryDataProviderConfigurationFactory : DataProviderConfigurationFactory
-    {
-        private string _registryPath;
-
-        public RegistryDataProviderConfigurationFactory(string registryPath)
-        {
-            _registryPath = registryPath;
-        }
-
-        protected override string GetValue(string prefix, string name)
-        {
-            string kustoRegistryPath = $@"{_registryPath}\DiagnosticDataProviders\{prefix}";
-
-            return (string)Registry.GetValue(kustoRegistryPath, name, string.Empty);
         }
     }
 

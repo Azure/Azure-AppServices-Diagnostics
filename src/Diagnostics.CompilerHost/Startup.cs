@@ -17,6 +17,9 @@ using System.Threading.Tasks;
 using System.Linq;
 using System;
 using System.IO;
+using Microsoft.Azure.KeyVault;
+using Microsoft.Azure.Services.AppAuthentication;
+using Microsoft.Extensions.Configuration.AzureKeyVault;
 
 namespace Diagnostics.CompilerHost
 {
@@ -33,9 +36,24 @@ namespace Diagnostics.CompilerHost
         {
             var builder = new ConfigurationBuilder()
               .SetBasePath(Directory.GetCurrentDirectory())
-              .AddEnvironmentVariables()
               .AddJsonFile($"appsettings.json", optional: false, reloadOnChange: true)
-              .AddJsonFile($"appsettings.{hostingEnvironment.EnvironmentName}.json", optional: true);
+              .AddJsonFile($"appsettings.{hostingEnvironment.EnvironmentName}.json", optional: true)
+              .AddEnvironmentVariables();
+
+            var builtConfig = builder.Build();
+
+            string keyVaultConfig = hostingEnvironment.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
+
+            var tokenProvider = new AzureServiceTokenProvider();
+            var keyVaultClient = new KeyVaultClient(
+                new KeyVaultClient.AuthenticationCallback(
+                    tokenProvider.KeyVaultTokenCallback
+                )
+            );
+
+            builder.AddAzureKeyVault($"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
+                                         keyVaultClient,
+                                         new DefaultKeyVaultSecretManager());
 
             Configuration = builder.Build();
         }
@@ -87,6 +105,8 @@ namespace Diagnostics.CompilerHost
                     };
 
                 });
+            // Enable app insights telemetry
+            services.AddApplicationInsightsTelemetry();
             services.AddMvc();
             CustomStartup();
         }

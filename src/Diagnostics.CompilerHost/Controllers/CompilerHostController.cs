@@ -20,7 +20,6 @@ namespace Diagnostics.CompilerHost.Controllers
     /// <summary>
     /// Compiler host controller.
     /// </summary>
-    [Authorize]
     [Route("api/[controller]")]
     public class CompilerHostController : Controller
     {
@@ -40,6 +39,7 @@ namespace Diagnostics.CompilerHost.Controllers
         /// <param name="jsonBody">Json request body.</param>
         /// <returns>Action result.</returns>
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Post([FromBody]JToken jsonBody)
         {
             if (jsonBody == null)
