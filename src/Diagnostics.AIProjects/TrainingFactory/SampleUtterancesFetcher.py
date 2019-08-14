@@ -120,7 +120,7 @@ class CaseTitlesFetcher:
         category = key[0]+"--"+key[1]
         lines = [(self.endSentence(row["CleanCaseTitles"]), row["SupportCenterCaseLink"])  for ind, row in group.iterrows()]
         resultTitles = []
-        if self.trainingConfig.runExtractionEnabled:
+        if self.trainingConfig.runExtractionEnabled and len(lines)>10:
             numsentences = group.shape[0]
             loggerInstance.logToFile("{0}.log".format(trainingId), "Extractor: Running extractor on category " + category + " containing " + str(numsentences) + " case titles")
             doc = " ".join([x[0] for x in lines])
@@ -135,13 +135,13 @@ class CaseTitlesFetcher:
                 if caselinks:
                     resultTitles.append({"text": sent, "links": caselinks, "category": category})
         else:
-            loggerInstance.logToFile("{0}.log".format(trainingId), "Extractor: Disabled")
+            loggerInstance.logToFile("{0}.log".format(trainingId), "Extractor: Disabled or not enough lines for summarization")
             resultTitles = [{"text": x[0], "links": x[1], "category": category} for x in lines]
         return resultTitles
 
     def runCaseTitlesExtraction(self, df, productid, datapath):
         trainingId = self.trainingId
-        if self.trainingConfig.downloadCaseTitlesEnabled and df:
+        if self.trainingConfig.downloadCaseTitlesEnabled and df.any:
             df["Incidents_SupportTopicL2Current"]=df["Incidents_SupportTopicL2Current"].fillna("NOSELECTION")
             df["Incidents_SupportTopicL3Current"]=df["Incidents_SupportTopicL3Current"].fillna("NOSELECTION")
             groups = df.groupby(["Incidents_SupportTopicL2Current", "Incidents_SupportTopicL3Current"])

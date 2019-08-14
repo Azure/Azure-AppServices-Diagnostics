@@ -16,7 +16,7 @@ class DetectorsFetcher:
         try:
             content = json.loads(requests.get(self.detectorsUrl).content)
             loggerInstance.logToFile("{0}.log".format(trainingId), "DetectorsFetcher: Fetched " + str(len(content)) + " detectors")
-        except:
+        except Exception as e:
             loggerInstance.logToFile("{0}.log".format(trainingId), "[ERROR]DetectorsFetcher: " + str(e))
             raise TrainingException("DetectorsFetcher: " + str(e))
         detectors = [detector for detector in content if (productid in getProductId(detector["resourceFilter"]))]
@@ -31,6 +31,6 @@ class DetectorsFetcher:
             try:
                 open(os.path.join(datapath, "Detectors.json"), "w").write(json.dumps(detectors, indent=4))
                 loggerInstance.logToFile("{0}.log".format(trainingId), "DetectorsFetcher: Written detectors to file Detectors.json")
-            except:
+            except Exception as e:
                 loggerInstance.logToFile("{0}.log".format(trainingId), "[ERROR]DetectorsFetcher: " + str(e))
                 raise TrainingException("DetectorsFetcher: " + str(e))
