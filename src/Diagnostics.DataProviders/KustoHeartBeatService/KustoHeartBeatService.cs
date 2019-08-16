@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using Diagnostics.Logger;
 using Microsoft.AspNetCore.Http.Features;
+using System.Data;
 
 namespace Diagnostics.DataProviders
 {
@@ -59,9 +60,22 @@ namespace Diagnostics.DataProviders
 
             if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName))
             {
-                if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
+                DataTable regionMappings = _kustoDataProvider.ExecuteClusterQuery($"cluster('wawseusfollower').database('wawsprod').WawsAn_regionsincluster | where pdate >= ago(5d) | summarize by Region, ClusterName, LocationName", "RegionMappingInit").Result;
+                if (regionMappings.Rows.Count > 0)
                 {
-                    throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
+                    foreach (DataRow dr in regionMappings.Rows)
+                    {
+                        _configuration.RegionSpecificClusterNameCollection.TryAdd(((string)dr["Region"]).ToLower(), ((string)dr["ClusterName"]).ToLower());
+                        _configuration.FailoverClusterNameCollection.TryAdd(((string)dr["Region"]).ToLower(), $"{((string)dr["ClusterName"])}follower");
+                    }
+                }
+
+                if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName))
+                {
+                    if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
+                    {
+                        throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
+                    }
                 }
             }
 
