@@ -113,7 +113,7 @@ namespace Diagnostics.RuntimeHost.Services
         protected virtual string GetTenantIdQuery(string stamp, string startTimeStr, string endTimeStr, string tableName)
         {
             string megaStampRegexPublicHost = $"{stamp}([a-z{{1}}]).cloudapp.net";
-            string vmssRegexPublicHost = $"{stamp}-([a-z0-9\\.]+).cloudapp.azure.com";
+            string vmssRegexPublicHost = $"{stamp}-([a-z0-9\\\\.]+).cloudapp.azure.com";
             return
                 $@"{tableName}
                 | where TIMESTAMP >= datetime({startTimeStr}) and TIMESTAMP <= datetime({endTimeStr})
