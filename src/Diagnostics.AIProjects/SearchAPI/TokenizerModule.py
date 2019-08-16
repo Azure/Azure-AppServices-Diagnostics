@@ -12,6 +12,10 @@ try:
     nltk.data.find('stopwords')
 except LookupError:
     nltk.download('stopwords')
+try:
+    nltk.data.find('wordnet')
+except LookupError:
+    nltk.download('wordnet')
 
 lemmatizer = WordNetLemmatizer()
 stop = stopwords.words('english')
