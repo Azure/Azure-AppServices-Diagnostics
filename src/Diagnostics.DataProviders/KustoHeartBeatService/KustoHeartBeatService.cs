@@ -64,7 +64,7 @@ namespace Diagnostics.DataProviders
                 {
                     try
                     {
-                         DataTable regionMappings = _kustoDataProvider.ExecuteClusterQuery($"cluster('wawseusfollower').database('wawsprod').WawsAn_regionsincluster | where pdate >= ago(5d) | summarize by Region, ClusterName, LocationName", "RegionMappingInit").Result;
+                         DataTable regionMappings = _kustoDataProvider.ExecuteClusterQuery($"cluster('wawseusfollower').database('wawsprod').WawsAn_regionsincluster | where pdate >= ago(5d) | summarize by Region, ClusterName", "RegionMappingInit").Result;
                         if (regionMappings.Rows.Count > 0)
                         {
                             foreach (DataRow dr in regionMappings.Rows)
