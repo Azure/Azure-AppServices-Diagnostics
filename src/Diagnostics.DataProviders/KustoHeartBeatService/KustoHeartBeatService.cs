@@ -60,23 +60,41 @@ namespace Diagnostics.DataProviders
 
             if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName))
             {
-                DataTable regionMappings = _kustoDataProvider.ExecuteClusterQuery($"cluster('wawseusfollower').database('wawsprod').WawsAn_regionsincluster | where pdate >= ago(5d) | summarize by Region, ClusterName, LocationName", "RegionMappingInit").Result;
-                if (regionMappings.Rows.Count > 0)
+                if(_configuration.CloudDomain == DataProviderConstants.AzureCloud)
                 {
-                    foreach (DataRow dr in regionMappings.Rows)
+                    try
                     {
-                        _configuration.RegionSpecificClusterNameCollection.TryAdd(((string)dr["Region"]).ToLower(), ((string)dr["ClusterName"]).ToLower());
-                        _configuration.FailoverClusterNameCollection.TryAdd(((string)dr["Region"]).ToLower(), $"{((string)dr["ClusterName"])}follower");
+                         DataTable regionMappings = _kustoDataProvider.ExecuteClusterQuery($"cluster('wawseusfollower').database('wawsprod').WawsAn_regionsincluster | where pdate >= ago(5d) | summarize by Region, ClusterName, LocationName", "RegionMappingInit").Result;
+                        if (regionMappings.Rows.Count > 0)
+                        {
+                            foreach (DataRow dr in regionMappings.Rows)
+                            {
+                                _configuration.RegionSpecificClusterNameCollection.TryAdd(((string)dr["Region"]).ToLower(), ((string)dr["ClusterName"]).ToLower());
+                                _configuration.FailoverClusterNameCollection.TryAdd(((string)dr["Region"]).ToLower(), $"{((string)dr["ClusterName"])}follower");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        //Swallow any Kusto related exception, then check if a mapping exists for *. Throw an exception is not.
+                    }
+                    finally
+                    {
+                        if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName))
+                        {
+                            if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
+                            {
+                                throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
+                            }
+                        }
                     }
                 }
-
-                if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName))
+                                
+                if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
                 {
-                    if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
-                    {
-                        throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
-                    }
+                    throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
                 }
+                
             }
 
             if (!string.IsNullOrWhiteSpace(_heartbeats[kustoClusterName].FailoverCluster))
