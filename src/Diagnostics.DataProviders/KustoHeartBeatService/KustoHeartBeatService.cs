@@ -69,8 +69,8 @@ namespace Diagnostics.DataProviders
                         {
                             foreach (DataRow dr in regionMappings.Rows)
                             {
-                                _configuration.RegionSpecificClusterNameCollection.TryAdd(((string)dr["Region"]).ToLower(), ((string)dr["ClusterName"]).ToLower());
-                                _configuration.FailoverClusterNameCollection.TryAdd(((string)dr["Region"]).ToLower(), $"{((string)dr["ClusterName"])}follower");
+                                _configuration.RegionSpecificClusterNameCollection.TryAdd(((string)dr["Region"]).ToLower(), $"{((string)dr["ClusterName"])}follower");
+                                _configuration.FailoverClusterNameCollection.TryAdd(((string)dr["Region"]).ToLower(), (string)dr["ClusterName"]);
                             }
                         }
                     }
