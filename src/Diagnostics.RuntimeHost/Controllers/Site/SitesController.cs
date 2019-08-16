@@ -226,6 +226,19 @@ namespace Diagnostics.RuntimeHost.Controllers
             return await base.GetGist(app, gistId, startTime, endTime, timeGrain);
         }
 
+        /// <summary>
+        /// Get site diagnostics properties
+        /// </summary>
+        /// <param name="subscriptionId">Subscription Id.</param>
+        /// <param name="resourceGroupName">Resource Group Name.</param>
+        /// <param name="siteName">Site name.</param
+        /// <returns>Site Stack.</returns>
+        [HttpPost(UriElements.AppStack)]        
+        public async Task<IActionResult> GetAppStack(string subscriptionId, string resourceGroupName, string siteName)
+        {
+            return Ok(await _siteService.GetApplicationStack(subscriptionId, resourceGroupName, siteName, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]));  
+        }
+
         private static bool IsPostBodyMissing(DiagnosticSiteData postBody)
         {
             return postBody == null || string.IsNullOrWhiteSpace(postBody.Name);
