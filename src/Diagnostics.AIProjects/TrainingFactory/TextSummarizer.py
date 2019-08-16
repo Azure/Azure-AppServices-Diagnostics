@@ -1,5 +1,4 @@
 import pytextrank, json, uuid, os, shutil
-from Logger import *
 
 def retrieveSentences(content, word_limit):
     currpath = os.getcwd()
