@@ -11,7 +11,7 @@ namespace Diagnostics.DataProviders
 {
     public interface IKustoHeartBeatService : IDisposable
     {
-        string GetClusterNameFromStamp(string stampName);
+        Task<string> GetClusterNameFromStamp(string stampName);
     }
 
     public class KustoHeartBeatService : IKustoHeartBeatService
@@ -53,7 +53,7 @@ namespace Diagnostics.DataProviders
             Initialize();
         }
 
-        public string GetClusterNameFromStamp(string stampName)
+        public async Task<string> GetClusterNameFromStamp(string stampName)
         {
             string kustoClusterName = null;
             string appserviceRegion = ParseRegionFromStamp(stampName);
@@ -64,7 +64,7 @@ namespace Diagnostics.DataProviders
                 {
                     try
                     {
-                         DataTable regionMappings = _kustoDataProvider.ExecuteClusterQuery($"cluster('wawseusfollower').database('wawsprod').WawsAn_regionsincluster | where pdate >= ago(5d) | summarize by Region, ClusterName", "RegionMappingInit").Result;
+                         DataTable regionMappings = await _kustoDataProvider.ExecuteClusterQuery($"cluster('wawseusfollower').database('wawsprod').WawsAn_regionsincluster | where pdate >= ago(5d) | summarize by Region, ClusterName", "RegionMappingInit");
                         if (regionMappings.Rows.Count > 0)
                         {
                             foreach (DataRow dr in regionMappings.Rows)
