@@ -9,6 +9,7 @@ using Microsoft.Win32;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
+using System.Diagnostics;
 
 namespace Diagnostics.DataProviders
 {
@@ -26,24 +27,33 @@ namespace Diagnostics.DataProviders
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile($"appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables();
 
-            var builtConfig = builder.Build();
+            //var builtConfig = builder.Build();
 
-            var tokenProvider = new AzureServiceTokenProvider();
-            var keyVaultClient = new KeyVaultClient(
-                new KeyVaultClient.AuthenticationCallback(
-                    tokenProvider.KeyVaultTokenCallback
-                )
-            );
+            //var tokenProvider = new AzureServiceTokenProvider(connectionString: "RunAs=App");
+            //var keyVaultClient = new KeyVaultClient(
+            //    new KeyVaultClient.AuthenticationCallback(
+            //        tokenProvider.KeyVaultTokenCallback
+            //    )
+            //);
 
-            string keyVaultConfig = env.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
+            //string keyVaultConfig = env.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
 
-            builder.AddAzureKeyVault($"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
-                                         keyVaultClient,
-                                         new DefaultKeyVaultSecretManager());
+            //Stopwatch sw = new Stopwatch();
+            //sw.Start();
+
+            //builder.AddAzureKeyVault(
+            //        $"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
+            //        keyVaultClient,
+            //        new DefaultKeyVaultSecretManager());
+            
 
             _configuration = builder.Build();
+
+            //sw.Stop();
+            //Console.WriteLine("azure key vault 2 loaded: " + sw.ElapsedMilliseconds + "ms");
         }
 
         protected override string GetValue(string prefix, string name)

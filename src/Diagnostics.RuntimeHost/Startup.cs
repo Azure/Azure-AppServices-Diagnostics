@@ -18,6 +18,7 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -35,6 +36,9 @@ namespace Diagnostics.RuntimeHost
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             var openIdConfigEndpoint = $"{Configuration["SecuritySettings:AADAuthority"]}/.well-known/openid-configuration";
             var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(openIdConfigEndpoint, new OpenIdConnectConfigurationRetriever());
             var config = configManager.GetConfigurationAsync().Result;
@@ -72,6 +76,11 @@ namespace Diagnostics.RuntimeHost
             services.AddApplicationInsightsTelemetry();
             services.AddMvc();
 
+            stopwatch.Stop();
+            Console.WriteLine("azure config 1 loaded: " + stopwatch.ElapsedMilliseconds + "ms");
+            stopwatch.Restart();
+
+
             services.AddSingleton<IDataSourcesConfigurationService, DataSourcesConfigurationService>();
             services.AddSingleton<ICompilerHostClient, CompilerHostClient>();
             services.AddSingleton<ISourceWatcherService, SourceWatcherService>();
@@ -92,6 +101,10 @@ namespace Diagnostics.RuntimeHost
             });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
 
+            stopwatch.Stop();
+            Console.WriteLine("azure config 2A loaded: " + stopwatch.ElapsedMilliseconds + "ms");
+            stopwatch.Restart();
+
             bool searchIsEnabled = Convert.ToBoolean(Configuration[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
 
             if (searchIsEnabled)
@@ -103,18 +116,44 @@ namespace Diagnostics.RuntimeHost
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
 
+            stopwatch.Stop();
+            Console.WriteLine("azure config 2B loaded: " + stopwatch.ElapsedMilliseconds + "ms");
+            stopwatch.Restart();
+
             var servicesProvider = services.BuildServiceProvider();
+
+            stopwatch.Stop();
+            Console.WriteLine("azure config 2C loaded: " + stopwatch.ElapsedMilliseconds + "ms");
+            stopwatch.Restart();
+
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
+
+            stopwatch.Stop();
+            Console.WriteLine("azure config 2D loaded: " + stopwatch.ElapsedMilliseconds + "ms");
+            stopwatch.Restart();
+
             var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
             var kustoConfiguration = dataSourcesConfigService.Config.KustoConfiguration;
 
+            stopwatch.Stop();
+            Console.WriteLine("azure config 3A loaded: " + stopwatch.ElapsedMilliseconds + "ms");
+            stopwatch.Restart();
+
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
+
+            stopwatch.Stop();
+            Console.WriteLine("azure config 3B loaded: " + stopwatch.ElapsedMilliseconds + "ms");
+            stopwatch.Restart();
 
             observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
             var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.WawsObserverResourceId, observerConfiguration);
             var supportBayApiObserverTokenService = new ObserverTokenService(observerConfiguration.SupportBayApiObserverResourceId, observerConfiguration);
             services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
             services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
+
+            stopwatch.Stop();
+            Console.WriteLine("azure config 4A loaded: " + stopwatch.ElapsedMilliseconds + "ms");
+            stopwatch.Restart();
 
             KustoTokenService.Instance.Initialize(dataSourcesConfigService.Config.KustoConfiguration);
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
@@ -126,9 +165,16 @@ namespace Diagnostics.RuntimeHost
                 GeoCertLoader.Instance.Initialize(Configuration);
                 MdmCertLoader.Instance.Initialize(Configuration);
             }
-			
-			// Initialize on startup
+
+            stopwatch.Stop();
+            Console.WriteLine("azure config 4B loaded: " + stopwatch.ElapsedMilliseconds + "ms");
+            stopwatch.Restart();
+
+            // Initialize on startup
             servicesProvider.GetService<ISourceWatcherService>();
+
+            stopwatch.Stop();
+            Console.WriteLine("azure config 5 loaded: " + stopwatch.ElapsedMilliseconds + "ms");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
