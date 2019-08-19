@@ -41,6 +41,7 @@
         public const string Statistics = "/statistics";
         public const string StatisticsResource = "/{invokerId}";
         public const string StatisticsQuery = "/statisticsQuery";
+        public const string AppStack = "appstack";
 
         // Constants for internal api interactions
         public const string Internal = "/internal";
