@@ -30,30 +30,30 @@ namespace Diagnostics.DataProviders
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables();
 
-            //var builtConfig = builder.Build();
+            var builtConfig = builder.Build();
 
-            //var tokenProvider = new AzureServiceTokenProvider(connectionString: "RunAs=App");
-            //var keyVaultClient = new KeyVaultClient(
-            //    new KeyVaultClient.AuthenticationCallback(
-            //        tokenProvider.KeyVaultTokenCallback
-            //    )
-            //);
+            var tokenProvider = new AzureServiceTokenProvider();
+            var keyVaultClient = new KeyVaultClient(
+                new KeyVaultClient.AuthenticationCallback(
+                    tokenProvider.KeyVaultTokenCallback
+                )
+            );
 
-            //string keyVaultConfig = env.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
+            string keyVaultConfig = env.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
 
-            //Stopwatch sw = new Stopwatch();
-            //sw.Start();
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
 
-            //builder.AddAzureKeyVault(
-            //        $"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
-            //        keyVaultClient,
-            //        new DefaultKeyVaultSecretManager());
+            builder.AddAzureKeyVault(
+                    $"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
+                    keyVaultClient,
+                    new DefaultKeyVaultSecretManager());
             
 
             _configuration = builder.Build();
 
-            //sw.Stop();
-            //Console.WriteLine("azure key vault 2 loaded: " + sw.ElapsedMilliseconds + "ms");
+            sw.Stop();
+            Console.WriteLine("azure key vault 2 loaded: " + sw.ElapsedMilliseconds + "ms");
         }
 
         protected override string GetValue(string prefix, string name)

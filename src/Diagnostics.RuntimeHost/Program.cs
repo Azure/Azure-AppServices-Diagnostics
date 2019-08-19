@@ -24,9 +24,25 @@ namespace Diagnostics.RuntimeHost
             var r = WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((context, config) =>
                 {
-                    config
-                        .AddCommandLine(args).AddEnvironmentVariables();
-                        
+                    var builtConfig = config
+                        .AddCommandLine(args)
+                        .AddEnvironmentVariables()
+                        .Build();
+
+                    
+                        var azureServiceTokenProvider = new AzureServiceTokenProvider();
+                        var keyVaultClient = new KeyVaultClient(
+                            new KeyVaultClient.AuthenticationCallback(
+                                azureServiceTokenProvider.KeyVaultTokenCallback));
+
+                    string keyVaultConfig = context.HostingEnvironment.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
+
+                    
+
+                    config.AddAzureKeyVault(
+                            $"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
+                            keyVaultClient,
+                            new DefaultKeyVaultSecretManager());
                     
                 })
                 .UseStartup<Startup>()

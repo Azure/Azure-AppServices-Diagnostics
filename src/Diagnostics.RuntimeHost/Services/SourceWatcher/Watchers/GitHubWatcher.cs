@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -112,6 +113,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// <returns>Task for starting watcher.</returns>
         private async Task StartWatcherInternal()
         {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
             try
             {
                 LogMessage("SourceWatcher : Start");
@@ -142,19 +145,22 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                      * This codepath will be mostly used when the process restarts or machine reboot (and no changes are done in scripts source).
                      */
                     LogMessage($"Checking if any invoker present locally needs to be added in cache");
-                    foreach (DirectoryInfo subDir in destDirInfo.EnumerateDirectories())
+                    var directories = destDirInfo.EnumerateDirectories();
+                    List<Task> tasks = new List<Task>(directories.Count());
+                    foreach (DirectoryInfo subDir in directories)
                     {
                         var workerId = await GetWorkerIdAsync(subDir);
 
                         if (GithubWorkers.ContainsKey(workerId))
                         {
-                            await GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir);
+                            tasks.Add(GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir));
                         }
                         else
                         {
                             LogWarning($"Cannot find github worker with id {workerId}. Directory: {subDir.FullName}.");
                         }
                     }
+                    await Task.WhenAll(tasks);
 
                     return;
                 }
@@ -219,6 +225,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             finally
             {
                 LogMessage("SourceWatcher : End");
+                sw.Stop();
+                Console.WriteLine("source watcher startup finished: " + sw.ElapsedMilliseconds + "ms");
             }
         }
 
