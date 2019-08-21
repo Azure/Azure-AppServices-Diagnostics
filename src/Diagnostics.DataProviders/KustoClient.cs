@@ -77,27 +77,29 @@ namespace Diagnostics.DataProviders
             };
             request.Content = new StringContent(JsonConvert.SerializeObject(requestPayload), Encoding.UTF8, "application/json");
             DataTableResponseObjectCollection dataSet = null;
-
+            string responseContent = string.Empty;
             try
             {
                 timeTakenStopWatch.Start();
 
                 var responseMsg = await _httpClient.SendAsync(request, tokenSource.Token);
-                var responseContent = await responseMsg.Content.ReadAsStringAsync();
+                responseContent = await responseMsg.Content.ReadAsStringAsync();
 
                 if (!responseMsg.IsSuccessStatusCode)
                 {
+                    timeTakenStopWatch.Stop();
+                    LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, new Exception($"Kusto call ended with a non success status code : {responseMsg.StatusCode.ToString()}"), dataSet, responseContent);
                     throw new Exception(responseContent);
                 }
                 else
                 {
                     dataSet = ProcessKustoResponse(responseContent);
                 }
-            }
+            }            
             catch (Exception ex)
             {
                 timeTakenStopWatch.Stop();
-                LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, ex, dataSet);
+                LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, ex, dataSet, responseContent);
 
                 throw;
             }
@@ -125,9 +127,11 @@ namespace Diagnostics.DataProviders
             return JsonConvert.DeserializeObject<DataTableResponseObjectCollection>(responseContent);
         }
 
-        private void LogKustoQuery(string query, string cluster, string operationName, Stopwatch timeTakenStopWatch, string kustoClientId, Exception kustoApiException, DataTableResponseObjectCollection dataSet)
+        private void LogKustoQuery(string query, string cluster, string operationName, Stopwatch timeTakenStopWatch, string kustoClientId, Exception kustoApiException, DataTableResponseObjectCollection dataSet, string kustoResponse = "")
         {
             var status = kustoApiException == null ? "Success" : "Failed";
+
+            kustoResponse = (kustoResponse != "") ? $" {Environment.NewLine} --> KustoResponseBody : {kustoResponse} " : string.Empty ;
 
             object stats = null;
             if (dataSet != null && dataSet.Tables != null && dataSet.Tables.Count() >= 4)
@@ -147,7 +151,7 @@ namespace Diagnostics.DataProviders
                JsonConvert.SerializeObject(stats) ?? string.Empty,
                query,
                kustoApiException != null ? kustoApiException.GetType().ToString() : string.Empty,
-               kustoApiException != null ? kustoApiException.ToString() : string.Empty);
+               kustoApiException != null ? $"{kustoApiException.ToString()}{kustoResponse}" : string.Empty);
         }
 
         public async Task<KustoQuery> GetKustoQueryAsync(string query, string cluster, string database)
