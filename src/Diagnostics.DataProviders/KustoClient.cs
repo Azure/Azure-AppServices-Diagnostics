@@ -131,7 +131,7 @@ namespace Diagnostics.DataProviders
         {
             var status = kustoApiException == null ? "Success" : "Failed";
 
-            kustoResponse = (kustoResponse != "") ? $" {Environment.NewLine} --> KustoResponseBody : {kustoResponse} " : string.Empty ;
+            kustoResponse = (kustoResponse != "") ? $" {Environment.NewLine} KustoResponseBody : {kustoResponse} " : string.Empty ;
 
             object stats = null;
             if (dataSet != null && dataSet.Tables != null && dataSet.Tables.Count() >= 4)
