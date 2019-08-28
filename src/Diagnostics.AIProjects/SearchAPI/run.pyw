@@ -2,26 +2,19 @@ import os, gc, shutil, uuid
 from argparse import ArgumentParser
 from flask import Flask, request
 from RegistryReader import detectorsFolderPath
-from Logger import *
+from Logger import loggerInstance
 from datetime import datetime, timezone
-import json, itertools, nltk
+import json
 from functools import wraps
+from ModelInfo import ModelInfo
+from TokenizerModule import *
 
 argparser = ArgumentParser()
 argparser.add_argument("-d", "--debug", default=False, help="flag for debug mode")
 args = vars(argparser.parse_args())
+loggerInstance.isLogToKustoEnabled = (not args['debug'])
 
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt')
-try:
-    nltk.data.find('stopwords')
-except LookupError:
-    nltk.download('stopwords')
-from nltk.corpus import stopwords
 from gensim.models import TfidfModel
-from nltk.stem.porter import *
 from gensim import corpora, similarities
 
 class ModelDownloadFailed(Exception):
@@ -45,8 +38,12 @@ packageFileNames = {
     "m2ModelFile": "m2.model",
     "m2IndexFile": "m2.index",
     "detectorsFile": "Detectors.json",
-    "sampleUtterancesFile": "SampleUtterances.json"
+    "sampleUtterancesFile": "SampleUtterances.json",
+    "mappingsFile": "Mappings.json",
+    "modelInfo": "ModelInfo.json"
 }
+
+optionalFiles = ["mappingsFile", "modelInfo"]
 
 modelsPath = detectorsFolderPath
 def copyFolder(src, dst):
@@ -85,13 +82,7 @@ def getProductId(resourceObj):
     else:
         return None
         
-#### Text Processing setup and Text Search model for Queries ####
-stemmer = PorterStemmer()
-stop = stopwords.words('english')
-
-def tokenize_text(txt):
-    return [stemmer.stem(word) for word in nltk.word_tokenize(txt.lower()) if word not in stop]
-
+#### Text Search model for Queries ####
 def verifyFile(filename):
     try:
         fp = open(filename, "rb")
@@ -105,7 +96,11 @@ class TextSearchModel:
         for key in packageFiles.keys():
             packageFiles[key] = os.path.join(modelpackagepath, packageFiles[key])
         self.packageFiles = packageFiles
-        self.models = {"dictionary": None, "m1Model": None, "m1Index": None, "m2Model": None, "m2Index": None, "detectors": None, "sampleUtterances": None}
+        self.models = {"dictionary": None, "m1Model": None, "m1Index": None, "m2Model": None, "m2Index": None, "detectors": None, "sampleUtterances": None, "mappings": None, "modelInfo": None}
+        try:
+            self.models["modelInfo"] = ModelInfo(json.loads(open(self.packageFiles["modelInfo"], "r").read()))
+        except:
+            self.models["modelInfo"] = ModelInfo({})
         try:
             self.models["dictionary"] = corpora.Dictionary.load(self.packageFiles["dictionaryFile"])
         except:
@@ -136,6 +131,13 @@ class TextSearchModel:
                 f.close()
         except:
             raise ModelFileLoadFailed("Failed to parse json from file " + self.packageFiles["detectorsFile"])
+        if self.models["modelInfo"].detectorContentSplitted:
+            try:
+                with open(self.packageFiles["mappingsFile"], "r") as f:
+                    self.models["mappings"] = json.loads(f.read())
+                    f.close()
+            except:
+                raise ModelFileLoadFailed("Failed to parse json from file " + self.packageFiles["mappingsFile"])
         try:
             with open(self.packageFiles["sampleUtterancesFile"], "r") as f:
                 self.models["sampleUtterances"] = json.loads(f.read())
@@ -144,13 +146,27 @@ class TextSearchModel:
                 gc.collect()
         except:
             raise ModelFileLoadFailed("Failed to parse json from file " + self.packageFiles["sampleUtterancesFile"])
+    def getDetectorByIndex(self, index):
+        detector = [x for x in self.models["mappings"] if (x["startindex"] <= index <= x["endindex"])]
+        if detector and detector[0]:
+            return detector[0]["id"]
+        else:
+            return None
 
     def queryDetectors(self, query=None):
         if query:
             try:
-                vector = self.models["m1Model"][self.models["dictionary"].doc2bow(tokenize_text(query))]
-                similar_doc_indices = sorted(enumerate(self.models["m1Index"][vector]), key=lambda item: -item[1])
-                similar_docs = list(map(lambda x: {"detector": self.models["detectors"][x[0]]["id"], "score": str(x[1])}, similar_doc_indices))
+                vector = self.models["m1Model"][self.models["dictionary"].doc2bow(getAllNGrams(query, self.models["modelInfo"].textNGrams))]
+                if self.models["modelInfo"].detectorContentSplitted:    
+                    similar_doc_indices = sorted(enumerate(self.models["m1Index"][vector]), key=lambda item: -item[1])[:10]
+                    similar_docs = []
+                    for x in similar_doc_indices:
+                        detector = self.getDetectorByIndex(x[0])
+                        if detector and (not (detector in [p["detector"] for p in similar_docs])):
+                            similar_docs.append({"detector": self.getDetectorByIndex(x[0]), "score": str(x[1])})
+                else:
+                    similar_doc_indices = sorted(enumerate(self.models["m1Index"][vector]), key=lambda item: -item[1])
+                    similar_docs = list(map(lambda x: {"detector": self.models["detectors"][x[0]]["id"], "score": str(x[1])}, similar_doc_indices))
                 return {"query": query, "results": similar_docs}
             except Exception as e:
                 return {"query": query, "results": []}
@@ -174,7 +190,7 @@ class TextSearchModel:
             query = query + " ".join(existing_utterances)
             self.loadUtteranceModel()
             try:
-                vector = self.models["m2Model"][self.models["dictionary"].doc2bow(tokenize_text(query))]
+                vector = self.models["m2Model"][self.models["dictionary"].doc2bow(getAllNGrams(query, self.models["modelInfo"].textNGrams))]
                 similar_doc_indices = sorted(enumerate(self.models["m2Index"][vector]), key=lambda item: -item[1])
                 similar_doc_indices = [x for x in similar_doc_indices if self.models["sampleUtterances"][x[0]]["text"].lower() not in existing_utterances][:10]
                 similar_docs = list(map(lambda x: {"sampleUtterance": self.models["sampleUtterances"][x[0]], "score": str(x[1])}, similar_doc_indices))
@@ -194,7 +210,7 @@ def loadModel(productid, model=None):
     modelpackagepath = productid
     if not os.path.isdir(productid) or not all([verifyFile(os.path.join(modelpackagepath, x)) for x in packageFileNames.values()]):
         downloadModels(productid)
-    if not all([verifyFile(os.path.join(modelpackagepath, x)) for x in packageFileNames.values()]):
+    if not all([verifyFile(os.path.join(modelpackagepath, packageFileNames[x])) for x in packageFileNames.keys() if x not in optionalFiles]):
         raise FileNotFoundError("One or more of model file(s) are missing")
     loaded_models[productid] = TextSearchModel(modelpackagepath, dict(packageFileNames))
 
@@ -202,7 +218,7 @@ def refreshModel(productid):
     path = str(uuid.uuid4())
     downloadModels(productid, path=path)
     modelpackagepath = os.path.join(path, productid)
-    if not all([verifyFile(os.path.join(modelpackagepath, x)) for x in packageFileNames.values()]):
+    if not all([verifyFile(os.path.join(modelpackagepath, packageFileNames[x])) for x in packageFileNames.keys() if x not in optionalFiles]):
         return "Failed to refresh model because One or more of model file(s) are missing"
     try:
         temp = TextSearchModel(modelpackagepath, dict(packageFileNames))
@@ -253,16 +269,16 @@ def loggingProvider(requestIdRequired=True):
             if not requestId:
                 res = ("BadRequest: Missing parameter requestId", 400)
                 endTime = getUTCTime()
-                logApiSummary("Null", str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
+                loggerInstance.logApiSummary("Null", str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
                 return res
             else:
                 try:
                     res = f(*args, **kwargs)
                 except Exception as e:
                     res = (str(e), 500)
-                    logUnhandledException(requestId, str(e))
+                    loggerInstance.logUnhandledException(requestId, str(e))
             endTime = getUTCTime()
-            logApiSummary(requestId, str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
+            loggerInstance.logApiSummary(requestId, str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
             return res
         return logger
     return loggingOuter
@@ -287,7 +303,8 @@ def queryDetectorsMethod():
     try:
         loadModel(productid)
     except Exception as e:
-        logHandledException(requestId, e)
+        loggerInstance.logHandledException(requestId, e)
+        loggerInstance.logToFile(requestId, e)
         return (json.dumps({"query": txt_data, "results": []}), 200)
     
     res = json.dumps(loaded_models[productid].queryDetectors(txt_data))
@@ -312,7 +329,7 @@ def queryUtterancesMethod():
             loadModel(product)
             res = loaded_models[product].queryUtterances(txt_data, existing_utterances)
         except Exception as e:
-            logHandledException(requestId, e)
+            loggerInstance.logHandledException(requestId, e)
             res = {"query": txt_data, "results": None}
         if res:
             results["results"] += res["results"] if res["results"] else []

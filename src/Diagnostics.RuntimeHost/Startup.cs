@@ -32,7 +32,6 @@ namespace Diagnostics.RuntimeHost
         public IConfiguration Configuration { get; }
         public IHostingEnvironment Environment { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             var openIdConfigEndpoint = $"{Configuration["SecuritySettings:AADAuthority"]}/.well-known/openid-configuration";
@@ -42,30 +41,30 @@ namespace Diagnostics.RuntimeHost
             var signingKeys = config.SigningKeys;
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateAudience = true,
-                ValidAudience = Configuration["SecuritySettings:ClientId"],
-                ValidateIssuer = true,
-                ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
-                ValidateLifetime = true,
-                RequireSignedTokens = true,
-                IssuerSigningKeys = signingKeys
-            };
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateAudience = true,
+                    ValidAudience = Configuration["SecuritySettings:ClientId"],
+                    ValidateIssuer = true,
+                    ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
+                    ValidateLifetime = true,
+                    RequireSignedTokens = true,
+                    IssuerSigningKeys = signingKeys
+                };
 
-            options.Events = new JwtBearerEvents
-            {
-                OnTokenValidated = context =>
+                options.Events = new JwtBearerEvents
                 {
-                var allowedAppIds = Configuration["SecuritySettings:AllowedAppIds"].Split(",").Select(p => p.Trim()).ToList();
-                var claimPrincipal = context.Principal;
-                var incomingAppId = claimPrincipal.Claims.FirstOrDefault(c => c.Type.Equals("appid", StringComparison.CurrentCultureIgnoreCase));
-                if(incomingAppId == null || !allowedAppIds.Exists(p => p.Equals(incomingAppId.Value, StringComparison.OrdinalIgnoreCase)))
-                {
-                    context.Fail("Unauthorized Request");
-                }
-                    return Task.CompletedTask;
-                }
+                    OnTokenValidated = context =>
+                    {
+                        var allowedAppIds = Configuration["SecuritySettings:AllowedAppIds"].Split(",").Select(p => p.Trim()).ToList();
+                        var claimPrincipal = context.Principal;
+                        var incomingAppId = claimPrincipal.Claims.FirstOrDefault(c => c.Type.Equals("appid", StringComparison.CurrentCultureIgnoreCase));
+                        if (incomingAppId == null || !allowedAppIds.Exists(p => p.Equals(incomingAppId.Value, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            context.Fail("Unauthorized Request");
+                        }
+                        return Task.CompletedTask;
+                    }
                 };
             });
             // Enable App Insights telemetry
@@ -92,7 +91,15 @@ namespace Diagnostics.RuntimeHost
             });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
 
-            bool searchIsEnabled = Convert.ToBoolean(Configuration[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
+            bool searchIsEnabled = false;
+            if (Environment.IsProduction())
+            {
+                searchIsEnabled = Convert.ToBoolean(Registry.GetValue(RegistryConstants.SearchAPIRegistryPath, RegistryConstants.SearchAPIEnabledKey, string.Empty));
+            }
+            else
+            {
+                searchIsEnabled = Convert.ToBoolean(Configuration[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
+            }
 
             if (searchIsEnabled)
             {
@@ -121,14 +128,13 @@ namespace Diagnostics.RuntimeHost
             AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
             CompilerHostTokenService.Instance.Initialize(Configuration);
 
-            if(Environment.IsProduction())
+            if (Environment.IsProduction())
             {
                 GeoCertLoader.Instance.Initialize(Configuration);
                 MdmCertLoader.Instance.Initialize(Configuration);
             }
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
@@ -136,7 +142,8 @@ namespace Diagnostics.RuntimeHost
                 app.UseDeveloperExceptionPage();
             }
             app.UseAuthentication();
-            app.UseDiagnosticsRequestMiddleware();
+
+            app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseMvc();
         }
     }
