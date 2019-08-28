@@ -213,7 +213,7 @@ namespace Diagnostics.Tests.DataProviderTests
             {
                 await Task.Delay(100);
             } while (startingHeartBeatRuns == MockKustoClient.HeartBeatRuns);
-            Assert.Equal(config.KustoConfiguration.KustoClusterNameGroupings, kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
+            Assert.Equal(config.KustoConfiguration.KustoClusterNameGroupings, await kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
 
 
             MockKustoClient.ShouldHeartbeatSucceed = false;
@@ -222,7 +222,7 @@ namespace Diagnostics.Tests.DataProviderTests
             {
                 await Task.Delay(100);
             } while (startingHeartBeatRuns == MockKustoClient.HeartBeatRuns);
-            Assert.Equal(config.KustoConfiguration.KustoClusterFailoverGroupings, kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
+            Assert.Equal(config.KustoConfiguration.KustoClusterFailoverGroupings, await kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
 
             MockKustoClient.ShouldHeartbeatSucceed = true;
             startingHeartBeatRuns = MockKustoClient.HeartBeatRuns;
@@ -230,7 +230,7 @@ namespace Diagnostics.Tests.DataProviderTests
             {
                 await Task.Delay(100);
             } while (startingHeartBeatRuns == MockKustoClient.HeartBeatRuns);
-            Assert.Equal(config.KustoConfiguration.KustoClusterNameGroupings, kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
+            Assert.Equal(config.KustoConfiguration.KustoClusterNameGroupings, await kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
 
         }
 
