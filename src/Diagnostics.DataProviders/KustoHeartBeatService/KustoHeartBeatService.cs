@@ -76,7 +76,7 @@ namespace Diagnostics.DataProviders
                     }
                     catch (Exception ex)
                     {
-                        //Swallow any Kusto related exception, then check if a mapping exists for *. Throw an exception is not.
+                        //Swallow any Kusto related exception, then check if a mapping exists for *. Throw an exception if not.
                     }
                     finally
                     {
