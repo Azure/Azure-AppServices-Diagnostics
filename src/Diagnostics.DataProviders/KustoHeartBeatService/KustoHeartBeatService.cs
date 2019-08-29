@@ -80,12 +80,9 @@ namespace Diagnostics.DataProviders
                     }
                     finally
                     {
-                        if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName))
+                        if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName) && !_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
                         {
-                            if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
-                            {
-                                throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
-                            }
+                            throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
                         }
                     }
                 }
