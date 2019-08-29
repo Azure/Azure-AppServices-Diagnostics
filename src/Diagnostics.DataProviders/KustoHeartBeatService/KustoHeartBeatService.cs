@@ -85,13 +85,7 @@ namespace Diagnostics.DataProviders
                             throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
                         }
                     }
-                }
-                                
-                if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
-                {
-                    throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
-                }
-                
+                }                 
             }
 
             if (!string.IsNullOrWhiteSpace(_heartbeats[kustoClusterName].FailoverCluster))
