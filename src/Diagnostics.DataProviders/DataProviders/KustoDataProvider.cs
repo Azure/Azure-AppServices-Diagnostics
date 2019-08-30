@@ -41,7 +41,7 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
         {
-            var cluster = GetClusterNameFromStamp(stampName);
+            var cluster = await GetClusterNameFromStamp(stampName);
             await AddQueryInformationToMetadata(query, cluster, operationName);
             return await _kustoClient.ExecuteQueryAsync(query, cluster, _configuration.DBName, requestId, operationName);
         }
@@ -58,7 +58,7 @@ namespace Diagnostics.DataProviders
 
         public async Task<KustoQuery> GetKustoQuery(string query, string stampName, string operationName)
         {
-            var cluster = GetClusterNameFromStamp(stampName);
+            var cluster = await GetClusterNameFromStamp(stampName);
             var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, cluster, _configuration.DBName, operationName);
             return kustoQuery;
         }
@@ -87,9 +87,9 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        private string GetClusterNameFromStamp(string stampName)
+        private async Task<string> GetClusterNameFromStamp(string stampName)
         {
-            return _kustoHeartBeatService.GetClusterNameFromStamp(stampName);
+            return await _kustoHeartBeatService.GetClusterNameFromStamp(stampName);
         }
     }
 }
