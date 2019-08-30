@@ -6,6 +6,7 @@ using System.Threading;
 using Diagnostics.Logger;
 using Microsoft.AspNetCore.Http.Features;
 using System.Data;
+using System.Collections.Concurrent;
 
 namespace Diagnostics.DataProviders
 {
@@ -17,13 +18,13 @@ namespace Diagnostics.DataProviders
     public class KustoHeartBeatService : IKustoHeartBeatService
     {
         private KustoDataProviderConfiguration _configuration;
-        private Dictionary<string, KustoHeartBeat> _heartbeats;
+        private ConcurrentDictionary<string, KustoHeartBeat> _heartbeats;
         private KustoDataProvider _kustoDataProvider;
         private CancellationTokenSource _cancellationToken;
 
         private void Initialize()
         {
-            _heartbeats = new Dictionary<string, KustoHeartBeat>();
+            _heartbeats = new ConcurrentDictionary<string, KustoHeartBeat>();
             _kustoDataProvider = new KustoDataProvider(new OperationDataCache(), _configuration, Guid.NewGuid().ToString(), this);
             _cancellationToken = new CancellationTokenSource();
 
@@ -35,9 +36,11 @@ namespace Diagnostics.DataProviders
                 {
                     failoverCluster = _configuration.FailoverClusterNameCollection[primaryCluster];
                 }
-                _heartbeats[primaryCluster] = new KustoHeartBeat(primaryCluster, failoverCluster, _kustoDataProvider, _configuration);
-                // Start threads for each heartbeat on the thread pool
-                Task.Run(() => _heartbeats[primaryCluster].RunHeartBeatTask(_cancellationToken.Token));
+                if (!_heartbeats.ContainsKey(primaryCluster) && _heartbeats.TryAdd(primaryCluster, new KustoHeartBeat(primaryCluster, failoverCluster, _kustoDataProvider, _configuration)))
+                {
+                    // Start threads for each heartbeat on the thread pool
+                    Task.Run(() => _heartbeats[primaryCluster].RunHeartBeatTask(_cancellationToken.Token));
+                }
             }
         }
 
@@ -83,6 +86,10 @@ namespace Diagnostics.DataProviders
                         if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName) && !_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
                         {
                             throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
+                        }
+                        else
+                        {
+                            Initialize();
                         }
                     }
                 }                 
