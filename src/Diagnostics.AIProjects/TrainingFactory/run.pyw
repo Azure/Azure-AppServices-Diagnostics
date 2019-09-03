@@ -1,17 +1,19 @@
 import os, gc, shutil, uuid
 from argparse import ArgumentParser
 from flask import Flask, request
-from Logger import *
+from Logger import loggerInstance
 from datetime import datetime, timezone
 import json
 from functools import wraps
 from ResourceFilterHelper import getProductId, findProductId
 from ModelTrainer import trainModel
 from RegistryReader import *
+from TrainingConfig import TrainingConfig
 
 argparser = ArgumentParser()
 argparser.add_argument("-d", "--debug", default=False, help="flag for debug mode")
 args = vars(argparser.parse_args())
+loggerInstance.isLogToKustoEnabled = (not args['debug'])
 
 class ResourceConfigDownloadFailed(Exception):
     pass
@@ -75,16 +77,16 @@ def loggingProvider(requestIdRequired=True):
             if not requestId:
                 res = ("BadRequest: Missing parameter requestId", 400)
                 endTime = getUTCTime()
-                logApiSummary("Null", str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
+                loggerInstance.logApiSummary("Null", str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
                 return res
             else:
                 try:
                     res = f(*args, **kwargs)
                 except Exception as e:
                     res = (str(e), 500)
-                    logUnhandledException(requestId, str(e))
+                    loggerInstance.logUnhandledException(requestId, str(e))
             endTime = getUTCTime()
-            logApiSummary(requestId, str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
+            loggerInstance.logApiSummary(requestId, str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
             return res
         return logger
     return loggingOuter
@@ -106,19 +108,23 @@ def triggerTrainingMethod():
         return ('Data not available for productId {0}'.format(productId), 404)
     if not 'trainingConfig' in data:
         return ("No config provided for training", 400)
-    trainingConfig = json.loads(data["trainingConfig"])
-    trainingId = str(uuid.uuid4())
-    try:
-        startTime = getUTCTime()
-        trainModel(trainingId, productId, trainingConfig)
-        endTime = getUTCTime()
-        logTrainingSummary(requestId, trainingId, productId, getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), json.dumps({"trainingLogs":  open("{0}.log".format(trainingId), "r").read()}))
-        removeLogFile("{0}.log".format(trainingId))
-        return ("Model Trained successfully for productId {0} - trainingId {1}".format(productId, trainingId), 200)
-    except Exception as e:
-        logTrainingException(requestId, trainingId, productId, e)
-        removeLogFile("{0}.log".format(trainingId))
-        return (str(e), 500)
+    trainingConfig = TrainingConfig(json.loads(data["trainingConfig"]))
+    if (trainingConfig.trainDetectors or trainingConfig.trainUtterances):
+        trainingId = str(uuid.uuid4())
+        try:
+            startTime = getUTCTime()
+            trainModel(trainingId, productId, trainingConfig)
+            endTime = getUTCTime()
+            loggerInstance.logTrainingSummary(requestId, trainingId, productId, getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), json.dumps({"trainingLogs":  open("{0}.log".format(trainingId), "r").read()}))
+            removeLogFile("{0}.log".format(trainingId))
+            return ("Model Trained successfully for productId {0} - trainingId {1}".format(productId, trainingId), 200)
+        except Exception as e:
+            loggerInstance.logTrainingException(requestId, trainingId, productId, e)
+            removeLogFile("{0}.log".format(trainingId))
+            return (str(e), 500)
+    else:
+        return ("Training flags are all set to false. Training not required", 200)
+
 
 if __name__ == '__main__':
     HOST = os.environ.get('SERVER_HOST', '0.0.0.0')

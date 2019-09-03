@@ -33,7 +33,6 @@ namespace Diagnostics.RuntimeHost
         public IConfiguration Configuration { get; }
         public IHostingEnvironment Environment { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             Stopwatch stopwatch = new Stopwatch();
@@ -46,30 +45,30 @@ namespace Diagnostics.RuntimeHost
             var signingKeys = config.SigningKeys;
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateAudience = true,
-                ValidAudience = Configuration["SecuritySettings:ClientId"],
-                ValidateIssuer = true,
-                ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
-                ValidateLifetime = true,
-                RequireSignedTokens = true,
-                IssuerSigningKeys = signingKeys
-            };
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateAudience = true,
+                    ValidAudience = Configuration["SecuritySettings:ClientId"],
+                    ValidateIssuer = true,
+                    ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
+                    ValidateLifetime = true,
+                    RequireSignedTokens = true,
+                    IssuerSigningKeys = signingKeys
+                };
 
-            options.Events = new JwtBearerEvents
-            {
-                OnTokenValidated = context =>
+                options.Events = new JwtBearerEvents
                 {
-                var allowedAppIds = Configuration["SecuritySettings:AllowedAppIds"].Split(",").Select(p => p.Trim()).ToList();
-                var claimPrincipal = context.Principal;
-                var incomingAppId = claimPrincipal.Claims.FirstOrDefault(c => c.Type.Equals("appid", StringComparison.CurrentCultureIgnoreCase));
-                if(incomingAppId == null || !allowedAppIds.Exists(p => p.Equals(incomingAppId.Value, StringComparison.OrdinalIgnoreCase)))
-                {
-                    context.Fail("Unauthorized Request");
-                }
-                    return Task.CompletedTask;
-                }
+                    OnTokenValidated = context =>
+                    {
+                        var allowedAppIds = Configuration["SecuritySettings:AllowedAppIds"].Split(",").Select(p => p.Trim()).ToList();
+                        var claimPrincipal = context.Principal;
+                        var incomingAppId = claimPrincipal.Claims.FirstOrDefault(c => c.Type.Equals("appid", StringComparison.CurrentCultureIgnoreCase));
+                        if (incomingAppId == null || !allowedAppIds.Exists(p => p.Equals(incomingAppId.Value, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            context.Fail("Unauthorized Request");
+                        }
+                        return Task.CompletedTask;
+                    }
                 };
             });
             // Enable App Insights telemetry
@@ -101,9 +100,10 @@ namespace Diagnostics.RuntimeHost
             });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
 
-            stopwatch.Stop();
-            Console.WriteLine("azure config 2A loaded: " + stopwatch.ElapsedMilliseconds + "ms");
-            stopwatch.Restart();
+            var servicesProvider = services.BuildServiceProvider();
+            var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
+            var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
+            var kustoConfiguration = dataSourcesConfigService.Config.KustoConfiguration;
 
             bool searchIsEnabled = Convert.ToBoolean(Configuration[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
 
@@ -115,29 +115,6 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
-
-            stopwatch.Stop();
-            Console.WriteLine("azure config 2B loaded: " + stopwatch.ElapsedMilliseconds + "ms");
-            stopwatch.Restart();
-
-            var servicesProvider = services.BuildServiceProvider();
-
-            stopwatch.Stop();
-            Console.WriteLine("azure config 2C loaded: " + stopwatch.ElapsedMilliseconds + "ms");
-            stopwatch.Restart();
-
-            var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
-
-            stopwatch.Stop();
-            Console.WriteLine("azure config 2D loaded: " + stopwatch.ElapsedMilliseconds + "ms");
-            stopwatch.Restart();
-
-            var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
-            var kustoConfiguration = dataSourcesConfigService.Config.KustoConfiguration;
-
-            stopwatch.Stop();
-            Console.WriteLine("azure config 3A loaded: " + stopwatch.ElapsedMilliseconds + "ms");
-            stopwatch.Restart();
 
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
 
@@ -158,9 +135,13 @@ namespace Diagnostics.RuntimeHost
             KustoTokenService.Instance.Initialize(dataSourcesConfigService.Config.KustoConfiguration);
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
             AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
+            if (searchIsEnabled)
+            {
+                SearchServiceTokenService.Instance.Initialize(dataSourcesConfigService.Config.SearchServiceProviderConfiguration);
+            }
             CompilerHostTokenService.Instance.Initialize(Configuration);
 
-            if(Environment.IsProduction())
+            if (Environment.IsProduction())
             {
                 GeoCertLoader.Instance.Initialize(Configuration);
                 MdmCertLoader.Instance.Initialize(Configuration);
@@ -177,7 +158,6 @@ namespace Diagnostics.RuntimeHost
             Console.WriteLine("azure config 5 loaded: " + stopwatch.ElapsedMilliseconds + "ms");
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
@@ -185,7 +165,8 @@ namespace Diagnostics.RuntimeHost
                 app.UseDeveloperExceptionPage();
             }
             app.UseAuthentication();
-            app.UseDiagnosticsRequestMiddleware();
+
+            app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseMvc();
         }
     }

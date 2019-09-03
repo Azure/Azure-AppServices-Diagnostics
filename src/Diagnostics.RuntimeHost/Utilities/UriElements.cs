@@ -41,6 +41,7 @@
         public const string Statistics = "/statistics";
         public const string StatisticsResource = "/{invokerId}";
         public const string StatisticsQuery = "/statisticsQuery";
+        public const string AppStack = "appstack";
 
         // Constants for internal api interactions
         public const string Internal = "/internal";
@@ -50,8 +51,6 @@
         public const string TrainModel = "trainmodel";
         public const string RefreshModel = "refreshmodel";
         public const string UpdateResourceConfig = "updateResourceConfig";
-        public const string SearchAPI = "http://localhost:8010";
-        public const string TrainingAPI = "http://localhost:8011";
 
         #region Observer Urls
 
