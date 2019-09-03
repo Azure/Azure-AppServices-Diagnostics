@@ -5,7 +5,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -115,8 +114,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// <returns>Task for starting watcher.</returns>
         private async Task StartWatcherInternal()
         {
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
             try
             {
                 LogMessage("SourceWatcher : Start");
@@ -221,8 +218,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             finally
             {
                 LogMessage("SourceWatcher : End");
-                sw.Stop();
-                Console.WriteLine("source watcher startup finished: " + sw.ElapsedMilliseconds + "ms");
             }
         }
 

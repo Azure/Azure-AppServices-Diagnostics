@@ -9,7 +9,6 @@ using Microsoft.Win32;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
-using System.Diagnostics;
 
 namespace Diagnostics.DataProviders
 {
@@ -41,19 +40,12 @@ namespace Diagnostics.DataProviders
 
             string keyVaultConfig = env.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
 
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-
             builder.AddAzureKeyVault(
                     $"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
                     keyVaultClient,
                     new DefaultKeyVaultSecretManager());
             
-
             _configuration = builder.Build();
-
-            sw.Stop();
-            Console.WriteLine("azure key vault 2 loaded: " + sw.ElapsedMilliseconds + "ms");
         }
 
         protected override string GetValue(string prefix, string name)

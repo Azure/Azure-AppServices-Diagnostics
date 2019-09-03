@@ -18,7 +18,6 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Diagnostics;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -35,9 +34,6 @@ namespace Diagnostics.RuntimeHost
 
         public void ConfigureServices(IServiceCollection services)
         {
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start();
-
             var openIdConfigEndpoint = $"{Configuration["SecuritySettings:AADAuthority"]}/.well-known/openid-configuration";
             var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(openIdConfigEndpoint, new OpenIdConnectConfigurationRetriever());
             var config = configManager.GetConfigurationAsync().Result;
@@ -75,11 +71,6 @@ namespace Diagnostics.RuntimeHost
             services.AddApplicationInsightsTelemetry();
             services.AddMvc();
 
-            stopwatch.Stop();
-            Console.WriteLine("azure config 1 loaded: " + stopwatch.ElapsedMilliseconds + "ms");
-            stopwatch.Restart();
-
-
             services.AddSingleton<IDataSourcesConfigurationService, DataSourcesConfigurationService>();
             services.AddSingleton<ICompilerHostClient, CompilerHostClient>();
             services.AddSingleton<ISourceWatcherService, SourceWatcherService>();
@@ -100,13 +91,7 @@ namespace Diagnostics.RuntimeHost
             });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
 
-            var servicesProvider = services.BuildServiceProvider();
-            var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
-            var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
-            var kustoConfiguration = dataSourcesConfigService.Config.KustoConfiguration;
-
             bool searchIsEnabled = Convert.ToBoolean(Configuration[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
-
             if (searchIsEnabled)
             {
                 services.AddSingleton<ISearchService, SearchService>();
@@ -116,21 +101,18 @@ namespace Diagnostics.RuntimeHost
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
 
-            services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
+            var servicesProvider = services.BuildServiceProvider();
+            var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
+            var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
+            var kustoConfiguration = dataSourcesConfigService.Config.KustoConfiguration;
 
-            stopwatch.Stop();
-            Console.WriteLine("azure config 3B loaded: " + stopwatch.ElapsedMilliseconds + "ms");
-            stopwatch.Restart();
+            services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
 
             observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
             var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.WawsObserverResourceId, observerConfiguration);
             var supportBayApiObserverTokenService = new ObserverTokenService(observerConfiguration.SupportBayApiObserverResourceId, observerConfiguration);
             services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
             services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
-
-            stopwatch.Stop();
-            Console.WriteLine("azure config 4A loaded: " + stopwatch.ElapsedMilliseconds + "ms");
-            stopwatch.Restart();
 
             KustoTokenService.Instance.Initialize(dataSourcesConfigService.Config.KustoConfiguration);
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
@@ -147,15 +129,8 @@ namespace Diagnostics.RuntimeHost
                 MdmCertLoader.Instance.Initialize(Configuration);
             }
 
-            stopwatch.Stop();
-            Console.WriteLine("azure config 4B loaded: " + stopwatch.ElapsedMilliseconds + "ms");
-            stopwatch.Restart();
-
             // Initialize on startup
             servicesProvider.GetService<ISourceWatcherService>();
-
-            stopwatch.Stop();
-            Console.WriteLine("azure config 5 loaded: " + stopwatch.ElapsedMilliseconds + "ms");
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
