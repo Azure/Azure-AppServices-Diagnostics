@@ -25,6 +25,13 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
         bool TryGetValue(K key, out V value);
 
         /// <summary>
+        /// Determines whether the cache has the specified key.
+        /// </summary>
+        /// <param name="key">Entry key.</param>
+        /// <returns>A value to indicate get operation success or not.</returns>
+        bool ContainsKey(K key);
+
+        /// <summary>
         /// Try to remove the entry.
         /// </summary>
         /// <param name="key">Entry key.</param>

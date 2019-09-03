@@ -39,6 +39,11 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
             return _collection.TryGetValue(key.ToLower(), out value);
         }
 
+        public bool ContainsKey(string key)
+        {
+            return _collection.ContainsKey(key);
+        }
+
         public IEnumerable<EntityInvoker> GetEntityInvokerList<TResource>(RuntimeContext<TResource> context)
             where TResource : IResource
         {

@@ -44,6 +44,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         private int _pollingIntervalInSeconds;
 
+        private bool _loadOnlyPublicDetectors;
+
         protected override Task FirstTimeCompletionTask => _firstTimeCompletionTask;
 
         protected override string SourceName => "GitHub";
@@ -69,8 +71,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             #region Initialize Github Worker
 
             // TODO: Register the github worker with destination path.
-            var gistWorker = new GithubGistWorker(gistCache);
-            var detectorWorker = new GithubDetectorWorker(invokerCache);
+            var gistWorker = new GithubGistWorker(gistCache, _loadOnlyPublicDetectors);
+            var detectorWorker = new GithubDetectorWorker(invokerCache, _loadOnlyPublicDetectors);
 
             GithubWorkers = new Dictionary<string, IGithubWorker>
             {
@@ -169,6 +171,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 var githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
                 var githubDirectories = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
 
+                List<Task> downloadContentUpdateCacheAndModifiedMarkerTasks = new List<Task>();
                 foreach (var gitHubDir in githubDirectories)
                 {
                     if (!gitHubDir.Type.Equals("dir", StringComparison.OrdinalIgnoreCase)) continue;
@@ -202,17 +205,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
                     LogMessage($"Detected changes in Github Folder : {gitHubDir.Name.ToLower()}. Syncing it locally ...");
 
-                    try
-                    {
-                        // Specifically catching exceptions for downloading and loading assembilies for every detector.
-                        await DownloadContentAndUpdateCache(gitHubDir, subDir, gitHubDir.Name);
-                        await FileHelper.WriteToFileAsync(subDir.FullName, _lastModifiedMarkerName, gitHubDir.Sha);
-                    }
-                    catch (Exception downloadEx)
-                    {
-                        LogException(downloadEx.Message, downloadEx);
-                    }
+                    downloadContentUpdateCacheAndModifiedMarkerTasks.Add(DownloadContentAndUpdateCacheAndModifiedMarker(gitHubDir, subDir));
                 }
+
+                await Task.WhenAll(downloadContentUpdateCacheAndModifiedMarkerTasks);
 
                 await SyncLocalDirForDeletedEntriesInGitHub(githubDirectories, destDirInfo);
 
@@ -227,6 +223,20 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 LogMessage("SourceWatcher : End");
                 sw.Stop();
                 Console.WriteLine("source watcher startup finished: " + sw.ElapsedMilliseconds + "ms");
+            }
+        }
+
+        private async Task DownloadContentAndUpdateCacheAndModifiedMarker(GithubEntry gitHubDir, DirectoryInfo subDir)
+        {
+            try
+            {
+                // Specifically catching exceptions for downloading and loading assembilies for every detector.
+                await DownloadContentAndUpdateCache(gitHubDir, subDir, gitHubDir.Name);
+                await FileHelper.WriteToFileAsync(subDir.FullName, _lastModifiedMarkerName, gitHubDir.Sha);
+            }
+            catch (Exception downloadEx)
+            {
+                LogException(downloadEx.Message, downloadEx);
             }
         }
 
@@ -396,6 +406,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             
             _destinationCsxPath = (_config[$"SourceWatcher:Github:{RegistryConstants.DestinationScriptsPathKey}"]).ToString();
             pollingIntervalvalue = (_config[$"SourceWatcher:{RegistryConstants.PollingIntervalInSecondsKey}"]).ToString();
+
+            if (!bool.TryParse((_config[$"SourceWatcher:{RegistryConstants.LoadOnlyPublicDetectorsKey}"]), out _loadOnlyPublicDetectors))
+            {
+                _loadOnlyPublicDetectors = false;
+            }
 
             if (!int.TryParse(pollingIntervalvalue, out _pollingIntervalInSeconds))
             {
