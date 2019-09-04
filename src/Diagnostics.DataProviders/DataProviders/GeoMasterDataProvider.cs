@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
-using System.Text.RegularExpressions;
 
 namespace Diagnostics.DataProviders
 {
@@ -242,7 +242,7 @@ namespace Diagnostics.DataProviders
         /// </example>
         public async Task<VnetConfiguration> CollectVirtualNetworkConfig(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var path = string.Format(@"subscriptions/{0}/providers/Microsoft.Web/collectVnetConfiguration", subscriptionId);
+            var path = string.Format("subscriptions/{0}/providers/Microsoft.Web/collectVnetConfiguration", subscriptionId);
             var vnetParameters = new VnetParameters { VnetResourceGroup = vnetResourceGroup, VnetName = vnetName, VnetSubnetName = vnetSubnetName };
             var result = await HttpPost<VnetConfiguration, VnetParameters>(path, vnetParameters, "", GeoMasterConstants.March2016Version, cancellationToken);
             return result;

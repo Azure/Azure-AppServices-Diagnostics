@@ -7,8 +7,8 @@ namespace Diagnostics.ModelsAndUtils.Models
     {
         public string ProvisioningState { get; set; }
         public bool DisableBgpRoutePropagation { get; set; }
-        public List<NetworkResourceProviderRoute> Routes { get; set; }
-        public List<NetworkResourceProviderSubnet> Subnets { get; set; }
+        public IEnumerable<NetworkResourceProviderRoute> Routes { get; set; }
+        public IEnumerable<NetworkResourceProviderSubnet> Subnets { get; set; }
     }
 
     public class NetworkResourceProviderRoute
@@ -21,7 +21,7 @@ namespace Diagnostics.ModelsAndUtils.Models
 
     public class NetworkAddressSpace
     {
-        public List<string> AddressPrefixes { get; set; }
+        public IEnumerable<string> AddressPrefixes { get; set; }
     }
 
     public class NetworkResourceProviderRouteTableRef
@@ -34,7 +34,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string ProvisioningState { get; set; }
         public string ResourceGuid { get; set; }
         public NetworkAddressSpace AddressSpace { get; set; }
-        public List<NetworkResourceProviderSubnet> Subnets { get; set; }
+        public IEnumerable<NetworkResourceProviderSubnet> Subnets { get; set; }
     }
 
     public class NetworkResourceProviderNsgRule : IComparable<NetworkResourceProviderNsgRule>
@@ -62,8 +62,8 @@ namespace Diagnostics.ModelsAndUtils.Models
     public class NetworkResourceProviderNsg
     {
         public string ResourceGuid { get; set; }
-        public List<NetworkResourceProviderNsgRule> SecurityRules { get; set; }
-        public List<NetworkResourceProviderNsgRule> DefaultSecurityRules { get; set; }
+        public IEnumerable<NetworkResourceProviderNsgRule> SecurityRules { get; set; }
+        public IEnumerable<NetworkResourceProviderNsgRule> DefaultSecurityRules { get; set; }
     }
 
     public class NetworkResourceProviderSubnetNsgRef
@@ -87,7 +87,7 @@ namespace Diagnostics.ModelsAndUtils.Models
     {
         public string ProvisioningState { get; set; }
         public string ServiceName { get; set; }
-        public List<string> Actions { get; set; }
+        public IEnumerable<string> Actions { get; set; }
     }
 
     public class NetworkResourceProviderSubnet
@@ -99,7 +99,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         public NetworkResourceProviderIpConfigurationRef[] IpConfigurations { get; set; }
         public NetworkResourceProviderServiceEndpointRef[] ServiceEndpoints { get; set; }
         public NetworkResourceProviderRouteTableRef RouteTable { get; set; }
-        public List<NetworkResourceProviderSubnetDelegation> Delegations { get; set; }
+        public IEnumerable<NetworkResourceProviderSubnetDelegation> Delegations { get; set; }
     }
 
     public class VnetConfiguration
