@@ -207,6 +207,48 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
+        /// Gets all the networking configurations for the hosting environment
+        /// </summary>
+        /// <param name="subscriptionId">Subscription Id for the resource</param>
+        /// <param name="vnetResourceGroup">The resource group in which the VNet is a part of</param>
+        /// <param name="vnetName">Name of the VNET</param>
+        /// <param name="vnetSubnetName">Subnet name of the VNET</param>
+        /// <param name="cancellationToken">(Optional)</param>
+        /// <returns></returns>
+        /// <example>
+        /// This sample shows how you can call this function to get the NSG rules
+        /// for this App Service environment
+        /// <code>
+        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
+        /// {
+        ///
+        ///     //Get VNET information from observer
+        ///     var name = cxt.Resource.InternalName;
+        ///     var url = $"https://wawsobserver.azurewebsites.windows.net/minienvironments/{name}"
+        ///
+        ///     var hostingEnvironmentData = await dp.Observer.GetResource(url);
+        ///     var vnetName = (string)hostingEnvironmentData.vnet_name;
+        ///     var subnet = (string)hostingEnvironmentData.vnet_subnet_name;
+        ///     var vnetRg = (string)hostingEnvironmentData.vnet_resource_group;
+        ///     var subId = cxt.Resource.SubscriptionId;
+        ///
+        ///     var results = await dp.GeoMaster.CollectVirtualNetworkConfig(subId,
+        ///                   vnetRg,
+        ///                   vnetName,
+        ///                   subnet);
+        ///
+        /// }
+        /// </code>
+        /// </example>
+        public async Task<VnetConfiguration> CollectVirtualNetworkConfig(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var path = string.Format(@"subscriptions/{0}/providers/Microsoft.Web/collectVnetConfiguration", subscriptionId);
+            var vnetParameters = new VnetParameters { VnetResourceGroup = vnetResourceGroup, VnetName = vnetName, VnetSubnetName = vnetSubnetName };
+            var result = await HttpPost<VnetConfiguration, VnetParameters>(path, vnetParameters, "", GeoMasterConstants.March2016Version, cancellationToken);
+            return result;
+        }
+
+        /// <summary>
         /// Gets a dictionary of all the deployments that were triggered for this Web App. The key of this dictionary
         /// is the DeploymentId
         /// </summary>
