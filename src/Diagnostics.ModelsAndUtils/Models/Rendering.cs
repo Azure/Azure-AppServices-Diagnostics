@@ -39,10 +39,20 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public string GroupByColumnName { get; set; }
 
+        public string DescriptionColumnName { get; set; }
+
+        public string Height { get; set; }
+
+        public dynamic TableOptions { get; set; }
+
+        public bool AllowColumnSearch { get; set; }
+
         public TableRendering() : base(RenderingType.Table)
         {
             DisplayColumnNames = null;
             GroupByColumnName = null;
+            DescriptionColumnName = null;
+            AllowColumnSearch = false;
         }
     }
 
