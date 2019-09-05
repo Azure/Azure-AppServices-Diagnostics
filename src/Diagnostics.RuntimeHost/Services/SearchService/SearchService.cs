@@ -33,9 +33,8 @@ namespace Diagnostics.RuntimeHost.Services
         private HttpClient _httpClient;
         SearchServiceProviderConfiguration configuration;
 
-        public SearchService(IServiceProvider services)
+        public SearchService(IDataSourcesConfigurationService dataSourcesConfigService)
         {
-            var dataSourcesConfigService = (IDataSourcesConfigurationService)services.GetService(typeof(IDataSourcesConfigurationService));
             configuration = dataSourcesConfigService.Config.SearchServiceProviderConfiguration;
             QueryDetectorsUrl = configuration.SearchEndpoint + "/queryDetectors";
             QueryUtterancesUrl = configuration.SearchEndpoint + "/queryUtterances";
@@ -49,13 +48,19 @@ namespace Diagnostics.RuntimeHost.Services
             return _httpClient.SendAsync(request);
         }
 
+        private async Task<HttpRequestMessage> AddAuthorizationHeadersAsync(HttpRequestMessage request)
+        {
+            string authToken = await SearchServiceTokenService.Instance.GetAuthorizationTokenAsync();
+            request.Headers.Add("Authorization", authToken);
+            return request;
+        }
+
         public async Task<HttpResponseMessage> SearchDetectors(string requestId, string query, Dictionary<string, string> parameters)
         {
             parameters.Add("text", query);
             parameters.Add("requestId", requestId ?? string.Empty);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryDetectorsUrl);
-            string authToken = await SearchServiceTokenService.Instance.GetAuthorizationTokenAsync();
-            request.Headers.Add("Authorization", authToken);
+            request = await AddAuthorizationHeadersAsync(request);
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return await Get(request);
         }
@@ -66,8 +71,7 @@ namespace Diagnostics.RuntimeHost.Services
             parameters.Add("detector_utterances", JsonConvert.SerializeObject(detectorUtterances));
             parameters.Add("requestId", requestId);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryUtterancesUrl);
-            string authToken = await SearchServiceTokenService.Instance.GetAuthorizationTokenAsync();
-            request.Headers.Add("Authorization", authToken);
+            request = await AddAuthorizationHeadersAsync(request);
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return await Get(request);
         }
@@ -77,8 +81,7 @@ namespace Diagnostics.RuntimeHost.Services
             parameters.Add("trainingConfig", trainingConfig);
             parameters.Add("requestId", requestId);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, TriggerTrainingUrl);
-            string authToken = await SearchServiceTokenService.Instance.GetAuthorizationTokenAsync();
-            request.Headers.Add("Authorization", authToken);
+            request = await AddAuthorizationHeadersAsync(request);
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return await Get(request);
         }
@@ -87,8 +90,7 @@ namespace Diagnostics.RuntimeHost.Services
         {
             parameters.Add("requestId", requestId);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, AppendQueryStringParams(TriggerModelRefreshUrl, parameters));
-            string authToken = await SearchServiceTokenService.Instance.GetAuthorizationTokenAsync();
-            request.Headers.Add("Authorization", authToken);
+            request = await AddAuthorizationHeadersAsync(request);
             return await Get(request);
         }
 
