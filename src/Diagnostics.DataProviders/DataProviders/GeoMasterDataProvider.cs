@@ -25,7 +25,6 @@ namespace Diagnostics.DataProviders
 
         private string[] RegexMatchingPatterns = new string[] { @"^AzureWebJobs\.[a-zA-Z][_a-zA-Z0-9-]*\.Disabled$" };
 
-        private string[] AppSettingsExistenceCheckList = new string[] { "APPINSIGHTS_INSTRUMENTATIONKEY" };
         public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache)
         {
             _geoMasterHostName = context.GeomasterHostName;
@@ -101,7 +100,7 @@ namespace Diagnostics.DataProviders
                     string value = RemovePIIFromSettings(item.Value);
                     appSettings.Add(item.Key, value);
                 }
-                else if (AppSettingsExistenceCheckList.Any(x => String.Compare(item.Key, x, true) == 0))
+                else
                 {
                     appSettings.Add(item.Key, "******");
                 }
