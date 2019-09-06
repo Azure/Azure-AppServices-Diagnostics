@@ -43,7 +43,21 @@ namespace Diagnostics.RuntimeHost
                 new KeyVaultClient.AuthenticationCallback(
                     azureServiceTokenProvider.KeyVaultTokenCallback));
 
-            var keyVaultConfig = context.HostingEnvironment.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
+            string keyVaultConfig;
+            switch (context.HostingEnvironment.EnvironmentName)
+            {
+                case "Production":
+                    keyVaultConfig = "Secrets:ProdKeyVaultName";
+                    break;
+                case "Staging":
+                    keyVaultConfig = "Secrets:StagingKeyVaultName";
+                    break;
+                case "Development":
+                default:
+                    keyVaultConfig = "Secrets:DevKeyVaultName";
+                    break;
+            }
+
             var builtConfig = config.Build();
 
             return new Tuple<string, KeyVaultClient>(builtConfig[keyVaultConfig], keyVaultClient);

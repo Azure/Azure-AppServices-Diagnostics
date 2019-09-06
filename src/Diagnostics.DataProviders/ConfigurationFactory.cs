@@ -37,7 +37,21 @@ namespace Diagnostics.DataProviders
                 )
             );
 
-            string keyVaultConfig = env.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
+            string keyVaultConfig;
+
+            switch (env.EnvironmentName)
+            {
+                case "Production":
+                    keyVaultConfig = "Secrets:ProdKeyVaultName";
+                    break;
+                case "Staging":
+                    keyVaultConfig = "Secrets:StagingKeyVaultName";
+                    break;
+                case "Development":
+                default:
+                    keyVaultConfig = "Secrets:DevKeyVaultName";
+                    break;
+            }
 
             builder.AddAzureKeyVault($"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
                                          keyVaultClient,

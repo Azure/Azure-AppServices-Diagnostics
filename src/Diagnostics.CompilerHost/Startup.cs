@@ -42,7 +42,20 @@ namespace Diagnostics.CompilerHost
 
             var builtConfig = builder.Build();
 
-            string keyVaultConfig = hostingEnvironment.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
+            string keyVaultConfig;
+            switch (hostingEnvironment.EnvironmentName)
+            {
+                case "Production":
+                    keyVaultConfig = "Secrets:ProdKeyVaultName";
+                    break;
+                case "Staging":
+                    keyVaultConfig = "Secrets:StagingKeyVaultName";
+                    break;
+                case "Development":
+                default:
+                    keyVaultConfig = "Secrets:DevKeyVaultName";
+                    break;
+            }
 
             var tokenProvider = new AzureServiceTokenProvider();
             var keyVaultClient = new KeyVaultClient(
