@@ -259,7 +259,7 @@ namespace Diagnostics.DataProviders
             finally
             {
                 var logMessage = $"message:Observer SQL query sent, route:{route}, " +
-                    $"query:{query}, statusCode:{response.StatusCode}, response:{loggingResponse}";
+                    $"query:{query}, statusCode:{(int)response.StatusCode}, response:{loggingResponse}";
                 Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", logMessage);
             }
 
