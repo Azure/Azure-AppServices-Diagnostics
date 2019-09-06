@@ -49,17 +49,6 @@ namespace Diagnostics.DataProviders
             return geoMasterClient;
         }
 
-        public string RemovePIIFromSettings(string content)
-        {
-            // Mask SAS Uri
-            if (Regex.Match(content, @"https*:\/\/[\w.]*[\w]+.core.windows.net?.*sig=.*", RegexOptions.IgnoreCase).Success)
-            {
-                content = "https://*.core.windows.net/*";
-            }
-
-            return content;
-        }
-
         /// <summary>
         /// Gets all the APP SETTINGS for the Web App that start with prefixes like WEBSITE_, FUNCTION_ etc, filtering out
         /// the sensitive settings like connectionstrings, tokens, secrets, keys, content shares etc.
@@ -99,8 +88,8 @@ namespace Diagnostics.DataProviders
                 if (AllowedlistAppSettingsStartingWith.Any(x => item.Key.StartsWith(x)) && !SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x))
                     || RegexMatchingPatterns.Any(x => (Regex.Match(item.Key, x).Success)))
                 {
-                    string value = RemovePIIFromSettings(item.Value);
-                    appSettings.Add(item.Key, value);
+                    
+                    appSettings.Add(item.Key, item.Value);
                 }
                 else if (AppSettingsExistenceCheckList.Any(x => String.Compare(item.Key, x, true) == 0))
                 {

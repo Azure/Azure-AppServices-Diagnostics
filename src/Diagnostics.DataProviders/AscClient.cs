@@ -21,12 +21,7 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// User-agent to pass to Azure Support Center, initialized from config.
         /// </summary>
-        public static string UserAgent
-        {
-            get { return AscClient.userAgent; }
-        }
-
-        private static string userAgent = string.Empty;
+        private readonly string userAgent;
 
         /// <summary>
         /// Request id for the current Applens request, used for logging.
@@ -41,9 +36,8 @@ namespace Diagnostics.DataProviders
         private readonly Lazy<HttpClient> client = new Lazy<HttpClient>(() =>
         {
             var client = new HttpClient();
-            client.DefaultRequestHeaders.Clear();
+            client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(AscClient.UserAgent);
             return client;
         });
 
@@ -72,7 +66,7 @@ namespace Diagnostics.DataProviders
             baseUri = config.BaseUri;
             apiUri = config.ApiUri;
             apiVersion = config.ApiVersion;
-            AscClient.userAgent = config.UserAgent;
+            userAgent = config.UserAgent;
             logger = DiagnosticsETWProvider.Instance;
             requestId = appLensRequestId;
         }
@@ -83,7 +77,7 @@ namespace Diagnostics.DataProviders
             {
                 return client.Value;
             }
-        }        
+        }
 
         /// <inheritdoc/>
         public async Task<T> MakeHttpPostRequest<T>(string jsonPostBody, string apiUri, string apiVersion, CancellationToken cancellationToken = default(CancellationToken))
@@ -247,6 +241,14 @@ namespace Diagnostics.DataProviders
 
         private async Task<HttpResponseMessage> SendAscRequestAsync(HttpRequestMessage request, bool isBlobRequest, CancellationToken cancellationToken = default(CancellationToken))
         {
+            httpClient.DefaultRequestHeaders.UserAgent.Clear();
+            httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(new ProductHeaderValue(userAgent)));
+
+            if (isBlobRequest)
+            {
+                httpClient.DefaultRequestHeaders.Remove("Authorization");
+            }
+
             var response = await httpClient.SendAsync(request, cancellationToken);
             logger.LogDataProviderMessage(requestId, "AscDataProvider", $"url:{request.RequestUri}, statusCode:{response.StatusCode}");
             return response;

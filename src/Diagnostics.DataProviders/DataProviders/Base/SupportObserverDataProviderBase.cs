@@ -31,14 +31,11 @@ namespace Diagnostics.DataProviders
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
-        public async Task<dynamic> GetResource(string resourceUrl)
+        public Task<dynamic> GetResource(string resourceUrl)
         {
-            if (string.IsNullOrWhiteSpace(resourceUrl))
-                throw new ArgumentNullException(nameof(resourceUrl));
-
             Uri uri;
 
-            var allowedHosts = new string[] { "wawsobserver.azurewebsites.windows.net", "wawsobserver-prod.azurewebsites.net", "wawsobserver-prod-staging.azurewebsites.net", "support-bay-api.azurewebsites.net", "support-bay-api-stage.azurewebsites.net", "localhost" };
+            var allowedHosts = new string[] { "wawsobserver.azurewebsites.windows.net", "wawsobserver-prod-staging.azurewebsites.net", "support-bay-api.azurewebsites.net", "support-bay-api-stage.azurewebsites.net", "localhost" };
 
             try
             {
@@ -48,6 +45,10 @@ namespace Diagnostics.DataProviders
                 {
                     throw new FormatException($"Cannot make a call to {uri.Host}. Please use a URL that points to one of the hosts: {string.Join(',', allowedHosts)}");
                 }
+            }
+            catch (ArgumentNullException)
+            {
+                throw new ArgumentNullException("resourceUrl");
             }
             catch (UriFormatException ex)
             {
@@ -64,11 +65,7 @@ namespace Diagnostics.DataProviders
 
             if (uri.Host.Contains(allowedHosts[0]) || uri.Host.Contains(allowedHosts[1]))
             {
-                return await GetWawsObserverResourceAsync(uri);
-            }
-            else if (Configuration.ObserverLocalHostEnabled)
-            {
-                return await GetWawsObserverResourceAsync(ConvertToLocalObserverRoute(uri));
+                return GetWawsObserverResourceAsync(uri);
             }
             else if (Configuration.ObserverLocalHostEnabled)
             {
@@ -76,7 +73,7 @@ namespace Diagnostics.DataProviders
             }
             else
             {
-                return await GetSupportObserverResourceAsync(uri);
+                return GetSupportObserverResourceAsync(uri);
             }
         }
 
