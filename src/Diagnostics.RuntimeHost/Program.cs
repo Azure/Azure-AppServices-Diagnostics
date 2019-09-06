@@ -6,6 +6,8 @@ using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
 using Diagnostics.DataProviders;
 using System;
+using Microsoft.CodeAnalysis;
+using Diagnostics.DataProviders.Utility;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -43,7 +45,8 @@ namespace Diagnostics.RuntimeHost
                 new KeyVaultClient.AuthenticationCallback(
                     azureServiceTokenProvider.KeyVaultTokenCallback));
 
-            var keyVaultConfig = context.HostingEnvironment.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
+            string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(context.HostingEnvironment.EnvironmentName);
+
             var builtConfig = config.Build();
 
             return new Tuple<string, KeyVaultClient>(builtConfig[keyVaultConfig], keyVaultClient);
