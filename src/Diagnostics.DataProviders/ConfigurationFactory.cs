@@ -9,6 +9,7 @@ using Microsoft.Win32;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
+using Diagnostics.DataProviders.Utility;
 
 namespace Diagnostics.DataProviders
 {
@@ -37,22 +38,7 @@ namespace Diagnostics.DataProviders
                 )
             );
 
-            string keyVaultConfig;
-
-            switch (env.EnvironmentName)
-            {
-                case "Production":
-                    keyVaultConfig = "Secrets:ProdKeyVaultName";
-                    break;
-                case "Staging":
-                    keyVaultConfig = "Secrets:StagingKeyVaultName";
-                    break;
-                case "Development":
-                default:
-                    keyVaultConfig = "Secrets:DevKeyVaultName";
-                    break;
-            }
-
+            string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(env.EnvironmentName);
             builder.AddAzureKeyVault($"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
                                          keyVaultClient,
                                          new DefaultKeyVaultSecretManager());

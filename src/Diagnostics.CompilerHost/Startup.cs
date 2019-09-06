@@ -4,6 +4,7 @@
 // </copyright>
 
 using Diagnostics.CompilerHost.Middleware;
+using Diagnostics.DataProviders.Utility;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -42,21 +43,7 @@ namespace Diagnostics.CompilerHost
 
             var builtConfig = builder.Build();
 
-            string keyVaultConfig;
-            switch (hostingEnvironment.EnvironmentName)
-            {
-                case "Production":
-                    keyVaultConfig = "Secrets:ProdKeyVaultName";
-                    break;
-                case "Staging":
-                    keyVaultConfig = "Secrets:StagingKeyVaultName";
-                    break;
-                case "Development":
-                default:
-                    keyVaultConfig = "Secrets:DevKeyVaultName";
-                    break;
-            }
-
+            string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(hostingEnvironment.EnvironmentName);
             var tokenProvider = new AzureServiceTokenProvider();
             var keyVaultClient = new KeyVaultClient(
                 new KeyVaultClient.AuthenticationCallback(
