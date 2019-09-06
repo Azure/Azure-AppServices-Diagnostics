@@ -35,7 +35,7 @@ namespace Diagnostics.DataProviders
         {
             Uri uri;
 
-            var allowedHosts = new string[] { "wawsobserver.azurewebsites.windows.net", "wawsobserver-prod-staging.azurewebsites.net", "support-bay-api.azurewebsites.net", "support-bay-api-stage.azurewebsites.net", "localhost" };
+            var allowedHosts = new string[] { "wawsobserver.azurewebsites.windows.net", "wawsobserver-prod.azurewebsites.net", "wawsobserver-prod-staging.azurewebsites.net", "support-bay-api.azurewebsites.net", "support-bay-api-stage.azurewebsites.net", "localhost" };
 
             try
             {
