@@ -121,19 +121,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 var response = await _githubClient.Get(_rootContentApiPath, etag: destLastModifiedMarker);
                 LogMessage($"Http call to repository root path completed. Status Code : {response.StatusCode.ToString()}");
 
-                if (response.StatusCode >= HttpStatusCode.NotFound)
-                {
-                    var errorContent = string.Empty;
-                    try
-                    {
-                        errorContent = await response.Content.ReadAsStringAsync();
-                    }
-                    catch { }
-
-                    LogException($"Unexpected response while checking for detector modifications. Response : {errorContent}", null);
-                    return;
-                }
-
                 if (response.StatusCode == HttpStatusCode.NotModified)
                 {
                     /*
@@ -156,6 +143,19 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                         }
                     }
 
+                    return;
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = string.Empty;
+                    try
+                    {
+                        errorContent = await response.Content.ReadAsStringAsync();
+                    }
+                    catch { }
+
+                    LogException($"Unexpected response while checking for detector modifications. Response : {errorContent}", null);
                     return;
                 }
 
