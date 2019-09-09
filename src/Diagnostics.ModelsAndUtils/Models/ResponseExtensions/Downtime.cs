@@ -21,6 +21,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// A optional label that if specified can be used to render a label or span in downtime analysis
         /// </summary>
         public string DownTimeLabel { get; set; }
+
+        /// <summary>
+        /// A boolean flag indicating whether this should be preferred downtime to be pre-selected
+        /// </summary>
+        public bool IsSelected { get; set; }
     }
     public static class ResponseDowntimeExtension
     {
@@ -39,13 +44,15 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             table.Columns.Add("StartTime", typeof(DateTime));
             table.Columns.Add("EndTime", typeof(DateTime));
             table.Columns.Add("DownTimeLabel");
- 
+            table.Columns.Add("IsSelected", typeof(bool));
+
             foreach (var d in downtimes)
             {
                 table.Rows.Add(
                     d.StartTime, 
                     d.EndTime, 
-                    d.DownTimeLabel);
+                    d.DownTimeLabel,
+                    d.IsSelected);
             }
 
             var diagData = new DiagnosticData()
