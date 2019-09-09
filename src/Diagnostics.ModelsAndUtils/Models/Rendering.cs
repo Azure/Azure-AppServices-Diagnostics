@@ -237,7 +237,13 @@ namespace Diagnostics.ModelsAndUtils.Models
         
         /// Dependent resources of web app rendered as graph.
         /// </summary>
-        DependencyGraph
+        DependencyGraph,
+
+        /// <summary>
+        /// Data Rendered as downtimes in the Analysis View
+        /// </summary>
+        DownTime
+
     }
 
     /// <summary>
