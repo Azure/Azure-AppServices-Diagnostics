@@ -9,6 +9,7 @@ using Microsoft.Win32;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
+using Diagnostics.DataProviders.Utility;
 
 namespace Diagnostics.DataProviders
 {
@@ -26,7 +27,8 @@ namespace Diagnostics.DataProviders
             var builder = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile($"appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true);
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables();
 
             var builtConfig = builder.Build();
 
@@ -37,8 +39,7 @@ namespace Diagnostics.DataProviders
                 )
             );
 
-            string keyVaultConfig = env.IsProduction() ? "Secrets:ProdKeyVaultName" : "Secrets:DevKeyVaultName";
-
+            string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(env.EnvironmentName);
             builder.AddAzureKeyVault($"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
                                          keyVaultClient,
                                          new DefaultKeyVaultSecretManager());

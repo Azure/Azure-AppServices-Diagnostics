@@ -25,6 +25,7 @@
 
         internal const string WatcherTypeKey = "WatcherType";
         internal const string PollingIntervalInSecondsKey = "PollingIntervalInSeconds";
+        internal const string LoadOnlyPublicDetectorsKey = "LoadOnlyPublicDetectors";
         internal const string LocalWatcherRegistryPath = SourceWatcherRegistryPath + @"\Local";
         internal const string LocalScriptsPathKey = "LocalScriptsPath";
         internal const string GithubWatcherRegistryPath = SourceWatcherRegistryPath + @"\Github";

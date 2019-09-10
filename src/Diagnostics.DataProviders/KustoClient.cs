@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
@@ -24,11 +23,6 @@ namespace Diagnostics.DataProviders
         private static readonly string _dataSizeExceededMessage = "Query result set has exceeded the internal data size limit";
         private static readonly string _recordCountExceededMessage = "Query result set has exceeded the internal record count limit";
         private static readonly string _queryLimitDocsLink = "https://docs.microsoft.com/en-us/azure/kusto/concepts/querylimits";
-       
-        /// <summary>
-        /// Failover Cluster Mapping.
-        /// </summary>
-        public ConcurrentDictionary<string, string> FailoverClusterMapping { get; set; }
 
         private readonly Lazy<HttpClient> _client = new Lazy<HttpClient>(() =>
         {
@@ -51,7 +45,6 @@ namespace Diagnostics.DataProviders
         {
             _requestId = requestId;
             KustoApiQueryEndpoint = config.KustoApiEndpoint + ":443/v1/rest/query";
-            FailoverClusterMapping = config.FailoverClusterNameCollection;
         }
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
@@ -77,29 +70,27 @@ namespace Diagnostics.DataProviders
             };
             request.Content = new StringContent(JsonConvert.SerializeObject(requestPayload), Encoding.UTF8, "application/json");
             DataTableResponseObjectCollection dataSet = null;
-            string responseContent = string.Empty;
+
             try
             {
                 timeTakenStopWatch.Start();
 
                 var responseMsg = await _httpClient.SendAsync(request, tokenSource.Token);
-                responseContent = await responseMsg.Content.ReadAsStringAsync();
+                var responseContent = await responseMsg.Content.ReadAsStringAsync();
 
                 if (!responseMsg.IsSuccessStatusCode)
                 {
-                    timeTakenStopWatch.Stop();
-                    LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, new Exception($"Kusto call ended with a non success status code : {responseMsg.StatusCode.ToString()}"), dataSet, responseContent);
                     throw new Exception(responseContent);
                 }
                 else
                 {
                     dataSet = ProcessKustoResponse(responseContent);
                 }
-            }            
+            }
             catch (Exception ex)
             {
                 timeTakenStopWatch.Stop();
-                LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, ex, dataSet, responseContent);
+                LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, ex, dataSet);
 
                 throw;
             }
@@ -127,11 +118,9 @@ namespace Diagnostics.DataProviders
             return JsonConvert.DeserializeObject<DataTableResponseObjectCollection>(responseContent);
         }
 
-        private void LogKustoQuery(string query, string cluster, string operationName, Stopwatch timeTakenStopWatch, string kustoClientId, Exception kustoApiException, DataTableResponseObjectCollection dataSet, string kustoResponse = "")
+        private void LogKustoQuery(string query, string cluster, string operationName, Stopwatch timeTakenStopWatch, string kustoClientId, Exception kustoApiException, DataTableResponseObjectCollection dataSet)
         {
             var status = kustoApiException == null ? "Success" : "Failed";
-
-            kustoResponse = (kustoResponse != "") ? $" {Environment.NewLine} KustoResponseBody : {kustoResponse} " : string.Empty ;
 
             object stats = null;
             if (dataSet != null && dataSet.Tables != null && dataSet.Tables.Count() >= 4)
@@ -151,7 +140,7 @@ namespace Diagnostics.DataProviders
                JsonConvert.SerializeObject(stats) ?? string.Empty,
                query,
                kustoApiException != null ? kustoApiException.GetType().ToString() : string.Empty,
-               kustoApiException != null ? $"{kustoApiException.ToString()}{kustoResponse}" : string.Empty);
+               kustoApiException != null ? kustoApiException.ToString() : string.Empty);
         }
 
         public async Task<KustoQuery> GetKustoQueryAsync(string query, string cluster, string database)
@@ -163,10 +152,6 @@ namespace Diagnostics.DataProviders
         {
             try
             {
-                if(FailoverClusterMapping.ContainsKey(cluster))
-                {
-                    cluster = FailoverClusterMapping[cluster];
-                }
                 var encodedQuery = await EncodeQueryAsBase64UrlAsync(query);
                 var kustoQuery = new KustoQuery
                 {
