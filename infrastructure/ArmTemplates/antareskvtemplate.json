@@ -1,0 +1,335 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "subscriptionId": {
+        "type": "string",
+        "metadata": {
+          "description": "The ID of the subscription the Azure App Service Plan belongs to."
+        }
+      },
+      "appServicePlanResourceGroup": {
+        "type": "string",
+        "metadata": {
+          "description": "The name of the resource group the Azure App Service Plan belongs to."
+        }
+      },
+      "appServicePlanName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name of Azure App Service Plan this web app belongs to."
+        }
+      },
+      "sku": {
+        "type": "string",
+        "allowedValues": [
+          "F1",
+          "D1",
+          "B1",
+          "B2",
+          "B3",
+          "S1",
+          "S2",
+          "S3",
+          "P1",
+          "P2",
+          "P3",
+          "P4"
+        ],
+        "defaultValue": "S1",
+        "metadata": {
+          "description": "The pricing tier for the Azure App Service Plan."
+        }
+      },
+      "workerSize": {
+        "type": "string",
+        "allowedValues": [
+          "0",
+          "1",
+          "2"
+        ],
+        "defaultValue": "0",
+        "metadata": {
+          "description": "The instance size of the Azure App Service Plan (small, medium, or large)."
+        }
+      },
+      "siteName": {
+        "type": "string",
+        "metadata": {
+          "description": "The name of the web app."
+        }
+      },
+      "alwaysOn": {
+        "type": "bool",
+        "defaultValue": true,
+        "metadata": {
+          "description": "Whether the web app should remain loaded after 20 minutes of inactivity."
+        }
+      },
+      "genevaCertContent": {
+        "type": "securestring",
+        "metadata": {
+          "description": "The PFX to be put in the AntMDS certificate store to be used to decrypt the encrypted storage account key and authenticate to MDM."
+        }
+      },
+      "monitoringTenant": {
+        "type": "string",
+        "metadata": {
+          "description": "Sets the MONITORING_TENANT environment variable "
+        }
+      },
+      "monitoringRole": {
+        "type": "string",
+        "metadata": {
+          "description": "Sets the MONITORING_ROLE environment variable"
+        }
+      },
+      "monitoringGcsEnvironment": {
+        "type": "string",
+        "allowedValues": [
+          "Diagnostics Prod",
+          "Test",
+          "Stage",
+          "FirstPartyProd",
+          "BillingProd",
+          "ExternalProd",
+          "CA BlackForest",
+          "CA Fairfax",
+          "CA Mooncake"
+        ],
+        "metadata": {
+          "description": "The endpoint for your Geneva Account.  Sets the MONITORING_GCS_ENVIRONMENT environment variable."
+        }
+      },
+      "monitoringGcsAccount": {
+        "type": "string",
+        "metadata": {
+          "description": "Sets the MONITORING_GCS_ACCOUNT environment variable."
+        }
+      },
+      "monitoringGcsNamespace": {
+        "type": "string",
+        "metadata": {
+          "description": "Sets the MONITORING_GCS_NAMESPACE environment variable"
+        }
+      },
+      "monitoringGcsAuthId": {
+        "type": "string",
+        "metadata": {
+          "description": "Sets the MONITORING_GCS_AUTH_ID environment variable."
+        }
+      },
+      "monitoringConfigVersion": {
+        "type": "string",
+        "metadata": {
+          "description": "Sets the MONITORING_CONFIG_VERSION environment variable."
+        }
+      }
+    },
+    "variables": {
+      "siteLocation": "[resourceGroup().location]",
+      "configJson": {
+        "MONITORING_TENANT": "[parameters('monitoringTenant')]",
+        "MONITORING_ROLE": "[parameters('monitoringRole')]",
+        "MONITORING_XSTORE_ACCOUNTS": "GCSPlaceholder",
+        "AdditionalEnvironmentVariables": [
+          {
+            "Key": "DATACENTER",
+            "Value": "[variables('siteLocation')]"
+          },
+          {
+            "Key": "MONITORING_GCS_ENVIRONMENT",
+            "Value": "[parameters('monitoringGcsEnvironment')]"
+          },
+          {
+            "Key": "MONITORING_GCS_ACCOUNT",
+            "Value": "[parameters('monitoringGcsAccount')]"
+          },
+          {
+            "Key": "MONITORING_GCS_NAMESPACE",
+            "Value": "[parameters('monitoringGcsNamespace')]"
+          },
+          {
+            "Key": "MONITORING_GCS_REGION",
+            "Value": "[variables('siteLocation')]"
+          },
+          {
+            "Key": "MONITORING_GCS_AUTH_ID",
+            "Value": "[parameters('monitoringGcsAuthId')]"
+          },
+          {
+            "Key": "MONITORING_GCS_AUTH_ID_TYPE",
+            "Value": "AuthKeyVault"
+          },
+          {
+            "Key": "MONITORING_CONFIG_VERSION",
+            "Value": "[parameters('monitoringConfigVersion')]"
+          },
+          {
+            "Key": "MONITORING_USE_GENEVA_CONFIG_SERVICE",
+            "Value": "true"
+          }
+
+        ]
+
+      },
+      "configXml": "<MonitoringManagement eventVersion=\"1\" version=\"1.0\" timestamp=\"2017-12-29T00:00:00Z\" namespace=\"PlaceHolder\"></MonitoringManagement>"
+
+    },
+    "resources": [
+      {
+        "comments": "Defines an Azure App Service Plan.",
+        "type": "Microsoft.Web/serverfarms",
+        "name": "[parameters('appServicePlanName')]",
+        "apiVersion": "2015-08-01",
+        "location": "[variables('siteLocation')]",
+        "sku": {
+          "name": "[parameters('sku')]",
+          "capacity": "[parameters('workerSize')]"
+        },
+        "properties": {
+          "name": "[parameters('appServicePlanName')]"
+        }
+      },
+      {
+        "comments": "Defines an Azure Web App integrated with Geneva.",
+        "type": "Microsoft.Web/sites",
+        "name": "[parameters('siteName')]",
+        "apiVersion": "2015-08-01",
+        "location": "[variables('siteLocation')]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+        ],
+        "tags": {
+          "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]": "empty"
+        },
+        "properties": {
+          "sourcePlatform": "Unknown",
+          "targetPlatform" :  "Unknown",
+          "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('appServicePlanResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]",
+          "siteConfig": {
+            "phpVersion": "off",
+            "scmType": null,
+            "netFrameworkVersion": "v4.0",
+            "use32BitWorkerProcess": false,
+            "webSocketsEnabled": false,
+            "alwaysOn": "[parameters('alwaysOn')]",
+            "httpLoggingEnabled": true,
+            "logsDirectorySizeLimit": 50,
+            "appSettings": [
+              {
+                "Name": "WEBSITE_FIRST_PARTY_ID",
+                "Value": "AntMDS"
+              },
+              {
+                "Name": "WEBSITE_NODE_DEFAULT_VERSION",
+                "Value": "6.7.0"
+              }
+            ]
+          }
+        },
+        "resources": [
+          {
+            "comments": "Defines an Azure Web App slot.",
+            "type": "slots",
+            "name": "staging",
+            "apiVersion": "2015-08-01",
+            "location": "[variables('siteLocation')]",
+            "dependsOn": [
+              "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+            ],
+            "tags": {
+              "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]": "empty"
+            },
+            "properties": {
+              "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('appServicePlanResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]",
+              "siteConfig": {
+                "phpVersion": "off",
+                "scmType": "LocalGit",
+                "netFrameworkVersion": "v4.0",
+                "use32BitWorkerProcess": false,
+                "webSocketsEnabled": false,
+                "alwaysOn": false,
+                "httpLoggingEnabled": true,
+                "logsDirectorySizeLimit": 50,
+                "appSettings": [
+                  {
+                    "Name": "WEBSITE_FIRST_PARTY_ID",
+                    "Value": "AntMDS"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "comments": "Defines how the Geneva Monitoring Agent should be configured.",
+            "type": "Microsoft.Web/serverfarms/firstPartyApps/settings",
+            "name": "[concat(parameters('appServicePlanName'), '/AntMDS/ConfigJson')]",
+            "apiVersion": "2015-08-01",
+            "location": "[variables('siteLocation')]",
+            "dependsOn": [
+              "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+              "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+            ],
+            "properties": {
+              "firstPartyId": "AntMDS",
+              "settingName": "ConfigJson",
+              "settingValue": "[string(variables('configJson'))]"
+            }
+          },
+          {
+            "comments": "Defines what events the Geneva Monitoring Agent should upload. This should be a placeholder configuration for services using GCS.",
+            "type": "Microsoft.Web/serverfarms/firstPartyApps/settings",
+            "name": "[concat(parameters('appServicePlanName'), '/AntMDS/MdsConfigXml')]",
+            "apiVersion": "2015-08-01",
+            "location": "[variables('siteLocation')]",
+            "dependsOn": [
+              "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+              "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+            ],
+            "properties": {
+              "firstPartyId": "AntMDS",
+              "settingName": "MdsConfigXml",
+              "settingValue": "[variables('configXml')]"
+            }
+          },
+          {
+            "type": "Microsoft.Web/serverfarms/firstPartyApps/settings",
+            "name": "[concat(parameters('appServicePlanName'), '/AntMDS/CERTIFICATE_PFX_GENEVACERT')]",
+            "apiVersion": "2015-08-01",
+            "location": "[variables('siteLocation')]",
+            "dependsOn": [
+              "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+              "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+            ],
+            "properties": {
+              "firstPartyId": "AntMDS",
+              "settingName": "CERTIFICATE_PFX_GENEVACERT",
+              "settingValue": "[parameters('genevaCertContent')]"
+            }
+          },
+          {
+            "type": "Microsoft.Web/serverfarms/firstPartyApps/settings",
+            "name": "[concat(parameters('appServicePlanName'), '/AntMDS/CERTIFICATE_PASSWORD_GENEVACERT')]",
+            "apiVersion": "2015-08-01",
+            "location": "[variables('siteLocation')]",
+            "dependsOn": [
+              "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+              "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+            ],
+            "properties": {
+              "firstPartyId": "AntMDS",
+              "settingName": "CERTIFICATE_PASSWORD_GENEVACERT",
+              "settingValue": ""
+            }
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "jsonconfig": {
+        "type": "object",
+        "value": "[variables('configJson')]"
+      }
+    }
+  }
