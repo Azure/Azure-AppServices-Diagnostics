@@ -92,13 +92,7 @@ namespace Diagnostics.RuntimeHost
             });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
 
-            var servicesProvider = services.BuildServiceProvider();
-            var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
-            var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
-            var kustoConfiguration = dataSourcesConfigService.Config.KustoConfiguration;
-
             bool searchIsEnabled = Convert.ToBoolean(Configuration[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
-
             if (searchIsEnabled)
             {
                 services.AddSingleton<ISearchService, SearchService>();
@@ -107,6 +101,11 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
+
+            var servicesProvider = services.BuildServiceProvider();
+            var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
+            var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
+            var kustoConfiguration = dataSourcesConfigService.Config.KustoConfiguration;
 
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
 
@@ -130,6 +129,9 @@ namespace Diagnostics.RuntimeHost
                 GeoCertLoader.Instance.Initialize(Configuration);
                 MdmCertLoader.Instance.Initialize(Configuration);
             }
+
+            // Initialize on startup
+            servicesProvider.GetService<ISourceWatcherService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

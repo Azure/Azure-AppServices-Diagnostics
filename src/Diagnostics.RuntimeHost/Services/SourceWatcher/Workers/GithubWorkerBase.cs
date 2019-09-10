@@ -3,12 +3,15 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using Diagnostics.Logger;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Newtonsoft.Json.Converters;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 {
@@ -22,6 +25,15 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
         /// </summary>
         public abstract string Name { get; }
 
+        private readonly bool _loadOnlyPublicDetectors;
+
+        public GithubWorkerBase(bool loadOnlyPublicDetectors)
+        {
+            _loadOnlyPublicDetectors = loadOnlyPublicDetectors;
+        }
+
+        private static Regex regexPublicDetectors = new Regex(@"InternalOnly\s*=\s*false",RegexOptions.IgnoreCase);
+
         /// <summary>
         /// Create or update cache.
         /// </summary>
@@ -33,7 +45,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
             {
                 var cacheId = await FileHelper.GetFileContentAsync(subDir.FullName, _cacheIdFileName);
 
-                if (string.IsNullOrWhiteSpace(cacheId) || !GetCacheService().TryGetValue(cacheId, out EntityInvoker invoker))
+                if (string.IsNullOrWhiteSpace(cacheId) || !GetCacheService().ContainsKey(cacheId))
                 {
                     LogMessage($"Folder : {subDir.FullName} missing in invoker cache.");
 
@@ -55,6 +67,12 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                     }
 
                     var scriptText = await FileHelper.GetFileContentAsync(csxScriptFile.FullName);
+
+                    if (_loadOnlyPublicDetectors && !regexPublicDetectors.Match(scriptText).Success)
+                    {
+                        return;
+                    }
+
                     var metadata = string.Empty;
                     if (File.Exists(metadataFile))
                     {
@@ -63,7 +81,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 
                     LogMessage($"Loading assembly : {mostRecentAssembly.FullName}");
                     var asm = Assembly.LoadFrom(mostRecentAssembly.FullName);
-                    invoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata));
+                    EntityInvoker invoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata));
                     invoker.InitializeEntryPoint(asm);
 
                     if (invoker.EntryPointDefinitionAttribute != null)
@@ -94,6 +112,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
         /// <returns>Task for downloading and updating cache.</returns>
         public async Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string scriptText, string assemblyPath, string metadata)
         {
+            if (_loadOnlyPublicDetectors && !regexPublicDetectors.Match(scriptText).Success)
+            {
+                return;
+            }
+
             LogMessage($"Loading assembly : {assemblyPath}");
             var asm = Assembly.LoadFrom(assemblyPath);
 
