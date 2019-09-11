@@ -487,13 +487,10 @@ namespace Diagnostics.RuntimeHost.Controllers
                 requestIds.FirstOrDefault()
             );
 
-            RuntimeContext<TResource> runtimeContext = new RuntimeContext<TResource>()
-            {
-                ClientIsInternal = true,
-                OperationContext = cxt
-            };
+            _runtimeContext.ClientIsInternal = true;
+            _runtimeContext.OperationContext = cxt;
 
-            var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, runtimeContext);
+            var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, (RuntimeContext<TResource>)_runtimeContext);
             IEnumerable<SupportTopic> supportTopicList = null;
             Definition definition = null;
             if (invoker != null && invoker.EntryPointDefinitionAttribute != null)
@@ -544,7 +541,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 internalViewRequested || forceInternal,
                 requestIds.FirstOrDefault(),
                 supportTopic: supportTopic,
-                form: Form
+                form: Form,
+                cloudDomain: _runtimeContext.CloudDomain
             );
 
             _runtimeContext.ClientIsInternal = isInternalClient || forceInternal;
