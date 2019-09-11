@@ -39,10 +39,11 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IStampService _stampService;
         protected IAssemblyCacheService _assemblyCacheService;
         protected ISearchService _searchService;
+        protected IRuntimeContext<TResource> _runtimeContext;
 
         private InternalAPIHelper _internalApiHelper;
 
-        public DiagnosticControllerBase(IServiceProvider services)
+        public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext)
         {
             this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));
             this._sourceWatcherService = (ISourceWatcherService)services.GetService(typeof(ISourceWatcherService));
@@ -54,6 +55,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
 
             this._internalApiHelper = new InternalAPIHelper();
+            _runtimeContext = runtimeContext;
         }
 
         #region API Response Methods
@@ -545,11 +547,10 @@ namespace Diagnostics.RuntimeHost.Controllers
                 form: Form
             );
 
-            return new RuntimeContext<TResource>()
-            {
-                ClientIsInternal = isInternalClient || forceInternal,
-                OperationContext = operationContext
-            };
+            _runtimeContext.ClientIsInternal = isInternalClient || forceInternal;
+            _runtimeContext.OperationContext = operationContext;
+
+            return (RuntimeContext<TResource>)_runtimeContext;
         }
 
         private async Task<IEnumerable<DiagnosticApiResponse>> ListGistsInternal(RuntimeContext<TResource> context)

@@ -1,6 +1,7 @@
 ﻿using Diagnostics.DataProviders;
 using Diagnostics.DataProviders.TokenService;
 using Diagnostics.RuntimeHost.Middleware;
+using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
@@ -36,6 +37,7 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
             services.AddSingleton<IGistCacheService, GistCacheService>();
             services.AddSingleton<ISiteService, SiteService>();
+            services.AddScoped(typeof(IRuntimeContext<>), typeof(RuntimeContext<>));
             services.AddSingleton<IStampService>((serviceProvider) =>
             {
                 var cloudDomain = serviceProvider.GetService<IDataSourcesConfigurationService>().Config.KustoConfiguration.CloudDomain;
