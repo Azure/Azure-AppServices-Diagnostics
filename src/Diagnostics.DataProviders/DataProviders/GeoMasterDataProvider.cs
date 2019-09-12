@@ -25,11 +25,14 @@ namespace Diagnostics.DataProviders
 
         private string[] RegexMatchingPatterns = new string[] { @"^AzureWebJobs\.[a-zA-Z][_a-zA-Z0-9-]*\.Disabled$" };
 
+        public string GeoMasterName { get; }
+
         public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache)
         {
-            _geoMasterHostName = context.GeomasterHostName;
+            _geoMasterHostName = string.IsNullOrWhiteSpace(context.GeomasterHostName) ? context.Configuration.GeoMasterConfiguration.GeoEndpointAddress : context.GeomasterHostName;
             _configuration = context.Configuration.GeoMasterConfiguration;
             _geoMasterClient = InitClient();
+            GeoMasterName = string.IsNullOrWhiteSpace(context.GeomasterName) ? ParseGeoMasterName(_geoMasterHostName) : null;
         }
 
         private IGeoMasterClient InitClient()
@@ -598,5 +601,26 @@ namespace Diagnostics.DataProviders
         }
 
         #endregion HttpMethods
+
+        /// <summary>
+        /// Given the regional geomaster change is not complete we will need to extract geomaster name from the geomaster hostname. This is temporary until
+        /// the geomaster migration is complete then we can rely on the stamp location to determine geomaster.
+        /// </summary>
+        /// <param name="geomasterHostName"></param>
+        /// <returns></returns>
+        private string ParseGeoMasterName(string geomasterHostName)
+        {
+            string geoMasterName = null;
+
+            if (Uri.TryCreate(geomasterHostName, UriKind.Absolute, out Uri geomasterHostNameUri))
+            {
+                geoMasterName = geomasterHostNameUri.Host.Split(new char[] { '.' }).First();
+
+                //Need to modify this to work with national cloud environments as gm-prod-sn1 does not exist in other clouds.
+                geoMasterName = geoMasterName.Equals("geomaster", StringComparison.CurrentCultureIgnoreCase) ? "gm-prod-sn1" : $"rgm-prod-{geoMasterName}";
+            }
+
+            return geoMasterName;
+        }
     }
 }

@@ -7,6 +7,8 @@ namespace Diagnostics.DataProviders
 {
     public interface IGeoMasterDataProvider : IMetadataProvider
     {
+        string GeoMasterName { get; }
+
         Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name);
 
         Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name, string slotName);

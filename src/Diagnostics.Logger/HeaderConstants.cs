@@ -41,9 +41,14 @@ namespace Diagnostics.Logger
         public static readonly string ClientPrincipalNameHeader = "x-ms-client-principal-name";
    
         /// <summary>
-        /// Client Principal Name header.
+        /// Geomaster HostName header.
         /// </summary>
         public static readonly string GeomasterHostNameHeader = "x-ms-geomaster-hostname";
+
+        /// <summary>
+        /// Geomaster Name header.
+        /// </summary>
+        public static readonly string GeomasterNameHeader = "x-ms-geomaster-name";
 
         /// <summary>
         /// Etag header name.

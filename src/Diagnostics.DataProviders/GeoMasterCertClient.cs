@@ -30,7 +30,7 @@ namespace Diagnostics.DataProviders
                 handler.ServerCertificateCustomValidationCallback = delegate { return true; };
             }
 
-            var geoEndpoint = new UriBuilder(!String.IsNullOrWhiteSpace(geoMasterHostName) ? geoMasterHostName : configuration.GeoEndpointAddress)
+            var geoEndpoint = new UriBuilder(geoMasterHostName)
             {
                 Scheme = "https",
                 Port = GeoMasterCsmApiPort
