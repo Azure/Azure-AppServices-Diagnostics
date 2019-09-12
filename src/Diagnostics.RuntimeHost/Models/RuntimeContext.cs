@@ -13,7 +13,7 @@ namespace Diagnostics.RuntimeHost.Models
 
         public RuntimeContext(IConfiguration configuration)
         {
-            CloudDomain = configuration.GetValue<string>("CloudDomain") ?? HostConstants.AzureCloud;
+            CloudDomain = string.IsNullOrWhiteSpace(configuration.GetValue<string>("CloudDomain")) ? HostConstants.AzureCloud : configuration.GetValue<string>("CloudDomain");
         }
     }
 
