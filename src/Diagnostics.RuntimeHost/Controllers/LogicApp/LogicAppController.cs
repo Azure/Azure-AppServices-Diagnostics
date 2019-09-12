@@ -12,8 +12,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.LogicAppResource)]
     public sealed class LogicAppController : DiagnosticControllerBase<LogicApp>
     {
-        public LogicAppController(IServiceProvider services)
-            : base(services)
+        public LogicAppController(IServiceProvider services, IRuntimeContext<LogicApp> runtimeContext)
+            : base(services, runtimeContext)
         {
         }
 

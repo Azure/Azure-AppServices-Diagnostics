@@ -14,8 +14,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.HostingEnvironmentResource)]
     public sealed class HostingEnvironmentController : DiagnosticControllerBase<HostingEnvironment>
     {
-        public HostingEnvironmentController(IServiceProvider services)
-            : base(services)
+        public HostingEnvironmentController(IServiceProvider services, IRuntimeContext<HostingEnvironment> runtimeContext)
+            : base(services, runtimeContext)
         {
         }
 
