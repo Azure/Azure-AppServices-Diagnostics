@@ -5,24 +5,26 @@ using System.Threading.Tasks;
 using System.Threading;
 using Diagnostics.Logger;
 using Microsoft.AspNetCore.Http.Features;
+using System.Data;
+using System.Collections.Concurrent;
 
 namespace Diagnostics.DataProviders
 {
     public interface IKustoHeartBeatService : IDisposable
     {
-        string GetClusterNameFromStamp(string stampName);
+        Task<string> GetClusterNameFromStamp(string stampName);
     }
 
     public class KustoHeartBeatService : IKustoHeartBeatService
     {
         private KustoDataProviderConfiguration _configuration;
-        private Dictionary<string, KustoHeartBeat> _heartbeats;
+        private ConcurrentDictionary<string, KustoHeartBeat> _heartbeats;
         private KustoDataProvider _kustoDataProvider;
         private CancellationTokenSource _cancellationToken;
 
         private void Initialize()
         {
-            _heartbeats = new Dictionary<string, KustoHeartBeat>();
+            _heartbeats = new ConcurrentDictionary<string, KustoHeartBeat>();
             _kustoDataProvider = new KustoDataProvider(new OperationDataCache(), _configuration, Guid.NewGuid().ToString(), this);
             _cancellationToken = new CancellationTokenSource();
 
@@ -34,9 +36,11 @@ namespace Diagnostics.DataProviders
                 {
                     failoverCluster = _configuration.FailoverClusterNameCollection[primaryCluster];
                 }
-                _heartbeats[primaryCluster] = new KustoHeartBeat(primaryCluster, failoverCluster, _kustoDataProvider, _configuration);
-                // Start threads for each heartbeat on the thread pool
-                Task.Run(() => _heartbeats[primaryCluster].RunHeartBeatTask(_cancellationToken.Token));
+                if (!_heartbeats.ContainsKey(primaryCluster) && _heartbeats.TryAdd(primaryCluster, new KustoHeartBeat(primaryCluster, failoverCluster, _kustoDataProvider, _configuration)))
+                {
+                    // Start threads for each heartbeat on the thread pool
+                    Task.Run(() => _heartbeats[primaryCluster].RunHeartBeatTask(_cancellationToken.Token));
+                }
             }
         }
 
@@ -52,17 +56,43 @@ namespace Diagnostics.DataProviders
             Initialize();
         }
 
-        public string GetClusterNameFromStamp(string stampName)
+        public async Task<string> GetClusterNameFromStamp(string stampName)
         {
             string kustoClusterName = null;
             string appserviceRegion = ParseRegionFromStamp(stampName);
 
             if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName))
             {
-                if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
+                if(_configuration.CloudDomain == DataProviderConstants.AzureCloud)
                 {
-                    throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
-                }
+                    try
+                    {
+                         DataTable regionMappings = await _kustoDataProvider.ExecuteClusterQuery($"cluster('wawseusfollower').database('wawsprod').WawsAn_regionsincluster | where pdate >= ago(5d) | summarize by Region, ClusterName", "RegionMappingInit");
+                        if (regionMappings.Rows.Count > 0)
+                        {
+                            foreach (DataRow dr in regionMappings.Rows)
+                            {
+                                _configuration.RegionSpecificClusterNameCollection.TryAdd(((string)dr["Region"]).ToLower(), $"{((string)dr["ClusterName"])}follower");
+                                _configuration.FailoverClusterNameCollection.TryAdd(((string)dr["Region"]).ToLower(), (string)dr["ClusterName"]);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        //Swallow any Kusto related exception, then check if a mapping exists for *. Throw an exception if not.
+                    }
+                    finally
+                    {
+                        if (!_configuration.RegionSpecificClusterNameCollection.TryGetValue(appserviceRegion.ToLower(), out kustoClusterName) && !_configuration.RegionSpecificClusterNameCollection.TryGetValue("*", out kustoClusterName))
+                        {
+                            throw new KeyNotFoundException(String.Format("Kusto Cluster Name not found for Region : {0}", appserviceRegion.ToLower()));
+                        }
+                        else
+                        {
+                            Initialize();
+                        }
+                    }
+                }                 
             }
 
             if (!string.IsNullOrWhiteSpace(_heartbeats[kustoClusterName].FailoverCluster))
