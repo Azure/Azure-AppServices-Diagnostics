@@ -124,7 +124,7 @@ namespace Diagnostics.RuntimeHost
             }
             CompilerHostTokenService.Instance.Initialize(Configuration);
 
-            if(Environment.IsProduction())
+            if(!Environment.IsDevelopment())
             {
                 GeoCertLoader.Instance.Initialize(Configuration);
                 MdmCertLoader.Instance.Initialize(Configuration);
