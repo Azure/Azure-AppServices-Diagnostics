@@ -6,6 +6,8 @@
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Diagnostics.Logger;
+using System;
 
 namespace Diagnostics.CompilerHost
 {
@@ -20,7 +22,21 @@ namespace Diagnostics.CompilerHost
         /// <param name="args">The arguments.</param>
         public static void Main(string[] args)
         {
-            BuildWebHost(args).Run();
+            try
+            {
+                BuildWebHost(args).Run();
+            }
+            catch (Exception ex)
+            {
+                //Log unhandled exceptions on startup
+                DiagnosticsETWProvider.Instance.LogCompilerHostUnhandledException(
+                    string.Empty,
+                    "LogException_Startup",
+                    ex.GetType().ToString(),
+                    ex.ToString());
+
+                throw;
+            }
         }
 
         /// <summary>
