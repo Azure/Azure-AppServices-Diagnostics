@@ -89,7 +89,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// </summary>
         public override void Start()
         {
-            _firstTimeCompletionTask = StartWatcherInternal();
+            _firstTimeCompletionTask = StartWatcherInternal(true);
             StartPollingForChanges();
         }
 
@@ -112,7 +112,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// Start github watcher
         /// </summary>
         /// <returns>Task for starting watcher.</returns>
-        private async Task StartWatcherInternal()
+        private async Task StartWatcherInternal(bool startup)
         {
             try
             {
@@ -152,14 +152,24 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
                         if (GithubWorkers.ContainsKey(workerId))
                         {
-                            tasks.Add(GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir));
+                            if (startup)
+                            {
+                                tasks.Add(GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir));
+                            }
+                            else
+                            {
+                                await GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir);
+                            }
                         }
                         else
                         {
                             LogWarning($"Cannot find github worker with id {workerId}. Directory: {subDir.FullName}.");
                         }
                     }
-                    await Task.WhenAll(tasks);
+                    if (startup)
+                    {
+                        await Task.WhenAll(tasks);
+                    }
 
                     return;
                 }
@@ -242,7 +252,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             do
             {
                 await Task.Delay(_pollingIntervalInSeconds * 1000);
-                await StartWatcherInternal();
+                await StartWatcherInternal(false);
             } while (true);
         }
 
