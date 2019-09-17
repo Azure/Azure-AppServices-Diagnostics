@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using static Diagnostics.Logger.HeaderConstants;
+using Diagnostics.ModelsAndUtils.Exceptions;
 
 namespace Diagnostics.RuntimeHost.Middleware
 {
@@ -39,6 +40,11 @@ namespace Diagnostics.RuntimeHost.Middleware
             {
                 exception = ex;
                 statusCode = (int)HttpStatusCode.RequestTimeout;
+            }
+            catch (ASETenantListEmptyException ex)
+            {
+                exception = ex;
+                statusCode = (int)HttpStatusCode.NotFound;
             }
             catch (Exception ex)
             {
