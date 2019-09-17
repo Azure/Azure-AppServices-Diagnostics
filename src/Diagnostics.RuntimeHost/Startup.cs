@@ -32,7 +32,7 @@ namespace Diagnostics.RuntimeHost
         public IConfiguration Configuration { get; }
         public IHostingEnvironment Environment { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
+
         public void ConfigureServices(IServiceCollection services)
         {
             var openIdConfigEndpoint = $"{Configuration["SecuritySettings:AADAuthority"]}/.well-known/openid-configuration";
@@ -134,7 +134,6 @@ namespace Diagnostics.RuntimeHost
             servicesProvider.GetService<ISourceWatcherService>();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             if (env.IsDevelopment())
@@ -142,7 +141,7 @@ namespace Diagnostics.RuntimeHost
                 app.UseDeveloperExceptionPage();
             }
             app.UseAuthentication();
-            app.UseDiagnosticsRequestMiddleware();
+            app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseMvc();
         }
     }
