@@ -74,5 +74,25 @@ namespace Diagnostics.Logger
         /// Json Content type header.
         /// </summary>
         public static readonly string JsonContentType = "application/json";
+
+        /// <summary>
+        /// Client Issuer header.
+        /// </summary>
+        public static readonly string ClientIssuerHeader = "x-ms-client-issuer";
+
+        /// <summary>
+        /// Client Puid header.
+        /// </summary>
+        public static readonly string ClientPuidHeader = "x-ms-client-puid";
+
+        /// <summary>
+        /// Client Alt SecId header.
+        /// </summary>
+        public static readonly string ClientAltSecIdHeader = "x-ms-client-alt-sec-id";
+
+        /// <summary>
+        /// Client Identity Provider header.
+        /// </summary>
+        public static readonly string ClientIdentityProviderHeader = "x-ms-client-identity-provider";
     }
 }

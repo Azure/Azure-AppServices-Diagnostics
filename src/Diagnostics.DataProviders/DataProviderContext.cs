@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using Microsoft.AspNetCore.Http;
 
 namespace Diagnostics.DataProviders
 {
@@ -27,7 +28,12 @@ namespace Diagnostics.DataProviders
         /// </summary>
         public string clientPrincipalName { get; private set; }
 
-        public DataProviderContext(DataSourcesConfiguration dataSourceConfiguration, string requestId = null, CancellationToken dataSourceCancellationToken = default(CancellationToken), DateTime queryStartTime = default(DateTime), DateTime queryEndTime = default(DateTime), IWawsObserverTokenService wawsObserverTokenService = null, ISupportBayApiObserverTokenService supportBayApiObserverTokenService = null, string objectId = "", string principalName = "", IKustoHeartBeatService kustoHeartBeatService = null, string geoMasterHostName = null, string geomasterName = null, string cloudDomain = null)
+        /// <summary>
+        /// List of headers received during an incoming request.
+        /// </summary>
+        public IHeaderDictionary receivedHeaders { get; private set; }
+
+        public DataProviderContext(DataSourcesConfiguration dataSourceConfiguration, string requestId = null, CancellationToken dataSourceCancellationToken = default(CancellationToken), DateTime queryStartTime = default(DateTime), DateTime queryEndTime = default(DateTime), IWawsObserverTokenService wawsObserverTokenService = null, ISupportBayApiObserverTokenService supportBayApiObserverTokenService = null, string objectId = "", string principalName = "", IKustoHeartBeatService kustoHeartBeatService = null, string geoMasterHostName = null, string geomasterName = null, string cloudDomain = null, IHeaderDictionary incomingHeaders = null)
         {
             Configuration = dataSourceConfiguration;
             RequestId = requestId ?? Guid.NewGuid().ToString();
@@ -42,6 +48,7 @@ namespace Diagnostics.DataProviders
             GeomasterHostName = geoMasterHostName;
             GeomasterName = geomasterName;
             CloudDomain = cloudDomain;
+            receivedHeaders = incomingHeaders;
         }
     }
 }

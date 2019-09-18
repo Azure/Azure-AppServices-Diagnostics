@@ -9,6 +9,7 @@ using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using Diagnostics.Logger;
+using Microsoft.AspNetCore.Http;
 
 namespace Diagnostics.DataProviders
 {
@@ -21,12 +22,12 @@ namespace Diagnostics.DataProviders
         private string dataProviderRequestId;
 
         private IKustoDataProvider kustoDataProvider;
-
-        public ChangeAnalysisDataProvider(OperationDataCache cache, ChangeAnalysisDataProviderConfiguration configuration, string requestId, string clientObjectId, string principalName, IKustoDataProvider kustoDataProvider) : base(cache)
+        
+        public ChangeAnalysisDataProvider(OperationDataCache cache, ChangeAnalysisDataProviderConfiguration configuration, string requestId, string clientObjectId, string principalName, IKustoDataProvider kustoDataProvider, IHeaderDictionary incomingRequestHeaders) : base(cache)
         {
             dataProviderConfiguration = configuration;
             dataProviderRequestId = requestId;
-            changeAnalysisClient = new ChangeAnalysisClient(configuration, requestId, clientObjectId, principalName);
+            changeAnalysisClient = new ChangeAnalysisClient(configuration, requestId, clientObjectId, incomingRequestHeaders, principalName);
             this.kustoDataProvider = kustoDataProvider;
         }
 
