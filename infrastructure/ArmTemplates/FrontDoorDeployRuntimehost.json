@@ -16,7 +16,8 @@
         }
     },
     "variables": {
-        "frontdoorLocation": "global"
+        "frontdoorLocation": "global",
+        "backendAddress": "[concat(parameters('backendAddress'),'.azurewebsites.net')]"
     },
     "resources": [
         {
@@ -78,8 +79,8 @@
                         "properties": {
                             "backends": [
                                 {
-                                    "address": "[parameters('backendAddress')]",
-                                    "backendHostHeader": "[parameters('backendAddress')]",
+                                    "address": "[variables('backendAddress')]",
+                                    "backendHostHeader": "[variables('backendAddress')]",
                                     "httpPort": 80,
                                     "httpsPort": 443,
                                     "weight": 50,

@@ -6,7 +6,12 @@
             "value": "diag-runtimehost"
         },
         "backendAddress": {
-            "value": "diag-runtimehost-prod-bay-001.azurewebsites.net"
+            "reference": {
+              "keyVault": {
+                "id": "/subscriptions/474eaba6-0f3f-4b5a-bae5-a7858bd7c53b/resourceGroups/real-stuff/providers/Microsoft.KeyVault/vaults/DiagDeployment"
+              },
+              "secretName": "DiagRuntimehostBackendName1"
+            }
         }
     }
 }
