@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using static Diagnostics.Logger.HeaderConstants;
-using Diagnostics.ModelsAndUtils.Exceptions;
+using Diagnostics.RuntimeHost.Models.Exceptions;
 
 namespace Diagnostics.RuntimeHost.Middleware
 {

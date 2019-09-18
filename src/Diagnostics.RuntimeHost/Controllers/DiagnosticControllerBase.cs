@@ -26,6 +26,8 @@ using Diagnostics.Scripts.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
+using Diagnostics.RuntimeHost.Models.Exceptions;
+using Diagnostics.DataProviders.Exceptions;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -303,6 +305,16 @@ namespace Diagnostics.RuntimeHost.Controllers
 
                         queryRes.RuntimeSucceeded = true;
                         queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse, dataProvidersMetadata, utterancesResults);
+                    }
+                    catch (KustoTenantListEmptyException ex)
+                    {
+                        if (resource as IResource is HostingEnvironment env)
+                        {
+                            if(env.TenantIdList != null && env.TenantIdList.Count() == 0)
+                            {
+                                throw new ASETenantListEmptyException("KustoExecuteQuery", "Tenant List is Empty for ASE");
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {

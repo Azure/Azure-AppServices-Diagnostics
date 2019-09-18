@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Diagnostics.ModelsAndUtils.Exceptions
+namespace Diagnostics.RuntimeHost.Models.Exceptions
 {
     public class ASETenantListEmptyException: Exception
     {

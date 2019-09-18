@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Diagnostics.ModelsAndUtils.Models;
-using Diagnostics.ModelsAndUtils.Exceptions;
 
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 
@@ -58,10 +57,6 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
             }
             else if (resource is HostingEnvironment env)
             {
-                if (env.TenantIdList.Count() == 0)
-                {
-                    throw new ASETenantListEmptyException("TenantFilterQuery", $"{env.Name}");
-                }
                 tenantIds = env.TenantIdList.ToList();
             }
 
