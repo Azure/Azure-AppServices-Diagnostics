@@ -264,7 +264,8 @@ namespace Diagnostics.Scripts
                 scriptOptions = scriptOptions.WithImports(_frameworkImports);
             }
 
-            scriptOptions = scriptOptions.WithSourceResolver(referenceResolver);
+            scriptOptions = scriptOptions.WithSourceResolver(referenceResolver)
+                .WithOptimizationLevel(OptimizationLevel.Release);
 
             return scriptOptions;
         }
