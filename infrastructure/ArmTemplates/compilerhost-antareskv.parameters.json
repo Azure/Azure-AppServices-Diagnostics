@@ -12,13 +12,18 @@
             "value": "CompilerHost-ASP-BAY-001"
         },
         "sku": {
-            "value": "S1"
+            "value": "P1V2"
         },
         "workerSize": {
             "value": "0"
         },
-        "siteName": {
-            "value": "diag-compilerhost-prod-bay-001"
+        "siteName":{
+            "reference": {
+              "keyVault": {
+                "id": "/subscriptions/474eaba6-0f3f-4b5a-bae5-a7858bd7c53b/resourceGroups/real-stuff/providers/Microsoft.KeyVault/vaults/DiagDeployment"
+              },
+              "secretName": "DiagCompilerhostBackendName1"
+            }
         },
         "genevaCertContent": {
             "reference": {

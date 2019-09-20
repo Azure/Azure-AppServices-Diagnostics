@@ -12,13 +12,15 @@
             "value": "RuntimeHost-ASP-BAY-001"
         },
         "sku": {
-            "value": "S1"
-        },
-        "workerSize": {
-            "value": "0"
+            "value": "P1V2"
         },
         "siteName": {
-            "value": "diag-runtimehost-prod-bay-001"
+            "reference": {
+              "keyVault": {
+                "id": "/subscriptions/474eaba6-0f3f-4b5a-bae5-a7858bd7c53b/resourceGroups/real-stuff/providers/Microsoft.KeyVault/vaults/DiagDeployment"
+              },
+              "secretName": "DiagRuntimehostBackendName1"
+            }
         },
         "genevaCertContent": {
             "reference": {
