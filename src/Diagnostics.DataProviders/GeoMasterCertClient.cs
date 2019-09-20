@@ -29,6 +29,7 @@ namespace Diagnostics.DataProviders
 
             if (_geoMasterCertificate != null)
             {
+                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("Added cert to GeoMaster Client Handler");
                 handler.ClientCertificates.Add(_geoMasterCertificate);
                 handler.ServerCertificateCustomValidationCallback = delegate { return true; };
             }

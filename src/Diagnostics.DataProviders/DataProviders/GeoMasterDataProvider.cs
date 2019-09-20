@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
+using Diagnostics.Logger;
 
 namespace Diagnostics.DataProviders
 {
@@ -40,6 +41,7 @@ namespace Diagnostics.DataProviders
             bool isAppService = !string.IsNullOrWhiteSpace(_configuration.CertificateName);
             if (isAppService)
             {
+                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("Using GeoMaster cert client");
                 geoMasterClient = new GeoMasterCertClient(_configuration, _geoMasterHostName);
             }
             else

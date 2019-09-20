@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.Configuration;
 using Diagnostics.DataProviders.KeyVaultCertLoader;
+using Diagnostics.Logger;
 
 namespace Diagnostics.DataProviders
 {
@@ -17,6 +18,7 @@ namespace Diagnostics.DataProviders
         {
             KeyVault = configuration["Secrets:ProdKeyVaultName"];
             CertificateName = configuration["GeoMaster:CertificateName"];
+            DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Loading cert {CertificateName} from key vault {KeyVault}");
             LoadCertFromKeyVault();
         }
       
