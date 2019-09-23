@@ -9,7 +9,7 @@
             "value": "CompilerHost-RG"
         },
         "appServicePlanName": {
-            "value": "CompilerHost-ASP-BAY-001"
+            "value": "CompilerHost-ASP-EUAP-001"
         },
         "sku": {
             "value": "P1V2"
@@ -20,9 +20,9 @@
         "siteName":{
             "reference": {
               "keyVault": {
-                "id": "/subscriptions/474eaba6-0f3f-4b5a-bae5-a7858bd7c53b/resourceGroups/real-stuff/providers/Microsoft.KeyVault/vaults/DiagDeployment"
+                "id": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourcegroups/AppServiceDiagnosticsResources/providers/Microsoft.KeyVault/vaults/DevOpsDeploymentKV"
               },
-              "secretName": "DiagCompilerhostBackendName1"
+              "secretName": "DiagCompilerhostNameEUAP"
             }
         },
         "pingPath":{
@@ -55,7 +55,7 @@
             "value": "DiagWebAppWarm"
         },
         "monitoringGcsNamespace": {
-            "value": "WebAppWarmWUS"
+            "value": "WebAppWarmCUS"
         },
         "monitoringConfigVersion": {
             "value": "1.0"
