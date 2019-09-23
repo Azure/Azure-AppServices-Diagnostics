@@ -25,6 +25,9 @@
         "pingPath": {
             "value": "/healthping"
         },
+        "keyVaultName":{
+            "value" : "AppServiceDiagnosticsKV"
+        },
         "genevaCertContent": {
             "reference": {
                 "keyVault": {
