@@ -42,32 +42,39 @@ namespace Diagnostics.RuntimeHost
             var signingKeys = config.SigningKeys;
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
             {
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateAudience = true,
-                ValidAudience = Configuration["SecuritySettings:ClientId"],
-                ValidateIssuer = true,
-                ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
-                ValidateLifetime = true,
-                RequireSignedTokens = true,
-                IssuerSigningKeys = signingKeys
-            };
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateAudience = true,
+                    ValidAudience = Configuration["SecuritySettings:ClientId"],
+                    ValidateIssuer = true,
+                    ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
+                    ValidateLifetime = true,
+                    RequireSignedTokens = true,
+                    IssuerSigningKeys = signingKeys
+                };
 
-            options.Events = new JwtBearerEvents
-            {
-                OnTokenValidated = context =>
+                options.Events = new JwtBearerEvents
                 {
-                var allowedAppIds = Configuration["SecuritySettings:AllowedAppIds"].Split(",").Select(p => p.Trim()).ToList();
-                var claimPrincipal = context.Principal;
-                var incomingAppId = claimPrincipal.Claims.FirstOrDefault(c => c.Type.Equals("appid", StringComparison.CurrentCultureIgnoreCase));
-                if(incomingAppId == null || !allowedAppIds.Exists(p => p.Equals(incomingAppId.Value, StringComparison.OrdinalIgnoreCase)))
-                {
-                    context.Fail("Unauthorized Request");
-                }
-                    return Task.CompletedTask;
-                }
+                    OnTokenValidated = context =>
+                    {
+                        var allowedAppIds = Configuration["SecuritySettings:AllowedAppIds"].Split(",").Select(p => p.Trim()).ToList();
+                        var claimPrincipal = context.Principal;
+                        var incomingAppId = claimPrincipal.Claims.FirstOrDefault(c => c.Type.Equals("appid", StringComparison.CurrentCultureIgnoreCase));
+                        if (incomingAppId == null || !allowedAppIds.Exists(p => p.Equals(incomingAppId.Value, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            context.Fail("Unauthorized Request");
+                        }
+                        return Task.CompletedTask;
+                    }
                 };
             });
+
+            if (!Environment.IsDevelopment())
+            {
+                GeoCertLoader.Instance.Initialize(Configuration);
+                MdmCertLoader.Instance.Initialize(Configuration);
+            }
+
             // Enable App Insights telemetry
             services.AddApplicationInsightsTelemetry();
             services.AddMvc();
@@ -102,6 +109,8 @@ namespace Diagnostics.RuntimeHost
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
 
+            
+
             var servicesProvider = services.BuildServiceProvider();
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
             var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
@@ -123,12 +132,6 @@ namespace Diagnostics.RuntimeHost
                 SearchServiceTokenService.Instance.Initialize(dataSourcesConfigService.Config.SearchServiceProviderConfiguration);
             }
             CompilerHostTokenService.Instance.Initialize(Configuration);
-
-            if(!Environment.IsDevelopment())
-            {
-                GeoCertLoader.Instance.Initialize(Configuration);
-                MdmCertLoader.Instance.Initialize(Configuration);
-            }
 
             // Initialize on startup
             servicesProvider.GetService<ISourceWatcherService>();
