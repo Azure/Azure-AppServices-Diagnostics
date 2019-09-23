@@ -47,6 +47,13 @@
           "description": "Location for all resources"
         }
       },
+      "pingPath":{
+        "type": "string",
+        "defaultValue": "/",
+        "metadata": {
+          "description": "The path to ping to warm up your site"
+        }
+      },
       "genevaCertContent": {
         "type": "securestring",
         "metadata": {
@@ -186,6 +193,9 @@
           "sourcePlatform": "Unknown",
           "targetPlatform" :  "Unknown",
           "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('appServicePlanResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]",
+          "WEBSITE_LOCAL_CACHE_OPTION": "Always",
+          "WEBSITE_LOCAL_CACHE_SIZEINMB": "300",
+          "WEBSITE_SWAP_WARMUP_PING_PATH": "[parameters('pingPath')]"
           "siteConfig": {
             "phpVersion": "off",
             "scmType": null,

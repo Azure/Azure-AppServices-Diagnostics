@@ -22,6 +22,9 @@
               "secretName": "DiagRuntimehostBackendName1"
             }
         },
+        "pingPath": {
+            "value": "/healthping"
+        },
         "genevaCertContent": {
             "reference": {
                 "keyVault": {

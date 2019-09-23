@@ -25,6 +25,9 @@
               "secretName": "DiagCompilerhostBackendName1"
             }
         },
+        "pingPath":{
+            "value": "/api/CompilerHost/healthping"
+        },
         "genevaCertContent": {
             "reference": {
                 "keyVault": {
