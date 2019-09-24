@@ -11,10 +11,10 @@
                 "properties": {
                     "mode": "Incremental",
                     "templateLink": {
-                        "uri": "./antareskvtemplate.json"
+                        "uri": "[uri(deployment().properties.templateLink.uri, 'antareskvtemplate.json')]"
                     },
                     "parametersLink": {
-                        "uri": "./runtimehost-antareskv.EUAP.parameters.json"
+                        "uri": "[uri(deployment().properties.templateLink.uri, 'runtimehost-antareskv.EUAP.parameters.json')]"
                     }
                 }
             }
