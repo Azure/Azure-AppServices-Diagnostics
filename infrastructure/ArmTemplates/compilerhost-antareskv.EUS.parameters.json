@@ -12,10 +12,7 @@
             "value": "CompilerHost-ASP-EUS-001"
         },
         "sku": {
-            "value": "P1V2"
-        },
-        "workerSize": {
-            "value": "0"
+            "value": "P2V2"
         },
         "location": {
             "value": "East US"

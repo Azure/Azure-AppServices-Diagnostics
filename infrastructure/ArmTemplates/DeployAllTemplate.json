@@ -21,7 +21,7 @@
             {
                 "type": "Microsoft.Resources/deployments",
                 "apiVersion": "2017-05-10",
-                "name": "linkedTemplate",
+                "name": "linkedTemplate2",
                 "properties": {
                     "mode": "Incremental",
                     "templateLink": {
