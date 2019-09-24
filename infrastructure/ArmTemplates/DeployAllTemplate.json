@@ -17,6 +17,20 @@
                         "uri": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/runtimehost-antareskv.EUAP.parameters.json"
                     }
                 }
+            },
+            {
+                "type": "Microsoft.Resources/deployments",
+                "apiVersion": "2017-05-10",
+                "name": "linkedTemplate",
+                "properties": {
+                    "mode": "Incremental",
+                    "templateLink": {
+                        "uri": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/antareskvtemplate.json"
+                    },
+                    "parametersLink": {
+                        "uri": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/compilerhost-antareskv.EUAP.parameters.json"
+                    }
+                }
             }
         ]
 }
