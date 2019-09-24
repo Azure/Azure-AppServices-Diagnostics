@@ -23,12 +23,11 @@
     },
     "resources": [
             {
+                "type": "Microsoft.Resources/deployments",
+                "name": "linkedTemplate",
+                "apiVersion": "2017-05-10",
                 "copy": {
                     "count": "[length(variables('linkedTemplates').templates)]",
-                    "type": "Microsoft.Resources/deployments",
-                    "apiVersion": "2017-05-10",
-                    "name": "linkedTemplate",
-                    
                     "properties": {
                         "mode": "Incremental",
                         "templateLink": {
