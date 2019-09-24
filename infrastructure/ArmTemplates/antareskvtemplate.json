@@ -316,10 +316,7 @@
                                   
                               ],
                               "enabledForDeployment": false
-                          },
-                          "dependsOn": [
-                              "[concat('Microsoft.Web/sites/', parameters('siteName'))]"
-                          ]
+                          }
                         }
                     ]
                 }
