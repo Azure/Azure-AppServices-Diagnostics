@@ -73,7 +73,15 @@ namespace Diagnostics.DataProviders
             var requestPayload = new
             {
                 db = database,
-                csl = query
+                csl = query,
+                properties = new
+                {
+                    ClientRequestId = kustoClientId,
+                    Options = new
+                    {
+                        servertimeout = new TimeSpan(0, 1, 0)
+                    }
+                }
             };
             request.Content = new StringContent(JsonConvert.SerializeObject(requestPayload), Encoding.UTF8, "application/json");
             DataTableResponseObjectCollection dataSet = null;
