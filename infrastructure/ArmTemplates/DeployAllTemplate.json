@@ -17,20 +17,6 @@
                     "uri": "[uri(deployment().properties.templateLink.uri, 'runtimehost-antareskv.EUAP.parameters.json')]"
                 }
                 }
-            },
-            {
-                "type": "Microsoft.Resources/deployments",
-                "apiVersion": "2018-05-01",
-                "name": "linkedTemplate2",
-                "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[uri(deployment().properties.templateLink.uri, 'antareskvtemplate.json')]"
-                },
-                "parametersLink": {
-                    "uri": "[uri(deployment().properties.templateLink.uri, 'compilerhost-antareskv.EUAP.parameters.json')]"
-                }
-                }
             }
         ]
 }
