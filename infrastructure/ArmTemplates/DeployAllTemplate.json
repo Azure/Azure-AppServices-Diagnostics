@@ -11,10 +11,10 @@
                 "properties": {
                     "mode": "Incremental",
                     "templateLink": {
-                        "uri": "[uri(deployment().properties.templateLink.uri, 'antareskvtemplate.json')]"
+                        "uri": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/antareskvtemplate.json"
                     },
                     "parametersLink": {
-                        "uri": "[uri(deployment().properties.templateLink.uri, 'runtimehost-antareskv.EUAP.parameters.json')]"
+                        "uri": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/runtimehost-antareskv.EUAP.parameters.json"
                     }
                 }
             }
