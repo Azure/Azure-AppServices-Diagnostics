@@ -1,0 +1,67 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "subscriptionId": {
+            "value": "0e7b3183-4428-4c1f-93cd-cb2a26616a8a"
+        },
+        "appServicePlanResourceGroup": {
+            "value": "CompilerHost-RG"
+        },
+        "appServicePlanName": {
+            "value": "CompilerHost-ASP-EUS-001"
+        },
+        "sku": {
+            "value": "P1V2"
+        },
+        "workerSize": {
+            "value": "0"
+        },
+        "location": {
+            "value": "East US"
+        },
+        "siteName":{
+            "reference": {
+              "keyVault": {
+                "id": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourcegroups/AppServiceDiagnosticsResources/providers/Microsoft.KeyVault/vaults/DevOpsDeploymentKV"
+              },
+              "secretName": "DiagCompilerhostNameEUS"
+            }
+        },
+        "pingPath":{
+            "value": "/api/CompilerHost/healthping"
+        },
+        "keyVaultName":{
+            "value" : "Diag-CompilerHost-ProdKV"
+        },
+        "genevaCertContent": {
+            "reference": {
+                "keyVault": {
+                    "id": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourceGroups/AppServiceDiagnosticsResources/providers/Microsoft.KeyVault/vaults/AppServiceDiagnosticsKV"
+                },
+                "secretName": "AppServiceDiagnosticsLogging"
+            }
+        },
+        "monitoringGcsAuthId": {
+            "value": "diag-logging-sample.azurewebsites.net.geneva.keyvault.diag-logging-sample.azurewebsites.net"
+        },
+        "monitoringTenant": {
+            "value": "GSMonAntares"
+        },
+        "monitoringRole": {
+            "value": "DiagWebAppWarm"
+        },
+        "monitoringGcsEnvironment": {
+            "value": "Diagnostics Prod"
+        },
+        "monitoringGcsAccount": {
+            "value": "DiagWebAppWarm"
+        },
+        "monitoringGcsNamespace": {
+            "value": "WebAppWarmEUS"
+        },
+        "monitoringConfigVersion": {
+            "value": "1.0"
+        }
+    }
+}
