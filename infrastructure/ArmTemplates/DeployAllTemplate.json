@@ -10,10 +10,10 @@
                 "name": "linkedTemplate",
                 "properties": {
                 "mode": "Incremental",
-                "templateLink": {
+                "template": {
                     "uri": "[uri(deployment().properties.templateLink.uri, 'antareskvtemplate.json')]"
                 },
-                "parametersLink": {
+                "parameters": {
                     "uri": "[uri(deployment().properties.templateLink.uri, 'runtimehost-antareskv.EUAP.parameters.json')]"
                 }
                 }
