@@ -1,20 +1,42 @@
 {
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "parameters": {},
-    "variables": {},
+    "parameters": {
+        "githubURL"  : {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/"
+        }
+    },
+    "variables": {
+        "linkedTemplates": {
+            "value": {
+                "templates": [
+                    {
+                        "link" : "runtimehost-antareskv.EUAP.parameters.json"
+                    },
+                    {
+                        "link" : "compilerhost-antareskv.EUAP.parameters.json"
+                    }
+                ]
+            }
+        }
+    },
     "resources": [
             {
-                "type": "Microsoft.Resources/deployments",
-                "apiVersion": "2017-05-10",
-                "name": "linkedTemplate",
-                "properties": {
-                    "mode": "Incremental",
-                    "templateLink": {
-                        "uri": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/antareskvtemplate.json"
-                    },
-                    "parametersLink": {
-                        "uri": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/runtimehost-antareskv.EUAP.parameters.json"
+                "copy": {
+                    "count": "[length(variables('linkedTemplates').templates)]",
+                    "type": "Microsoft.Resources/deployments",
+                    "apiVersion": "2017-05-10",
+                    "name": "linkedTemplate",
+                    
+                    "properties": {
+                        "mode": "Incremental",
+                        "templateLink": {
+                            "uri": "[concat(parameters('githubURL'),'antareskvtemplate.json')]"
+                        },
+                        "parametersLink": {
+                            "uri": "[concat(parameters('githubURL'),variables('linkedTemplates').templates[copyIndex('templates')].link)]"
+                        }
                     }
                 }
             }
