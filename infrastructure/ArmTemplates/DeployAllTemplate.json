@@ -6,16 +6,16 @@
     "resources": [
             {
                 "type": "Microsoft.Resources/deployments",
-                "apiVersion": "2018-05-01",
+                "apiVersion": "2017-05-10",
                 "name": "linkedTemplate",
                 "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "uri": "[uri(deployment().properties.templateLink.uri, 'antareskvtemplate.json')]"
-                },
-                "parameters": {
-                    "uri": "[uri(deployment().properties.templateLink.uri, 'runtimehost-antareskv.EUAP.parameters.json')]"
-                }
+                    "mode": "Incremental",
+                    "templateLink": {
+                        "uri": "[uri(deployment().properties.templateLink.uri, 'antareskvtemplate.json')]"
+                    },
+                    "parametersLink": {
+                        "uri": "[uri(deployment().properties.templateLink.uri, 'runtimehost-antareskv.EUAP.parameters.json')]"
+                    }
                 }
             }
         ]
