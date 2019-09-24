@@ -1,41 +1,20 @@
 {
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "parameters": {
-        "githubURL"  : {
-            "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/"
-        }
-    },
-    "variables": {
-        "linkedTemplates": {
-            "value": {
-                "templates": [
-                    {
-                        "link" : "runtimehost-antareskv.EUAP.parameters.json"
-                    },
-                    {
-                        "link" : "compilerhost-antareskv.EUAP.parameters.json"
-                    }
-                ]
-            }
-        }
-    },
+    "parameters": {},
+    "variables": {},
     "resources": [
             {
                 "type": "Microsoft.Resources/deployments",
-                "name": "linkedTemplate",
                 "apiVersion": "2017-05-10",
-                "copy": {
-                    "count": "[length(variables('linkedTemplates').templates)]",
-                    "properties": {
-                        "mode": "Incremental",
-                        "templateLink": {
-                            "uri": "[concat(parameters('githubURL'),'antareskvtemplate.json')]"
-                        },
-                        "parametersLink": {
-                            "uri": "[concat(parameters('githubURL'),variables('linkedTemplates').templates[copyIndex('templates')].link)]"
-                        }
+                "name": "linkedTemplate",
+                "properties": {
+                    "mode": "Incremental",
+                    "templateLink": {
+                        "uri": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/antareskvtemplate.json"
+                    },
+                    "parametersLink": {
+                        "uri": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/runtimehost-antareskv.EUAP.parameters.json"
                     }
                 }
             }
