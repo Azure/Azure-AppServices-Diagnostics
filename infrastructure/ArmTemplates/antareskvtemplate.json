@@ -168,7 +168,7 @@
       },
       "configXml": "<MonitoringManagement eventVersion=\"1\" version=\"1.0\" timestamp=\"2017-12-29T00:00:00Z\" namespace=\"PlaceHolder\"></MonitoringManagement>",
       "identityResourceId" : "[concat(resourceId('Microsoft.Web/sites', parameters('siteName')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
-      "identityResourceStaging" : "[concat(resourceId('Microsoft.Web/sites', parameters('siteName')),'-staging/providers/Microsoft.ManagedIdentity/Identities/default')]"
+      "identityResourceStaging" : "[concat(resourceId('Microsoft.Web/sites', parameters('siteName')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]"
 
     },
     "resources": [
