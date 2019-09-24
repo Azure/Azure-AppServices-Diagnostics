@@ -266,27 +266,14 @@
             }
           },
           {
-            "comments": "Defines how the Geneva Monitoring Agent should be configured.",
-            "type": "Microsoft.Web/serverfarms/firstPartyApps/settings",
-            "name": "[concat(parameters('appServicePlanName'), '/AntMDS/ConfigJson')]",
-            "apiVersion": "2015-08-01",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-              "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
-              "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
-            ],
-            "properties": {
-              "firstPartyId": "AntMDS",
-              "settingName": "ConfigJson",
-              "settingValue": "[string(variables('configJson'))]"
-            }
-          },
-          {
             "apiVersion": "2017-05-10",
             "name": "nestedTemplate",
             "type": "Microsoft.Resources/deployments",
             "resourceGroup": "AppServiceDiagnosticsResources",
             "subscriptionId": "0e7b3183-4428-4c1f-93cd-cb2a26616a8a",
+            "dependsOn": [
+              "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+            ],
             "properties":{
               "mode": "Incremental",
                 "template": {
@@ -336,6 +323,22 @@
                         }
                     ]
                 }
+            }
+          },
+          {
+            "comments": "Defines how the Geneva Monitoring Agent should be configured.",
+            "type": "Microsoft.Web/serverfarms/firstPartyApps/settings",
+            "name": "[concat(parameters('appServicePlanName'), '/AntMDS/ConfigJson')]",
+            "apiVersion": "2015-08-01",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+              "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+              "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+            ],
+            "properties": {
+              "firstPartyId": "AntMDS",
+              "settingName": "ConfigJson",
+              "settingValue": "[string(variables('configJson'))]"
             }
           },
           {
