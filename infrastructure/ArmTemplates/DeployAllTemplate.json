@@ -1,0 +1,36 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {},
+    "variables": {},
+    "resources": [
+            {
+                "type": "Microsoft.Resources/deployments",
+                "apiVersion": "2018-05-01",
+                "name": "linkedTemplate",
+                "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'antareskvtemplate.json')]"
+                },
+                "parametersLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'runtimehost-antareskv.EUAP.parameters.json')]"
+                }
+                }
+            },
+            {
+                "type": "Microsoft.Resources/deployments",
+                "apiVersion": "2018-05-01",
+                "name": "linkedTemplate",
+                "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'antareskvtemplate.json')]"
+                },
+                "parametersLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'compilerhost-antareskv.EUAP.parameters.json')]"
+                }
+                }
+            }
+        ]
+}

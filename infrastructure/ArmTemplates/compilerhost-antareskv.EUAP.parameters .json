@@ -14,8 +14,8 @@
         "sku": {
             "value": "P1V2"
         },
-        "workerSize": {
-            "value": "0"
+        "location":{
+            "value": "East US 2 EUAP"
         },
         "siteName":{
             "reference": {
