@@ -31,6 +31,9 @@
         "keyVaultName":{
             "value" : "AppServiceDiagnosticsKV"
         },
+        "keyVaultLocation":{
+            "value" : "West US"
+        },
         "genevaCertContent": {
             "reference": {
                 "keyVault": {

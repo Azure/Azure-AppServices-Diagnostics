@@ -31,6 +31,9 @@
         "keyVaultName":{
             "value" : "Diag-CompilerHost-ProdKV"
         },
+        "keyVaultLocation":{
+            "value" : "Central US"
+        },
         "genevaCertContent": {
             "reference": {
                 "keyVault": {
