@@ -1,47 +1,28 @@
 {
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "parameters": {},
+    "parameters": {
+      "CompilerHost1":{
+        "type" :"string"
+      },
+      "CompilerHost2":{
+        "type" :"string"
+      },
+      "RuntimeHost1":{
+        "type" :"string"
+      },
+      "RuntimeHost2":{
+        "type" :"string"
+      }
+    },
     "variables": {
-        "CompilerHost1":{
-            "reference": {
-              "keyVault": {
-                "id": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourcegroups/AppServiceDiagnosticsResources/providers/Microsoft.KeyVault/vaults/DevOpsDeploymentKV"
-              },
-              "secretName": "DiagCompilerhostNameEUAP"
-            }
-        },
-        "CompilerHost2":{
-            "reference": {
-              "keyVault": {
-                "id": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourcegroups/AppServiceDiagnosticsResources/providers/Microsoft.KeyVault/vaults/DevOpsDeploymentKV"
-              },
-              "secretName": "DiagCompilerhostNameWUS"
-            }
-        },
-        "RuntimeHost1":{
-            "reference": {
-              "keyVault": {
-                "id": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourcegroups/AppServiceDiagnosticsResources/providers/Microsoft.KeyVault/vaults/DevOpsDeploymentKV"
-              },
-              "secretName": "DiagRuntimehostNameEUAP"
-            }
-        },
-        "RuntimeHost2":{
-            "reference": {
-              "keyVault": {
-                "id": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourcegroups/AppServiceDiagnosticsResources/providers/Microsoft.KeyVault/vaults/DevOpsDeploymentKV"
-              },
-              "secretName": "DiagRuntimehostNameWUS"
-            }
-        },
-        "CompilerHostResourceId1" : "[concat(resourceId('Microsoft.Web/sites', variables('CompilerHost1')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
-        "CompilerHostResourceStaging1" : "[concat(resourceId('Microsoft.Web/sites', variables('CompilerHost1')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
-        "CompilerHostResourceId2" : "[concat(resourceId('Microsoft.Web/sites', variables('CompilerHost2')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
-        "CompilerHostResourceStaging2" : "[concat(resourceId('Microsoft.Web/sites', variables('CompilerHost2')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
-        "RuntimeHostResourceId1" : "[concat(resourceId('Microsoft.Web/sites', variables('RuntimeHost1')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
-        "RuntimeHostResourceStaging1" : "[concat(resourceId('Microsoft.Web/sites', variables('RuntimeHost1')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
-        "RuntimeHostResourceId2" : "[concat(resourceId('Microsoft.Web/sites', variables('RuntimeHost2')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "CompilerHostResourceId1" : "[concat(resourceId('Microsoft.Web/sites', parameters('CompilerHost1')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "CompilerHostResourceStaging1" : "[concat(resourceId('Microsoft.Web/sites', parameters('CompilerHost1')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "CompilerHostResourceId2" : "[concat(resourceId('Microsoft.Web/sites', parameters('CompilerHost2')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "CompilerHostResourceStaging2" : "[concat(resourceId('Microsoft.Web/sites', parameters('CompilerHost2')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "RuntimeHostResourceId1" : "[concat(resourceId('Microsoft.Web/sites', parameters('RuntimeHost1')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "RuntimeHostResourceStaging1" : "[concat(resourceId('Microsoft.Web/sites', parameters('RuntimeHost1')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "RuntimeHostResourceId2" : "[concat(resourceId('Microsoft.Web/sites', parameters('RuntimeHost2')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
         "RuntimeHostResourceStaging2" : "[concat(resourceId('Microsoft.Web/sites', variables('RuntimeHost2')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]"
     },
     "resources": [
