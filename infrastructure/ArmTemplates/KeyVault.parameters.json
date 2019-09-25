@@ -1,0 +1,38 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "CompilerHost1":{
+            "reference": {
+              "keyVault": {
+                "id": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourcegroups/AppServiceDiagnosticsResources/providers/Microsoft.KeyVault/vaults/DevOpsDeploymentKV"
+              },
+              "secretName": "DiagCompilerhostNameEUAP"
+            }
+        },
+        "CompilerHost2":{
+            "reference": {
+              "keyVault": {
+                "id": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourcegroups/AppServiceDiagnosticsResources/providers/Microsoft.KeyVault/vaults/DevOpsDeploymentKV"
+              },
+              "secretName": "DiagCompilerhostNameWUS"
+            }
+        },
+        "RuntimeHost1":{
+            "reference": {
+              "keyVault": {
+                "id": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourcegroups/AppServiceDiagnosticsResources/providers/Microsoft.KeyVault/vaults/DevOpsDeploymentKV"
+              },
+              "secretName": "DiagRuntimehostNameEUAP"
+            }
+        },
+        "RuntimeHost2":{
+            "reference": {
+              "keyVault": {
+                "id": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourcegroups/AppServiceDiagnosticsResources/providers/Microsoft.KeyVault/vaults/DevOpsDeploymentKV"
+              },
+              "secretName": "DiagRuntimehostNameWUS"
+            }
+        }
+    }
+}
