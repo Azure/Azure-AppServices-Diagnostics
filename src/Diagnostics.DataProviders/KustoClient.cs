@@ -57,10 +57,6 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
         {
-            if(query!=null && query.Contains("Tenant in ()"))
-            {
-                throw new KustoTenantListEmptyException("KustoDataProvider", "Malformed Query: Query contains an empty tenant list.");
-            }
             return await ExecuteQueryAsync(query, cluster, database, DataProviderConstants.DefaultTimeoutInSeconds, requestId, operationName);
         }
 
@@ -99,6 +95,13 @@ namespace Diagnostics.DataProviders
 
                 if (!responseMsg.IsSuccessStatusCode)
                 {
+                    if ((int)responseMsg.StatusCode == 400)
+                    {
+                        if (query != null && query.Contains("Tenant in ()"))
+                        {
+                            throw new KustoTenantListEmptyException("KustoDataProvider", "Malformed Query: Query contains an empty tenant list.");
+                        }
+                    }
                     timeTakenStopWatch.Stop();
                     LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, new Exception($"Kusto call ended with a non success status code : {responseMsg.StatusCode.ToString()}"), dataSet, responseContent);
                     throw new Exception(responseContent);
