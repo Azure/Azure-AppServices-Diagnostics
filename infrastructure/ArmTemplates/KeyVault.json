@@ -23,7 +23,7 @@
         "RuntimeHostResourceId1" : "[concat(resourceId('Microsoft.Web/sites', parameters('RuntimeHost1')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
         "RuntimeHostResourceStaging1" : "[concat(resourceId('Microsoft.Web/sites', parameters('RuntimeHost1')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
         "RuntimeHostResourceId2" : "[concat(resourceId('Microsoft.Web/sites', parameters('RuntimeHost2')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
-        "RuntimeHostResourceStaging2" : "[concat(resourceId('Microsoft.Web/sites', variables('RuntimeHost2')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]"
+        "RuntimeHostResourceStaging2" : "[concat(resourceId('Microsoft.Web/sites', parameters('RuntimeHost2')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]"
     },
     "resources": [
         {
@@ -33,8 +33,8 @@
             "resourceGroup": "AppServiceDiagnosticsResources",
             "subscriptionId": "0e7b3183-4428-4c1f-93cd-cb2a26616a8a",
             "dependsOn": [
-              "[resourceId('Microsoft.Web/sites', variables('CompilerHost1'))]",
-              "[resourceId('Microsoft.Web/sites', variables('CompilerHost2'))]"
+              "[resourceId('Microsoft.Web/sites', parameters('CompilerHost1'))]",
+              "[resourceId('Microsoft.Web/sites', parameters('CompilerHost2'))]"
             ],
             "properties":{
               "mode": "Incremental",
@@ -109,8 +109,8 @@
             "resourceGroup": "AppServiceDiagnosticsResources",
             "subscriptionId": "0e7b3183-4428-4c1f-93cd-cb2a26616a8a",
             "dependsOn": [
-              "[resourceId('Microsoft.Web/sites', variables('RuntimeHost1'))]",
-              "[resourceId('Microsoft.Web/sites', variables('RuntimeHost2'))]"
+              "[resourceId('Microsoft.Web/sites', parameters('RuntimeHost1'))]",
+              "[resourceId('Microsoft.Web/sites', parameters('RuntimeHost2'))]"
             ],
             "properties":{
               "mode": "Incremental",
