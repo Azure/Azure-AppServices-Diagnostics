@@ -43,6 +43,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         private int _pollingIntervalInSeconds;
 
+        private bool _loadOnlyPublicDetectors;
+
         protected override Task FirstTimeCompletionTask => _firstTimeCompletionTask;
 
         protected override string SourceName => "GitHub";
@@ -68,8 +70,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             #region Initialize Github Worker
 
             // TODO: Register the github worker with destination path.
-            var gistWorker = new GithubGistWorker(gistCache);
-            var detectorWorker = new GithubDetectorWorker(invokerCache);
+            var gistWorker = new GithubGistWorker(gistCache, _loadOnlyPublicDetectors);
+            var detectorWorker = new GithubDetectorWorker(invokerCache, _loadOnlyPublicDetectors);
 
             GithubWorkers = new Dictionary<string, IGithubWorker>
             {
@@ -87,7 +89,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// </summary>
         public override void Start()
         {
-            _firstTimeCompletionTask = StartWatcherInternal();
+            _firstTimeCompletionTask = StartWatcherInternal(true);
             StartPollingForChanges();
         }
 
@@ -110,7 +112,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// Start github watcher
         /// </summary>
         /// <returns>Task for starting watcher.</returns>
-        private async Task StartWatcherInternal()
+        private async Task StartWatcherInternal(bool startup)
         {
             try
             {
@@ -142,18 +144,31 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                      * This codepath will be mostly used when the process restarts or machine reboot (and no changes are done in scripts source).
                      */
                     LogMessage($"Checking if any invoker present locally needs to be added in cache");
-                    foreach (DirectoryInfo subDir in destDirInfo.EnumerateDirectories())
+                    var directories = destDirInfo.EnumerateDirectories();
+                    List<Task> tasks = new List<Task>(directories.Count());
+                    foreach (DirectoryInfo subDir in directories)
                     {
                         var workerId = await GetWorkerIdAsync(subDir);
 
                         if (GithubWorkers.ContainsKey(workerId))
                         {
-                            await GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir);
+                            if (startup)
+                            {
+                                tasks.Add(GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir));
+                            }
+                            else
+                            {
+                                await GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir);
+                            }
                         }
                         else
                         {
                             LogWarning($"Cannot find github worker with id {workerId}. Directory: {subDir.FullName}.");
                         }
+                    }
+                    if (startup)
+                    {
+                        await Task.WhenAll(tasks);
                     }
 
                     return;
@@ -163,6 +178,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 var githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
                 var githubDirectories = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
 
+                List<Task> downloadContentUpdateCacheAndModifiedMarkerTasks = new List<Task>();
                 foreach (var gitHubDir in githubDirectories)
                 {
                     if (!gitHubDir.Type.Equals("dir", StringComparison.OrdinalIgnoreCase)) continue;
@@ -196,17 +212,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
                     LogMessage($"Detected changes in Github Folder : {gitHubDir.Name.ToLower()}. Syncing it locally ...");
 
-                    try
-                    {
-                        // Specifically catching exceptions for downloading and loading assembilies for every detector.
-                        await DownloadContentAndUpdateCache(gitHubDir, subDir, gitHubDir.Name);
-                        await FileHelper.WriteToFileAsync(subDir.FullName, _lastModifiedMarkerName, gitHubDir.Sha);
-                    }
-                    catch (Exception downloadEx)
-                    {
-                        LogException(downloadEx.Message, downloadEx);
-                    }
+                    downloadContentUpdateCacheAndModifiedMarkerTasks.Add(DownloadContentAndUpdateCacheAndModifiedMarker(gitHubDir, subDir));
                 }
+
+                await Task.WhenAll(downloadContentUpdateCacheAndModifiedMarkerTasks);
 
                 await SyncLocalDirForDeletedEntriesInGitHub(githubDirectories, destDirInfo);
 
@@ -222,6 +231,20 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             }
         }
 
+        private async Task DownloadContentAndUpdateCacheAndModifiedMarker(GithubEntry gitHubDir, DirectoryInfo subDir)
+        {
+            try
+            {
+                // Specifically catching exceptions for downloading and loading assembilies for every detector.
+                await DownloadContentAndUpdateCache(gitHubDir, subDir, gitHubDir.Name);
+                await FileHelper.WriteToFileAsync(subDir.FullName, _lastModifiedMarkerName, gitHubDir.Sha);
+            }
+            catch (Exception downloadEx)
+            {
+                LogException(downloadEx.Message, downloadEx);
+            }
+        }
+
         private async void StartPollingForChanges()
         {
             await _firstTimeCompletionTask;
@@ -229,7 +252,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             do
             {
                 await Task.Delay(_pollingIntervalInSeconds * 1000);
-                await StartWatcherInternal();
+                await StartWatcherInternal(false);
             } while (true);
         }
 
@@ -388,6 +411,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             
             _destinationCsxPath = (_config[$"SourceWatcher:Github:{RegistryConstants.DestinationScriptsPathKey}"]).ToString();
             pollingIntervalvalue = (_config[$"SourceWatcher:{RegistryConstants.PollingIntervalInSecondsKey}"]).ToString();
+
+            if (!bool.TryParse((_config[$"SourceWatcher:{RegistryConstants.LoadOnlyPublicDetectorsKey}"]), out _loadOnlyPublicDetectors))
+            {
+                _loadOnlyPublicDetectors = false;
+            }
 
             if (!int.TryParse(pollingIntervalvalue, out _pollingIntervalInSeconds))
             {

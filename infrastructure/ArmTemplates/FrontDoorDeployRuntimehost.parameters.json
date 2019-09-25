@@ -1,0 +1,17 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "frontDoorName": {
+            "value": "diag-runtimehost"
+        },
+        "backendAddress": {
+            "reference": {
+              "keyVault": {
+                "id": "/subscriptions/474eaba6-0f3f-4b5a-bae5-a7858bd7c53b/resourceGroups/real-stuff/providers/Microsoft.KeyVault/vaults/DiagDeployment"
+              },
+              "secretName": "DiagRuntimehostBackendName1"
+            }
+        }
+    }
+}

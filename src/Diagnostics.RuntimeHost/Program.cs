@@ -8,6 +8,7 @@ using Diagnostics.DataProviders;
 using System;
 using Microsoft.CodeAnalysis;
 using Diagnostics.DataProviders.Utility;
+using Diagnostics.Logger;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -15,7 +16,24 @@ namespace Diagnostics.RuntimeHost
     {
         public static void Main(string[] args)
         {
-            BuildWebHost(args).Run();
+            try
+            {
+                BuildWebHost(args).Run();
+            }
+            catch (Exception ex)
+            {
+                //Log unhandled exceptions on startup
+                DiagnosticsETWProvider.Instance.LogRuntimeHostUnhandledException(
+                    string.Empty,
+                    "LogException_Startup",
+                    string.Empty,
+                    string.Empty,
+                    string.Empty,
+                    ex.GetType().ToString(),
+                    ex.ToString());
+            
+                throw;
+            }
         }
 
         public static IWebHost BuildWebHost(string[] args)
