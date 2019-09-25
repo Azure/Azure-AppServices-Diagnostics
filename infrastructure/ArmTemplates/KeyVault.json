@@ -16,14 +16,14 @@
       }
     },
     "variables": {
-        "CompilerHostResourceId1" : "[concat(resourceId('Microsoft.Web/sites', parameters('CompilerHost1')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
-        "CompilerHostResourceStaging1" : "[concat(resourceId('Microsoft.Web/sites', parameters('CompilerHost1')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
-        "CompilerHostResourceId2" : "[concat(resourceId('Microsoft.Web/sites', parameters('CompilerHost2')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
-        "CompilerHostResourceStaging2" : "[concat(resourceId('Microsoft.Web/sites', parameters('CompilerHost2')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
-        "RuntimeHostResourceId1" : "[concat(resourceId('Microsoft.Web/sites', parameters('RuntimeHost1')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
-        "RuntimeHostResourceStaging1" : "[concat(resourceId('Microsoft.Web/sites', parameters('RuntimeHost1')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
-        "RuntimeHostResourceId2" : "[concat(resourceId('Microsoft.Web/sites', parameters('RuntimeHost2')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
-        "RuntimeHostResourceStaging2" : "[concat(resourceId('Microsoft.Web/sites', parameters('RuntimeHost2')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]"
+        "CompilerHostResourceId1" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'CompilerHost-RG', 'Microsoft.Web/sites', parameters('CompilerHost1')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "CompilerHostResourceStaging1" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'CompilerHost-RG', 'Microsoft.Web/sites', parameters('CompilerHost1')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "CompilerHostResourceId2" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'CompilerHost-RG', 'Microsoft.Web/sites', parameters('CompilerHost2')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "CompilerHostResourceStaging2" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'CompilerHost-RG', 'Microsoft.Web/sites', parameters('CompilerHost2')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "RuntimeHostResourceId1" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'RuntimeHost-RG', 'Microsoft.Web/sites', parameters('RuntimeHost1')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "RuntimeHostResourceStaging1" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'RuntimeHost-RG', 'Microsoft.Web/sites', parameters('RuntimeHost1')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "RuntimeHostResourceId2" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'RuntimeHost-RG', 'Microsoft.Web/sites', parameters('RuntimeHost2')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "RuntimeHostResourceStaging2" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'RuntimeHost-RG', 'Microsoft.Web/sites', parameters('RuntimeHost2')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]"
     },
     "resources": [
         {
