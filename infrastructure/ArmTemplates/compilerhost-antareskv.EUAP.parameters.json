@@ -32,7 +32,7 @@
             "value" : "Diag-CompilerHost-ProdKV"
         },
         "keyVaultLocation":{
-            "value" : "Central US"
+            "value" : "northcentralus"
         },
         "genevaCertContent": {
             "reference": {
