@@ -22,6 +22,7 @@
                 "type": "Microsoft.Resources/deployments",
                 "apiVersion": "2017-05-10",
                 "name": "linkedTemplate2",
+                "resourceGroup": "CompilerHost-RG",
                 "properties": {
                     "mode": "Incremental",
                     "templateLink": {
