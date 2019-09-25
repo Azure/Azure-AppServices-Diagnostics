@@ -55,7 +55,7 @@
             "value": "DiagWebAppWarm"
         },
         "monitoringGcsNamespace": {
-            "value": "WebAppWarmCUS"
+            "value": "WebAppWarmEUS"
         },
         "monitoringConfigVersion": {
             "value": "1.0"
