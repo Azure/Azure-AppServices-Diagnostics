@@ -216,6 +216,22 @@
               {
                 "Name": "WEBSITE_NODE_DEFAULT_VERSION",
                 "Value": "6.7.0"
+              },
+              {
+                "Name": "ASPNETCORE_ENVIRONMENT",
+                "Value": "Staging"
+              },
+              {
+                "Name": "WEBSITE_LOCAL_CACHE_OPTION",
+                "Value": "Always"
+              },
+              {
+                "Name": "WEBSITE_LOCAL_CACHE_SIZEINMB",
+                "Value": "300"
+              },
+              {
+                "Name": "WEBSITE_SWAP_WARMUP_PING_PATH",
+                "Value": "[parameters('pingPath')]"
               }
             ]
           }
@@ -251,6 +267,22 @@
                   {
                     "Name": "WEBSITE_FIRST_PARTY_ID",
                     "Value": "AntMDS"
+                  },
+                  {
+                    "Name": "ASPNETCORE_ENVIRONMENT",
+                    "Value": "Staging"
+                  },
+                  {
+                    "Name": "WEBSITE_LOCAL_CACHE_OPTION",
+                    "Value": "Always"
+                  },
+                  {
+                    "Name": "WEBSITE_LOCAL_CACHE_SIZEINMB",
+                    "Value": "300"
+                  },
+                  {
+                    "Name": "WEBSITE_SWAP_WARMUP_PING_PATH",
+                    "Value": "[parameters('pingPath')]"
                   }
                 ]
               }
