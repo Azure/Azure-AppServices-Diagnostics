@@ -8,7 +8,16 @@
                 "description": "The name of the frontdoor resource."
             }
         },
-        "backendAddress": {
+        "healthPingPath": {
+            "type": "string"
+        },
+        "backendAddress1": {
+            "type": "string",
+            "metadata": {
+                "description": "The hostname of the backend. Must be an IP address or FQDN."
+            }
+        },
+        "backendAddress2": {
             "type": "string",
             "metadata": {
                 "description": "The hostname of the backend. Must be an IP address or FQDN."
@@ -17,7 +26,8 @@
     },
     "variables": {
         "frontdoorLocation": "global",
-        "backendAddress": "[concat(parameters('backendAddress'),'.azurewebsites.net')]"
+        "backendAddress1": "[concat(parameters('backendAddress1'),'.azurewebsites.net')]",
+        "backendAddress2": "[concat(parameters('backendAddress2'),'.azurewebsites.net')]"
     },
     "resources": [
         {
@@ -58,7 +68,7 @@
                     {
                         "name": "healthProbeSettings1",
                         "properties": {
-                            "path": "/healthping",
+                            "path": "[parameters('healthPingPath')]",
                             "protocol": "Https",
                             "intervalInSeconds": 10
                         }
@@ -79,8 +89,17 @@
                         "properties": {
                             "backends": [
                                 {
-                                    "address": "[variables('backendAddress')]",
-                                    "backendHostHeader": "[variables('backendAddress')]",
+                                    "address": "[variables('backendAddress1')]",
+                                    "backendHostHeader": "[variables('backendAddress1')]",
+                                    "httpPort": 80,
+                                    "httpsPort": 443,
+                                    "weight": 50,
+                                    "priority": 1,
+                                    "enabledState": "Enabled"
+                                },
+                                {
+                                    "address": "[variables('backendAddress2')]",
+                                    "backendHostHeader": "[variables('backendAddress2')]",
                                     "httpPort": 80,
                                     "httpsPort": 443,
                                     "weight": 50,

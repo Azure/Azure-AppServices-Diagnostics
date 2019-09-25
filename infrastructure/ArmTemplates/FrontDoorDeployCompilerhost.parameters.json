@@ -3,17 +3,17 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "frontDoorName": {
-            "value": "diag-runtimehost"
+            "value": "diag-compilerhost"
         },
         "healthPingPath":{
-          "value": "/healthping"
+            "value": "/api/CompilerHost/healthping"
         },
         "backendAddress1": {
             "reference": {
               "keyVault": {
                 "id": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourcegroups/AppServiceDiagnosticsResources/providers/Microsoft.KeyVault/vaults/DevOpsDeploymentKV"
               },
-              "secretName": "DiagRuntimehostNameWUS"
+              "secretName": "DiagCompilerhostNameWUS"
             }
         },
         "backendAddress2": {
@@ -21,7 +21,7 @@
             "keyVault": {
               "id": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourcegroups/AppServiceDiagnosticsResources/providers/Microsoft.KeyVault/vaults/DevOpsDeploymentKV"
             },
-            "secretName": "DiagRuntimehostNameEUAP"
+            "secretName": "DiagCompilerhostNameEUAP"
           }
       }
     }
