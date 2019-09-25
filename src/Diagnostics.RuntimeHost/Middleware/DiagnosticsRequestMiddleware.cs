@@ -29,6 +29,7 @@ namespace Diagnostics.RuntimeHost.Middleware
         {
             Exception exception = null;
             int statusCode = 0;
+            string responseMessage = null;
             GenerateMissingRequestHeaders(httpContext);
             BeginRequestHandle(httpContext);
 
@@ -44,7 +45,8 @@ namespace Diagnostics.RuntimeHost.Middleware
             catch (ASETenantListEmptyException ex)
             {
                 exception = ex;
-                statusCode = (int)HttpStatusCode.NotFound;
+                statusCode = 424;
+                responseMessage = ErrorMessages.ASETenantListEmptyErrorMessage;
             }
             catch (Exception ex)
             {
@@ -57,6 +59,10 @@ namespace Diagnostics.RuntimeHost.Middleware
                 {
                     httpContext.Response.Clear();
                     httpContext.Response.StatusCode = statusCode;
+                    if (responseMessage != null)
+                    {
+                        httpContext.Response.WriteAsync(responseMessage);
+                    }
                     LogException(httpContext, exception);
                 }
 

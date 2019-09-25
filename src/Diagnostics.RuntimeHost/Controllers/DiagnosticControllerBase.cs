@@ -306,18 +306,26 @@ namespace Diagnostics.RuntimeHost.Controllers
                         queryRes.RuntimeSucceeded = true;
                         queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse, dataProvidersMetadata, utterancesResults);
                     }
-                    catch (KustoTenantListEmptyException ex)
-                    {
-                        if (resource as IResource is HostingEnvironment env)
-                        {
-                            if(env.TenantIdList != null && env.TenantIdList.Count() == 0)
-                            {
-                                throw new ASETenantListEmptyException("KustoExecuteQuery", "Tenant List is Empty for ASE");
-                            }
-                        }
-                    }
                     catch (Exception ex)
                     {
+                        if (ex.InnerException is KustoTenantListEmptyException)
+                        {
+                            if (
+                                   (
+                                   // Resource is ASE
+                                    resource as IResource is HostingEnvironment env && (env.TenantIdList != null && env.TenantIdList.Count() == 0)
+                                   )
+                                   ||
+                                   (
+                                   // Resource is app in a Stamp of type ASE V1 or V2
+                                    (resource as IResource is App currentApp && ((currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V1) || (currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V2)))
+                                    && (currentApp.Stamp.TenantIdList != null && currentApp.Stamp.TenantIdList.Count() == 0)
+                                   )
+                               )
+                            {
+                                throw new ASETenantListEmptyException("KustoExecuteQuery", "Tenant List is empty for the App Service Environment.");
+                            }
+                        }
                         if (isInternalCall)
                         {
                             queryRes.RuntimeSucceeded = false;
