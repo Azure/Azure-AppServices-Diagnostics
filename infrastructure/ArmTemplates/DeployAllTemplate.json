@@ -109,6 +109,27 @@
                     "count": "[length(variables('AppServices'))]",
                     "name": "linkedTemplateTopCopy"
                 }
+            },
+            {
+                "type": "Microsoft.Resources/deployments",
+                "apiVersion": "2017-05-10",
+                "name": "[concat('linkedTemplateFrontDoor', copyIndex())]",
+                "resourceGroup": "[variables('AppServices')[copyIndex()].ResourceGroup]",
+                "properties": {
+                    "mode": "Incremental",
+                    "templateLink": {
+                        "uri": "[concat(variables('TemplateBaseURI'),'FrontDoorDeploy.json')]"
+                    },
+                    "parameters": {
+                        "sites":{"value": "[variables('AppServices')[copyIndex()].Apps]"},
+                        "frontDoorName":{"value": "[variables('AppServices')[copyIndex()].ResourceGroup]"},
+                        "healthPingPath":{"value": "[variables('AppServices')[copyIndex()].pingPath]"}
+                    }
+                },
+                "copy": {
+                    "count": "[length(variables('AppServices'))]",
+                    "name": "linkedTemplateFrontDoorCopy"
+                }
             }
         ]
 }

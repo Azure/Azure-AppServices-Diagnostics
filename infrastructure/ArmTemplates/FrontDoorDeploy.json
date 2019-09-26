@@ -11,23 +11,15 @@
         "healthPingPath": {
             "type": "string"
         },
-        "backendAddress1": {
-            "type": "string",
+        "sites": {
+            "type": "array",
             "metadata": {
-                "description": "The hostname of the backend. Must be an IP address or FQDN."
-            }
-        },
-        "backendAddress2": {
-            "type": "string",
-            "metadata": {
-                "description": "The hostname of the backend. Must be an IP address or FQDN."
+                "description": "array of hostnames."
             }
         }
     },
     "variables": {
-        "frontdoorLocation": "global",
-        "backendAddress1": "[concat(parameters('backendAddress1'),'.azurewebsites.net')]",
-        "backendAddress2": "[concat(parameters('backendAddress2'),'.azurewebsites.net')]"
+        "frontdoorLocation": "global"
     },
     "resources": [
         {
@@ -87,24 +79,18 @@
                     {
                         "name": "backendPool1",
                         "properties": {
-                            "backends": [
+                            "copy": [
                                 {
-                                    "address": "[variables('backendAddress1')]",
-                                    "backendHostHeader": "[variables('backendAddress1')]",
-                                    "httpPort": 80,
-                                    "httpsPort": 443,
-                                    "weight": 50,
-                                    "priority": 1,
-                                    "enabledState": "Enabled"
-                                },
-                                {
-                                    "address": "[variables('backendAddress2')]",
-                                    "backendHostHeader": "[variables('backendAddress2')]",
-                                    "httpPort": 80,
-                                    "httpsPort": 443,
-                                    "weight": 50,
-                                    "priority": 1,
-                                    "enabledState": "Enabled"
+                                    "name": "backends",
+                                    "count": "[length(parameters('sites'))]",
+                                    "input": {
+                                        "address": "[concat(parameters('sites')[copyIndex()].siteName,'.azurewebsites.net')]",
+                                        "httpPort": 80,
+                                        "httpsPort": 443,
+                                        "weight": 50,
+                                        "priority": 1,
+                                        "enabledState": "Enabled"
+                                    }
                                 }
                             ],
                             "loadBalancingSettings": {
