@@ -127,7 +127,8 @@
                     }
                 },
                 "copy": {
-                    "count": "[length(parameters('AppServices'))]"
+                    "count": "[length(parameters('AppServices'))]",
+                    "name": "linkedTemplateMiddleCopy"
                 }
             }
         ]

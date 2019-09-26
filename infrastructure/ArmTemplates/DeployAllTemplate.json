@@ -106,7 +106,8 @@
                     }
                 },
                 "copy": {
-                    "count": "[length(variables('AppServices'))]"
+                    "count": "[length(variables('AppServices'))]",
+                    "name": "linkedTemplateTopCopy"
                 }
             }
         ]
