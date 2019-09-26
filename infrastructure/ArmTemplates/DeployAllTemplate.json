@@ -1,37 +1,112 @@
 {
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "parameters": {},
-    "variables": {},
+    "parameters": {
+        "genevaCertContent": {
+            "type": "securestring",
+            "metadata": {
+              "description": "The PFX to be put in the AntMDS certificate store to be used to decrypt the encrypted storage account key and authenticate to MDM."
+            }
+        },
+        "CompilerHost1":{
+            "type" :"string"
+        },
+        "CompilerHost2":{
+            "type" :"string"
+        },
+        "RuntimeHost1":{
+            "type" :"string"
+        },
+        "RuntimeHost2":{
+            "type" :"string"
+        }
+    },
+    "variables": {
+        "AppServices": 
+        [
+            {
+                "ResourceGroup" : "CompilerHost-RG",
+                "pingPath":"/api/CompilerHost/healthping",
+                "FrontDoorName": "diag-compilerhost",
+                "Apps":
+                [
+                    {
+                        "appServicePlanName":  "CompilerHost-ASP-EUAP-001",
+                        "location" : "East US 2 EUAP",
+                        "siteName": "[parameters('CompilerHost1')]",
+                        "monitoringGcsNamespace": "WebAppWarmEUS"
+                    },
+                    {
+                        "appServicePlanName":  "CompilerHost-ASP-BAY-001",
+                        "location" : "West US",
+                        "siteName": "[parameters('CompilerHost2')]",
+                        "monitoringGcsNamespace": "WebAppWarmWUS"
+                    }
+                ]
+            },
+            {
+
+                "ResourceGroup" : "RuntimeHost-RG",
+                "pingPath":"/healthping",
+                "FrontDoorName": "diag-runtimehost",
+                "Apps":
+                [
+                    {
+                        "appServicePlanName":  "RuntimeHost-ASP-EUAP-001",
+                        "location" : "East US 2 EUAP",
+                        "siteName": "[parameters('RuntimeHost1')]",
+                        "monitoringGcsNamespace": "WebAppWarmEUS"
+                    },
+                    {
+                        "appServicePlanName":  "RuntimeHost-ASP-BAY-001",
+                        "location" : "West US",
+                        "siteName": "[parameters('RuntimeHost2')]",
+                        "monitoringGcsNamespace": "WebAppWarmWUS"
+                    }
+                ]
+            
+            }
+        ],
+        "SKU": "P2V2",
+        "subscriptionId": "0e7b3183-4428-4c1f-93cd-cb2a26616a8a",
+        "monitoringGcsAuthId": "diag-logging-sample.azurewebsites.net.geneva.keyvault.diag-logging-sample.azurewebsites.net",
+        "monitoringTenant": "GSMonAntares",
+        "monitoringRole": "DiagWebAppWarm",
+        "monitoringGcsEnvironment": "Diagnostics Prod",
+        "monitoringGcsAccount": "DiagWebAppWarm",
+        "monitoringConfigVersion": "1.0",
+        "TemplateBaseURI": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/"
+    },
     "resources": [
             {
                 "type": "Microsoft.Resources/deployments",
                 "apiVersion": "2017-05-10",
-                "name": "linkedTemplate",
-                "resourceGroup": "RuntimeHost-RG",
+                "name": "[concat('linkedTemplateTop', copyIndex())]",
+                "resourceGroup": "[variables('AppServices')[copyIndex()].ResourceGroup]",
                 "properties": {
                     "mode": "Incremental",
-                    "templateLink": {
-                        "uri": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/antareskvtemplate.json"
+                    "template": {
+                        "uri": "[concat(variables('TemplateBaseURI'),'DeployAppServices.json')]"
                     },
-                    "parametersLink": {
-                        "uri": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/runtimehost-antareskv.EUAP.parameters.json"
+                    "parameters": {
+                        "AppServices":{"value": "[variables('AppServices')[copyIndex()].Apps]"},
+                        "appServicePlanResourceGroup":{"value": "[variables('AppServices')[copyIndex()].ResourceGroup]"},
+                        "pingPath":{"value": "[variables('AppServices')[copyIndex()].pingPath]"},
+                        "subscriptionId":{"value": "[variables('subscriptionId')]"},
+                        "sku":{"value": "[variables('sku')]"},
+                        "alwaysOn":{"value": true},
+                        "genevaCertContent":{"value": "[parameters('genevaCertContent')]"},  
+                        "monitoringTenant":{"value": "[variables('monitoringTenant')]"},
+                        "monitoringRole":{"value": "[variables('monitoringRole')]"},
+                        "monitoringGcsEnvironment":{"value": "[variables('monitoringGcsEnvironment')]"},
+                        "monitoringGcsAccount":{"value": "[variables('monitoringGcsAccount')]"},
+                        "monitoringGcsAuthId":{"value": "[variables('monitoringGcsAuthId')]"},
+                        "monitoringConfigVersion":{"value": "[variables('monitoringConfigVersion')]"},
+                        "TemplateBaseURI":{"value": "[variables('TemplateBaseURI')]"}
                     }
-                }
-            },
-            {
-                "type": "Microsoft.Resources/deployments",
-                "apiVersion": "2017-05-10",
-                "name": "linkedTemplate2",
-                "resourceGroup": "CompilerHost-RG",
-                "properties": {
-                    "mode": "Incremental",
-                    "templateLink": {
-                        "uri": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/antareskvtemplate.json"
-                    },
-                    "parametersLink": {
-                        "uri": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/compilerhost-antareskv.EUAP.parameters.json"
-                    }
+                },
+                "copy": {
+                    "count": "[length(variables('AppServices'))]"
                 }
             }
         ]
