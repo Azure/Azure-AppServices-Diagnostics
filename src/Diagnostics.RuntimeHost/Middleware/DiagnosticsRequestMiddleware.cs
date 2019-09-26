@@ -61,7 +61,7 @@ namespace Diagnostics.RuntimeHost.Middleware
                     httpContext.Response.StatusCode = statusCode;
                     if (responseMessage != null)
                     {
-                        httpContext.Response.WriteAsync(responseMessage);
+                        await httpContext.Response.WriteAsync(responseMessage).ConfigureAwait(false);
                     }
                     LogException(httpContext, exception);
                 }

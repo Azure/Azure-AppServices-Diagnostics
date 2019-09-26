@@ -313,13 +313,13 @@ namespace Diagnostics.RuntimeHost.Controllers
                             if (
                                    (
                                    // Resource is ASE
-                                    resource as IResource is HostingEnvironment env && (env.TenantIdList != null && env.TenantIdList.Count() == 0)
+                                    resource as IResource is HostingEnvironment env && (env.TenantIdList != null && !env.TenantIdList.Any())
                                    )
                                    ||
                                    (
                                    // Resource is app in a Stamp of type ASE V1 or V2
                                     (resource as IResource is App currentApp && ((currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V1) || (currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V2)))
-                                    && (currentApp.Stamp.TenantIdList != null && currentApp.Stamp.TenantIdList.Count() == 0)
+                                    && (currentApp.Stamp.TenantIdList != null && !currentApp.Stamp.TenantIdList.Any())
                                    )
                                )
                             {
@@ -697,10 +697,35 @@ namespace Diagnostics.RuntimeHost.Controllers
                 IsInternalCall = context.OperationContext.IsInternalCall
             };
 
-            var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
-            response.UpdateDetectorStatusFromInsights();
+            try
+            {
+                var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
+                response.UpdateDetectorStatusFromInsights();
 
-            return new Tuple<Response, List<DataProviderMetadata>>(response, dataProvidersMetadata);
+                return new Tuple<Response, List<DataProviderMetadata>>(response, dataProvidersMetadata);
+            }
+            catch (Exception ex)
+            {
+                if (ex.InnerException is KustoTenantListEmptyException)
+                {
+                    if (
+                           (
+                            // Resource is ASE
+                            context.OperationContext.Resource as IResource is HostingEnvironment env && (env.TenantIdList != null && !env.TenantIdList.Any())
+                           )
+                           ||
+                           (
+                            // Resource is app in a Stamp of type ASE V1 or V2
+                            (context.OperationContext.Resource as IResource is App currentApp && ((currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V1) || (currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V2)))
+                            && (currentApp.Stamp.TenantIdList != null && !currentApp.Stamp.TenantIdList.Any())
+                           )
+                       )
+                    {
+                        throw new ASETenantListEmptyException("KustoExecuteQuery", "Tenant List is empty for the App Service Environment.");
+                    }
+                }
+                throw;
+            }
         }
 
         private async Task<IEnumerable<AzureSupportCenterInsight>> GetInsightsFromDetector(RuntimeContext<TResource> context, Definition detector, List<Definition> detectorsRun)
