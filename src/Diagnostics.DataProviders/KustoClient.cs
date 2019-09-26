@@ -95,6 +95,8 @@ namespace Diagnostics.DataProviders
 
                 if (!responseMsg.IsSuccessStatusCode)
                 {
+                    timeTakenStopWatch.Stop();
+                    LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, new Exception($"Kusto call ended with a non success status code : {responseMsg.StatusCode.ToString()}"), dataSet, responseContent);
                     if ((int)responseMsg.StatusCode == 400)
                     {
                         if (query != null && query.Contains("Tenant in ()"))
@@ -102,8 +104,6 @@ namespace Diagnostics.DataProviders
                             throw new KustoTenantListEmptyException("KustoDataProvider", "Malformed Query: Query contains an empty tenant list.");
                         }
                     }
-                    timeTakenStopWatch.Stop();
-                    LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, new Exception($"Kusto call ended with a non success status code : {responseMsg.StatusCode.ToString()}"), dataSet, responseContent);
                     throw new Exception(responseContent);
                 }
                 else
