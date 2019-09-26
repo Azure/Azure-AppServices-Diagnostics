@@ -139,7 +139,7 @@
                 "apiVersion": "2017-05-10",
                 "name": "[concat('linkedTemplateKeyVault', copyIndex())]",
                 "dependsOn": [
-                    "[resourceId('Microsoft.Resources/deployments', concat('linkedTemplateTop', copyIndex()))]"
+                    "[resourceId(variables('subscriptionId'), variables('AppServices')[copyIndex()].ResourceGroup, 'Microsoft.Resources/deployments', concat('linkedTemplateTop', copyIndex()))]"
                   ],
                 "resourceGroup": "AppServiceDiagnosticsResources",
                 "subscriptionId": "[variables('subscriptionId')]",
