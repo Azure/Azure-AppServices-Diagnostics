@@ -14,7 +14,7 @@
         "sites": {
             "type": "array",
             "metadata": {
-                "description": "array of hostnames."
+                "description": "array of objects with a siteName property."
             }
         }
     },
