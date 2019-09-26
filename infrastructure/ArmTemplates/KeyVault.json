@@ -1,0 +1,174 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "CompilerHost1":{
+        "type" :"string"
+      },
+      "CompilerHost2":{
+        "type" :"string"
+      },
+      "RuntimeHost1":{
+        "type" :"string"
+      },
+      "RuntimeHost2":{
+        "type" :"string"
+      }
+    },
+    "variables": {
+        "CompilerHostResourceId1" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'CompilerHost-RG', 'Microsoft.Web/sites', parameters('CompilerHost1')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "CompilerHostResourceStaging1" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'CompilerHost-RG', 'Microsoft.Web/sites', parameters('CompilerHost1')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "CompilerHostResourceId2" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'CompilerHost-RG', 'Microsoft.Web/sites', parameters('CompilerHost2')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "CompilerHostResourceStaging2" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'CompilerHost-RG', 'Microsoft.Web/sites', parameters('CompilerHost2')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "RuntimeHostResourceId1" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'RuntimeHost-RG', 'Microsoft.Web/sites', parameters('RuntimeHost1')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "RuntimeHostResourceStaging1" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'RuntimeHost-RG', 'Microsoft.Web/sites', parameters('RuntimeHost1')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "RuntimeHostResourceId2" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'RuntimeHost-RG', 'Microsoft.Web/sites', parameters('RuntimeHost2')),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+        "RuntimeHostResourceStaging2" : "[concat(resourceId('0e7b3183-4428-4c1f-93cd-cb2a26616a8a', 'RuntimeHost-RG', 'Microsoft.Web/sites', parameters('RuntimeHost2')),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-05-10",
+            "name": "nestedTemplate",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "AppServiceDiagnosticsResources",
+            "subscriptionId": "0e7b3183-4428-4c1f-93cd-cb2a26616a8a",
+            "properties":{
+              "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                          "type": "Microsoft.KeyVault/vaults",
+                          "name": "Diag-CompilerHost-ProdKV",
+                          "apiVersion": "2015-06-01",
+                          "location": "northcentralus",
+                          "tags": {},
+                          "properties": {
+                              "sku": {
+                                  "family": "A",
+                                  "name": "Standard"
+                              },
+                              "tenantId": "[reference(variables('CompilerHostResourceId1'), '2015-08-31-PREVIEW').tenantId]",
+                              "accessPolicies": [
+                                  {
+                                      "tenantId": "[reference(variables('CompilerHostResourceId1'), '2015-08-31-PREVIEW').tenantId]",
+                                      "objectId": "[reference(variables('CompilerHostResourceId1'), '2015-08-31-PREVIEW').principalId]",
+                                      "permissions": {
+                                          "secrets": [
+                                              "get","list"
+                                          ]
+                                      }
+                                  },
+                                  {
+                                    "tenantId": "[reference(variables('CompilerHostResourceStaging1'), '2015-08-31-PREVIEW').tenantId]",
+                                    "objectId": "[reference(variables('CompilerHostResourceStaging1'), '2015-08-31-PREVIEW').principalId]",
+                                    "permissions": {
+                                        "secrets": [
+                                            "get","list"
+                                        ]
+                                    }
+                                  },
+                                  {
+                                    "tenantId": "[reference(variables('CompilerHostResourceId2'), '2015-08-31-PREVIEW').tenantId]",
+                                    "objectId": "[reference(variables('CompilerHostResourceId2'), '2015-08-31-PREVIEW').principalId]",
+                                    "permissions": {
+                                        "secrets": [
+                                            "get","list"
+                                        ]
+                                    }
+                                },
+                                {
+                                  "tenantId": "[reference(variables('CompilerHostResourceStaging2'), '2015-08-31-PREVIEW').tenantId]",
+                                  "objectId": "[reference(variables('CompilerHostResourceStaging2'), '2015-08-31-PREVIEW').principalId]",
+                                  "permissions": {
+                                      "secrets": [
+                                          "get","list"
+                                      ]
+                                  }
+                                }
+                                  
+                              ],
+                              "enabledForDeployment": false
+                          }
+                        }
+                    ]
+                }
+            }
+          },
+          {
+            "apiVersion": "2017-05-10",
+            "name": "nestedTemplate2",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "AppServiceDiagnosticsResources",
+            "subscriptionId": "0e7b3183-4428-4c1f-93cd-cb2a26616a8a",
+            "properties":{
+              "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                          "type": "Microsoft.KeyVault/vaults",
+                          "name": "AppServiceDiagnosticsKV",
+                          "apiVersion": "2015-06-01",
+                          "location": "West US",
+                          "tags": {},
+                          "properties": {
+                              "sku": {
+                                  "family": "A",
+                                  "name": "Standard"
+                              },
+                              "tenantId": "[reference(variables('RuntimeHostResourceId1'), '2015-08-31-PREVIEW').tenantId]",
+                              "accessPolicies": [
+                                  {
+                                      "tenantId": "[reference(variables('RuntimeHostResourceId1'), '2015-08-31-PREVIEW').tenantId]",
+                                      "objectId": "[reference(variables('RuntimeHostResourceId1'), '2015-08-31-PREVIEW').principalId]",
+                                      "permissions": {
+                                          "secrets": [
+                                              "get","list"
+                                          ]
+                                      }
+                                  },
+                                  {
+                                    "tenantId": "[reference(variables('RuntimeHostResourceStaging1'), '2015-08-31-PREVIEW').tenantId]",
+                                    "objectId": "[reference(variables('RuntimeHostResourceStaging1'), '2015-08-31-PREVIEW').principalId]",
+                                    "permissions": {
+                                        "secrets": [
+                                            "get","list"
+                                        ]
+                                    }
+                                  },
+                                  {
+                                    "tenantId": "[reference(variables('RuntimeHostResourceId2'), '2015-08-31-PREVIEW').tenantId]",
+                                    "objectId": "[reference(variables('RuntimeHostResourceId2'), '2015-08-31-PREVIEW').principalId]",
+                                    "permissions": {
+                                        "secrets": [
+                                            "get","list"
+                                        ]
+                                    }
+                                },
+                                {
+                                  "tenantId": "[reference(variables('RuntimeHostResourceStaging2'), '2015-08-31-PREVIEW').tenantId]",
+                                  "objectId": "[reference(variables('RuntimeHostResourceStaging2'), '2015-08-31-PREVIEW').principalId]",
+                                  "permissions": {
+                                      "secrets": [
+                                          "get","list"
+                                      ]
+                                  }
+                                }
+                                  
+                              ],
+                              "enabledForDeployment": false
+                          }
+                        }
+                    ]
+                }
+            }
+          }
+        ]
+}

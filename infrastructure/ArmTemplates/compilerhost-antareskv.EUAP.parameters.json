@@ -28,9 +28,6 @@
         "pingPath":{
             "value": "/api/CompilerHost/healthping"
         },
-        "keyVaultName":{
-            "value" : "Diag-CompilerHost-ProdKV"
-        },
         "genevaCertContent": {
             "reference": {
                 "keyVault": {
