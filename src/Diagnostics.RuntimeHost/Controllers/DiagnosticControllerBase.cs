@@ -308,24 +308,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                     }
                     catch (Exception ex)
                     {
-                        if (ex.InnerException is KustoTenantListEmptyException)
-                        {
-                            if (
-                                   (
-                                   // Resource is ASE
-                                    resource as IResource is HostingEnvironment env && (env.TenantIdList != null && !env.TenantIdList.Any())
-                                   )
-                                   ||
-                                   (
-                                   // Resource is app in a Stamp of type ASE V1 or V2
-                                    (resource as IResource is App currentApp && ((currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V1) || (currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V2)))
-                                    && (currentApp.Stamp.TenantIdList != null && !currentApp.Stamp.TenantIdList.Any())
-                                   )
-                               )
-                            {
-                                throw new ASETenantListEmptyException("KustoExecuteQuery", "Tenant List is empty for the App Service Environment.");
-                            }
-                        }
                         if (isInternalCall)
                         {
                             queryRes.RuntimeSucceeded = false;
@@ -333,6 +315,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         }
                         else
                         {
+                            HandleEmtpyTenantListException(ex, resource);
                             throw;
                         }
                     }
@@ -340,6 +323,28 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             return Ok(queryRes);
+        }
+
+        private void HandleEmtpyTenantListException(Exception ex, IResource resource)
+        {
+            if (ex is KustoTenantListEmptyException || ex.InnerException is KustoTenantListEmptyException)
+            {
+                if (
+                    (
+                    // Resource is ASE
+                    resource is HostingEnvironment env && (env.TenantIdList != null && !env.TenantIdList.Any())
+                    )
+                    ||
+                    (
+                    // Resource is app in a Stamp of type ASE V1 or V2
+                    (resource is App currentApp && ((currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V1) || (currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V2)))
+                    && (currentApp.Stamp.TenantIdList != null && !currentApp.Stamp.TenantIdList.Any())
+                    )
+                )
+                {
+                    throw new ASETenantListEmptyException("KustoExecuteQuery", "Tenant List is empty for the App Service Environment.");
+                }
+            }
         }
 
         protected async Task<IActionResult> PublishPackage(Package pkg)
@@ -706,24 +711,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             catch (Exception ex)
             {
-                if (ex.InnerException is KustoTenantListEmptyException)
-                {
-                    if (
-                           (
-                            // Resource is ASE
-                            context.OperationContext.Resource as IResource is HostingEnvironment env && (env.TenantIdList != null && !env.TenantIdList.Any())
-                           )
-                           ||
-                           (
-                            // Resource is app in a Stamp of type ASE V1 or V2
-                            (context.OperationContext.Resource as IResource is App currentApp && ((currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V1) || (currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V2)))
-                            && (currentApp.Stamp.TenantIdList != null && !currentApp.Stamp.TenantIdList.Any())
-                           )
-                       )
-                    {
-                        throw new ASETenantListEmptyException("KustoExecuteQuery", "Tenant List is empty for the App Service Environment.");
-                    }
-                }
+                HandleEmtpyTenantListException(ex, context.OperationContext.Resource);
                 throw;
             }
         }
