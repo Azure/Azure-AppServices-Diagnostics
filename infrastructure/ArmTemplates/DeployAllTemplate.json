@@ -85,7 +85,7 @@
                 "resourceGroup": "[variables('AppServices')[copyIndex()].ResourceGroup]",
                 "properties": {
                     "mode": "Incremental",
-                    "template": {
+                    "templateLink": {
                         "uri": "[concat(variables('TemplateBaseURI'),'DeployAppServices.json')]"
                     },
                     "parameters": {

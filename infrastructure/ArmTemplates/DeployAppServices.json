@@ -104,7 +104,7 @@
                 "resourceGroup": "[parameters('appServicePlanResourceGroup')]",
                 "properties": {
                     "mode": "Incremental",
-                    "template": {
+                    "templateLink": {
                         "uri": "[concat(parameters('TemplateBaseURI'),'antareskvtemplate.json')]"
                     },
                     "parameters": {
