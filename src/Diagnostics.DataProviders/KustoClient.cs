@@ -14,6 +14,7 @@ using System.Web;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
+using Diagnostics.DataProviders.Exceptions;
 
 namespace Diagnostics.DataProviders
 {
@@ -56,7 +57,6 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
         {
-
             return await ExecuteQueryAsync(query, cluster, database, DataProviderConstants.DefaultTimeoutInSeconds, requestId, operationName);
         }
 
@@ -97,6 +97,13 @@ namespace Diagnostics.DataProviders
                 {
                     timeTakenStopWatch.Stop();
                     LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, new Exception($"Kusto call ended with a non success status code : {responseMsg.StatusCode.ToString()}"), dataSet, responseContent);
+                    if ((int)responseMsg.StatusCode == 400)
+                    {
+                        if (query != null && query.Contains("Tenant in ()"))
+                        {
+                            throw new KustoTenantListEmptyException("KustoDataProvider", "Malformed Query: Query contains an empty tenant list.");
+                        }
+                    }
                     throw new Exception(responseContent);
                 }
                 else
