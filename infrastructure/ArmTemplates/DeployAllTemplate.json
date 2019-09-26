@@ -8,6 +8,7 @@
                 "type": "Microsoft.Resources/deployments",
                 "apiVersion": "2017-05-10",
                 "name": "linkedTemplate",
+                "resourceGroup": "RuntimeHost-RG",
                 "properties": {
                     "mode": "Incremental",
                     "templateLink": {
@@ -22,6 +23,7 @@
                 "type": "Microsoft.Resources/deployments",
                 "apiVersion": "2017-05-10",
                 "name": "linkedTemplate2",
+                "resourceGroup": "CompilerHost-RG",
                 "properties": {
                     "mode": "Incremental",
                     "templateLink": {
