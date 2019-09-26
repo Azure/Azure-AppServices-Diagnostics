@@ -15,19 +15,19 @@
         }
       },
       "subscriptionId": {
-        "type": "array",
+        "type": "string",
         "metadata": {
             "description": "The ID of the subscription the Azure App Service Plan belongs to."
         }
       },
       "KeyVaultName": {
-        "type": "array",
+        "type": "string",
         "metadata": {
             "description": "The name of the KeyVault."
         }
       },
       "KeyVaultLocation": {
-        "type": "array",
+        "type": "string",
         "metadata": {
             "description": "The location of the KeyVault."
         }

@@ -79,7 +79,7 @@
         "monitoringGcsEnvironment": "Diagnostics Prod",
         "monitoringGcsAccount": "DiagWebAppWarm",
         "monitoringConfigVersion": "1.0",
-        "TemplateBaseURI": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/master2/infrastructure/ArmTemplates/"
+        "TemplateBaseURI": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/"
     },
     "resources": [
             {
