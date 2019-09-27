@@ -133,34 +133,33 @@
                     "count": "[length(variables('AppServices'))]",
                     "name": "linkedTemplateFrontDoorCopy"
                 }
-            },
-            {
-                "type": "Microsoft.Resources/deployments",
-                "apiVersion": "2017-05-10",
-                "name": "[concat('linkedTemplateKeyVault', copyIndex())]",
-                "dependsOn": [
-                    "[resourceId(variables('subscriptionId'), variables('AppServices')[copyIndex()].ResourceGroup, 'Microsoft.Resources/deployments', concat('linkedTemplateTop', copyIndex()))]"
-                  ],
-                "resourceGroup": "AppServiceDiagnosticsResources",
-                "subscriptionId": "[variables('subscriptionId')]",
-                "location":"West US",
-                "properties": {
-                    "mode": "Incremental",
-                    "templateLink": {
-                        "uri": "[concat(variables('TemplateBaseURI'),'KeyVault.json')]"
-                    },
-                    "parameters": {
-                        "sites":{"value": "[variables('AppServices')[copyIndex()].Apps]"},
-                        "ResourceGroup":{"value": "[variables('AppServices')[copyIndex()].ResourceGroup]"},
-                        "subscriptionId":{"value": "[variables('subscriptionId')]"},
-                        "KeyVaultName":{"value": "[variables('AppServices')[copyIndex()].KeyVaultName]"},
-                        "KeyVaultLocation":{"value": "[variables('AppServices')[copyIndex()].KeyVaultLocation]"}
-                    }
-                },
-                "copy": {
-                    "count": "[length(variables('AppServices'))]",
-                    "name": "linkedTemplateKeyVaultCopy"
-                }
-            }
+            }//,
+            // {
+            //     "type": "Microsoft.Resources/deployments",
+            //     "apiVersion": "2017-05-10",
+            //     "name": "[concat('linkedTemplateKeyVault', copyIndex())]",
+            //     "dependsOn": [
+            //         "[resourceId(variables('subscriptionId'), variables('AppServices')[copyIndex()].ResourceGroup, 'Microsoft.Resources/deployments', concat('linkedTemplateTop', copyIndex()))]"
+            //       ],
+            //     "resourceGroup": "AppServiceDiagnosticsResources",
+            //     "subscriptionId": "[variables('subscriptionId')]",
+            //     "properties": {
+            //         "mode": "Incremental",
+            //         "templateLink": {
+            //             "uri": "[concat(variables('TemplateBaseURI'),'KeyVault.json')]"
+            //         },
+            //         "parameters": {
+            //             "sites":{"value": "[variables('AppServices')[copyIndex()].Apps]"},
+            //             "ResourceGroup":{"value": "[variables('AppServices')[copyIndex()].ResourceGroup]"},
+            //             "subscriptionId":{"value": "[variables('subscriptionId')]"},
+            //             "KeyVaultName":{"value": "[variables('AppServices')[copyIndex()].KeyVaultName]"},
+            //             "KeyVaultLocation":{"value": "[variables('AppServices')[copyIndex()].KeyVaultLocation]"}
+            //         }
+            //     },
+            //     "copy": {
+            //         "count": "[length(variables('AppServices'))]",
+            //         "name": "linkedTemplateKeyVaultCopy"
+            //     }
+            // }
         ]
 }
