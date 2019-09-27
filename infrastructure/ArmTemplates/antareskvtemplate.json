@@ -222,14 +222,6 @@
                 "Value": "Staging"
               },
               {
-                "Name": "WEBSITE_LOCAL_CACHE_OPTION",
-                "Value": "Always"
-              },
-              {
-                "Name": "WEBSITE_LOCAL_CACHE_SIZEINMB",
-                "Value": "300"
-              },
-              {
                 "Name": "WEBSITE_SWAP_WARMUP_PING_PATH",
                 "Value": "[parameters('pingPath')]"
               }
@@ -271,14 +263,6 @@
                   {
                     "Name": "ASPNETCORE_ENVIRONMENT",
                     "Value": "Staging"
-                  },
-                  {
-                    "Name": "WEBSITE_LOCAL_CACHE_OPTION",
-                    "Value": "Always"
-                  },
-                  {
-                    "Name": "WEBSITE_LOCAL_CACHE_SIZEINMB",
-                    "Value": "300"
                   },
                   {
                     "Name": "WEBSITE_SWAP_WARMUP_PING_PATH",
