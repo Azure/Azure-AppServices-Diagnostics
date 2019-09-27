@@ -79,70 +79,71 @@
         "monitoringGcsEnvironment": "Diagnostics Prod",
         "monitoringGcsAccount": "DiagWebAppWarm",
         "monitoringConfigVersion": "1.0",
+        "KeyVaultResourceGroup": "AppServiceDiagnosticsResources",
         "TemplateBaseURI": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/"
     },
     "resources": [
-            {
-                "type": "Microsoft.Resources/deployments",
-                "apiVersion": "2017-05-10",
-                "name": "[concat('linkedTemplateTop', copyIndex())]",
-                "resourceGroup": "[variables('AppServices')[copyIndex()].ResourceGroup]",
-                "properties": {
-                    "mode": "Incremental",
-                    "templateLink": {
-                        "uri": "[concat(variables('TemplateBaseURI'),'DeployAppServices.json')]"
-                    },
-                    "parameters": {
-                        "AppServices":{"value": "[variables('AppServices')[copyIndex()].Apps]"},
-                        "appServicePlanResourceGroup":{"value": "[variables('AppServices')[copyIndex()].ResourceGroup]"},
-                        "pingPath":{"value": "[variables('AppServices')[copyIndex()].pingPath]"},
-                        "subscriptionId":{"value": "[variables('subscriptionId')]"},
-                        "sku":{"value": "[variables('sku')]"},
-                        "alwaysOn":{"value": true},
-                        "genevaCertContent":{"value": "[parameters('genevaCertContent')]"},  
-                        "monitoringTenant":{"value": "[variables('monitoringTenant')]"},
-                        "monitoringRole":{"value": "[variables('monitoringRole')]"},
-                        "monitoringGcsEnvironment":{"value": "[variables('monitoringGcsEnvironment')]"},
-                        "monitoringGcsAccount":{"value": "[variables('monitoringGcsAccount')]"},
-                        "monitoringGcsAuthId":{"value": "[variables('monitoringGcsAuthId')]"},
-                        "monitoringConfigVersion":{"value": "[variables('monitoringConfigVersion')]"},
-                        "TemplateBaseURI":{"value": "[variables('TemplateBaseURI')]"}
-                    }
-                },
-                "copy": {
-                    "count": "[length(variables('AppServices'))]",
-                    "name": "linkedTemplateTopCopy"
-                }
-            },
-            {
-                "type": "Microsoft.Resources/deployments",
-                "apiVersion": "2017-05-10",
-                "name": "[concat('linkedTemplateFrontDoor', copyIndex())]",
-                "resourceGroup": "[variables('AppServices')[copyIndex()].ResourceGroup]",
-                "properties": {
-                    "mode": "Incremental",
-                    "templateLink": {
-                        "uri": "[concat(variables('TemplateBaseURI'),'FrontDoorDeploy.json')]"
-                    },
-                    "parameters": {
-                        "sites":{"value": "[variables('AppServices')[copyIndex()].Apps]"},
-                        "frontDoorName":{"value": "[variables('AppServices')[copyIndex()].FrontDoorName]"},
-                        "healthPingPath":{"value": "[variables('AppServices')[copyIndex()].pingPath]"}
-                    }
-                },
-                "copy": {
-                    "count": "[length(variables('AppServices'))]",
-                    "name": "linkedTemplateFrontDoorCopy"
-                }
-            },
+            // {
+            //     "type": "Microsoft.Resources/deployments",
+            //     "apiVersion": "2017-05-10",
+            //     "name": "[concat('linkedTemplateTop', copyIndex())]",
+            //     "resourceGroup": "[variables('AppServices')[copyIndex()].ResourceGroup]",
+            //     "properties": {
+            //         "mode": "Incremental",
+            //         "templateLink": {
+            //             "uri": "[concat(variables('TemplateBaseURI'),'DeployAppServices.json')]"
+            //         },
+            //         "parameters": {
+            //             "AppServices":{"value": "[variables('AppServices')[copyIndex()].Apps]"},
+            //             "appServicePlanResourceGroup":{"value": "[variables('AppServices')[copyIndex()].ResourceGroup]"},
+            //             "pingPath":{"value": "[variables('AppServices')[copyIndex()].pingPath]"},
+            //             "subscriptionId":{"value": "[variables('subscriptionId')]"},
+            //             "sku":{"value": "[variables('sku')]"},
+            //             "alwaysOn":{"value": true},
+            //             "genevaCertContent":{"value": "[parameters('genevaCertContent')]"},  
+            //             "monitoringTenant":{"value": "[variables('monitoringTenant')]"},
+            //             "monitoringRole":{"value": "[variables('monitoringRole')]"},
+            //             "monitoringGcsEnvironment":{"value": "[variables('monitoringGcsEnvironment')]"},
+            //             "monitoringGcsAccount":{"value": "[variables('monitoringGcsAccount')]"},
+            //             "monitoringGcsAuthId":{"value": "[variables('monitoringGcsAuthId')]"},
+            //             "monitoringConfigVersion":{"value": "[variables('monitoringConfigVersion')]"},
+            //             "TemplateBaseURI":{"value": "[variables('TemplateBaseURI')]"}
+            //         }
+            //     },
+            //     "copy": {
+            //         "count": "[length(variables('AppServices'))]",
+            //         "name": "linkedTemplateTopCopy"
+            //     }
+            // },
+            // {
+            //     "type": "Microsoft.Resources/deployments",
+            //     "apiVersion": "2017-05-10",
+            //     "name": "[concat('linkedTemplateFrontDoor', copyIndex())]",
+            //     "resourceGroup": "[variables('AppServices')[copyIndex()].ResourceGroup]",
+            //     "properties": {
+            //         "mode": "Incremental",
+            //         "templateLink": {
+            //             "uri": "[concat(variables('TemplateBaseURI'),'FrontDoorDeploy.json')]"
+            //         },
+            //         "parameters": {
+            //             "sites":{"value": "[variables('AppServices')[copyIndex()].Apps]"},
+            //             "frontDoorName":{"value": "[variables('AppServices')[copyIndex()].FrontDoorName]"},
+            //             "healthPingPath":{"value": "[variables('AppServices')[copyIndex()].pingPath]"}
+            //         }
+            //     },
+            //     "copy": {
+            //         "count": "[length(variables('AppServices'))]",
+            //         "name": "linkedTemplateFrontDoorCopy"
+            //     }
+            // },
             {
                 "type": "Microsoft.Resources/deployments",
                 "apiVersion": "2017-05-10",
                 "name": "[concat('linkedTemplateKeyVault', copyIndex())]",
-                "dependsOn": [
-                    "[resourceId(variables('subscriptionId'), variables('AppServices')[copyIndex()].ResourceGroup, 'Microsoft.Resources/deployments', concat('linkedTemplateTop', copyIndex()))]"
-                  ],
-                "resourceGroup": "AppServiceDiagnosticsResources",
+                // "dependsOn": [
+                //     "[resourceId(variables('subscriptionId'), variables('AppServices')[copyIndex()].ResourceGroup, 'Microsoft.Resources/deployments', concat('linkedTemplateTop', copyIndex()))]"
+                //   ],
+                "resourceGroup": "[variables('KeyVaultResourceGroup')]",
                 "subscriptionId": "[variables('subscriptionId')]",
                 "properties": {
                     "mode": "Incremental",
