@@ -85,6 +85,7 @@
                                     "count": "[length(parameters('sites'))]",
                                     "input": {
                                         "address": "[concat(parameters('sites')[copyIndex('backends')].siteName,'.azurewebsites.net')]",
+                                        "backendHostHeader": "[concat(parameters('sites')[copyIndex('backends')].siteName,'.azurewebsites.net')]",
                                         "httpPort": 80,
                                         "httpsPort": 443,
                                         "weight": 50,
