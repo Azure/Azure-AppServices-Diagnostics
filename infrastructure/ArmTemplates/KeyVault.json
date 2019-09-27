@@ -48,6 +48,7 @@
                     "name": "Standard"
                 },
                 "tenantId": "[concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[0].siteName),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+                "enabledForDeployment": false,
                 "copy" : {
                     "name": "accessPolicies",
                     "count": "[length(parameters('sites'))]",
@@ -72,8 +73,7 @@
                         }
                     ]
                   }
-                },
-                "enabledForDeployment": false
+                }
             }
         }
     ]
