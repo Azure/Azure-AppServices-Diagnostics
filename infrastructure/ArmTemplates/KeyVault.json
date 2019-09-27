@@ -20,6 +20,9 @@
             "description": "The ID of the subscription the Azure App Service Plan belongs to."
         }
       },
+      "tenantId": {
+        "type": "string",
+      },
       "KeyVaultName": {
         "type": "string",
         "metadata": {
@@ -46,14 +49,14 @@
                     "family": "A",
                     "name": "Standard"
                 },
-                "tenantId": "[concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[0].siteName),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
+                "tenantId": "[parameters('tenantId')]",
                 "enabledForDeployment": false,
                 "copy" : [
                     {
                         "name": "accessPolicies",
                         "count": "[mul(length(parameters('sites')),2)]",
                         "input": {
-                            "tenantId": "[reference(concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[div(copyIndex('accessPolicies'),2)].siteName),if(equals(mod(copyIndex('accessPolicies'),2),1),'/providers/Microsoft.ManagedIdentity/Identities/default','/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')), '2015-08-31-PREVIEW').tenantId]",
+                            "tenantId": "[parameters('tenantId')]",
                             "objectId": "[reference(concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[div(copyIndex('accessPolicies'),2)].siteName),if(equals(mod(copyIndex('accessPolicies'),2),1),'/providers/Microsoft.ManagedIdentity/Identities/default','/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')), '2015-08-31-PREVIEW').principalId]",
                             "permissions": {
                                 "secrets": [
