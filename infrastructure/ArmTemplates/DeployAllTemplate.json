@@ -143,6 +143,7 @@
                   ],
                 "resourceGroup": "AppServiceDiagnosticsResources",
                 "subscriptionId": "[variables('subscriptionId')]",
+                "location":"West US",
                 "properties": {
                     "mode": "Incremental",
                     "templateLink": {
