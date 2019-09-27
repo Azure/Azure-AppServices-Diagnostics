@@ -28,7 +28,6 @@
                 "ResourceGroup" : "CompilerHost-RG",
                 "pingPath":"/api/CompilerHost/healthping",
                 "FrontDoorName": "diag-compilerhost",
-                "FrontDoorLocation": "West US 2",
                 "KeyVaultName": "Diag-CompilerHost-ProdKV",
                 "KeyVaultLocation": "northcentralus",
                 "Apps":
@@ -52,7 +51,6 @@
                 "ResourceGroup" : "RuntimeHost-RG",
                 "pingPath":"/healthping",
                 "FrontDoorName": "diag-runtimehost",
-                "FrontDoorLocation": "West US 2",
                 "KeyVaultName": "AppServiceDiagnosticsKV",
                 "KeyVaultLocation": "West US",
                 "Apps":
@@ -121,7 +119,6 @@
                 "apiVersion": "2017-05-10",
                 "name": "[concat('linkedTemplateFrontDoor', copyIndex())]",
                 "resourceGroup": "[variables('AppServices')[copyIndex()].ResourceGroup]",
-                "location": "[variables('AppServices')[copyIndex()].FrontDoorLocation]",
                 "properties": {
                     "mode": "Incremental",
                     "templateLink": {
