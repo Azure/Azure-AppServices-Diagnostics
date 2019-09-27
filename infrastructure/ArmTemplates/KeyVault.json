@@ -51,30 +51,18 @@
                 "enabledForDeployment": false,
                 "copy" : {
                     "name": "accessPolicies",
-                    "count": "[length(parameters('sites'))]",
-                    "input": [
-                        {
-                            "tenantId": "[reference(concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[copyIndex('accessPolicies')].siteName),'/providers/Microsoft.ManagedIdentity/Identities/default'), '2015-08-31-PREVIEW').tenantId]",
-                            "objectId": "[reference(concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[copyIndex('accessPolicies')].siteName),'/providers/Microsoft.ManagedIdentity/Identities/default'), '2015-08-31-PREVIEW').principalId]",
-                            "permissions": {
-                                "secrets": [
-                                    "get","list"
-                                ]
-                            }
-                        },
-                        {
-                          "tenantId": "[reference(concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[copyIndex('accessPolicies')].siteName),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default'), '2015-08-31-PREVIEW').tenantId]",
-                          "objectId": "[reference(concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[copyIndex('accessPolicies')].siteName),'/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default'), '2015-08-31-PREVIEW').principalId]",
-                          "permissions": {
-                              "secrets": [
-                                  "get","list"
-                              ]
-                          }
-                        }
-                    ]
+                    "count": "[mul(length(parameters('sites')),2)]",
+                    "input": {
+                        "tenantId": "[reference(concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[div(copyIndex('accessPolicies'),2)].siteName),if(equals(mod(copyIndex('accessPolicies'),2),1),'/providers/Microsoft.ManagedIdentity/Identities/default','/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')), '2015-08-31-PREVIEW').tenantId]",
+                        "objectId": "[reference(concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[div(copyIndex('accessPolicies'),2)].siteName),if(equals(mod(copyIndex('accessPolicies'),2),1),'/providers/Microsoft.ManagedIdentity/Identities/default','/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')), '2015-08-31-PREVIEW').principalId]",
+                        "permissions": {
+                            "secrets": [
+                                "get","list"
+                            ]
+                        } 
+                    }
                 }
             }
         }
-        
     ]
 }
