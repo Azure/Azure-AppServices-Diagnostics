@@ -41,7 +41,6 @@
             "name": "[parameters('KeyVaultName')]",
             "apiVersion": "2015-06-01",
             "location": "[parameters('KeyVaultLocation')]",
-            "tags": {},
             "properties": {
                 "sku": {
                     "family": "A",
@@ -49,19 +48,21 @@
                 },
                 "tenantId": "[concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[0].siteName),'/providers/Microsoft.ManagedIdentity/Identities/default')]",
                 "enabledForDeployment": false,
-                "copy" : {
-                    "name": "accessPolicies",
-                    "count": "[mul(length(parameters('sites')),2)]",
-                    "input": {
-                        "tenantId": "[reference(concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[div(copyIndex('accessPolicies'),2)].siteName),if(equals(mod(copyIndex('accessPolicies'),2),1),'/providers/Microsoft.ManagedIdentity/Identities/default','/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')), '2015-08-31-PREVIEW').tenantId]",
-                        "objectId": "[reference(concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[div(copyIndex('accessPolicies'),2)].siteName),if(equals(mod(copyIndex('accessPolicies'),2),1),'/providers/Microsoft.ManagedIdentity/Identities/default','/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')), '2015-08-31-PREVIEW').principalId]",
-                        "permissions": {
-                            "secrets": [
-                                "get","list"
-                            ]
-                        } 
+                "copy" : [
+                    {
+                        "name": "accessPolicies",
+                        "count": "[mul(length(parameters('sites')),2)]",
+                        "input": {
+                            "tenantId": "[reference(concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[div(copyIndex('accessPolicies'),2)].siteName),if(equals(mod(copyIndex('accessPolicies'),2),1),'/providers/Microsoft.ManagedIdentity/Identities/default','/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')), '2015-08-31-PREVIEW').tenantId]",
+                            "objectId": "[reference(concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[div(copyIndex('accessPolicies'),2)].siteName),if(equals(mod(copyIndex('accessPolicies'),2),1),'/providers/Microsoft.ManagedIdentity/Identities/default','/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')), '2015-08-31-PREVIEW').principalId]",
+                            "permissions": {
+                                "secrets": [
+                                    "get","list"
+                                ]
+                            } 
+                        }
                     }
-                }
+                ]
             }
         }
     ]
