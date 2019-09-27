@@ -81,7 +81,7 @@
         "monitoringConfigVersion": "1.0",
         "KeyVaultResourceGroup": "AppServiceDiagnosticsResources",
         "tenantId" : "72f988bf-86f1-41af-91ab-2d7cd011db47",
-        "TemplateBaseURI": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/"
+        "TemplateBaseURI": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/master2/infrastructure/ArmTemplates/"
     },
     "resources": [
             {
