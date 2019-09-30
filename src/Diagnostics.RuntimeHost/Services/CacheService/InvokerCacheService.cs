@@ -41,7 +41,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
 
         public bool ContainsKey(string key)
         {
-            return _collection.ContainsKey(key);
+            return _collection.ContainsKey(key.ToLower());
         }
 
         public IEnumerable<EntityInvoker> GetEntityInvokerList<TResource>(RuntimeContext<TResource> context)
