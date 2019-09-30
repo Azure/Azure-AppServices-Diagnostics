@@ -6,6 +6,9 @@
         internal const string ApiLoggerKey = "API_LOGGER";
         internal const string DataProviderContextKey = "DATA_PROVIDER_CONTEXT";
         internal const int TimeoutInMilliSeconds = 60 * 1000;
+        internal const string AzureCloud = "PublicAzure";
+        internal const string AzureChinaCloud = "China";
+        internal const string AzureUSGovernment = "Government";
     }
 
     internal class RegistryConstants

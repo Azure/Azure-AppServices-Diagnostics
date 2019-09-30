@@ -12,8 +12,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.AppServiceDomainResource)]
     public sealed class AppServiceDomainController : DiagnosticControllerBase<AppServiceDomain>
     {
-        public AppServiceDomainController(IServiceProvider services)
-            : base(services)
+        public AppServiceDomainController(IServiceProvider services, IRuntimeContext<AppServiceDomain> runtimeContext)
+            : base(services, runtimeContext)
         {
         }
 

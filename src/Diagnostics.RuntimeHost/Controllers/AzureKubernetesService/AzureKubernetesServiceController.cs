@@ -12,8 +12,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.AzureKubernetesServiceResource)]
     public class AzureKubernetesServiceController : DiagnosticControllerBase<AzureKubernetesService>
     {
-        public AzureKubernetesServiceController(IServiceProvider services)
-            : base(services)
+        public AzureKubernetesServiceController(IServiceProvider services, IRuntimeContext<AzureKubernetesService> runtimeContext)
+            : base(services, runtimeContext)
         {
         }
 

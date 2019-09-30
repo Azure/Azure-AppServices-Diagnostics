@@ -26,6 +26,8 @@ using Diagnostics.Scripts.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
+using Diagnostics.RuntimeHost.Models.Exceptions;
+using Diagnostics.DataProviders.Exceptions;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -39,10 +41,11 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IStampService _stampService;
         protected IAssemblyCacheService _assemblyCacheService;
         protected ISearchService _searchService;
+        protected IRuntimeContext<TResource> _runtimeContext;
 
         private InternalAPIHelper _internalApiHelper;
 
-        public DiagnosticControllerBase(IServiceProvider services)
+        public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext)
         {
             this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));
             this._sourceWatcherService = (ISourceWatcherService)services.GetService(typeof(ISourceWatcherService));
@@ -54,6 +57,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
 
             this._internalApiHelper = new InternalAPIHelper();
+            _runtimeContext = runtimeContext;
         }
 
         #region API Response Methods
@@ -311,6 +315,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         }
                         else
                         {
+                            HandleEmtpyTenantListException(ex, resource);
                             throw;
                         }
                     }
@@ -318,6 +323,28 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             return Ok(queryRes);
+        }
+
+        private void HandleEmtpyTenantListException(Exception ex, IResource resource)
+        {
+            if (ex is KustoTenantListEmptyException || ex.InnerException is KustoTenantListEmptyException)
+            {
+                if (
+                    (
+                    // Resource is ASE
+                    resource is HostingEnvironment env && (env.TenantIdList != null && !env.TenantIdList.Any())
+                    )
+                    ||
+                    (
+                    // Resource is app in a Stamp of type ASE V1 or V2
+                    (resource is App currentApp && ((currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V1) || (currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V2)))
+                    && (currentApp.Stamp.TenantIdList != null && !currentApp.Stamp.TenantIdList.Any())
+                    )
+                )
+                {
+                    throw new ASETenantListEmptyException("KustoExecuteQuery", "Tenant List is empty for the App Service Environment.");
+                }
+            }
         }
 
         protected async Task<IActionResult> PublishPackage(Package pkg)
@@ -485,13 +512,10 @@ namespace Diagnostics.RuntimeHost.Controllers
                 requestIds.FirstOrDefault()
             );
 
-            RuntimeContext<TResource> runtimeContext = new RuntimeContext<TResource>()
-            {
-                ClientIsInternal = true,
-                OperationContext = cxt
-            };
+            _runtimeContext.ClientIsInternal = true;
+            _runtimeContext.OperationContext = cxt;
 
-            var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, runtimeContext);
+            var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, (RuntimeContext<TResource>)_runtimeContext);
             IEnumerable<SupportTopic> supportTopicList = null;
             Definition definition = null;
             if (invoker != null && invoker.EntryPointDefinitionAttribute != null)
@@ -542,14 +566,14 @@ namespace Diagnostics.RuntimeHost.Controllers
                 internalViewRequested || forceInternal,
                 requestIds.FirstOrDefault(),
                 supportTopic: supportTopic,
-                form: Form
+                form: Form,
+                cloudDomain: _runtimeContext.CloudDomain
             );
 
-            return new RuntimeContext<TResource>()
-            {
-                ClientIsInternal = isInternalClient || forceInternal,
-                OperationContext = operationContext
-            };
+            _runtimeContext.ClientIsInternal = isInternalClient || forceInternal;
+            _runtimeContext.OperationContext = operationContext;
+
+            return (RuntimeContext<TResource>)_runtimeContext;
         }
 
         private async Task<IEnumerable<DiagnosticApiResponse>> ListGistsInternal(RuntimeContext<TResource> context)
@@ -678,10 +702,18 @@ namespace Diagnostics.RuntimeHost.Controllers
                 IsInternalCall = context.OperationContext.IsInternalCall
             };
 
-            var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
-            response.UpdateDetectorStatusFromInsights();
+            try
+            {
+                var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
+                response.UpdateDetectorStatusFromInsights();
 
-            return new Tuple<Response, List<DataProviderMetadata>>(response, dataProvidersMetadata);
+                return new Tuple<Response, List<DataProviderMetadata>>(response, dataProvidersMetadata);
+            }
+            catch (Exception ex)
+            {
+                HandleEmtpyTenantListException(ex, context.OperationContext.Resource);
+                throw;
+            }
         }
 
         private async Task<IEnumerable<AzureSupportCenterInsight>> GetInsightsFromDetector(RuntimeContext<TResource> context, Definition detector, List<Definition> detectorsRun)
