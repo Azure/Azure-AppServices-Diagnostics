@@ -18,12 +18,27 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpGet(UriElements.ObserverGetSites)]
         public async Task<IActionResult> GetSiteDetails(string siteName)
         {
+            if (string.IsNullOrWhiteSpace(siteName))
+            {
+                throw new ArgumentNullException(nameof(siteName));
+            }
+
             return await GetResultAsync($"/sites/{siteName}/adminsites");
         }
 
         [HttpGet(UriElements.ObserverGetSiteWithStamp)]
         public async Task<IActionResult> GetSiteWithStampDetails(string stampName, string siteName)
         {
+            if (string.IsNullOrWhiteSpace(stampName))
+            {
+                throw new ArgumentNullException(nameof(stampName));
+            }
+
+            if (string.IsNullOrWhiteSpace(siteName))
+            {
+                throw new ArgumentNullException(nameof(siteName));
+            }
+
             return await GetResultAsync($"/stamps/{stampName}/sites/{siteName}/adminsites");
         }
 

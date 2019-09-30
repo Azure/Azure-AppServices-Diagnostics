@@ -29,6 +29,20 @@ namespace Diagnostics.DataProviders
             throw new NotImplementedException();
         }
 
+        public override async Task<JArray> GetAdminSitesAsync(string siteName)
+        {
+            if (string.IsNullOrWhiteSpace(siteName))
+            {
+                throw new ArgumentNullException(nameof(siteName));    
+            }
+
+            var path = $"sites/{siteName}/adminsites";
+            
+            var response = await GetObserverResource(path);
+            var siteObject = JsonConvert.DeserializeObject<JArray>(response);
+            return siteObject;
+        }
+
         public override Task<IEnumerable<object>> GetAppServiceEnvironmentDeploymentsAsync(string hostingEnvironmentName)
         {
             throw new NotImplementedException();
@@ -190,21 +204,20 @@ namespace Diagnostics.DataProviders
 
         public override async Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName)
         {
-            dynamic siteObjects = await GetSite(siteName);
-            JToken obj2 = ((JArray)siteObjects)
+            var siteObjects = await GetAdminSitesAsync(siteName);
+            JToken obj2 = siteObjects
                     .Select(i => (JObject)i)
                     .FirstOrDefault(j =>
-                        j.ContainsKey("subscription") &&
-                        j["subscription"]["name"].ToString().Equals(
+                        j.ContainsKey("Subscription") &&
+                        j["Subscription"].ToString().Equals(
                             subscriptionId, StringComparison.InvariantCultureIgnoreCase
                         ) &&
-                        j.ContainsKey("resource_group_name") && j["resource_group_name"].ToString().Equals(
+                        j.ContainsKey("ResourceGroupName") && j["ResourceGroupName"].ToString().Equals(
                             resourceGroupName, StringComparison.InvariantCultureIgnoreCase
-                        ) && j.ContainsKey("stamp")
+                        ) && j.ContainsKey("StampName")
                     );
 
-            string stampName = obj2?["stamp"]?["name"]?.ToString();
-            return stampName;
+            return obj2?["StampName"]?.ToString();
         }
 
         public override async Task<dynamic> GetHostNames(string stampName, string siteName)
@@ -216,6 +229,11 @@ namespace Diagnostics.DataProviders
 
         public override async Task<dynamic> GetSitePostBody(string stampName, string siteName)
         {
+            if (string.IsNullOrWhiteSpace(stampName))
+            {
+                throw new ArgumentNullException(nameof(stampName));
+            }
+
             var response = await GetObserverResource($"stamps/{stampName}/sites/{siteName}/postbody");
             dynamic sitePostBody = JsonConvert.DeserializeObject(response);
             return sitePostBody;

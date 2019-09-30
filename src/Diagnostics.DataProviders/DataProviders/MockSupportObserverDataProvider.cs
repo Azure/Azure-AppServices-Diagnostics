@@ -192,6 +192,11 @@ namespace Diagnostics.DataProviders
             return new MockHttpClient();
         }
 
+        public override Task<JArray> GetAdminSitesAsync(string siteName)
+        {
+            throw new NotImplementedException();
+        }
+
         private class MockHttpClient : HttpClient
         {
             public MockHttpClient()

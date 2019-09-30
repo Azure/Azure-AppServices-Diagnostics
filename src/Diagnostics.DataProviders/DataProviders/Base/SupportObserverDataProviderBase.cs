@@ -228,6 +228,8 @@ namespace Diagnostics.DataProviders
 
         public abstract Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames);
 
+        public abstract Task<JArray> GetAdminSitesAsync(string siteName);
+
         public abstract Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName);
 
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName);
