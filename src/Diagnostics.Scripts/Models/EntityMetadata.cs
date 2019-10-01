@@ -6,16 +6,18 @@
 
         public string ScriptText;
         public string Metadata;
+        public string LastModifiedMarker;
 
         public EntityMetadata()
         {
         }
 
-        public EntityMetadata(string scriptText, EntityType type = EntityType.Signal, string metadata = null)
+        public EntityMetadata(string scriptText, string lastModifiedMarker, EntityType type = EntityType.Signal, string metadata = null)
         {
             ScriptText = scriptText;
             Metadata = metadata;
             Type = type;
+            LastModifiedMarker = lastModifiedMarker;
         }
     }
 }

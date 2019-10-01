@@ -45,7 +45,9 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
             {
                 var cacheId = await FileHelper.GetFileContentAsync(subDir.FullName, _cacheIdFileName);
 
-                if (string.IsNullOrWhiteSpace(cacheId) || !GetCacheService().ContainsKey(cacheId))
+                var subDirModifiedMarker = await FileHelper.GetFileContentAsync(subDir.FullName, _lastModifiedMarkerName);
+
+                if (string.IsNullOrWhiteSpace(cacheId) || !GetCacheService().TryGetValue(cacheId, out EntityInvoker invoker) || invoker.EntityMetadata.LastModifiedMarker != subDirModifiedMarker)
                 {
                     LogMessage($"Folder : {subDir.FullName} missing in invoker cache.");
 
@@ -81,7 +83,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 
                     LogMessage($"Loading assembly : {mostRecentAssembly.FullName}");
                     var asm = Assembly.LoadFrom(mostRecentAssembly.FullName);
-                    EntityInvoker invoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata));
+                    invoker = new EntityInvoker(new EntityMetadata(scriptText, subDirModifiedMarker, GetEntityType(), metadata));
                     invoker.InitializeEntryPoint(asm);
 
                     if (invoker.EntryPointDefinitionAttribute != null)
