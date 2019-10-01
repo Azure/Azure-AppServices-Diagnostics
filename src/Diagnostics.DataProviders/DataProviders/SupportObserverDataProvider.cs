@@ -39,6 +39,11 @@ namespace Diagnostics.DataProviders
             var path = $"sites/{siteName}/adminsites";
             
             var response = await GetObserverResource(path);
+            if (response == null)
+            {
+                return new JArray();
+            }
+
             var siteObject = JsonConvert.DeserializeObject<JArray>(response);
             return siteObject;
         }
