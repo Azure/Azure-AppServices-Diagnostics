@@ -123,7 +123,7 @@
                         "monitoringGcsEnvironment":{"value": "[parameters('monitoringGcsEnvironment')]"},
                         "monitoringGcsAccount":{"value": "[parameters('monitoringGcsAccount')]"},
                         "monitoringGcsAuthId":{"value": "[parameters('monitoringGcsAuthId')]"},
-                        "monitoringConfigVersion":{"value": "[parameters('monitoringConfigVersion')]"},
+                        "monitoringConfigVersion":{"value": "[parameters('monitoringConfigVersion')]"}
                     }
                 },
                 "copy": {

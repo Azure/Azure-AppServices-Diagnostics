@@ -206,6 +206,7 @@
             "use32BitWorkerProcess": false,
             "webSocketsEnabled": false,
             "alwaysOn": "[parameters('alwaysOn')]",
+            "healthCheckPath": "[parameters('pingPath')]",
             "httpLoggingEnabled": true,
             "logsDirectorySizeLimit": 50,
             "appSettings": [
@@ -224,6 +225,14 @@
               {
                 "Name": "WEBSITE_SWAP_WARMUP_PING_PATH",
                 "Value": "[parameters('pingPath')]"
+              },
+              {
+                "Name": "WEBSITE_ADD_SITENAME_BINDINGS_IN_APPHOST_CONFIG",
+                "Value": 1
+              }, 
+              {
+                "Name": "WEBSITE_LOCAL_CACHE_OPTION",
+                "Value": "Always"
               }
             ]
           }
@@ -253,6 +262,7 @@
                 "use32BitWorkerProcess": false,
                 "webSocketsEnabled": false,
                 "alwaysOn": false,
+                "healthCheckPath": null,
                 "httpLoggingEnabled": true,
                 "logsDirectorySizeLimit": 50,
                 "appSettings": [
@@ -267,6 +277,14 @@
                   {
                     "Name": "WEBSITE_SWAP_WARMUP_PING_PATH",
                     "Value": "[parameters('pingPath')]"
+                  },
+                  {
+                    "Name": "WEBSITE_ADD_SITENAME_BINDINGS_IN_APPHOST_CONFIG",
+                    "Value": 1
+                  }, 
+                  {
+                    "Name": "WEBSITE_LOCAL_CACHE_OPTION",
+                    "Value": "Always"
                   }
                 ]
               }
