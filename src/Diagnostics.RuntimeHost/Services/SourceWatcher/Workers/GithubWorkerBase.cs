@@ -83,7 +83,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 
                     LogMessage($"Loading assembly : {mostRecentAssembly.FullName}");
                     var asm = Assembly.LoadFrom(mostRecentAssembly.FullName);
-                    invoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata, subDirModifiedMarker));
+                    invoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata, subDirSha));
                     invoker.InitializeEntryPoint(asm);
 
                     if (invoker.EntryPointDefinitionAttribute != null)
