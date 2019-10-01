@@ -58,13 +58,13 @@ namespace Diagnostics.DataProviders
             var result = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/certificates");
             return JsonConvert.DeserializeObject(result);
         }
-
-        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
+        
+        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
         {
-            return await GetRuntimeSiteSlotMap(null, siteName);
+            return GetRuntimeSiteSlotMap(stampName, siteName, null);
         }
 
-        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
+        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName = null)
         {
             if (string.IsNullOrWhiteSpace(stampName))
             {
@@ -74,26 +74,6 @@ namespace Diagnostics.DataProviders
             if (string.IsNullOrWhiteSpace(siteName))
             {
                 throw new ArgumentNullException(nameof(siteName));
-            }
-
-            return await GetRuntimeSiteSlotMapInternal(stampName, siteName, null);
-        }
-
-        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName)
-        {
-            if (string.IsNullOrWhiteSpace(stampName))
-            {
-                throw new ArgumentNullException(nameof(stampName));
-            }
-
-            if (string.IsNullOrWhiteSpace(siteName))
-            {
-                throw new ArgumentNullException(nameof(siteName));
-            }
-
-            if (string.IsNullOrWhiteSpace(slotName))
-            {
-                throw new ArgumentNullException(nameof(slotName));
             }
 
             return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName);
@@ -205,19 +185,16 @@ namespace Diagnostics.DataProviders
         public override async Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName)
         {
             var siteObjects = await GetAdminSitesAsync(siteName);
-            JToken obj2 = siteObjects
-                    .Select(i => (JObject)i)
-                    .FirstOrDefault(j =>
-                        j.ContainsKey("Subscription") &&
-                        j["Subscription"].ToString().Equals(
-                            subscriptionId, StringComparison.InvariantCultureIgnoreCase
-                        ) &&
-                        j.ContainsKey("ResourceGroupName") && j["ResourceGroupName"].ToString().Equals(
-                            resourceGroupName, StringComparison.InvariantCultureIgnoreCase
-                        ) && j.ContainsKey("StampName")
-                    );
+            var siteObject = siteObjects?
+                .Select(i => (JObject)i)?
+                .FirstOrDefault(j =>
+                    j.ContainsKey("Subscription") &&
+                    j["Subscription"].ToString().Equals(subscriptionId, StringComparison.InvariantCultureIgnoreCase) &&
+                    j.ContainsKey("ResourceGroupName") && 
+                    j["ResourceGroupName"].ToString().Equals(resourceGroupName, StringComparison.InvariantCultureIgnoreCase) && 
+                    (j.ContainsKey("StampName") || j.ContainsKey("InternalStampName")));
 
-            return obj2?["StampName"]?.ToString();
+            return siteObject?["StampName"]?.ToString() ?? siteObject?["InternalStampName"]?.ToString() ?? string.Empty;
         }
 
         public override async Task<dynamic> GetHostNames(string stampName, string siteName)
@@ -232,6 +209,11 @@ namespace Diagnostics.DataProviders
             if (string.IsNullOrWhiteSpace(stampName))
             {
                 throw new ArgumentNullException(nameof(stampName));
+            }
+
+            if (string.IsNullOrWhiteSpace(siteName))
+            {
+                throw new ArgumentNullException(nameof(siteName));
             }
 
             var response = await GetObserverResource($"stamps/{stampName}/sites/{siteName}/postbody");

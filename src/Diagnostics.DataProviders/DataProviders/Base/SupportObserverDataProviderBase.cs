@@ -231,9 +231,7 @@ namespace Diagnostics.DataProviders
         public abstract Task<JArray> GetAdminSitesAsync(string siteName);
 
         public abstract Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName);
-
-        public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName);
-
+        
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
 
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName);
@@ -245,6 +243,11 @@ namespace Diagnostics.DataProviders
         public DataProviderMetadata GetMetadata()
         {
             return null;
+        }
+
+        public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
+        {
+            throw new NotImplementedException("Cannot retrieve slot map without a stamp name.");
         }
     }
 }

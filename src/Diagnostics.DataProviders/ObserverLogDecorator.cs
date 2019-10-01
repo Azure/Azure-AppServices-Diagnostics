@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
@@ -45,10 +46,10 @@ namespace Diagnostics.DataProviders
 			return MakeDependencyCall(DataProvider.GetResource(wawsObserverUrl));
 		}
 
-		public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
-		{
-			return MakeDependencyCall(DataProvider.GetRuntimeSiteSlotMap(siteName));
-		}
+        public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
+        {
+            throw new NotImplementedException("Cannot retrieve slot map without a stamp name.");
+        }
 
 		public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
 		{
@@ -139,5 +140,5 @@ namespace Diagnostics.DataProviders
 		{
 			return MakeDependencyCall(DataProvider.ExecuteSqlQueryAsync(cloudServiceName, query));
 		}
-	}
+    }
 }
