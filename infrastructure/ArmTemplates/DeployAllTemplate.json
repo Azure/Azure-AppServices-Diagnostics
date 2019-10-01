@@ -62,6 +62,12 @@
                         "monitoringGcsNamespace": "WebAppWarmEUS"
                     },
                     {
+                        "appServicePlanName":  "RuntimeHost-ASP-EUAP-002",
+                        "location" : "East US 2 EUAP",
+                        "siteName": "[replace(parameters('RuntimeHost1'),'1','2')]",
+                        "monitoringGcsNamespace": "WebAppWarmEUS"
+                    },
+                    {
                         "appServicePlanName":  "RuntimeHost-ASP-BAY-001",
                         "location" : "West US",
                         "siteName": "[parameters('RuntimeHost2')]",
@@ -80,7 +86,24 @@
         "monitoringGcsAccount": "DiagWebAppWarm",
         "monitoringConfigVersion": "1.0",
         "KeyVaultResourceGroup": "AppServiceDiagnosticsResources",
-        "TemplateBaseURI": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/"
+        "TemplateBaseURI": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-templates/infrastructure/ArmTemplates/",
+
+
+        "EUAPFrontDoorResources":
+        {
+            "ResourceGroup" : "RuntimeHost-RG",
+            "pingPath":"/healthping",
+            "FrontDoorName": "diag-runtimehost-euap",
+            "Apps":
+            [
+                {
+                    "siteName": "[parameters('RuntimeHost1')]"
+                },
+                {
+                    "siteName": "[replace(parameters('RuntimeHost1'),'1','2')]"
+                }
+            ]
+        }
     },
     "resources": [
             {
@@ -134,6 +157,23 @@
                 "copy": {
                     "count": "[length(variables('AppServices'))]",
                     "name": "linkedTemplateFrontDoorCopy"
+                }
+            },
+            {
+                "type": "Microsoft.Resources/deployments",
+                "apiVersion": "2017-05-10",
+                "name": "EuapFrontDoor",
+                "resourceGroup": "[variables('EUAPFrontDoorResources').ResourceGroup]",
+                "properties": {
+                    "mode": "Incremental",
+                    "templateLink": {
+                        "uri": "[concat(variables('TemplateBaseURI'),'FrontDoorDeploy.json')]"
+                    },
+                    "parameters": {
+                        "sites":{"value": "[variables('EUAPFrontDoorResources').Apps]"},
+                        "frontDoorName":{"value": "[variables('EUAPFrontDoorResources').FrontDoorName]"},
+                        "healthPingPath":{"value": "[variables('EUAPFrontDoorResources').pingPath]"}
+                    }
                 }
             },
             {
