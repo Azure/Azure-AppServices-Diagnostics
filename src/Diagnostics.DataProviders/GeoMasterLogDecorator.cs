@@ -70,5 +70,10 @@ namespace Diagnostics.DataProviders
         {
             return MakeDependencyCall(DataProvider.VerifyHostingEnvironmentVnet(subscriptionId, vnetResourceGroup, vnetName, vnetSubnetName, cancellationToken));
         }
+
+        public Task<VnetConfiguration> CollectVirtualNetworkConfig(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return MakeDependencyCall(DataProvider.CollectVirtualNetworkConfig(subscriptionId, vnetResourceGroup, vnetName, vnetSubnetName, cancellationToken));
+        }
     }
 }
