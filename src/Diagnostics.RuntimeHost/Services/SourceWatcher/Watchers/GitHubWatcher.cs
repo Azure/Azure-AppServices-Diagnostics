@@ -231,8 +231,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             finally
             {
                 stopWatch.Stop();
-                Console.WriteLine("RunTime " + stopWatch.ElapsedMilliseconds);
-                LogMessage("SourceWatcher : End");
+                LogMessage($"SourceWatcher : End, Time Taken: {stopWatch.ElapsedMilliseconds}");
             }
         }
 
