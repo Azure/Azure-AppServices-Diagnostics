@@ -244,10 +244,5 @@ namespace Diagnostics.DataProviders
         {
             return null;
         }
-
-        public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
-        {
-            throw new NotImplementedException("Cannot retrieve slot map without a stamp name.");
-        }
     }
 }

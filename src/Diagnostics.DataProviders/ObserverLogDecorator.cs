@@ -45,12 +45,7 @@ namespace Diagnostics.DataProviders
 		{
 			return MakeDependencyCall(DataProvider.GetResource(wawsObserverUrl));
 		}
-
-        public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
-        {
-            throw new NotImplementedException("Cannot retrieve slot map without a stamp name.");
-        }
-
+        
 		public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
 		{
 			return MakeDependencyCall(DataProvider.GetRuntimeSiteSlotMap(stampName, siteName));
