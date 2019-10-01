@@ -83,7 +83,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 
                     LogMessage($"Loading assembly : {mostRecentAssembly.FullName}");
                     var asm = Assembly.LoadFrom(mostRecentAssembly.FullName);
-                    invoker = new EntityInvoker(new EntityMetadata(scriptText, subDirModifiedMarker, GetEntityType(), metadata));
+                    invoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata, subDirModifiedMarker));
                     invoker.InitializeEntryPoint(asm);
 
                     if (invoker.EntryPointDefinitionAttribute != null)
@@ -112,7 +112,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
         /// <param name="assemblyPath">Assembly path.</param>
         /// <param name="metadata">Metadata</param>
         /// <returns>Task for downloading and updating cache.</returns>
-        public async Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string scriptText, string assemblyPath, string metadata)
+        public async Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string lastModifiedMarker, string scriptText, string assemblyPath, string metadata)
         {
             if (_loadOnlyPublicDetectors && !regexPublicDetectors.Match(scriptText).Success)
             {
@@ -122,7 +122,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
             LogMessage($"Loading assembly : {assemblyPath}");
             var asm = Assembly.LoadFrom(assemblyPath);
 
-            var newInvoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata));
+            var newInvoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata, lastModifiedMarker));
             newInvoker.InitializeEntryPoint(asm);
 
             var cacheIdFilePath = Path.Combine(destDir.FullName, _cacheIdFileName);

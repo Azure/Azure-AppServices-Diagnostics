@@ -12,7 +12,7 @@
         {
         }
 
-        public EntityMetadata(string scriptText, string lastModifiedMarker, EntityType type = EntityType.Signal, string metadata = null)
+        public EntityMetadata(string scriptText, EntityType type = EntityType.Signal, string metadata = null, string lastModifiedMarker = null)
         {
             ScriptText = scriptText;
             Metadata = metadata;
