@@ -1,6 +1,7 @@
 ﻿using System;
 using Diagnostics.DataProviders.Interfaces;
 
+
 namespace Diagnostics.DataProviders
 {
     public class DataProviders
@@ -21,7 +22,7 @@ namespace Diagnostics.DataProviders
             Observer = new ObserverLogDecorator(context, SupportObserverDataProviderFactory.GetDataProvider(_cache, context.Configuration, context));
             GeoMaster = new GeoMasterLogDecorator(context, new GeoMasterDataProvider(_cache, context));
             AppInsights = new AppInsightsLogDecorator(context, new AppInsightsDataProvider(_cache, context.Configuration.AppInsightsConfiguration));
-            ChangeAnalysis = new ChangeAnalysisLogDecorator(context, new ChangeAnalysisDataProvider(_cache, context.Configuration.ChangeAnalysisDataProviderConfiguration, context.RequestId, context.clientObjectId, context.clientPrincipalName, Kusto));
+            ChangeAnalysis = new DataProviderLogDecorator(context, new ChangeAnalysisDataProvider(_cache, context.Configuration.ChangeAnalysisDataProviderConfiguration, context.RequestId, context.clientObjectId, context.clientPrincipalName, Kusto));
             Asc = new AscLogDecorator(context, new AscDataProvider(_cache, context.Configuration.AscDataProviderConfiguration, context.RequestId));
             Mdm = (MdmDataSource ds) =>
             {

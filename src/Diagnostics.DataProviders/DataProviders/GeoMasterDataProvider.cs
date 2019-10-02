@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
@@ -26,12 +27,15 @@ namespace Diagnostics.DataProviders
         private string[] RegexMatchingPatterns = new string[] { @"^AzureWebJobs\.[a-zA-Z][_a-zA-Z0-9-]*\.Disabled$" };
 
         private string[] AppSettingsExistenceCheckList = new string[] { "APPINSIGHTS_INSTRUMENTATIONKEY" };
+		
+		public string GeoMasterName { get; }
 
         public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache)
         {
-            _geoMasterHostName = context.GeomasterHostName;
+            _geoMasterHostName = string.IsNullOrWhiteSpace(context.GeomasterHostName) ? context.Configuration.GeoMasterConfiguration.GeoEndpointAddress : context.GeomasterHostName;
             _configuration = context.Configuration.GeoMasterConfiguration;
             _geoMasterClient = InitClient();
+            GeoMasterName = string.IsNullOrWhiteSpace(context.GeomasterName) ? ParseGeoMasterName(_geoMasterHostName) : null;
         }
 
         private IGeoMasterClient InitClient()
@@ -98,11 +102,15 @@ namespace Diagnostics.DataProviders
             {
                 if (AllowedlistAppSettingsStartingWith.Any(x => item.Key.StartsWith(x)) && !SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x))
                     || RegexMatchingPatterns.Any(x => (Regex.Match(item.Key, x).Success)))
-                {
+				{
                     string value = RemovePIIFromSettings(item.Value);
                     appSettings.Add(item.Key, value);
                 }
-                else if (AppSettingsExistenceCheckList.Any(x => String.Compare(item.Key, x, true) == 0))
+                    if (!SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x)))
+                {
+                    string value = RemovePIIFromSettings(item.Value);
+                        appSettings.Add(item.Key, item.Value);
+                else
                 {
                     appSettings.Add(item.Key, "******");
                 }
@@ -204,6 +212,48 @@ namespace Diagnostics.DataProviders
             var path = string.Format(@"subscriptions/{0}/providers/Microsoft.Web/verifyHostingEnvironmentVnet", subscriptionId);
             var vnetParameters = new VnetParameters { VnetResourceGroup = vnetResourceGroup, VnetName = vnetName, VnetSubnetName = vnetSubnetName };
             var result = await HttpPost<VnetValidationRespone, VnetParameters>(path, vnetParameters, "", GeoMasterConstants.March2016Version, cancellationToken);
+            return result;
+        }
+
+        /// <summary>
+        /// Gets all the networking configurations for the hosting environment
+        /// </summary>
+        /// <param name="subscriptionId">Subscription Id for the resource</param>
+        /// <param name="vnetResourceGroup">The resource group in which the VNet is a part of</param>
+        /// <param name="vnetName">Name of the VNET</param>
+        /// <param name="vnetSubnetName">Subnet name of the VNET</param>
+        /// <param name="cancellationToken">(Optional)</param>
+        /// <returns></returns>
+        /// <example>
+        /// This sample shows how you can call this function to get the NSG rules
+        /// for this App Service environment
+        /// <code>
+        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
+        /// {
+        ///
+        ///     //Get VNET information from observer
+        ///     var name = cxt.Resource.InternalName;
+        ///     var url = $"https://wawsobserver.azurewebsites.windows.net/minienvironments/{name}"
+        ///
+        ///     var hostingEnvironmentData = await dp.Observer.GetResource(url);
+        ///     var vnetName = (string)hostingEnvironmentData.vnet_name;
+        ///     var subnet = (string)hostingEnvironmentData.vnet_subnet_name;
+        ///     var vnetRg = (string)hostingEnvironmentData.vnet_resource_group;
+        ///     var subId = cxt.Resource.SubscriptionId;
+        ///
+        ///     var results = await dp.GeoMaster.CollectVirtualNetworkConfig(subId,
+        ///                   vnetRg,
+        ///                   vnetName,
+        ///                   subnet);
+        ///
+        /// }
+        /// </code>
+        /// </example>
+        public async Task<VnetConfiguration> CollectVirtualNetworkConfig(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var path = string.Format("subscriptions/{0}/providers/Microsoft.Web/collectVnetConfiguration", subscriptionId);
+            var vnetParameters = new VnetParameters { VnetResourceGroup = vnetResourceGroup, VnetName = vnetName, VnetSubnetName = vnetSubnetName };
+            var result = await HttpPost<VnetConfiguration, VnetParameters>(path, vnetParameters, "", GeoMasterConstants.March2016Version, cancellationToken);
             return result;
         }
 
@@ -600,5 +650,26 @@ namespace Diagnostics.DataProviders
         }
 
         #endregion HttpMethods
+
+        /// <summary>
+        /// Given the regional geomaster change is not complete we will need to extract geomaster name from the geomaster hostname. This is temporary until
+        /// the geomaster migration is complete then we can rely on the stamp location to determine geomaster.
+        /// </summary>
+        /// <param name="geomasterHostName"></param>
+        /// <returns></returns>
+        private string ParseGeoMasterName(string geomasterHostName)
+        {
+            string geoMasterName = null;
+
+            if (Uri.TryCreate(geomasterHostName, UriKind.Absolute, out Uri geomasterHostNameUri))
+            {
+                geoMasterName = geomasterHostNameUri.Host.Split(new char[] { '.' }).First();
+
+                //Need to modify this to work with national cloud environments as gm-prod-sn1 does not exist in other clouds.
+                geoMasterName = geoMasterName.Equals("geomaster", StringComparison.CurrentCultureIgnoreCase) ? "gm-prod-sn1" : $"rgm-prod-{geoMasterName}";
+            }
+
+            return geoMasterName;
+        }
     }
 }

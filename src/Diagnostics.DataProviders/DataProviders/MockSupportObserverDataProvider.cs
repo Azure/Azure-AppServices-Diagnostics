@@ -20,21 +20,16 @@ namespace Diagnostics.DataProviders
         {
         }
 
-        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
-        {
-            return GetRuntimeSiteSlotMap(null, siteName);
-        }
-
         public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
         {
             if (string.IsNullOrWhiteSpace(siteName))
             {
-                throw new ArgumentNullException("siteName");
+                throw new ArgumentNullException(nameof(siteName));
             }
 
             if (string.IsNullOrWhiteSpace(stampName))
             {
-                throw new ArgumentNullException("stampName");
+                throw new ArgumentNullException(nameof(stampName));
             }
 
             var mock = new Dictionary<string, List<RuntimeSitenameTimeRange>>();
@@ -190,6 +185,11 @@ namespace Diagnostics.DataProviders
         public override HttpClient GetObserverClient()
         {
             return new MockHttpClient();
+        }
+
+        public override Task<JArray> GetAdminSitesAsync(string siteName)
+        {
+            throw new NotImplementedException();
         }
 
         private class MockHttpClient : HttpClient

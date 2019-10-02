@@ -15,8 +15,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     {
         protected ISiteService _siteService;
 
-        public SiteControllerBase(IServiceProvider services)
-            : base(services)
+        public SiteControllerBase(IServiceProvider services, IRuntimeContext<App> runtimeContext)
+            : base(services, runtimeContext)
         {
             this._siteService = (ISiteService)services.GetService(typeof(ISiteService));
         }
