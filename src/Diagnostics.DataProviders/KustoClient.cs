@@ -138,8 +138,27 @@ namespace Diagnostics.DataProviders
             {
                 throw new Exception($"Kusto query response exceeded the Kusto record count limit: {_queryLimitDocsLink}");
             }
-
-            return JsonConvert.DeserializeObject<DataTableResponseObjectCollection>(responseContent);
+            try
+            {
+                return JsonConvert.DeserializeObject<DataTableResponseObjectCollection>(responseContent);
+            }
+            catch (Newtonsoft.Json.JsonSerializationException ex)
+            {
+                try
+                {
+                    var responseObj = JsonConvert.DeserializeObject<DataTableExceptionResponseObject>(responseContent);
+                    var kustoException = responseObj.Exceptions.FirstOrDefault();
+                    if (kustoException != null)
+                    {
+                        throw new MalformedResponseException("KustoResponse", kustoException);
+                    }
+                }
+                catch (Exception ex1)
+                {
+                    throw new MalformedResponseException("KustoResponse", $"Failed to parse kusto response as exception object: {ex1.Message}");
+                }
+                throw new MalformedResponseException("KustoResponse", $"Failed to parse kusto response as data table: {ex.Message}");
+            }
         }
 
         private void LogKustoQuery(string query, string cluster, string operationName, Stopwatch timeTakenStopWatch, string kustoClientId, Exception kustoApiException, DataTableResponseObjectCollection dataSet, string kustoResponse = "")

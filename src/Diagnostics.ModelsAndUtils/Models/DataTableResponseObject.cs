@@ -10,6 +10,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         public IEnumerable<DataTableResponseObject> Tables { get; set; }
     }
 
+    public class DataTableExceptionResponseObject
+    {
+        public IEnumerable<dynamic> Tables { get; set; }
+        public IEnumerable<string> Exceptions { get; set; }
+    }
+
     public class DataTableResponseObject
     {
         public string TableName { get; set; }
