@@ -76,7 +76,7 @@ namespace Diagnostics.DataProviders
                 csl = query,
                 properties = new
                 {
-                    ClientRequestId = kustoClientId,
+                    ClientRequestId = $"{kustoClientId}_{(new Guid()).ToString()}",
                     Options = new
                     {
                         servertimeout = new TimeSpan(0, 1, 0)
