@@ -106,10 +106,10 @@ namespace Diagnostics.DataProviders
                     string value = RemovePIIFromSettings(item.Value);
                     appSettings.Add(item.Key, value);
                 }
-                    if (!SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x)))
+                if (!SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x)))
                 {
                     string value = RemovePIIFromSettings(item.Value);
-                        appSettings.Add(item.Key, item.Value);
+                }
                 else
                 {
                     appSettings.Add(item.Key, "******");

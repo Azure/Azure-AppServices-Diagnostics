@@ -46,11 +46,6 @@ namespace Diagnostics.DataProviders
 			return MakeDependencyCall(DataProvider.GetResource(wawsObserverUrl));
 		}
 
-		public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
-		{
-			return MakeDependencyCall(DataProvider.GetRuntimeSiteSlotMap(siteName));
-		}
-
 		public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
 		{
 			return MakeDependencyCall(DataProvider.GetRuntimeSiteSlotMap(stampName, siteName));
