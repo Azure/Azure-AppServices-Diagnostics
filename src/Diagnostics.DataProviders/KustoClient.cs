@@ -64,9 +64,9 @@ namespace Diagnostics.DataProviders
         {
             var timeTakenStopWatch = new Stopwatch();
             var authorizationToken = await KustoTokenService.Instance.GetAuthorizationTokenAsync();
-            var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId}##{0}";
+            var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId}##{0}_{(new Guid()).ToString()}";
             var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
-            var request = new HttpRequestMessage(HttpMethod.Post, KustoApiQueryEndpoint.Replace("{cluster}", cluster));
+            var request = new HttpRequestMessage(HttpMethod.Post, KustoApiQueryEndpoint.Replace("{cluster}", cluster));            
             request.Headers.Add("Authorization", authorizationToken);
             request.Headers.Add(HeaderConstants.ClientRequestIdHeader, requestId ?? Guid.NewGuid().ToString());
             request.Headers.UserAgent.ParseAdd("appservice-diagnostics");
@@ -76,7 +76,7 @@ namespace Diagnostics.DataProviders
                 csl = query,
                 properties = new
                 {
-                    ClientRequestId = $"{kustoClientId}_{(new Guid()).ToString()}",
+                    ClientRequestId = kustoClientId,
                     Options = new
                     {
                         servertimeout = new TimeSpan(0, 1, 0)
