@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
 using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -114,6 +115,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// <returns>Task for starting watcher.</returns>
         private async Task StartWatcherInternal(bool startup)
         {
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
             try
             {
                 LogMessage("SourceWatcher : Start");
@@ -227,7 +230,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             }
             finally
             {
-                LogMessage("SourceWatcher : End");
+                stopWatch.Stop();
+                LogMessage($"SourceWatcher : End, Time Taken: {stopWatch.ElapsedMilliseconds}");
             }
         }
 
@@ -331,7 +335,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
             if (GithubWorkers.ContainsKey(workerId))
             {
-                await GithubWorkers[workerId].CreateOrUpdateCacheAsync(destDir, scriptText, assemblyPath, metadata);
+                await GithubWorkers[workerId].CreateOrUpdateCacheAsync(destDir, parentGithubEntry.Sha, scriptText, assemblyPath, metadata);
             }
             else
             {
