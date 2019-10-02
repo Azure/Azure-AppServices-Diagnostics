@@ -144,13 +144,20 @@ namespace Diagnostics.DataProviders
             }
             catch (Newtonsoft.Json.JsonSerializationException ex)
             {
-                var responseObj = JsonConvert.DeserializeObject<DataTableExceptionResponseObject>(responseContent);
-                var kustoException = responseObj.Exceptions.FirstOrDefault();
-                if (kustoException != null)
+                try
                 {
-                    throw new KustoResponseSchemaException("KustoResponse", kustoException);
+                    var responseObj = JsonConvert.DeserializeObject<DataTableExceptionResponseObject>(responseContent);
+                    var kustoException = responseObj.Exceptions.FirstOrDefault();
+                    if (kustoException != null)
+                    {
+                        throw new MalformedResponseException("KustoResponse", kustoException);
+                    }
                 }
-                throw new KustoResponseSchemaException("KustoResponse", "Failed to parse kusto response as data table");
+                catch (Exception ex1)
+                {
+                    throw new MalformedResponseException("KustoResponse", $"Failed to parse kusto response as exception object: {ex1.Message}");
+                }
+                throw new MalformedResponseException("KustoResponse", $"Failed to parse kusto response as data table: {ex.Message}");
             }
         }
 
