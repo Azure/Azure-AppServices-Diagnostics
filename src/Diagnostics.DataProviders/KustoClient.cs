@@ -68,7 +68,7 @@ namespace Diagnostics.DataProviders
             var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
             var request = new HttpRequestMessage(HttpMethod.Post, KustoApiQueryEndpoint.Replace("{cluster}", cluster));            
             request.Headers.Add("Authorization", authorizationToken);
-            request.Headers.Add(HeaderConstants.ClientRequestIdHeader, requestId ?? Guid.NewGuid().ToString());
+            request.Headers.Add(HeaderConstants.ClientRequestIdHeader, kustoClientId ?? Guid.NewGuid().ToString());
             request.Headers.UserAgent.ParseAdd("appservice-diagnostics");
             var requestPayload = new
             {
