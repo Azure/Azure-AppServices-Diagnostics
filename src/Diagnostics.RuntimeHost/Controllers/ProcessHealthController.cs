@@ -24,10 +24,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpGet(UriElements.HealthPing)]
         public async Task<IActionResult> HealthPing()
         {
-            if (_sourceWatcherService.Watcher is GitHubWatcher githubWatcher)
-            {
-                await githubWatcher.WaitForFirstCompletion();
-            }
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
             return Ok("Server is up and running.");
         }
     }
