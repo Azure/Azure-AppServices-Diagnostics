@@ -112,7 +112,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 
             if (nonWildCardHostNames.Any())
             {
-                hostNameQuery = $"{hostNameColumn} in ({string.Join(",", nonWildCardHostNames.Select(h => $@"""{h}"""))})";
+                hostNameQuery = $"{hostNameColumn} in~ ({string.Join(",", nonWildCardHostNames.Select(h => $@"""{h}"""))})";
             }
 
             if (wildCardHostNames.Any())
