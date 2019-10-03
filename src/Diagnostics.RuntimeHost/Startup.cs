@@ -86,6 +86,7 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
             services.AddSingleton<IGistCacheService, GistCacheService>();
             services.AddSingleton<ISiteService, SiteService>();
+            services.AddScoped(typeof(IRuntimeContext<>), typeof(RuntimeContext<>));
             services.AddSingleton<IStampService>((serviceProvider) =>
             {
                 var cloudDomain = serviceProvider.GetService<IDataSourcesConfigurationService>().Config.KustoConfiguration.CloudDomain;
