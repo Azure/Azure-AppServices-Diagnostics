@@ -17,8 +17,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.ArmResource)]
     public class ArmResourceController : DiagnosticControllerBase<ArmResource>
     {
-        public ArmResourceController(IServiceProvider services)
-            : base(services)
+        public ArmResourceController(IServiceProvider services, IRuntimeContext<ArmResource> runtimeContext)
+            : base(services, runtimeContext)
         {
         }
 

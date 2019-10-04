@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using static Diagnostics.Logger.HeaderConstants;
+using Diagnostics.RuntimeHost.Models.Exceptions;
 
 namespace Diagnostics.RuntimeHost.Middleware
 {
@@ -28,6 +29,7 @@ namespace Diagnostics.RuntimeHost.Middleware
         {
             Exception exception = null;
             int statusCode = 0;
+            string responseMessage = null;
             GenerateMissingRequestHeaders(httpContext);
             BeginRequestHandle(httpContext);
 
@@ -40,6 +42,12 @@ namespace Diagnostics.RuntimeHost.Middleware
                 exception = ex;
                 statusCode = (int)HttpStatusCode.RequestTimeout;
             }
+            catch (ASETenantListEmptyException ex)
+            {
+                exception = ex;
+                statusCode = 424;
+                responseMessage = ErrorMessages.ASETenantListEmptyErrorMessage;
+            }
             catch (Exception ex)
             {
                 exception = ex;
@@ -51,6 +59,10 @@ namespace Diagnostics.RuntimeHost.Middleware
                 {
                     httpContext.Response.Clear();
                     httpContext.Response.StatusCode = statusCode;
+                    if (responseMessage != null)
+                    {
+                        await httpContext.Response.WriteAsync(responseMessage).ConfigureAwait(false);
+                    }
                     LogException(httpContext, exception);
                 }
 
@@ -110,12 +122,19 @@ namespace Diagnostics.RuntimeHost.Middleware
             }
 
             string geomasterHostName = string.Empty;
+            string geomasterName = string.Empty;
+
             if (httpContext.Request.Headers.ContainsKey(GeomasterHostNameHeader))
             {
                 geomasterHostName = httpContext.Request.Headers[GeomasterHostNameHeader];
             }
 
-            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName, kustoHeartBeatService, geomasterHostName));
+            if (httpContext.Request.Headers.ContainsKey(GeomasterNameHeader))
+            {
+                geomasterName = httpContext.Request.Headers[GeomasterNameHeader];
+            }
+
+            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName, kustoHeartBeatService, geomasterHostName, geomasterName, null, httpContext.Request.Headers));
         }
 
         private void EndRequestHandle(HttpContext httpContext)
