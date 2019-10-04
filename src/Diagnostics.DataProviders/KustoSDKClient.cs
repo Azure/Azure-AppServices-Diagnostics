@@ -17,7 +17,7 @@ namespace Diagnostics.DataProviders
         private string _kustoApiQueryEndpoint;
         private string _appKey;
         private string _clientId;
-        private string _dbName;
+        //private string _dbName;
         private string _aadAuthority;
 
 
@@ -33,14 +33,14 @@ namespace Diagnostics.DataProviders
             _kustoApiQueryEndpoint = config.KustoApiEndpoint + ":443";
             _appKey = config.AppKey;
             _clientId = config.ClientId;
-            _dbName = config.DBName;
+            //_dbName = config.DBName;
             _aadAuthority = config.AADAuthority;
             FailoverClusterMapping = config.FailoverClusterNameCollection;
         }
 
-        private ICslQueryProvider client(string cluster)
+        private ICslQueryProvider client(string cluster, string database)
         {
-            KustoConnectionStringBuilder connectionStringBuilder = new KustoConnectionStringBuilder(_kustoApiQueryEndpoint.Replace("{cluster}", cluster), _dbName);
+            KustoConnectionStringBuilder connectionStringBuilder = new KustoConnectionStringBuilder(_kustoApiQueryEndpoint.Replace("{cluster}", cluster), database);
             connectionStringBuilder.FederatedSecurity = true;
             connectionStringBuilder.ApplicationClientId = _clientId;
             connectionStringBuilder.ApplicationKey = _appKey;
@@ -50,11 +50,19 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, int timeoutSeconds, string requestId = null, string operationName = null)
         {
-            throw new NotImplementedException();
+            var kustoClient = client(cluster, database);
+            ClientRequestProperties clientRequestProperties = new ClientRequestProperties();
+            var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId}##{0}_{(new Guid()).ToString()}";
+            clientRequestProperties.ClientRequestId = kustoClientId;
+            clientRequestProperties.SetOption("servertimeout", new TimeSpan(0,0,timeoutSeconds));
+            var result = await kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
+            return result.ToDataSet().Tables[0];
         }
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
         {
+            
+
             throw new NotImplementedException();
         }
 
