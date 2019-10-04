@@ -26,12 +26,6 @@ namespace Diagnostics.DataProviders
         private string _aadAuthority;
         private static ConcurrentDictionary<Tuple<string, string>, ICslQueryProvider> QueryProviderMapping;
 
-
-        /// <summary>
-        /// Failover Cluster Mapping.
-        /// </summary>
-        public ConcurrentDictionary<string, string> FailoverClusterMapping { get; set; }
-
         public KustoSDKClient(KustoDataProviderConfiguration config, string requestId)
         {
             if (QueryProviderMapping == null)
@@ -43,7 +37,6 @@ namespace Diagnostics.DataProviders
             _appKey = config.AppKey;
             _clientId = config.ClientId;
             _aadAuthority = config.AADAuthority;
-            FailoverClusterMapping = config.FailoverClusterNameCollection;
         }
 
         private ICslQueryProvider client(string cluster, string database)
