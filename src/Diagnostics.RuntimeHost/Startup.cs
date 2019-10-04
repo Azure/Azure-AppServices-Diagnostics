@@ -124,7 +124,6 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
             services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
 
-            KustoTokenService.Instance.Initialize(dataSourcesConfigService.Config.KustoConfiguration);
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
             AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
             if (searchIsEnabled)
