@@ -1,0 +1,135 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "AppServices": {
+            "type": "array"
+        },
+        "subscriptionId": {
+            "type": "string",
+            "metadata": {
+              "description": "The ID of the subscription the Azure App Service Plan belongs to."
+            }
+          },
+          "appServicePlanResourceGroup": {
+            "type": "string",
+            "metadata": {
+              "description": "The name of the resource group the Azure App Service Plan belongs to."
+            }
+          },
+          "sku": {
+            "type": "string",
+            "defaultValue": "S1",
+            "metadata": {
+              "description": "The SKU of App Service Plan, by default is Standard S1"
+            }
+          },
+          "alwaysOn": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+              "description": "Whether the web app should remain loaded after 20 minutes of inactivity."
+            }
+          },
+          "pingPath":{
+            "type": "string",
+            "defaultValue": "/",
+            "metadata": {
+              "description": "The path to ping to warm up your site"
+            }
+          },
+          "genevaCertContent": {
+            "type": "securestring",
+            "metadata": {
+              "description": "The PFX to be put in the AntMDS certificate store to be used to decrypt the encrypted storage account key and authenticate to MDM."
+            }
+          },
+          "monitoringTenant": {
+            "type": "string",
+            "metadata": {
+              "description": "Sets the MONITORING_TENANT environment variable "
+            }
+          },
+          "monitoringRole": {
+            "type": "string",
+            "metadata": {
+              "description": "Sets the MONITORING_ROLE environment variable"
+            }
+          },
+          "monitoringGcsEnvironment": {
+            "type": "string",
+            "allowedValues": [
+              "Diagnostics Prod",
+              "Test",
+              "Stage",
+              "FirstPartyProd",
+              "BillingProd",
+              "ExternalProd",
+              "CA BlackForest",
+              "CA Fairfax",
+              "CA Mooncake"
+            ],
+            "metadata": {
+              "description": "The endpoint for your Geneva Account.  Sets the MONITORING_GCS_ENVIRONMENT environment variable."
+            }
+          },
+          "monitoringGcsAccount": {
+            "type": "string",
+            "metadata": {
+              "description": "Sets the MONITORING_GCS_ACCOUNT environment variable."
+            }
+          },
+          "monitoringGcsAuthId": {
+            "type": "string",
+            "metadata": {
+              "description": "Sets the MONITORING_GCS_AUTH_ID environment variable."
+            }
+          },
+          "monitoringConfigVersion": {
+            "type": "string",
+            "metadata": {
+              "description": "Sets the MONITORING_CONFIG_VERSION environment variable."
+            }
+          },
+          "TemplateBaseURI": {
+              "type": "string"
+          }
+    },
+    "variables": { },
+    "resources": [
+            {
+                "type": "Microsoft.Resources/deployments",
+                "apiVersion": "2017-05-10",
+                "name": "[concat('linkedTemplateMiddle', copyIndex())]",
+                "resourceGroup": "[parameters('appServicePlanResourceGroup')]",
+                "properties": {
+                    "mode": "Incremental",
+                    "templateLink": {
+                        "uri": "[concat(parameters('TemplateBaseURI'),'antareskvtemplate.json')]"
+                    },
+                    "parameters": {
+                        "siteName":{"value": "[parameters('AppServices')[copyIndex()].siteName]"},
+                        "appServicePlanName":{"value": "[parameters('AppServices')[copyIndex()].appServicePlanName]"},
+                        "location":{"value": "[parameters('AppServices')[copyIndex()].location]"},
+                        "monitoringGcsNamespace":{"value": "[parameters('AppServices')[copyIndex()].monitoringGcsNamespace]"},
+                        "appServicePlanResourceGroup":{"value": "[parameters('appServicePlanResourceGroup')]"},
+                        "pingPath":{"value": "[parameters('pingPath')]"},
+                        "subscriptionId":{"value": "[parameters('subscriptionId')]"},
+                        "sku":{"value": "[parameters('sku')]"},
+                        "alwaysOn":{"value": "[parameters('alwaysOn')]"},
+                        "genevaCertContent":{"value": "[parameters('genevaCertContent')]"},  
+                        "monitoringTenant":{"value": "[parameters('monitoringTenant')]"},
+                        "monitoringRole":{"value": "[parameters('monitoringRole')]"},
+                        "monitoringGcsEnvironment":{"value": "[parameters('monitoringGcsEnvironment')]"},
+                        "monitoringGcsAccount":{"value": "[parameters('monitoringGcsAccount')]"},
+                        "monitoringGcsAuthId":{"value": "[parameters('monitoringGcsAuthId')]"},
+                        "monitoringConfigVersion":{"value": "[parameters('monitoringConfigVersion')]"}
+                    }
+                },
+                "copy": {
+                    "count": "[length(parameters('AppServices'))]",
+                    "name": "linkedTemplateMiddleCopy"
+                }
+            }
+        ]
+}
