@@ -39,7 +39,7 @@ namespace Diagnostics.DataProviders
             _aadAuthority = config.AADAuthority;
         }
 
-        private ICslQueryProvider client(string cluster, string database)
+        private ICslQueryProvider Client(string cluster, string database)
         {
             var key = Tuple.Create(cluster, database);
             if (!QueryProviderMapping.ContainsKey(key))
@@ -71,7 +71,7 @@ namespace Diagnostics.DataProviders
             try
             {
                 timeTakenStopWatch.Start();
-                var kustoClient = client(cluster, database);
+                var kustoClient = Client(cluster, database);
                 var result = await kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
                 dataSet = result.ToDataSet();
             }
