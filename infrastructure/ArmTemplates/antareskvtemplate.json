@@ -199,6 +199,7 @@
           "WEBSITE_LOCAL_CACHE_SIZEINMB": "300",
           "WEBSITE_SWAP_WARMUP_PING_PATH": "[parameters('pingPath')]",
           "WEBSITE_ENABLE_SYNC_UPDATE_SITE": "true",
+          "clientAffinityEnabled": false,
           "siteConfig": {
             "phpVersion": "off",
             "scmType": null,
@@ -209,7 +210,6 @@
             "healthCheckPath": "[parameters('pingPath')]",
             "httpLoggingEnabled": true,
             "logsDirectorySizeLimit": 50,
-            "clientAffinityEnabled": false,
             "appSettings": [
               {
                 "Name": "WEBSITE_FIRST_PARTY_ID",
@@ -256,6 +256,7 @@
             },
             "properties": {
               "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('appServicePlanResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]",
+              "clientAffinityEnabled": false,
               "siteConfig": {
                 "phpVersion": "off",
                 "scmType": "LocalGit",
@@ -266,7 +267,6 @@
                 "healthCheckPath": null,
                 "httpLoggingEnabled": true,
                 "logsDirectorySizeLimit": 50,
-                "clientAffinityEnabled": false,
                 "appSettings": [
                   {
                     "Name": "WEBSITE_FIRST_PARTY_ID",
