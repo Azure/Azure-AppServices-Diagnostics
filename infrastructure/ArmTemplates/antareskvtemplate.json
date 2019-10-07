@@ -228,7 +228,7 @@
       },
       {
         "type": "Microsoft.Insights/autoscalesettings",
-        "name": "AutoScaleSettings",
+        "name": "[concat(toLower(parameters('appServicePlanName')), '-setting')]",
         "dependsOn": [
           "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
         ],
