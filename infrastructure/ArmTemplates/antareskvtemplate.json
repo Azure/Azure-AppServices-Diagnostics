@@ -209,6 +209,7 @@
             "healthCheckPath": "[parameters('pingPath')]",
             "httpLoggingEnabled": true,
             "logsDirectorySizeLimit": 50,
+            "clientAffinityEnabled": false,
             "appSettings": [
               {
                 "Name": "WEBSITE_FIRST_PARTY_ID",
@@ -265,6 +266,7 @@
                 "healthCheckPath": null,
                 "httpLoggingEnabled": true,
                 "logsDirectorySizeLimit": 50,
+                "clientAffinityEnabled": false,
                 "appSettings": [
                   {
                     "Name": "WEBSITE_FIRST_PARTY_ID",
