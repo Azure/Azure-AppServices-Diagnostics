@@ -14,6 +14,7 @@ using System.Web;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
+using Diagnostics.DataProviders.Exceptions;
 
 namespace Diagnostics.DataProviders
 {
@@ -56,7 +57,6 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
         {
-
             return await ExecuteQueryAsync(query, cluster, database, DataProviderConstants.DefaultTimeoutInSeconds, requestId, operationName);
         }
 
@@ -64,16 +64,24 @@ namespace Diagnostics.DataProviders
         {
             var timeTakenStopWatch = new Stopwatch();
             var authorizationToken = await KustoTokenService.Instance.GetAuthorizationTokenAsync();
-            var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId}##{0}";
+            var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId}##{0}_{(new Guid()).ToString()}";
             var tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
-            var request = new HttpRequestMessage(HttpMethod.Post, KustoApiQueryEndpoint.Replace("{cluster}", cluster));
+            var request = new HttpRequestMessage(HttpMethod.Post, KustoApiQueryEndpoint.Replace("{cluster}", cluster));            
             request.Headers.Add("Authorization", authorizationToken);
-            request.Headers.Add(HeaderConstants.ClientRequestIdHeader, requestId ?? Guid.NewGuid().ToString());
+            request.Headers.Add(HeaderConstants.ClientRequestIdHeader, kustoClientId ?? Guid.NewGuid().ToString());
             request.Headers.UserAgent.ParseAdd("appservice-diagnostics");
             var requestPayload = new
             {
                 db = database,
-                csl = query
+                csl = query,
+                properties = new
+                {
+                    ClientRequestId = kustoClientId,
+                    Options = new
+                    {
+                        servertimeout = new TimeSpan(0, 1, 0)
+                    }
+                }
             };
             request.Content = new StringContent(JsonConvert.SerializeObject(requestPayload), Encoding.UTF8, "application/json");
             DataTableResponseObjectCollection dataSet = null;
@@ -89,6 +97,13 @@ namespace Diagnostics.DataProviders
                 {
                     timeTakenStopWatch.Stop();
                     LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, new Exception($"Kusto call ended with a non success status code : {responseMsg.StatusCode.ToString()}"), dataSet, responseContent);
+                    if ((int)responseMsg.StatusCode == 400)
+                    {
+                        if (query != null && query.Contains("Tenant in ()"))
+                        {
+                            throw new KustoTenantListEmptyException("KustoDataProvider", "Malformed Query: Query contains an empty tenant list.");
+                        }
+                    }
                     throw new Exception(responseContent);
                 }
                 else
@@ -123,8 +138,27 @@ namespace Diagnostics.DataProviders
             {
                 throw new Exception($"Kusto query response exceeded the Kusto record count limit: {_queryLimitDocsLink}");
             }
-
-            return JsonConvert.DeserializeObject<DataTableResponseObjectCollection>(responseContent);
+            try
+            {
+                return JsonConvert.DeserializeObject<DataTableResponseObjectCollection>(responseContent);
+            }
+            catch (Newtonsoft.Json.JsonSerializationException ex)
+            {
+                try
+                {
+                    var responseObj = JsonConvert.DeserializeObject<DataTableExceptionResponseObject>(responseContent);
+                    var kustoException = responseObj.Exceptions.FirstOrDefault();
+                    if (kustoException != null)
+                    {
+                        throw new MalformedResponseException("KustoResponse", kustoException);
+                    }
+                }
+                catch (Exception ex1)
+                {
+                    throw new MalformedResponseException("KustoResponse", $"Failed to parse kusto response as exception object: {ex1.Message}");
+                }
+                throw new MalformedResponseException("KustoResponse", $"Failed to parse kusto response as data table: {ex.Message}");
+            }
         }
 
         private void LogKustoQuery(string query, string cluster, string operationName, Stopwatch timeTakenStopWatch, string kustoClientId, Exception kustoApiException, DataTableResponseObjectCollection dataSet, string kustoResponse = "")

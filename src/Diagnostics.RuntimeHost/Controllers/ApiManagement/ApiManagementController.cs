@@ -14,8 +14,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.ApiManagementServiceResource)]
     public sealed class ApiManagementController : DiagnosticControllerBase<ApiManagementService>
     {
-        public ApiManagementController(IServiceProvider services)
-            : base(services)
+        public ApiManagementController(IServiceProvider services, IRuntimeContext<ApiManagementService> runtimeContext)
+            : base(services, runtimeContext)
         {
         }
 

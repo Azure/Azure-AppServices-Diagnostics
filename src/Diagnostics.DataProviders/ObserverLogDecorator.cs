@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
@@ -43,11 +44,6 @@ namespace Diagnostics.DataProviders
 		public Task<dynamic> GetResource(string wawsObserverUrl)
 		{
 			return MakeDependencyCall(DataProvider.GetResource(wawsObserverUrl));
-		}
-
-		public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName)
-		{
-			return MakeDependencyCall(DataProvider.GetRuntimeSiteSlotMap(siteName));
 		}
 
 		public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)

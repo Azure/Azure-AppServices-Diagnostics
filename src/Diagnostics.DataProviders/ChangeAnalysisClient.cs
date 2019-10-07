@@ -11,8 +11,10 @@ using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.DataProviders.TokenService;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using static Diagnostics.Logger.HeaderConstants;
+using Diagnostics.Logger; 
 
 namespace Diagnostics.DataProviders
 {
@@ -60,15 +62,21 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
+        /// List of x-ms headers received during an incoming request.
+        /// </summary>
+        public IHeaderDictionary receivedHeaders { get; private set; }
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ChangeAnalysisClient"/> class.
         /// </summary>
-        public ChangeAnalysisClient(ChangeAnalysisDataProviderConfiguration configuration, string requestTrackingId, string clientObjectId, string clientPrincipalName = "")
+        public ChangeAnalysisClient(ChangeAnalysisDataProviderConfiguration configuration, string requestTrackingId, string clientObjectId,  IHeaderDictionary incomingRequestHeaders, string clientPrincipalName = "")
         {
             clientObjectIdHeader = clientObjectId;
             clientPrincipalNameHeader = clientPrincipalName;
             changeAnalysisEndPoint = configuration.Endpoint;
             apiVersion = configuration.Apiversion;
             requestId = requestTrackingId;
+            receivedHeaders = incomingRequestHeaders;
         }
 
         /// <inheritdoc/>
@@ -308,6 +316,46 @@ namespace Diagnostics.DataProviders
             if (!string.IsNullOrWhiteSpace(clientPrincipalNameHeader))
             {
                 requestMessage.Headers.Add(ClientPrincipalNameHeader, clientPrincipalNameHeader);
+            }
+
+            string clientIssuer = string.Empty;
+            if(receivedHeaders.ContainsKey(ClientIssuerHeader))
+            {
+                clientIssuer = receivedHeaders[ClientIssuerHeader];
+            }
+            if(!string.IsNullOrWhiteSpace(clientIssuer))
+            {
+                requestMessage.Headers.Add(ClientIssuerHeader, clientIssuer);
+            }
+
+            string clientPuid = string.Empty;
+            if(receivedHeaders.ContainsKey(ClientPuidHeader))
+            {
+                clientPuid = receivedHeaders[ClientPuidHeader];
+            }
+            if(!string.IsNullOrWhiteSpace(clientPuid))
+            {
+                requestMessage.Headers.Add(ClientPuidHeader, clientPuid);
+            }
+
+            string clientAltSecId = string.Empty;
+            if(receivedHeaders.ContainsKey(ClientAltSecIdHeader))
+            {
+                clientAltSecId = receivedHeaders[ClientAltSecIdHeader];
+            }
+            if(!string.IsNullOrWhiteSpace(clientAltSecId))
+            {
+                requestMessage.Headers.Add(ClientAltSecIdHeader, clientAltSecId);
+            }
+
+            string clientIdentityProvider = string.Empty;
+            if(receivedHeaders.ContainsKey(ClientIdentityProviderHeader))
+            {
+                clientIdentityProvider = receivedHeaders[ClientIdentityProviderHeader];
+            }
+            if(!string.IsNullOrWhiteSpace(clientIdentityProvider))
+            {
+                requestMessage.Headers.Add(ClientIdentityProviderHeader, clientIdentityProvider);
             }
 
             if (postBody != null)

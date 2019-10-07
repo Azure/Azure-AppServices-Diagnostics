@@ -14,8 +14,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.AppServiceCertResource)]
     public sealed class AppServiceCertificateController : DiagnosticControllerBase<AppServiceCertificate>
     {
-        public AppServiceCertificateController(IServiceProvider services)
-            : base(services)
+        public AppServiceCertificateController(IServiceProvider services, IRuntimeContext<AppServiceCertificate> runtimeContext)
+            : base(services, runtimeContext)
         {
         }
 

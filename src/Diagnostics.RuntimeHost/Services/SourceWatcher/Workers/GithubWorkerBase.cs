@@ -45,7 +45,9 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
             {
                 var cacheId = await FileHelper.GetFileContentAsync(subDir.FullName, _cacheIdFileName);
 
-                if (string.IsNullOrWhiteSpace(cacheId) || !GetCacheService().ContainsKey(cacheId))
+                var subDirSha = await FileHelper.GetFileContentAsync(subDir.FullName, _lastModifiedMarkerName);
+
+                if (string.IsNullOrWhiteSpace(cacheId) || !GetCacheService().TryGetValue(cacheId, out EntityInvoker invoker) || invoker.EntityMetadata.Sha != subDirSha)
                 {
                     LogMessage($"Folder : {subDir.FullName} missing in invoker cache.");
 
@@ -81,7 +83,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 
                     LogMessage($"Loading assembly : {mostRecentAssembly.FullName}");
                     var asm = Assembly.LoadFrom(mostRecentAssembly.FullName);
-                    EntityInvoker invoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata));
+                    invoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata, subDirSha));
                     invoker.InitializeEntryPoint(asm);
 
                     if (invoker.EntryPointDefinitionAttribute != null)
@@ -110,7 +112,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
         /// <param name="assemblyPath">Assembly path.</param>
         /// <param name="metadata">Metadata</param>
         /// <returns>Task for downloading and updating cache.</returns>
-        public async Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string scriptText, string assemblyPath, string metadata)
+        public async Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string sha, string scriptText, string assemblyPath, string metadata)
         {
             if (_loadOnlyPublicDetectors && !regexPublicDetectors.Match(scriptText).Success)
             {
@@ -120,7 +122,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
             LogMessage($"Loading assembly : {assemblyPath}");
             var asm = Assembly.LoadFrom(assemblyPath);
 
-            var newInvoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata));
+            var newInvoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata, sha));
             newInvoker.InitializeEntryPoint(asm);
 
             var cacheIdFilePath = Path.Combine(destDir.FullName, _cacheIdFileName);
