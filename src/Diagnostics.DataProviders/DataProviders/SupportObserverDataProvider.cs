@@ -199,7 +199,7 @@ namespace Diagnostics.DataProviders
                     j["ResourceGroupName"].ToString().Equals(resourceGroupName, StringComparison.InvariantCultureIgnoreCase) && 
                     (j.ContainsKey("StampName") || j.ContainsKey("InternalStampName")));
 
-            return siteObject?["StampName"]?.ToString() ?? siteObject?["InternalStampName"]?.ToString() ?? string.Empty;
+            return siteObject?["InternalStampName"]?.ToString() ?? siteObject?["StampName"]?.ToString() ?? string.Empty;
         }
 
         public override async Task<dynamic> GetHostNames(string stampName, string siteName)
