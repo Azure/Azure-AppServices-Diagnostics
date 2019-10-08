@@ -9,7 +9,7 @@
                 return new MockKustoClient();
             }
 
-            return new KustoClient(config, requestId);
+            return new KustoSDKClient(config, requestId);
         }
     }
 }
