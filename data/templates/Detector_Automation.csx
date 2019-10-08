@@ -8,13 +8,13 @@ private static string GetQuery(OperationContext<ArmResource> cxt)
 		let startTime = datetime({cxt.StartTime});
 		let endTime = datetime({cxt.EndTime});
 		cluster('ClusterName').database('DBName').YOUR_TABLE_NAME
-		| where Timestamp == startTime and Timestamp == endTime
+		| where TIMESTAMP == startTime and TIMESTAMP == endTime
 		YOUR_QUERY
 	";
 }
 
 
-[ArmResourceFilter(provider: "Microsoft.Automation", resourceTypeName: "Automation")]
+[ArmResourceFilter(provider: "Microsoft.Automation", resourceTypeName: "automation")]
 [Definition(Id = "YOUR_DETECTOR_ID", Name = "", Author = "YOUR_ALIAS", Description = "")]
 public async static Task<Response> Run(DataProviders dp, OperationContext<ArmResource> cxt, Response res)
 {
