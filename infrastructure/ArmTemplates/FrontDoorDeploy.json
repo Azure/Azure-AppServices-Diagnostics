@@ -103,6 +103,10 @@
                         }
                     }
                 ],
+                "backendPoolsSettings": {
+                    "enforceCertificateNameCheck": "Enabled",
+                    "sendRecvTimeoutSeconds": 90
+                },
                 "frontendEndpoints": [
                     {
                         "name": "frontendEndpoint1",
