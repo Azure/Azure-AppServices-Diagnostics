@@ -22,7 +22,7 @@ namespace Diagnostics.RuntimeHost.Services
             if (string.IsNullOrWhiteSpace(siteName)) throw new ArgumentNullException("siteName");
 
             string queryTemplate =
-                $@"set query_results_cache_max_age = time(12h);
+                $@"set query_results_cache_max_age = time(1d);
                 WawsAn_dailyentity
                 | where pdate >= ago(5d) and sitename =~ ""{siteName}"" and sitesubscription =~ ""{subscriptionId}"" and resourcegroup =~ ""{resourceGroup}""
                 | where sitestack !contains ""unknown"" and sitestack !contains ""no traffic"" and sitestack  !contains ""undefined""
