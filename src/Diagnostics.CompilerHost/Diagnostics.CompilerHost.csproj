@@ -22,6 +22,7 @@
   <PropertyGroup>
     <CodeAnalysisRuleSet>../../ca.ruleset</CodeAnalysisRuleSet>
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+    <AspNetCoreModuleName>AspNetCoreModuleV2</AspNetCoreModuleName>
   </PropertyGroup>
 
   <ItemGroup>
