@@ -9,6 +9,8 @@ namespace Diagnostics.DataProviders
     {
         public IGeoMasterDataProvider DataProvider;
 
+        public string GeoMasterName => DataProvider.GeoMasterName;
+
         public GeoMasterLogDecorator(DataProviderContext context, IGeoMasterDataProvider dataProvider) : base(context, dataProvider.GetMetadata())
         {
             DataProvider = dataProvider;
@@ -67,6 +69,11 @@ namespace Diagnostics.DataProviders
         public Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
         {
             return MakeDependencyCall(DataProvider.VerifyHostingEnvironmentVnet(subscriptionId, vnetResourceGroup, vnetName, vnetSubnetName, cancellationToken));
+        }
+
+        public Task<VnetConfiguration> CollectVirtualNetworkConfig(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return MakeDependencyCall(DataProvider.CollectVirtualNetworkConfig(subscriptionId, vnetResourceGroup, vnetName, vnetSubnetName, cancellationToken));
         }
     }
 }

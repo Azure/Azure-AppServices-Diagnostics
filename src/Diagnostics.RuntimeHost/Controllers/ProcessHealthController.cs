@@ -3,6 +3,8 @@ using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
+using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -20,8 +22,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpGet(UriElements.HealthPing)]
-        public IActionResult HealthPing()
+        public async Task<IActionResult> HealthPing()
         {
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
             return Ok("Server is up and running.");
         }
     }

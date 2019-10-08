@@ -47,9 +47,7 @@ namespace Diagnostics.DataProviders
         Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames);
 
         Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName);
-
-        Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string siteName);
-
+        
         Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
 
         Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName);

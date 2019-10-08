@@ -1,0 +1,72 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "sites": {
+        "type": "array",
+        "metadata": {
+            "description": "array of objects with a siteName property."
+        }
+      },
+      "ResourceGroup": {
+        "type": "string",
+        "metadata": {
+            "description": "The name of the resource group the Azure App Service Plan belongs to."
+        }
+      },
+      "subscriptionId": {
+        "type": "string",
+        "metadata": {
+            "description": "The ID of the subscription the Azure App Service Plan belongs to."
+        },
+        "defaultValue": "[subscription().tenantId]"
+      },
+      "KeyVaultName": {
+        "type": "string",
+        "metadata": {
+            "description": "The name of the KeyVault."
+        }
+      },
+      "KeyVaultLocation": {
+        "type": "string",
+        "metadata": {
+            "description": "The location of the KeyVault."
+        }
+      }
+
+    },
+    "variables": {
+      "tenantId": "[subscription().tenantId]"
+     },
+    "resources": [
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "name": "[parameters('KeyVaultName')]",
+            "apiVersion": "2015-06-01",
+            "location": "[parameters('KeyVaultLocation')]",
+            "properties": {
+                "sku": {
+                    "family": "A",
+                    "name": "Standard"
+                },
+                "tenantId": "[variables('tenantId')]",
+                "enabledForDeployment": false,
+                "copy" : [
+                    {
+                        "name": "accessPolicies",
+                        "count": "[mul(length(parameters('sites')),2)]",
+                        "input": {
+                            "tenantId": "[variables('tenantId')]",
+                            "objectId": "[reference(concat(resourceId(parameters('subscriptionId'), parameters('ResourceGroup'), 'Microsoft.Web/sites', parameters('sites')[div(copyIndex('accessPolicies'),2)].siteName),if(equals(mod(copyIndex('accessPolicies'),2),1),'/providers/Microsoft.ManagedIdentity/Identities/default','/slots/staging/providers/Microsoft.ManagedIdentity/Identities/default')), '2015-08-31-PREVIEW').principalId]",
+                            "permissions": {
+                                "secrets": [
+                                    "get","list"
+                                ]
+                            } 
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

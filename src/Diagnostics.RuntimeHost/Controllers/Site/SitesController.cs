@@ -19,8 +19,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.SitesResource)]
     public sealed class SitesController : SiteControllerBase
     {
-        public SitesController(IServiceProvider services)
-            : base(services)
+        public SitesController(IServiceProvider services, IRuntimeContext<App> runtimeContext)
+            : base(services, runtimeContext)
         {
         }
 
