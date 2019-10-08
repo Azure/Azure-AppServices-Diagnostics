@@ -29,23 +29,25 @@ namespace Diagnostics.DataProviders
             try
             {
                 var tcs = new TaskCompletionSource<bool>();
-                cTokenRegistration = _dataSourceCancellationToken.Register(() => tcs.TrySetResult(true));
-                var completedTask = await Task.WhenAny(new Task[] { dataProviderTask, tcs.Task });
-
-                if (completedTask.Id == dataProviderTask.Id)
+                using (cTokenRegistration = _dataSourceCancellationToken.Register(() => tcs.TrySetResult(true)))
                 {
-                    return await dataProviderTask;
-                }
-                else
-                {
-                    var dataSourceName = this.GetType().Name;
-                    var logDecoratorSuffix = "LogDecorator";
+                    var completedTask = await Task.WhenAny(new Task[] { dataProviderTask, tcs.Task });
 
-                    if (dataSourceName.EndsWith(logDecoratorSuffix, StringComparison.InvariantCultureIgnoreCase))
+                    if (completedTask.Id == dataProviderTask.Id)
                     {
-                        dataSourceName = dataSourceName.Substring(0, dataSourceName.Length - logDecoratorSuffix.Length);
+                        return await dataProviderTask;
                     }
-                    throw new TimeoutException($"DataSource timed out: {dataSourceName}");
+                    else
+                    {
+                        var dataSourceName = this.GetType().Name;
+                        var logDecoratorSuffix = "LogDecorator";
+
+                        if (dataSourceName.EndsWith(logDecoratorSuffix, StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            dataSourceName = dataSourceName.Substring(0, dataSourceName.Length - logDecoratorSuffix.Length);
+                        }
+                        throw new TimeoutException($"DataSource timed out: {dataSourceName}");
+                    }
                 }
             }
             catch (Exception ex)
@@ -55,11 +57,6 @@ namespace Diagnostics.DataProviders
             }
             finally
             {
-                if (cTokenRegistration != null)
-                {
-                    cTokenRegistration.Dispose();
-                }
-
                 endTime = DateTime.UtcNow;
                 var latencyMilliseconds = Convert.ToInt64((endTime - startTime).TotalMilliseconds);
 
