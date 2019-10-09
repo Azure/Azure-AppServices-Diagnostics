@@ -36,7 +36,7 @@ namespace Diagnostics.CompilerHost
         public Startup(IHostingEnvironment hostingEnvironment)
         {
             var builder = new ConfigurationBuilder()
-              .SetBasePath(Directory.GetCurrentDirectory())
+              .SetBasePath(AppContext.BaseDirectory)
               .AddJsonFile($"appsettings.json", optional: false, reloadOnChange: true)
               .AddJsonFile($"appsettings.{hostingEnvironment.EnvironmentName}.json", optional: true)
               .AddEnvironmentVariables();
