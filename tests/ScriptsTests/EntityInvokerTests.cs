@@ -198,7 +198,7 @@ namespace Diagnostics.Tests.ScriptsTests
                 Id = "TestId"
             };
 
-            string assemblyPath = $@"{Directory.GetCurrentDirectory()}\{Guid.NewGuid().ToString()}";
+            string assemblyPath = $@"{AppContext.BaseDirectory}\{Guid.NewGuid().ToString()}";
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
             metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute);
 
@@ -221,7 +221,7 @@ namespace Diagnostics.Tests.ScriptsTests
                 Id = "TestId"
             };
 
-            string assemblyPath = $@"{Directory.GetCurrentDirectory()}/{Guid.NewGuid().ToString()}";
+            string assemblyPath = $@"{AppContext.BaseDirectory}/{Guid.NewGuid().ToString()}";
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata(EntityType.Gist);
             metadata.ScriptText = await ScriptTestDataHelper.GetGistScript(definitonAttribute);
 
@@ -259,7 +259,7 @@ namespace Diagnostics.Tests.ScriptsTests
                 Id = "TestId"
             };
 
-            string assemblyPath = $@"{Directory.GetCurrentDirectory()}/{Guid.NewGuid().ToString()}";
+            string assemblyPath = $@"{AppContext.BaseDirectory}/{Guid.NewGuid().ToString()}";
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
             metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScript(definitonAttribute);
 

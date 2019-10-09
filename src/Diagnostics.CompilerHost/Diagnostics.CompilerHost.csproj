@@ -21,8 +21,9 @@
 
   <PropertyGroup>
     <CodeAnalysisRuleSet>../../ca.ruleset</CodeAnalysisRuleSet>
-    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
-    <AspNetCoreModuleName>AspNetCoreModuleV2</AspNetCoreModuleName>
+    <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
+    <AspNetCoreModuleName>AspNetCoreModule</AspNetCoreModuleName>
+    <PublishWithAspNetCoreTargetManifest>false</PublishWithAspNetCoreTargetManifest>
   </PropertyGroup>
 
   <ItemGroup>
