@@ -8,7 +8,7 @@ private static string GetQuery(OperationContext<ArmResource> cxt)
 		let startTime = datetime({cxt.StartTime});
 		let endTime = datetime({cxt.EndTime});
 		cluster('ClusterName').database('DBName').YOUR_TABLE_NAME
-		| where TIMESTAMP == startTime and TIMESTAMP == endTime
+		| where TIMESTAMP >= startTime and TIMESTAMP <= endTime
 		YOUR_QUERY
 	";
 }
