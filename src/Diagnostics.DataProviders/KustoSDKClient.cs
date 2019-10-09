@@ -14,6 +14,7 @@ using System.Web;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
+using Diagnostics.DataProviders.Exceptions;
 
 namespace Diagnostics.DataProviders
 {
@@ -79,6 +80,13 @@ namespace Diagnostics.DataProviders
             {
                 timeTakenStopWatch.Stop();
                 LogKustoQuery(query, cluster, operationName, timeTakenStopWatch, kustoClientId, ex, dataSet);
+                if (ex is Kusto.Data.Exceptions.SyntaxException)
+                {
+                    if (query != null && query.Contains("Tenant in ()"))
+                    {
+                        throw new KustoTenantListEmptyException("KustoDataProvider", "Malformed Query: Query contains an empty tenant list.");
+                    }
+                }
 
                 throw;
             }
