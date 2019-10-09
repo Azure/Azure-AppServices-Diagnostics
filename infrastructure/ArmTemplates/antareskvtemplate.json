@@ -334,7 +334,7 @@
               },
               {
                 "Name": "ASPNETCORE_ENVIRONMENT",
-                "Value": "Staging"
+                "Value": "Production"
               },
               {
                 "Name": "WEBSITE_SWAP_WARMUP_PING_PATH",
