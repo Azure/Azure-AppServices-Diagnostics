@@ -23,7 +23,7 @@
     },
     "resources": [
         {
-            "apiVersion": "2019-04-01",
+            "apiVersion": "2019-05-01",
             "type": "Microsoft.Network/frontDoors",
             "name": "[parameters('frontDoorName')]",
             "location": "[variables('frontdoorLocation')]",
@@ -103,6 +103,10 @@
                         }
                     }
                 ],
+                "backendPoolsSettings": {
+                    "enforceCertificateNameCheck": "Enabled",
+                    "sendRecvTimeoutSeconds": 90
+                },
                 "frontendEndpoints": [
                     {
                         "name": "frontendEndpoint1",
