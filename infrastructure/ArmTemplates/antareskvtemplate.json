@@ -325,6 +325,10 @@
             "logsDirectorySizeLimit": 50,
             "appSettings": [
               {
+                  "Name" : "DIAG_HOST",
+                  "Value": "[parameters('siteName')]"
+              },
+              {
                 "Name": "WEBSITE_FIRST_PARTY_ID",
                 "Value": "AntMDS"
               },
@@ -352,6 +356,17 @@
           }
         },
         "resources": [
+          {
+              "apiVersion": "2015-08-01",
+              "name": "slotconfignames",
+              "type": "config",
+              "dependsOn": [
+                  "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]"
+              ],
+              "properties": {
+                  "appSettingNames": [ "ASPNETCORE_ENVIRONMENT", "DIAG_HOST" ]
+              }
+          },
           {
             "comments": "Defines an Azure Web App slot.",
             "type": "slots",
@@ -381,6 +396,10 @@
                 "httpLoggingEnabled": true,
                 "logsDirectorySizeLimit": 50,
                 "appSettings": [
+                  {
+                      "Name" : "DIAG_HOST",
+                      "Value": "[concat(parameters('siteName'),'-staging')]"
+                  },
                   {
                     "Name": "WEBSITE_FIRST_PARTY_ID",
                     "Value": "AntMDS"
