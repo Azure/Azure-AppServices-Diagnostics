@@ -86,7 +86,7 @@
         "monitoringGcsAccount": "DiagWebAppWarm",
         "monitoringConfigVersion": "1.0",
         "KeyVaultResourceGroup": "AppServiceDiagnosticsResources",
-        "TemplateBaseURI": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/master2/infrastructure/ArmTemplates/",
+        "TemplateBaseURI": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/cmaher/arm-template3/infrastructure/ArmTemplates/",
 
 
         "EUAPFrontDoorResources":
