@@ -22,7 +22,7 @@ namespace Diagnostics.Logger
         static DiagnosticsETWProvider()
         {
             EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            WebsiteHostName = Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME");
+            WebsiteHostName = Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME2");
         }
 
         /// <summary>
