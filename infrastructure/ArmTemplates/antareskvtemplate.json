@@ -293,7 +293,7 @@
         "comments": "Defines an Azure Web App integrated with Geneva.",
         "type": "Microsoft.Web/sites",
         "name": "[parameters('siteName')]",
-        "apiVersion": "2015-08-01",
+        "apiVersion": "2018-11-01",
         "location": "[parameters('location')]",
         "identity": {
           "type": "SystemAssigned"
@@ -352,7 +352,29 @@
                 "Name": "WEBSITE_LOCAL_CACHE_OPTION",
                 "Value": "Always"
               }
-            ]
+            ],
+            "autoHealEnabled": true,
+            "autoHealRules": {
+              "triggers": {
+                "requests": null,
+                "privateBytesInKB": 0,
+                "statusCodes": [
+                  {
+                      "status": 500,
+                      "subStatus": 0,
+                      "win32Status": 0,
+                      "count": 100,
+                      "timeInterval": "00:10:00"
+                  }
+                ],
+                "slowRequests": null
+              },
+              "actions": {
+                "actionType": "Recycle",
+                "customAction": null,
+                "minProcessExecutionTime": "00:05:00"
+              }
+            }
           }
         },
         "resources": [
