@@ -325,8 +325,8 @@
             "logsDirectorySizeLimit": 50,
             "appSettings": [
               {
-                  "Name" : "WEBSITE_HOSTNAME2",
-                  "Value": "[concat(parameters('siteName'),'.azurewebsites.net')]"
+                  "Name" : "DIAG_HOST",
+                  "Value": "[parameters('siteName')]"
               },
               {
                 "Name": "WEBSITE_FIRST_PARTY_ID",
@@ -364,7 +364,7 @@
                   "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]"
               ],
               "properties": {
-                  "appSettingNames": [ "ASPNETCORE_ENVIRONMENT", "WEBSITE_HOSTNAME2" ]
+                  "appSettingNames": [ "ASPNETCORE_ENVIRONMENT", "DIAG_HOST" ]
               }
           },
           {
@@ -397,8 +397,8 @@
                 "logsDirectorySizeLimit": 50,
                 "appSettings": [
                   {
-                      "Name" : "WEBSITE_HOSTNAME2",
-                      "Value": "[concat(parameters('siteName'),'-staging.azurewebsites.net')]"
+                      "Name" : "DIAG_HOST",
+                      "Value": "[concat(parameters('siteName'),'-staging')]"
                   },
                   {
                     "Name": "WEBSITE_FIRST_PARTY_ID",
