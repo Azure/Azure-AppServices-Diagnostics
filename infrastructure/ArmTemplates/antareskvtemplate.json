@@ -325,7 +325,7 @@
             "logsDirectorySizeLimit": 50,
             "appSettings": [
               {
-                  "Name" : "WEBSITE_HOSTNAME",
+                  "Name" : "WEBSITE_HOSTNAME2",
                   "Value": "[concat(parameters('siteName'),'.azurewebsites.net')]"
               },
               {
@@ -364,7 +364,7 @@
                   "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]"
               ],
               "properties": {
-                  "appSettingNames": [ "ASPNETCORE_ENVIRONMENT", "WEBSITE_HOSTNAME" ]
+                  "appSettingNames": [ "ASPNETCORE_ENVIRONMENT", "WEBSITE_HOSTNAME2" ]
               }
           },
           {
@@ -397,7 +397,7 @@
                 "logsDirectorySizeLimit": 50,
                 "appSettings": [
                   {
-                      "Name" : "WEBSITE_HOSTNAME",
+                      "Name" : "WEBSITE_HOSTNAME2",
                       "Value": "[concat(parameters('siteName'),'-staging.azurewebsites.net')]"
                   },
                   {
