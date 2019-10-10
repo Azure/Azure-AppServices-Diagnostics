@@ -362,7 +362,12 @@
                 {
                   "status": 500,
                   "subStatus": 0,
-                  "win32Status": 0,
+                  "count": 100,
+                  "timeInterval": "00:10:00"
+                },
+                {
+                  "status": 503,
+                  "subStatus": 0,
                   "count": 100,
                   "timeInterval": "00:10:00"
                 }
