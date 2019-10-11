@@ -115,7 +115,8 @@ namespace Diagnostics.RuntimeHost.Services
             string megaStampRegexPublicHost = $"{stamp}([a-z{{1}}]).cloudapp.net";
             string vmssRegexPublicHost = $"{stamp}-([a-z0-9\\\\.]+).cloudapp.azure.com";
             return
-                $@"{tableName}
+                $@"set query_results_cache_max_age = time(1d);
+                {tableName}
                 | where TIMESTAMP >= datetime({startTimeStr}) and TIMESTAMP <= datetime({endTimeStr})
                 | where PublicHost =~ ""{stamp}.cloudapp.net"" or PublicHost matches regex ""{megaStampRegexPublicHost}"" or PublicHost matches regex ""{vmssRegexPublicHost}""
                 | summarize by Tenant, PublicHost";
