@@ -39,10 +39,10 @@
                         "monitoringGcsNamespace": "WebAppWarmEUS"
                     },
                     {
-                        "appServicePlanName":  "CompilerHost-ASP-BAY-001",
-                        "location" : "West US",
-                        "siteName": "[parameters('CompilerHost2')]",
-                        "monitoringGcsNamespace": "WebAppWarmWUS"
+                        "appServicePlanName":  "CompilerHost-ASP-EUAP-002",
+                        "location" : "East US 2 EUAP",
+                        "siteName": "[replace(parameters('CompilerHost1'),'1','2')]",
+                        "monitoringGcsNamespace": "WebAppWarmEUS"
                     }
                 ]
             },
