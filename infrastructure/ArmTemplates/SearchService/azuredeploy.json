@@ -16,6 +16,16 @@
         "description": "The SKU of App Service Plan, by default is Standard S1"
       }
     },
+    "environments": {
+      "defaultValue": [
+        "staging"
+      ],
+      "type": "array",
+      "metadata": {
+        "description": "Array with the names for the environment slots"
+      },
+      "maxLength": 19
+    },
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
@@ -100,6 +110,74 @@
           ]
         }
       ]
+    },
+    {
+      "apiVersion": "2018-11-01",
+      "type": "Microsoft.Web/sites/slots",
+      "name": "[concat(variables('webAppPortalName'), '/', parameters('environments')[copyIndex()])]",
+      "kind": "app",
+      "location": "[parameters('location')]",
+      "comments": "This specifies the web app slots.",
+      "tags": {
+        "displayName": "WebAppSlots"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "WEBSITES_PORT",
+              "value": "5555"
+            },
+            {
+              "name": "APP_ID",
+              "value": "__APP_ID__"
+            },
+            {
+              "name": "WHITELISTED_APPS",
+              "value": "__WHITELISTED_APPS__"
+            },
+            {
+              "name": "STORAGE_ACCOUNT_NAME",
+              "value": "__STORAGE_ACCOUNT_NAME__"
+            },
+            {
+              "name": "STORAGE_ACCOUNT_KEY",
+              "value": "__STORAGE_ACCOUNT_KEY__"
+            },
+            {
+              "name": "STORAGE_ACCOUNT_CONTAINER_NAME",
+              "value": "__STORAGE_ACCOUNT_CONTAINER_NAME__"
+            },
+            {
+              "name": "TRAINED_MODELS_PATH",
+              "value": "__TRAINED_MODELS_PATH__"
+            },
+            {
+              "name": "ENVIRONMENT",
+              "value": "__ENVIRONMENT__"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/Sites', variables('webAppPortalName'))]"
+      ],
+      "resources": [
+        {
+          "apiVersion": "2018-11-01",
+          "name": "python364x64",
+          "type": "siteextensions",
+          "properties": {},
+          "dependsOn": [
+            "[concat(variables('webAppPortalName'), '/', parameters('environments')[copyIndex()])]"
+          ]
+        }
+      ],
+      "copy": {
+        "name": "webPortalSlot",
+        "count": "[length(parameters('environments'))]"
+      }
     }
   ]
 }
