@@ -168,7 +168,10 @@
           "apiVersion": "2018-11-01",
           "name": "python364x64",
           "type": "siteextensions",
-          "properties": {}
+          "properties": {},
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites/slots', [concat(variables('webAppPortalName'), '/slots/', parameters('environments')[copyIndex()])])]"
+          ]
         }
       ],
       "copy": {
