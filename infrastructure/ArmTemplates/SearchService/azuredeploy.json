@@ -114,7 +114,7 @@
     {
       "apiVersion": "2018-11-01",
       "type": "Microsoft.Web/sites/slots",
-      "name": "[concat(variables('webAppPortalName'), '/', parameters('environments')[copyIndex()])]",
+      "name": "[concat(variables('webAppPortalName'), '-', parameters('environments')[copyIndex()])]",
       "kind": "app",
       "location": "[parameters('location')]",
       "comments": "This specifies the web app slots.",
@@ -170,7 +170,7 @@
           "type": "siteextensions",
           "properties": {},
           "dependsOn": [
-            "[concat(variables('webAppPortalName'), '/', parameters('environments')[copyIndex()])]"
+            "[concat(variables('webAppPortalName'), '-', parameters('environments')[copyIndex()])]"
           ]
         }
       ],
