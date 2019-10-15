@@ -93,7 +93,10 @@
               "name": "ENVIRONMENT",
               "value": "__ENVIRONMENT__"
             }
-          ]
+          ],
+          "parameters": {
+            "alwaysOn": true
+          }
         }
       },
       "dependsOn": [
@@ -157,7 +160,10 @@
               "name": "ENVIRONMENT",
               "value": "__ENVIRONMENT__"
             }
-          ]
+          ],
+          "parameters": {
+            "alwaysOn":  true
+          }
         }
       },
       "dependsOn": [
