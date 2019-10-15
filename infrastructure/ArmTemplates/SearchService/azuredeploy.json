@@ -170,7 +170,7 @@
           "type": "siteextensions",
           "properties": {},
           "dependsOn": [
-            "[concat(variables('webAppPortalName'), '/slots/', parameters('environments')[copyIndex()])]"
+            "[resourceId('Microsoft.Web/sites/slots', variables('webAppPortalName'), parameters('environments')[copyIndex()])]"
           ]
         }
       ],
