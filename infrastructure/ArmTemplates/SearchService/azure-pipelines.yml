@@ -1,6 +1,11 @@
 pool:
   name: Hosted Windows 2019 with VS2019
 
+trigger:
+  paths:
+    include:
+    - infrastructure/ArmTemplates/SearchService/*
+
 steps:
 - task: ArchiveFiles@2
   inputs:
