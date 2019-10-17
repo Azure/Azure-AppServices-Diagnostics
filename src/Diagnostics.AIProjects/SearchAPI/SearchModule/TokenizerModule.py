@@ -1,4 +1,4 @@
-import nltk
+import nltk, os
 from nltk import ngrams
 import itertools
 from nltk.corpus import stopwords
@@ -9,11 +9,11 @@ try:
 except LookupError:
     nltk.download('punkt')
 try:
-    nltk.data.find('stopwords')
+    nltk.data.find('corpora/stopwords')
 except LookupError:
     nltk.download('stopwords')
 try:
-    nltk.data.find('wordnet')
+    nltk.data.find('corpora/wordnet')
 except LookupError:
     nltk.download('wordnet')
 

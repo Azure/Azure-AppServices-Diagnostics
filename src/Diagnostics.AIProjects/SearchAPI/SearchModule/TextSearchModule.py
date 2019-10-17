@@ -1,21 +1,18 @@
 import os, gc, shutil, uuid
-from argparse import ArgumentParser
-from flask import Flask, request
-from RegistryReader import detectorsFolderPath
-from Logger import loggerInstance
+from SearchModule.Logger import loggerInstance
 from datetime import datetime, timezone
 import json
-from functools import wraps
-from ModelInfo import ModelInfo
-from TokenizerModule import *
-
-argparser = ArgumentParser()
-argparser.add_argument("-d", "--debug", default=False, help="flag for debug mode")
-args = vars(argparser.parse_args())
-loggerInstance.isLogToKustoEnabled = (not args['debug'])
+from SearchModule.ModelInfo import ModelInfo
+from SearchModule.TokenizerModule import *
 
 from gensim.models import TfidfModel
 from gensim import corpora, similarities
+
+SITE_ROOT = os.getcwd()
+loggerInstance.logInsights("SITE_ROOT: {0}".format(SITE_ROOT))
+
+def absPath(path):
+    return os.path.join(SITE_ROOT, path)
 
 class ModelDownloadFailed(Exception):
     pass
@@ -25,11 +22,12 @@ class ModelFileLoadFailed(Exception):
     pass
 class ResourceConfigDownloadFailed(Exception):
     pass
-def getUTCTime():
-    return datetime.now(timezone.utc)
-
-def getLatency(startTime, endTime):
-    return (endTime-startTime).total_seconds()*1000
+class ModelRefreshException(Exception):
+    pass
+class CopySourceFolderNotFoundException(Exception):
+    pass
+class CopyTaskException(Exception):
+    pass
 
 packageFileNames = {
     "dictionaryFile": "dictionary.dict",
@@ -45,25 +43,41 @@ packageFileNames = {
 
 optionalFiles = ["mappingsFile", "modelInfo"]
 
-modelsPath = detectorsFolderPath
+modelsPath = "models"
 def copyFolder(src, dst):
-    if os.path.isdir(src):
-        if os.path.isdir(dst):
-            shutil.rmtree(dst)
-        shutil.copytree(src, dst)
+    if os.path.isdir(absPath(src)):
+        try:
+            if os.path.isdir(absPath(dst)):
+                try:
+                    shutil.rmtree(absPath(dst))
+                except Exception as e:
+                    raise Exception("folderCopyTask: Delete existing folder Exception: {0}".format(str(e)))
+            try:
+                shutil.copytree(absPath(src), absPath(dst))
+            except Exception as e:
+                raise Exception("folderCopyTask: Copying to folder Exception: {0}".format(str(e)))
+        except Exception as e:
+            exception = CopyTaskException("TextSearchModule: {0}, src:{1}, dst:{2}".format(str(e), absPath(src), absPath(dst)))
+            loggerInstance.logHandledException("folderCopyTask", exception)
+            raise exception
+    else:
+        exception = CopySourceFolderNotFoundException("Source folder not found Copying Folder from {0} to {1}".format(absPath(src), absPath(dst)))
+        loggerInstance.logHandledException("folderCopyTask", exception)
+        raise exception
+
 def downloadModels(productid, path=""):
     try:
-        copyFolder(os.path.join(modelsPath, productid), os.path.join(path, productid))
+        copyFolder(os.path.join(modelsPath, productid), absPath(os.path.join(path, productid)))
+        loggerInstance.logInsights("TextSearchModule: Copied Folder for product {0} to {1}".format(productid, absPath(os.path.join(path, productid))))
     except Exception as e:
         raise ModelDownloadFailed("Model can't be downloaded " + str(e))
 def downloadResourceConfig():
     try:
-        copyFolder(os.path.join(modelsPath, "resourceConfig"), os.path.join(os.path.dirname(os.path.abspath(__file__)), "resourceConfig"))
+        copyFolder(os.path.join(modelsPath, "resourceConfig"), absPath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "resourceConfig")))
     except Exception as e:
         raise ResourceConfigDownloadFailed("Resource config can't be downloaded " + str(e))
 
-downloadResourceConfig()
-config = json.loads(open("resourceConfig/config.json", "r").read())
+config = json.loads(open(absPath(os.path.join("SearchModule", "resourceConfig.json")), "r").read())
 resourceConfig = config["resourceConfig"]
 def getProductId(resourceObj):
     productids = []
@@ -83,22 +97,26 @@ def getProductId(resourceObj):
         return None
         
 #### Text Search model for Queries ####
-def verifyFile(filename):
+def verifyFile(filename, prelogMessage=""):
     try:
-        fp = open(filename, "rb")
-        fp.close()
+        with open(absPath(filename), "rb") as fp:
+            fp.close()
+        loggerInstance.logInsights("TextSearchModule: {0}Verified File {1}".format(prelogMessage, absPath(filename)))
         return True
     except FileNotFoundError:
+        loggerInstance.logInsights("TextSearchModule: {0}Failed to Verify File {1}".format(prelogMessage, absPath(filename)))
         return False
 
 class TextSearchModel:
     def __init__(self, modelpackagepath, packageFiles):
         for key in packageFiles.keys():
-            packageFiles[key] = os.path.join(modelpackagepath, packageFiles[key])
+            packageFiles[key] = absPath(os.path.join(modelpackagepath, packageFiles[key]))
         self.packageFiles = packageFiles
         self.models = {"dictionary": None, "m1Model": None, "m1Index": None, "m2Model": None, "m2Index": None, "detectors": None, "sampleUtterances": None, "mappings": None, "modelInfo": None}
         try:
-            self.models["modelInfo"] = ModelInfo(json.loads(open(self.packageFiles["modelInfo"], "r").read()))
+            with open(self.packageFiles["modelInfo"], "r") as fp:
+                self.models["modelInfo"] = ModelInfo(json.loads(fp.read()))
+                fp.close()
         except:
             self.models["modelInfo"] = ModelInfo({})
         try:
@@ -169,7 +187,7 @@ class TextSearchModel:
                     similar_docs = list(map(lambda x: {"detector": self.models["detectors"][x[0]]["id"], "score": str(x[1])}, similar_doc_indices))
                 return {"query": query, "results": similar_docs}
             except Exception as e:
-                return {"query": query, "results": []}
+                return {"query": query, "results": [], "exception": str(e)}
         return None
 
     def loadUtteranceModel(self):
@@ -202,36 +220,47 @@ class TextSearchModel:
 
 def loadModel(productid, model=None):
     if model:
+        loggerInstance.logInsights("TextSearchModule: Loading model for product {0}: From provided pre-loaded model.".format(productid))
         loaded_models[productid] = model
         gc.collect()
         return
     if productid in loaded_models:
+        loggerInstance.logInsights("TextSearchModule: Loading model for product {0}: Model is already loaded in app".format(productid))
         return
-    modelpackagepath = productid
-    if not os.path.isdir(productid) or not all([verifyFile(os.path.join(modelpackagepath, x)) for x in packageFileNames.values()]):
-        downloadModels(productid)
+    modelpackagepath = os.path.join("SearchModule", productid)
+    loggerInstance.logInsights("TextSearchModule: Loading model for product {0}: Loading from folder {1}".format(productid, modelpackagepath))
+    if not os.path.isdir(absPath(modelpackagepath)) or not all([verifyFile(os.path.join(modelpackagepath, x)) for x in packageFileNames.values()]):
+        loggerInstance.logInsights("TextSearchModule: Loading model for product {0}: Could not find model folder. Getting model from download location.".format(productid))
+        downloadModels(productid, "SearchModule")
     if not all([verifyFile(os.path.join(modelpackagepath, packageFileNames[x])) for x in packageFileNames.keys() if x not in optionalFiles]):
+        loggerInstance.logHandledException("modelLoadTask", ModelFileConfigFailed("TextSearchModule: Loading model for product {0}: {1}".format(productid, "One or more of model file(s) are missing")))
         raise FileNotFoundError("One or more of model file(s) are missing")
     loaded_models[productid] = TextSearchModel(modelpackagepath, dict(packageFileNames))
 
 def refreshModel(productid):
     path = str(uuid.uuid4())
+    loggerInstance.logInsights("TextSearchModule: Refresh model request for product {0}: Copying models from download folder".format(productid))
     downloadModels(productid, path=path)
     modelpackagepath = os.path.join(path, productid)
-    if not all([verifyFile(os.path.join(modelpackagepath, packageFileNames[x])) for x in packageFileNames.keys() if x not in optionalFiles]):
+    if not all([verifyFile(os.path.join(modelpackagepath, packageFileNames[x]), "Refresh model request for product {0}: ".format(productid)) for x in packageFileNames.keys() if x not in optionalFiles]):
+        loggerInstance.logHandledException("modelRefreshTask", ModelRefreshException("TextSearchModule: Refresh model request for product {0}: Failed to refresh model because One or more of model file(s) are missing".format(productid)))
         return "Failed to refresh model because One or more of model file(s) are missing"
+    loggerInstance.logInsights("TextSearchModule: Refresh model request for product {0}: Successfully verified all files exist for the model.".format(productid))
     try:
         temp = TextSearchModel(modelpackagepath, dict(packageFileNames))
         temp = None
         gc.collect()
-        if os.path.isdir(productid):
-            shutil.rmtree(productid)
-        copyFolder(modelpackagepath, productid)
-        shutil.rmtree(path)
+        if os.path.isdir(os.path.join("SearchModule", productid)):
+            shutil.rmtree(os.path.join("SearchModule", productid))
+        copyFolder(modelpackagepath, os.path.join("SearchModule", productid))
+        shutil.rmtree(absPath(path))
+        loggerInstance.logInsights("TextSearchModule: Refresh model request for product {0}: Verified the new model by loading it. Triggering the switch.".format(productid))
     except Exception as e:
-        shutil.rmtree(path)
+        shutil.rmtree(absPath(path))
+        loggerInstance.logHandledException("modelRefreshTask", ModelRefreshException("TextSearchModule: Refresh model request for product {0}: {1}".format(productid, str(e))))
         return "Failed to refresh Model Exception:" + str(e)
-    loadModel(productid, model=TextSearchModel(productid, dict(packageFileNames)))
+    loadModel(productid, model=TextSearchModel(os.path.join("SearchModule", productid), dict(packageFileNames)))
+    loggerInstance.logInsights("TextSearchModule: Refresh model request for product {0}: Successfully refreshed model.".format(productid))
     return "Model Refreshed Successfully"
 
 def freeModel(productid):
@@ -241,116 +270,3 @@ def freeModel(productid):
 
 
 loaded_models = {}
-######## RUN THE API SERVER IN FLASK  #############
-app = Flask(__name__)
-# Make the WSGI interface available at the top level so wfastcgi can get it.
-wsgi_app = app.wsgi_app
-
-def getRequestId(req):
-    if req.method == 'POST':
-        data = json.loads(request.data.decode('ascii'))
-        return data['requestId'] if 'requestId' in data else None
-    elif req.method == 'GET':
-        return request.args.get('requestId')
-    return None
-
-def loggingProvider(requestIdRequired=True):
-    def loggingOuter(f):
-        @wraps(f)
-        def logger(*args, **kwargs):
-            try:
-                downloadResourceConfig()
-            except:
-                pass
-            startTime = getUTCTime()
-            res = None
-            requestId = getRequestId(request)
-            requestId = requestId if requestId else (str(uuid.uuid4()) if not requestIdRequired else None)
-            if not requestId:
-                res = ("BadRequest: Missing parameter requestId", 400)
-                endTime = getUTCTime()
-                loggerInstance.logApiSummary("Null", str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
-                return res
-            else:
-                try:
-                    res = f(*args, **kwargs)
-                except Exception as e:
-                    res = (str(e), 500)
-                    loggerInstance.logUnhandledException(requestId, str(e))
-            endTime = getUTCTime()
-            loggerInstance.logApiSummary(requestId, str(request.url_rule), res[1], getLatency(startTime, endTime), startTime.strftime("%H:%M:%S.%f"), endTime.strftime("%H:%M:%S.%f"), res[0])
-            return res
-        return logger
-    return loggingOuter
-
-@app.route('/healthping')
-def healthPing():
-    return ("I am alive!", 200)
-
-@app.route('/queryDetectors', methods=["POST"])
-@loggingProvider(requestIdRequired=True)
-def queryDetectorsMethod():
-    data = json.loads(request.data.decode('ascii'))
-    requestId = data['requestId']
-
-    txt_data = data['text']
-    if not txt_data:
-        return ("No text provided for search", 400)
-    productid = getProductId(data)
-    if not productid:
-        return ('Resource data not available', 404)
-    productid = productid[0]
-    try:
-        loadModel(productid)
-    except Exception as e:
-        loggerInstance.logHandledException(requestId, e)
-        loggerInstance.logToFile(requestId, e)
-        return (json.dumps({"query": txt_data, "results": []}), 200)
-    
-    res = json.dumps(loaded_models[productid].queryDetectors(txt_data))
-    return (res, 200)
-
-@app.route('/queryUtterances', methods=["POST"])
-@loggingProvider(requestIdRequired=True)
-def queryUtterancesMethod():
-    data = json.loads(request.data.decode('ascii'))
-    requestId = data['requestId']
-    
-    txt_data = data['detector_description']
-    existing_utterances = [str(x).lower() for x in json.loads(data['detector_utterances'])]
-    if not txt_data:
-        return ("No text provided for search", 400)
-    productid = getProductId(data)
-    if not productid:
-        return ('Resource type product data not available', 404)
-    results = {"query": txt_data, "results": []}
-    for product in productid:
-        try:
-            loadModel(product)
-            res = loaded_models[product].queryUtterances(txt_data, existing_utterances)
-        except Exception as e:
-            loggerInstance.logHandledException(requestId, e)
-            res = {"query": txt_data, "results": None}
-        if res:
-            results["results"] += res["results"] if res["results"] else []
-    res = json.dumps(results)
-
-    return (res, 200)
-
-@app.route('/freeModel')
-def freeModelMethod():
-    productid = str(request.args.get('productId'))
-    freeModel(productid)
-    return ('', 204)
-
-@app.route('/refreshModel', methods=["GET"])
-@loggingProvider(requestIdRequired=True)
-def refreshModelMethod():
-    productid = str(request.args.get('productId')).strip()
-    res = "{0} - {1}".format(productid, refreshModel(productid))
-    return (res, 200)
-
-if __name__ == '__main__':
-    HOST = os.environ.get('SERVER_HOST', '0.0.0.0')
-    PORT = 8010
-    app.run(HOST, PORT, debug=args['debug'])
