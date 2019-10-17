@@ -15,6 +15,7 @@ using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using Diagnostics.DataProviders.Exceptions;
+using System.Collections.Concurrent;
 
 namespace Diagnostics.DataProviders
 {
@@ -27,6 +28,11 @@ namespace Diagnostics.DataProviders
         private string _aadAuthority;
         private static ConcurrentDictionary<Tuple<string, string>, ICslQueryProvider> QueryProviderMapping;
 
+        /// <summary>
+        /// Failover cluster mapping
+        /// </summary>
+        public ConcurrentDictionary<string, string> FailoverClusterMapping { get; set; }
+
         public KustoSDKClient(KustoDataProviderConfiguration config, string requestId)
         {
             if (QueryProviderMapping == null)
@@ -38,6 +44,7 @@ namespace Diagnostics.DataProviders
             _appKey = config.AppKey;
             _clientId = config.ClientId;
             _aadAuthority = config.AADAuthority;
+            FailoverClusterMapping = config.FailoverClusterNameCollection;
         }
 
         private ICslQueryProvider Client(string cluster, string database)
@@ -120,6 +127,10 @@ namespace Diagnostics.DataProviders
             try
             {
                 var encodedQuery = await EncodeQueryAsBase64UrlAsync(query);
+                if(FailoverClusterMapping.ContainsKey(cluster))
+                {
+                    cluster = FailoverClusterMapping[cluster];
+                }
                 var kustoQuery = new KustoQuery
                 {
                     Text = query,
