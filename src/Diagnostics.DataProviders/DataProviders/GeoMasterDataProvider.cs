@@ -101,14 +101,10 @@ namespace Diagnostics.DataProviders
             foreach (var item in properties)
             {
                 if (AllowedlistAppSettingsStartingWith.Any(x => item.Key.StartsWith(x)) && !SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x))
-                    || RegexMatchingPatterns.Any(x => (Regex.Match(item.Key, x).Success)))
-				{
-                    string value = RemovePIIFromSettings(item.Value);
-                    appSettings.Add(item.Key, value);
-                }
-                if (!SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x)))
+                   || RegexMatchingPatterns.Any(x => (Regex.Match(item.Key, x).Success)))
                 {
                     string value = RemovePIIFromSettings(item.Value);
+                    appSettings.Add(item.Key, value);
                 }
                 else
                 {
