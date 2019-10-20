@@ -103,9 +103,9 @@ namespace Diagnostics.RuntimeHost.Utilities
                 errorMessage = "Invalid Start Time and End Time. End Time cannot be earlier than Start Time.";
                 return false;
             }
-            else if (startTimeUtc > currentUtcTime)
+            else if (startTimeUtc > currentUtcTime.AddMinutes(-15))
             {
-                errorMessage = "Invalid Start Time. Start Time cannot be a future date.";
+                errorMessage = "Invalid Start Time. Start Time cannot be after 15 minutes before current time.";
                 return false;
             }
 
