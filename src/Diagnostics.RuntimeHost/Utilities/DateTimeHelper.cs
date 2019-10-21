@@ -106,12 +106,12 @@ namespace Diagnostics.RuntimeHost.Utilities
             }
             if (endTimeUtc > currentUtcTime.AddMinutes(kustoDelayInMinutes))
             {
-                errorMessage = $"Invalid Start Time. End Time should be at least {HostConstants.KustoDelayInMinutes} minutes from now";
+                errorMessage = $"Invalid End Time. End Time should be less by at least {HostConstants.KustoDelayInMinutes} minutes from now";
                 return false;
             }
             else if (startTimeUtc > currentUtcTime.AddMinutes(kustoDelayInMinutes))
             {
-                errorMessage = $"Invalid Start Time. Start Time should be at least {HostConstants.KustoDelayInMinutes} minutes from now";
+                errorMessage = $"Invalid Start Time. Start Time should be less by at least {HostConstants.KustoDelayInMinutes} minutes from now";
                 return false;
             }
 
