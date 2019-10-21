@@ -66,11 +66,11 @@ namespace Diagnostics.RuntimeHost.Utilities
             DateTime currentUtcTime = GetDateTimeInUtcFormat(DateTime.UtcNow);
             bool result = true;
             errorMessage = string.Empty;
-            int kustoDelayInSeconds = -HostConstants.KustoDelayInSeconds;
+            int kustoDelayInMinutes = -HostConstants.KustoDelayInMinutes;
 
             if (string.IsNullOrWhiteSpace(startTime) && string.IsNullOrWhiteSpace(endTime))
             {
-                endTimeUtc = currentUtcTime.AddMinutes(kustoDelayInSeconds);
+                endTimeUtc = currentUtcTime.AddMinutes(kustoDelayInMinutes);
                 startTimeUtc = endTimeUtc.AddDays(-1);
             }
             else if (string.IsNullOrWhiteSpace(startTime))
@@ -82,9 +82,9 @@ namespace Diagnostics.RuntimeHost.Utilities
             {
                 result = ParseDateTimeParameter("startTime", startTime, currentUtcTime.AddDays(-1), out startTimeUtc);
                 endTimeUtc = startTimeUtc.AddDays(1);
-                if (endTimeUtc > currentUtcTime.AddMinutes(kustoDelayInSeconds))
+                if (endTimeUtc > currentUtcTime.AddMinutes(kustoDelayInMinutes))
                 {
-                    endTimeUtc = currentUtcTime.AddMinutes(kustoDelayInSeconds);
+                    endTimeUtc = currentUtcTime.AddMinutes(kustoDelayInMinutes);
                 }
             }
             else
@@ -104,14 +104,14 @@ namespace Diagnostics.RuntimeHost.Utilities
                 errorMessage = "Invalid Start Time and End Time. End Time cannot be earlier than Start Time.";
                 return false;
             }
-            if (endTimeUtc > currentUtcTime.AddMinutes(kustoDelayInSeconds))
+            if (endTimeUtc > currentUtcTime.AddMinutes(kustoDelayInMinutes))
             {
-                errorMessage = $"Invalid Start Time. End Time should be at least {HostConstants.KustoDelayInSeconds} minutes from now";
+                errorMessage = $"Invalid Start Time. End Time should be at least {HostConstants.KustoDelayInMinutes} minutes from now";
                 return false;
             }
-            else if (startTimeUtc > currentUtcTime.AddMinutes(kustoDelayInSeconds))
+            else if (startTimeUtc > currentUtcTime.AddMinutes(kustoDelayInMinutes))
             {
-                errorMessage = $"Invalid Start Time. Start Time should be at least {HostConstants.KustoDelayInSeconds} minutes from now";
+                errorMessage = $"Invalid Start Time. Start Time should be at least {HostConstants.KustoDelayInMinutes} minutes from now";
                 return false;
             }
 
