@@ -2,6 +2,9 @@ pool:
   name: Hosted Windows 2019 with VS2019
 
 trigger:
+  branches:
+    include:
+    - master2
   paths:
     include:
     - src/Diagnostics.AIProjects/SearchAPI/*
