@@ -66,10 +66,11 @@ namespace Diagnostics.RuntimeHost.Utilities
             DateTime currentUtcTime = GetDateTimeInUtcFormat(DateTime.UtcNow);
             bool result = true;
             errorMessage = string.Empty;
+            int kustoDelayInMinutes = -HostConstants.KustoDelayInMinutes;
 
             if (string.IsNullOrWhiteSpace(startTime) && string.IsNullOrWhiteSpace(endTime))
             {
-                endTimeUtc = currentUtcTime;
+                endTimeUtc = currentUtcTime.AddMinutes(kustoDelayInMinutes);
                 startTimeUtc = endTimeUtc.AddDays(-1);
             }
             else if (string.IsNullOrWhiteSpace(startTime))
@@ -81,9 +82,9 @@ namespace Diagnostics.RuntimeHost.Utilities
             {
                 result = ParseDateTimeParameter("startTime", startTime, currentUtcTime.AddDays(-1), out startTimeUtc);
                 endTimeUtc = startTimeUtc.AddDays(1);
-                if (endTimeUtc > currentUtcTime)
+                if (endTimeUtc > currentUtcTime.AddMinutes(kustoDelayInMinutes))
                 {
-                    endTimeUtc = currentUtcTime;
+                    endTimeUtc = currentUtcTime.AddMinutes(kustoDelayInMinutes);
                 }
             }
             else
@@ -103,9 +104,14 @@ namespace Diagnostics.RuntimeHost.Utilities
                 errorMessage = "Invalid Start Time and End Time. End Time cannot be earlier than Start Time.";
                 return false;
             }
-            else if (startTimeUtc > currentUtcTime)
+            if (endTimeUtc > currentUtcTime.AddMinutes(kustoDelayInMinutes))
             {
-                errorMessage = "Invalid Start Time. Start Time cannot be a future date.";
+                errorMessage = $"Invalid End Time. End Time should be less by at least {HostConstants.KustoDelayInMinutes} minutes from now";
+                return false;
+            }
+            else if (startTimeUtc > currentUtcTime.AddMinutes(kustoDelayInMinutes))
+            {
+                errorMessage = $"Invalid Start Time. Start Time should be less by at least {HostConstants.KustoDelayInMinutes} minutes from now";
                 return false;
             }
 
