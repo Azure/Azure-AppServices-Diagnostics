@@ -99,6 +99,10 @@ namespace Diagnostics.DataProviders.TokenService
         {
             if (!tokenAcquiredAtleastOnce)
             {
+                while (acquireTokenTask == null)
+                {
+                    await Task.Delay(1000);
+                }
                 var authResult = await acquireTokenTask;
                 return GetAuthTokenFromAuthenticationResult(authResult);
             }

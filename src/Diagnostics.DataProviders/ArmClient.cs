@@ -7,22 +7,24 @@ namespace Diagnostics.DataProviders
     internal class ArmClient : IGeoMasterClient
     {
         private const string CsmEndpointUrl = "https://management.azure.com/";
-        public HttpClient Client { get; }
-        public Uri BaseUri { get; }
+        private static readonly HttpClient _client = new HttpClient();
+        public HttpClient Client => _client;
+        public Uri BaseUri => _client.BaseAddress;
+        public string AuthenticationToken { get; }
+
+        static ArmClient()
+        {
+            _client.BaseAddress = new Uri(CsmEndpointUrl);
+            _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        }
 
         public ArmClient(GeoMasterDataProviderConfiguration configuration)
         {
-            var handler = new HttpClientHandler();
-            BaseUri = new Uri(CsmEndpointUrl);
-
-            Client = new HttpClient(handler)
+            if (configuration.Token == null)
             {
-                BaseAddress = BaseUri
-            };
-
-            Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", configuration.Token);
-            Client.BaseAddress = BaseUri;
+                throw new ArgumentNullException("NULL TOKEN!!");
+            }
+            this.AuthenticationToken = configuration.Token;
         }
     }
 }
