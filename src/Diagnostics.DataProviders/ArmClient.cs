@@ -20,9 +20,9 @@ namespace Diagnostics.DataProviders
 
         public ArmClient(GeoMasterDataProviderConfiguration configuration)
         {
-            if (configuration.Token == null)
+            if (string.IsNullOrWhiteSpace(configuration.Token))
             {
-                throw new ArgumentException("configuration.Token is null");
+                throw new ArgumentException("configuration.Token is null or empty");
             }
             this.AuthenticationToken = configuration.Token;
         }
