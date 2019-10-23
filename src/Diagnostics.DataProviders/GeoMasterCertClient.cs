@@ -31,7 +31,6 @@ namespace Diagnostics.DataProviders
             };
 
             BaseUri = geoEndpoint.Uri;
-            _httpClient.BaseAddress = BaseUri;
         }
 
         public HttpClient Init(GeoMasterDataProviderConfiguration configuration)
@@ -54,7 +53,6 @@ namespace Diagnostics.DataProviders
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(HeaderConstants.JsonContentType));
             httpClient.DefaultRequestHeaders.Add(HeaderConstants.UserAgentHeaderName, "appservice-diagnostics");
             httpClient.Timeout = TimeSpan.FromSeconds(30);
-            httpClient.BaseAddress = BaseUri;
 
             return httpClient;
         }

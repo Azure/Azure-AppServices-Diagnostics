@@ -584,11 +584,12 @@ namespace Diagnostics.DataProviders
         private async Task<R> PerformHttpRequest<R>(HttpMethod method, string path, string queryString, string content, string apiVersion, CancellationToken cancellationToken)
         {
             var query = SitePathUtility.CsmAnnotateQueryString(queryString, apiVersion);
+            var uri = new Uri(_geoMasterClient.BaseUri, path + query);
             HttpResponseMessage response = null;
 
             try
             {
-                using (var request = new HttpRequestMessage(method, path + query))
+                using (var request = new HttpRequestMessage(method, uri))
                 {
                     try
                     {
