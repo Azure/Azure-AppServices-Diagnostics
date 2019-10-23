@@ -22,7 +22,7 @@ namespace Diagnostics.DataProviders
         {
             if (configuration.Token == null)
             {
-                throw new ArgumentNullException("NULL TOKEN!!");
+                throw new ArgumentException("configuration.Token is null");
             }
             this.AuthenticationToken = configuration.Token;
         }
