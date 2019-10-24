@@ -51,7 +51,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
 
             if (list == null || !list.Any()) return list;
 
-            list = list.Where(item => ((item.SystemFilter == null) && (item.ResourceFilter != null) && (item.ResourceFilter.ResourceType & context.OperationContext.Resource.ResourceType) > 0) && (context.ClientIsInternal || !item.ResourceFilter.InternalOnly));
+            list = list.Where(item => ((item.SystemFilterSpecified == false) && (item.ResourceFilter != null) && (item.ResourceFilter.ResourceType & context.OperationContext.Resource.ResourceType) > 0) && (context.ClientIsInternal || !item.ResourceFilter.InternalOnly));
             List<EntityInvoker> filteredList = new List<EntityInvoker>();
             list.ToList().ForEach(item =>
             {
@@ -67,7 +67,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
         public EntityInvoker GetEntityInvoker<TResource>(string detectorId, RuntimeContext<TResource> context)
             where TResource : IResource
         {
-            if (!TryGetValue(detectorId, out EntityInvoker invoker) || invoker.SystemFilter != null || invoker.ResourceFilter == null || (!context.ClientIsInternal && invoker.ResourceFilter.InternalOnly))
+            if (!TryGetValue(detectorId, out EntityInvoker invoker) || invoker.SystemFilterSpecified == true || invoker.ResourceFilter == null || (!context.ClientIsInternal && invoker.ResourceFilter.InternalOnly))
             {
                 return null;
             }
@@ -87,14 +87,14 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
 
             if (list == null || !list.Any()) return list;
 
-            list = list.Where(item => (context.ClientIsInternal && item.SystemFilter != null));
+            list = list.Where(item => (context.ClientIsInternal && item.SystemFilterSpecified == true));
 
             return list.OrderBy(p => p.EntryPointDefinitionAttribute.Name);
         }
 
         public EntityInvoker GetSystemInvoker(string invokerId)
         {
-            if (!TryGetValue(invokerId, out EntityInvoker invoker) || invoker.SystemFilter == null || invoker.ResourceFilter != null)
+            if (!TryGetValue(invokerId, out EntityInvoker invoker) || invoker.SystemFilterSpecified == false || invoker.ResourceFilter != null)
             {
                 return null;
             }

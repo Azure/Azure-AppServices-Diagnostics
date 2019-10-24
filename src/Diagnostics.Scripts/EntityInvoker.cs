@@ -35,7 +35,7 @@ namespace Diagnostics.Scripts
         private MemberInfo memberInfo;
         private Definition _entryPointDefinitionAttribute;
         private IResourceFilter _resourceFilter;
-        private SystemFilter _systemFilter;
+        private bool _systemFilter = false;
 
         public IEnumerable<string> References { get; private set; }
 
@@ -49,7 +49,7 @@ namespace Diagnostics.Scripts
 
         public IResourceFilter ResourceFilter => _resourceFilter;
 
-        public SystemFilter SystemFilter => _systemFilter;
+        public bool SystemFilterSpecified => _systemFilter;
 
         public EntityInvoker(EntityMetadata entityMetadata)
         {
@@ -246,7 +246,8 @@ namespace Diagnostics.Scripts
             }
 
             _resourceFilter = memberInfo.GetCustomAttribute<ResourceFilterBase>();
-            _systemFilter = memberInfo.GetCustomAttribute<SystemFilter>();
+            var systemFilter = memberInfo.GetCustomAttribute<SystemFilter>();
+            _systemFilter = systemFilter != null ? true : false;
         }
 
         private ScriptOptions GetScriptOptions(SourceReferenceResolver referenceResolver)
@@ -321,13 +322,13 @@ namespace Diagnostics.Scripts
                         }
                     });
 
-                    if (this._systemFilter == null && this._resourceFilter.InternalOnly && this._entryPointDefinitionAttribute.SupportTopicList.Any())
+                    if (this._systemFilter == false && this._resourceFilter.InternalOnly && this._entryPointDefinitionAttribute.SupportTopicList.Any())
                     {
                         this.CompilationOutput = this.CompilationOutput.Concat(new string[] { "WARNING: Detector is marked internal and SupportTopic is specified. This means the detector will be enabled for Azure Support Center but not for case submission flow, until the isInternal flag is set to false." });
                     }
                 }
 
-                if (this._systemFilter != null && this._resourceFilter != null)
+                if (this._systemFilter == true && this._resourceFilter != null)
                 {
                     throw new ScriptCompilationException("Detector is marked with both SystemFilter and ResourceFilter. System Invoker should not include any ResourceFilter attribute.");
                 }

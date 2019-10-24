@@ -131,7 +131,6 @@ namespace Diagnostics.Tests.ScriptsTests
                 Author = "User"
             };
 
-            SystemFilter filter = new SystemFilter();
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
             metadata.ScriptText = await ScriptTestDataHelper.GetSystemInvokerScript(definitonAttribute);
 
@@ -140,8 +139,7 @@ namespace Diagnostics.Tests.ScriptsTests
                 await invoker.InitializeEntryPointAsync();
 
                 Assert.True(invoker.IsCompilationSuccessful);
-                Assert.NotNull(invoker.SystemFilter);
-                Assert.Equal(filter, invoker.SystemFilter);
+                Assert.True(invoker.SystemFilterSpecified);
             }
         }
 

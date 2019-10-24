@@ -55,39 +55,11 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         [DataMember]
         public IEnumerable<SupportTopic> SupportTopicList { get; set; }
 
-        [JsonIgnore]
-        public string AnalysisType { get; set; } = string.Empty;
-
         /// <summary>
         /// Gets Analysis Types for which this detector should apply to.
         /// </summary>
         [DataMember]
-        public List<string> AnalysisTypes
-        {
-            get
-            {
-                if (string.IsNullOrWhiteSpace(AnalysisType))
-                {
-                    return null;
-                }
-                else
-                {
-                    return AnalysisType.Split(',').ToList();
-                }
-            }
-
-            set
-            {
-                if (value == null)
-                {
-                    AnalysisType = string.Empty;
-                }
-                else
-                {
-                    AnalysisType = string.Join(",", value);
-                }
-            }
-        }
+        public List<string> AnalysisTypes { get; set; }
 
         /// <summary>
         /// Whether this detector is an Analysis Detector or not.
