@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -115,9 +116,9 @@ namespace Diagnostics.DataProviders
             return appSettings;
         }
 
-        public async Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name)
+        public Task<IDictionary<string, string>> GetAppSettings(string subscriptionId, string resourceGroupName, string name)
         {
-            return await GetAppSettings(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot);
+            return GetAppSettings(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot);
         }
 
         /// <summary>
@@ -203,12 +204,11 @@ namespace Diagnostics.DataProviders
         /// }
         /// </code>
         /// </example>
-        public async Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<VnetValidationRespone> VerifyHostingEnvironmentVnet(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
         {
             var path = string.Format(@"subscriptions/{0}/providers/Microsoft.Web/verifyHostingEnvironmentVnet", subscriptionId);
             var vnetParameters = new VnetParameters { VnetResourceGroup = vnetResourceGroup, VnetName = vnetName, VnetSubnetName = vnetSubnetName };
-            var result = await HttpPost<VnetValidationRespone, VnetParameters>(path, vnetParameters, "", GeoMasterConstants.March2016Version, cancellationToken);
-            return result;
+            return HttpPost<VnetValidationRespone, VnetParameters>(path, vnetParameters, "", GeoMasterConstants.March2016Version, cancellationToken);
         }
 
         /// <summary>
@@ -245,12 +245,11 @@ namespace Diagnostics.DataProviders
         /// }
         /// </code>
         /// </example>
-        public async Task<VnetConfiguration> CollectVirtualNetworkConfig(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<VnetConfiguration> CollectVirtualNetworkConfig(string subscriptionId, string vnetResourceGroup, string vnetName, string vnetSubnetName, CancellationToken cancellationToken = default(CancellationToken))
         {
             var path = string.Format("subscriptions/{0}/providers/Microsoft.Web/collectVnetConfiguration", subscriptionId);
             var vnetParameters = new VnetParameters { VnetResourceGroup = vnetResourceGroup, VnetName = vnetName, VnetSubnetName = vnetSubnetName };
-            var result = await HttpPost<VnetConfiguration, VnetParameters>(path, vnetParameters, "", GeoMasterConstants.March2016Version, cancellationToken);
-            return result;
+            return HttpPost<VnetConfiguration, VnetParameters>(path, vnetParameters, "", GeoMasterConstants.March2016Version, cancellationToken);
         }
 
         /// <summary>
@@ -304,9 +303,9 @@ namespace Diagnostics.DataProviders
             return deployments;
         }
 
-        public async Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name)
+        public Task<List<IDictionary<string, dynamic>>> GetAppDeployments(string subscriptionId, string resourceGroupName, string name)
         {
-            return await GetAppDeployments(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot);
+            return GetAppDeployments(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot);
         }
 
         /// <summary>
@@ -370,7 +369,7 @@ namespace Diagnostics.DataProviders
         /// }
         /// </code>
         /// </example>
-        public async Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string path = "")
+        public Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string path = "")
         {
             if (!string.IsNullOrWhiteSpace(path))
             {
@@ -385,13 +384,12 @@ namespace Diagnostics.DataProviders
                 path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}/{path}";
             }
 
-            var geoMasterResponse = await HttpGet<T>(path);
-            return geoMasterResponse;
+            return HttpGet<T>(path);
         }
 
-        public async Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path = "")
+        public Task<T> MakeHttpGetRequest<T>(string subscriptionId, string resourceGroupName, string name, string path = "")
         {
-            return await MakeHttpGetRequest<T>(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot, path);
+            return MakeHttpGetRequest<T>(subscriptionId, resourceGroupName, name, GeoMasterConstants.ProductionSlot, path);
         }
 
         /// <summary>
@@ -445,15 +443,14 @@ namespace Diagnostics.DataProviders
         /// </code>
         /// </example>
         /// <returns></returns>
-        public async Task<T> MakeHttpGetRequestWithFullPath<T>(string fullPath, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version)
+        public Task<T> MakeHttpGetRequestWithFullPath<T>(string fullPath, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version)
         {
             if (string.IsNullOrWhiteSpace(fullPath))
             {
-                throw new ArgumentNullException("fullPath");
+                throw new ArgumentNullException(nameof(fullPath));
             }
 
-            var geoMasterResponse = await HttpGet<T>(fullPath, queryString, apiVersion);
-            return geoMasterResponse;
+            return HttpGet<T>(fullPath, queryString, apiVersion);
         }
 
         /// <summary>
@@ -481,11 +478,10 @@ namespace Diagnostics.DataProviders
         /// </code>
         /// </example>
         /// <returns></returns>
-        public async Task<string> GetLinuxContainerLogs(string subscriptionId, string resourceGroupName, string name, string slotName)
+        public Task<string> GetLinuxContainerLogs(string subscriptionId, string resourceGroupName, string name, string slotName)
         {
             string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName)}/containerlogs";
-            var geoMasterResponse = await HttpPost<string, string>(path);
-            return geoMasterResponse;
+            return HttpPost<string, string>(path);
         }
 
         /// <summary>
@@ -516,16 +512,15 @@ namespace Diagnostics.DataProviders
         /// </code>
         /// </example>
         /// <returns></returns>
-        private async Task<T> InvokeSiteExtension<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string extension, string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
+        private Task<T> InvokeSiteExtension<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string extension, string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(extension))
             {
                 throw new ArgumentNullException(nameof(extension));
             }
 
-            string path = SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName) + SiteExtensionResource.Replace("{*extensionApiMethod}", extension);
-            var result = await HttpGet<T>(path, string.Empty, apiVersion, cancellationToken);
-            return result;
+            string path = SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName) + SiteExtensionResource.Replace("{*extensionApiMethod}", extension, StringComparison.CurrentCultureIgnoreCase);
+            return HttpGet<T>(path, string.Empty, apiVersion, cancellationToken);
         }
 
         /// <summary>
@@ -557,7 +552,7 @@ namespace Diagnostics.DataProviders
         /// </code>
         /// </example>
         /// <returns></returns>
-        public async Task<T> InvokeDaasExtension<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string daasApiPath, string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<T> InvokeDaasExtension<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string daasApiPath, string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrWhiteSpace(daasApiPath))
             {
@@ -572,72 +567,79 @@ namespace Diagnostics.DataProviders
             string extensionPath = $"daas/{daasApiPath}";
 
             string path = SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName) + SiteExtensionResource.Replace("{*extensionApiMethod}", extensionPath);
-            var result = await HttpGet<T>(path, string.Empty, apiVersion, cancellationToken);
-            return result;
+            return HttpGet<T>(path, string.Empty, apiVersion, cancellationToken);
         }
 
         #region HttpMethods
 
-        private async Task<R> HttpGet<R>(string path, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
+        private Task<R> HttpGet<R>(string path, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var query = SitePathUtility.CsmAnnotateQueryString(queryString, apiVersion);
-            var response = new HttpResponseMessage();
-
-            try
-            {
-                var uri = path + query;
-                response = await _geoMasterClient.Client.GetAsync(uri, cancellationToken);
-                response.EnsureSuccessStatusCode();
-            }
-            catch (TaskCanceledException)
-            {
-                if (cancellationToken != default(CancellationToken))
-                {
-                    throw new DataSourceCancelledException();
-                }
-                //if any task cancelled without provided cancellation token - we want capture exception in datasourcemanager
-                throw;
-            }
-
-            if (typeof(R) == typeof(string))
-            {
-                return (await response.Content.ReadAsStringAsync()).CastTo<R>();
-            }
-            string responseContent = await response.Content.ReadAsStringAsync();
-            R value = JsonConvert.DeserializeObject<R>(responseContent);
-            return value;
+            return PerformHttpRequest<R>(HttpMethod.Get, path, queryString, null, apiVersion, cancellationToken);
         }
 
-        private async Task<R> HttpPost<R, T>(string path, T content = default(T), string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
+        private Task<R> HttpPost<R, T>(string path, T content = default(T), string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var body = JsonConvert.SerializeObject(content);
+            return PerformHttpRequest<R>(HttpMethod.Post, path, queryString, body, apiVersion, cancellationToken);
+        }
+
+
+        private async Task<R> PerformHttpRequest<R>(HttpMethod method, string path, string queryString, string content, string apiVersion, CancellationToken cancellationToken)
         {
             var query = SitePathUtility.CsmAnnotateQueryString(queryString, apiVersion);
-            var response = new HttpResponseMessage();
+            var uri = new Uri(_geoMasterClient.BaseUri, path + query);
+            HttpResponseMessage response = null;
 
             try
             {
-                var uri = path + query;
-                var body = JsonConvert.SerializeObject(content);
-                response = await _geoMasterClient.Client.PostAsync(uri, new StringContent(body, Encoding.UTF8, "application/json"), cancellationToken);
-                response.EnsureSuccessStatusCode();
-            }
-            catch (TaskCanceledException)
-            {
-                if (cancellationToken != default(CancellationToken))
+                using (var request = new HttpRequestMessage(method, uri))
                 {
-                    throw new DataSourceCancelledException();
+                    try
+                    {
+                        if (method == HttpMethod.Post || method == HttpMethod.Put)
+                        {
+                            request.Content = new StringContent(content, Encoding.UTF8, "application/json");
+                        }
+
+                        var token = _geoMasterClient.AuthenticationToken;
+                        if (!string.IsNullOrWhiteSpace(token))
+                        {
+                            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                        }
+                        response = await _geoMasterClient.Client.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                        response.EnsureSuccessStatusCode();
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        if (cancellationToken != default(CancellationToken))
+                        {
+                            throw new DataSourceCancelledException();
+                        }
+                        //if any task cancelled without provided cancellation token - we want capture exception in datasourcemanager
+                        throw;
+                    }
                 }
-                //if any task cancelled without provided cancellation token - we want capture exception in datasourcemanager
-                throw;
-            }
 
-            if (typeof(R) == typeof(string))
+                R value;
+
+                if (typeof(R) == typeof(string))
+                {
+                    value = (await response.Content.ReadAsStringAsync().ConfigureAwait(false)).CastTo<R>();
+                }
+                else
+                {
+                    string responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    value = JsonConvert.DeserializeObject<R>(responseContent);
+                }
+                return value;
+            }
+            finally
             {
-                return (await response.Content.ReadAsStringAsync()).CastTo<R>();
+                if (response != null)
+                {
+                    response.Dispose();
+                }
             }
-
-            string responseContent = await response.Content.ReadAsStringAsync();
-            R value = JsonConvert.DeserializeObject<R>(responseContent);
-            return value;
         }
 
         public DataProviderMetadata GetMetadata()

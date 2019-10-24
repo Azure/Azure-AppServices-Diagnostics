@@ -72,7 +72,7 @@ namespace Diagnostics.DataProviders
             var timeTakenStopWatch = new Stopwatch();
             DataSet dataSet = null;
             ClientRequestProperties clientRequestProperties = new ClientRequestProperties();
-            var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId}##{0}_{(new Guid()).ToString()}";
+            var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId}##{0}_{Guid.NewGuid().ToString()}";
             clientRequestProperties.ClientRequestId = kustoClientId;
             clientRequestProperties.SetOption("servertimeout", new TimeSpan(0,0,timeoutSeconds));
 

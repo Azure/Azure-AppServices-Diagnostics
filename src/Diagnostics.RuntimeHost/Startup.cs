@@ -19,6 +19,7 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -28,6 +29,14 @@ namespace Diagnostics.RuntimeHost
         {
             Configuration = configuration;
             Environment = environment;
+
+            if (!Environment.IsProduction())
+            {
+                AppDomain.CurrentDomain.FirstChanceException += (sender, eventArgs) =>
+                {
+                    Debug.WriteLine(eventArgs.Exception.ToString());
+                };
+            }
         }
 
         public IConfiguration Configuration { get; }
