@@ -510,29 +510,36 @@ namespace Diagnostics.DataProviders
         ///     var name = cxt.Resource.Name;
         ///     var slot = cxt.Resource.Slot;
         ///
-        ///     byte[] zip = await dp.GeoMaster.GetLogFilesZip(subId, rg, name, slot);
-        /// 
-        ///     using (MemoryStream ms = new MemoryStream(zipBytes))
+        ///     try
         ///     {
-        ///         using (ZipArchive ar = new ZipArchive(ms))
+        ///         byte[] zip = await dp.GeoMaster.GetLogFilesZip(subId, rg, name, slot);
+        /// 
+        ///         using (MemoryStream ms = new MemoryStream(zipBytes))
         ///         {
-        ///             foreach(var e in ar.Entries)
+        ///             using (ZipArchive ar = new ZipArchive(ms))
         ///             {
-        ///                 // Find Linux log files
-        ///                 var m = Regex.Match(e.Name, @"^\d{4}_\d\d_\d\d_RD[0-9a-fA-F]+.*.log");
-        ///                 if (m.Success)
+        ///                 foreach(var e in ar.Entries)
         ///                 {
-        ///                     using (var fs = e.Open())
+        ///                     // Find Linux log files
+        ///                     var m = Regex.Match(e.Name, @"^\d{4}_\d\d_\d\d_RD[0-9a-fA-F]+.*.log");
+        ///                     if (m.Success)
         ///                     {
-        ///                         using (var sr = new StreamReader(fs))
+        ///                         using (var fs = e.Open())
         ///                         {
-        ///                             var body = sr.ReadToEnd();
-        ///                             // Do what you want with the log file
+        ///                             using (var sr = new StreamReader(fs))
+        ///                             {
+        ///                                 var body = sr.ReadToEnd();
+        ///                                 // Do what you want with the log file
+        ///                             }
         ///                         }
         ///                     }
         ///                 }
         ///             }
         ///         }
+        ///     }
+        ///     catch(Exception)
+        ///     {
+        ///         // Error handling
         ///     }
         /// }
         /// </code>
