@@ -76,6 +76,11 @@ namespace Diagnostics.Logger
         public static readonly string JsonContentType = "application/json";
 
         /// <summary>
+        /// Binary Content type header.
+        /// </summary>
+        public static readonly string OctetStreamContentType = "application/octet-stream";
+
+        /// <summary>
         /// Client Issuer header.
         /// </summary>
         public static readonly string ClientIssuerHeader = "x-ms-client-issuer";

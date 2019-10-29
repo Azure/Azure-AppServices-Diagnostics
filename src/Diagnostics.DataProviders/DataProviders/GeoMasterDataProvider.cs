@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 
@@ -19,6 +20,16 @@ namespace Diagnostics.DataProviders
         private readonly IGeoMasterClient _geoMasterClient;
         private GeoMasterDataProviderConfiguration _configuration;
         private string _geoMasterHostName;
+        private Lazy<HttpClient> _scmClient = new Lazy<HttpClient>(() =>
+        {
+            var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(HeaderConstants.OctetStreamContentType));
+            httpClient.DefaultRequestHeaders.Add(HeaderConstants.UserAgentHeaderName, "appservice-diagnostics");
+            httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+            return httpClient;
+        });
 
         private string[] AllowedlistAppSettingsStartingWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType"};
 
@@ -479,6 +490,72 @@ namespace Diagnostics.DataProviders
         {
             string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName)}/containerlogs";
             return HttpPost<string, string>(path);
+        }
+
+        /// <summary>
+        /// Gets all the APP SETTINGS for the Web App that start with prefixes like WEBSITE_, FUNCTION_ etc, filtering out
+        /// the sensitive settings like connectionstrings, tokens, secrets, keys, content shares etc.
+        /// </summary>
+        /// <param name="subscriptionId">Subscription Id for the resource</param>
+        /// <param name="resourceGroupName">The resource group that the resource is part of </param>
+        /// <param name="name">Name of the resource</param>
+        /// <param name="slotName">slot name (if querying for a slot, defaults to production slot)</param>
+        /// <returns>A dictionary of AppSetting Keys and values</returns>
+        /// <example>
+        /// <code>
+        /// This sample shows how to call the <see cref="GetAppSettings"/> method in a detector
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
+        /// {
+        ///     var subId = cxt.Resource.SubscriptionId;
+        ///     var rg = cxt.Resource.ResourceGroup;
+        ///     var name = cxt.Resource.Name;
+        ///     var slot = cxt.Resource.Slot;
+        ///
+        ///     byte[] zip = await dp.GeoMaster.GetLogFilesZip(subId, rg, name, slot);
+        /// }
+        /// </code>
+        /// </example>
+        public async Task<byte[]> GetLogFolderZip(string subscriptionId, string resourceGroupName, string name, string slotName)
+        {
+            string path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName)}/publishxml";
+            var publishXml = await HttpPost<string, string>(path);
+
+            var match = Regex.Match(publishXml, "publishUrl=\"([^\"]+)\".*userName=\"([^\"\\\\]+)\".*userPWD=\"([^\"]+)\"");
+
+            if (!match.Success)
+            {
+                throw new InvalidOperationException("Could not get access to the SCM site");
+            }
+
+            var publishUrl = match.Groups[1].Value;
+            var userName = match.Groups[2].Value;
+            var publishingPassword = match.Groups[3].Value;
+
+            // Call SCM
+            var http = _scmClient.Value;
+            HttpResponseMessage response = null;
+
+            try
+            {
+                var url = $"https://{publishUrl}/api/dump";
+                using (var request = new HttpRequestMessage(HttpMethod.Get, url))
+                {
+                    var byteArray = Encoding.ASCII.GetBytes(userName + ":" + publishingPassword);
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+                    response = await http.SendAsync(request).ConfigureAwait(false);
+                    response.EnsureSuccessStatusCode();
+                }
+
+                var zipBytes = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+                return zipBytes;
+            }
+            finally
+            {
+                if (response != null)
+                {
+                    response.Dispose();
+                }
+            }
         }
 
         /// <summary>
