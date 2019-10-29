@@ -51,7 +51,7 @@ namespace Diagnostics.DataProviders
             var httpClient = new HttpClient(handler);
             httpClient.DefaultRequestHeaders.Accept.Clear();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(HeaderConstants.JsonContentType));
-            httpClient.DefaultRequestHeaders.Add(HeaderConstants.UserAgentHeaderName, "appservice-diagnostics");
+            httpClient.DefaultRequestHeaders.Add(HeaderConstants.UserAgentHeaderName, HeaderConstants.UserAgentHeaderValue);
             httpClient.Timeout = TimeSpan.FromSeconds(30);
 
             return httpClient;

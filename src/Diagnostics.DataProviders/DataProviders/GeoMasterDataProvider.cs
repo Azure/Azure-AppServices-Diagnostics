@@ -25,7 +25,7 @@ namespace Diagnostics.DataProviders
             var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Accept.Clear();
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(HeaderConstants.OctetStreamContentType));
-            httpClient.DefaultRequestHeaders.Add(HeaderConstants.UserAgentHeaderName, "appservice-diagnostics");
+            httpClient.DefaultRequestHeaders.Add(HeaderConstants.UserAgentHeaderName, HeaderConstants.UserAgentHeaderValue);
             httpClient.Timeout = TimeSpan.FromSeconds(30);
 
             return httpClient;
@@ -493,17 +493,16 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
-        /// Gets all the APP SETTINGS for the Web App that start with prefixes like WEBSITE_, FUNCTION_ etc, filtering out
-        /// the sensitive settings like connectionstrings, tokens, secrets, keys, content shares etc.
+        /// Downloads the zipped contents under app's /home/LogFiles directory as a byte array.
         /// </summary>
         /// <param name="subscriptionId">Subscription Id for the resource</param>
         /// <param name="resourceGroupName">The resource group that the resource is part of </param>
         /// <param name="name">Name of the resource</param>
         /// <param name="slotName">slot name (if querying for a slot, defaults to production slot)</param>
-        /// <returns>A dictionary of AppSetting Keys and values</returns>
+        /// <returns>A byte array of zipped contents under /home/LogFiles</returns>
         /// <example>
         /// <code>
-        /// This sample shows how to call the <see cref="GetAppSettings"/> method in a detector
+        /// This sample shows how to call the <see cref="GetLogFolderZip"/> method in a detector
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
         /// {
         ///     var subId = cxt.Resource.SubscriptionId;
@@ -512,6 +511,29 @@ namespace Diagnostics.DataProviders
         ///     var slot = cxt.Resource.Slot;
         ///
         ///     byte[] zip = await dp.GeoMaster.GetLogFilesZip(subId, rg, name, slot);
+        /// 
+        ///     using (MemoryStream ms = new MemoryStream(zipBytes))
+        ///     {
+        ///         using (ZipArchive ar = new ZipArchive(ms))
+        ///         {
+        ///             foreach(var e in ar.Entries)
+        ///             {
+        ///                 // Find Linux log files
+        ///                 var m = Regex.Match(e.Name, @"^\d{4}_\d\d_\d\d_RD[0-9a-fA-F]+.*.log");
+        ///                 if (m.Success)
+        ///                 {
+        ///                     using (var fs = e.Open())
+        ///                     {
+        ///                         using (var sr = new StreamReader(fs))
+        ///                         {
+        ///                             var body = sr.ReadToEnd();
+        ///                             // Do what you want with the log file
+        ///                         }
+        ///                     }
+        ///                 }
+        ///             }
+        ///         }
+        ///     }
         /// }
         /// </code>
         /// </example>

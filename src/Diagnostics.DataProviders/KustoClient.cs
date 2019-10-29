@@ -69,7 +69,7 @@ namespace Diagnostics.DataProviders
             var request = new HttpRequestMessage(HttpMethod.Post, KustoApiQueryEndpoint.Replace("{cluster}", cluster));            
             request.Headers.Add("Authorization", authorizationToken);
             request.Headers.Add(HeaderConstants.ClientRequestIdHeader, kustoClientId ?? Guid.NewGuid().ToString());
-            request.Headers.UserAgent.ParseAdd("appservice-diagnostics");
+            request.Headers.UserAgent.ParseAdd(HeaderConstants.UserAgentHeaderValue);
             var requestPayload = new
             {
                 db = database,

@@ -99,5 +99,10 @@ namespace Diagnostics.Logger
         /// Client Identity Provider header.
         /// </summary>
         public static readonly string ClientIdentityProviderHeader = "x-ms-client-identity-provider";
+
+        /// <summary>
+        /// User Agent value for App Service Diagnostics.
+        /// </summary>
+        public static readonly string UserAgentHeaderValue = "appservice-diagnostics";
     }
 }
