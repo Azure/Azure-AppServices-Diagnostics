@@ -110,6 +110,16 @@ namespace Diagnostics.DataProviders
                         return string.Empty;
                 }
             }
+            else if (prefix == "GeoMaster")
+            {
+                switch (name)
+                {
+                    case "Token":
+                        return "DUMMYTOKEN";
+                    default:
+                        return string.Empty;
+                }
+            }
 
             return string.Empty;
         }

@@ -5,8 +5,10 @@
 
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.Logger;
+using Diagnostics.DataProviders.Utility;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace Diagnostics.DataProviders.TokenService
@@ -14,7 +16,7 @@ namespace Diagnostics.DataProviders.TokenService
     public abstract class TokenServiceBase
     {
         private Task<AuthenticationResult> acquireTokenTask;
-        private bool tokenAcquiredAtleastOnce;
+        private readonly AsyncManualResetEvent tokenAcquiredAtleastOnce = new AsyncManualResetEvent();
 
         /// <summary>
         /// Gets AAD issued auth token.
@@ -65,7 +67,7 @@ namespace Diagnostics.DataProviders.TokenService
                     acquireTokenTask = AuthenticationContext.AcquireTokenAsync(Resource, ClientCredential);
                     AuthenticationResult authResult = await acquireTokenTask;
                     AuthorizationToken = GetAuthTokenFromAuthenticationResult(authResult);
-                    tokenAcquiredAtleastOnce = true;
+                    tokenAcquiredAtleastOnce.Set();
                     message = "Token Acquisition Status : Success";
                 }
                 catch (Exception ex)
@@ -97,12 +99,7 @@ namespace Diagnostics.DataProviders.TokenService
         /// </summary>
         public async Task<string> GetAuthorizationTokenAsync()
         {
-            if (!tokenAcquiredAtleastOnce)
-            {
-                var authResult = await acquireTokenTask;
-                return GetAuthTokenFromAuthenticationResult(authResult);
-            }
-
+            await tokenAcquiredAtleastOnce.WaitAsync().ConfigureAwait(false);
             return AuthorizationToken;
         }
 

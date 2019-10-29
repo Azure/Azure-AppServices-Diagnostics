@@ -7,5 +7,6 @@ namespace Diagnostics.DataProviders
     {
         HttpClient Client { get; }
         Uri BaseUri { get; }
+        string AuthenticationToken { get; }
     }
 }
