@@ -242,8 +242,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data Rendered as downtimes in the Analysis View
         /// </summary>
-        DownTime
+        DownTime,
 
+        /// <summary>
+        /// Data Rendered as only summarized message
+        /// </summary>
+        MetaData
     }
 
     /// <summary>
