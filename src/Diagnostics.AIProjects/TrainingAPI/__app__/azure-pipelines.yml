@@ -4,7 +4,7 @@ trigger:
     - master2
   paths:
     include:
-    - src/Diagnostics.AIProjects/TrainingAPI/*
+    - src/Diagnostics.AIProjects/TrainingAPI/__app__/*
 
 variables:
   # Agent VM image name
