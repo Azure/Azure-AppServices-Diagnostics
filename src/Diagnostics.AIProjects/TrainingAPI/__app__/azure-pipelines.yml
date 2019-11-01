@@ -11,7 +11,7 @@ variables:
   vmImageName: 'ubuntu-latest'
 
   # Working Directory
-  workingDirectory: '$(System.DefaultWorkingDirectory)/'
+  workingDirectory: '$(System.DefaultWorkingDirectory)/src/Diagnostics.AIProjects/TrainingAPI/__app__/'
 
 stages:
 - stage: Build
