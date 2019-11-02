@@ -656,7 +656,7 @@ namespace Diagnostics.DataProviders
         {
             string geoMasterName = null;
 
-            if (!geomasterHostName.StartsWith(Uri.UriSchemeHttp, StringComparison.CurrentCultureIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(geomasterHostName) && !geomasterHostName.StartsWith(Uri.UriSchemeHttp, StringComparison.CurrentCultureIgnoreCase))
             {
                 geomasterHostName = $"{Uri.UriSchemeHttps}://{geomasterHostName}";
             }
