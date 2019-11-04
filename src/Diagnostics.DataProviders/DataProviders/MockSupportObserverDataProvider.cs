@@ -156,32 +156,7 @@ namespace Diagnostics.DataProviders
         {
             throw new NotImplementedException();
         }
-
-        public override Task<JObject> GetAppServiceEnvironmentDetailsAsync(string hostingEnvironmentName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override Task<IEnumerable<object>> GetAppServiceEnvironmentDeploymentsAsync(string hostingEnvironmentName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override Task<JObject> GetAdminSitesBySiteNameAsync(string stampName, string siteName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName)
-        {
-            throw new NotImplementedException();
-        }
-
+        
         public override HttpClient GetObserverClient()
         {
             return new MockHttpClient();
