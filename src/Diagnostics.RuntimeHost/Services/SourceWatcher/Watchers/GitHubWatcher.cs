@@ -293,6 +293,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             if (isSearchModel)
             {
                 HitModelRefresh(folderName);
+                LogMessage($"Found a search model, skipping loading the folder {folderName} into cache");
+                return;
             }
 
             var scriptText = await FileHelper.GetFileContentAsync(csxFilePath);
