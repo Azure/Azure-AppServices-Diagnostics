@@ -19,22 +19,10 @@ namespace Diagnostics.DataProviders
         {
         }
 
-        public override Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override Task<JObject> GetAdminSitesBySiteNameAsync(string stampName, string siteName)
-        {
-            throw new NotImplementedException();
-        }
-
         public override async Task<JArray> GetAdminSitesAsync(string siteName)
         {
             if (string.IsNullOrWhiteSpace(siteName))
-            {
-                throw new ArgumentNullException(nameof(siteName));    
-            }
+                throw new ArgumentNullException(nameof(siteName));
 
             var path = $"sites/{siteName}/adminsites";
             
@@ -48,18 +36,13 @@ namespace Diagnostics.DataProviders
             return siteObject;
         }
 
-        public override Task<IEnumerable<object>> GetAppServiceEnvironmentDeploymentsAsync(string hostingEnvironmentName)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override Task<JObject> GetAppServiceEnvironmentDetailsAsync(string hostingEnvironmentName)
-        {
-            throw new NotImplementedException();
-        }
-
         public override async Task<dynamic> GetCertificatesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
+            if (string.IsNullOrWhiteSpace(subscriptionName))
+                throw new ArgumentNullException(nameof(subscriptionName));
+            if (string.IsNullOrWhiteSpace(resourceGroupName))
+                throw new ArgumentNullException(nameof(resourceGroupName));
+
             var result = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/certificates");
             return JsonConvert.DeserializeObject(result);
         }
@@ -72,20 +55,20 @@ namespace Diagnostics.DataProviders
         public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName = null)
         {
             if (string.IsNullOrWhiteSpace(stampName))
-            {
                 throw new ArgumentNullException(nameof(stampName));
-            }
-
             if (string.IsNullOrWhiteSpace(siteName))
-            {
                 throw new ArgumentNullException(nameof(siteName));
-            }
-
+            
             return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName);
         }
 
         private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName, string slotName)
         {
+            if (string.IsNullOrWhiteSpace(stampName))
+                throw new ArgumentNullException(nameof(stampName));
+            if (string.IsNullOrWhiteSpace(siteName))
+                throw new ArgumentNullException(nameof(siteName));
+
             var result = await GetObserverResource($"stamps/{stampName}/sites/{siteName}/runtimesiteslotmap");
             var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);
             var slotTimeRange = new Dictionary<string, List<RuntimeSitenameTimeRange>>(slotTimeRangeCaseSensitiveDictionary, StringComparer.CurrentCultureIgnoreCase);
@@ -115,64 +98,104 @@ namespace Diagnostics.DataProviders
 
         public override async Task<dynamic> GetServerFarmsInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
+            if (string.IsNullOrWhiteSpace(subscriptionName))
+                throw new ArgumentNullException(nameof(subscriptionName));
+            if (string.IsNullOrWhiteSpace(resourceGroupName))
+                throw new ArgumentNullException(nameof(resourceGroupName));
+
             var result = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/serverfarms");
             return JsonConvert.DeserializeObject(result);
         }
 
         public override async Task<string> GetServerFarmWebspaceName(string subscriptionId, string serverFarm)
         {
+            if (string.IsNullOrWhiteSpace(subscriptionId))
+                throw new ArgumentNullException(nameof(subscriptionId));
+            if (string.IsNullOrWhiteSpace(serverFarm))
+                throw new ArgumentNullException(nameof(serverFarm));
+
             return await Get($"subscriptionid/{subscriptionId}/serverfarm/{serverFarm}/webspacename");
         }
 
         public override async Task<string> GetSiteResourceGroupNameAsync(string siteName)
         {
+            if (string.IsNullOrWhiteSpace(siteName))
+                throw new ArgumentNullException(nameof(siteName));
+
             return await Get($"sites/{siteName}/resourcegroupname");
         }
 
         public override async Task<dynamic> GetSitesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
         {
+            if (string.IsNullOrWhiteSpace(subscriptionName))
+                throw new ArgumentNullException(nameof(subscriptionName));
+            if (string.IsNullOrWhiteSpace(resourceGroupName))
+                throw new ArgumentNullException(nameof(resourceGroupName));
+
             var sitesResult = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/sites");
             return JsonConvert.DeserializeObject(sitesResult);
         }
 
         public override async Task<dynamic> GetSitesInServerFarmAsync(string subscriptionId, string serverFarmName)
         {
+            if (string.IsNullOrWhiteSpace(subscriptionId))
+                throw new ArgumentNullException(nameof(subscriptionId));
+            if (string.IsNullOrWhiteSpace(serverFarmName))
+                throw new ArgumentNullException(nameof(serverFarmName));
+
             var sitesResult = await Get($"subscriptionid/{subscriptionId}/serverfarm/{serverFarmName}/sites");
             return JsonConvert.DeserializeObject(sitesResult);
         }
 
         public override async Task<string> GetSiteWebSpaceNameAsync(string subscriptionId, string siteName)
         {
-            return await Get($"subscriptionid/{subscriptionId}/sitename/{siteName}/webspacename");
-        }
+            if (string.IsNullOrWhiteSpace(subscriptionId))
+                throw new ArgumentNullException(nameof(subscriptionId));
+            if (string.IsNullOrWhiteSpace(siteName))
+                throw new ArgumentNullException(nameof(siteName));
 
-        public override Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName)
-        {
-            throw new NotImplementedException();
+            return await Get($"subscriptionid/{subscriptionId}/sitename/{siteName}/webspacename");
         }
 
         public override async Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName)
         {
+            if (string.IsNullOrWhiteSpace(subscriptionId))
+                throw new ArgumentNullException(nameof(subscriptionId));
+            if (string.IsNullOrWhiteSpace(webSpaceName))
+                throw new ArgumentNullException(nameof(webSpaceName));
+
             return await Get($"subscriptionid/{subscriptionId}/webspacename/{webSpaceName}/resourcegroupname");
         }
 
         public override async Task<dynamic> GetSite(string siteName)
         {
+            if (string.IsNullOrWhiteSpace(siteName))
+                throw new ArgumentNullException(nameof(siteName));
+
             return await GetSiteInternal(null, siteName, null);
         }
 
         public override async Task<dynamic> GetSite(string stampName, string siteName)
         {
+            if (string.IsNullOrWhiteSpace(siteName))
+                throw new ArgumentNullException(nameof(siteName));
+
             return await GetSiteInternal(stampName, siteName, null);
         }
 
         public override async Task<dynamic> GetSite(string stampName, string siteName, string slotName)
         {
+            if (string.IsNullOrWhiteSpace(siteName))
+                throw new ArgumentNullException(nameof(siteName));
+
             return await GetSiteInternal(stampName, siteName, slotName);
         }
 
         private async Task<dynamic> GetSiteInternal(string stampName, string siteName, string slotName)
         {
+            if (string.IsNullOrWhiteSpace(siteName))
+                throw new ArgumentNullException(nameof(siteName));
+
             string path = "";
 
             if (!string.IsNullOrWhiteSpace(stampName))
@@ -204,6 +227,11 @@ namespace Diagnostics.DataProviders
 
         public override async Task<dynamic> GetHostNames(string stampName, string siteName)
         {
+            if (string.IsNullOrWhiteSpace(stampName))
+                throw new ArgumentNullException(nameof(stampName));
+            if (string.IsNullOrWhiteSpace(siteName))
+                throw new ArgumentNullException(nameof(siteName));
+
             var response = await Get($"stamps/{stampName}/sites/{siteName}/hostnames");
             var hostNames = JsonConvert.DeserializeObject(response);
             return hostNames;
@@ -212,14 +240,9 @@ namespace Diagnostics.DataProviders
         public override async Task<dynamic> GetSitePostBody(string stampName, string siteName)
         {
             if (string.IsNullOrWhiteSpace(stampName))
-            {
                 throw new ArgumentNullException(nameof(stampName));
-            }
-
             if (string.IsNullOrWhiteSpace(siteName))
-            {
                 throw new ArgumentNullException(nameof(siteName));
-            }
 
             var response = await GetObserverResource($"stamps/{stampName}/sites/{siteName}/postbody");
             dynamic sitePostBody = JsonConvert.DeserializeObject(response);
@@ -228,6 +251,9 @@ namespace Diagnostics.DataProviders
 
         public override async Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName)
         {
+            if (string.IsNullOrWhiteSpace(hostingEnvironmentName))
+                throw new ArgumentNullException(nameof(hostingEnvironmentName));
+
             var response = await GetObserverResource($"hostingEnvironments/{hostingEnvironmentName}/postbody");
             var hostingEnvironmentPostBody = JsonConvert.DeserializeObject(response);
             return hostingEnvironmentPostBody;
@@ -235,6 +261,11 @@ namespace Diagnostics.DataProviders
 
         public override async Task<DataTable> ExecuteSqlQueryAsync(string cloudServiceName, string query)
         {
+            if (string.IsNullOrWhiteSpace(cloudServiceName))
+                throw new ArgumentNullException(nameof(cloudServiceName));
+            if (string.IsNullOrWhiteSpace(query))
+                throw new ArgumentNullException(nameof(query));
+
             if (!query.StartsWith("\""))
             {
                 // BUG: Passing as JSON requires query to be wrapped in quotes, fix API expected content type
@@ -299,12 +330,40 @@ namespace Diagnostics.DataProviders
         /// </summary>
         private async Task<string> Get(string path)
         {
+            if (string.IsNullOrWhiteSpace(path))
+                throw new ArgumentNullException(nameof(path));
+
             var request = new HttpRequestMessage(HttpMethod.Get, $"https://support-bay-api.azurewebsites.net/observer/{path}?api-version=2.0");
             request.Headers.TryAddWithoutValidation("Authorization", await DataProviderContext.SupportBayApiObserverTokenService.GetAuthorizationTokenAsync());
             var response = await GetObserverClient().SendAsync(request);
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadAsStringAsync();
             return result;
+        }
+
+        public override Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<JObject> GetAdminSitesBySiteNameAsync(string stampName, string siteName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<IEnumerable<object>> GetAppServiceEnvironmentDeploymentsAsync(string hostingEnvironmentName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<JObject> GetAppServiceEnvironmentDetailsAsync(string hostingEnvironmentName)
+        {
+            throw new NotImplementedException();
         }
     }
 }
