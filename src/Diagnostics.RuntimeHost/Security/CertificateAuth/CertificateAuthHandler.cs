@@ -23,9 +23,9 @@ namespace Diagnostics.RuntimeHost.Security.CertificateAuth
 
         public IConfiguration Configuration { get; }
 
-        public List<string> AllowedCertSubjectNames { get; set; }
+        public IEnumerable<string> AllowedCertSubjectNames { get; set; }
 
-        public List<string> AllowedCertIssuers { get; set; }
+        public IEnumerable<string> AllowedCertIssuers { get; set; }
 
         /// <summary>
         /// The handler calls methods on the events which give the application control at certain points where processing is occurring.
@@ -120,48 +120,32 @@ namespace Diagnostics.RuntimeHost.Security.CertificateAuth
             var thumbprint = certificate.Thumbprint;
             claims.Add(new Claim(ClaimTypes.Thumbprint, thumbprint, ClaimValueTypes.Base64Binary, Options.ClaimsIssuer));
 
-            var value = certificate.SubjectName.Name;
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                claims.Add(new Claim(ClaimTypes.X500DistinguishedName, value, ClaimValueTypes.String, Options.ClaimsIssuer));
-            }
+            var certValues = new List<string>() {certificate.SubjectName.Name,
+                                    certificate.SerialNumber,
+                                    certificate.GetNameInfo(X509NameType.DnsName, false),
+                                    certificate.GetNameInfo(X509NameType.SimpleName, false),
+                                    certificate.GetNameInfo(X509NameType.EmailName, false),
+                                    certificate.GetNameInfo(X509NameType.UpnName, false),
+                                    certificate.GetNameInfo(X509NameType.UrlName, false)};
 
-            value = certificate.SerialNumber;
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                claims.Add(new Claim(ClaimTypes.SerialNumber, value, ClaimValueTypes.String, Options.ClaimsIssuer));
-            }
+            var claimTypes = new List<string>() { ClaimTypes.X500DistinguishedName ,
+                                    ClaimTypes.SerialNumber ,
+                                    ClaimTypes.Dns ,
+                                    ClaimTypes.Name,
+                                    ClaimTypes.Email,
+                                    ClaimTypes.Upn,
+                                    ClaimTypes.Uri };
+           
+            var certDetailsMapping = certValues.Zip(claimTypes, (key, val) => new KeyValuePair<string, string>(key, val));
 
-            value = certificate.GetNameInfo(X509NameType.DnsName, false);
-            if (!string.IsNullOrWhiteSpace(value))
+            foreach (var certPair in certDetailsMapping)
             {
-                claims.Add(new Claim(ClaimTypes.Dns, value, ClaimValueTypes.String, Options.ClaimsIssuer));
+                if(!string.IsNullOrWhiteSpace(certPair.Key))
+                {
+                    claims.Add(new Claim(certPair.Value, certPair.Key, ClaimValueTypes.String, Options.ClaimsIssuer));
+                }
             }
-
-            value = certificate.GetNameInfo(X509NameType.SimpleName, false);
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                claims.Add(new Claim(ClaimTypes.Name, value, ClaimValueTypes.String, Options.ClaimsIssuer));
-            }
-
-            value = certificate.GetNameInfo(X509NameType.EmailName, false);
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                claims.Add(new Claim(ClaimTypes.Email, value, ClaimValueTypes.String, Options.ClaimsIssuer));
-            }
-
-            value = certificate.GetNameInfo(X509NameType.UpnName, false);
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                claims.Add(new Claim(ClaimTypes.Upn, value, ClaimValueTypes.String, Options.ClaimsIssuer));
-            }
-
-            value = certificate.GetNameInfo(X509NameType.UrlName, false);
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                claims.Add(new Claim(ClaimTypes.Uri, value, ClaimValueTypes.String, Options.ClaimsIssuer));
-            }
-
+          
             var identity = new ClaimsIdentity(claims, CertificateAuthDefaults.AuthenticationScheme);
             return new ClaimsPrincipal(identity);
         }

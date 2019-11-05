@@ -58,7 +58,7 @@ namespace Diagnostics.RuntimeHost
                 services.AddAuthentication().AddCertificateAuth(CertificateAuthDefaults.AuthenticationScheme, 
                     options =>
                     {
-                        options.AllowedIssuers = Configuration["SecuritySettings:AllowedCertIssuers"].Split(",").Select(p => p.Trim()).ToList();
+                        options.AllowedIssuers = Configuration["SecuritySettings:AllowedCertIssuers"].Split("|").Select(p => p.Trim()).ToList();
                         options.AllowedSubjectNames = Configuration["SecuritySettings:AllowedCertSubjectNames"].Split(",").Select(p => p.Trim()).ToList();
                     }).AddJwtBearer("AzureAd", options => {
                     options.TokenValidationParameters = new TokenValidationParameters
@@ -94,7 +94,7 @@ namespace Diagnostics.RuntimeHost
                                             AddAuthenticationSchemes(CertificateAuthDefaults.AuthenticationScheme, "AzureAd")
                                             .Build();
                 });
-        }
+            }
             if (!Environment.IsDevelopment())
             {
                 GeoCertLoader.Instance.Initialize(Configuration);
