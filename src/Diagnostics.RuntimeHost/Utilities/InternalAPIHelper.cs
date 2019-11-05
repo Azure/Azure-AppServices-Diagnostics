@@ -25,6 +25,7 @@ namespace Diagnostics.RuntimeHost.Utilities
                     PlatformType platformType = appFilter.PlatformType;
                     var platformTypesList = Enum.GetValues(typeof(PlatformType)).Cast<PlatformType>().Where(p => platformType.HasFlag(p)).Select(x => Enum.GetName(typeof(PlatformType), x));
                     resourceParams.Add("PlatformType", String.Join(",", platformTypesList));
+                    resourceParams.Add("InternalOnly", gResourceFilter.InternalOnly.ToString());
                 }
                 return resourceParams;
             }
