@@ -9,19 +9,26 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
     public class MetaData
     {
-        public MetaData(SummrizeStatus status,string message)
-        {
-            this.status = status;
-            this.message = message;
-        }
+        public string Title { set; get; }
 
-        public string message { set; get; }
+        public string Message { set; get; }
 
         [JsonConverter(typeof(StringEnumConverter))]
-        public SummrizeStatus status { set; get; }
+        public MetaDataStatus Status { set; get; }
+
+        public string Description { set; get; }
+
+        public MetaData(MetaDataStatus status, string title,string message,string description) 
+        {
+            this.Status = status;
+            this.Message = message ?? string.Empty;
+            this.Description = description;
+            this.Title = title;
+        }
+
     }
 
-    public enum SummrizeStatus
+    public enum MetaDataStatus
     {
         Critical,
         Warning,
@@ -41,11 +48,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
             var table = new DataTable();
             table.Columns.Add("Status",typeof(string));
+            table.Columns.Add("Title", typeof(string));
             table.Columns.Add("Message",typeof(string));
+            table.Columns.Add("Description", typeof(string));
 
             foreach (MetaData meta in metaDatas)
             {
-                table.Rows.Add(meta.message,meta.status);
+                table.Rows.Add(meta.Status,meta.Title,meta.Message,meta.Description);
             }
 
             var diagData = new DiagnosticData()
@@ -66,9 +75,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             return AddMetaDatas(response, new List<MetaData> { metaData });
         }
 
-        public static DiagnosticData AddMetaData(this Response response, SummrizeStatus status,string message)
+        public static DiagnosticData AddMetaData(this Response response, MetaDataStatus status,string title,string message,string description)
         {
-            var metaData = new MetaData(status, message);
+            var metaData = new MetaData(status,title,message,description);
             return AddMetaDatas(response, new List<MetaData> { metaData });
         }
     }
