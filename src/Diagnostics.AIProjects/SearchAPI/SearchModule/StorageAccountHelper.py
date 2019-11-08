@@ -28,6 +28,9 @@ class StorageAccountHelper:
 					now = datetime.datetime.now(pytz.utc)
 					if self.blob_service:
 						allblobsList = [blob for blob in list(self.blob_service.list_blobs(app.config["STORAGE_ACCOUNT_CONTAINER_NAME"])) if blob.name.startswith("{0}/models".format(productId))]
+						if not len(allblobsList)>0:
+							self.firstTime[productId] = False
+							continue
 						folders = list(set([int(blob.name.split("/")[2]) for blob in allblobsList]))
 						latestFolder = str(max(folders))
 						downloadList = [blob for blob in allblobsList if blob.name.startswith("{0}/models/{1}".format(productId, latestFolder))]

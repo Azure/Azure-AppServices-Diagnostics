@@ -129,3 +129,15 @@ appsettings.json
 local.settings.json
 .python_packages
 serverless-python.zip
+**/Detectors.json
+**/SampleUtterances.json
+**.model
+**.index
+**.dat.npy
+**.dict
+**/Mappings.json
+**/ModelInfo.json
+**/trainingId.txt
+rawdata_**
+**/testCases.json
+resourceConfig

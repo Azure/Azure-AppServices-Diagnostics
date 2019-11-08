@@ -7,6 +7,7 @@ from SearchModule.TextSearchModule import *
 from SearchModule.StorageAccountHelper import StorageAccountHelper
 import threading
 from googletrans import Translator
+import time
 translator = Translator()
 
 ######## RUN THE API SERVER IN FLASK  #############
@@ -76,6 +77,12 @@ def activate_job():
     loggerInstance.logInsights("Starting model sync for {0}".format(','.join(productIds)))
     thread = threading.Thread(target=sah.watchModels, args=(productIds,))
     thread.start()
+    while True:
+        modelDownloadPending = [sah.firstTime[productId] if productId in sah.firstTime else True for productId in productIds]
+        if any(modelDownloadPending):
+            time.sleep(2)
+        else:
+            break
     loggerInstance.logInsights("Search service startup succeeded")
 
 
@@ -106,6 +113,28 @@ def queryDetectorsMethod():
         return (json.dumps({"query": txt_data, "results": [], "exception": str(e)}), 404)
     results = loaded_models[productid].queryDetectors(txt_data)
     res = json.dumps(results)
+    return (res, 200)
+
+@app.route('/queryMultiple', methods=["POST"])
+def queryMultipleMethod():
+    data = json.loads(request.data.decode('utf-8'))
+    requestId = data['requestId']
+
+    txts = data['texts']
+    if not txts:
+        return ("No texts provided for search", 400)
+    productid = getProductId(data)
+    if not productid:
+        return ('Resource data not available', 404)
+    productid = productid[0]
+    try:
+        loadModel(productid)
+    except Exception as e:
+        loggerInstance.logHandledException(requestId, e)
+        loggerInstance.logToFile(requestId, e)
+        return (json.dumps({"query": txts, "results": [], "exception": str(e)}), 404)
+    
+    res = json.dumps([loaded_models[productid].queryDetectors(txt_data) for txt_data in txts])
     return (res, 200)
 
 @app.route('/queryUtterances', methods=["POST"])
