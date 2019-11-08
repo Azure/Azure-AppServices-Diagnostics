@@ -8,7 +8,7 @@ from __app__.TrainingModule.StorageAccountHelper import StorageAccountHelper
 from __app__.TrainingModule.DetectorsFetchHelper import getAllDetectors
 from __app__.TestingModule.TextSearchModule import loadModel
 from __app__.TestingModule.TestSchema import TestCase
-
+from __app__.TrainingModule.ResourceFilterHelper import getProductId
 
 class TrainingException(Exception):
     pass
@@ -41,7 +41,7 @@ def trainDictionary(alltokens, productid, outpath):
     dictionary = corpora.Dictionary(alltokens)
     dictionary.save(os.path.join(outpath, "dictionary.dict"))
     
-def trainModelM1(detector_tokens, sampleUtterances_tokens, productid, outpath):
+def trainModelM1(detector_tokens, productid, outpath):
     dictionary = corpora.Dictionary.load(os.path.join(outpath, "dictionary.dict"))
     corpus = [dictionary.doc2bow(line) for line in detector_tokens]
     model = TfidfModel(corpus)
@@ -49,7 +49,7 @@ def trainModelM1(detector_tokens, sampleUtterances_tokens, productid, outpath):
     model.save(os.path.join(outpath, "m1.model"))
     index.save(os.path.join(outpath, "m1.index"))
 
-def trainModelM2(detector_tokens, sampleUtterances_tokens, productid, outpath):
+def trainModelM2(sampleUtterances_tokens, productid, outpath):
     dictionary = corpora.Dictionary.load(os.path.join(outpath, "dictionary.dict"))
     corpus = [dictionary.doc2bow(line) for line in sampleUtterances_tokens]
     model = TfidfModel(corpus)
@@ -81,6 +81,8 @@ async def trainModel(trainingId, productid, trainingConfig):
     try:
         detectors_ = getAllDetectors()
         logging.info("DataFetcher: Sucessfully fetched detectors for training")
+        detectors_ = [detector for detector in detectors_ if productid in getProductId(detector["resourceFilter"] if "resourceFilter" in detector else {})]
+        logging.info(f"DataFetcher: Successfully filtered fetched {len(detectors_)} detectors based on productid {productid}.")
         if detectors_ and len(detectors_)>0:
             open(os.path.join(datapath, "Detectors.json"), "w").write(json.dumps(detectors_))
         detectorsdata = open(os.path.join(datapath, "Detectors.json"), "r").read()
@@ -117,7 +119,7 @@ async def trainModel(trainingId, productid, trainingConfig):
         raise TrainingException("DictionaryTrainer: " + str(e))
     if trainingConfig.trainDetectors:
         try:
-            trainModelM1(detector_tokens, sampleUtterances_tokens, productid, outpath)
+            trainModelM1(detector_tokens, productid, outpath)
             logging.info("ModelM1Trainer: Sucessfully trained model m1")
         except Exception as e:
             logging.error("[ERROR]ModelM1Trainer: " + str(e))
@@ -127,7 +129,7 @@ async def trainModel(trainingId, productid, trainingConfig):
         logging.info("ModelM1Trainer: Training is disabled")
     if trainingConfig.trainUtterances:
         try:
-            trainModelM2(detector_tokens, sampleUtterances_tokens, productid, outpath)
+            trainModelM2(sampleUtterances_tokens, productid, outpath)
             logging.info("ModelM2Trainer: Sucessfully trained model m2")
         except Exception as e:
             logging.error("[ERROR]ModelM2Trainer: " + str(e))

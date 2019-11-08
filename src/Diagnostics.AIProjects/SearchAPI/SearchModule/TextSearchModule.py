@@ -238,10 +238,8 @@ def loadModel(productid, model=None):
     loaded_models[productid] = TextSearchModel(modelpackagepath, dict(packageFileNames))
 
 def refreshModel(productid):
-    path = str(uuid.uuid4())
     loggerInstance.logInsights("TextSearchModule: Refresh model request for product {0}: Copying models from download folder".format(productid))
-    downloadModels(productid, path=path)
-    modelpackagepath = os.path.join(path, productid)
+    modelpackagepath = os.path.join(modelsPath, productid)
     if not all([verifyFile(os.path.join(modelpackagepath, packageFileNames[x]), "Refresh model request for product {0}: ".format(productid)) for x in packageFileNames.keys() if x not in optionalFiles]):
         loggerInstance.logHandledException("modelRefreshTask", ModelRefreshException("TextSearchModule: Refresh model request for product {0}: Failed to refresh model because One or more of model file(s) are missing".format(productid)))
         return "Failed to refresh model because One or more of model file(s) are missing"
@@ -253,10 +251,10 @@ def refreshModel(productid):
         if os.path.isdir(os.path.join("SearchModule", productid)):
             shutil.rmtree(os.path.join("SearchModule", productid))
         copyFolder(modelpackagepath, os.path.join("SearchModule", productid))
-        shutil.rmtree(absPath(path))
+        #shutil.rmtree(absPath(path))
         loggerInstance.logInsights("TextSearchModule: Refresh model request for product {0}: Verified the new model by loading it. Triggering the switch.".format(productid))
     except Exception as e:
-        shutil.rmtree(absPath(path))
+        #shutil.rmtree(absPath(path))
         loggerInstance.logHandledException("modelRefreshTask", ModelRefreshException("TextSearchModule: Refresh model request for product {0}: {1}".format(productid, str(e))))
         return "Failed to refresh Model Exception:" + str(e)
     loadModel(productid, model=TextSearchModel(os.path.join("SearchModule", productid), dict(packageFileNames)))
