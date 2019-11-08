@@ -1,4 +1,4 @@
-import logging, asyncio
+import logging, asyncio, json
 import azure.functions as func
 from __app__.AppSettings.AppSettings import appSettings
 from __app__.TrainingModule.HandleRequest import triggerTrainingMethod
