@@ -7,6 +7,7 @@ from SearchModule.TextSearchModule import *
 from SearchModule.StorageAccountHelper import StorageAccountHelper
 import threading
 from googletrans import Translator
+import time
 translator = Translator()
 
 ######## RUN THE API SERVER IN FLASK  #############
@@ -76,6 +77,12 @@ def activate_job():
     loggerInstance.logInsights("Starting model sync for {0}".format(','.join(productIds)))
     thread = threading.Thread(target=sah.watchModels, args=(productIds,))
     thread.start()
+    while True:
+        modelDownloadPending = [sah.firstTime[productId] if productId in sah.firstTime else True for productId in productIds]
+        if any(modelDownloadPending):
+            time.sleep(2)
+        else:
+            break
     loggerInstance.logInsights("Search service startup succeeded")
 
 
