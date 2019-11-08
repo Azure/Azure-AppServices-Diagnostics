@@ -26,5 +26,4 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
                 return func.HttpResponse(f"{res}", status_code=stat)
             except Exception as e:
                 return func.HttpResponse(f"{e}", status_code=500)
-    else:
-        return func.HttpResponse("Please provide data in the request body", status_code=400)
+    return func.HttpResponse("Please provide training configuration in the request body", status_code=400)
