@@ -132,7 +132,7 @@ def queryMultipleMethod():
     except Exception as e:
         loggerInstance.logHandledException(requestId, e)
         loggerInstance.logToFile(requestId, e)
-        return (json.dumps({"query": txts, "results": []}), 200)
+        return (json.dumps({"query": txts, "results": [], "exception": str(e)}), 404)
     
     res = json.dumps([loaded_models[productid].queryDetectors(txt_data) for txt_data in txts])
     return (res, 200)
