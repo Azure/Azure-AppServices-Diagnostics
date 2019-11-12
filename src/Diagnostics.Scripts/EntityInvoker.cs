@@ -51,6 +51,21 @@ namespace Diagnostics.Scripts
 
         public bool SystemFilterSpecified => _systemFilter;
 
+        private bool _lazyLoadDLL = false;
+
+        public EntityInvoker(EntityMetadata entityMetadata, Definition entryPointDefinitionAttribute, IResourceFilter resourceFilter, bool systemFilterSpecified)
+        {
+            _entityMetaData = entityMetadata;
+            _resourceFilter = resourceFilter;
+            _systemFilter = systemFilterSpecified;
+            _entryPointDefinitionAttribute = entryPointDefinitionAttribute;
+            _lazyLoadDLL = true;
+            _frameworkReferences = ImmutableArray<string>.Empty;
+            _frameworkImports = ImmutableArray<string>.Empty;
+            _frameworkLoads = ImmutableDictionary<string, string>.Empty;
+            CompilationOutput = Enumerable.Empty<string>();
+        }
+
         public EntityInvoker(EntityMetadata entityMetadata)
         {
             _entityMetaData = entityMetadata;
@@ -173,6 +188,14 @@ namespace Diagnostics.Scripts
             if (!IsCompilationSuccessful)
             {
                 throw new ScriptCompilationException(CompilationOutput);
+            }
+
+            if (_lazyLoadDLL && memberInfo == null)
+            {
+                DLLLoader loader = new DLLLoader(_entryPointDefinitionAttribute.Id);
+                var bytes = await loader.LoadAsync();
+                var asm = Assembly.Load(bytes);
+                this.InitializeEntryPoint(asm);
             }
 
             var methodInfo = memberInfo as MethodInfo;

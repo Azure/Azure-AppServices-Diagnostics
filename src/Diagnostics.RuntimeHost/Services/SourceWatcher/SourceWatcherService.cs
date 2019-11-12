@@ -29,6 +29,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     IGithubClient githubClient = new GithubClient(env, configuration);
                     _watcher = new GitHubWatcher(env, configuration, invokerCacheService, gistCacheService, githubClient, searchService);
                     break;
+                case SourceWatcherType.CosmosDB:
+                    CosmosDBClient.CosmosDBClient cosmosDBClient = new CosmosDBClient.CosmosDBClient(configuration);
+                    _watcher = new CosmosDBWatcher(env, configuration, invokerCacheService, gistCacheService, cosmosDBClient, searchService);
+                    break;
                 default:
                     throw new NotSupportedException("Source Watcher Type not supported");
             }
