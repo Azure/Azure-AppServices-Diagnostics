@@ -20,13 +20,13 @@ except LookupError:
 lemmatizer = WordNetLemmatizer()
 stop = stopwords.words('english')
 
-def tokenize_text(txt):
-    return [lemmatizer.lemmatize(word) for word in nltk.word_tokenize(txt.lower()) if word not in stop]
+def tokenize_text(txt, lemmatize=True):
+    return [lemmatizer.lemmatize(word) if lemmatize else word for word in nltk.word_tokenize(txt.lower()) if word not in stop]
 
-def getNGrams(sentence, n):
-    return [' '.join(list(x)) for x in ngrams(tokenize_text(sentence), n)]
+def getNGrams(sentence, n, lemmatize=True):
+    return [' '.join(list(x)) for x in ngrams(tokenize_text(sentence, lemmatize), n)]
 
-def getAllNGrams(sentence, n=1):
+def getAllNGrams(sentence, n=1, lemmatize=True):
     if not sentence:
         return []
-    return list(itertools.chain.from_iterable([getNGrams(sentence, i) for i in range(1, min([n, len(sentence.split())])+1)]))
+    return list(itertools.chain.from_iterable([getNGrams(sentence, i, lemmatize) for i in range(1, min([n, len(sentence.split())])+1)]))

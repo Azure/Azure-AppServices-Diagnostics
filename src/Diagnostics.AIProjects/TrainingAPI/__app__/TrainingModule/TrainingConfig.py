@@ -16,3 +16,5 @@ class TrainingConfig:
 		self.detectorContentSplitted = trainingConfig.get("detectorContentSplitted", False)
 		self.trainDetectors = trainingConfig.get("trainDetectors", False)
 		self.trainUtterances = trainingConfig.get("trainUtterances", False)
+
+		self.modelType = trainingConfig.get("modelType", "TfIdfSearchModel")
