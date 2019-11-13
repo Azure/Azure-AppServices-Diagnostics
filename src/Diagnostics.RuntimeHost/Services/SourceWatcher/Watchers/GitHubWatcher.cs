@@ -316,13 +316,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
             }
 
-            if (isSearchModel)
-            {
-                HitModelRefresh(folderName);
-                LogMessage($"Found a search model, skipping loading the folder {folderName} into cache");
-                return;
-            }
-
             var scriptText = await FileHelper.GetFileContentAsync(csxFilePath);
             var assemblyPath = Path.Combine(destDir.FullName, $"{assemblyName}.dll");
 
