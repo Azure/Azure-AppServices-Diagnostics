@@ -1,6 +1,6 @@
 ## Intent
-The goal of this deployment folder is to fully automate the infrastructure of the App Service Diagnostics application.
-This will make it trivial to create the resources needed to deploy ASD into new clouds.
+The goal of this deployment folder is to fully automate the infrastructure deployment of the App Service Diagnostics application, as well as other services in the application's cluster.
+This will make it easier to repeat this infrastructure in other environments.
 
 ARM templates also control Geneva configuration upgrades.
 

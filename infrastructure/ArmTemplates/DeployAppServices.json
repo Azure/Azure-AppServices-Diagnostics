@@ -97,39 +97,39 @@
     },
     "variables": { },
     "resources": [
-            {
-                "type": "Microsoft.Resources/deployments",
-                "apiVersion": "2017-05-10",
-                "name": "[concat('linkedTemplateMiddle', copyIndex())]",
-                "resourceGroup": "[parameters('appServicePlanResourceGroup')]",
-                "properties": {
-                    "mode": "Incremental",
-                    "templateLink": {
-                        "uri": "[concat(parameters('TemplateBaseURI'),'antareskvtemplate.json')]"
-                    },
-                    "parameters": {
-                        "siteName":{"value": "[parameters('AppServices')[copyIndex()].siteName]"},
-                        "appServicePlanName":{"value": "[parameters('AppServices')[copyIndex()].appServicePlanName]"},
-                        "location":{"value": "[parameters('AppServices')[copyIndex()].location]"},
-                        "monitoringGcsNamespace":{"value": "[parameters('AppServices')[copyIndex()].monitoringGcsNamespace]"},
-                        "appServicePlanResourceGroup":{"value": "[parameters('appServicePlanResourceGroup')]"},
-                        "pingPath":{"value": "[parameters('pingPath')]"},
-                        "subscriptionId":{"value": "[parameters('subscriptionId')]"},
-                        "sku":{"value": "[parameters('sku')]"},
-                        "alwaysOn":{"value": "[parameters('alwaysOn')]"},
-                        "genevaCertContent":{"value": "[parameters('genevaCertContent')]"},  
-                        "monitoringTenant":{"value": "[parameters('monitoringTenant')]"},
-                        "monitoringRole":{"value": "[parameters('monitoringRole')]"},
-                        "monitoringGcsEnvironment":{"value": "[parameters('monitoringGcsEnvironment')]"},
-                        "monitoringGcsAccount":{"value": "[parameters('monitoringGcsAccount')]"},
-                        "monitoringGcsAuthId":{"value": "[parameters('monitoringGcsAuthId')]"},
-                        "monitoringConfigVersion":{"value": "[parameters('monitoringConfigVersion')]"}
-                    }
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2017-05-10",
+            "name": "[concat('linkedTemplateMiddle', copyIndex())]",
+            "resourceGroup": "[parameters('appServicePlanResourceGroup')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('TemplateBaseURI'),'antareskvtemplate.json')]"
                 },
-                "copy": {
-                    "count": "[length(parameters('AppServices'))]",
-                    "name": "linkedTemplateMiddleCopy"
+                "parameters": {
+                    "siteName":{"value": "[parameters('AppServices')[copyIndex()].siteName]"},
+                    "appServicePlanName":{"value": "[parameters('AppServices')[copyIndex()].appServicePlanName]"},
+                    "location":{"value": "[parameters('AppServices')[copyIndex()].location]"},
+                    "monitoringGcsNamespace":{"value": "[parameters('AppServices')[copyIndex()].monitoringGcsNamespace]"},
+                    "appServicePlanResourceGroup":{"value": "[parameters('appServicePlanResourceGroup')]"},
+                    "pingPath":{"value": "[parameters('pingPath')]"},
+                    "subscriptionId":{"value": "[parameters('subscriptionId')]"},
+                    "sku":{"value": "[parameters('sku')]"},
+                    "alwaysOn":{"value": "[parameters('alwaysOn')]"},
+                    "genevaCertContent":{"value": "[parameters('genevaCertContent')]"},
+                    "monitoringTenant":{"value": "[parameters('monitoringTenant')]"},
+                    "monitoringRole":{"value": "[parameters('monitoringRole')]"},
+                    "monitoringGcsEnvironment":{"value": "[parameters('monitoringGcsEnvironment')]"},
+                    "monitoringGcsAccount":{"value": "[parameters('monitoringGcsAccount')]"},
+                    "monitoringGcsAuthId":{"value": "[parameters('monitoringGcsAuthId')]"},
+                    "monitoringConfigVersion":{"value": "[parameters('monitoringConfigVersion')]"}
                 }
+            },
+            "copy": {
+                "count": "[length(parameters('AppServices'))]",
+                "name": "linkedTemplateMiddleCopy"
             }
-        ]
+        }
+    ]
 }
