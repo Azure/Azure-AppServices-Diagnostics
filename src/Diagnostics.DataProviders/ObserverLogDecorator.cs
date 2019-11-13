@@ -15,27 +15,7 @@ namespace Diagnostics.DataProviders
 		{
 			DataProvider = dataProvider;
 		}
-
-		public Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames)
-		{
-			return MakeDependencyCall(DataProvider.GetAdminSitesByHostNameAsync(stampName, hostNames));
-		}
-
-		public Task<JObject> GetAdminSitesBySiteNameAsync(string stampName, string siteName)
-		{
-			return MakeDependencyCall(DataProvider.GetAdminSitesBySiteNameAsync(stampName, siteName));
-		}
-
-		public Task<IEnumerable<object>> GetAppServiceEnvironmentDeploymentsAsync(string hostingEnvironmentName)
-		{
-			return MakeDependencyCall(DataProvider.GetAppServiceEnvironmentDeploymentsAsync(hostingEnvironmentName));
-		}
-
-		public Task<JObject> GetAppServiceEnvironmentDetailsAsync(string hostingEnvironmentName)
-		{
-			return MakeDependencyCall(DataProvider.GetAppServiceEnvironmentDetailsAsync(hostingEnvironmentName));
-		}
-
+                                
 		public Task<dynamic> GetCertificatesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
 		{
 			return MakeDependencyCall(DataProvider.GetCertificatesInResourceGroupAsync(subscriptionName, resourceGroupName));
@@ -119,11 +99,6 @@ namespace Diagnostics.DataProviders
 		public Task<string> GetSiteWebSpaceNameAsync(string subscriptionId, string siteName)
 		{
 			return MakeDependencyCall(DataProvider.GetSiteWebSpaceNameAsync(subscriptionId, siteName));
-		}
-
-		public Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName)
-		{
-			return MakeDependencyCall(DataProvider.GetStorageVolumeForSiteAsync(stampName, siteName));
 		}
 
 		public Task<string> GetWebspaceResourceGroupName(string subscriptionId, string webSpaceName)

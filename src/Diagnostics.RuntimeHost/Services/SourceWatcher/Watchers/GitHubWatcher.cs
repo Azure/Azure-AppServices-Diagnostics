@@ -268,7 +268,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             var metadataFilePath = string.Empty;
             var lastCacheId = string.Empty;
             var cacheIdFilePath = Path.Combine(destDir.FullName, _cacheIdFileName);
-            
+
             var response = await _githubClient.Get(parentGithubEntry.Url);
             if (!response.IsSuccessStatusCode)
             {
@@ -314,6 +314,13 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
                 LogMessage($"Begin downloading File : {githubFile.Name.ToLower()} and saving it as : {downloadFilePath}");
                 await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
+            }
+
+            if (isSearchModel)
+            {
+                HitModelRefresh(folderName);
+                LogMessage($"Found a search model, skipping loading the folder {folderName} into cache");
+                return;
             }
 
             var scriptText = await FileHelper.GetFileContentAsync(csxFilePath);
@@ -390,7 +397,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         {
             _rootContentApiPath = $@"https://api.github.com/repos/{_githubClient.UserName}/{_githubClient.RepoName}/contents?ref={_githubClient.Branch}";
             var pollingIntervalvalue = string.Empty;
-            
+
             _destinationCsxPath = (_config[$"SourceWatcher:Github:{RegistryConstants.DestinationScriptsPathKey}"]).ToString();
             pollingIntervalvalue = (_config[$"SourceWatcher:{RegistryConstants.PollingIntervalInSecondsKey}"]).ToString();
 
