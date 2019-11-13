@@ -25,7 +25,7 @@ namespace Diagnostics.DataProviders
                 throw new ArgumentNullException(nameof(siteName));
 
             var path = $"sites/{siteName}/adminsites";
-            
+
             var response = await GetObserverResource(path);
             if (response == null)
             {
@@ -46,7 +46,7 @@ namespace Diagnostics.DataProviders
             var result = await Get($"subscriptions/{subscriptionName}/resourceGroups/{resourceGroupName}/certificates");
             return JsonConvert.DeserializeObject(result);
         }
-        
+
         public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
         {
             return GetRuntimeSiteSlotMap(stampName, siteName, null);
@@ -54,11 +54,6 @@ namespace Diagnostics.DataProviders
 
         public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName = null)
         {
-            if (string.IsNullOrWhiteSpace(stampName))
-                throw new ArgumentNullException(nameof(stampName));
-            if (string.IsNullOrWhiteSpace(siteName))
-                throw new ArgumentNullException(nameof(siteName));
-            
             return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName);
         }
 
@@ -169,25 +164,16 @@ namespace Diagnostics.DataProviders
 
         public override async Task<dynamic> GetSite(string siteName)
         {
-            if (string.IsNullOrWhiteSpace(siteName))
-                throw new ArgumentNullException(nameof(siteName));
-
             return await GetSiteInternal(null, siteName, null);
         }
 
         public override async Task<dynamic> GetSite(string stampName, string siteName)
         {
-            if (string.IsNullOrWhiteSpace(siteName))
-                throw new ArgumentNullException(nameof(siteName));
-
             return await GetSiteInternal(stampName, siteName, null);
         }
 
         public override async Task<dynamic> GetSite(string stampName, string siteName, string slotName)
         {
-            if (string.IsNullOrWhiteSpace(siteName))
-                throw new ArgumentNullException(nameof(siteName));
-
             return await GetSiteInternal(stampName, siteName, slotName);
         }
 
@@ -218,8 +204,8 @@ namespace Diagnostics.DataProviders
                 .FirstOrDefault(j =>
                     j.ContainsKey("Subscription") &&
                     j["Subscription"].ToString().Equals(subscriptionId, StringComparison.InvariantCultureIgnoreCase) &&
-                    j.ContainsKey("ResourceGroupName") && 
-                    j["ResourceGroupName"].ToString().Equals(resourceGroupName, StringComparison.InvariantCultureIgnoreCase) && 
+                    j.ContainsKey("ResourceGroupName") &&
+                    j["ResourceGroupName"].ToString().Equals(resourceGroupName, StringComparison.InvariantCultureIgnoreCase) &&
                     (j.ContainsKey("StampName") || j.ContainsKey("InternalStampName")));
 
             return siteObject?["InternalStampName"]?.ToString() ?? siteObject?["StampName"]?.ToString() ?? string.Empty;
