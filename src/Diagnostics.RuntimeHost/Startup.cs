@@ -96,6 +96,10 @@ namespace Diagnostics.RuntimeHost
             KustoTokenService.Instance.Initialize(dataSourcesConfigService.Config.KustoConfiguration);
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
             AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
+            if (searchIsEnabled)
+            {
+                SearchServiceTokenService.Instance.Initialize(dataSourcesConfigService.Config.SearchServiceProviderConfiguration);
+            }
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
