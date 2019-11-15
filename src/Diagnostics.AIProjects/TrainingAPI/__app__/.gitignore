@@ -125,6 +125,7 @@ dmypy.json
 # Azure Functions artifacts
 bin
 obj
+appsettings.json
 local.settings.json
 .python_packages
 serverless-python.zip

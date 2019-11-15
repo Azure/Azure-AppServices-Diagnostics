@@ -13,3 +13,4 @@ models/
 **/Mappings.json
 **/ModelInfo.json
 **/trainingId.txt
+**/appconfig.json
