@@ -61,29 +61,11 @@ namespace Diagnostics.RuntimeHost
             });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
 
-            bool searchIsEnabled = false;
-            if (Environment.IsProduction())
-            {
-                searchIsEnabled = Convert.ToBoolean(Registry.GetValue(RegistryConstants.SearchAPIRegistryPath, RegistryConstants.SearchAPIEnabledKey, string.Empty));
-            }
-            else
-            {
-                searchIsEnabled = Convert.ToBoolean(Configuration[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
-            }
-
-            if (searchIsEnabled)
-            {
-                services.AddSingleton<ISearchService, SearchService>();
-            }
-            else
-            {
-                services.AddSingleton<ISearchService, SearchServiceDisabled>();
-            }
-
             var servicesProvider = services.BuildServiceProvider();
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
             var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
             var kustoConfiguration = dataSourcesConfigService.Config.KustoConfiguration;
+            var searchApiConfiguration = dataSourcesConfigService.Config.SearchServiceProviderConfiguration;
 
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
 
@@ -96,9 +78,14 @@ namespace Diagnostics.RuntimeHost
             KustoTokenService.Instance.Initialize(dataSourcesConfigService.Config.KustoConfiguration);
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
             AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
-            if (searchIsEnabled)
+            if (searchApiConfiguration.SearchAPIEnabled)
             {
+                services.AddSingleton<ISearchService, SearchService>();
                 SearchServiceTokenService.Instance.Initialize(dataSourcesConfigService.Config.SearchServiceProviderConfiguration);
+            }
+            else
+            {
+                services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
         }
 
