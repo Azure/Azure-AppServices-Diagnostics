@@ -1,0 +1,15 @@
+*.user
+nltk_data/
+obj/
+.vs/
+**/__pycache__
+models/
+**/Detectors.json
+**/SampleUtterances.json
+**.dict
+**.index
+**.model
+**.dat.npy
+**/Mappings.json
+**/ModelInfo.json
+**/trainingId.txt

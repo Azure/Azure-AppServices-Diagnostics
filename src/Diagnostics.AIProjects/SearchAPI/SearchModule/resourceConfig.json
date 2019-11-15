@@ -1,0 +1,10 @@
+{
+  "resourceConfig": {
+    "App": {
+      "WebApp": {
+        "Windows": "14748"
+      }
+    }
+  },
+  "internalApiPort":  "2743"
+}
