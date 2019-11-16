@@ -56,11 +56,9 @@ namespace Diagnostics.RuntimeHost.Utilities
                 }
 
                 using (FileStream SourceStream = File.Open(fileInfo.FullName, FileMode.Open))
+                using (FileStream DestinationStream = File.Create(Path.Combine(destinationDirInfo.FullName, desiredFileName)))
                 {
-                    using (FileStream DestinationStream = File.Create(Path.Combine(destinationDirInfo.FullName, desiredFileName)))
-                    {
-                        await SourceStream.CopyToAsync(DestinationStream);
-                    }
+                    await SourceStream.CopyToAsync(DestinationStream);
                 }
             }
         }
