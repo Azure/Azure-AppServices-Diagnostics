@@ -93,7 +93,7 @@ namespace Diagnostics.RuntimeHost.Utilities
                 result &= ParseDateTimeParameter("startTime", startTime, currentUtcTime.AddDays(-1), out startTimeUtc);
             }
 
-            if (result == false)
+            if (!result)
             {
                 errorMessage = "Cannot parse invalid date time. Valid Time format is yyyy-mm-ddThh:mm";
                 return false;

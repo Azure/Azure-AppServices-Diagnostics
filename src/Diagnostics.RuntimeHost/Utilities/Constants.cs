@@ -38,9 +38,5 @@
         internal const string GithubRepoNameKey = "RepoName";
         internal const string GithubBranchKey = "Branch";
         internal const string DestinationScriptsPathKey = "DestinationScriptsPath";
-
-        // Search API Registry Settings
-        internal const string SearchAPIRegistryPath = RegistryRootPath + @"\SearchAPI";
-        internal const string SearchAPIEnabledKey = "SearchAPIEnabled";
     }
 }

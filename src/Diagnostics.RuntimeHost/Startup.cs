@@ -110,20 +110,11 @@ namespace Diagnostics.RuntimeHost
             });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
 
-            bool searchIsEnabled = Convert.ToBoolean(Configuration[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
-            if (searchIsEnabled)
-            {
-                services.AddSingleton<ISearchService, SearchService>();
-            }
-            else
-            {
-                services.AddSingleton<ISearchService, SearchServiceDisabled>();
-            }
-
             var servicesProvider = services.BuildServiceProvider();
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
             var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
             var kustoConfiguration = dataSourcesConfigService.Config.KustoConfiguration;
+            var searchApiConfiguration = dataSourcesConfigService.Config.SearchServiceProviderConfiguration;
 
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
 
@@ -135,11 +126,17 @@ namespace Diagnostics.RuntimeHost
 
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
             AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
-            if (searchIsEnabled)
+            CompilerHostTokenService.Instance.Initialize(Configuration);
+            if (searchApiConfiguration.SearchAPIEnabled)
             {
+                services.AddSingleton<ISearchService, SearchService>();
                 SearchServiceTokenService.Instance.Initialize(dataSourcesConfigService.Config.SearchServiceProviderConfiguration);
             }
-            CompilerHostTokenService.Instance.Initialize(Configuration);
+            else
+            {
+                services.AddSingleton<ISearchService, SearchServiceDisabled>();
+            }
+        }
 
             // Initialize on startup
             servicesProvider.GetService<ISourceWatcherService>();
