@@ -136,8 +136,6 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
-        }
-
             // Initialize on startup
             servicesProvider.GetService<ISourceWatcherService>();
         }
