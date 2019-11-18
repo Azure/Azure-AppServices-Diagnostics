@@ -32,7 +32,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         private string _rootContentApiPath;
 
         public readonly IGithubClient _githubClient;
-        public readonly ISearchService _searchService;
         private readonly string _workerIdFileName = "workerId.txt";
         private readonly string _lastModifiedMarkerName = "_lastModified.marker";
         private readonly string _deleteMarkerName = "_delete.marker";
@@ -57,11 +56,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// <param name="invokerCache">Invoker cache.</param>
         /// <param name="gistCache">Gist cache.</param>
         /// <param name="githubClient">Github client.</param>
-        public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, IGithubClient githubClient, ISearchService searchService)
+        public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, IGithubClient githubClient)
             : base(env, configuration, invokerCache, gistCache, "GithubWatcher")
         {
             _githubClient = githubClient;
-            _searchService = searchService;
 
             LoadConfigurations();
 
@@ -241,7 +239,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             var metadataFilePath = string.Empty;
             var lastCacheId = string.Empty;
             var cacheIdFilePath = Path.Combine(destDir.FullName, _cacheIdFileName);
-            bool isSearchModel = false;
 
             var response = await _githubClient.Get(parentGithubEntry.Url);
             if (!response.IsSuccessStatusCode)
@@ -275,10 +272,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     metadataFilePath = downloadFilePath;
                 }
                 // Extensions used in search model files
-                else if (githubFile.Name.Split(".").Last() == "model" || githubFile.Name.Split(".").Last() == "index" || githubFile.Name.Split(".").Last() == "dict" || githubFile.Name.Split(".").Last() == "json" || githubFile.Name.Split(".").Last() == "npy")
+                else if (githubFile.Name.Split(".").Last() == "model" || githubFile.Name.Split(".").Last() == "index" || githubFile.Name.Split(".").Last() == "dict" || githubFile.Name.Split(".").Last() == "npy")
                 {
-                    isSearchModel = true;
-                    downloadFilePath = Path.Combine(destDir.FullName, githubFile.Name);
+                    LogMessage($"Found a search model, skipping the folder {folderName}");
+                    return;
                 }
                 else
                 {
@@ -288,13 +285,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
                 LogMessage($"Begin downloading File : {githubFile.Name.ToLower()} and saving it as : {downloadFilePath}");
                 await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
-            }
-
-            if (isSearchModel)
-            {
-                HitModelRefresh(folderName);
-                LogMessage($"Found a search model, skipping loading the folder {folderName} into cache");
-                return;
             }
 
             var scriptText = await FileHelper.GetFileContentAsync(csxFilePath);
@@ -316,22 +306,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             {
                 LogWarning($"Cannot find github worker with id {workerId}. Directory: {destDir.FullName}.");
             }
-        }
-
-        private void HitModelRefresh(string productId)
-        {
-            Dictionary<string, string> parameters = new Dictionary<string, string>();
-            parameters.Add("productId", productId);
-            var requestId = Guid.NewGuid().ToString();
-            try
-            {
-                _searchService.TriggerModelRefresh(requestId, parameters);
-            }
-            catch (Exception ex)
-            {
-                DiagnosticsETWProvider.Instance.LogInternalAPIHandledException(requestId, "SearchAPICallException: RefreshModel: " + ex.GetType().ToString(), ex.Message);
-            }
-            return;
         }
 
         private async Task SyncLocalDirForDeletedEntriesInGitHub(GithubEntry[] githubDirectories, DirectoryInfo destDirInfo)
