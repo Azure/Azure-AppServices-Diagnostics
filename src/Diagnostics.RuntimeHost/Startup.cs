@@ -53,7 +53,7 @@ namespace Diagnostics.RuntimeHost
             var issuer = config.Issuer;
             var signingKeys = config.SigningKeys;
             // Adding both custom cert auth handler and Azure AAD JWT token handler to support multiple forms of auth.
-            if (Environment.IsProduction())
+            if (Environment.IsProduction() || Environment.IsStaging() )
             {
                 services.AddAuthentication().AddCertificateAuth(CertificateAuthDefaults.AuthenticationScheme, 
                     options =>
