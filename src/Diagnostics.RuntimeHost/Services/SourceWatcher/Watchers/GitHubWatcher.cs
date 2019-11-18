@@ -33,7 +33,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         private string _rootContentApiPath;
 
         public readonly IGithubClient _githubClient;
-        public readonly ISearchService _searchService;
         private readonly string _workerIdFileName = "workerId.txt";
         private readonly string _lastModifiedMarkerName = "_lastModified.marker";
         private readonly string _deleteMarkerName = "_delete.marker";
@@ -60,11 +59,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// <param name="invokerCache">Invoker cache.</param>
         /// <param name="gistCache">Gist cache.</param>
         /// <param name="githubClient">Github client.</param>
-        public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, IGithubClient githubClient, ISearchService searchService)
+        public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, IGithubClient githubClient)
             : base(env, configuration, invokerCache, gistCache, "GithubWatcher")
         {
             _githubClient = githubClient;
-            _searchService = searchService;
 
             LoadConfigurations();
 
@@ -268,7 +266,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             var metadataFilePath = string.Empty;
             var lastCacheId = string.Empty;
             var cacheIdFilePath = Path.Combine(destDir.FullName, _cacheIdFileName);
-            
+
             var response = await _githubClient.Get(parentGithubEntry.Url);
             if (!response.IsSuccessStatusCode)
             {
