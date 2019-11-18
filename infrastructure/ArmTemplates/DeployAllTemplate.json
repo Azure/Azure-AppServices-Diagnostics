@@ -98,7 +98,7 @@
             ]
         },
         "RedisCache": {
-            "Name": "LiberationCache-Prod",
+            "Name": "DiagnosticsCache-Prod",
             "diagnosticsEnabled": true,
             "existingDiagnosticsStorageAccountId": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourceGroups/RedisCache-RG/providers/Microsoft.Storage/storageAccounts/storeokauaj64yhhns"
         }
