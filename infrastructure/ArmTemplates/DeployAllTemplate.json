@@ -98,7 +98,9 @@
             ]
         },
         "RedisCache": {
-            "Name": "ObserverCache"
+            "Name": "LiberationCache-Prod",
+            "diagnosticsEnabled": true,
+            "existingDiagnosticsStorageAccountId": "/subscriptions/0e7b3183-4428-4c1f-93cd-cb2a26616a8a/resourceGroups/RedisCache-RG/providers/Microsoft.Storage/storageAccounts/storeokauaj64yhhns"
         }
     },
     "resources": [
@@ -211,7 +213,9 @@
                     "uri": "[concat(variables('TemplateBaseURI'),'RedisCache.json')]"
                 },
                 "parameters": {
-                    "redisCacheName": {"value": "[variables('RedisCache').Name]"}
+                    "redisCacheName": {"value": "[variables('RedisCache').Name]"},
+                    "diagnosticsEnabled": {"value": "[variables('RedisCache').diagnosticsEnabled]"},
+                    "existingDiagnosticsStorageAccountId": {"value": "[variables('RedisCache').existingDiagnosticsStorageAccountId]"},
                 }
             }
         }
