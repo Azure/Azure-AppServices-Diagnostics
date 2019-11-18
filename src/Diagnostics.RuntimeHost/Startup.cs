@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Win32;
 using System;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Protocols;
@@ -20,6 +19,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using Diagnostics.RuntimeHost.Security.CertificateAuth;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -50,35 +52,49 @@ namespace Diagnostics.RuntimeHost
             var config = configManager.GetConfigurationAsync().Result;
             var issuer = config.Issuer;
             var signingKeys = config.SigningKeys;
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+            // Adding both custom cert auth handler and Azure AAD JWT token handler to support multiple forms of auth.
+            if (Environment.IsProduction())
             {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateAudience = true,
-                    ValidAudience = Configuration["SecuritySettings:ClientId"],
-                    ValidateIssuer = true,
-                    ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
-                    ValidateLifetime = true,
-                    RequireSignedTokens = true,
-                    IssuerSigningKeys = signingKeys
-                };
-
-                options.Events = new JwtBearerEvents
-                {
-                    OnTokenValidated = context =>
+                services.AddAuthentication().AddCertificateAuth(CertificateAuthDefaults.AuthenticationScheme, 
+                    options =>
                     {
-                        var allowedAppIds = Configuration["SecuritySettings:AllowedAppIds"].Split(",").Select(p => p.Trim()).ToList();
-                        var claimPrincipal = context.Principal;
-                        var incomingAppId = claimPrincipal.Claims.FirstOrDefault(c => c.Type.Equals("appid", StringComparison.CurrentCultureIgnoreCase));
-                        if (incomingAppId == null || !allowedAppIds.Exists(p => p.Equals(incomingAppId.Value, StringComparison.OrdinalIgnoreCase)))
-                        {
-                            context.Fail("Unauthorized Request");
-                        }
-                        return Task.CompletedTask;
-                    }
-                };
-            });
+                        options.AllowedIssuers = Configuration["SecuritySettings:AllowedCertIssuers"].Split("|").Select(p => p.Trim()).ToList();
+                        options.AllowedSubjectNames = Configuration["SecuritySettings:AllowedCertSubjectNames"].Split(",").Select(p => p.Trim()).ToList();
+                    }).AddJwtBearer("AzureAd", options => {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateAudience = true,
+                        ValidAudience = Configuration["SecuritySettings:ClientId"],
+                        ValidateIssuer = true,
+                        ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
+                        ValidateLifetime = true,
+                        RequireSignedTokens = true,
+                        IssuerSigningKeys = signingKeys
+                    };
 
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnTokenValidated = context =>
+                        {
+                            var allowedAppIds = Configuration["SecuritySettings:AllowedAppIds"].Split(",").Select(p => p.Trim()).ToList();
+                            var claimPrincipal = context.Principal;
+                            var incomingAppId = claimPrincipal.Claims.FirstOrDefault(c => c.Type.Equals("appid", StringComparison.CurrentCultureIgnoreCase));
+                            if (incomingAppId == null || !allowedAppIds.Exists(p => p.Equals(incomingAppId.Value, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                context.Fail("Unauthorized Request");
+                            }
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
+                services.AddAuthorization(options =>
+                {
+                    options.DefaultPolicy = new AuthorizationPolicyBuilder().
+                                            RequireAuthenticatedUser().
+                                            AddAuthenticationSchemes(CertificateAuthDefaults.AuthenticationScheme, "AzureAd")
+                                            .Build();
+                });
+            }
             if (!Environment.IsDevelopment())
             {
                 GeoCertLoader.Instance.Initialize(Configuration);
@@ -87,7 +103,17 @@ namespace Diagnostics.RuntimeHost
 
             // Enable App Insights telemetry
             services.AddApplicationInsightsTelemetry();
-            services.AddMvc();
+            if(Environment.IsDevelopment())
+            {
+                services.AddMvc(options =>
+                {
+                    options.Filters.Add(new AllowAnonymousFilter());
+                });
+            }
+            else
+            {
+                services.AddMvc();
+            }
 
             services.AddSingleton<IDataSourcesConfigurationService, DataSourcesConfigurationService>();
             services.AddSingleton<ICompilerHostClient, CompilerHostClient>();
@@ -110,20 +136,11 @@ namespace Diagnostics.RuntimeHost
             });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
 
-            bool searchIsEnabled = Convert.ToBoolean(Configuration[$"SearchAPI:{RegistryConstants.SearchAPIEnabledKey}"]);
-            if (searchIsEnabled)
-            {
-                services.AddSingleton<ISearchService, SearchService>();
-            }
-            else
-            {
-                services.AddSingleton<ISearchService, SearchServiceDisabled>();
-            }
-
             var servicesProvider = services.BuildServiceProvider();
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
             var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
             var kustoConfiguration = dataSourcesConfigService.Config.KustoConfiguration;
+            var searchApiConfiguration = dataSourcesConfigService.Config.SearchServiceProviderConfiguration;
 
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
 
@@ -135,12 +152,16 @@ namespace Diagnostics.RuntimeHost
 
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
             AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
-            if (searchIsEnabled)
+            CompilerHostTokenService.Instance.Initialize(Configuration);
+            if (searchApiConfiguration.SearchAPIEnabled)
             {
+                services.AddSingleton<ISearchService, SearchService>();
                 SearchServiceTokenService.Instance.Initialize(dataSourcesConfigService.Config.SearchServiceProviderConfiguration);
             }
-            CompilerHostTokenService.Instance.Initialize(Configuration);
-
+            else
+            {
+                services.AddSingleton<ISearchService, SearchServiceDisabled>();
+            }
             // Initialize on startup
             servicesProvider.GetService<ISourceWatcherService>();
         }
