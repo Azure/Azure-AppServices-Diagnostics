@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
+using Diagnostics.Logger;
 
 namespace Diagnostics.DataProviders
 {
@@ -31,12 +32,15 @@ namespace Diagnostics.DataProviders
 		
 		public string GeoMasterName { get; }
 
+        public string RequestId { get; set; }
+
         public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache)
         {
             _geoMasterHostName = string.IsNullOrWhiteSpace(context.GeomasterHostName) ? context.Configuration.GeoMasterConfiguration.GeoEndpointAddress : context.GeomasterHostName;
             _configuration = context.Configuration.GeoMasterConfiguration;
             _geoMasterClient = InitClient();
             GeoMasterName = string.IsNullOrWhiteSpace(context.GeomasterName) ? ParseGeoMasterName(_geoMasterHostName) : context.GeomasterName;
+            RequestId = context.RequestId;
         }
 
         private IGeoMasterClient InitClient()
@@ -606,6 +610,7 @@ namespace Diagnostics.DataProviders
                         {
                             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
                         }
+                        DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, $"{nameof(GeoMasterDataProvider.PerformHttpRequest)}", $"Making HTTP call to GeoMaster URI: {uri.AbsoluteUri} Method: {method.Method} ");
                         response = await _geoMasterClient.Client.SendAsync(request, cancellationToken).ConfigureAwait(false);
                         response.EnsureSuccessStatusCode();
                     }
