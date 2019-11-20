@@ -612,6 +612,10 @@ namespace Diagnostics.DataProviders
                         }
                         DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, $"{nameof(GeoMasterDataProvider.PerformHttpRequest)}", $"Making HTTP call to GeoMaster URI: {uri.AbsoluteUri} Method: {method.Method} ");
                         response = await _geoMasterClient.Client.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                        if(!response.IsSuccessStatusCode && response.Content != null)
+                        {
+                            DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, $"{nameof(GeoMasterDataProvider.PerformHttpRequest)}", $"HTTP call to GeoMaster failed with response: {response.Content.ReadAsStringAsync()} ");
+                        }
                         response.EnsureSuccessStatusCode();
                     }
                     catch (TaskCanceledException)
