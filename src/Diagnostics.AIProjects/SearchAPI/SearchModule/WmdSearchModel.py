@@ -80,7 +80,7 @@ class WmdSearchModel:
     def queryDetectors(self, query=None):
         if query:
             try:
-                tokenized = getAllNGrams(query, self.models["modelInfo"].textNGrams)
+                tokenized = getAllNGrams(query, self.models["modelInfo"].textNGrams, lemmatize=False)
                 similar_doc_indices = sorted(enumerate(self.models["m1Index"][tokenized]), key=lambda x: x[1], reverse=True)[:10]
                 if self.models["modelInfo"].detectorContentSplitted:    
                     similar_docs = []
@@ -111,7 +111,7 @@ class WmdSearchModel:
             query = query + " ".join(existing_utterances)
             self.loadUtteranceModel()
             try:
-                tokenized = getAllNGrams(query, self.models["modelInfo"].textNGrams)
+                tokenized = getAllNGrams(query, self.models["modelInfo"].textNGrams, lemmatize=False)
                 similar_doc_indices = sorted(enumerate(self.models["m2Index"][tokenized]), key=lambda item: -item[1])
                 similar_doc_indices = [x for x in similar_doc_indices if self.models["sampleUtterances"][x[0]]["text"].lower() not in existing_utterances][:10]
                 similar_docs = list(map(lambda x: {"sampleUtterance": self.models["sampleUtterances"][x[0]], "score": str(x[1])}, similar_doc_indices))
