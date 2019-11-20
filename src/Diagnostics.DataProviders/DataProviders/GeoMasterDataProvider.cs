@@ -614,7 +614,8 @@ namespace Diagnostics.DataProviders
                         response = await _geoMasterClient.Client.SendAsync(request, cancellationToken).ConfigureAwait(false);
                         if(!response.IsSuccessStatusCode && response.Content != null)
                         {
-                            DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, $"{nameof(GeoMasterDataProvider.PerformHttpRequest)}", $"HTTP call to GeoMaster failed with response: {response.Content.ReadAsStringAsync()} ");
+                            string responseMessage = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, $"{nameof(GeoMasterDataProvider.PerformHttpRequest)}", $"HTTP call to GeoMaster failed with response: {responseMessage}");
                         }
                         response.EnsureSuccessStatusCode();
                     }
