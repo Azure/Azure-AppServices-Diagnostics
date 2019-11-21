@@ -247,7 +247,8 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data Rendered as only summarized message
         /// </summary>
-        MetaData
+        SummaryCard,
+        FabDropdown
     }
 
     /// <summary>
