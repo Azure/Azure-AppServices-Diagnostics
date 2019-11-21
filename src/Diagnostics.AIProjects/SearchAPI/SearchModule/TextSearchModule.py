@@ -28,7 +28,6 @@ def loadModel(productId, model=None):
     if model:
         loggerInstance.logInsights(f"{prelogMessage}From provided pre-loaded model.")
         loaded_models[productId] = model
-        gc.collect()
         return
     if productId in loaded_models:
         loggerInstance.logInsights(f"{prelogMessage}Model is already loaded in app")
@@ -46,8 +45,7 @@ def refreshModel(productId):
     try:
         # Try to load the given model
         temp = TextSearchModel(modelpackagepath)
-        temp = None
-        gc.collect()
+        del temp
         if os.path.isdir(os.path.join("SearchModule", productId)):
             shutil.rmtree(os.path.join("SearchModule", productId))
         copyFolder(modelpackagepath, os.path.join("SearchModule", productId))
@@ -63,8 +61,7 @@ def refreshModel(productId):
 
 def freeModel(productId):
     loaded_models[productId] = None
-    loaded_models.pop(productId, None)
-    gc.collect()
+    del loaded_models[productId]
 
 
 loaded_models = {}

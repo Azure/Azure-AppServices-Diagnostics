@@ -50,13 +50,13 @@ class TfIdfSearchModel:
         try:
             self.models["m2Model"] = TfidfModel.load(self.packageFiles["m2ModelFile"])
             self.models["m2Model"] = None
-            gc.collect()
+            del self.models["m2Model"]
         except:
             raise ModelFileLoadFailed("Failed to load model from file " + self.packageFiles["m2ModelFile"])
         try:
             self.models["m2Index"] = similarities.MatrixSimilarity.load(self.packageFiles["m2IndexFile"])
             self.models["m2Index"] = None
-            gc.collect()
+            del self.models["m2Index"]
         except:
             raise ModelFileLoadFailed("Failed to load index from file " + self.packageFiles["m2IndexFile"])
         try:
@@ -77,7 +77,7 @@ class TfIdfSearchModel:
                 self.models["sampleUtterances"] = json.loads(f.read())
                 f.close()
                 self.models["sampleUtterances"] = None
-                gc.collect()
+                del self.models["sampleUtterances"]
         except:
             raise ModelFileLoadFailed("Failed to parse json from file " + self.packageFiles["sampleUtterancesFile"])
     
@@ -121,10 +121,9 @@ class TfIdfSearchModel:
             f.close()
 
     def unloadUtteranceModel(self):
-        self.models["m2Model"] = None
-        self.models["m2Index"] = None
-        self.models["sampleUtterances"] = None
-        gc.collect()
+        del self.models["m2Model"]
+        del self.models["m2Index"]
+        del self.models["sampleUtterances"]
 
     def queryUtterances(self, query=None, existing_utterances=[]):
         if query:

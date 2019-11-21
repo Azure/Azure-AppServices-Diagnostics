@@ -39,7 +39,7 @@ class WmdSearchModel:
         try:
             self.models["m2Index"] = WmdSimilarity.load(self.packageFiles["m2IndexFile"])
             self.models["m2Index"] = None
-            gc.collect()
+            del self.models["m2Index"]
         except:
             raise ModelFileLoadFailed("Failed to load index from file " + self.packageFiles["m2IndexFile"])
         try:
@@ -60,7 +60,7 @@ class WmdSearchModel:
                 self.models["sampleUtterances"] = json.loads(f.read())
                 f.close()
                 self.models["sampleUtterances"] = None
-                gc.collect()
+                del self.models["sampleUtterances"]
         except:
             raise ModelFileLoadFailed("Failed to parse json from file " + self.packageFiles["sampleUtterancesFile"])
     
@@ -102,9 +102,8 @@ class WmdSearchModel:
             f.close()
 
     def unloadUtteranceModel(self):
-        self.models["m2Index"] = None
-        self.models["sampleUtterances"] = None
-        gc.collect()
+        del self.models["m2Index"]
+        del self.models["sampleUtterances"]
 
     def queryUtterances(self, query=None, existing_utterances=[]):
         if query:
