@@ -33,7 +33,7 @@ namespace Diagnostics.DataProviders
             _geoMasterHostName = string.IsNullOrWhiteSpace(context.GeomasterHostName) ? context.Configuration.GeoMasterConfiguration.GeoEndpointAddress : context.GeomasterHostName;
             _configuration = context.Configuration.GeoMasterConfiguration;
             _geoMasterClient = InitClient();
-            GeoMasterName = string.IsNullOrWhiteSpace(context.GeomasterName) ? ParseGeoMasterName(_geoMasterHostName) : null;
+            GeoMasterName = string.IsNullOrWhiteSpace(context.GeomasterName) ? ParseGeoMasterName(_geoMasterHostName) : context.GeomasterName;
         }
 
         private IGeoMasterClient InitClient()
@@ -655,6 +655,11 @@ namespace Diagnostics.DataProviders
         private string ParseGeoMasterName(string geomasterHostName)
         {
             string geoMasterName = null;
+
+            if (!string.IsNullOrWhiteSpace(geomasterHostName) && !geomasterHostName.StartsWith(Uri.UriSchemeHttp, StringComparison.CurrentCultureIgnoreCase))
+            {
+                geomasterHostName = $"{Uri.UriSchemeHttps}://{geomasterHostName}";
+            }
 
             if (Uri.TryCreate(geomasterHostName, UriKind.Absolute, out Uri geomasterHostNameUri))
             {

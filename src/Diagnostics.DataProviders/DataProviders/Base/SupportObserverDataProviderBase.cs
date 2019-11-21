@@ -219,19 +219,9 @@ namespace Diagnostics.DataProviders
         public abstract Task<string> GetSiteWebSpaceNameAsync(string subscriptionId, string siteName);
 
         public abstract Task<dynamic> GetSitesInServerFarmAsync(string subscriptionId, string serverFarmName);
-
-        public abstract Task<JObject> GetAppServiceEnvironmentDetailsAsync(string hostingEnvironmentName);
-
-        public abstract Task<IEnumerable<object>> GetAppServiceEnvironmentDeploymentsAsync(string hostingEnvironmentName);
-
-        public abstract Task<JObject> GetAdminSitesBySiteNameAsync(string stampName, string siteName);
-
-        public abstract Task<JObject> GetAdminSitesByHostNameAsync(string stampName, string[] hostNames);
-
+        
         public abstract Task<JArray> GetAdminSitesAsync(string siteName);
 
-        public abstract Task<string> GetStorageVolumeForSiteAsync(string stampName, string siteName);
-        
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
 
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName);
