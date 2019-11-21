@@ -1,4 +1,4 @@
-import gc, json, os, gensim
+import json, os, gensim
 from gensim.similarities import WmdSimilarity
 from pyemd import emd
 from SearchModule.ModelInfo import ModelInfo

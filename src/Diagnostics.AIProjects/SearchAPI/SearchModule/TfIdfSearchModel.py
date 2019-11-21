@@ -1,4 +1,4 @@
-import gc, json, os
+import json, os
 from SearchModule.ModelInfo import ModelInfo
 from SearchModule.TokenizerModule import getAllNGrams
 from gensim.models import TfidfModel

@@ -1,4 +1,4 @@
-import os, gc, shutil, json
+import os, shutil, json
 from SearchModule.Logger import loggerInstance
 from SearchModule.ModelInfo import ModelInfo
 from SearchModule.TfIdfSearchModel import TfIdfSearchModel
