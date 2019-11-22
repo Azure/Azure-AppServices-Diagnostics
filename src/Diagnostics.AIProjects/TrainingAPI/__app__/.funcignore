@@ -3,6 +3,6 @@
 local.settings.json
 test
 .venv
-14748
 resourceConfig
 **/__pycache__
+**/14748
