@@ -41,7 +41,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
     public static class ResponseSummaryCardExtension
     {
-        public static DiagnosticData AddSummaryCards(Response response,List<SummaryCard> summaryCards)
+        public static DiagnosticData AddSummaryCards(this Response response,List<SummaryCard> summaryCards)
         {
             if (summaryCards == null || !summaryCards.Any())
             {
