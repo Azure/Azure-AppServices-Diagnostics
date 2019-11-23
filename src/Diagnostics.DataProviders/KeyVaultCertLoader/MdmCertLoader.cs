@@ -4,7 +4,7 @@ using Diagnostics.DataProviders.KeyVaultCertLoader;
 
 namespace Diagnostics.DataProviders
 {
-    public class MdmCertLoader: KeyVaultCertLoaderBase
+    public class MdmCertLoader: CertLoaderBase
     {
         private static readonly Lazy<MdmCertLoader> _instance = new Lazy<MdmCertLoader>(() => new MdmCertLoader());
 

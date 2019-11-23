@@ -3,12 +3,12 @@ using System.Security.Cryptography.X509Certificates;
 using Diagnostics.Logger;
 namespace Diagnostics.DataProviders.KeyVaultCertLoader
 {
-    public abstract class KeyVaultCertLoaderBase
+    public abstract class CertLoaderBase
     {
         protected abstract string Thumbprint { get; set; }
         public X509Certificate2 Cert { get; private set; }
 
-        public async void LoadCertFromAppService()
+        public void LoadCertFromAppService()
         {
             X509Store certStore = new X509Store(StoreName.My, StoreLocation.CurrentUser);
             certStore.Open(OpenFlags.ReadOnly);

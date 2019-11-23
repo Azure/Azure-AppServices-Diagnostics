@@ -4,7 +4,7 @@ using Diagnostics.DataProviders.KeyVaultCertLoader;
 
 namespace Diagnostics.DataProviders
 {
-    public class GeoCertLoader: KeyVaultCertLoaderBase
+    public class GeoCertLoader: CertLoaderBase
     {
         private static readonly Lazy<GeoCertLoader> _instance = new Lazy<GeoCertLoader>(() => new GeoCertLoader());
 
