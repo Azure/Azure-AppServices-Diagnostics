@@ -4,20 +4,18 @@ using Diagnostics.DataProviders.KeyVaultCertLoader;
 
 namespace Diagnostics.DataProviders
 {
-    public class GeoCertLoader: KeyVaultCertLoaderBase
+    public class GeoCertLoader: CertLoaderBase
     {
         private static readonly Lazy<GeoCertLoader> _instance = new Lazy<GeoCertLoader>(() => new GeoCertLoader());
 
         public static GeoCertLoader Instance => _instance.Value;
 
-        protected override string KeyVault { get; set; }
-        protected override string CertificateName { get; set; }
+        protected override string Thumbprint { get; set; }
 
         public void Initialize(IConfiguration configuration)
         {
-            KeyVault = configuration["Secrets:ProdKeyVaultName"];
-            CertificateName = configuration["GeoMaster:CertificateName"];
-            LoadCertFromKeyVault();
+            Thumbprint = configuration["GeoMaster:GeoCertThumbprint"];
+            LoadCertFromAppService();
         }
       
     }
