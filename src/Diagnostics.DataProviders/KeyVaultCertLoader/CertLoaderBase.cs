@@ -29,7 +29,7 @@ namespace Diagnostics.DataProviders.KeyVaultCertLoader
             }
             catch (Exception ex)
             {
-                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Error: {ex.Message} occurred while trying to load cert {Thumbprint} ");
+                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Error: {ex.Message} occurred while trying to load cert {Thumbprint}, Stack Trace: {ex.StackTrace} ");
                 throw;
             }
             finally
