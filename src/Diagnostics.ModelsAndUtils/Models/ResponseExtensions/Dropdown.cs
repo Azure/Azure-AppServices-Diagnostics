@@ -32,6 +32,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         }
     }
 
+    public enum DropdownType
+    {
+        Dropdown,
+        FabDropdown
+    }
+
     public static class ResponseDropdownExtension
     {
         /// <summary>
@@ -96,6 +102,59 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 {
                     Title = title ?? string.Empty
                 }
+            };
+
+            response.Dataset.Add(diagData);
+            return diagData;
+        }
+
+        public static DiagnosticData AddDropdownView(this Response response, Dropdown dropdownView, string title = null, DropdownType type = DropdownType.Dropdown)
+        {
+            var table = new DataTable();
+            table.Columns.Add(new DataColumn("Label", typeof(string)));
+            table.Columns.Add(new DataColumn("Key", typeof(string)));
+            table.Columns.Add(new DataColumn("Selected", typeof(bool)));
+            table.Columns.Add(new DataColumn("Value", typeof(string)));
+
+            foreach (var item in dropdownView.Data)
+            {
+                List<DiagnosticDataApiResponse> dataSet = item.Item3.Dataset.Select(entry =>
+                    new DiagnosticDataApiResponse()
+                    {
+                        RenderingProperties = entry.RenderingProperties,
+                        Table = entry.Table.ToDataTableResponseObject()
+                    }).ToList();
+
+                table.Rows.Add(new object[] {
+                    dropdownView.Label,
+                    item.Item1,
+                    item.Item2,
+                    JsonConvert.SerializeObject(dataSet, new JsonSerializerSettings
+                    {
+                        ContractResolver = new CamelCasePropertyNamesContractResolver()
+                    })
+                });
+            }
+
+            Rendering properties;
+            switch (type)
+            {
+                case DropdownType.FabDropdown:
+                    properties = new Rendering(RenderingType.FabDropdown);
+                    break;
+                case DropdownType.Dropdown:
+                    properties = new Rendering(RenderingType.DropDown);
+                    break;
+                default:
+                    properties = new Rendering(RenderingType.DropDown);
+                    break;
+            }
+            properties.Title = title ?? string.Empty;
+
+            var diagData = new DiagnosticData()
+            {
+                Table = table,
+                RenderingProperties = properties
             };
 
             response.Dataset.Add(diagData);
