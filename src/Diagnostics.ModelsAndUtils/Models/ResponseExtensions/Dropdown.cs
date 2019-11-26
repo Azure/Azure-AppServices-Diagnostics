@@ -69,43 +69,44 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </example>
         public static DiagnosticData AddDropdownView(this Response response, Dropdown dropdownView, string title = null)
         {
-            var table = new DataTable();
-            table.Columns.Add(new DataColumn("Label", typeof(string)));
-            table.Columns.Add(new DataColumn("Key", typeof(string)));
-            table.Columns.Add(new DataColumn("Selected", typeof(bool)));
-            table.Columns.Add(new DataColumn("Value", typeof(string)));
+            //var table = new DataTable();
+            //table.Columns.Add(new DataColumn("Label", typeof(string)));
+            //table.Columns.Add(new DataColumn("Key", typeof(string)));
+            //table.Columns.Add(new DataColumn("Selected", typeof(bool)));
+            //table.Columns.Add(new DataColumn("Value", typeof(string)));
 
-            foreach (var item in dropdownView.Data)
-            {
-                List<DiagnosticDataApiResponse> dataSet = item.Item3.Dataset.Select(entry =>
-                    new DiagnosticDataApiResponse()
-                    {
-                        RenderingProperties = entry.RenderingProperties,
-                        Table = entry.Table.ToDataTableResponseObject()
-                    }).ToList();
+            //foreach (var item in dropdownView.Data)
+            //{
+            //    List<DiagnosticDataApiResponse> dataSet = item.Item3.Dataset.Select(entry =>
+            //        new DiagnosticDataApiResponse()
+            //        {
+            //            RenderingProperties = entry.RenderingProperties,
+            //            Table = entry.Table.ToDataTableResponseObject()
+            //        }).ToList();
 
-                table.Rows.Add(new object[] {
-                    dropdownView.Label,
-                    item.Item1,
-                    item.Item2,
-                    JsonConvert.SerializeObject(dataSet, new JsonSerializerSettings
-                    {
-                        ContractResolver = new CamelCasePropertyNamesContractResolver()
-                    })
-                });
-            }
+            //    table.Rows.Add(new object[] {
+            //        dropdownView.Label,
+            //        item.Item1,
+            //        item.Item2,
+            //        JsonConvert.SerializeObject(dataSet, new JsonSerializerSettings
+            //        {
+            //            ContractResolver = new CamelCasePropertyNamesContractResolver()
+            //        })
+            //    });
+            //}
 
-            var diagData = new DiagnosticData()
-            {
-                Table = table,
-                RenderingProperties = new Rendering(RenderingType.DropDown)
-                {
-                    Title = title ?? string.Empty
-                }
-            };
+            //var diagData = new DiagnosticData()
+            //{
+            //    Table = table,
+            //    RenderingProperties = new Rendering(RenderingType.DropDown)
+            //    {
+            //        Title = title ?? string.Empty
+            //    }
+            //};
 
-            response.Dataset.Add(diagData);
-            return diagData;
+            //response.Dataset.Add(diagData);
+            //return diagData;
+            return AddDropdownView(response, dropdownView, title, DropdownType.Dropdown);
         }
 
         public static DiagnosticData AddDropdownView(this Response response, Dropdown dropdownView, string title = null, DropdownType type = DropdownType.Dropdown)
