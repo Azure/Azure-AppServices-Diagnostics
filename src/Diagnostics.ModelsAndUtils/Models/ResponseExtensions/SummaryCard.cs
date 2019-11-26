@@ -7,6 +7,21 @@ using Newtonsoft.Json.Converters;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
+    public enum SummaryCardActionType
+    {
+        Detector,
+        Tool
+    }
+
+    public enum SummaryCardStatus
+    {
+        Critical,
+        Warning,
+        Info,
+        Success,
+        None
+    }
+
     public class SummaryCard
     {
         public string Title { set; get; }
@@ -18,26 +33,22 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
         public string Description { set; get; }
 
-        public string DetectorLink { set; get; }
+        [JsonConverter(typeof(StringEnumConverter))]
+        public SummaryCardActionType ActionType { set; get; }
 
-        public SummaryCard(SummaryCardStatus status, string title,string message,string description,string detectorLink) 
+        public string Link { set; get; }
+
+        public SummaryCard(SummaryCardStatus status, string title,string message,string description,string link,SummaryCardActionType actionType = SummaryCardActionType.Detector) 
         {
             this.Status = status;
             this.Message = message;
             this.Description = description;
             this.Title = title;
-            this.DetectorLink = detectorLink;
+            this.Link = link;
+            this.ActionType = actionType;
         }
     }
 
-    public enum SummaryCardStatus
-    {
-        Critical,
-        Warning,
-        Info,
-        Success,
-        None
-    }
 
     public static class ResponseSummaryCardExtension
     {
@@ -53,7 +64,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             table.Columns.Add("Title", typeof(string));
             table.Columns.Add("Message",typeof(string));
             table.Columns.Add("Description", typeof(string));
-            table.Columns.Add("DetectorLink", typeof(string));
+            table.Columns.Add("Link", typeof(string));
+            table.Columns.Add("ActionType", typeof(string));
 
             foreach (var summaryCard in summaryCards)
             {
@@ -62,7 +74,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 nr["Title"] = summaryCard.Title;
                 nr["Message"] = summaryCard.Message;
                 nr["Description"] = summaryCard.Description;
-                nr["DetectorLink"] = summaryCard.DetectorLink;
+                nr["Link"] = summaryCard.Link;
+                nr["ActionType"] = summaryCard.ActionType;
                 table.Rows.Add(nr);
                 //table.Rows.Add(summaryCard.Status,summaryCard.Title,summaryCard.Message,summaryCard.Description);
             }
@@ -76,9 +89,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             return diagData;
         }
 
-        public static DiagnosticData AddSummaryCard(this Response response, SummaryCardStatus status,string title,string message,string description,string detectorLink)
+        public static DiagnosticData AddSummaryCard(this Response response, SummaryCardStatus status,string title,string message,string description,string link,SummaryCardActionType actionType = SummaryCardActionType.Detector)
         {
-            var summaryCard = new SummaryCard(status,title,message,description,detectorLink);
+            var summaryCard = new SummaryCard(status,title,message,description,link,actionType);
             return AddSummaryCards(response, new List<SummaryCard> { summaryCard });
         }
     }
