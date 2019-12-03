@@ -41,11 +41,11 @@ namespace Diagnostics.RuntimeHost
             return WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((context, config) =>
                 {
-                    var (keyVaultConfig, keyVaultClient) = GetKeyVaultSettings(context, config);
+                    var (keyVaultUri, keyVaultClient) = GetKeyVaultSettings(context, config);
 
                     config
                         .AddAzureKeyVault(
-                            $"https://{keyVaultConfig}.vault.azure.net/",
+                            keyVaultUri,
                             keyVaultClient,
                             new DefaultKeyVaultSecretManager())
                         .AddEnvironmentVariables()
@@ -66,7 +66,6 @@ namespace Diagnostics.RuntimeHost
             string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(context.HostingEnvironment.EnvironmentName);
 
             var builtConfig = config.Build();
-
             return new Tuple<string, KeyVaultClient>(builtConfig[keyVaultConfig], keyVaultClient);
         }
     }

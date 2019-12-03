@@ -51,9 +51,7 @@ namespace Diagnostics.CompilerHost
                 )
             );
 
-            builder.AddAzureKeyVault($"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
-                                         keyVaultClient,
-                                         new DefaultKeyVaultSecretManager());
+            builder.AddAzureKeyVault(builtConfig[keyVaultConfig], keyVaultClient, new DefaultKeyVaultSecretManager());
 
             Configuration = builder.Build();
         }

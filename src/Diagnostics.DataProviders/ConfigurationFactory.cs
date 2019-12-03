@@ -40,9 +40,7 @@ namespace Diagnostics.DataProviders
             );
 
             string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(env.EnvironmentName);
-            builder.AddAzureKeyVault($"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
-                                         keyVaultClient,
-                                         new DefaultKeyVaultSecretManager());
+            builder.AddAzureKeyVault(builtConfig[keyVaultConfig], keyVaultClient, new DefaultKeyVaultSecretManager());
 
             _configuration = builder.Build();
         }
