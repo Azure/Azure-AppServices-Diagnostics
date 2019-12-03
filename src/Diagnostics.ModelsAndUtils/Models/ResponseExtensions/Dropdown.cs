@@ -26,7 +26,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="label">Dropdown Label</param>
         /// <param name="data">Dropdown Data</param>
         public Dropdown(string label, List<Tuple<string, bool, Response>> data)
-        {    
+        {
             this.Label = label;
             this.Data = data;
         }
@@ -76,7 +76,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </example>
         public static DiagnosticData AddDropdownView(this Response response, Dropdown dropdownView, string title = null)
         {
-            return AddDropdownView(response, dropdownView, title, DropdownType.Legacy,DropdownPosition.FloatRight);
+            return AddDropdownView(response, dropdownView, title, DropdownType.Legacy, DropdownPosition.FloatLeft);
         }
 
         /// <summary>
@@ -108,7 +108,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// }
         /// </code>
         /// </example>
-        public static DiagnosticData AddDropdownView(this Response response, Dropdown dropdownView, string title, DropdownType type = DropdownType.Legacy,DropdownPosition position = DropdownPosition.FloatRight)
+        public static DiagnosticData AddDropdownView(this Response response, Dropdown dropdownView, string title, DropdownType type = DropdownType.Legacy, DropdownPosition position = DropdownPosition.FloatLeft)
         {
             var table = new DataTable();
             table.Columns.Add(new DataColumn("Label", typeof(string)));

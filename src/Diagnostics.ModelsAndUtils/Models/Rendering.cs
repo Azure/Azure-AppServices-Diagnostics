@@ -234,7 +234,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// Data rendered for appliation insight
         /// </summary>
         AppInsight,
-        
+
         /// Dependent resources of web app rendered as graph.
         /// </summary>
         DependencyGraph,
@@ -247,7 +247,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data Rendered as only summarized message
         /// </summary>
-        SummaryCard,
+        SummaryCard
 
     }
 

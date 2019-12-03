@@ -55,12 +55,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// Spicfy the Action Type(Detector,Tool)
         /// </summary>
         [JsonConverter(typeof(StringEnumConverter))]
-        public SummaryCardActionType ActionType { set; get; }
+        public SummaryCardActionType OnClickActionType { set; get; }
 
         /// <summary>
         /// Spicfy the Link to detector(detectorId) or tool
         /// </summary>
-        public string Link { set; get; }
+        public string OnClickActionLink { set; get; }
 
         /// <summary>
         /// Create an instance of Summary Card
@@ -70,15 +70,15 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="message">Message of Summary card,shown in middle of card</param>
         /// <param name="description">Description of Summary card,shown in bottom of card</param>
         /// <param name="link">Link to detector(detectorId) or tool</param>
-        /// <param name="actionType">Action Type for card</param>
-        public SummaryCard(SummaryCardStatus status, string title,string message,string description,string link,SummaryCardActionType actionType = SummaryCardActionType.Detector) 
+        /// <param name="actionType">onClick Action Type for card</param>
+        public SummaryCard(SummaryCardStatus status, string title, string message, string description, string onClickActionLink, SummaryCardActionType onClickActionType = SummaryCardActionType.Detector)
         {
             this.Status = status;
             this.Message = message;
             this.Description = description;
             this.Title = title;
-            this.Link = link;
-            this.ActionType = actionType;
+            this.OnClickActionLink = onClickActionLink;
+            this.OnClickActionType = onClickActionType;
         }
     }
 
@@ -121,7 +121,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///}
         /// </code>
         /// </example>
-    public static DiagnosticData AddSummaryCards(this Response response,List<SummaryCard> summaryCards)
+        public static DiagnosticData AddSummaryCards(this Response response, List<SummaryCard> summaryCards)
         {
             if (summaryCards == null || !summaryCards.Any())
             {
@@ -129,9 +129,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             }
 
             var table = new DataTable();
-            table.Columns.Add("Status",typeof(string));
+            table.Columns.Add("Status", typeof(string));
             table.Columns.Add("Title", typeof(string));
-            table.Columns.Add("Message",typeof(string));
+            table.Columns.Add("Message", typeof(string));
             table.Columns.Add("Description", typeof(string));
             table.Columns.Add("Link", typeof(string));
             table.Columns.Add("ActionType", typeof(string));
@@ -143,8 +143,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 nr["Title"] = summaryCard.Title;
                 nr["Message"] = summaryCard.Message;
                 nr["Description"] = summaryCard.Description;
-                nr["Link"] = summaryCard.Link;
-                nr["ActionType"] = summaryCard.ActionType;
+                nr["Link"] = summaryCard.OnClickActionLink;
+                nr["ActionType"] = summaryCard.OnClickActionType;
                 table.Rows.Add(nr);
                 //table.Rows.Add(summaryCard.Status,summaryCard.Title,summaryCard.Message,summaryCard.Description);
             }
@@ -184,9 +184,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///}     
         /// </code>
         /// </example>
-        public static DiagnosticData AddSummaryCard(this Response response, SummaryCardStatus status,string title,string message,string description,string link,SummaryCardActionType actionType = SummaryCardActionType.Detector)
+        public static DiagnosticData AddSummaryCard(this Response response, SummaryCardStatus status, string title, string message, string description, string onClickActionLink, SummaryCardActionType onClikcActionType)
         {
-            var summaryCard = new SummaryCard(status,title,message,description,link,actionType);
+            var summaryCard = new SummaryCard(status, title, message, description, onClickActionLink, onClikcActionType);
             return AddSummaryCards(response, new List<SummaryCard> { summaryCard });
         }
     }
