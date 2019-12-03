@@ -13,7 +13,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     public enum SummaryCardActionType
     {
         Detector,
-        Tool
+        Tool,
+        None
     }
 
     /// <summary>
@@ -69,9 +70,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="title">Title for card,shown in top of card</param>
         /// <param name="message">Message of Summary card,shown in middle of card</param>
         /// <param name="description">Description of Summary card,shown in bottom of card</param>
-        /// <param name="link">Link to detector(detectorId) or tool</param>
-        /// <param name="actionType">onClick Action Type for card</param>
-        public SummaryCard(SummaryCardStatus status, string title, string message, string description, string onClickActionLink, SummaryCardActionType onClickActionType = SummaryCardActionType.Detector)
+        /// <param name="onClickActionLink">Link to detector(detectorId) or tool</param>
+        /// <param name="onClickActionType">onClick Action Type for card</param>
+        public SummaryCard(SummaryCardStatus status, string title, string message, string description, SummaryCardActionType onClickActionType = SummaryCardActionType.None, string onClickActionLink = null)
         {
             this.Status = status;
             this.Message = message;
@@ -179,14 +180,14 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///         "Request and Errors",
         ///         "25",
         ///         "HTTP errors",
-        ///         "http4xx",
-        ///         SummaryCardActionType.Detector);
+        ///         SummaryCardActionType.Detector,
+        ///         "http4xx");
         ///}     
         /// </code>
         /// </example>
-        public static DiagnosticData AddSummaryCard(this Response response, SummaryCardStatus status, string title, string message, string description, string onClickActionLink, SummaryCardActionType onClickActionType)
+        public static DiagnosticData AddSummaryCard(this Response response, SummaryCardStatus status, string title, string message, string description, SummaryCardActionType onClickActionType = SummaryCardActionType.None, string onClickActionLink = null)
         {
-            var summaryCard = new SummaryCard(status, title, message, description, onClickActionLink, onClickActionType);
+            var summaryCard = new SummaryCard(status, title, message, description, onClickActionType, onClickActionLink);
             return AddSummaryCards(response, new List<SummaryCard> { summaryCard });
         }
     }
