@@ -58,7 +58,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public SummaryCardActionType OnClickActionType { set; get; }
 
         /// <summary>
-        /// Spicfy the Link to detector(detectorId) or tool
+        /// Spicfy the Link as detector(detectorId) or tool
         /// </summary>
         public string OnClickActionLink { set; get; }
 
@@ -166,8 +166,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="title">Title</param>
         /// <param name="message">Message</param>
         /// <param name="description">Description</param>
-        /// <param name="link">Link</param>
-        /// <param name="actionType">ActionType</param>
+        /// <param name="onClickActionLink">Link</param>
+        /// <param name="onClickActionType">Action Type</param>
         /// <returns></returns>
         /// <example>
         /// This sample code shows how to use <see cref="AddSummaryCard"> method.
@@ -184,9 +184,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///}     
         /// </code>
         /// </example>
-        public static DiagnosticData AddSummaryCard(this Response response, SummaryCardStatus status, string title, string message, string description, string onClickActionLink, SummaryCardActionType onClikcActionType)
+        public static DiagnosticData AddSummaryCard(this Response response, SummaryCardStatus status, string title, string message, string description, string onClickActionLink, SummaryCardActionType onClickActionType)
         {
-            var summaryCard = new SummaryCard(status, title, message, description, onClickActionLink, onClikcActionType);
+            var summaryCard = new SummaryCard(status, title, message, description, onClickActionLink, onClickActionType);
             return AddSummaryCards(response, new List<SummaryCard> { summaryCard });
         }
     }
