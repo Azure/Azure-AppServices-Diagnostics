@@ -249,10 +249,6 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         SummaryCard,
 
-        /// <summary>
-        /// Data rendered as (key, value) pair where key goes in dropdown and value goes in body. Rendered with Fabric UI
-        /// </summary>
-        FabDropdown
     }
 
     /// <summary>

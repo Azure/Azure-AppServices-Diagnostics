@@ -26,16 +26,23 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="label">Dropdown Label</param>
         /// <param name="data">Dropdown Data</param>
         public Dropdown(string label, List<Tuple<string, bool, Response>> data)
-        {
+        {    
             this.Label = label;
             this.Data = data;
         }
     }
 
+
     public enum DropdownType
     {
-        Dropdown,
-        FabDropdown
+        Legacy,
+        Fabric
+    }
+
+    public enum DropdownPosition
+    {
+        FloatLeft,
+        FloatRight
     }
 
     public static class ResponseDropdownExtension
@@ -63,13 +70,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///     data.Add(new Tuple<![CDATA[<string, bool, Response>]]>(firstDataKey, selected, firstDataEntry));
         ///
         ///     Dropdown dropdownViewModel = new Dropdown(label, data);
-        ///     res.AddDropdownView(dropdownViewModel);
+        ///     res.AddDropdownView(dropdownViewModel,"Title");
         /// }
         /// </code>
         /// </example>
         public static DiagnosticData AddDropdownView(this Response response, Dropdown dropdownView, string title = null)
         {
-            return AddDropdownView(response, dropdownView, title, DropdownType.Dropdown);
+            return AddDropdownView(response, dropdownView, title, DropdownType.Legacy,DropdownPosition.FloatRight);
         }
 
         /// <summary>
@@ -79,6 +86,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="dropdownView">Dropdown View</param>
         /// <param name="title">Title</param>
         /// <param name="type">Dropdown Type</param>
+        /// <param name="position">Dropdown Position</param>
         /// <returns></returns>
         /// <example>
         /// This sample shows how to use <see cref="AddDropdownView"/> method.
@@ -95,18 +103,20 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///
         ///     data.Add(new Tuple<![CDATA[<string, bool, Response>]]>(firstDataKey, selected, firstDataEntry));
         ///
-        ///     Dropdown dropdownViewModel = new Dropdown(label, data);
-        ///     res.AddDropdownView(dropdownViewModel,"Title",DropdownType.Dropdown);
+        ///     Dropdown dropdownViewModel = new Dropdown("label", data);
+        ///     res.AddDropdownView(dropdownViewModel,"Title",DropdownType.Fabric,DropdownPosition.FloatLeft);
         /// }
         /// </code>
         /// </example>
-        public static DiagnosticData AddDropdownView(this Response response, Dropdown dropdownView, string title = null, DropdownType type = DropdownType.Dropdown)
+        public static DiagnosticData AddDropdownView(this Response response, Dropdown dropdownView, string title, DropdownType type = DropdownType.Legacy,DropdownPosition position = DropdownPosition.FloatRight)
         {
             var table = new DataTable();
             table.Columns.Add(new DataColumn("Label", typeof(string)));
             table.Columns.Add(new DataColumn("Key", typeof(string)));
             table.Columns.Add(new DataColumn("Selected", typeof(bool)));
             table.Columns.Add(new DataColumn("Value", typeof(string)));
+            table.Columns.Add(new DataColumn("DropdownType", typeof(string)));
+            table.Columns.Add(new DataColumn("DropdownPosition", typeof(string)));
 
             foreach (var item in dropdownView.Data)
             {
@@ -124,29 +134,20 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                     JsonConvert.SerializeObject(dataSet, new JsonSerializerSettings
                     {
                         ContractResolver = new CamelCasePropertyNamesContractResolver()
-                    })
+                    }),
+                    type,
+                    position
                 });
             }
 
-            Rendering properties;
-            switch (type)
-            {
-                case DropdownType.FabDropdown:
-                    properties = new Rendering(RenderingType.FabDropdown);
-                    break;
-                case DropdownType.Dropdown:
-                    properties = new Rendering(RenderingType.DropDown);
-                    break;
-                default:
-                    properties = new Rendering(RenderingType.DropDown);
-                    break;
-            }
-            properties.Title = title ?? string.Empty;
 
             var diagData = new DiagnosticData()
             {
                 Table = table,
-                RenderingProperties = properties
+                RenderingProperties = new Rendering(RenderingType.DropDown)
+                {
+                    Title = title ?? string.Empty
+                }
             };
 
             response.Dataset.Add(diagData);
