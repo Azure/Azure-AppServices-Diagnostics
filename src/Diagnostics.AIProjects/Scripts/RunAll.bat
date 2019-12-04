@@ -1,2 +1,0 @@
-start RunSearchServer.bat
-start RunTrainingServer.bat

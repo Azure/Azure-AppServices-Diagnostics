@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>antares.external.diagnostics.compilerhost</id>
-    <version>1.0.21</version>
+    <version>1.0.24</version>
     <authors>Ajay Sharma</authors>
     <owners>ajsharm</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>

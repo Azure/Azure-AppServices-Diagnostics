@@ -1,0 +1,8 @@
+.git*
+.vscode
+local.settings.json
+test
+.venv
+resourceConfig
+**/__pycache__
+**/14748
