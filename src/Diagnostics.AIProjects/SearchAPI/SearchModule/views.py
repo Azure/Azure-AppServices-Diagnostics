@@ -1,13 +1,17 @@
 from flask import request
 from flask_cors import CORS, cross_origin
+from datetime import datetime, timezone
 from functools import wraps
-from SearchModule import app
-from AuthModule.azuread import authProvider
-from SearchModule.TextSearchModule import *
-from SearchModule.StorageAccountHelper import StorageAccountHelper
-import threading
+import threading, json, time
 from googletrans import Translator
-import time
+
+from AuthModule.azuread import authProvider
+from SearchModule import app
+from SearchModule.TextSearchModule import loadModel, refreshModel, freeModel, loaded_models
+from SearchModule.Utilities import resourceConfig, getProductId, getAllProductIds
+from SearchModule.StorageAccountHelper import StorageAccountHelper
+from SearchModule.Logger import loggerInstance
+
 translator = Translator()
 
 ######## RUN THE API SERVER IN FLASK  #############
@@ -56,15 +60,6 @@ def loggingProvider(requestIdRequired=True):
         return logger
     return loggingOuter
 
-def getAllProductIds(node):
-    allProductIds = []
-    if type(node).__name__=='dict':
-        for key in node.keys():
-            allProductIds += getAllProductIds(node[key])
-    else:
-        allProductIds.append(node)
-    return allProductIds
-
 # App routes
 cors = CORS(app)
 app.config.from_object("AppConfig.ProductionConfig")
@@ -72,17 +67,18 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 @app.before_first_request
 def activate_job():
-    productIds = getAllProductIds(resourceConfig)
-    sah = StorageAccountHelper(loggerInstance)
-    loggerInstance.logInsights("Starting model sync for {0}".format(','.join(productIds)))
-    thread = threading.Thread(target=sah.watchModels, args=(productIds,))
-    thread.start()
-    while True:
-        modelDownloadPending = [sah.firstTime[productId] if productId in sah.firstTime else True for productId in productIds]
-        if any(modelDownloadPending):
-            time.sleep(2)
-        else:
-            break
+    if app.config['MODEL_SYNC_ENABLED']:
+        productIds = getAllProductIds(resourceConfig)
+        sah = StorageAccountHelper(loggerInstance)
+        loggerInstance.logInsights("Starting model sync for {0}".format(','.join(productIds)))
+        thread = threading.Thread(target=sah.watchModels, args=(productIds,))
+        thread.start()
+        while True:
+            modelDownloadPending = [sah.firstTime[productId] if productId in sah.firstTime else True for productId in productIds]
+            if any(modelDownloadPending):
+                time.sleep(2)
+            else:
+                break
     loggerInstance.logInsights("Search service startup succeeded")
 
 
