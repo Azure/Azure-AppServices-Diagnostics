@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using static Diagnostics.Logger.HeaderConstants;
 using Diagnostics.RuntimeHost.Models.Exceptions;
+using System.Diagnostics;
 
 namespace Diagnostics.RuntimeHost.Middleware
 {
@@ -146,6 +147,8 @@ namespace Diagnostics.RuntimeHost.Middleware
 
         private void LogException(HttpContext context, Exception ex)
         {
+            Trace.WriteLine($"LogException_DiagnosticsRequestMiddleware:{ex.GetType().ToString()}:{ex.ToString()}");
+
             try
             {
                 var logger = (ApiMetricsLogger)context.Items[HostConstants.ApiLoggerKey] ?? new ApiMetricsLogger(context);
