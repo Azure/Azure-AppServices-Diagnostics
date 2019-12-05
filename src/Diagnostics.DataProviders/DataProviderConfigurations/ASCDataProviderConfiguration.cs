@@ -51,6 +51,12 @@
         [ConfigurationName("AppKey")]
         public string AppKey { get; set; }
 
+        /// <summary>
+        ///  Enabled
+        /// </summary>
+        [ConfigurationName("Enabled")]
+        public bool Enabled { get; set; }
+
         public void PostInitialize()
         {
         }

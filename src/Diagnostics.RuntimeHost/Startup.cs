@@ -152,9 +152,21 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
             services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
 
-            ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
-            AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
-            CompilerHostTokenService.Instance.Initialize(Configuration);
+            if (Configuration.GetValue("ChangeAnalysis:Enabled", true))
+            {
+                ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
+            }
+
+            if (Configuration.GetValue("AzureSupportCenter:Enabled", true))
+            {
+                AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
+            }
+
+            if (Configuration.GetValue("CompilerHost:Enabled", true))
+            {
+                CompilerHostTokenService.Instance.Initialize(Configuration);
+            }
+
             if (searchApiConfiguration.SearchAPIEnabled)
             {
                 services.AddSingleton<ISearchService, SearchService>();
