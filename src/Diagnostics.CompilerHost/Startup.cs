@@ -44,7 +44,7 @@ namespace Diagnostics.CompilerHost
             var builtConfig = builder.Build();
 
             string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(hostingEnvironment.EnvironmentName);
-            var tokenProvider = new AzureServiceTokenProvider();
+            var tokenProvider = new AzureServiceTokenProvider(azureAdInstance: builtConfig["Secrets:AzureAdInstance"]);
             var keyVaultClient = new KeyVaultClient(
                 new KeyVaultClient.AuthenticationCallback(
                     tokenProvider.KeyVaultTokenCallback

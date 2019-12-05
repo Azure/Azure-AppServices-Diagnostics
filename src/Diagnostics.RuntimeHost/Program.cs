@@ -58,14 +58,13 @@ namespace Diagnostics.RuntimeHost
 
         private static Tuple<string, KeyVaultClient> GetKeyVaultSettings(WebHostBuilderContext context, IConfigurationBuilder config)
         {
-            var azureServiceTokenProvider = new AzureServiceTokenProvider();
+            var builtConfig = config.Build();
+            var azureServiceTokenProvider = new AzureServiceTokenProvider(azureAdInstance: builtConfig["Secrets:AzureAdInstance"]);
             var keyVaultClient = new KeyVaultClient(
                 new KeyVaultClient.AuthenticationCallback(
                     azureServiceTokenProvider.KeyVaultTokenCallback));
 
             string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(context.HostingEnvironment.EnvironmentName);
-
-            var builtConfig = config.Build();
             return new Tuple<string, KeyVaultClient>(builtConfig[keyVaultConfig], keyVaultClient);
         }
     }
