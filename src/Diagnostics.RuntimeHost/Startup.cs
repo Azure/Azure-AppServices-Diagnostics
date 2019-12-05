@@ -22,6 +22,7 @@ using System.Diagnostics;
 using Diagnostics.RuntimeHost.Security.CertificateAuth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.IdentityModel.Logging;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -47,6 +48,7 @@ namespace Diagnostics.RuntimeHost
 
         public void ConfigureServices(IServiceCollection services)
         {
+            IdentityModelEventSource.ShowPII = Configuration.GetValue("ShowIdentityModelErrors", false);
             var openIdConfigEndpoint = $"{Configuration["SecuritySettings:AADAuthority"]}/.well-known/openid-configuration";
             var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(openIdConfigEndpoint, new OpenIdConnectConfigurationRetriever());
             var config = configManager.GetConfigurationAsync().Result;
