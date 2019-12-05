@@ -29,7 +29,7 @@ namespace Diagnostics.DataProviders
         private string[] RegexMatchingPatterns = new string[] { @"^AzureWebJobs\.[a-zA-Z][_a-zA-Z0-9-]*\.Disabled$" };
 
         private string[] AppSettingsExistenceCheckList = new string[] { "APPINSIGHTS_INSTRUMENTATIONKEY" };
-		
+
 		public string GeoMasterName { get; }
 
         public string RequestId { get; set; }

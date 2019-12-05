@@ -55,7 +55,7 @@ namespace Diagnostics.RuntimeHost
             // Adding both custom cert auth handler and Azure AAD JWT token handler to support multiple forms of auth.
             if (Environment.IsProduction() || Environment.IsStaging() )
             {
-                services.AddAuthentication().AddCertificateAuth(CertificateAuthDefaults.AuthenticationScheme, 
+                services.AddAuthentication().AddCertificateAuth(CertificateAuthDefaults.AuthenticationScheme,
                     options =>
                     {
                         options.AllowedIssuers = Configuration["SecuritySettings:AllowedCertIssuers"].Split("|").Select(p => p.Trim()).ToList();
