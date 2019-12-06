@@ -24,5 +24,10 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
         /// Gets or sets monitoring account.
         /// </summary>
         string MonitoringAccount { get; set; }
+
+        /// <summary>
+        /// Gets or sets if monitoring account is regional.
+        /// </summary>
+        bool IsRegional { get; set; }
     }
 }

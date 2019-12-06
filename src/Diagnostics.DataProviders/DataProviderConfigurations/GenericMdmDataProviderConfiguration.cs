@@ -1,4 +1,4 @@
-﻿// <copyright file="AntaresMdmDataProviderConfiguration.cs" company="Microsoft Corporation">
+﻿// <copyright file="GenericMdmDataProviderConfiguration.cs" company="Microsoft Corporation">
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
@@ -8,31 +8,26 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
     /// <summary>
     /// Mdm data provider configuration.
     /// </summary>
-    [DataSourceConfiguration(@"Mdm")]
-    public class AntaresMdmDataProviderConfiguration : IDataProviderConfiguration, IMdmDataProviderConfiguration
+    public class GenericMdmDataProviderConfiguration : IDataProviderConfiguration, IMdmDataProviderConfiguration
     {
         /// <summary>
         /// Gets or sets the base endpoint.
         /// </summary>
-        [ConfigurationName("MdmShoeboxEndpoint")]
         public string Endpoint { get; set; }
 
         /// <summary>
         /// Gets or sets the certificate thumbprint.
         /// </summary>
-        [ConfigurationName("MdmRegistrationCertThumbprint")]
         public string CertificateThumbprint { get; set; }
 
         /// <summary>
         /// Gets or sets monitoring account.
         /// </summary>
-        [ConfigurationName("MdmShoeboxAccount")]
         public string MonitoringAccount { get; set; }
 
         /// <summary>
         /// Gets or sets whether monitoring account is regional.
         /// </summary>
-        [ConfigurationName("MdmShoeboxAccountIsRegional", DefaultValue = false)]
         public bool IsRegional { get; set; }
 
         /// <summary>

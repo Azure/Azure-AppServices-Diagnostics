@@ -4,7 +4,9 @@ using System.Data;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.DataProviders.Interfaces;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
+using Microsoft.AspNetCore.Http;
 
 namespace Diagnostics.DataProviders
 {
@@ -22,10 +24,17 @@ namespace Diagnostics.DataProviders
         /// <param name="cache">Operation cache.</param>
         /// <param name="configuration">Data provider configuration.</param>
         /// <param name="requestId">Request id.</param>
-        public MdmDataProvider(OperationDataCache cache, IMdmDataProviderConfiguration configuration, string requestId)
+        public MdmDataProvider(OperationDataCache cache, IMdmDataProviderConfiguration configuration, string requestId, IHeaderDictionary headers = null)
             : base(cache)
         {
             _configuration = configuration;
+
+            // If the MDM account is regional, get the location from request headers and update the mdm account name with location suffix.
+            if (configuration.IsRegional && headers != null && headers.TryGetValue(HeaderConstants.LocationHeader, out var locations) && locations.Count > 0)
+            {
+                _configuration.MonitoringAccount += locations[0];
+            }
+
             _mdmClient = MdmClientFactory.GetMdmClient(configuration, requestId);
         }
 
