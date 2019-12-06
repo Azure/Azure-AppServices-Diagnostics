@@ -2,7 +2,7 @@ cd /D "%~dp0"
 SET output=%~dp0target\distrib\publish\
 SET slnFile=%~dp0\AppServiceSample.sln
 
-rem Build and package the the solution
+rem Build and publish the solution
 dotnet build --no-incremental --no-restore "%slnFile%" /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PublishProfile=Release /p:PackageAsSingleFile=true --output "%output%"
 if %errorlevel% neq 0 (
     popd
