@@ -12,15 +12,11 @@ def findProductIdRecursive(configDict, productid):
         return False
 
 def findProductId(productid):
-    global resourceConfig
     resourceConfig = json.loads(open("resourceConfig/config.json", "r").read())["resourceConfig"]
     return findProductIdRecursive(resourceConfig, productid)
 
-def getProductId(resourceObj, refresh=False):
-    global resourceConfig
+def getProductId(resourceObj):
     resourceConfig = json.loads(open("resourceConfig/config.json", "r").read())["resourceConfig"]
-    if refresh:
-        resourceConfig = json.loads(open("resourceConfig/config.json", "r").read())
     productids = []
     if "ResourceType" in resourceObj and (resourceObj["ResourceType"] == "App"):
         apptypes = resourceObj["AppType"].split(",")
