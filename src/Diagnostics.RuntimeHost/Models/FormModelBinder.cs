@@ -20,6 +20,7 @@ namespace Diagnostics.RuntimeHost.Models
             var formIdValueProvider = bindingContext.ValueProvider.GetValue("fId");
             var inputIdProvider = bindingContext.ValueProvider.GetValue("inpId");
             var inputValueProvider = bindingContext.ValueProvider.GetValue("val");
+            var inputTypeProvider = bindingContext.ValueProvider.GetValue("inpType");
             var btnIdProvider = bindingContext.ValueProvider.GetValue("btnId");
             if (formIdValueProvider == ValueProviderResult.None ||
                 inputIdProvider == ValueProviderResult.None ||
@@ -49,6 +50,7 @@ namespace Diagnostics.RuntimeHost.Models
             }
             var inputIds = inputIdProvider.Values.ToArray();
             var inputValues = inputValueProvider.Values.ToArray();
+            var inputTypes = inputTypeProvider.Values.ToArray();
             for (int i = 0; i < inputIds.Length; i++)
             {
                 if (!IsInt(inputIds[i]))
@@ -61,9 +63,35 @@ namespace Diagnostics.RuntimeHost.Models
                     bindingContext.ModelState.TryAddModelError("val", "Length of val cannot exceed 50 characters.");
                     return Task.CompletedTask;
                 }
-                var text = new Textbox(Convert.ToInt32(inputIds[i]), "");
-                text.Value = inputValues[i];
-                result.AddFormInput(text);
+
+                if (inputTypes != null && i < inputTypes.Length)
+                {
+                    if (int.TryParse(inputTypes[i], out int intInputType))
+                    {
+                        FormInputTypes inputType = (FormInputTypes)intInputType;
+
+                        if (inputType == FormInputTypes.TextBox)
+                        {
+                            var text = new Textbox(Convert.ToInt32(inputIds[i]), "");
+                            text.Value = inputValues[i];
+                            result.AddFormInput(text);
+                        }
+                        else if (inputType == FormInputTypes.RadioButton)
+                        {
+                            var radioButtonList = new RadioButtonList(Convert.ToInt32(inputIds[i]), "");
+                            radioButtonList.SelectedValue = inputValues[i];
+                            result.AddFormInput(radioButtonList);
+                        }
+                    }
+                }
+                else
+                {
+                    var text = new Textbox(Convert.ToInt32(inputIds[i]), "");
+                    text.Value = inputValues[i];
+                    result.AddFormInput(text);
+                }
+
+                
             }
             bindingContext.Result = ModelBindingResult.Success(result);
             return Task.CompletedTask;
