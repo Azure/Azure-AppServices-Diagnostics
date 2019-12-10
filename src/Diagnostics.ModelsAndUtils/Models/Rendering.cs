@@ -247,7 +247,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data Rendered as only summarized message
         /// </summary>
-        SummaryCard
+        SummaryCard,
+
+        /// <search>
+        /// Render search component inside detector
+        /// </search>
+        SearchComponent
 
     }
 
