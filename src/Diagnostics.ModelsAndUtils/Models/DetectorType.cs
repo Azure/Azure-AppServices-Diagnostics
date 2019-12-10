@@ -22,6 +22,11 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Analysis means this is a detector that can act as an analysis
         /// </summary>
-        Analysis
+        Analysis,
+
+        /// <summary>
+        /// CategoryOverview means is the overpage for each category in external UI
+        /// </summary>
+        CategoryOverview
     }
 }
