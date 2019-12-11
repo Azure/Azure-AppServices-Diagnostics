@@ -21,7 +21,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._siteService = (ISiteService)services.GetService(typeof(ISiteService));
         }
 
-        protected async Task<App> GetAppResource(string subscriptionId, string resourceGroup, string appName, DiagnosticSiteData postBody, DateTime startTime, DateTime endTime)
+        protected async Task<App> GetAppResource(string subscriptionId, string resourceGroup, string appName, DiagnosticSiteData postBody, DateTime startTime, DateTime endTime, bool fetchStackInformation = true)
         {
             App app = new App(subscriptionId, resourceGroup, appName)
             {
@@ -32,7 +32,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 Stamp = await GetHostingEnvironment(postBody.Stamp.Subscription, postBody.Stamp.ResourceGroup, postBody.Stamp != null ? postBody.Stamp.Name : string.Empty, postBody.Stamp, startTime, endTime),
                 AppType = GetApplicationType(postBody.Kind),
                 PlatformType = (!string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Kind.ToLower().Contains("linux")) ? PlatformType.Linux : PlatformType.Windows,
-                StackType = await this._siteService.GetApplicationStack(subscriptionId, resourceGroup, appName, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey])
+                StackType = !fetchStackInformation ? StackType.All : await this._siteService.GetApplicationStack(subscriptionId, resourceGroup, appName, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey])
             };
 
             switch (app.Stamp.HostingEnvironmentType)
