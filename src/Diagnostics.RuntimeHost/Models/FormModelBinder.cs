@@ -64,7 +64,7 @@ namespace Diagnostics.RuntimeHost.Models
                     return Task.CompletedTask;
                 }
 
-                if (inputTypes != null && i < inputTypes.Length)
+                if (inputTypes.Length > 0 && i < inputTypes.Length)
                 {
                     if (int.TryParse(inputTypes[i], out int intInputType))
                     {
@@ -86,6 +86,7 @@ namespace Diagnostics.RuntimeHost.Models
                 }
                 else
                 {
+                    // This is for backward compatibility. This should be removed once the UI is updated.
                     var text = new Textbox(Convert.ToInt32(inputIds[i]), "");
                     text.Value = inputValues[i];
                     result.AddFormInput(text);

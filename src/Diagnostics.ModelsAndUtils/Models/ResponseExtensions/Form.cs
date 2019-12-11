@@ -137,25 +137,81 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         }
     }
 
+    /// <summary>
+    /// RadioButtonList class used to add a list of radio buttons to a form field
+    /// </summary>
+    /// <example>
+    ///  This sample shows how to add a RadioButtonList to a form
+    ///  <code>
+    ///  
+    ///  Form myform = new Form(1);
+    /// 
+    ///  Button saveButton = new Button(2, "Button Label");
+    /// 
+    ///  var item1 = new ListItem("First Downtime", "Downtime1", true);
+    ///  var item2 = new ListItem("Second Downtime", "Downtime2", false);
+    /// 
+    ///  var radioList = new RadioButtonList(3, "Select a downtime", new List<![CDATA[<ListItem]]>(){item1, item2});
+    /// 
+    ///  myform.AddFormInputs(new List<![CDATA[<FormInputBase]]>() { saveButton, radios});
+    ///  
+    ///  if(cxt.Form != null) 
+    ///  {
+    ///     RadioButtonList radioInput = (RadioButtonList)Utilities.GetFormInput(cxt.Form, 3);
+    ///     var markdown += $"<br/> The value selected in RadioButton is: {radioInput.SelectedValue} ";
+    ///     res.AddMarkdownView(markdown, "Form Output");
+    ///  }
+    /// 
+    ///  </code>    
+    /// </example>
     public class RadioButtonList : FormInputBase
     {
         
+        /// <summary>
+        /// The selected value from the radio button list
+        /// </summary>
         public string SelectedValue{ get; set; }
 
-        public RadioButtonList(int id, string label, bool isRequired = false, List<ListItem> items = null) : base(id, FormInputTypes.RadioButton, label, isRequired, items)
+        /// <summary>
+        /// Create an instance of new RadioButtonList class
+        /// </summary>
+        /// <param name="id">Unique id for the input</param>
+        /// <param name="label">Label for the radio button list</param>
+        /// <param name="items">The list of items for this list</param>
+        public RadioButtonList(int id, string label, List<ListItem> items = null) : base(id, FormInputTypes.RadioButton, label, false, items)
         {
         }
 
     }
 
+    /// <summary>
+    /// ListItem class used to create items for RadioButtonList 
+    /// </summary>
     public class ListItem
     {
+        /// <summary>
+        /// The text of the list item
+        /// </summary>
         public string Text;
 
+        /// <summary>
+        /// The HTML value for the list item
+        /// </summary>
         public string Value;
 
+        /// <summary>
+        /// Whether this list item is selected or not. If multiple items have
+        /// IsSelected set to true, the last item that will be added to the list
+        /// will be pre-selected one
+        /// </summary>
         public bool IsSelected;
 
+        /// <summary>
+        /// Creates an instance of a new ListItem class
+        /// </summary>
+        /// <param name="text">Text for the list item</param>
+        /// <param name="value">HTML value for the list item</param>
+        /// <param name="isSelected">whether the list item is auto selected or not</param>
         public ListItem(string text, string value, bool isSelected = false)
         {
             Text = text;
