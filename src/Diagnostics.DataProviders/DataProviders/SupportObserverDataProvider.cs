@@ -315,9 +315,7 @@ namespace Diagnostics.DataProviders
 
         public override HttpClient GetObserverClient()
         {
-            // Instantiating an HttpClient class for every request will exhaust the number of sockets available under heavy loads
-            // TODO: Use HttpClientFactory
-            return new HttpClient();
+            return lazyClient.Value;
         }
 
         /// <summary>
