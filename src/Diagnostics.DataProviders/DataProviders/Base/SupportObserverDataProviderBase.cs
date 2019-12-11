@@ -18,7 +18,13 @@ namespace Diagnostics.DataProviders
         protected readonly DataProviderContext DataProviderContext;
         protected readonly string RequestId;
         protected readonly DiagnosticsETWProvider Logger;
-        private readonly HttpClient _httpClient;
+
+        protected static readonly Lazy<HttpClient> lazyClient = new Lazy<HttpClient>(() =>
+        {
+            var client = new HttpClient();
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            return client;
+        });
 
         public SupportObserverDataProviderBase(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, DataProviderContext dataProviderContext) : base(cache)
         {
@@ -26,9 +32,6 @@ namespace Diagnostics.DataProviders
             RequestId = dataProviderContext.RequestId;
             DataProviderContext = dataProviderContext;
             Logger = DiagnosticsETWProvider.Instance;
-            _httpClient = GetObserverClient();
-            _httpClient.BaseAddress = new Uri($"{configuration.Endpoint}/api/");
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         public async Task<dynamic> GetResource(string resourceUrl)
@@ -104,24 +107,14 @@ namespace Diagnostics.DataProviders
         protected async Task<string> GetObserverResource(string url, string resourceId = null)
         {
             if (string.IsNullOrWhiteSpace(url))
-            {
                 throw new ArgumentNullException(nameof(url));
-            }
+
+            var cleanUrl = url.TrimStart('/');
+            if (!cleanUrl.StartsWith("api"))
+                url = $"api/{cleanUrl}";
 
             var request = new HttpRequestMessage(HttpMethod.Get, url);
-            HttpResponseMessage response;
-
-            // TODO: remove redirect to wawsobserver when Geomaster API implements GeoRegion connection strings
-            if (url.StartsWith("minienvironments/") && Configuration.ObserverLocalHostEnabled)
-            {
-                request = new HttpRequestMessage(HttpMethod.Get, $"/api/{url}");
-                response = await SendWawsObserverRequestAsync(request, resourceId);
-            }
-            else
-            {
-                response = await SendObserverRequestAsync(request, resourceId);
-            }
-
+            var response = await SendObserverRequestAsync(request, resourceId);
             var result = await response.Content.ReadAsStringAsync();
 
             var loggingMessage = "Request succeeded";
@@ -139,9 +132,10 @@ namespace Diagnostics.DataProviders
             finally
             {
                 Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider",
-                    $"url:{new Uri(_httpClient.BaseAddress, request.RequestUri)}, response:{loggingMessage}, statusCode:{(int)response.StatusCode}");
+                    $"url:{new Uri(new Uri(Configuration.Endpoint), request.RequestUri)}, response:{loggingMessage}, statusCode:{(int)response.StatusCode}");
 
                 request.Dispose();
+                response.Dispose();
             }
 
             return result;
@@ -151,7 +145,7 @@ namespace Diagnostics.DataProviders
         {
             if (httpClient == null)
             {
-                httpClient = _httpClient;
+                httpClient = lazyClient.Value;
             }
 
             request.Headers.TryAddWithoutValidation(HeaderConstants.RequestIdHeaderName, RequestId);
@@ -160,22 +154,10 @@ namespace Diagnostics.DataProviders
                 request.Headers.TryAddWithoutValidation("Authorization", await GetToken(resourceId));
             }
 
+            request.RequestUri = new Uri(new Uri(Configuration.Endpoint), request.RequestUri);
             var response = await httpClient.SendAsync(request);
 
             return response;
-        }
-
-        protected async Task<HttpResponseMessage> SendWawsObserverRequestAsync(HttpRequestMessage request, string resourceId = null)
-        {
-            var httpClient = new HttpClient
-            {
-                BaseAddress = new Uri("https://wawsobserver.azurewebsites.windows.net")
-            };
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-            request.Headers.TryAddWithoutValidation("Authorization", await GetToken(resourceId));
-
-            return await SendObserverRequestAsync(request, resourceId, httpClient);
         }
 
         private async Task<string> GetToken(string resourceId)
@@ -219,7 +201,7 @@ namespace Diagnostics.DataProviders
         public abstract Task<string> GetSiteWebSpaceNameAsync(string subscriptionId, string siteName);
 
         public abstract Task<dynamic> GetSitesInServerFarmAsync(string subscriptionId, string serverFarmName);
-        
+
         public abstract Task<JArray> GetAdminSitesAsync(string siteName);
 
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
