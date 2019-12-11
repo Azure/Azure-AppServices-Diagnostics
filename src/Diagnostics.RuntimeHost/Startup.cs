@@ -22,6 +22,7 @@ using System.Diagnostics;
 using Diagnostics.RuntimeHost.Security.CertificateAuth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using System.Net;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -149,6 +150,9 @@ namespace Diagnostics.RuntimeHost
             var supportBayApiObserverTokenService = new ObserverTokenService(observerConfiguration.SupportBayApiObserverResourceId, observerConfiguration);
             services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
             services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
+            var observerServicePoint = ServicePointManager.FindServicePoint(new Uri(dataSourcesConfigService.Config.SupportObserverConfiguration.Endpoint));
+            observerServicePoint.ConnectionLeaseTimeout = 60 * 1000;
+
 
             ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
             AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
@@ -165,6 +169,7 @@ namespace Diagnostics.RuntimeHost
             // Initialize on startup
             servicesProvider.GetService<ISourceWatcherService>();
         }
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
