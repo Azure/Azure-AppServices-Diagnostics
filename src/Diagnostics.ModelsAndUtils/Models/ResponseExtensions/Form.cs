@@ -91,8 +91,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public string Label;
 
-        public List<ListItem> Items { get; set; }
-
         /// <summary>
         /// Creates an input with given id and input type
         /// </summary>
@@ -100,13 +98,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="inputType">Input type for the input</param>
         /// <param name="label">The label of the input</param>
         /// <param name="isRequired">Indicates whether this is a required input</param>
-        public FormInputBase(int id, FormInputTypes inputType, string label, bool isRequired = false, List<ListItem> items = null)
+        public FormInputBase(int id, FormInputTypes inputType, string label, bool isRequired = false)
         {
             InputId = id;
             InputType = inputType;
             Label = label;
             IsRequired = isRequired;
-            Items = items;
         }
     }
 
@@ -173,13 +170,19 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public string SelectedValue{ get; set; }
 
         /// <summary>
+        /// List of items for this RadioButtonList
+        /// </summary>
+        public List<ListItem> Items { get; set; }
+
+        /// <summary>
         /// Create an instance of new RadioButtonList class
         /// </summary>
         /// <param name="id">Unique id for the input</param>
         /// <param name="label">Label for the radio button list</param>
         /// <param name="items">The list of items for this list</param>
-        public RadioButtonList(int id, string label, List<ListItem> items = null) : base(id, FormInputTypes.RadioButton, label, false, items)
+        public RadioButtonList(int id, string label, List<ListItem> items) : base(id, FormInputTypes.RadioButton, label, false)
         {
+            Items = items;
         }
 
     }

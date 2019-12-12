@@ -78,7 +78,7 @@ namespace Diagnostics.RuntimeHost.Models
                         }
                         else if (inputType == FormInputTypes.RadioButton)
                         {
-                            var radioButtonList = new RadioButtonList(Convert.ToInt32(inputIds[i]), "");
+                            var radioButtonList = new RadioButtonList(Convert.ToInt32(inputIds[i]), "", null);
                             radioButtonList.SelectedValue = inputValues[i];
                             result.AddFormInput(radioButtonList);
                         }
@@ -91,8 +91,6 @@ namespace Diagnostics.RuntimeHost.Models
                     text.Value = inputValues[i];
                     result.AddFormInput(text);
                 }
-
-                
             }
             bindingContext.Result = ModelBindingResult.Success(result);
             return Task.CompletedTask;
