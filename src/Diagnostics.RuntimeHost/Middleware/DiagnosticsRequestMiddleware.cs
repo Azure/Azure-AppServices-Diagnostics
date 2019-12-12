@@ -53,6 +53,7 @@ namespace Diagnostics.RuntimeHost.Middleware
             {
                 exception = ex;
                 statusCode = (int)HttpStatusCode.InternalServerError;
+                throw;
             }
             finally
             {
