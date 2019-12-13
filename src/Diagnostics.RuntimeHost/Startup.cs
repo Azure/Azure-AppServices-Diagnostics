@@ -105,6 +105,7 @@ namespace Diagnostics.RuntimeHost
 
             // Enable App Insights telemetry
             services.AddApplicationInsightsTelemetry();
+            services.AddAppServiceApplicationLogging();
             if(Environment.IsDevelopment())
             {
                 services.AddMvc(options =>

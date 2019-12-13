@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
+using Microsoft.Extensions.Logging;
 using Diagnostics.DataProviders;
 using System;
 using Microsoft.CodeAnalysis;
@@ -51,6 +52,10 @@ namespace Diagnostics.RuntimeHost
                         .AddEnvironmentVariables()
                         .AddCommandLine(args)
                         .Build();
+                })
+                .ConfigureLogging(loggingBuilder =>
+                {
+                    loggingBuilder.AddAzureWebAppDiagnostics();
                 })
                 .UseStartup<Startup>()
                 .Build();
