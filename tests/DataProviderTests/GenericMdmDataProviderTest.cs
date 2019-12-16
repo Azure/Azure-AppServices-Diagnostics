@@ -15,7 +15,7 @@ namespace Diagnostics.Tests.DataProviderTests
     public class GenericMdmDataProviderTest
     {
         [Fact]
-        public void TestGenericSystemMdmAccountRegional()
+        public void TestGenericSystemMdmAccount()
         {
             var dataSourceConfiguration = new MockDataProviderConfigurationFactory();
 
@@ -25,8 +25,7 @@ namespace Diagnostics.Tests.DataProviderTests
             {
                 CertificateThumbprint = "BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0",
                 Endpoint = "http://0.0.0.0",
-                MonitoringAccount = "Mock",
-                IsRegional = true
+                MonitoringAccount = "Mock"
             };
 
             var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, incomingHeaders: new HeaderDictionary() { [HeaderConstants.LocationHeader] = "FakeLocation" }));
@@ -34,28 +33,6 @@ namespace Diagnostics.Tests.DataProviderTests
             var mdmDataProvider = dataProviders.MdmGeneric(mdmConfig);
             Assert.NotNull(mdmDataProvider);
             Assert.Equal("MockFakeLocation", mdmConfig.MonitoringAccount);
-        }
-
-        [Fact]
-        public void TestGenericSystemMdmAccountNotRegional()
-        {
-            var dataSourceConfiguration = new MockDataProviderConfigurationFactory();
-
-            var config = dataSourceConfiguration.LoadConfigurations();
-
-            var mdmConfig = new GenericMdmDataProviderConfiguration
-            {
-                CertificateThumbprint = "BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0",
-                Endpoint = "http://0.0.0.0",
-                MonitoringAccount = "Mock",
-                IsRegional = false
-            };
-
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, incomingHeaders: new HeaderDictionary() { [HeaderConstants.LocationHeader] = "FakeLocation" }));
-
-            var mdmDataProvider = dataProviders.MdmGeneric(mdmConfig);
-            Assert.NotNull(mdmDataProvider);
-            Assert.Equal("Mock", mdmConfig.MonitoringAccount);
         }
 
         [Fact]
@@ -97,8 +74,7 @@ public static class MDMConfiguration
         {
             CertificateThumbprint = ""BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0"",
             Endpoint = ""http://0.0.0.0"",
-            MonitoringAccount = ""Mock"",
-            IsRegional = true
+            MonitoringAccount = ""Mock""
         };
 }
 ";

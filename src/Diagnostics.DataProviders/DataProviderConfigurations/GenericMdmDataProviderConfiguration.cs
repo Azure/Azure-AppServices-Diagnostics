@@ -26,11 +26,6 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
         public string MonitoringAccount { get; set; }
 
         /// <summary>
-        /// Gets or sets whether monitoring account is regional.
-        /// </summary>
-        public bool IsRegional { get; set; }
-
-        /// <summary>
         /// Post initialize.
         /// </summary>
         public void PostInitialize()

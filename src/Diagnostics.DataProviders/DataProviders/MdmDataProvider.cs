@@ -28,13 +28,6 @@ namespace Diagnostics.DataProviders
             : base(cache)
         {
             _configuration = configuration;
-
-            // If the MDM account is regional, get the location from request headers and update the mdm account name with location suffix.
-            if (configuration.IsRegional && headers != null && headers.TryGetValue(HeaderConstants.LocationHeader, out var locations) && locations.Count > 0)
-            {
-                _configuration.MonitoringAccount += locations[0];
-            }
-
             _mdmClient = MdmClientFactory.GetMdmClient(configuration, requestId);
         }
 
