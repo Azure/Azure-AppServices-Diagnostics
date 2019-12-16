@@ -32,7 +32,6 @@ namespace Diagnostics.Tests.DataProviderTests
 
             var mdmDataProvider = dataProviders.MdmGeneric(mdmConfig);
             Assert.NotNull(mdmDataProvider);
-            Assert.Equal("MockFakeLocation", mdmConfig.MonitoringAccount);
         }
 
         [Fact]
