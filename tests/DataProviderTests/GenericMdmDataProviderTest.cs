@@ -28,7 +28,7 @@ namespace Diagnostics.Tests.DataProviderTests
                 MonitoringAccount = "Mock"
             };
 
-            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, incomingHeaders: new HeaderDictionary() { [HeaderConstants.LocationHeader] = "FakeLocation" }));
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
 
             var mdmDataProvider = dataProviders.MdmGeneric(mdmConfig);
             Assert.NotNull(mdmDataProvider);
