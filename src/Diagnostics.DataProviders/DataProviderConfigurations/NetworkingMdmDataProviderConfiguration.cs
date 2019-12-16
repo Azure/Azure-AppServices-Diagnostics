@@ -23,6 +23,12 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
         [ConfigurationName("MdmNetworkingRegistrationCertThumbprint")]
         public string CertificateThumbprint { get; set; }
 
+        /// <summary>	
+        /// Gets or sets monitoring account.	
+        /// </summary>	
+        [ConfigurationName("MdmNetworkingAccount")]
+        public string MonitoringAccount { get; set; }
+
         /// <summary>
         /// Post initialize.
         /// </summary>
