@@ -94,5 +94,10 @@ namespace Diagnostics.Logger
         /// Client Identity Provider header.
         /// </summary>
         public static readonly string ClientIdentityProviderHeader = "x-ms-client-identity-provider";
+
+        /// <summary>
+        /// Subscription Location Placement id.
+        /// </summary>
+        public static readonly string SubscriptionLocationPlacementId = "x-ms-subscription-location-placementid";
     }
 }
