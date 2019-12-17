@@ -217,7 +217,7 @@ namespace Diagnostics.DataProviders
             var stampNameObjects = objects.Where(x => x.ContainsKey("StampName") && !string.IsNullOrWhiteSpace(x["StampName"].ToString()));
             if (stampNameObjects.Any())
                 return stampNameObjects.First()["StampName"].ToString();
-
+            
             throw new Exception($"Admin Sites response did not contain stamp name for site {siteName}. Admin Sites response: {siteObjects}");
         }
 
