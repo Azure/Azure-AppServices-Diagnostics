@@ -82,11 +82,6 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string Location { get; set; }
 
         /// <summary>
-        /// List of Tenant Ids for this environment.
-        /// </summary>
-        public IEnumerable<string> TenantIdList;
-
-        /// <summary>
         /// Arm Resource Provider
         /// </summary>
         public string Provider
@@ -113,7 +108,6 @@ namespace Diagnostics.ModelsAndUtils.Models
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
             this.FriendlyName = name;
-            this.TenantIdList = new List<string>();
         }
 
         public bool IsApplicable(IResourceFilter filter)
