@@ -17,6 +17,18 @@ namespace Diagnostics.DataProviders
         {
         }
 
+        private async Task<TObject> DeserializeResponseAsync<TObject>(string path) where TObject : new()
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                throw new ArgumentNullException(nameof(path));
+
+            var response = await GetObserverResource(path);
+
+            return response == null ?
+                new TObject() :
+                JsonConvert.DeserializeObject<TObject>(response);
+        }
+
         public override async Task<JArray> GetAdminSitesAsync(string siteName)
         {
             if (string.IsNullOrWhiteSpace(siteName))
@@ -24,14 +36,19 @@ namespace Diagnostics.DataProviders
 
             var path = $"sites/{siteName}/adminsites";
 
-            var response = await GetObserverResource(path);
-            if (response == null)
-            {
-                return new JArray();
-            }
+            return await DeserializeResponseAsync<JArray>(path);
+        }
 
-            var siteObject = JsonConvert.DeserializeObject<JArray>(response);
-            return siteObject;
+        public override async Task<JArray> GetAdminSitesAsync(string siteName, string stampName)
+        {
+            if (string.IsNullOrWhiteSpace(stampName))
+                throw new ArgumentNullException(nameof(stampName));
+            if (string.IsNullOrWhiteSpace(siteName))
+                throw new ArgumentNullException(nameof(siteName));
+
+            var path = $"stamps/{stampName}/sites/{siteName}/adminsites";
+
+            return await DeserializeResponseAsync<JArray>(path);
         }
 
         public override async Task<dynamic> GetCertificatesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
