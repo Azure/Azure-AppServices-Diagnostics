@@ -110,5 +110,15 @@ namespace Diagnostics.DataProviders
 		{
 			return MakeDependencyCall(DataProvider.ExecuteSqlQueryAsync(cloudServiceName, query));
 		}
-	}
+
+        public Task<JArray> GetAdminSitesAsync(string siteName)
+        {
+            return MakeDependencyCall(DataProvider.GetAdminSitesAsync(siteName));
+        }
+
+        public Task<JArray> GetAdminSitesAsync(string siteName, string stampName)
+        {
+            return MakeDependencyCall(DataProvider.GetAdminSitesAsync(siteName, stampName));
+        }
+    }
 }

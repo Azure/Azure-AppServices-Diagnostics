@@ -167,6 +167,11 @@ namespace Diagnostics.DataProviders
             throw new NotImplementedException();
         }
 
+        public override Task<JArray> GetAdminSitesAsync(string siteName, string stampName)
+        {
+            throw new NotImplementedException();
+        }
+
         private class MockHttpClient : HttpClient
         {
             public MockHttpClient()
