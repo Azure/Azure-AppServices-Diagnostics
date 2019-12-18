@@ -53,11 +53,20 @@ namespace Diagnostics.ModelsAndUtils.Models
             }
         }
 
-        public LogicApp(string subscriptionId, string resourceGroup, string appName) : base()
+        /// <summary>
+        /// Subscription Location Placement id
+        /// </summary>
+        public string SubscriptionLocationPlacementId
+        {
+            get; set;
+        }
+
+        public LogicApp(string subscriptionId, string resourceGroup, string appName, string subscriptionLocationPlacementid = null) : base()
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
             this.Name = appName;
+            SubscriptionLocationPlacementId = subscriptionLocationPlacementid;
         }
 
         /// <summary>

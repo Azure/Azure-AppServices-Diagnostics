@@ -54,6 +54,14 @@ namespace Diagnostics.ModelsAndUtils.Models
         }
 
         /// <summary>
+        /// Subscription Location Placement id
+        /// </summary>
+        public string SubscriptionLocationPlacementId
+        {
+            get; set;
+        }
+
+        /// <summary>
         /// Determines whether the Azure Kubernetes Service resource is applicable after filtering.
         /// </summary>
         /// <param name="filter">Resource Filter</param>
@@ -63,11 +71,12 @@ namespace Diagnostics.ModelsAndUtils.Models
             return filter is AzureKubernetesServiceFilter;
         }
 
-        public AzureKubernetesService(string subscriptionId, string resourceGroup, string resourceName) : base()
+        public AzureKubernetesService(string subscriptionId, string resourceGroup, string resourceName, string subLocationPlacementId = null) : base()
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
             this.Name = resourceName;
+            SubscriptionLocationPlacementId = subLocationPlacementId;
         }
     }
 }
