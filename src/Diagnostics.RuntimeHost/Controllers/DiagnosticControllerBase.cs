@@ -315,7 +315,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                         }
                         else
                         {
-                            HandleEmtpyTenantListException(ex, resource);
                             throw;
                         }
                     }
@@ -323,28 +322,6 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             return Ok(queryRes);
-        }
-
-        private void HandleEmtpyTenantListException(Exception ex, IResource resource)
-        {
-            if (ex is KustoTenantListEmptyException || ex.InnerException is KustoTenantListEmptyException)
-            {
-                if (
-                    (
-                    // Resource is ASE
-                    resource is HostingEnvironment env && (env.TenantIdList != null && !env.TenantIdList.Any())
-                    )
-                    ||
-                    (
-                    // Resource is app in a Stamp of type ASE V1 or V2
-                    (resource is App currentApp && ((currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V1) || (currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V2)))
-                    && (currentApp.Stamp.TenantIdList != null && !currentApp.Stamp.TenantIdList.Any())
-                    )
-                )
-                {
-                    throw new ASETenantListEmptyException("KustoExecuteQuery", "Tenant List is empty for the App Service Environment.");
-                }
-            }
         }
 
         protected async Task<IActionResult> PublishPackage(Package pkg)
@@ -459,7 +436,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         // Purposefully leaving this method in Base class. This method is shared between two resources right now - HostingEnvironment and WebApp
-        protected async Task<HostingEnvironment> GetHostingEnvironment(string subscriptionId, string resourceGroup, string name, DiagnosticStampData stampPostBody, DateTime startTime, DateTime endTime)
+        protected async Task<HostingEnvironment> GetHostingEnvironment(string subscriptionId, string resourceGroup, string name, DiagnosticStampData stampPostBody, DateTime startTime, DateTime endTime, string kind)
         {
             if (stampPostBody == null)
             {
@@ -501,10 +478,16 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             string stampName = !string.IsNullOrWhiteSpace(hostingEnv.InternalName) ? hostingEnv.InternalName : hostingEnv.Name;
 
-            var result = await this._stampService.GetTenantIdForStamp(stampName, hostingEnv.HostingEnvironmentType == HostingEnvironmentType.None, startTime, endTime, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
-            hostingEnv.TenantIdList = result.Item1;
-            hostingEnv.PlatformType = result.Item2;
-
+            if (stampPostBody.Kind == DiagnosticStampType.ASEV1 || stampPostBody.Kind == DiagnosticStampType.ASEV2)
+            {
+                var result = await this._stampService.GetTenantIdForStamp(stampName, hostingEnv.HostingEnvironmentType == HostingEnvironmentType.None, startTime, endTime, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+                hostingEnv.PlatformType = result.Item2;
+            }
+            else
+            {
+                hostingEnv.PlatformType = (!string.IsNullOrWhiteSpace(kind) && kind.ToLower().Contains("linux")) ? PlatformType.Linux : PlatformType.Windows;
+            }
+            
             return hostingEnv;
         }
 
@@ -722,7 +705,6 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             catch (Exception ex)
             {
-                HandleEmtpyTenantListException(ex, context.OperationContext.Resource);
                 throw;
             }
         }

@@ -50,17 +50,21 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         /// </example>
         public static string TenantFilterQuery(IResource resource)
         {
-            List<string> tenantIds = new List<string>();
+            return PrimaryStampFilterQuery(resource);
+        }
+
+        public static string PrimaryStampFilterQuery(IResource resource)
+        {
+            string primaryStampName = null;
             if (resource is App app)
             {
-                tenantIds = app.Stamp.TenantIdList.ToList();
+                primaryStampName = app.Stamp.InternalName;
             }
             else if (resource is HostingEnvironment env)
             {
-                tenantIds = env.TenantIdList.ToList();
+                primaryStampName = env.InternalName;
             }
-
-            return $"Tenant in ({string.Join(",", tenantIds.Select(t => $@"""{t}"""))})";
+            return $"EventPrimaryStampName=~{$@"""{primaryStampName}"""}";
         }
 
         /// <summary>

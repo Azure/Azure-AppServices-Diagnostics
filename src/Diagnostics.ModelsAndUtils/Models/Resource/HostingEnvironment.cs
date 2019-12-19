@@ -82,11 +82,6 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string Location { get; set; }
 
         /// <summary>
-        /// List of Tenant Ids for this environment.
-        /// </summary>
-        public IEnumerable<string> TenantIdList;
-
-        /// <summary>
         /// Arm Resource Provider
         /// </summary>
         public string Provider

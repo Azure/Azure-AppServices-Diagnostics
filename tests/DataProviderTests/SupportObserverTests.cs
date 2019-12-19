@@ -70,11 +70,6 @@ namespace Diagnostics.Tests.DataProviderTests
                     Stamp = new HostingEnvironment(string.Empty, string.Empty, "waws-prod-bn1-71717c45")
                 };
 
-                appResource.Stamp.TenantIdList = new List<string>()
-                {
-                    Guid.NewGuid().ToString()
-                };
-
                 var operationContext = new OperationContext<App>(appResource, null, null, true, null);
 
                 var response = new Response();
