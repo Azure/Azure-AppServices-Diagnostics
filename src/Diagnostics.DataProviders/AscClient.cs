@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -9,6 +10,8 @@ using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.DataProviders.TokenService;
 using Diagnostics.Logger;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 
 namespace Diagnostics.DataProviders
@@ -25,6 +28,11 @@ namespace Diagnostics.DataProviders
         {
             get { return AscClient.userAgent; }
         }
+
+        /// <summary>
+        /// Subscription Location PlacementId derived from incoming headers
+        /// </summary>
+        public string SubscriptionLocationPlacementId;
 
         private static string userAgent = string.Empty;
 
@@ -62,12 +70,13 @@ namespace Diagnostics.DataProviders
         /// </summary>
         private string apiVersion;
 
+        private readonly string MethodNotAllowed = "DataProvider method not allowed";
         /// <summary>
         /// Initializes a new instance of the <see cref="AscClient"/> class.
         /// <param name="config">Config for Asc Data Provider.</param>
         /// <param name="appLensRequestId">AppLens Request Id, used for logging.</param>
         /// </summary>
-        public AscClient(AscDataProviderConfiguration config, string appLensRequestId)
+        public AscClient(AscDataProviderConfiguration config, string appLensRequestId, IHeaderDictionary incomingRequestHeaders)
         {
             baseUri = config.BaseUri;
             apiUri = config.ApiUri;
@@ -75,6 +84,13 @@ namespace Diagnostics.DataProviders
             AscClient.userAgent = config.UserAgent;
             logger = DiagnosticsETWProvider.Instance;
             requestId = appLensRequestId;
+            if(incomingRequestHeaders.TryGetValue(HeaderConstants.SubscriptionLocationPlacementId, out StringValues subLocationPlacementId))
+            {
+                SubscriptionLocationPlacementId = subLocationPlacementId.FirstOrDefault();
+            } else
+            {
+                SubscriptionLocationPlacementId = string.Empty;
+            }
         }
 
         private HttpClient httpClient
@@ -89,7 +105,7 @@ namespace Diagnostics.DataProviders
         public async Task<T> MakeHttpPostRequest<T>(string jsonPostBody, string apiUri, string apiVersion, CancellationToken cancellationToken = default(CancellationToken))
         {
             try
-            {
+            {              
                 if (string.IsNullOrWhiteSpace(apiUri))
                 {
                     apiUri = this.apiUri;
@@ -215,6 +231,10 @@ namespace Diagnostics.DataProviders
 
         private async Task<T> GetAscResponse<T>(HttpRequestMessage requestMessage, bool isBlobRequest, CancellationToken cancellationToken = default(CancellationToken))
         {
+            if (!string.IsNullOrWhiteSpace(SubscriptionLocationPlacementId) && SubscriptionLocationPlacementId.Equals("geos_2020-01-01", StringComparison.CurrentCultureIgnoreCase))
+            {
+                throw new HttpRequestException(MethodNotAllowed);
+            }
             var response = await SendAscRequestAsync(requestMessage, isBlobRequest, cancellationToken);
             string responseContent = await response.Content.ReadAsStringAsync();
             if (response.IsSuccessStatusCode)
