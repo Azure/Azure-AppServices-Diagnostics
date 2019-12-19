@@ -9,7 +9,7 @@
         internal const string AzureCloud = "PublicAzure";
         internal const string AzureChinaCloud = "China";
         internal const string AzureUSGovernment = "Government";
-        internal const int KustoDelayInMinutes = 15;
+        internal const double KustoDelayInMinutes = 14.5;
     }
 
     internal class RegistryConstants
