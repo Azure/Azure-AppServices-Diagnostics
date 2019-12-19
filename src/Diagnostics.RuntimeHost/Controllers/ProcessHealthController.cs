@@ -25,7 +25,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             _configuration = Configuration;
         }
 
-        public static bool PingExternal(string pingUrl)
+        private static bool PingExternal(string pingUrl)
         {
             try
             {
