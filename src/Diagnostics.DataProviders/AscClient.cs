@@ -238,7 +238,7 @@ namespace Diagnostics.DataProviders
         {
             if (!string.IsNullOrWhiteSpace(SubscriptionLocationPlacementId) && SubscriptionLocationPlacementId.Equals(DiagAscHeaderValue, StringComparison.CurrentCultureIgnoreCase))
             {
-                throw new InvalidOperationException();
+                throw new InvalidOperationException("This subscription is not allowed for ASC calls");
             }
             var response = await SendAscRequestAsync(requestMessage, isBlobRequest, cancellationToken);
             string responseContent = await response.Content.ReadAsStringAsync();
