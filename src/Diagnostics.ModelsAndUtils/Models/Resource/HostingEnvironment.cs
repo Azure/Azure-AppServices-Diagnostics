@@ -116,7 +116,6 @@ namespace Diagnostics.ModelsAndUtils.Models
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
             this.FriendlyName = name;
-            this.TenantIdList = new List<string>();
             SubscriptionLocationPlacementId = subLocationPlacementId;
         }
 

@@ -51,6 +51,12 @@
         [ConfigurationName("AppKey")]
         public string AppKey { get; set; }
 
+        /// <summary>
+        /// Header value based on which we block calls to ASC
+        /// </summary>
+        [ConfigurationName("DiagAscHeader")]
+        public string DiagAscHeader { get; set; }
+
         public void PostInitialize()
         {
         }

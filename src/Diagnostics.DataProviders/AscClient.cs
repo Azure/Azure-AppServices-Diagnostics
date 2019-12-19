@@ -70,7 +70,11 @@ namespace Diagnostics.DataProviders
         /// </summary>
         private string apiVersion;
 
-        private readonly string MethodNotAllowed = "DataProvider method not allowed";
+        /// <summary>
+        /// Header value based on which we block ASC calls.
+        /// </summary>
+        private string DiagAscHeaderValue;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="AscClient"/> class.
         /// <param name="config">Config for Asc Data Provider.</param>
@@ -91,6 +95,7 @@ namespace Diagnostics.DataProviders
             {
                 SubscriptionLocationPlacementId = string.Empty;
             }
+            DiagAscHeaderValue = config.DiagAscHeader;
         }
 
         private HttpClient httpClient
@@ -231,9 +236,9 @@ namespace Diagnostics.DataProviders
 
         private async Task<T> GetAscResponse<T>(HttpRequestMessage requestMessage, bool isBlobRequest, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (!string.IsNullOrWhiteSpace(SubscriptionLocationPlacementId) && SubscriptionLocationPlacementId.Equals("geos_2020-01-01", StringComparison.CurrentCultureIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(SubscriptionLocationPlacementId) && SubscriptionLocationPlacementId.Equals(DiagAscHeaderValue, StringComparison.CurrentCultureIgnoreCase))
             {
-                throw new HttpRequestException(MethodNotAllowed);
+                throw new InvalidOperationException();
             }
             var response = await SendAscRequestAsync(requestMessage, isBlobRequest, cancellationToken);
             string responseContent = await response.Content.ReadAsStringAsync();
