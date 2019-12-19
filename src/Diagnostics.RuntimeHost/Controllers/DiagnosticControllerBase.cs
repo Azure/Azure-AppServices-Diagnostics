@@ -427,7 +427,12 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         protected TResource GetResource(string subscriptionId, string resourceGroup, string name)
         {
-            return (TResource)Activator.CreateInstance(typeof(TResource), subscriptionId, resourceGroup, name);
+            var subLocationPlacementId = string.Empty;
+            if (Request.Headers.TryGetValue(HeaderConstants.SubscriptionLocationPlacementId, out StringValues subscriptionLocationPlacementId))
+            {
+                subLocationPlacementId = subscriptionLocationPlacementId.FirstOrDefault();
+            }
+            return (TResource)Activator.CreateInstance(typeof(TResource), subscriptionId, resourceGroup, name, subLocationPlacementId);
         }
 
         // Purposefully leaving this method in Base class. This method is shared between two resources right now - HostingEnvironment and WebApp
@@ -449,6 +454,12 @@ namespace Diagnostics.RuntimeHost.Controllers
                 SuspendedOn = stampPostBody.SuspendedOn,
                 Location = stampPostBody.Location
             };
+
+
+            if (Request.Headers.TryGetValue(HeaderConstants.SubscriptionLocationPlacementId, out StringValues subscriptionLocationPlacementId))
+            {
+                hostingEnv.SubscriptionLocationPlacementId = subscriptionLocationPlacementId.FirstOrDefault();
+            }
 
             switch (stampPostBody.Kind)
             {

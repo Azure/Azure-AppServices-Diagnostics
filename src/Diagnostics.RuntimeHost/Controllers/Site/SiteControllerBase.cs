@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Utilities;
+using Microsoft.Extensions.Primitives;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -49,6 +51,10 @@ namespace Diagnostics.RuntimeHost.Controllers
                     break;
             }
 
+            if(Request.Headers.TryGetValue(HeaderConstants.SubscriptionLocationPlacementId, out StringValues subscriptionLocationPlacementId))
+            {
+                app.SubscriptionLocationPlacementId = subscriptionLocationPlacementId.FirstOrDefault();
+            }
             return app;
         }
 
