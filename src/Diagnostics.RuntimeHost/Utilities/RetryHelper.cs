@@ -41,22 +41,24 @@ namespace Diagnostics.RuntimeHost.Utilities
                 }
                 finally
                 {
-                    string exceptionType = attemptException != null ? attemptException.GetType().ToString() : string.Empty;
-                    string exceptionDetails = attemptException != null ? attemptException.ToString() : string.Empty;
-                    DateTime taskInvocationEndTime = DateTime.UtcNow;
-                    long latencyInMs = Convert.ToInt64((taskInvocationEndTime - taskInvocationStartTime).TotalMilliseconds);
+                    if (retryCount > 0)
+                    {
+                        string exceptionType = attemptException != null ? attemptException.GetType().ToString() : string.Empty;
+                        string exceptionDetails = attemptException != null ? attemptException.ToString() : string.Empty;
+                        DateTime taskInvocationEndTime = DateTime.UtcNow;
+                        long latencyInMs = Convert.ToInt64((taskInvocationEndTime - taskInvocationStartTime).TotalMilliseconds);
 
-                    DiagnosticsETWProvider.Instance.LogRetryAttemptSummary(
-                        requestId ?? string.Empty,
-                        source ?? string.Empty,
-                        $"Retry Attempt : {retryCount}, IsSuccessful : {attemptException == null}",
-                        latencyInMs,
-                        taskInvocationStartTime.ToString("HH:mm:ss.fff"),
-                        taskInvocationEndTime.ToString("HH:mm:ss.fff"),
-                        exceptionType,
-                        exceptionDetails
-                        );
-
+                        DiagnosticsETWProvider.Instance.LogRetryAttemptSummary(
+                            requestId ?? string.Empty,
+                            source ?? string.Empty,
+                            $"Retry Attempt : {retryCount}, IsSuccessful : {attemptException == null}",
+                            latencyInMs,
+                            taskInvocationStartTime.ToString("HH:mm:ss.fff"),
+                            taskInvocationEndTime.ToString("HH:mm:ss.fff"),
+                            exceptionType,
+                            exceptionDetails
+                            );
+                    }
                     retryCount++;
                 }
 

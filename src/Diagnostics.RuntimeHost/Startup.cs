@@ -136,6 +136,7 @@ namespace Diagnostics.RuntimeHost
                 }
             });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
+            services.AddSingleton<IHealthCheckService, HealthCheckService>();
 
             var servicesProvider = services.BuildServiceProvider();
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
