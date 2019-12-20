@@ -4,6 +4,7 @@ using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -25,8 +26,11 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpGet(UriElements.HealthPing)]
         public async Task<IActionResult> HealthPing()
         {
-            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
-            await _healthCheckService.RunHealthCheck();
+            List<Task> allChecks = new List<Task>();
+            Task.Run(_sourceWatcherService.Watcher.WaitForFirstCompletion);
+            Task.Run(_healthCheckService.RunHealthCheck);
+
+            await Task.WhenAll(allChecks);
 
             return Ok("Server is up and running.");
         }
