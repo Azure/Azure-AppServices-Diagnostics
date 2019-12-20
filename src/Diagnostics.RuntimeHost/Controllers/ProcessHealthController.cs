@@ -26,7 +26,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         public async Task<IActionResult> HealthPing()
         {
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
-            await _healthCheckService.RunHealthCheck(true);
+            await _healthCheckService.RunHealthCheck();
 
             return Ok("Server is up and running.");
         }
