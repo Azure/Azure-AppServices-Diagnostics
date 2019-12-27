@@ -623,6 +623,11 @@ namespace Diagnostics.RuntimeHost.Controllers
                         });
                         // Finally select only those detectors that have a positive score value
                         allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
+                        // Log the filtered public search results
+                        Dictionary<string, string> logMessage = new Dictionary<string, string>();
+                        logMessage.Add("InsightName", "SearchResultsPublic");
+                        logMessage.Add("InsightData", JsonConvert.SerializeObject(allDetectors));
+                        DiagnosticsETWProvider.Instance.LogInternalAPIInsights(context.OperationContext.RequestId, JsonConvert.SerializeObject(logMessage));
                     }
                     else
                     {
