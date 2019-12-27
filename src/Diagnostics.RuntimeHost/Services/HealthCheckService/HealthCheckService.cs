@@ -50,6 +50,7 @@ namespace Diagnostics.RuntimeHost.Services
 
         public async Task RunHealthCheck()
         {
+            if (IsOutboundConnectivityCheckEnabled)
             await RetryHelper.RetryAsync(HealthCheckPing, "Healthping", "", 3, 100);
         }
 
