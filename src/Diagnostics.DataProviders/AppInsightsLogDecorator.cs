@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders.Interfaces;
+using Diagnostics.ModelsAndUtils.Models;
 
 namespace Diagnostics.DataProviders
 {
@@ -16,6 +17,11 @@ namespace Diagnostics.DataProviders
         public Task<DataTable> ExecuteAppInsightsQuery(string query)
         {
             return MakeDependencyCall(DataProvider.ExecuteAppInsightsQuery(query));
+        }
+
+        public Task<bool> InitializeAppInsightsKey(OperationContext<IResource> cxt)
+        {
+            return MakeDependencyCall(DataProvider.InitializeAppInsightsKey(cxt));
         }
 
         public Task<bool> SetAppInsightsKey(string appId, string apiKey)
