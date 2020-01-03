@@ -9,12 +9,12 @@ namespace Diagnostics.RuntimeHost.Services
 {
     public interface ISiteService
     {
-        Task<StackType> GetApplicationStack(string subscriptionId, string resourceGroup, string siteName, DataProviderContext dataProviderContext);
+        Task<string> GetApplicationStack(string subscriptionId, string resourceGroup, string siteName, DataProviderContext dataProviderContext);
     }
 
     public class SiteService : ISiteService
     {
-        public async Task<StackType> GetApplicationStack(string subscriptionId, string resourceGroup, string siteName, DataProviderContext dataProviderContext)
+        public async Task<string> GetApplicationStack(string subscriptionId, string resourceGroup, string siteName, DataProviderContext dataProviderContext)
         {
             var dp = new DataProviders.DataProviders(dataProviderContext);
             if (string.IsNullOrWhiteSpace(subscriptionId)) throw new ArgumentNullException("subscriptionId");
@@ -47,10 +47,10 @@ namespace Diagnostics.RuntimeHost.Services
 
             if (stackTable == null || stackTable.Rows == null || stackTable.Rows.Count == 0)
             {
-                return StackType.None;
+                return "Unknown";
             }
 
-            return GetAppStackType(stackTable.Rows[0][0].ToString().ToLower());
+            return stackTable.Rows[0][0].ToString();
         }
 
         private StackType GetAppStackType(string stackString)
