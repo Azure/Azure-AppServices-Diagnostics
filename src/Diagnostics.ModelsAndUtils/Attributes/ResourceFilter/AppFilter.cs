@@ -32,5 +32,10 @@
             this.StackType = StackType.All;
             this.StampType = StampType.All;
         }
+
+        /// <summary>
+        /// ARM tags set on the resource
+        /// </summary>
+        public string Tags;
     }
 }

@@ -34,8 +34,9 @@ namespace Diagnostics.RuntimeHost.Controllers
                 Stamp = await GetHostingEnvironment(postBody.Stamp.Subscription, postBody.Stamp.ResourceGroup, postBody.Stamp != null ? postBody.Stamp.Name : string.Empty, postBody.Stamp, startTime, endTime, postBody.Kind),
                 AppType = GetApplicationType(postBody.Kind),
                 PlatformType = (!string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Kind.ToLower().Contains("linux")) ? PlatformType.Linux : PlatformType.Windows,
-                StackType =  StackType.All //await this._siteService.GetApplicationStack(subscriptionId, resourceGroup, appName, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey])
+                StackType =  StackType.All, //await this._siteService.GetApplicationStack(subscriptionId, resourceGroup, appName, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey])
                 // Not Fetching Stack Information anymore for kusto optimizations. Instead, detectors should look to leverage a gist created for the same.
+                Tags = postBody.Tags
             };
 
             switch (app.Stamp.HostingEnvironmentType)
