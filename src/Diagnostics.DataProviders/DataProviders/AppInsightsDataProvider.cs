@@ -32,7 +32,7 @@ namespace Diagnostics.DataProviders
             return Task.FromResult(true);
         }
 
-        public async Task<bool> InitializeAppInsightsKey(OperationContext<IResource> cxt)
+        public async Task<bool> SetAppInsightsKey(OperationContext<IResource> cxt)
         {
             bool keyFound = false;
             if (cxt.Resource is App app)
@@ -46,7 +46,7 @@ namespace Diagnostics.DataProviders
             return keyFound;
         }
 
-        public string DecryptString(string encryptedString)
+        private string DecryptString(string encryptedString)
         {
             byte[] iv = new byte[16];
             byte[] buffer = Convert.FromBase64String(encryptedString);

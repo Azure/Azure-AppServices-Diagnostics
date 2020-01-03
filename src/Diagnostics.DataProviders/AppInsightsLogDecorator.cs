@@ -19,9 +19,9 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(DataProvider.ExecuteAppInsightsQuery(query));
         }
 
-        public Task<bool> InitializeAppInsightsKey(OperationContext<IResource> cxt)
+        public Task<bool> SetAppInsightsKey(OperationContext<IResource> cxt)
         {
-            return MakeDependencyCall(DataProvider.InitializeAppInsightsKey(cxt));
+            return MakeDependencyCall(DataProvider.SetAppInsightsKey(cxt));
         }
 
         public Task<bool> SetAppInsightsKey(string appId, string apiKey)

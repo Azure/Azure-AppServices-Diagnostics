@@ -10,6 +10,6 @@ namespace Diagnostics.DataProviders.Interfaces
 
         Task<bool> SetAppInsightsKey(string appId, string apiKey);
 
-        Task<bool> InitializeAppInsightsKey(OperationContext<IResource> cxt);
+        Task<bool> SetAppInsightsKey(OperationContext<IResource> cxt);
     }
 }
