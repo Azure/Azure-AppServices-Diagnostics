@@ -88,6 +88,11 @@ namespace Diagnostics.ModelsAndUtils.Models
             }
         }
 
+        public string SubscriptionLocationPlacementId
+        {
+            get; set;
+        }
+
         public App(string subscriptionId, string resourceGroup, string appName) : base()
         {
             this.SubscriptionId = subscriptionId;

@@ -249,10 +249,15 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         SummaryCard,
 
-        /// <search>
+        /// <summary>
         /// Render search component inside detector
-        /// </search>
-        SearchComponent
+        /// </summary>
+        SearchComponent,
+
+        ///<summary>
+        /// Data Rendered as AppInsights enablement in detector
+        ///</summary>
+        AppInsightEnablement
 
     }
 

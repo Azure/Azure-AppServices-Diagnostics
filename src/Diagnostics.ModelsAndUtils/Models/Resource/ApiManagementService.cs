@@ -56,11 +56,20 @@ namespace Diagnostics.ModelsAndUtils.Models
             }
         }
 
-        public ApiManagementService(string subscriptionId, string resourceGroup, string name) : base()
+        /// <summary>
+        /// Subscription Location Placement id
+        /// </summary>
+        public string SubscriptionLocationPlacementId
+        {
+            get; set;
+        }
+
+        public ApiManagementService(string subscriptionId, string resourceGroup, string name, string subLocationPlacementid = null) : base()
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
             this.Name = name;
+            this.SubscriptionLocationPlacementId = subLocationPlacementid;
         }
 
         /// <summary>
