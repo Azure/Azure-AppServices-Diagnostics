@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Utilities;
+using Microsoft.Extensions.Primitives;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -32,8 +34,9 @@ namespace Diagnostics.RuntimeHost.Controllers
                 Stamp = await GetHostingEnvironment(postBody.Stamp.Subscription, postBody.Stamp.ResourceGroup, postBody.Stamp != null ? postBody.Stamp.Name : string.Empty, postBody.Stamp, startTime, endTime, postBody.Kind),
                 AppType = GetApplicationType(postBody.Kind),
                 PlatformType = (!string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Kind.ToLower().Contains("linux")) ? PlatformType.Linux : PlatformType.Windows,
-                StackType =  StackType.All //await this._siteService.GetApplicationStack(subscriptionId, resourceGroup, appName, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey])
+                StackType =  StackType.All, //await this._siteService.GetApplicationStack(subscriptionId, resourceGroup, appName, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey])
                 // Not Fetching Stack Information anymore for kusto optimizations. Instead, detectors should look to leverage a gist created for the same.
+                Tags = postBody.Tags
             };
 
             switch (app.Stamp.HostingEnvironmentType)
@@ -49,6 +52,10 @@ namespace Diagnostics.RuntimeHost.Controllers
                     break;
             }
 
+            if(Request.Headers.TryGetValue(HeaderConstants.SubscriptionLocationPlacementId, out StringValues subscriptionLocationPlacementId))
+            {
+                app.SubscriptionLocationPlacementId = subscriptionLocationPlacementId.FirstOrDefault();
+            }
             return app;
         }
 

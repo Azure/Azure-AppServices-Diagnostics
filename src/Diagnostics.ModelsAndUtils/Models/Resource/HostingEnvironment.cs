@@ -103,11 +103,20 @@ namespace Diagnostics.ModelsAndUtils.Models
             }
         }
 
-        public HostingEnvironment(string subscriptionId, string resourceGroup, string name)
+        /// <summary>
+        /// Subscription Location Placement id
+        /// </summary>
+        public string SubscriptionLocationPlacementId
+        {
+            get; set;
+        }
+
+        public HostingEnvironment(string subscriptionId, string resourceGroup, string name, string subLocationPlacementId = null)
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
             this.FriendlyName = name;
+            SubscriptionLocationPlacementId = subLocationPlacementId;
         }
 
         public bool IsApplicable(IResourceFilter filter)

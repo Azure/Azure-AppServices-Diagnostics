@@ -56,11 +56,20 @@ namespace Diagnostics.ModelsAndUtils.Models
             }
         }
 
-        public AppServiceCertificate(string subscriptionId, string resourceGroup, string name) : base()
+        /// <summary>
+        /// Subscription Location Placement id
+        /// </summary>
+        public string SubscriptionLocationPlacementId
+        {
+            get; set;
+        }
+
+        public AppServiceCertificate(string subscriptionId, string resourceGroup, string name, string subscriptionLocationPlacementId = null) : base()
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
             this.Name = name;
+            SubscriptionLocationPlacementId = subscriptionLocationPlacementId;
         }
 
         /// <summary>
