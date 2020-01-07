@@ -88,7 +88,7 @@ namespace Diagnostics.DataProviders
             AscClient.userAgent = config.UserAgent;
             logger = DiagnosticsETWProvider.Instance;
             requestId = appLensRequestId;
-            if(incomingRequestHeaders.TryGetValue(HeaderConstants.SubscriptionLocationPlacementId, out StringValues subLocationPlacementId))
+            if(incomingRequestHeaders != null && incomingRequestHeaders.TryGetValue(HeaderConstants.SubscriptionLocationPlacementId, out StringValues subLocationPlacementId))
             {
                 SubscriptionLocationPlacementId = subLocationPlacementId.FirstOrDefault();
             } else
