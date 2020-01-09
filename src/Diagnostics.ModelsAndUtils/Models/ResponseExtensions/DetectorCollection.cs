@@ -5,13 +5,14 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
     public static class ResponseDetectorViewExtensions
     {
-        public static DiagnosticData AddDetectorCollection(this Response response, List<string> detectorIds)
+        public static DiagnosticData AddDetectorCollection(this Response response, List<string> detectorIds, IDictionary<string, string> additionalParams = null)
         {
             var diagnosticData = new DiagnosticData()
             {
                 RenderingProperties = new DetectorCollectionRendering()
                 {
-                    DetectorIds = detectorIds
+                    DetectorIds = detectorIds,
+                    AdditionalParams = additionalParams != null ? JsonConvert.SerializeObject(additionalParams) : string.Empty,
                 }
             };
 
