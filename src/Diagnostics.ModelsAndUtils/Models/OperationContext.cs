@@ -1,6 +1,7 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.ModelsAndUtils.Utilities;
+using System.Collections.Generic;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {
@@ -57,6 +58,8 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public string CloudDomain { get; private set; }
 
+        public Dictionary<string, string> QueryParams { get; set; }
+
         public static implicit operator OperationContext(OperationContext<TResource> context)
         {
             return new OperationContext(context.Resource, context.StartTime, context.EndTime, context.IsInternalCall,
@@ -74,6 +77,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             SupportTopic = supportTopic;
             Form = form;
             CloudDomain = cloudDomain;
+            QueryParams = new Dictionary<string, string>();
         }
     }
 
