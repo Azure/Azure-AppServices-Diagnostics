@@ -568,6 +568,11 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             _runtimeContext.ClientIsInternal = isInternalClient || forceInternal;
             _runtimeContext.OperationContext = operationContext;
+            var queryParamCollection = Request.Query;
+            foreach(var pair in queryParamCollection)
+            {
+                _runtimeContext.OperationContext.QueryParams.Add(pair.Key, pair.Value);
+            }
 
             return (RuntimeContext<TResource>)_runtimeContext;
         }

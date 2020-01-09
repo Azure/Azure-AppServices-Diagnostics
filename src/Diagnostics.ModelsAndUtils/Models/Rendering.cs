@@ -28,6 +28,8 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public string MessageIfCritical { get; set; }
 
+        public string AdditionalParams { get; set; }
+
         public DetectorCollectionRendering() : base(RenderingType.Detector)
         {
         }
