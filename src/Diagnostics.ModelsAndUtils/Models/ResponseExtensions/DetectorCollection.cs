@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
@@ -19,13 +20,14 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             return diagnosticData;
         }
 
-        public static DiagnosticData AddDetector(this Response response, string detectorId)
+        public static DiagnosticData AddDetector(this Response response, string detectorId, IDictionary<string, string> additionalParams = null )
         {
             var diagnosticData = new DiagnosticData()
             {
                 RenderingProperties = new DetectorCollectionRendering()
                 {
-                    DetectorIds = new string[] { detectorId }
+                    DetectorIds = new string[] { detectorId },
+                    AdditionalParams = additionalParams != null ? JsonConvert.SerializeObject(additionalParams) : string.Empty,
                 }
             };
 
