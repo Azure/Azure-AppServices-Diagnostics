@@ -3,6 +3,15 @@
     "App": {
       "WebApp": {
         "Windows": "14748"
+      },
+      "ApiApp": {
+        "Windows": "14748"
+      },
+      "GatewayApp": {
+        "Windows": "14748"
+      },
+      "MobileApp": {
+        "Windows": "14748"
       }
     }
   },
