@@ -37,7 +37,11 @@ def loadModel(productId, model=None):
     if not os.path.isdir(absPath(modelpackagepath)):
         loggerInstance.logInsights(f"{prelogMessage}Could not find model folder. Getting model from download location.")
         moveModels(productId, "SearchModule")
-    loaded_models[productId] = TextSearchModel(modelpackagepath)
+    try:
+        loaded_models[productId] = TextSearchModel(modelpackagepath)
+    except ModelFileVerificationFailed:
+        moveModels(productId, "SearchModule")
+        loaded_models[productId] = TextSearchModel(modelpackagepath)
 
 def refreshModel(productId):
     prelogMessage = refreshModelMessage.format(productId)
