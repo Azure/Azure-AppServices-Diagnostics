@@ -49,14 +49,14 @@ class TfIdfSearchModel:
             raise ModelFileLoadFailed("Failed to load index from file " + self.packageFiles["m1IndexFile"])
         try:
             self.models["m2Model"] = TfidfModel.load(self.packageFiles["m2ModelFile"])
-            self.models["m2Model"] = None
-            del self.models["m2Model"]
+            #self.models["m2Model"] = None
+            #del self.models["m2Model"]
         except:
             raise ModelFileLoadFailed("Failed to load model from file " + self.packageFiles["m2ModelFile"])
         try:
             self.models["m2Index"] = similarities.MatrixSimilarity.load(self.packageFiles["m2IndexFile"])
-            self.models["m2Index"] = None
-            del self.models["m2Index"]
+            #self.models["m2Index"] = None
+            #del self.models["m2Index"]
         except:
             raise ModelFileLoadFailed("Failed to load index from file " + self.packageFiles["m2IndexFile"])
         try:
@@ -76,8 +76,8 @@ class TfIdfSearchModel:
             with open(self.packageFiles["sampleUtterancesFile"], "r") as f:
                 self.models["sampleUtterances"] = json.loads(f.read())
                 f.close()
-                self.models["sampleUtterances"] = None
-                del self.models["sampleUtterances"]
+                #self.models["sampleUtterances"] = None
+                #del self.models["sampleUtterances"]
         except:
             raise ModelFileLoadFailed("Failed to parse json from file " + self.packageFiles["sampleUtterancesFile"])
     
@@ -128,7 +128,7 @@ class TfIdfSearchModel:
     def queryUtterances(self, query=None, existing_utterances=[]):
         if query:
             query = query + " ".join(existing_utterances)
-            self.loadUtteranceModel()
+            #self.loadUtteranceModel()
             try:
                 vector = self.models["m2Model"][self.models["dictionary"].doc2bow(getAllNGrams(query, self.models["modelInfo"].textNGrams))]
                 similar_doc_indices = sorted(enumerate(self.models["m2Index"][vector]), key=lambda item: -item[1])
@@ -137,5 +137,5 @@ class TfIdfSearchModel:
                 return {"query": query, "results": similar_docs}
             except Exception as e:
                 return {"query": query, "results": None}
-            self.unloadUtteranceModel()
+            #self.unloadUtteranceModel()
         return None
