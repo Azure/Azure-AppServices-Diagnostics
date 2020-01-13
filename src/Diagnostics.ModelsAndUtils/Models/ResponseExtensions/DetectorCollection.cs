@@ -5,7 +5,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
     public static class ResponseDetectorViewExtensions
     {
-        public static DiagnosticData AddDetectorCollection(this Response response, List<string> detectorIds, IDictionary<string, string> additionalParams = null)
+        public static DiagnosticData AddDetectorCollection(this Response response, List<string> detectorIds)
+        {
+            return AddDetectorCollection(response, detectorIds, null);
+        }
+
+        public static DiagnosticData AddDetectorCollection(this Response response, List<string> detectorIds, IDictionary<string, string> additionalParams)
         {
             var diagnosticData = new DiagnosticData()
             {
@@ -21,7 +26,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             return diagnosticData;
         }
 
-        public static DiagnosticData AddDetector(this Response response, string detectorId, IDictionary<string, string> additionalParams = null )
+
+        public static DiagnosticData AddDetector(this Response response, string detectorId)
+        {
+            return AddDetector(response, detectorId, null);
+        }
+
+        public static DiagnosticData AddDetector(this Response response, string detectorId, IDictionary<string, string> additionalParams)
         {
             var diagnosticData = new DiagnosticData()
             {
