@@ -14,6 +14,10 @@ namespace Diagnostics.DataProviders
 
         Task<dynamic> GetSite(string stampName, string siteName, string slotName);
 
+        Task<JArray> GetAdminSitesAsync(string siteName);
+
+        Task<JArray> GetAdminSitesAsync(string siteName, string stampName);
+
         Task<string> GetSiteResourceGroupNameAsync(string siteName);
 
         Task<dynamic> GetSitesInResourceGroupAsync(string subscriptionName, string resourceGroupName);
@@ -29,9 +33,9 @@ namespace Diagnostics.DataProviders
         Task<string> GetSiteWebSpaceNameAsync(string subscriptionId, string siteName);
 
         Task<dynamic> GetSitesInServerFarmAsync(string subscriptionId, string serverFarmName);
-        
+
         Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName);
-        
+
         Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName);
 
         Task<dynamic> GetHostNames(string stampName, string siteName);

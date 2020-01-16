@@ -17,18 +17,21 @@ namespace Diagnostics.DataProviders
 
         private string dataProviderRequestId;
 
+        private DataProviderContext CurrentRequestContext;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="AscDataProvider"/> class.
         /// </summary>
         /// <param name="cache">Operation Data Cache instance.</param>
         /// <param name="configuration">Configuration for calling into Azure Support Center.</param>
         /// <param name="requestId">AppLens request id.</param>
-        public AscDataProvider(OperationDataCache cache, AscDataProviderConfiguration configuration, string requestId)
+        public AscDataProvider(OperationDataCache cache, AscDataProviderConfiguration configuration, string requestId, DataProviderContext context)
             : base(cache)
         {
             dataProviderConfiguration = configuration;
             dataProviderRequestId = requestId;
-            ascClient = new AscClient(configuration, dataProviderRequestId);
+            ascClient = new AscClient(configuration, dataProviderRequestId, context.receivedHeaders);
+            CurrentRequestContext = context;
         }
 
         /// <inheritdoc/>

@@ -32,6 +32,19 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         }
     }
 
+
+    public enum DropdownType
+    {
+        Legacy,
+        Fabric
+    }
+
+    public enum DropdownPosition
+    {
+        FloatLeft,
+        FloatRight
+    }
+
     public static class ResponseDropdownExtension
     {
         /// <summary>
@@ -57,17 +70,53 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ///     data.Add(new Tuple<![CDATA[<string, bool, Response>]]>(firstDataKey, selected, firstDataEntry));
         ///
         ///     Dropdown dropdownViewModel = new Dropdown(label, data);
-        ///     res.AddDropdownView(dropdownViewModel);
+        ///     res.AddDropdownView(dropdownViewModel,"Title");
         /// }
         /// </code>
         /// </example>
         public static DiagnosticData AddDropdownView(this Response response, Dropdown dropdownView, string title = null)
+        {
+            return AddDropdownView(response, dropdownView, title, DropdownType.Legacy, DropdownPosition.FloatLeft);
+        }
+
+        /// <summary>
+        /// Adds a Dropdown View to Response
+        /// </summary>
+        /// <param name="response">Response</param>
+        /// <param name="dropdownView">Dropdown View</param>
+        /// <param name="title">Title</param>
+        /// <param name="type">Dropdown Type</param>
+        /// <param name="position">Dropdown Position</param>
+        /// <returns></returns>
+        /// <example>
+        /// This sample shows how to use <see cref="AddDropdownView"/> method.
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        ///      string label = "select item here";
+        ///      List<![CDATA[<Tuple<string, bool, Response>>]]> data = new List<![CDATA[<Tuple<string, bool, Response>>]]>();
+        ///
+        ///      string firstDataKey = "key1";
+        ///      bool selected = true;
+        ///      var firstDataEntry = new Response();
+        ///      firstDataEntry.AddMarkdownView(@"some markdown content");
+        ///
+        ///     data.Add(new Tuple<![CDATA[<string, bool, Response>]]>(firstDataKey, selected, firstDataEntry));
+        ///
+        ///     Dropdown dropdownViewModel = new Dropdown("label", data);
+        ///     res.AddDropdownView(dropdownViewModel,"Title",DropdownType.Fabric,DropdownPosition.FloatLeft);
+        /// }
+        /// </code>
+        /// </example>
+        public static DiagnosticData AddDropdownView(this Response response, Dropdown dropdownView, string title, DropdownType type = DropdownType.Legacy, DropdownPosition position = DropdownPosition.FloatLeft)
         {
             var table = new DataTable();
             table.Columns.Add(new DataColumn("Label", typeof(string)));
             table.Columns.Add(new DataColumn("Key", typeof(string)));
             table.Columns.Add(new DataColumn("Selected", typeof(bool)));
             table.Columns.Add(new DataColumn("Value", typeof(string)));
+            table.Columns.Add(new DataColumn("DropdownType", typeof(string)));
+            table.Columns.Add(new DataColumn("DropdownPosition", typeof(string)));
 
             foreach (var item in dropdownView.Data)
             {
@@ -85,9 +134,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                     JsonConvert.SerializeObject(dataSet, new JsonSerializerSettings
                     {
                         ContractResolver = new CamelCasePropertyNamesContractResolver()
-                    })
+                    }),
+                    type,
+                    position
                 });
             }
+
 
             var diagData = new DiagnosticData()
             {

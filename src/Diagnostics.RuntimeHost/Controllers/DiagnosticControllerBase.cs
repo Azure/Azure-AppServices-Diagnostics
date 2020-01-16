@@ -317,7 +317,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                         }
                         else
                         {
-                            HandleEmtpyTenantListException(ex, resource);
                             throw;
                         }
                     }
@@ -325,28 +324,6 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             return Ok(queryRes);
-        }
-
-        private void HandleEmtpyTenantListException(Exception ex, IResource resource)
-        {
-            if (ex is KustoTenantListEmptyException || ex.InnerException is KustoTenantListEmptyException)
-            {
-                if (
-                    (
-                    // Resource is ASE
-                    resource is HostingEnvironment env && (env.TenantIdList != null && !env.TenantIdList.Any())
-                    )
-                    ||
-                    (
-                    // Resource is app in a Stamp of type ASE V1 or V2
-                    (resource is App currentApp && ((currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V1) || (currentApp.Stamp.HostingEnvironmentType == HostingEnvironmentType.V2)))
-                    && (currentApp.Stamp.TenantIdList != null && !currentApp.Stamp.TenantIdList.Any())
-                    )
-                )
-                {
-                    throw new ASETenantListEmptyException("KustoExecuteQuery", "Tenant List is empty for the App Service Environment.");
-                }
-            }
         }
 
         protected async Task<IActionResult> PublishPackage(Package pkg)
@@ -452,11 +429,16 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         protected TResource GetResource(string subscriptionId, string resourceGroup, string name)
         {
-            return (TResource)Activator.CreateInstance(typeof(TResource), subscriptionId, resourceGroup, name);
+            var subLocationPlacementId = string.Empty;
+            if (Request.Headers.TryGetValue(HeaderConstants.SubscriptionLocationPlacementId, out StringValues subscriptionLocationPlacementId))
+            {
+                subLocationPlacementId = subscriptionLocationPlacementId.FirstOrDefault();
+            }
+            return (TResource)Activator.CreateInstance(typeof(TResource), subscriptionId, resourceGroup, name, subLocationPlacementId);
         }
 
         // Purposefully leaving this method in Base class. This method is shared between two resources right now - HostingEnvironment and WebApp
-        protected async Task<HostingEnvironment> GetHostingEnvironment(string subscriptionId, string resourceGroup, string name, DiagnosticStampData stampPostBody, DateTime startTime, DateTime endTime)
+        protected async Task<HostingEnvironment> GetHostingEnvironment(string subscriptionId, string resourceGroup, string name, DiagnosticStampData stampPostBody, DateTime startTime, DateTime endTime, string kind)
         {
             if (stampPostBody == null)
             {
@@ -475,6 +457,12 @@ namespace Diagnostics.RuntimeHost.Controllers
                 Location = stampPostBody.Location
             };
 
+
+            if (Request.Headers.TryGetValue(HeaderConstants.SubscriptionLocationPlacementId, out StringValues subscriptionLocationPlacementId))
+            {
+                hostingEnv.SubscriptionLocationPlacementId = subscriptionLocationPlacementId.FirstOrDefault();
+            }
+
             switch (stampPostBody.Kind)
             {
                 case DiagnosticStampType.ASEV1:
@@ -492,10 +480,16 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             string stampName = !string.IsNullOrWhiteSpace(hostingEnv.InternalName) ? hostingEnv.InternalName : hostingEnv.Name;
 
-            var result = await this._stampService.GetTenantIdForStamp(stampName, hostingEnv.HostingEnvironmentType == HostingEnvironmentType.None, startTime, endTime, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
-            hostingEnv.TenantIdList = result.Item1;
-            hostingEnv.PlatformType = result.Item2;
-
+            if (stampPostBody.Kind == DiagnosticStampType.ASEV1 || stampPostBody.Kind == DiagnosticStampType.ASEV2)
+            {
+                var result = await this._stampService.GetTenantIdForStamp(stampName, hostingEnv.HostingEnvironmentType == HostingEnvironmentType.None, startTime, endTime, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+                hostingEnv.PlatformType = result.Item2;
+            }
+            else
+            {
+                hostingEnv.PlatformType = (!string.IsNullOrWhiteSpace(kind) && kind.ToLower().Contains("linux")) ? PlatformType.Linux : PlatformType.Windows;
+            }
+            
             return hostingEnv;
         }
 
@@ -574,6 +568,11 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             _runtimeContext.ClientIsInternal = isInternalClient || forceInternal;
             _runtimeContext.OperationContext = operationContext;
+            var queryParamCollection = Request.Query;
+            foreach(var pair in queryParamCollection)
+            {
+                _runtimeContext.OperationContext.QueryParams.Add(pair.Key, pair.Value);
+            }
 
             return (RuntimeContext<TResource>)_runtimeContext;
         }
@@ -631,6 +630,9 @@ namespace Diagnostics.RuntimeHost.Controllers
                         });
                         // Finally select only those detectors that have a positive score value
                         allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
+                        // Log the filtered public search results
+                        var logMessage = new { InsightName = "SearchResultsPublic", InsightData = allDetectors.Select(p => new { Id = p.EntryPointDefinitionAttribute.Id, Score = p.EntryPointDefinitionAttribute.Score }) };
+                        DiagnosticsETWProvider.Instance.LogInternalAPIInsights(context.OperationContext.RequestId, JsonConvert.SerializeObject(logMessage));
                     }
                     else
                     {
@@ -713,7 +715,6 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             catch (Exception ex)
             {
-                HandleEmtpyTenantListException(ex, context.OperationContext.Resource);
                 throw;
             }
         }

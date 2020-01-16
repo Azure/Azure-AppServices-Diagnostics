@@ -82,11 +82,6 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string Location { get; set; }
 
         /// <summary>
-        /// List of Tenant Ids for this environment.
-        /// </summary>
-        public IEnumerable<string> TenantIdList;
-
-        /// <summary>
         /// Arm Resource Provider
         /// </summary>
         public string Provider
@@ -108,12 +103,20 @@ namespace Diagnostics.ModelsAndUtils.Models
             }
         }
 
-        public HostingEnvironment(string subscriptionId, string resourceGroup, string name)
+        /// <summary>
+        /// Subscription Location Placement id
+        /// </summary>
+        public string SubscriptionLocationPlacementId
+        {
+            get; set;
+        }
+
+        public HostingEnvironment(string subscriptionId, string resourceGroup, string name, string subLocationPlacementId = null)
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
             this.FriendlyName = name;
-            this.TenantIdList = new List<string>();
+            SubscriptionLocationPlacementId = subLocationPlacementId;
         }
 
         public bool IsApplicable(IResourceFilter filter)

@@ -57,6 +57,11 @@
         [ConfigurationName("Enabled")]
         public bool Enabled { get; set; }
 
+        /// Header value based on which we block calls to ASC
+        /// </summary>
+        [ConfigurationName("DiagAscHeader")]
+        public string DiagAscHeader { get; set; }
+
         public void PostInitialize()
         {
         }

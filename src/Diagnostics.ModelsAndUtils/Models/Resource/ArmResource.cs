@@ -52,11 +52,20 @@ namespace Diagnostics.ModelsAndUtils.Models
             }
         }
 
-        public ArmResource(string subscriptionId, string resourceGroup, string provider, string resourceTypeName, string resourceName) : base(provider, resourceTypeName)
+        /// <summary>
+        /// Subscription Location Placement id
+        /// </summary>
+        public string SubscriptionLocationPlacementId
+        {
+            get; set;
+        }
+
+        public ArmResource(string subscriptionId, string resourceGroup, string provider, string resourceTypeName, string resourceName, string subscriptionLocationPlacementId = null) : base(provider, resourceTypeName)
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
             this.Name = resourceName;
+            SubscriptionLocationPlacementId = subscriptionLocationPlacementId;
         }
     }
 }

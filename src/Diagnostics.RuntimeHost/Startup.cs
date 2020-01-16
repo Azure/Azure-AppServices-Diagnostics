@@ -23,6 +23,7 @@ using Diagnostics.RuntimeHost.Security.CertificateAuth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.IdentityModel.Logging;
+using System.Net;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -57,7 +58,7 @@ namespace Diagnostics.RuntimeHost
             // Adding both custom cert auth handler and Azure AAD JWT token handler to support multiple forms of auth.
             if (Environment.IsProduction() || Environment.IsStaging() )
             {
-                services.AddAuthentication().AddCertificateAuth(CertificateAuthDefaults.AuthenticationScheme, 
+                services.AddAuthentication().AddCertificateAuth(CertificateAuthDefaults.AuthenticationScheme,
                     options =>
                     {
                         options.AllowedIssuers = Configuration["SecuritySettings:AllowedCertIssuers"].Split("|").Select(p => p.Trim()).ToList();
@@ -138,6 +139,7 @@ namespace Diagnostics.RuntimeHost
                 }
             });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
+            services.AddSingleton<IHealthCheckService, HealthCheckService>();
 
             var servicesProvider = services.BuildServiceProvider();
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
@@ -152,6 +154,9 @@ namespace Diagnostics.RuntimeHost
             var supportBayApiObserverTokenService = new ObserverTokenService(observerConfiguration.SupportBayApiObserverResourceId, observerConfiguration);
             services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
             services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
+            var observerServicePoint = ServicePointManager.FindServicePoint(new Uri(dataSourcesConfigService.Config.SupportObserverConfiguration.Endpoint));
+            observerServicePoint.ConnectionLeaseTimeout = 60 * 1000;
+
 
             if (Configuration.GetValue("ChangeAnalysis:Enabled", true))
             {
@@ -180,6 +185,7 @@ namespace Diagnostics.RuntimeHost
             // Initialize on startup
             servicesProvider.GetService<ISourceWatcherService>();
         }
+
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {

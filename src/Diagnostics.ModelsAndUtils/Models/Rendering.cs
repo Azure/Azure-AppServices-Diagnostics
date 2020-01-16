@@ -28,6 +28,8 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public string MessageIfCritical { get; set; }
 
+        public string AdditionalParams { get; set; }
+
         public DetectorCollectionRendering() : base(RenderingType.Detector)
         {
         }
@@ -234,7 +236,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// Data rendered for appliation insight
         /// </summary>
         AppInsight,
-        
+
         /// Dependent resources of web app rendered as graph.
         /// </summary>
         DependencyGraph,
@@ -242,7 +244,22 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data Rendered as downtimes in the Analysis View
         /// </summary>
-        DownTime
+        DownTime,
+
+        /// <summary>
+        /// Data Rendered as only summarized message
+        /// </summary>
+        SummaryCard,
+
+        /// <summary>
+        /// Render search component inside detector
+        /// </summary>
+        SearchComponent,
+
+        ///<summary>
+        /// Data Rendered as AppInsights enablement in detector
+        ///</summary>
+        AppInsightEnablement
 
     }
 

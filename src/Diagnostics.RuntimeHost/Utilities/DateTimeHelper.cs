@@ -66,7 +66,7 @@ namespace Diagnostics.RuntimeHost.Utilities
             DateTime currentUtcTime = GetDateTimeInUtcFormat(DateTime.UtcNow);
             bool result = true;
             errorMessage = string.Empty;
-            int kustoDelayInMinutes = -HostConstants.KustoDelayInMinutes;
+            double kustoDelayInMinutes = -HostConstants.KustoDelayInMinutes;
 
             if (string.IsNullOrWhiteSpace(startTime) && string.IsNullOrWhiteSpace(endTime))
             {

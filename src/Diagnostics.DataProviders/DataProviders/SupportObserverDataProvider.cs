@@ -13,10 +13,20 @@ namespace Diagnostics.DataProviders
 {
     public class SupportObserverDataProvider : SupportObserverDataProviderBase
     {
-        private object _lockObject = new object();
-
         public SupportObserverDataProvider(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, DataProviderContext dataProviderContext) : base(cache, configuration, dataProviderContext)
         {
+        }
+
+        private async Task<TObject> DeserializeResponseAsync<TObject>(string path) where TObject : new()
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                throw new ArgumentNullException(nameof(path));
+
+            var response = await GetObserverResource(path);
+
+            return response == null ?
+                new TObject() :
+                JsonConvert.DeserializeObject<TObject>(response);
         }
 
         public override async Task<JArray> GetAdminSitesAsync(string siteName)
@@ -26,14 +36,19 @@ namespace Diagnostics.DataProviders
 
             var path = $"sites/{siteName}/adminsites";
 
-            var response = await GetObserverResource(path);
-            if (response == null)
-            {
-                return new JArray();
-            }
+            return await DeserializeResponseAsync<JArray>(path);
+        }
 
-            var siteObject = JsonConvert.DeserializeObject<JArray>(response);
-            return siteObject;
+        public override async Task<JArray> GetAdminSitesAsync(string siteName, string stampName)
+        {
+            if (string.IsNullOrWhiteSpace(stampName))
+                throw new ArgumentNullException(nameof(stampName));
+            if (string.IsNullOrWhiteSpace(siteName))
+                throw new ArgumentNullException(nameof(siteName));
+
+            var path = $"stamps/{stampName}/sites/{siteName}/adminsites";
+
+            return await DeserializeResponseAsync<JArray>(path);
         }
 
         public override async Task<dynamic> GetCertificatesInResourceGroupAsync(string subscriptionName, string resourceGroupName)
@@ -198,17 +213,29 @@ namespace Diagnostics.DataProviders
 
         public override async Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName)
         {
-            var siteObjects = await GetAdminSitesAsync(siteName);
-            var siteObject = siteObjects?
-                .Select(i => (JObject)i)?
-                .FirstOrDefault(j =>
-                    j.ContainsKey("Subscription") &&
-                    j["Subscription"].ToString().Equals(subscriptionId, StringComparison.InvariantCultureIgnoreCase) &&
-                    j.ContainsKey("ResourceGroupName") &&
-                    j["ResourceGroupName"].ToString().Equals(resourceGroupName, StringComparison.InvariantCultureIgnoreCase) &&
-                    (j.ContainsKey("StampName") || j.ContainsKey("InternalStampName")));
+            if (string.IsNullOrWhiteSpace(subscriptionId))
+                throw new ArgumentNullException(nameof(subscriptionId));
+            if (string.IsNullOrWhiteSpace(resourceGroupName))
+                throw new ArgumentNullException(nameof(resourceGroupName));
 
-            return siteObject?["InternalStampName"]?.ToString() ?? siteObject?["StampName"]?.ToString() ?? string.Empty;
+            var siteObjects = await GetAdminSitesAsync(siteName);
+            if (siteObjects == null || !siteObjects.Any())
+                throw new Exception($"Could not get admin sites for site {siteName}");
+
+            var icic = StringComparison.InvariantCultureIgnoreCase;
+            var objects = siteObjects.Select(x => (JObject)x)
+                .Where(x => x.ContainsKey("Subscription") && x["Subscription"].ToString().Equals(subscriptionId, icic))
+                .Where(x => x.ContainsKey("ResourceGroupName") && x["ResourceGroupName"].ToString().Equals(resourceGroupName, icic));
+
+            var internalStampObjects = objects.Where(x => x.ContainsKey("InternalStampName") && !string.IsNullOrWhiteSpace(x["InternalStampName"].ToString()));
+            if (internalStampObjects.Any())
+                return internalStampObjects.First()["InternalStampName"].ToString();
+
+            var stampNameObjects = objects.Where(x => x.ContainsKey("StampName") && !string.IsNullOrWhiteSpace(x["StampName"].ToString()));
+            if (stampNameObjects.Any())
+                return stampNameObjects.First()["StampName"].ToString();
+            
+            throw new Exception($"Admin Sites response did not contain stamp name for site {siteName}. Admin Sites response: {siteObjects}");
         }
 
         public override async Task<dynamic> GetHostNames(string stampName, string siteName)
@@ -305,9 +332,7 @@ namespace Diagnostics.DataProviders
 
         public override HttpClient GetObserverClient()
         {
-            // Instantiating an HttpClient class for every request will exhaust the number of sockets available under heavy loads
-            // TODO: Use HttpClientFactory
-            return new HttpClient();
+            return lazyClient.Value;
         }
 
         /// <summary>

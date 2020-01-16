@@ -1,13 +1,13 @@
 ﻿private static string _latestKuduDeployQuery = @"
 Kudu
-| where PreciseTimeStamp >= ago(30d) and Tenant =~ ""{tenantId}""
+| where PreciseTimeStamp >= ago(30d) and EventPrimaryStampName =~ ""{eventPrimaryStampName}""
 | where TaskName =~ ""ProjectDeployed"" and (siteName =~ ""{siteName}"" or siteName startswith ""{siteName}__"")
 | summarize LatestDeployment = max(PreciseTimeStamp), TotalDeployments30d = count()
 ";
 
 private static string _latestMsDeployQuery = @"
 MSDeploy
-| where PreciseTimeStamp >= ago(30d) and Tenant =~ ""{tenantId}""
+| where PreciseTimeStamp >= ago(30d) and EventPrimaryStampName =~ ""{eventPrimaryStampName}""
 | where (SiteName =~ ""~1{siteName}"" or SiteName startswith ""~1{siteName}__"")
 | where (Message contains ""PassId: 1"" or Message contains ""Package deployed successfully"" )
 | summarize LatestDeployment = max(PreciseTimeStamp), TotalDeployments30d = count()
@@ -20,8 +20,8 @@ public async static Task<Response> Run(DataProviders dp, OperationContext cxt, R
     string resolution = null;
 
     var siteDataTask = dp.Observer.GetSite(cxt.Resource.Stamp, cxt.Resource.SiteName);
-    var latestKuduDeploymentTask = dp.Kusto.ExecuteQuery(_latestKuduDeployQuery.Replace("{siteName}", cxt.Resource.SiteName).Replace("{tenantId}", (cxt.Resource.TenantIdList as List<string>)[0]), cxt.Resource.Stamp, operationName: "GetLatestDeployment");
-    var latestMsDeploymentTask = dp.Kusto.ExecuteQuery(_latestMsDeployQuery.Replace("{siteName}", cxt.Resource.SiteName).Replace("{tenantId}", (cxt.Resource.TenantIdList as List<string>)[0]), cxt.Resource.Stamp, operationName: "GetLatestDeployment");
+    var latestKuduDeploymentTask = dp.Kusto.ExecuteQuery(_latestKuduDeployQuery.Replace("{siteName}", cxt.Resource.SiteName).Replace("{eventPrimaryStampName}", cxt.Resource.Stamp.InternalName), cxt.Resource.Stamp, operationName: "GetLatestDeployment");
+    var latestMsDeploymentTask = dp.Kusto.ExecuteQuery(_latestMsDeployQuery.Replace("{siteName}", cxt.Resource.SiteName).Replace("{eventPrimaryStampName}", cxt.Resource.Stamp.InternalName), cxt.Resource.Stamp, operationName: "GetLatestDeployment");
 
     await Task.WhenAll(new Task[] { siteDataTask, latestKuduDeploymentTask, latestMsDeploymentTask });
 

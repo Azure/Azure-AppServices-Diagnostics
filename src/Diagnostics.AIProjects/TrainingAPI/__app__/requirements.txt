@@ -3,3 +3,4 @@ gensim==3.7.2
 azure-functions
 azure-storage==0.36.0
 adal
+pyemd==0.5.1
