@@ -93,7 +93,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             get; set;
         }
 
-        public App(string subscriptionId, string resourceGroup, string appName) : base()
+        public App(string subscriptionId, string resourceGroup, string appName, string subLocationPlacementId = null) : base()
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
