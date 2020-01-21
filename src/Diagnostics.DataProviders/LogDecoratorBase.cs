@@ -7,11 +7,20 @@ using Diagnostics.ModelsAndUtils.Models;
 
 namespace Diagnostics.DataProviders
 {
-    internal abstract class LogDecoratorBase : IMetadataProvider
+    public abstract class LogDecoratorBase : IMetadataProvider
     {
+        public DiagnosticDataProvider DataProvider { get; private set; }
         protected string _requestId;
         private DataProviderMetadata _metadataProvider;
         private CancellationToken _dataSourceCancellationToken;
+
+        protected LogDecoratorBase(DiagnosticDataProvider dataProvider, DataProviderContext context, DataProviderMetadata metaData)
+        {
+            DataProvider = dataProvider;
+            _metadataProvider = metaData;
+            _requestId = context.RequestId;
+            _dataSourceCancellationToken = context.DataSourcesCancellationToken;
+        }
 
         protected LogDecoratorBase(DataProviderContext context, DataProviderMetadata metaData)
         {

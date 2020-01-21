@@ -7,7 +7,7 @@ namespace Diagnostics.DataProviders
 	{
 		public IKustoDataProvider DataProvider;
 
-		public KustoLogDecorator(DataProviderContext context, IKustoDataProvider dataProvider) : base(context, dataProvider.GetMetadata())
+		public KustoLogDecorator(DataProviderContext context, IKustoDataProvider dataProvider) : base((DiagnosticDataProvider)dataProvider, context, dataProvider.GetMetadata())
 		{
 			DataProvider = dataProvider;
 		}
