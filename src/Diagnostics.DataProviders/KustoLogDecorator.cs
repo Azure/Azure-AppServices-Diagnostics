@@ -22,6 +22,11 @@ namespace Diagnostics.DataProviders
 			return ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, operationName);
 		}
 
+		public Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId = null, string operationName = null)
+		{
+			return ExecuteClusterQuery(query, cluster, databaseName, requestId, operationName);
+		}
+
 		public Task<KustoQuery> GetKustoQuery(string query, string stampName)
 		{
 			return MakeDependencyCall(DataProvider.GetKustoQuery(query, stampName));
