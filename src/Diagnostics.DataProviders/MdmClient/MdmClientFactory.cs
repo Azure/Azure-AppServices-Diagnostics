@@ -10,7 +10,7 @@ namespace Diagnostics.DataProviders
     {
         internal static IMdmClient GetMdmClient(IMdmDataProviderConfiguration config, string requestId)
         {
-            if (config.MonitoringAccount == "Mock")
+            if (config.MonitoringAccount.StartsWith("Mock"))
             {
                 return new MockMdmClient();
             }

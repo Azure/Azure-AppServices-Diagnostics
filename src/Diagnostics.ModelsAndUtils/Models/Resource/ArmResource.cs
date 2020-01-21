@@ -24,6 +24,11 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string Name { get; set; }
 
         /// <summary>
+        /// Location of the resource
+        /// </summary>
+        public string Location { get; set; }
+
+        /// <summary>
         /// Arm URI for the resource
         /// </summary>
         public string ResourceUri
@@ -65,6 +70,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
             this.Name = resourceName;
+            this.Location = location;
             SubscriptionLocationPlacementId = subscriptionLocationPlacementId;
         }
     }
