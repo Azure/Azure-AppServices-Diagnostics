@@ -30,6 +30,11 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
         public string MonitoringAccount { get; set; }
 
         /// <summary>
+        /// Gets or sets certificate name 
+        /// </summary>
+        public string CertificateName { get; set; }
+
+        /// <summary>
         /// Post initialize.
         /// </summary>
         public void PostInitialize()
