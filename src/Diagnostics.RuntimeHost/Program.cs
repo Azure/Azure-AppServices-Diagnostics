@@ -55,6 +55,7 @@ namespace Diagnostics.RuntimeHost
                 })
                 .ConfigureLogging(loggingBuilder =>
                 {
+                    //Send log output to text file application logs
                     loggingBuilder.AddAzureWebAppDiagnostics();
                     //Send log output to the Windows Event Log
                     loggingBuilder.AddEventLog();
