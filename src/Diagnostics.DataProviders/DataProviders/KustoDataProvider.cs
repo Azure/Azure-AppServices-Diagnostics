@@ -108,7 +108,7 @@ namespace Diagnostics.DataProviders
             try
             {
                 var cluster = _configuration.RegionSpecificClusterNameCollection.Values.First();
-                response = await ExecuteClusterQuery(_configuration.HeartBeatQuery, cluster, _configuration.DBName, "", "");
+                response = await ExecuteClusterQuery(_configuration.HeartBeatQuery, cluster, _configuration.DBName, "");
             }
             catch (Exception ex)
             {
