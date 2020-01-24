@@ -150,7 +150,7 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
 
             observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
-            var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.WawsObserverResourceId, observerConfiguration);
+            var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.AADResource, observerConfiguration);
             var supportBayApiObserverTokenService = new ObserverTokenService(observerConfiguration.SupportBayApiObserverResourceId, observerConfiguration);
             services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
             services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
