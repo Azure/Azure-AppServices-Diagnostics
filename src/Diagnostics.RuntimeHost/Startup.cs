@@ -22,6 +22,7 @@ using System.Diagnostics;
 using Diagnostics.RuntimeHost.Security.CertificateAuth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.IdentityModel.Logging;
 using System.Net;
 
 namespace Diagnostics.RuntimeHost
@@ -48,6 +49,7 @@ namespace Diagnostics.RuntimeHost
 
         public void ConfigureServices(IServiceCollection services)
         {
+            IdentityModelEventSource.ShowPII = Configuration.GetValue("ShowIdentityModelErrors", false);
             var openIdConfigEndpoint = $"{Configuration["SecuritySettings:AADAuthority"]}/.well-known/openid-configuration";
             var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(openIdConfigEndpoint, new OpenIdConnectConfigurationRetriever());
             var config = configManager.GetConfigurationAsync().Result;
@@ -104,6 +106,7 @@ namespace Diagnostics.RuntimeHost
 
             // Enable App Insights telemetry
             services.AddApplicationInsightsTelemetry();
+            services.AddAppServiceApplicationLogging();
             if(Environment.IsDevelopment())
             {
                 services.AddMvc(options =>
@@ -147,7 +150,7 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
 
             observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
-            var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.WawsObserverResourceId, observerConfiguration);
+            var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.AADResource, observerConfiguration);
             var supportBayApiObserverTokenService = new ObserverTokenService(observerConfiguration.SupportBayApiObserverResourceId, observerConfiguration);
             services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
             services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
@@ -155,9 +158,21 @@ namespace Diagnostics.RuntimeHost
             observerServicePoint.ConnectionLeaseTimeout = 60 * 1000;
 
 
-            ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
-            AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
-            CompilerHostTokenService.Instance.Initialize(Configuration);
+            if (Configuration.GetValue("ChangeAnalysis:Enabled", true))
+            {
+                ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
+            }
+
+            if (Configuration.GetValue("AzureSupportCenter:Enabled", true))
+            {
+                AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
+            }
+
+            if (Configuration.GetValue("CompilerHost:Enabled", true))
+            {
+                CompilerHostTokenService.Instance.Initialize(Configuration);
+            }
+
             if (searchApiConfiguration.SearchAPIEnabled)
             {
                 services.AddSingleton<ISearchService, SearchService>();

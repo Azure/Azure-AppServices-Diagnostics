@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Diagnostics.DataProviders
 {
@@ -15,7 +17,7 @@ namespace Diagnostics.DataProviders
         public string OperationName;
     }
 
-    public class KustoDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IKustoDataProvider
+    public class KustoDataProvider : DiagnosticDataProvider, IKustoDataProvider
     {
         private KustoDataProviderConfiguration _configuration;
         private IKustoClient _kustoClient;
@@ -37,6 +39,12 @@ namespace Diagnostics.DataProviders
         public async Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null)
         {
             return await ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, operationName);
+        }
+
+        public async Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string operationName, string requestId = null)
+        {
+            await AddQueryInformationToMetadata(query, cluster, operationName);
+            return await _kustoClient.ExecuteQueryAsync(query, cluster, databaseName, requestId, operationName);
         }
 
         public async Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
@@ -90,6 +98,32 @@ namespace Diagnostics.DataProviders
         private async Task<string> GetClusterNameFromStamp(string stampName)
         {
             return await _kustoHeartBeatService.GetClusterNameFromStamp(stampName);
+        }
+
+        public async override Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+        {
+            DataTable response;
+            Exception kustoException = null;
+            HealthCheckResult result;
+            try
+            {
+                var cluster = _configuration.RegionSpecificClusterNameCollection.Values.First();
+                response = await ExecuteClusterQuery(_configuration.HeartBeatQuery, cluster, _configuration.DBName, "");
+            }
+            catch (Exception ex)
+            {
+                kustoException = ex;
+            }
+            finally
+            {
+                result = new HealthCheckResult(
+                    kustoException == null ? HealthStatus.Healthy : HealthStatus.Unhealthy,
+                    description: "Kusto Health Check",
+                    kustoException
+                    );
+            }
+
+            return result;
         }
     }
 }
