@@ -41,7 +41,7 @@ namespace Diagnostics.DataProviders
             return await ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, operationName);
         }
 
-        public async Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string operationName, string requestId = null)
+        public async Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId, string operationName)
         {
             await AddQueryInformationToMetadata(query, cluster, operationName);
             return await _kustoClient.ExecuteQueryAsync(query, cluster, databaseName, requestId, operationName);
@@ -108,7 +108,7 @@ namespace Diagnostics.DataProviders
             try
             {
                 var cluster = _configuration.RegionSpecificClusterNameCollection.Values.First();
-                response = await ExecuteClusterQuery(_configuration.HeartBeatQuery, cluster, _configuration.DBName, "");
+                response = await ExecuteClusterQuery(_configuration.HeartBeatQuery, cluster, _configuration.DBName, null, null);
             }
             catch (Exception ex)
             {
