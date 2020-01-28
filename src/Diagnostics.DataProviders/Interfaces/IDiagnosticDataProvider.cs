@@ -2,6 +2,6 @@
 {
     public interface IDiagnosticDataProvider
     {
-        // TODO
+        IDataProviderConfiguration DataProviderConfiguration { get; }
     }
 }

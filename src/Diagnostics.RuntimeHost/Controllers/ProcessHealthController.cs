@@ -5,6 +5,8 @@ using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Diagnostics.DataProviders;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -33,6 +35,13 @@ namespace Diagnostics.RuntimeHost.Controllers
             await Task.WhenAll(allChecks);
 
             return Ok("Server is up and running.");
+        }
+
+        [HttpGet("/dependencyCheck")]
+        public async Task<IEnumerable<HealthCheckResult>> DependencyCheck()
+        {
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+            return await _healthCheckService.RunDependencyCheck(dataProviders);
         }
     }
 }

@@ -3,12 +3,16 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Diagnostics.RuntimeHost.Utilities;
+using Diagnostics.DataProviders;
+using System.Collections.Generic;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Diagnostics.RuntimeHost.Services
 {
     public interface IHealthCheckService : IDisposable
     {
         Task RunHealthCheck();
+        Task<IEnumerable<HealthCheckResult>> RunDependencyCheck(DataProviders.DataProviders dataProviders);
     }
 
     public class HealthCheckService : IHealthCheckService
@@ -52,6 +56,14 @@ namespace Diagnostics.RuntimeHost.Services
         {
             if (IsOutboundConnectivityCheckEnabled)
             await RetryHelper.RetryAsync(HealthCheckPing, "Healthping", "", 3, 100);
+        }
+
+        public async Task<IEnumerable<HealthCheckResult>> RunDependencyCheck(DataProviders.DataProviders dataProviders)
+        {
+            var results = new List<HealthCheckResult>();
+            DiagnosticDataProvider dp = ((LogDecoratorBase)dataProviders.Kusto).DataProvider;
+            results.Add(await dp.CheckHealthAsync(null));
+            return results;
         }
 
         public void Dispose()

@@ -7,7 +7,7 @@ namespace Diagnostics.DataProviders
 	{
 		public IKustoDataProvider DataProvider;
 
-		public KustoLogDecorator(DataProviderContext context, IKustoDataProvider dataProvider) : base(context, dataProvider.GetMetadata())
+		public KustoLogDecorator(DataProviderContext context, IKustoDataProvider dataProvider) : base((DiagnosticDataProvider)dataProvider, context, dataProvider.GetMetadata())
 		{
 			DataProvider = dataProvider;
 		}
@@ -20,6 +20,11 @@ namespace Diagnostics.DataProviders
 		public Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null)
 		{
 			return ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, operationName);
+		}
+
+		public Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId, string operationName)
+		{
+			return ExecuteClusterQuery(query, cluster, databaseName, requestId, operationName);
 		}
 
 		public Task<KustoQuery> GetKustoQuery(string query, string stampName)

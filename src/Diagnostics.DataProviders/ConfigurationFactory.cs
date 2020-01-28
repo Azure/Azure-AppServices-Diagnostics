@@ -32,7 +32,7 @@ namespace Diagnostics.DataProviders
 
             var builtConfig = builder.Build();
 
-            var tokenProvider = new AzureServiceTokenProvider();
+            var tokenProvider = new AzureServiceTokenProvider(azureAdInstance: builtConfig["Secrets:AzureAdInstance"]);
             var keyVaultClient = new KeyVaultClient(
                 new KeyVaultClient.AuthenticationCallback(
                     tokenProvider.KeyVaultTokenCallback
@@ -40,9 +40,7 @@ namespace Diagnostics.DataProviders
             );
 
             string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(env.EnvironmentName);
-            builder.AddAzureKeyVault($"https://{builtConfig[keyVaultConfig]}.vault.azure.net/",
-                                         keyVaultClient,
-                                         new DefaultKeyVaultSecretManager());
+            builder.AddAzureKeyVault(builtConfig[keyVaultConfig], keyVaultClient, new DefaultKeyVaultSecretManager());
 
             _configuration = builder.Build();
         }

@@ -52,6 +52,11 @@
         public string AppKey { get; set; }
 
         /// <summary>
+        ///  Enabled
+        /// </summary>
+        [ConfigurationName("Enabled")]
+        public bool Enabled { get; set; }
+
         /// Header value based on which we block calls to ASC
         /// </summary>
         [ConfigurationName("DiagAscHeader")]
