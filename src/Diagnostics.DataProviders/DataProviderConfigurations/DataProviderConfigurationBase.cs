@@ -27,16 +27,19 @@ namespace Diagnostics.DataProviders
         {
             get
             {
-                if (!string.IsNullOrWhiteSpace(HealthCheckInputsString) && _healthCheckInputs == null)
+                if (_healthCheckInputs == null)
                 {
                     _healthCheckInputs = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
-                    var keyValuePairs = HealthCheckInputsString.Trim().Split(new char[] { ';', ',', '|' });
-                    foreach (string pair in keyValuePairs)
+                    if (!string.IsNullOrWhiteSpace(HealthCheckInputsString) && _healthCheckInputs == null)
                     {
-                        var arr = pair.Trim().Split(new char[] { '=' });
-                        if(arr.Length == keyValuePairLength)
+                        var keyValuePairs = HealthCheckInputsString.Trim().Split(new char[] { ';', ',', '|' });
+                        foreach (string pair in keyValuePairs)
                         {
-                            _healthCheckInputs.Add(arr[0], arr[1]);
+                            var arr = pair.Trim().Split(new char[] { '=' });
+                            if (arr.Length == keyValuePairLength)
+                            {
+                                _healthCheckInputs.Add(arr[0], arr[1]);
+                            }
                         }
                     }
                 }
