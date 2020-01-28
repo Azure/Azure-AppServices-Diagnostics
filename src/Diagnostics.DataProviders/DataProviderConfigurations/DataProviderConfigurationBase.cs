@@ -30,7 +30,7 @@ namespace Diagnostics.DataProviders
                 if (_healthCheckInputs == null)
                 {
                     _healthCheckInputs = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
-                    if (!string.IsNullOrWhiteSpace(HealthCheckInputsString) && _healthCheckInputs == null)
+                    if (!string.IsNullOrWhiteSpace(HealthCheckInputsString))
                     {
                         var keyValuePairs = HealthCheckInputsString.Trim().Split(new char[] { ';', ',', '|' });
                         foreach (string pair in keyValuePairs)
