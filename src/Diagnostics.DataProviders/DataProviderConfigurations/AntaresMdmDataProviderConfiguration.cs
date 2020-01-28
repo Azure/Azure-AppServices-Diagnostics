@@ -9,7 +9,7 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
     /// Mdm data provider configuration.
     /// </summary>
     [DataSourceConfiguration(@"Mdm")]
-    public class AntaresMdmDataProviderConfiguration : IDataProviderConfiguration, IMdmDataProviderConfiguration
+    public class AntaresMdmDataProviderConfiguration : DataProviderConfigurationBase, IDataProviderConfiguration, IMdmDataProviderConfiguration
     {
         /// <summary>
         /// Gets or sets the base endpoint.

@@ -60,10 +60,19 @@ namespace Diagnostics.RuntimeHost.Services
 
         public async Task<IEnumerable<HealthCheckResult>> RunDependencyCheck(DataProviders.DataProviders dataProviders)
         {
-            var results = new List<HealthCheckResult>();
-            DiagnosticDataProvider dp = ((LogDecoratorBase)dataProviders.Kusto).DataProvider;
-            results.Add(await dp.CheckHealthAsync(null));
-            return results;
+            var healthCheckResultsTask = new List<Task<HealthCheckResult>>();
+            var dataProviderFields = dataProviders.GetType().GetFields();
+            foreach (var dataProviderField in dataProviderFields)
+            {
+                if (dataProviderField.FieldType.IsInterface)
+                {
+                    DiagnosticDataProvider dp = ((LogDecoratorBase)dataProviderField.GetValue(dataProviders)).DataProvider;
+                    if (dp != null)
+                        healthCheckResultsTask.Add(dp.CheckHealthAsync(null));
+                }
+            }
+
+            return await Task.WhenAll(healthCheckResultsTask);
         }
 
         public void Dispose()

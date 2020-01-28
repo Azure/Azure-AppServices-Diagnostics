@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 namespace Diagnostics.DataProviders
 {
     [DataSourceConfiguration("Kusto")]
-    public class KustoDataProviderConfiguration : IDataProviderConfiguration
+    public class KustoDataProviderConfiguration : DataProviderConfigurationBase, IDataProviderConfiguration
     {
         /// <summary>
         /// Client Id
@@ -130,7 +130,7 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        public void PostInitialize()
+        public override void PostInitialize()
         {
             RegionSpecificClusterNameCollection = new ConcurrentDictionary<string, string>();
             FailoverClusterNameCollection = new ConcurrentDictionary<string, string>();

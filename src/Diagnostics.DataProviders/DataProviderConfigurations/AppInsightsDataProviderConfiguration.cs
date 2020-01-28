@@ -1,13 +1,9 @@
 ﻿namespace Diagnostics.DataProviders.DataProviderConfigurations
 {
     [DataSourceConfiguration("AppInsights")]
-    public class AppInsightsDataProviderConfiguration : IDataProviderConfiguration
+    public class AppInsightsDataProviderConfiguration : DataProviderConfigurationBase, IDataProviderConfiguration
     {
         [ConfigurationName("EncryptionKey")]
         public string EncryptionKey { get; set; }
-
-        public void PostInitialize()
-        {
-        }
     }
 }

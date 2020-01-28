@@ -1,7 +1,7 @@
 ﻿namespace Diagnostics.DataProviders.DataProviderConfigurations
 {
     [DataSourceConfiguration("ChangeAnalysis")]
-    public class ChangeAnalysisDataProviderConfiguration : IDataProviderConfiguration
+    public class ChangeAnalysisDataProviderConfiguration : DataProviderConfigurationBase, IDataProviderConfiguration
     {
         /// <summary>
         /// Client Id.
@@ -38,15 +38,5 @@
         /// </summary>
         [ConfigurationName("Apiversion")]
         public string Apiversion { get; set; }
-
-        /// <summary>
-        /// Enabled
-        /// </summary>
-        [ConfigurationName("Enabled")]
-        public bool Enabled { get; set; }
-
-        public void PostInitialize()
-        {
-        }
     }
 }
