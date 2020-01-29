@@ -59,7 +59,12 @@
         /// <summary>
         /// Represents linux platform
         /// </summary>
-        Linux = 2
+        Linux = 2,
+
+        /// <summary>
+        /// Represents HyperV platform
+        /// </summary>
+        HyperV = 4
     }
 
     /// <summary>

@@ -25,15 +25,17 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         protected async Task<App> GetAppResource(string subscriptionId, string resourceGroup, string appName, DiagnosticSiteData postBody, DateTime startTime, DateTime endTime)
         {
+            var platformType = GetPlatformType(postBody);
+
             App app = new App(subscriptionId, resourceGroup, appName)
             {
                 DefaultHostName = postBody.DefaultHostName,
                 Hostnames = postBody.HostNames != null ? postBody.HostNames.Select(p => p.Name) : new List<string>(),
                 WebSpace = postBody.WebSpace,
                 ScmSiteHostname = postBody.ScmSiteHostname,
-                Stamp = await GetHostingEnvironment(postBody.Stamp.Subscription, postBody.Stamp.ResourceGroup, postBody.Stamp != null ? postBody.Stamp.Name : string.Empty, postBody.Stamp, startTime, endTime, postBody.Kind),
+                Stamp = await GetHostingEnvironment(postBody.Stamp.Subscription, postBody.Stamp.ResourceGroup, postBody.Stamp?.Name ?? string.Empty, postBody.Stamp, startTime, endTime, platformType),
                 AppType = GetApplicationType(postBody.Kind),
-                PlatformType = (!string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Kind.ToLower().Contains("linux")) ? PlatformType.Linux : PlatformType.Windows,
+                PlatformType = platformType,
                 StackType =  StackType.All, //await this._siteService.GetApplicationStack(subscriptionId, resourceGroup, appName, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey])
                 // Not Fetching Stack Information anymore for kusto optimizations. Instead, detectors should look to leverage a gist created for the same.
                 Tags = postBody.Tags
@@ -56,7 +58,15 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 app.SubscriptionLocationPlacementId = subscriptionLocationPlacementId.FirstOrDefault();
             }
+
             return app;
+        }
+
+        private PlatformType GetPlatformType(DiagnosticSiteData postBody)
+        {
+            return postBody.IsXenon ?? false ? PlatformType.HyperV :
+                postBody.Kind != null && postBody.Kind.ToLower().Contains("linux") ? PlatformType.Linux :
+                PlatformType.Windows;
         }
 
         private AppType GetApplicationType(string kind)

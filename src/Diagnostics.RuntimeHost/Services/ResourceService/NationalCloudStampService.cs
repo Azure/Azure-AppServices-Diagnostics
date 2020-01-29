@@ -10,7 +10,7 @@ namespace Diagnostics.RuntimeHost.Services
     {
         protected override async Task<List<string>> GetTenantIdsAsync(string stamp, DateTime startTime, DateTime endTime, DataProviderContext dataProviderContext, PlatformType platformType)
         {
-            if (platformType == PlatformType.Windows)
+            if (platformType == PlatformType.Windows || platformType == PlatformType.HyperV)
             {
                 return await base.GetTenantIdsAsync(stamp, startTime, endTime, dataProviderContext, platformType);
             }

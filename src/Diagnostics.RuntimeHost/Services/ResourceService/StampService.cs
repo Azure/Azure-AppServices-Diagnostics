@@ -46,15 +46,16 @@ namespace Diagnostics.RuntimeHost.Services
 
             var windowsTenantIdsTask = GetTenantIdsAsync(stamp, startTime, endTime, dataProviderContext, PlatformType.Windows);
             var linuxTenantIdsTask = GetTenantIdsAsync(stamp, startTime, endTime, dataProviderContext, PlatformType.Linux);
+            await Task.WhenAll(windowsTenantIdsTask, linuxTenantIdsTask);
             var windowsTenantIds = await windowsTenantIdsTask;
             var linuxTenantIds = await linuxTenantIdsTask;
 
-            PlatformType type = PlatformType.Windows;
             List<string> tenantIds = windowsTenantIds.Union(linuxTenantIds).ToList();
 
+            PlatformType type = PlatformType.Windows | PlatformType.HyperV;
             if (windowsTenantIds.Any() && linuxTenantIds.Any())
             {
-                type = PlatformType.Windows | PlatformType.Linux;
+                type = PlatformType.Windows | PlatformType.HyperV | PlatformType.Linux;
             }
             else if (linuxTenantIds.Any())
             {
