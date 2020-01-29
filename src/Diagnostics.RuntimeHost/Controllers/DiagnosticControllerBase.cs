@@ -44,6 +44,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IAssemblyCacheService _assemblyCacheService;
         protected ISearchService _searchService;
         protected IRuntimeContext<TResource> _runtimeContext;
+        protected ISupportTopicService _supportTopicService;
 
         private InternalAPIHelper _internalApiHelper;
 
@@ -57,6 +58,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._stampService = (IStampService)services.GetService(typeof(IStampService));
             this._assemblyCacheService = (IAssemblyCacheService)services.GetService(typeof(IAssemblyCacheService));
             this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
+            this._supportTopicService = (ISupportTopicService)services.GetService(typeof(ISupportTopicService));
 
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
@@ -348,8 +350,17 @@ namespace Diagnostics.RuntimeHost.Controllers
             return DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata);
         }
 
-        protected async Task<IActionResult> GetInsights(TResource resource, string pesId, string supportTopicId, string startTime, string endTime, string timeGrain)
+        protected async Task<IActionResult> GetInsights(TResource resource, string pesId, string supportTopicId, string startTime, string endTime, string timeGrain, string supportTopicPath = null, string postBody = null)
         {
+            if (supportTopicPath != null)
+            {
+                SupportTopicModel supportTopicMap = await this._supportTopicService.GetSupportTopicFromString(supportTopicPath, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+                if (supportTopicMap != null)
+                {
+                    pesId = supportTopicMap.ProductId;
+                    supportTopicId = supportTopicMap.SupportTopicId;
+                }
+            }
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
             {
                 return BadRequest(errorMessage);
@@ -358,6 +369,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             supportTopicId = ParseCorrectSupportTopicId(supportTopicId);
             var supportTopic = new SupportTopic() { Id = supportTopicId, PesId = pesId };
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, true, supportTopic);
+            DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId, "AzureSupportCenter", "ASCAdditionalParameters", postBody);
 
             List<AzureSupportCenterInsight> insights = null;
             string error = null;

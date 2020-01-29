@@ -8,6 +8,8 @@ using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Authorization;
+using Newtonsoft.Json;
+using Microsoft.CSharp.RuntimeBinder;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -95,11 +97,12 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Insights)]
-        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, [FromBody] DiagnosticStampData postBody, string pesId, string supportTopicId = null, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, [FromBody] dynamic postBody, string pesId, string supportTopicId = null, string supportTopic = null, string startTime = null, string endTime = null, string timeGrain = null)
         {
-            if (postBody == null)
+            DiagnosticStampData diagnosticPostBody = JsonConvert.DeserializeObject<DiagnosticStampData>(JsonConvert.SerializeObject(postBody));
+            if (diagnosticPostBody == null)
             {
-                postBody = await GetHostingEnvironmentPostBody(hostingEnvironmentName);
+                diagnosticPostBody = await GetHostingEnvironmentPostBody(hostingEnvironmentName);
             }
 
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
@@ -107,8 +110,17 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest(errorMessage);
             }
 
-            HostingEnvironment ase = await GetHostingEnvironment(subscriptionId, resourceGroupName, hostingEnvironmentName, postBody, startTimeUtc, endTimeUtc, null);
-            return await base.GetInsights(ase, pesId, supportTopicId, startTime, endTime, timeGrain);
+            HostingEnvironment ase = await GetHostingEnvironment(subscriptionId, resourceGroupName, hostingEnvironmentName, diagnosticPostBody, startTimeUtc, endTimeUtc, null);
+            string postBodyString;
+            try
+            {
+                postBodyString = JsonConvert.SerializeObject(postBody.Parameters);
+            }
+            catch (RuntimeBinderException)
+            {
+                postBodyString = "";
+            }
+            return await base.GetInsights(ase, pesId, supportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
         }
 
         /// <summary>
