@@ -44,7 +44,7 @@ namespace Diagnostics.RuntimeHost.Services
             string query = $@"cluster('azsupport').database('AzureSupportability').ActiveSupportTopicTree
                             | where Timestamp > ago(3d)
                             | summarize by ProductId, SupportTopicId = SupportTopicL3Id, ProductName, SupportTopicL2Name, SupportTopicL3Name
-                            | where SupportTopicId != '' //and SupportTopicL2Name != '' //and SupportTopicL3Name != ''
+                            | where SupportTopicId != ''
                             | extend SupportTopicPath = strcat(ProductName, '\\', SupportTopicL2Name,'\\', SupportTopicL3Name)
                             | project ProductId, SupportTopicId, SupportTopicPath";
             return query;
