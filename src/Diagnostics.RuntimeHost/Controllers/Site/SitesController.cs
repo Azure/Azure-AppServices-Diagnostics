@@ -8,6 +8,8 @@ using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Authorization;
+using Newtonsoft.Json;
+using Microsoft.CSharp.RuntimeBinder;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -156,11 +158,12 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="timeGrain">Time grain.</param>
         /// <returns>Task for getting insights.</returns>
         [HttpPost(UriElements.Insights)]
-        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody, string pesId = null, string supportTopicId = null, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string siteName, [FromBody] dynamic postBody, string pesId = null, string supportTopicId = null, string supportTopic = null, string startTime = null, string endTime = null, string timeGrain = null)
         {
-            if (IsPostBodyMissing(postBody))
+            var diagnosticSitePostBody = JsonConvert.DeserializeObject<DiagnosticSiteData>(JsonConvert.SerializeObject(postBody));
+            if (IsPostBodyMissing(diagnosticSitePostBody))
             {
-                postBody = await GetSitePostBody(subscriptionId, resourceGroupName, siteName);
+                diagnosticSitePostBody = await GetSitePostBody(subscriptionId, resourceGroupName, siteName);
             }
 
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
@@ -168,8 +171,17 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest(errorMessage);
             }
 
-            App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
-            return await base.GetInsights(app, pesId, supportTopicId, startTime, endTime, timeGrain);
+            App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, diagnosticSitePostBody, startTimeUtc, endTimeUtc);
+            string postBodyString;
+            try
+            {
+                postBodyString = JsonConvert.SerializeObject(postBody.Parameters);
+            }
+            catch (RuntimeBinderException)
+            {
+                postBodyString = "";
+            }
+            return await base.GetInsights(app, pesId, supportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
         }
 
         /// <summary>

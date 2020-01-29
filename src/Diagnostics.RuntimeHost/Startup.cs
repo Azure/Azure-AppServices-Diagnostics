@@ -125,6 +125,7 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
             services.AddSingleton<IGistCacheService, GistCacheService>();
             services.AddSingleton<ISiteService, SiteService>();
+            services.AddSingleton<ISupportTopicService, SupportTopicService>();
             services.AddScoped(typeof(IRuntimeContext<>), typeof(RuntimeContext<>));
             services.AddSingleton<IStampService>((serviceProvider) =>
             {
