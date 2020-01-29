@@ -59,14 +59,19 @@ test:
     - !!testcommand
       name: 'Test CSharp'
       command: 'test.cmd'
-      testresults:                                                       # Sequence of entries indicating which test results files to collect.
-        - from: 'tests'
-          title: 'Unit tests'                                         # Test run title. Used by VSTS.
-          configuration: 'Debug'                                         # Optional build configuration.
-          platform: 'Debug'                                              # Optional build platform.
-          type: 'vstest'                                                 # Test engine type. Used by VSTS. Supported values are JUnit, NUnit
-          include:                                                       # Sequence of glob patterns indicating which test results file to
+      testresults:
+        - title: 'Unit tests'
+          type: 'vstest'
+          include:
            - '**\*.trx'
+      codecoverage:
+        - summary_file: 'reports\Cobertura.xml'
+          report_directory: 'reports'
+          coverage_tool: 'Cobertura'
+          from: 'reports'
+          include:
+            - '**\*.xml'
+            - '**\*.htm'
 
 
 static_analysis_options:
