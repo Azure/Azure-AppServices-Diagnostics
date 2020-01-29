@@ -329,3 +329,8 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+# Code coverage report data files
+coveragetool
+reports/
+*.cobertura.xml
