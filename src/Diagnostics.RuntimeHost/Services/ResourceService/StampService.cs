@@ -23,7 +23,7 @@ namespace Diagnostics.RuntimeHost.Services
         private ConcurrentDictionary<string, Tuple<List<string>, PlatformType>> _tenantCache;
         protected const string RoleInstanceHeartBeatTableName = "RoleInstanceHeartbeat";
         protected const string LinuxRoleInstanceHeartBeatTableName = "LinuxRoleInstanceHeartBeats";
-        
+
 
         public StampService()
         {
@@ -46,7 +46,6 @@ namespace Diagnostics.RuntimeHost.Services
 
             var windowsTenantIdsTask = GetTenantIdsAsync(stamp, startTime, endTime, dataProviderContext, PlatformType.Windows);
             var linuxTenantIdsTask = GetTenantIdsAsync(stamp, startTime, endTime, dataProviderContext, PlatformType.Linux);
-            await Task.WhenAll(windowsTenantIdsTask, linuxTenantIdsTask);
             var windowsTenantIds = await windowsTenantIdsTask;
             var linuxTenantIds = await linuxTenantIdsTask;
 
