@@ -6,6 +6,8 @@ using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Newtonsoft.Json;
+using Microsoft.CSharp.RuntimeBinder;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -50,9 +52,18 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Insights)]
-        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string domainName, [FromBody] dynamic postBody, string pesId, string supportTopicId = null, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string domainName, [FromBody] dynamic postBody, string pesId, string supportTopicId = null, string supportTopic = null, string startTime = null, string endTime = null, string timeGrain = null)
         {
-            return await base.GetInsights(GetResource(subscriptionId, resourceGroupName, domainName), pesId, supportTopicId, startTime, endTime, timeGrain);
+            string postBodyString;
+            try
+            {
+                postBodyString = JsonConvert.SerializeObject(postBody.Parameters);
+            }
+            catch (RuntimeBinderException)
+            {
+                postBodyString = "";
+            }
+            return await base.GetInsights(GetResource(subscriptionId, resourceGroupName, domainName), pesId, supportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
         }
 
         /// <summary>
