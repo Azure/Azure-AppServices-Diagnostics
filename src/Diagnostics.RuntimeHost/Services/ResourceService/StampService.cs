@@ -78,7 +78,8 @@ namespace Diagnostics.RuntimeHost.Services
             var dp = new DataProviders.DataProviders(dataProviderContext);
             var tenantIds = new List<string>();
             var kustoQuery = GetTenantIdQuery(stamp, startTime, endTime, platformType);
-            var kustoTask = dp.Kusto.ExecuteQuery(kustoQuery, stamp, operationName: platformType == PlatformType.Windows ? KustoOperations.GetTenantIdForWindows : KustoOperations.GetTenantIdForLinux);
+            var operationName = platformType == PlatformType.Linux ? KustoOperations.GetTenantIdForLinux : KustoOperations.GetTenantIdForWindowsAndXenon;
+            var kustoTask = dp.Kusto.ExecuteQuery(kustoQuery, stamp, operationName: operationName);
             tenantIds = GetTenantIdsFromTable(await kustoTask);
             return tenantIds;
         }

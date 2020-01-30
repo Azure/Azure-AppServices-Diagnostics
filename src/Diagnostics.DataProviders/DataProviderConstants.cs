@@ -48,7 +48,7 @@ namespace Diagnostics.DataProviders
 
     public class KustoOperations
     {
-        public const string GetTenantIdForWindows = "gettenantidforstamp-windows";
+        public const string GetTenantIdForWindowsAndXenon = "gettenantidforstamp-windows";
         public const string GetTenantIdForLinux = "gettenantidforstamp-linux";
         public const string GetLatestDeployment = "getlatestdeployment";
     }
