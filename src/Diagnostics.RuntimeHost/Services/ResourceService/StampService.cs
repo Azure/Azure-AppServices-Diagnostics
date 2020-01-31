@@ -51,10 +51,10 @@ namespace Diagnostics.RuntimeHost.Services
 
             List<string> tenantIds = windowsTenantIds.Union(linuxTenantIds).ToList();
 
-            PlatformType type = PlatformType.Windows | PlatformType.HyperV;
+            PlatformType type = PlatformType.Windows;
             if (windowsTenantIds.Any() && linuxTenantIds.Any())
             {
-                type = PlatformType.Windows | PlatformType.HyperV | PlatformType.Linux;
+                type = PlatformType.Windows | PlatformType.Linux;
             }
             else if (linuxTenantIds.Any())
             {
@@ -77,7 +77,7 @@ namespace Diagnostics.RuntimeHost.Services
             var dp = new DataProviders.DataProviders(dataProviderContext);
             var tenantIds = new List<string>();
             var kustoQuery = GetTenantIdQuery(stamp, startTime, endTime, platformType);
-            var operationName = platformType == PlatformType.Linux ? KustoOperations.GetTenantIdForLinux : KustoOperations.GetTenantIdForWindowsAndXenon;
+            var operationName = platformType == PlatformType.Linux ? KustoOperations.GetTenantIdForLinux : KustoOperations.GetTenantIdForWindows;
             var kustoTask = dp.Kusto.ExecuteQuery(kustoQuery, stamp, operationName: operationName);
             tenantIds = GetTenantIdsFromTable(await kustoTask);
             return tenantIds;

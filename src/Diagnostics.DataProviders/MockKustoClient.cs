@@ -32,7 +32,7 @@ namespace Diagnostics.DataProviders
             {
                 switch (operationName.ToLower())
                 {
-                    case KustoOperations.GetTenantIdForWindowsAndXenon:
+                    case KustoOperations.GetTenantIdForWindows:
                     case KustoOperations.GetTenantIdForLinux:
                         return await GetFakeTenantIdResults();
                     case KustoOperations.GetLatestDeployment:
