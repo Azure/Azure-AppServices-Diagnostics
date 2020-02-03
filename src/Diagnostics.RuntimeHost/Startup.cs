@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Win32;
 using System;
 using System.Diagnostics;
@@ -38,6 +39,8 @@ namespace Diagnostics.RuntimeHost
 
         public void ConfigureServices(IServiceCollection services)
         {
+            LoggerCallbackHandler.UseDefaultLogging = false;
+
             services.AddMvc();
 
             services.AddSingleton<IDataSourcesConfigurationService, DataSourcesConfigurationService>();
