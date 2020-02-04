@@ -28,7 +28,7 @@
         public AppFilter(bool internalOnly = true) : base(ResourceType.App, internalOnly)
         {
             this.AppType = AppType.All;
-            this.PlatformType = PlatformType.Windows | PlatformType.Linux;
+            this.PlatformType = PlatformType.Windows | PlatformType.Linux | PlatformType.HyperV;
             this.StackType = StackType.All;
             this.StampType = StampType.All;
         }
