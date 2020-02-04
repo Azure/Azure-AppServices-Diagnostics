@@ -52,7 +52,12 @@ namespace Diagnostics.DataProviders
         {
             return GetRuntimeSiteSlotMap(stampName, siteName);
         }
-        
+
+        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(OperationContext<App> cxt, string stampName = null, string siteName = null, string slotName = null, DateTime? endTime = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public override Task<DataTable> ExecuteSqlQueryAsync(string cloudServiceName, string query)
         {
             throw new NotImplementedException();

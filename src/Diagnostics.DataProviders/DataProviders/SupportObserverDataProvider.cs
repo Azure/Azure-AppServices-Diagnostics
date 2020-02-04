@@ -71,15 +71,28 @@ namespace Diagnostics.DataProviders
         {
             return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName);
         }
-        
-        private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName, string slotName)
+
+        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(OperationContext<App> cxt, string stampName = null, string siteName = null, string slotName = null, DateTime? endTime = null)
+        {
+            if (cxt?.Resource?.Stamp == null)
+                throw new ArgumentNullException(nameof(cxt));
+
+            stampName = string.IsNullOrWhiteSpace(stampName) ? cxt.Resource.Stamp.InternalName : stampName;
+            siteName = string.IsNullOrWhiteSpace(siteName) ? cxt.Resource.Name : siteName;
+            endTime = endTime == null ? DateTime.SpecifyKind(DateTime.Parse(cxt.EndTime), DateTimeKind.Utc) : endTime;
+
+            return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName, endTime);
+        }
+
+        private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName, string slotName, DateTime? endTime = null)
         {
             if (string.IsNullOrWhiteSpace(stampName))
                 throw new ArgumentNullException(nameof(stampName));
             if (string.IsNullOrWhiteSpace(siteName))
                 throw new ArgumentNullException(nameof(siteName));
 
-            var endTimeUtcString = $"{DataProviderContext.QueryEndTime.ToUniversalTime():O}";
+            endTime = endTime == null ? DataProviderContext.QueryEndTime : endTime;
+            var endTimeUtcString = $"{endTime.Value.ToUniversalTime():O}";
             var route = $"stamps/{stampName}/sites/{siteName}/runtimesiteslotmap?endTime={endTimeUtcString}";
 
             var result = await GetObserverResource(route);

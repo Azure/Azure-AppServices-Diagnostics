@@ -47,6 +47,8 @@ namespace Diagnostics.DataProviders
 
         Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName);
 
+        Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(OperationContext<App> cxt, string stampName = null, string siteName = null, string slotName = null, DateTime? endTime = null);
+
         Task<dynamic> GetResource(string wawsObserverUrl);
 
         Task<DataTable> ExecuteSqlQueryAsync(string cloudServiceName, string query);
