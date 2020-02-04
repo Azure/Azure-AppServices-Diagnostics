@@ -26,17 +26,22 @@ namespace Diagnostics.DataProviders
 			return MakeDependencyCall(DataProvider.GetResource(wawsObserverUrl));
 		}
 
-		public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
+		public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, DateTime? endTime = null)
 		{
-			return MakeDependencyCall(DataProvider.GetRuntimeSiteSlotMap(stampName, siteName));
+			return MakeDependencyCall(DataProvider.GetRuntimeSiteSlotMap(stampName, siteName, endTime));
 		}
 
-		public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName)
+		public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName, DateTime? endTime = null)
 		{
-			return MakeDependencyCall(DataProvider.GetRuntimeSiteSlotMap(stampName, siteName, slotName));
+			return MakeDependencyCall(DataProvider.GetRuntimeSiteSlotMap(stampName, siteName, slotName, endTime));
 		}
 
-		public Task<dynamic> GetServerFarmsInResourceGroupAsync(string subscriptionName, string resourceGroupName)
+        public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(OperationContext<App> cxt, string stampName = "", string siteName = "", string slotName = "", DateTime? endTime = null)
+        {
+            return MakeDependencyCall(DataProvider.GetRuntimeSiteSlotMap(cxt, stampName, siteName, slotName, endTime));
+        }
+
+        public Task<dynamic> GetServerFarmsInResourceGroupAsync(string subscriptionName, string resourceGroupName)
 		{
 			return MakeDependencyCall(DataProvider.GetServerFarmsInResourceGroupAsync(subscriptionName, resourceGroupName));
 		}

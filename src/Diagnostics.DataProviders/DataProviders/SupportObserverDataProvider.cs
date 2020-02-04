@@ -62,24 +62,40 @@ namespace Diagnostics.DataProviders
             return JsonConvert.DeserializeObject(result);
         }
 
-        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
+        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, DateTime? endTime = null)
         {
-            return GetRuntimeSiteSlotMap(stampName, siteName, null);
+            return GetRuntimeSiteSlotMap(stampName, siteName, null, endTime);
         }
 
-        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName = null)
+        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName = null, DateTime? endTime = null)
         {
-            return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName);
+            return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName, endTime);
         }
 
-        private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName, string slotName)
+        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(OperationContext<App> cxt, string stampName = "", string siteName = "", string slotName = "", DateTime? endTime = null)
+        {
+            if (cxt?.Resource?.Stamp == null)
+                throw new ArgumentNullException(nameof(cxt));
+
+            stampName = string.IsNullOrWhiteSpace(stampName) ? cxt.Resource.Stamp.InternalName : stampName;
+            siteName = string.IsNullOrWhiteSpace(siteName) ? cxt.Resource.Name : siteName;
+            endTime = endTime == null ? DateTime.SpecifyKind(DateTime.Parse(cxt.EndTime), DateTimeKind.Utc) : endTime;
+
+            return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName, endTime);
+        }
+
+        private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName, string slotName, DateTime? endTime = null)
         {
             if (string.IsNullOrWhiteSpace(stampName))
                 throw new ArgumentNullException(nameof(stampName));
             if (string.IsNullOrWhiteSpace(siteName))
                 throw new ArgumentNullException(nameof(siteName));
 
-            var result = await GetObserverResource($"stamps/{stampName}/sites/{siteName}/runtimesiteslotmap");
+            var route = $"stamps/{stampName}/sites/{siteName}/runtimesiteslotmap";
+            if (endTime != null)
+                route = $"{route}?endTime={endTime}";
+
+            var result = await GetObserverResource(route);
             var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);
             var slotTimeRange = new Dictionary<string, List<RuntimeSitenameTimeRange>>(slotTimeRangeCaseSensitiveDictionary, StringComparer.CurrentCultureIgnoreCase);
 
@@ -91,15 +107,15 @@ namespace Diagnostics.DataProviders
                 );
                 if (missingHistoricalSwapData.Any())
                 {
-                    var startTime = missingHistoricalSwapData.Min(x => x.StartTime);
-                    var endTime = missingHistoricalSwapData.Max(x => x.EndTime);
+                    var slotStartTime = missingHistoricalSwapData.Min(x => x.StartTime);
+                    var slotEndTime = missingHistoricalSwapData.Max(x => x.EndTime);
 
                     if (!string.IsNullOrWhiteSpace(slotName) && slotMap.Key.Equals(slotName, StringComparison.CurrentCultureIgnoreCase) && missingHistoricalSwapData.Any(timeRange => timeRange.StartTime >= DataProviderContext.QueryStartTime) && missingHistoricalSwapData.Any(timeRange => timeRange.EndTime <= DataProviderContext.QueryEndTime))
                     {
                         Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. Swap historical data was purged for web app {siteName}({slotName})");
                     }
 
-                    Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. No swap history data for web app {siteName}({slotMap.Key}) from {startTime} to {endTime}");
+                    Logger.LogDataProviderMessage(RequestId, "ObserverDataProvider", $"Warning. No swap history data for web app {siteName}({slotMap.Key}) from {slotStartTime} to {slotEndTime}");
                 }
             }
 
@@ -234,7 +250,7 @@ namespace Diagnostics.DataProviders
             var stampNameObjects = objects.Where(x => x.ContainsKey("StampName") && !string.IsNullOrWhiteSpace(x["StampName"].ToString()));
             if (stampNameObjects.Any())
                 return stampNameObjects.First()["StampName"].ToString();
-            
+
             throw new Exception($"Admin Sites response did not contain stamp name for site {siteName}. Admin Sites response: {siteObjects}");
         }
 
