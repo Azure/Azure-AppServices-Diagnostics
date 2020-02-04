@@ -62,41 +62,25 @@ namespace Diagnostics.DataProviders
             return JsonConvert.DeserializeObject(result);
         }
 
-        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, DateTime? endTime = null)
+        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
         {
-            return GetRuntimeSiteSlotMap(stampName, siteName, null, endTime);
+            return GetRuntimeSiteSlotMap(stampName, siteName, null);
         }
 
-        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName = null, DateTime? endTime = null)
+        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName = null)
         {
-            return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName, endTime);
+            return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName);
         }
-
-        public override async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(OperationContext<App> cxt, string stampName = "", string siteName = "", string slotName = "", DateTime? endTime = null)
-        {
-            if (cxt?.Resource?.Stamp == null)
-                throw new ArgumentNullException(nameof(cxt));
-
-            stampName = string.IsNullOrWhiteSpace(stampName) ? cxt.Resource.Stamp.InternalName : stampName;
-            siteName = string.IsNullOrWhiteSpace(siteName) ? cxt.Resource.Name : siteName;
-            endTime = endTime == null ? DateTime.SpecifyKind(DateTime.Parse(cxt.EndTime), DateTimeKind.Utc) : endTime;
-
-            return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName, endTime);
-        }
-
-        private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName, string slotName, DateTime? endTime = null)
+        
+        private async Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMapInternal(string stampName, string siteName, string slotName)
         {
             if (string.IsNullOrWhiteSpace(stampName))
                 throw new ArgumentNullException(nameof(stampName));
             if (string.IsNullOrWhiteSpace(siteName))
                 throw new ArgumentNullException(nameof(siteName));
 
-            var route = $"stamps/{stampName}/sites/{siteName}/runtimesiteslotmap";
-            if (endTime != null)
-            {
-                var endTimeUtcString = $"{endTime.Value.ToUniversalTime():O}";
-                route = $"{route}?endTime={endTimeUtcString}";
-            }
+            var endTimeUtcString = $"{DataProviderContext.QueryEndTime.ToUniversalTime():O}";
+            var route = $"stamps/{stampName}/sites/{siteName}/runtimesiteslotmap?endTime={endTimeUtcString}";
 
             var result = await GetObserverResource(route);
             var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);

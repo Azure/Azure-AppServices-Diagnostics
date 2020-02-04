@@ -20,7 +20,7 @@ namespace Diagnostics.DataProviders
         {
         }
 
-        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, DateTime? endTime = null)
+        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName)
         {
             if (string.IsNullOrWhiteSpace(siteName))
             {
@@ -48,16 +48,11 @@ namespace Diagnostics.DataProviders
             return Task.FromResult(mock);
         }
 
-        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName, DateTime? endTime = null)
+        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName)
         {
-            return GetRuntimeSiteSlotMap(stampName, siteName, endTime);
+            return GetRuntimeSiteSlotMap(stampName, siteName);
         }
-
-        public override Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(OperationContext<App> cxt, string stampName = "", string siteName = "", string slotName = "", DateTime? endTime = null)
-        {
-            return GetRuntimeSiteSlotMap(cxt.Resource.Stamp.InternalName, cxt.Resource.Name, DateTime.SpecifyKind(DateTime.Parse(cxt.EndTime), DateTimeKind.Utc));
-        }
-
+        
         public override Task<DataTable> ExecuteSqlQueryAsync(string cloudServiceName, string query)
         {
             throw new NotImplementedException();

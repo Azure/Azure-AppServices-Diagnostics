@@ -43,11 +43,9 @@ namespace Diagnostics.DataProviders
 
         Task<dynamic> GetSitePostBody(string stampName, string siteName);
 
-        Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, DateTime? endTime = null);
+        Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
 
-        Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName, DateTime? endTime = null);
-
-        Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(OperationContext<App> cxt, string stampName = "", string siteName = "", string slotName = "", DateTime? endTime = null);
+        Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName);
 
         Task<dynamic> GetResource(string wawsObserverUrl);
 
