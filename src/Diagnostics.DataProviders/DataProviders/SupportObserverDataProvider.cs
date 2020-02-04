@@ -93,7 +93,7 @@ namespace Diagnostics.DataProviders
 
             var route = $"stamps/{stampName}/sites/{siteName}/runtimesiteslotmap";
             if (endTime != null)
-                route = $"{route}?endTime={endTime}";
+                route = $"{route}?endTime={endTime.Value.ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'")}";
 
             var result = await GetObserverResource(route);
             var slotTimeRangeCaseSensitiveDictionary = JsonConvert.DeserializeObject<Dictionary<string, List<RuntimeSitenameTimeRange>>>(result);
