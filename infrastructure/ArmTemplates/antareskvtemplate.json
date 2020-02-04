@@ -370,9 +370,19 @@
                   "subStatus": 0,
                   "count": 100,
                   "timeInterval": "00:10:00"
-                }
+                },
+                {
+                  "status": 502,
+                  "subStatus": 0,
+                  "count": 100,
+                  "timeInterval": "00:10:00"
+                }              
               ],
-              "slowRequests": null
+              "slowRequests": {
+                "timeTaken": "00:01:30",
+                "count": 100,
+                "timeInterval": "00:10:00"
+              }
             },
             "actions": {
               "actionType": "CustomAction",
