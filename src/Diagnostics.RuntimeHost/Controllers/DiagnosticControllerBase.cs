@@ -368,7 +368,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             supportTopicId = ParseCorrectSupportTopicId(supportTopicId);
             var supportTopic = new SupportTopic() { Id = supportTopicId, PesId = pesId };
-            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, true, supportTopic);
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, true, supportTopic, null, postBody);
             DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId, "AzureSupportCenter", "ASCAdditionalParameters", postBody);
 
             List<AzureSupportCenterInsight> insights = null;
@@ -547,7 +547,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return systemContext;
         }
 
-        private RuntimeContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, SupportTopic supportTopic = null, Form Form = null)
+        private RuntimeContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, SupportTopic supportTopic = null, Form Form = null, string ascParams = null)
         {
             this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
             this.Request.Headers.TryGetValue(HeaderConstants.InternalClientHeader, out StringValues internalCallHeader);
@@ -575,7 +575,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 requestIds.FirstOrDefault(),
                 supportTopic: supportTopic,
                 form: Form,
-                cloudDomain: _runtimeContext.CloudDomain
+                cloudDomain: _runtimeContext.CloudDomain,
+                ascParams: ascParams
             );
 
             _runtimeContext.ClientIsInternal = isInternalClient || forceInternal;
