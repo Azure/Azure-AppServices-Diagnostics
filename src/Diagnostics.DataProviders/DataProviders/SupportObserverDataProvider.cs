@@ -79,7 +79,7 @@ namespace Diagnostics.DataProviders
 
             stampName = string.IsNullOrWhiteSpace(stampName) ? cxt.Resource.Stamp.InternalName : stampName;
             siteName = string.IsNullOrWhiteSpace(siteName) ? cxt.Resource.Name : siteName;
-            endTime = endTime == null ? DateTime.SpecifyKind(DateTime.Parse(cxt.EndTime), DateTimeKind.Utc) : endTime;
+            endTime = endTime == null ? DataProviderContext.QueryEndTime : endTime;
 
             return await GetRuntimeSiteSlotMapInternal(stampName, siteName, slotName, endTime);
         }
