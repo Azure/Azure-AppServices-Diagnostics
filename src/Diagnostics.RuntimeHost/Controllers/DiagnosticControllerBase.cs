@@ -450,7 +450,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         // Purposefully leaving this method in Base class. This method is shared between two resources right now - HostingEnvironment and WebApp
-        protected async Task<HostingEnvironment> GetHostingEnvironment(string subscriptionId, string resourceGroup, string name, DiagnosticStampData stampPostBody, DateTime startTime, DateTime endTime, string kind)
+        protected async Task<HostingEnvironment> GetHostingEnvironment(string subscriptionId, string resourceGroup, string name, DiagnosticStampData stampPostBody, DateTime startTime, DateTime endTime, PlatformType? platformType = null)
         {
             if (stampPostBody == null)
             {
@@ -499,7 +499,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             else
             {
-                hostingEnv.PlatformType = (!string.IsNullOrWhiteSpace(kind) && kind.ToLower().Contains("linux")) ? PlatformType.Linux : PlatformType.Windows;
+                hostingEnv.PlatformType = platformType ?? PlatformType.Windows;
             }
             
             return hostingEnv;

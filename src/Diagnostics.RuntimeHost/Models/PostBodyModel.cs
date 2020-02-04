@@ -12,6 +12,7 @@ namespace Diagnostics.RuntimeHost.Models
         public string NamespaceDescriptor { get; set; }
         public bool IsDefaultContainer { get; set; }
         public bool? IsLinux { get; set; }
+        public bool? IsXenon { get; set; }
         public string DefaultHostName { get; set; }
         public string ScmSiteHostname { get; set; }
         public DateTime? ModifiedTimeUtc { get; set; }

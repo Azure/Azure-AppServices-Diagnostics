@@ -23,7 +23,7 @@ namespace Diagnostics.RuntimeHost.Services
         private ConcurrentDictionary<string, Tuple<List<string>, PlatformType>> _tenantCache;
         protected const string RoleInstanceHeartBeatTableName = "RoleInstanceHeartbeat";
         protected const string LinuxRoleInstanceHeartBeatTableName = "LinuxRoleInstanceHeartBeats";
-        
+
 
         public StampService()
         {
@@ -49,9 +49,9 @@ namespace Diagnostics.RuntimeHost.Services
             var windowsTenantIds = await windowsTenantIdsTask;
             var linuxTenantIds = await linuxTenantIdsTask;
 
-            PlatformType type = PlatformType.Windows;
             List<string> tenantIds = windowsTenantIds.Union(linuxTenantIds).ToList();
 
+            PlatformType type = PlatformType.Windows;
             if (windowsTenantIds.Any() && linuxTenantIds.Any())
             {
                 type = PlatformType.Windows | PlatformType.Linux;
@@ -77,7 +77,8 @@ namespace Diagnostics.RuntimeHost.Services
             var dp = new DataProviders.DataProviders(dataProviderContext);
             var tenantIds = new List<string>();
             var kustoQuery = GetTenantIdQuery(stamp, startTime, endTime, platformType);
-            var kustoTask = dp.Kusto.ExecuteQuery(kustoQuery, stamp, operationName: platformType == PlatformType.Windows ? KustoOperations.GetTenantIdForWindows : KustoOperations.GetTenantIdForLinux);
+            var operationName = platformType == PlatformType.Linux ? KustoOperations.GetTenantIdForLinux : KustoOperations.GetTenantIdForWindows;
+            var kustoTask = dp.Kusto.ExecuteQuery(kustoQuery, stamp, operationName: operationName);
             tenantIds = GetTenantIdsFromTable(await kustoTask);
             return tenantIds;
         }
