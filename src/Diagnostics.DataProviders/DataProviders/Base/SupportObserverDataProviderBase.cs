@@ -119,7 +119,7 @@ namespace Diagnostics.DataProviders
                         isHealthy = false;
                         var responseContent = await httpResult.Content.ReadAsStringAsync();
 
-                        if (string.IsNullOrWhiteSpace(responseContent))
+                        if (!string.IsNullOrWhiteSpace(responseContent))
                         {
                             result.Add(item.Key + " HTTP Content", responseContent);
                         }
