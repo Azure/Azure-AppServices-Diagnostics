@@ -117,6 +117,12 @@ namespace Diagnostics.DataProviders
                     if (!httpResult.IsSuccessStatusCode)
                     {
                         isHealthy = false;
+                        var responseContent = await httpResult.Content.ReadAsStringAsync();
+
+                        if (string.IsNullOrWhiteSpace(responseContent))
+                        {
+                            result.Add(item.Key + " HTTP Content", responseContent);
+                        }
                     }
                 }
 
