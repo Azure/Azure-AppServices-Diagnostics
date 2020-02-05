@@ -100,7 +100,7 @@ namespace Diagnostics.DataProviders
             return await _kustoHeartBeatService.GetClusterNameFromStamp(stampName);
         }
 
-        public async override Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+        public async override Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken))
         {
             DataTable response;
             Exception kustoException = null;

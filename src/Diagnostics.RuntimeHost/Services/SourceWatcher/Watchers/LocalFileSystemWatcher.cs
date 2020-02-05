@@ -51,7 +51,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             throw new NotImplementedException("Local Source Watcher Mode right now doesnt support live detector deployment.");
         }
 
-        public override Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+        public override Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken))
         {
             return null;
         }

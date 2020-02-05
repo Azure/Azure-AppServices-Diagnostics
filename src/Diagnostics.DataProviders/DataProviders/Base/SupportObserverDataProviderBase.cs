@@ -82,7 +82,7 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        public override async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+        public override async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken))
         {
             Dictionary<string, Uri> tests;
             Dictionary<string, Task<HttpResponseMessage>> testResponses;

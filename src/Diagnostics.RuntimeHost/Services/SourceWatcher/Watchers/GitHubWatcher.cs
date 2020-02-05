@@ -109,7 +109,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             await _githubClient.CreateOrUpdateFiles(pkg.GetCommitContents(), pkg.GetCommitMessage());
         }
 
-        public override async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+        public override async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken))
         {
             HttpResponseMessage response = null;
             Exception healthCheckException = null;

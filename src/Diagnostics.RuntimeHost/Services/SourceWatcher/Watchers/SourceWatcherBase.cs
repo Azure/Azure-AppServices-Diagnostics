@@ -28,7 +28,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         public abstract Task CreateOrUpdatePackage(Package pkg);
 
-        public abstract Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default);
+        public abstract Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken));
 
         protected SourceWatcherBase(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, string eventSource)
         {
