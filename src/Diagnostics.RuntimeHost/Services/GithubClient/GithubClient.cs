@@ -228,6 +228,7 @@ namespace Diagnostics.RuntimeHost.Services
                 Timeout = TimeSpan.FromSeconds(30)
             };
 
+            _httpClient.DefaultRequestHeaders.Add("Authorization", $@"token {_accessToken}");
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonContentType));
             _httpClient.DefaultRequestHeaders.Add(UserAgentHeaderName, _userName);
         }
@@ -244,7 +245,6 @@ namespace Diagnostics.RuntimeHost.Services
         {
             var uriBuilder = new UriBuilder(url);
             var queryParams = HttpUtility.ParseQueryString(uriBuilder.Query);
-            queryParams.Add("access_token", _accessToken);
             uriBuilder.Query = queryParams.ToString();
             return uriBuilder.ToString();
         }
