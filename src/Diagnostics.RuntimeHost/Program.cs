@@ -42,13 +42,13 @@ namespace Diagnostics.RuntimeHost
             return WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((context, config) =>
                 {
-                    var (keyVaultUri, keyVaultClient) = GetKeyVaultSettings(context, config);
+                    //var (keyVaultUri, keyVaultClient) = GetKeyVaultSettings(context, config);
 
                     config
-                        .AddAzureKeyVault(
+                        /*.AddAzureKeyVault(
                             keyVaultUri,
                             keyVaultClient,
-                            new DefaultKeyVaultSecretManager())
+                            new DefaultKeyVaultSecretManager())*/
                         .AddEnvironmentVariables()
                         .AddCommandLine(args)
                         .Build();
@@ -57,7 +57,7 @@ namespace Diagnostics.RuntimeHost
                 .Build();
         }
 
-        private static Tuple<string, KeyVaultClient> GetKeyVaultSettings(WebHostBuilderContext context, IConfigurationBuilder config)
+        /*private static Tuple<string, KeyVaultClient> GetKeyVaultSettings(WebHostBuilderContext context, IConfigurationBuilder config)
         {
             var builtConfig = config.Build();
             var azureServiceTokenProvider = new AzureServiceTokenProvider(azureAdInstance: builtConfig["Secrets:AzureAdInstance"]);
@@ -67,6 +67,6 @@ namespace Diagnostics.RuntimeHost
 
             string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(context.HostingEnvironment.EnvironmentName);
             return new Tuple<string, KeyVaultClient>(builtConfig[keyVaultConfig], keyVaultClient);
-        }
+        }*/
     }
 }
