@@ -6,11 +6,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Diagnostics.RuntimeHost.Models;
+using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace Diagnostics.RuntimeHost.Controllers.Configuration
 {
@@ -19,19 +22,31 @@ namespace Diagnostics.RuntimeHost.Controllers.Configuration
     [Route(UriElements.ArmResource + "/" + UriElements.KustoClusterMappings)]
     public class KustoClusterMappingsController : Controller
     {
-        public KustoClusterMappingsController()
-        {
+        private ISourceWatcherService _sourceWatcherService;
 
+        public KustoClusterMappingsController(ISourceWatcherService sourceWatcherService)
+        {
+            _sourceWatcherService = sourceWatcherService;
         }
 
         [HttpPost]
-        public IActionResult AddOrUpdateMapping(string subscriptionId, string resourceGroupName, string provider, string resourceTypeName, string resourceName, [FromBody]TablePostBody kustoMappings)
+        public async Task<IActionResult> AddOrUpdateMapping(string provider, [FromBody]TablePostBody kustoMappings)
         {
-            throw new NotImplementedException();
+            var gitHubPackage = new GithubPackage(GetGitHubId(provider), "kustoClusterMappings", "json", JsonConvert.SerializeObject(kustoMappings));
+
+            try
+            {
+                await _sourceWatcherService.Watcher.CreateOrUpdatePackage(gitHubPackage);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode((int)HttpStatusCode.InternalServerError, ex);
+            }
         }
 
-        [HttpGet(UriElements.UniqueResourceId)]
-        public Task<IActionResult> GetMapping(string subscriptionId, string resourceGroupName, string provider, string resourceTypeName, string resourceName, string id)
+        [HttpGet]
+        public Task<IActionResult> GetMappings(string provider)
         {
             throw new NotImplementedException();
         }
@@ -40,6 +55,11 @@ namespace Diagnostics.RuntimeHost.Controllers.Configuration
         public Task<IActionResult> DeleteMapping(string subscriptionId, string resourceGroupName, string provider, string resourceTypeName, string resourceName, string id)
         {
             throw new NotImplementedException();
+        }
+
+        private string GetGitHubId(string provider)
+        {
+            return $"{provider.Replace(".", string.Empty)}Configuration";
         }
     }
 }
