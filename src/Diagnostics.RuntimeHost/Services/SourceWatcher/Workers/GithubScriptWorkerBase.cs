@@ -12,24 +12,30 @@ using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Newtonsoft.Json.Converters;
+using System.Collections;
+using System.Collections.Generic;
+using Newtonsoft.Json;
+using System.Security.Cryptography;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 {
     /// <summary>
     /// Github worker base class.
     /// </summary>
-    public abstract class GithubWorkerBase : IGithubWorker
+    public abstract class GithubScriptWorkerBase : IGithubWorker
     {
         /// <summary>
         /// Worker name.
         /// </summary>
         public abstract string Name { get; }
-
+        private readonly string _workerIdFileName = "workerId.txt";
         private readonly bool _loadOnlyPublicDetectors;
+        private IGithubClient _githubClient;
 
-        public GithubWorkerBase(bool loadOnlyPublicDetectors)
+        public GithubScriptWorkerBase(bool loadOnlyPublicDetectors, IGithubClient githubClient)
         {
             _loadOnlyPublicDetectors = loadOnlyPublicDetectors;
+            _githubClient = githubClient;
         }
 
         private static Regex regexPublicDetectors = new Regex(@"InternalOnly\s*=\s*false",RegexOptions.IgnoreCase);
@@ -101,6 +107,65 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
             catch (Exception ex)
             {
                 LogException(ex.Message, ex);
+            }
+        }
+
+
+        public async Task CreateOrUpdateCacheAsync(IEnumerable<GithubEntry> githubEntries, DirectoryInfo artifactsDestination, string lastModifiedMarker)
+        {
+            var assemblyName = Guid.NewGuid().ToString();
+            var csxFilePath = string.Empty;
+            var confFilePath = string.Empty;
+            var metadataFilePath = string.Empty;
+            var expectedFiles = new string[] { "csx", "package.json", "metadata.json" };
+
+            if (!githubEntries.Any(x => expectedFiles.Any(y => x.Name.Contains(y, StringComparison.CurrentCultureIgnoreCase))))
+            {
+                return;
+            }
+
+            foreach (GithubEntry githubFile in githubEntries)
+            {
+                var fileExtension = githubFile.Name.Split(new char[] { '.' }).LastOrDefault();
+
+                var downloadFilePath = Path.Combine(artifactsDestination.FullName, githubFile.Name.ToLower());
+
+                if (fileExtension.Equals("csx", StringComparison.OrdinalIgnoreCase))
+                {
+                    csxFilePath = downloadFilePath;
+                }
+                else if (githubFile.Name.Equals("package.json", StringComparison.OrdinalIgnoreCase))
+                {
+                    confFilePath = downloadFilePath;
+                }
+                else if (githubFile.Name.Equals("metadata.json", StringComparison.OrdinalIgnoreCase))
+                {
+                    metadataFilePath = downloadFilePath;
+                }
+                else
+                {
+                    // Use Guids for Assembly and PDB Names to ensure uniqueness.
+                    downloadFilePath = Path.Combine(artifactsDestination.FullName, $"{assemblyName}.{fileExtension.ToLower()}");
+                }
+
+                LogMessage($"Begin downloading File : {githubFile.Name.ToLower()} and saving it as : {downloadFilePath}");
+                await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
+            }
+
+            var scriptText = await FileHelper.GetFileContentAsync(csxFilePath);
+            var assemblyPath = Path.Combine(artifactsDestination.FullName, $"{assemblyName}.dll");
+
+            var configFile = await FileHelper.GetFileContentAsync(confFilePath);
+            var config = JsonConvert.DeserializeObject<PackageConfig>(configFile);
+
+            var metadata = await FileHelper.GetFileContentAsync(metadataFilePath);
+
+            var workerId = string.Equals(config?.Type, "gist", StringComparison.OrdinalIgnoreCase) ? "GistWorker" : "DetectorWorker";
+            await FileHelper.WriteToFileAsync(artifactsDestination.FullName, _workerIdFileName, workerId);
+
+            if (Enum.TryParse(config?.Type, true, out EntityType result) && result.Equals(this.GetEntityType()))
+            {
+                await this.CreateOrUpdateCacheAsync(artifactsDestination, lastModifiedMarker, scriptText, assemblyPath, metadata);
             }
         }
 
