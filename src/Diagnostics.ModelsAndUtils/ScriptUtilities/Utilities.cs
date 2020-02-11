@@ -116,16 +116,31 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 
             if (nonWildCardHostNames.Any())
             {
+                nonWildCardHostNames = AddPortNumberToHostNames(nonWildCardHostNames);
                 hostNameQuery = $"{hostNameColumn} in~ ({string.Join(",", nonWildCardHostNames.Select(h => $@"""{h}"""))})";
             }
 
             if (wildCardHostNames.Any())
             {
-                string wildCardQuery = string.Join("or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w.Replace("*.", ".")}"""));
+                wildCardHostNames = AddPortNumberToHostNames(wildCardHostNames);
+                string wildCardQuery = string.Join(" or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w.Replace("*.", ".")}"""));
                 hostNameQuery = $"{hostNameQuery} or {wildCardQuery}";
             }
 
             return hostNameQuery;
+        }
+
+        private static IEnumerable<string> AddPortNumberToHostNames(IEnumerable<string> hostnames)
+        {
+            var hostNamesWithPort = new List<string>();
+            foreach (var host in hostnames)
+            {
+                hostNamesWithPort.Add(host);
+                hostNamesWithPort.Add(host + ":80");
+                hostNamesWithPort.Add(host + ":443");
+            }
+
+            return hostNamesWithPort;
         }
 
         /// <summary>
