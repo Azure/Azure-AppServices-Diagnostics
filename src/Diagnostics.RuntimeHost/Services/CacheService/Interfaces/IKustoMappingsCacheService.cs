@@ -7,5 +7,5 @@ using Diagnostics.RuntimeHost.Models;
 
 namespace Diagnostics.RuntimeHost.Services.CacheService
 {
-    public interface IKustoMappingsCacheService : ICache<string, Table> { }
+    public interface IKustoMappingsCacheService : ICache<string, List<Dictionary<string, string>>> { }
 }

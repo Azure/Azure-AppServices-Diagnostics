@@ -60,7 +60,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// <param name="gistCache">Gist cache.</param>
         /// <param name="githubClient">Github client.</param>
         public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, IKustoMappingsCacheService kustoMappingsCache, IGithubClient githubClient)
-            : base(env, configuration, invokerCache, gistCache, "GithubWatcher")
+            : base(env, configuration, invokerCache, gistCache, kustoMappingsCache,  "GithubWatcher")
         {
             _githubClient = githubClient;
 
@@ -313,6 +313,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     {
                         // No action.
                     }
+
+                    _kustoMappingsCache.TryRemoveValue(subDir.Name, out var throwAway);
 
                     await FileHelper.WriteToFileAsync(subDir.FullName, _deleteMarkerName, "true");
                 }

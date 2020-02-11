@@ -32,13 +32,14 @@ namespace Diagnostics.RuntimeHost.Controllers.Configuration
             _kustoMappingsCache = kustoMappingsCache;
         }
 
-        [HttpPut]
-        public async Task<IActionResult> AddOrUpdateMapping(string provider, [FromBody]Table kustoMappings)
+        [HttpPost]
+        public async Task<IActionResult> AddOrUpdateMapping(string provider, [FromBody]List<Dictionary<string, string>> kustoMappings)
         {
             var cacheId = GetGitHubId(provider);
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
 
-            if (_kustoMappingsCache.TryGetValue(cacheId, out Table cacheValue) && cacheValue.Equals(kustoMappings))
+            //TODO the equals condition always fail due to the strings in the data structures are never compared
+            if (_kustoMappingsCache.TryGetValue(cacheId, out List<Dictionary<string, string>> cacheValue) && cacheValue.Equals(kustoMappings))
             {
                 return Ok();
             }
@@ -62,7 +63,7 @@ namespace Diagnostics.RuntimeHost.Controllers.Configuration
             var cacheId = GetGitHubId(provider);
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
             
-            if (_kustoMappingsCache.TryGetValue(cacheId, out Table value))
+            if (_kustoMappingsCache.TryGetValue(cacheId, out List<Dictionary<string, string>> value))
             {
                 return Ok(value);
             }

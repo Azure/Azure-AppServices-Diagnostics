@@ -34,10 +34,18 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 
             if (IsWorkerApplicable(subDir) || workerId.Equals(Name, StringComparison.CurrentCultureIgnoreCase))
             {
-                var kustoMappingsStringContent = await FileHelper.GetFileContentAsync(subDir.FullName, $"{_kustoClusterFileName}.json");
-                var kustoMappings = (Table)JsonConvert.DeserializeObject(kustoMappingsStringContent, typeof(Table));
+                // Check if delete marker file exists.
+                var deleteMarkerFile = new FileInfo(Path.Combine(subDir.FullName, _deleteMarkerName));
+                if (deleteMarkerFile.Exists)
+                {
+                    _cacheService.TryRemoveValue(subDir.Name, out var throwAway);
+                    return;
+                }
 
-                if (!_cacheService.ContainsKey(subDir.Name) || (_cacheService.TryGetValue(subDir.Name, out Table value) && !value.Equals(kustoMappings)))
+                var kustoMappingsStringContent = await FileHelper.GetFileContentAsync(subDir.FullName, $"{_kustoClusterFileName}.json");
+                var kustoMappings = (List<Dictionary<string, string>>)JsonConvert.DeserializeObject(kustoMappingsStringContent, typeof(List<Dictionary<string, string>>));
+
+                if (!_cacheService.ContainsKey(subDir.Name) || (_cacheService.TryGetValue(subDir.Name, out List<Dictionary<string, string>> value) && !value.Equals(kustoMappings)))
                 {
                     _cacheService.AddOrUpdate(subDir.Name, kustoMappings);
                 }
@@ -60,10 +68,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                     LogMessage($"Begin downloading File : {githubFile.Name.ToLower()} and saving it as : {downloadFilePath}");
                     await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
 
-                    _cacheService.TryRemoveValue(githubFile.Url, out Table throwAway);
+                    _cacheService.TryRemoveValue(artifactsDestination.Name, out List<Dictionary<string, string>> throwAway);
 
                     var kustoMappingsStringContent = await FileHelper.GetFileContentAsync(artifactsDestination.FullName, githubFile.Name);
-                    var kustoMappings = (Table) JsonConvert.DeserializeObject(kustoMappingsStringContent, typeof(Table));
+                    var kustoMappings = (List<Dictionary<string, string>>) JsonConvert.DeserializeObject(kustoMappingsStringContent, typeof(List<Dictionary<string, string>>));
 
                     _cacheService.AddOrUpdate(artifactsDestination.Name, kustoMappings);
                 }
