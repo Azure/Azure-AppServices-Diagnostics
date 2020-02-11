@@ -123,7 +123,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
             if (wildCardHostNames.Any())
             {
                 wildCardHostNames = AddPortNumberToHostNames(wildCardHostNames);
-                string wildCardQuery = string.Join("or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w.Replace("*.", ".")}"""));
+                string wildCardQuery = string.Join(" or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w.Replace("*.", ".")}"""));
                 hostNameQuery = $"{hostNameQuery} or {wildCardQuery}";
             }
 
