@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Kusto.Data.Common;
 
 namespace Diagnostics.DataProviders
 {
@@ -11,9 +12,19 @@ namespace Diagnostics.DataProviders
 
         public const string AzureCloud = "PublicAzure";
 
+        public const string AzureCloudAlternativeName = "Public";
+
         public const string AzureChinaCloud = "China";
 
+        public const string AzureChinaCloudCodename = "Mooncake";
+
         public const string AzureUSGovernment = "Government";
+
+        public const string AzureUSGovernmentCodename = "Fairfax";
+
+        public const string AzureUSSec = "USSec";
+
+        public const string AzureUSNat = "USNat";
 
         #region Kusto Constants
 
