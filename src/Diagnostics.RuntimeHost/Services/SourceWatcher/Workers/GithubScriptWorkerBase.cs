@@ -45,7 +45,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
         /// </summary>
         /// <param name="subDir">Directory info.</param>
         /// <returns>Task for adding item to cache.</returns>
-        public virtual async Task CreateOrUpdateCacheAsync(DirectoryInfo subDir)
+        public async Task CreateOrUpdateCacheAsync(DirectoryInfo subDir)
         {
             try
             {
