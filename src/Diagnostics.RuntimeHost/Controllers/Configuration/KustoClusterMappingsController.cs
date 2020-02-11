@@ -30,7 +30,7 @@ namespace Diagnostics.RuntimeHost.Controllers.Configuration
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddOrUpdateMapping(string provider, [FromBody]TablePostBody kustoMappings)
+        public async Task<IActionResult> AddOrUpdateMapping(string provider, [FromBody]Table kustoMappings)
         {
             var gitHubPackage = new GithubPackage(GetGitHubId(provider), "kustoClusterMappings", "json", JsonConvert.SerializeObject(kustoMappings));
 
