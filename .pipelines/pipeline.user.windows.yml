@@ -45,7 +45,7 @@ build:
       fail_on_stderr: false
       artifacts:
         - from: 'target/distrib'
-          to: 'target/distrib/AppService'
+          to: 'target/distrib'
           include:
             - '**/*'
             
