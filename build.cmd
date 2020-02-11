@@ -1,5 +1,5 @@
 cd /D "%~dp0"
-SET output=%~dp0target\distrib\AppService\
+SET output=%~dp0target\distrib\
 SET slnFile=%~dp0\AppServiceSample.sln
 
 rem Build and publish the solution
