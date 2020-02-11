@@ -34,11 +34,12 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 
             if (IsWorkerApplicable(subDir) || workerId.Equals(Name, StringComparison.CurrentCultureIgnoreCase))
             {
-                if (!_cacheService.ContainsKey(GetCacheId(subDir.Name, _kustoClusterFileName)))
+                var kustoMappingsStringContent = await FileHelper.GetFileContentAsync(subDir.FullName, $"{_kustoClusterFileName}.json");
+                var kustoMappings = (Table)JsonConvert.DeserializeObject(kustoMappingsStringContent, typeof(Table));
+
+                if (!_cacheService.ContainsKey(subDir.Name) || (_cacheService.TryGetValue(subDir.Name, out Table value) && !value.Equals(kustoMappings)))
                 {
-                    var kustoMappingsStringContent = await FileHelper.GetFileContentAsync(subDir.FullName, $"{_kustoClusterFileName}.json");
-                    var kustoMappings = (Table)JsonConvert.DeserializeObject(kustoMappingsStringContent, typeof(Table));
-                    _cacheService.AddOrUpdate(GetCacheId(subDir.Name, _kustoClusterFileName), kustoMappings);
+                    _cacheService.AddOrUpdate(subDir.Name, kustoMappings);
                 }
             }
         }
@@ -64,7 +65,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                     var kustoMappingsStringContent = await FileHelper.GetFileContentAsync(artifactsDestination.FullName, githubFile.Name);
                     var kustoMappings = (Table) JsonConvert.DeserializeObject(kustoMappingsStringContent, typeof(Table));
 
-                    _cacheService.AddOrUpdate(GetCacheId(artifactsDestination.Name, githubFile), kustoMappings);
+                    _cacheService.AddOrUpdate(artifactsDestination.Name, kustoMappings);
                 }
 
                 await FileHelper.WriteToFileAsync(artifactsDestination.FullName, _workerIdFileName, Name);
@@ -80,16 +81,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
         private bool IsWorkerApplicable(DirectoryInfo dir)
         {
             return dir.EnumerateFiles().Any(x => x.Name.EndsWith($"{_kustoClusterFileName}.json", StringComparison.CurrentCultureIgnoreCase));
-        }
-
-        private string GetCacheId(string folderName, GithubEntry githubFile)
-        {
-            return GetCacheId(folderName, githubFile.Name);
-        }
-
-        private string GetCacheId(string foldername, string fileName)
-        {
-            return foldername + fileName;
         }
     }
 }

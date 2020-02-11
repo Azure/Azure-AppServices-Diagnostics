@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Diagnostics.RuntimeHost.Models;
+using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Authorization;
@@ -23,16 +24,26 @@ namespace Diagnostics.RuntimeHost.Controllers.Configuration
     public class KustoClusterMappingsController : Controller
     {
         private ISourceWatcherService _sourceWatcherService;
+        private IKustoMappingsCacheService _kustoMappingsCache;
 
-        public KustoClusterMappingsController(ISourceWatcherService sourceWatcherService)
+        public KustoClusterMappingsController(ISourceWatcherService sourceWatcherService, IKustoMappingsCacheService kustoMappingsCache)
         {
             _sourceWatcherService = sourceWatcherService;
+            _kustoMappingsCache = kustoMappingsCache;
         }
 
-        [HttpPost]
+        [HttpPut]
         public async Task<IActionResult> AddOrUpdateMapping(string provider, [FromBody]Table kustoMappings)
         {
-            var gitHubPackage = new GithubPackage(GetGitHubId(provider), "kustoClusterMappings", "json", JsonConvert.SerializeObject(kustoMappings));
+            var cacheId = GetGitHubId(provider);
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
+
+            if (_kustoMappingsCache.TryGetValue(cacheId, out Table cacheValue) && cacheValue.Equals(kustoMappings))
+            {
+                return Ok();
+            }
+
+            var gitHubPackage = new GithubPackage(cacheId, "kustoClusterMappings", "json", JsonConvert.SerializeObject(kustoMappings));
 
             try
             {
@@ -46,13 +57,21 @@ namespace Diagnostics.RuntimeHost.Controllers.Configuration
         }
 
         [HttpGet]
-        public Task<IActionResult> GetMappings(string provider)
+        public async Task<IActionResult> GetMappings(string provider)
         {
-            throw new NotImplementedException();
+            var cacheId = GetGitHubId(provider);
+            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
+            
+            if (_kustoMappingsCache.TryGetValue(cacheId, out Table value))
+            {
+                return Ok(value);
+            }
+
+            return NotFound();
         }
 
-        [HttpDelete(UriElements.UniqueResourceId)]
-        public Task<IActionResult> DeleteMapping(string subscriptionId, string resourceGroupName, string provider, string resourceTypeName, string resourceName, string id)
+        [HttpDelete]
+        public Task<IActionResult> DeleteMapping(string provider)
         {
             throw new NotImplementedException();
         }
