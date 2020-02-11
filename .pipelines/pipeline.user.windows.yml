@@ -49,7 +49,7 @@ build:
           include:
             - '**/*'
             
-        - from: 'EV2Files'
+        - from: 'EV2Files/CDPx - AppService'
           to: 'target/distrib'
           include:
             - '**/*'       
