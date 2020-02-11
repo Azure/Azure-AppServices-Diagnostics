@@ -59,7 +59,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// <param name="invokerCache">Invoker cache.</param>
         /// <param name="gistCache">Gist cache.</param>
         /// <param name="githubClient">Github client.</param>
-        public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, IGithubClient githubClient)
+        public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, IKustoMappingsCacheService kustoMappingsCache, IGithubClient githubClient)
             : base(env, configuration, invokerCache, gistCache, "GithubWatcher")
         {
             _githubClient = githubClient;
@@ -71,11 +71,13 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             // TODO: Register the github worker with destination path.
             var gistWorker = new GithubGistWorker(gistCache, _loadOnlyPublicDetectors, _githubClient);
             var detectorWorker = new GithubDetectorWorker(invokerCache, _loadOnlyPublicDetectors, _githubClient);
+            var kustoMappingsWorker = new GithubKustoConfigurationWorker(kustoMappingsCache, _githubClient);
 
             GithubWorkers = new Dictionary<string, IGithubWorker>
             {
                 { gistWorker.Name, gistWorker },
-                { detectorWorker.Name, detectorWorker }
+                { detectorWorker.Name, detectorWorker },
+                { kustoMappingsWorker.Name, kustoMappingsWorker }
             };
 
             #endregion Initialize Github Worker
@@ -147,26 +149,22 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     LogMessage($"Checking if any invoker present locally needs to be added in cache");
                     var directories = destDirInfo.EnumerateDirectories();
                     List<Task> tasks = new List<Task>(directories.Count());
+                    
                     foreach (DirectoryInfo subDir in directories)
                     {
-                        var workerId = await GetWorkerIdAsync(subDir);
-
-                        if (GithubWorkers.ContainsKey(workerId))
+                        foreach (var githubWorker in GithubWorkers.Values)
                         {
                             if (startup)
                             {
-                                tasks.Add(GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir));
+                                tasks.Add(githubWorker.CreateOrUpdateCacheAsync(subDir));
                             }
                             else
                             {
-                                await GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir);
+                                await githubWorker.CreateOrUpdateCacheAsync(subDir);
                             }
                         }
-                        else
-                        {
-                            LogWarning($"Cannot find github worker with id {workerId}. Directory: {subDir.FullName}.");
-                        }
                     }
+
                     if (startup)
                     {
                         await Task.WhenAll(tasks);
@@ -197,15 +195,9 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     // ETag matches
                     if (subDirModifiedMarker == gitHubDir.Sha)
                     {
-                        var workerId = await GetWorkerIdAsync(subDir);
-
-                        if (GithubWorkers.ContainsKey(workerId))
+                        foreach (var githubWorker in GithubWorkers.Values)
                         {
-                            await GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir);
-                        }
-                        else
-                        {
-                            LogWarning($"Cannot find github worker with id {workerId}. Directory: {subDir.FullName}.");
+                            await githubWorker.CreateOrUpdateCacheAsync(subDir);
                         }
 
                         continue;
@@ -325,17 +317,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     await FileHelper.WriteToFileAsync(subDir.FullName, _deleteMarkerName, "true");
                 }
             }
-        }
-
-        private async Task<string> GetWorkerIdAsync(DirectoryInfo subDir)
-        {
-            var workerId = await FileHelper.GetFileContentAsync(subDir.FullName, _workerIdFileName);
-            if (string.IsNullOrWhiteSpace(workerId))
-            {
-                return "DetectorWorker";
-            }
-
-            return workerId;
         }
 
         private static string GetHeaderValue(HttpResponseMessage responseMsg, string headerName)

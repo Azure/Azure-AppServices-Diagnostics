@@ -15,39 +15,41 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
     /// <summary>
     /// An instance of IGithubWorker to specifically capture kusto configuration data from a github repo.
     /// </summary>
-    public class GithubKustoConfigurationWorker : IGithubWorker
+    public class GithubKustoConfigurationWorker : GithubWorkerBase
     {
-        public string Name { get { return "KustoConfigurationWorker"; } }
+        public override string Name { get { return "KustoConfigurationWorker"; } }
         private IGithubClient _githubClient;
         private IKustoMappingsCacheService _cacheService;
         private const string _kustoClusterFileName = "kustoClusterMappings";
 
-        public GithubKustoConfigurationWorker(IGithubClient githubClient, IKustoMappingsCacheService cacheService)
+        public GithubKustoConfigurationWorker(IKustoMappingsCacheService cacheService, IGithubClient githubClient)
         {
             _githubClient = githubClient;
             _cacheService = cacheService;
         }
 
-        public async Task CreateOrUpdateCacheAsync(DirectoryInfo subDir)
+        public override async Task CreateOrUpdateCacheAsync(DirectoryInfo subDir)
         {
-            if (IsWorkerApplicable(subDir))
+            var workerId = await FileHelper.GetFileContentAsync(subDir.FullName, _workerIdFileName);
+
+            if (IsWorkerApplicable(subDir) || workerId.Equals(Name, StringComparison.CurrentCultureIgnoreCase))
             {
                 if (!_cacheService.ContainsKey(GetCacheId(subDir.Name, _kustoClusterFileName)))
                 {
-                    var kustoMappingsStringContent = await FileHelper.GetFileContentAsync(subDir.FullName, _kustoClusterFileName);
+                    var kustoMappingsStringContent = await FileHelper.GetFileContentAsync(subDir.FullName, $"{_kustoClusterFileName}.json");
                     var kustoMappings = (Table)JsonConvert.DeserializeObject(kustoMappingsStringContent, typeof(Table));
                     _cacheService.AddOrUpdate(GetCacheId(subDir.Name, _kustoClusterFileName), kustoMappings);
                 }
             }
         }
 
-        public Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string lastModifiedMarker, string scriptText, string assemblyPath, string metadata)
+        public override Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string lastModifiedMarker, string scriptText, string assemblyPath, string metadata)
         {
             //no op
             throw new NotImplementedException();
         }
 
-        public async Task CreateOrUpdateCacheAsync(IEnumerable<GithubEntry> githubEntries, DirectoryInfo artifactsDestination, string lastModifiedMarker)
+        public override async Task CreateOrUpdateCacheAsync(IEnumerable<GithubEntry> githubEntries, DirectoryInfo artifactsDestination, string lastModifiedMarker)
         {
             if (IsWorkerApplicable(githubEntries))
             {
@@ -64,6 +66,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 
                     _cacheService.AddOrUpdate(GetCacheId(artifactsDestination.Name, githubFile), kustoMappings);
                 }
+
+                await FileHelper.WriteToFileAsync(artifactsDestination.FullName, _workerIdFileName, Name);
             }
         }
 
@@ -75,8 +79,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 
         private bool IsWorkerApplicable(DirectoryInfo dir)
         {
-            return dir.EnumerateFiles().Any(x => x.Name.Contains(_kustoClusterFileName, StringComparison.CurrentCultureIgnoreCase)
-            && x.Extension.Equals("json", StringComparison.CurrentCultureIgnoreCase));
+            return dir.EnumerateFiles().Any(x => x.Name.EndsWith($"{_kustoClusterFileName}.json", StringComparison.CurrentCultureIgnoreCase));
         }
 
         private string GetCacheId(string folderName, GithubEntry githubFile)
@@ -87,22 +90,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
         private string GetCacheId(string foldername, string fileName)
         {
             return foldername + fileName;
-        }
-
-        protected static void LogMessage(string message)
-        {
-            DiagnosticsETWProvider.Instance.LogSourceWatcherMessage("GithubWatcher", message);
-        }
-
-        protected static void LogWarning(string message)
-        {
-            DiagnosticsETWProvider.Instance.LogSourceWatcherWarning("GithubWatcher", message);
-        }
-
-        protected static void LogException(string message, Exception ex)
-        {
-            var exception = new SourceWatcherException("Github", message, ex);
-            DiagnosticsETWProvider.Instance.LogSourceWatcherException("GithubWatcher", message, exception.GetType().ToString(), exception.ToString());
         }
     }
 }

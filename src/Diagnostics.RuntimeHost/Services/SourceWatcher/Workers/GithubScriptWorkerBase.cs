@@ -4,33 +4,24 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
-using Diagnostics.Logger;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Newtonsoft.Json.Converters;
-using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using System.Security.Cryptography;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 {
     /// <summary>
-    /// Github worker base class.
+    /// Base class for gists and detector github workers.
     /// </summary>
-    public abstract class GithubScriptWorkerBase : IGithubWorker
+    public abstract class GithubScriptWorkerBase : GithubWorkerBase
     {
-        /// <summary>
-        /// Worker name.
-        /// </summary>
-        public abstract string Name { get; }
-        private readonly string _workerIdFileName = "workerId.txt";
         private readonly bool _loadOnlyPublicDetectors;
         private IGithubClient _githubClient;
+        private static Regex regexPublicDetectors = new Regex(@"InternalOnly\s*=\s*false", RegexOptions.IgnoreCase);
 
         public GithubScriptWorkerBase(bool loadOnlyPublicDetectors, IGithubClient githubClient)
         {
@@ -38,17 +29,24 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
             _githubClient = githubClient;
         }
 
-        private static Regex regexPublicDetectors = new Regex(@"InternalOnly\s*=\s*false",RegexOptions.IgnoreCase);
+        protected abstract ICache<string, EntityInvoker> GetCacheService();
+
+        protected abstract EntityType GetEntityType();
 
         /// <summary>
         /// Create or update cache.
         /// </summary>
         /// <param name="subDir">Directory info.</param>
         /// <returns>Task for adding item to cache.</returns>
-        public async Task CreateOrUpdateCacheAsync(DirectoryInfo subDir)
+        public override async Task CreateOrUpdateCacheAsync(DirectoryInfo subDir)
         {
             try
             {
+                if (!(await GetWorkerIdAsync(subDir)).Equals(this.Name, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return;
+                }
+
                 var cacheId = await FileHelper.GetFileContentAsync(subDir.FullName, _cacheIdFileName);
 
                 var subDirSha = await FileHelper.GetFileContentAsync(subDir.FullName, _lastModifiedMarkerName);
@@ -110,8 +108,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
             }
         }
 
-
-        public async Task CreateOrUpdateCacheAsync(IEnumerable<GithubEntry> githubEntries, DirectoryInfo artifactsDestination, string lastModifiedMarker)
+        public override async Task CreateOrUpdateCacheAsync(IEnumerable<GithubEntry> githubEntries, DirectoryInfo artifactsDestination, string lastModifiedMarker)
         {
             var assemblyName = Guid.NewGuid().ToString();
             var csxFilePath = string.Empty;
@@ -163,7 +160,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
             var workerId = string.Equals(config?.Type, "gist", StringComparison.OrdinalIgnoreCase) ? "GistWorker" : "DetectorWorker";
             await FileHelper.WriteToFileAsync(artifactsDestination.FullName, _workerIdFileName, workerId);
 
-            if (Enum.TryParse(config?.Type, true, out EntityType result) && result.Equals(this.GetEntityType()))
+            if (workerId.Equals(this.Name, StringComparison.CurrentCultureIgnoreCase))
             {
                 await this.CreateOrUpdateCacheAsync(artifactsDestination, lastModifiedMarker, scriptText, assemblyPath, metadata);
             }
@@ -177,7 +174,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
         /// <param name="assemblyPath">Assembly path.</param>
         /// <param name="metadata">Metadata</param>
         /// <returns>Task for downloading and updating cache.</returns>
-        public async Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string sha, string scriptText, string assemblyPath, string metadata)
+        public override async Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string sha, string scriptText, string assemblyPath, string metadata)
         {
             if (_loadOnlyPublicDetectors && !regexPublicDetectors.Match(scriptText).Success)
             {
@@ -211,36 +208,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
             {
                 LogWarning("Missing Entry Point Definition attribute. skipping cache update");
             }
-        }
-
-        protected abstract ICache<string, EntityInvoker> GetCacheService();
-
-        protected abstract EntityType GetEntityType();
-
-        protected readonly string _lastModifiedMarkerName = "_lastModified.marker";
-        protected readonly string _deleteMarkerName = "_delete.marker";
-        protected readonly string _cacheIdFileName = "cacheId.txt";
-
-        protected static void LogMessage(string message)
-        {
-            DiagnosticsETWProvider.Instance.LogSourceWatcherMessage("GithubWatcher", message);
-        }
-
-        protected static void LogWarning(string message)
-        {
-            DiagnosticsETWProvider.Instance.LogSourceWatcherWarning("GithubWatcher", message);
-        }
-
-        protected static void LogException(string message, Exception ex)
-        {
-            var exception = new SourceWatcherException("Github", message, ex);
-            DiagnosticsETWProvider.Instance.LogSourceWatcherException("GithubWatcher", message, exception.GetType().ToString(), exception.ToString());
-        }
-
-        protected static FileInfo GetMostRecentFileByExtension(DirectoryInfo dir, string extension)
-        {
-            return dir.GetFiles().Where(p => (!string.IsNullOrWhiteSpace(p.Extension) && p.Extension.Equals(extension, StringComparison.OrdinalIgnoreCase)))
-                .OrderByDescending(f => f.LastWriteTimeUtc).FirstOrDefault();
         }
     }
 }
