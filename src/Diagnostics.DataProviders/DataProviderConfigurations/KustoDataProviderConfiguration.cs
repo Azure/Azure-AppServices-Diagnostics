@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
+using Diagnostics.DataProviders.Interfaces;
 
 namespace Diagnostics.DataProviders
 {
@@ -94,6 +95,11 @@ namespace Diagnostics.DataProviders
         /// Failover Cluster Names.
         /// </summary>
         public ConcurrentDictionary<string, string> FailoverClusterNameCollection { get; set; }
+
+        /// <summary>
+        /// Kusto map.
+        /// </summary>
+        public IKustoMap KustoMap { get; set; }
 
         public string CloudDomain
         {

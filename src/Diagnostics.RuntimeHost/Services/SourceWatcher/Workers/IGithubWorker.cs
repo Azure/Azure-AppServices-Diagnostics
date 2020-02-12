@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
@@ -19,6 +21,13 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
         /// <param name="subDir">Directory info.</param>
         /// <returns>Task for adding item to cache.</returns>
         Task CreateOrUpdateCacheAsync(DirectoryInfo subDir);
+
+        /// <summary>
+        /// Create or update cache.
+        /// </summary>
+        /// <param name="githubEntries"></param>
+        /// <returns></returns>
+        Task CreateOrUpdateCacheAsync(IEnumerable<GithubEntry> githubEntries, DirectoryInfo artifactsDestination, string lastModifiedMarker);
 
         /// <summary>
         /// Create or update cache.

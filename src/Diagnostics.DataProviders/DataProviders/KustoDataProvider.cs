@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders.Interfaces;
+using Diagnostics.DataProviders.Utility;
 using Diagnostics.ModelsAndUtils.Models;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
@@ -23,6 +26,7 @@ namespace Diagnostics.DataProviders
         private IKustoClient _kustoClient;
         private string _requestId;
         private IKustoHeartBeatService _kustoHeartBeatService;
+        private IKustoMap _kustoMap;
 
         public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration, string requestId, IKustoHeartBeatService kustoHeartBeat) : base(cache)
         {
@@ -30,6 +34,8 @@ namespace Diagnostics.DataProviders
             _kustoClient = KustoClientFactory.GetKustoClient(configuration, requestId);
             _requestId = requestId;
             _kustoHeartBeatService = kustoHeartBeat;
+            _kustoMap = configuration.KustoMap ?? new NullableKustoMap();
+
             Metadata = new DataProviderMetadata
             {
                 ProviderName = "Kusto"
@@ -44,14 +50,14 @@ namespace Diagnostics.DataProviders
         public async Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId, string operationName)
         {
             await AddQueryInformationToMetadata(query, cluster, operationName);
-            return await _kustoClient.ExecuteQueryAsync(query, cluster, databaseName, requestId, operationName);
+            return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(databaseName) ?? databaseName, requestId, operationName);
         }
 
         public async Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
         {
             var cluster = await GetClusterNameFromStamp(stampName);
             await AddQueryInformationToMetadata(query, cluster, operationName);
-            return await _kustoClient.ExecuteQueryAsync(query, cluster, _configuration.DBName, requestId, operationName);
+            return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName);
         }
 
         public Task<KustoQuery> GetKustoClusterQuery(string query)
@@ -67,7 +73,7 @@ namespace Diagnostics.DataProviders
         public async Task<KustoQuery> GetKustoQuery(string query, string stampName, string operationName)
         {
             var cluster = await GetClusterNameFromStamp(stampName);
-            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, cluster, _configuration.DBName, operationName);
+            var kustoQuery = await _kustoClient.GetKustoQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, operationName);
             return kustoQuery;
         }
 
@@ -83,7 +89,7 @@ namespace Diagnostics.DataProviders
 
         private async Task AddQueryInformationToMetadata(string query, string cluster, string operationName = null)
         {
-            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, cluster, _configuration.DBName, operationName);
+            var kustoQuery = await _kustoClient.GetKustoQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, operationName);
             bool queryExists = false;
 
             queryExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&
