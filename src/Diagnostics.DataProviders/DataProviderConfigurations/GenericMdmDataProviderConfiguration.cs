@@ -8,7 +8,7 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
     /// <summary>
     /// Mdm data provider configuration.
     /// </summary>
-    public class GenericMdmDataProviderConfiguration : IDataProviderConfiguration, IMdmDataProviderConfiguration
+    public class GenericMdmDataProviderConfiguration : DataProviderConfigurationBase, IDataProviderConfiguration, IMdmDataProviderConfiguration
     {
         /// <summary>
         /// Gets or sets the base endpoint.
