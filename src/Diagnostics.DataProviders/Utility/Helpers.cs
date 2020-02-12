@@ -32,7 +32,7 @@ namespace Diagnostics.DataProviders.Utility
                 foreach (Match element in matches)
                 {
                     var targetCluster = kustoMap.MapCluster(element.Groups["cluster"].Value.Trim(new char[] { '\'', '\"' }));
-                    var targetDatabase = kustoMap.MapCluster(element.Groups["database"].Value.Trim(new char[] { '\'', '\"' }));
+                    var targetDatabase = kustoMap.MapDatabase(element.Groups["database"].Value.Trim(new char[] { '\'', '\"' }));
 
                     if (!string.IsNullOrWhiteSpace(targetCluster) && !string.IsNullOrWhiteSpace(targetDatabase))
                     {

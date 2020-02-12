@@ -103,5 +103,22 @@ namespace Diagnostics.Tests.DataProviderTests
             Assert.Null(publicAzureSampleKustoMap.MapCluster("does_not_exist"));
             Assert.Null(publicAzureSampleKustoMap.MapDatabase("does_not_exist"));
         }
+
+        [Fact]
+        public void TestKustoQueryManipulation()
+        {
+            var kustoQuery = @"
+	let time = 3d;
+	cluster('fake_cluster1').database('fake_database1').SomeTable
+	| where TIMESTAMP >= ago(time) and RequestId == 'some-request-id'
+	| join (cluster('fake_cluster2').database('fake_database2').SomeTable2 | where TIMESTAMP >= ago(time)
+	) on $left.RequestId == $right.CorrellationId
+	| project TIMESTAMP, ResourceName, StatusCode, Exceptions
+	| order by TIMESTAMP asc
+	";
+            var modifiedQuery = Diagnostics.DataProviders.Utility.Helpers.MakeQueryCloudAgnostic(governmentAzureSampleKustoMap, kustoQuery);
+            Assert.Contains("fake_cluster3", modifiedQuery);
+            Assert.Contains("fake_database3", modifiedQuery);
+        }
     }
 }
