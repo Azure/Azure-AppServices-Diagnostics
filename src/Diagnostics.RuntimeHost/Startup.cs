@@ -124,6 +124,7 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<ISourceWatcherService, SourceWatcherService>();
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
             services.AddSingleton<IGistCacheService, GistCacheService>();
+            services.AddSingleton<IKustoMappingsCacheService, KustoMappingsCacheService>();
             services.AddSingleton<ISiteService, SiteService>();
             services.AddSingleton<ISupportTopicService, SupportTopicService>();
             services.AddScoped(typeof(IRuntimeContext<>), typeof(RuntimeContext<>));
@@ -134,6 +135,8 @@ namespace Diagnostics.RuntimeHost
                 {
                     case DataProviderConstants.AzureChinaCloud:
                     case DataProviderConstants.AzureUSGovernment:
+                    case DataProviderConstants.AzureUSNat:
+                    case DataProviderConstants.AzureUSSec:
                         return new NationalCloudStampService();
                     default:
                         return new StampService();

@@ -37,14 +37,14 @@ namespace Diagnostics.RuntimeHost.Models
         /// <summary>
         /// Gets or sets the id.
         /// </summary>
-        public string Id { get; set; }
+        public virtual string Id { get; set; }
 
         public string Metadata { get; set; }
 
         /// <summary>
         /// Gets or sets the committed alias.
         /// </summary>
-        public string CommittedByAlias { get; set; }
+        public virtual string CommittedByAlias { get; set; }
 
         /// <summary>
         /// Gets or sets the configuration.
@@ -67,7 +67,7 @@ namespace Diagnostics.RuntimeHost.Models
         /// Get commit for detector package.
         /// </summary>
         /// <returns>The commit.</returns>
-        public IEnumerable<CommitContent> GetCommitContents()
+        public virtual IEnumerable<CommitContent> GetCommitContents()
         {
             var filePath = $"{Id.ToLower()}/{Id.ToLower()}";
             var csxFilePath = $"{filePath}.csx";

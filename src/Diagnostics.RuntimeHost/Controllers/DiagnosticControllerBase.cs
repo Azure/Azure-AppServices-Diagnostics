@@ -45,6 +45,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected ISearchService _searchService;
         protected IRuntimeContext<TResource> _runtimeContext;
         protected ISupportTopicService _supportTopicService;
+        protected IKustoMappingsCacheService _kustoMappingCacheService;
 
         private InternalAPIHelper _internalApiHelper;
 
@@ -59,6 +60,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._assemblyCacheService = (IAssemblyCacheService)services.GetService(typeof(IAssemblyCacheService));
             this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
             this._supportTopicService = (ISupportTopicService)services.GetService(typeof(ISupportTopicService));
+            this._kustoMappingCacheService = (IKustoMappingsCacheService)services.GetService(typeof(IKustoMappingsCacheService));
 
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
@@ -667,7 +669,19 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var queryParams = Request.Query;
-            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+            
+            var dataProviderContext = (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey];
+            
+            _kustoMappingCacheService.TryGetValue($"{context.OperationContext.Resource.Provider?.Replace(".", string.Empty)}Configuration",
+                out List <Dictionary<string, string>> kustoMappings);
+
+            if (kustoMappings != null)
+            {
+                dataProviderContext.Configuration.KustoConfiguration.KustoMap = new KustoMap(context.CloudDomain == DataProviderConstants.AzureCloud 
+                    ? DataProviderConstants.AzureCloudAlternativeName : context.CloudDomain, kustoMappings);
+            }
+            
+            var dataProviders = new DataProviders.DataProviders(dataProviderContext);
             List<DataProviderMetadata> dataProvidersMetadata = null;
             if (context.ClientIsInternal)
             {

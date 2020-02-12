@@ -12,7 +12,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
     /// <summary>
     /// Gist worker.
     /// </summary>
-    public class GithubGistWorker : GithubWorkerBase
+    public class GithubGistWorker : GithubScriptWorkerBase
     {
         /// <summary>
         /// Gets the name.
@@ -28,7 +28,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
         /// Initializes a new instance of the <see cref="GithubGistWorker"/> class.
         /// </summary>
         /// <param name="gistCache">Gist cache service.</param>
-        public GithubGistWorker(IGistCacheService gistCache, bool loadOnlyPublicDetectors) : base(loadOnlyPublicDetectors)
+        public GithubGistWorker(IGistCacheService gistCache, bool loadOnlyPublicDetectors, IGithubClient githubClient) : base(loadOnlyPublicDetectors, githubClient)
         {
             GistCache = gistCache;
         }
