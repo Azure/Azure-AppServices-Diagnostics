@@ -36,20 +36,19 @@ namespace Diagnostics.RuntimeHost.Controllers.Configuration
         public async Task<IActionResult> AddOrUpdateMapping(string provider, [FromBody]List<Dictionary<string, string>> kustoMappings)
         {
             var cacheId = GetGitHubId(provider);
-            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
-
-            //TODO the equals condition always fail due to the strings in the data structures are never compared
-            if (_kustoMappingsCache.TryGetValue(cacheId, out List<Dictionary<string, string>> cacheValue) && cacheValue.Equals(kustoMappings))
-            {
-                return Ok();
-            }
-
-            var gitHubPackage = new GithubPackage(cacheId, "kustoClusterMappings", "json", JsonConvert.SerializeObject(kustoMappings));
-
             try
             {
-                await _sourceWatcherService.Watcher.CreateOrUpdatePackage(gitHubPackage);
-                return Ok();
+                await _sourceWatcherService.Watcher.WaitForFirstCompletion();
+
+                //TODO the equals condition always fail due to the strings in the data structures are never compared
+                if (_kustoMappingsCache.TryGetValue(cacheId, out List<Dictionary<string, string>> cacheValue) && cacheValue.Equals(kustoMappings))
+                {
+                    return Ok();
+                }
+
+                var gitHubPackage = new GithubPackage(cacheId, "kustoClusterMappings", "json", JsonConvert.SerializeObject(kustoMappings));
+                    await _sourceWatcherService.Watcher.CreateOrUpdatePackage(gitHubPackage);
+                    return Ok();
             }
             catch (Exception ex)
             {

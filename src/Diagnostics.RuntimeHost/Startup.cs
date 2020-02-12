@@ -135,6 +135,8 @@ namespace Diagnostics.RuntimeHost
                 {
                     case DataProviderConstants.AzureChinaCloud:
                     case DataProviderConstants.AzureUSGovernment:
+                    case DataProviderConstants.AzureUSNat:
+                    case DataProviderConstants.AzureUSSec:
                         return new NationalCloudStampService();
                     default:
                         return new StampService();

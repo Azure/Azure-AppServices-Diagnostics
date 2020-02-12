@@ -51,7 +51,8 @@ namespace Diagnostics.DataProviders
             
             foreach (var env in environments)
             {
-                _clusterMapping.Columns.Add(env, typeof(string));
+                _clusterMapping.Columns.Add(new DataColumn { ColumnName = env, DataType = typeof(string), AllowDBNull = true });
+                _databaseMapping.Columns.Add(new DataColumn { ColumnName = env, DataType = typeof(string), AllowDBNull = true });
             }
 
             foreach (IEnumerable<KeyValuePair<string,string>> bodyOfKeyValuePairs in existingMap)
@@ -61,21 +62,30 @@ namespace Diagnostics.DataProviders
 
                 foreach (KeyValuePair<string, string> pair in bodyOfKeyValuePairs)
                 {
-                    foreach (DataColumn column in _clusterMapping.Columns)
+                    foreach (string env in environments)
                     {
-                        if (pair.Key.ToLower().Contains(column.ColumnName.ToLower()))
+                        if (pair.Key.ToLower().Contains(env.ToLower()))
                         {
                             if (pair.Key.ToLower().Contains("clustername"))
                             {
-                                clusterRow[column] = pair.Value;
+                                if (!string.IsNullOrWhiteSpace(pair.Value))
+                                {
+                                    clusterRow[env] = pair.Value;
+                                }
                             }
                             else if (pair.Key.ToLower().Contains("databasename"))
                             {
-                                databaseRow[column] = pair.Value;
+                                if (!string.IsNullOrWhiteSpace(pair.Value))
+                                {
+                                    databaseRow[env] = pair.Value;
+                                }
                             }
                         }
                     }
                 }
+                 
+                _clusterMapping.Rows.Add(clusterRow);
+                _databaseMapping.Rows.Add(databaseRow);
             }
 
             //todo add logging of entries that didn't get added to the map
@@ -91,7 +101,7 @@ namespace Diagnostics.DataProviders
                 {
                     if (sourceRow != null)
                     {
-                        break;
+                        return sourceRow[_cloudEnvironment]?.ToString();
                     }
 
                     foreach (DataRow row in _clusterMapping.Rows)
@@ -103,8 +113,6 @@ namespace Diagnostics.DataProviders
                         }
                     }
                 }
-
-                return sourceRow[_cloudEnvironment].ToString();
             }
 
             return null;
@@ -120,7 +128,7 @@ namespace Diagnostics.DataProviders
                 {
                     if (sourceRow != null)
                     {
-                        break;
+                        return sourceRow[_cloudEnvironment]?.ToString();
                     }
 
                     foreach (DataRow row in _databaseMapping.Rows)
@@ -132,8 +140,6 @@ namespace Diagnostics.DataProviders
                         }
                     }
                 }
-
-                return sourceRow[_cloudEnvironment].ToString();
             }
 
             return null;
@@ -143,6 +149,113 @@ namespace Diagnostics.DataProviders
         {
             _clusterMapping.Dispose();
             _databaseMapping.Dispose();
+        }
+
+        public bool TryGetCluster(KustoDatabaseEntry database, out string targetCluster)
+        {
+            return TryGetCluster(database, _cloudEnvironment, out targetCluster);
+        }
+
+        public bool TryGetCluster(KustoDatabaseEntry database, string environment, out string targetCluster)
+        {
+            if (database == null)
+            {
+                throw new ArgumentNullException();
+            }
+
+            targetCluster = null;
+
+            try
+            {
+                if (_databaseMapping.Columns.Contains(environment))
+                {
+                    DataRow row = null;
+
+                    foreach (DataRow r in _databaseMapping.Rows)
+                    {
+                        if (r.ItemArray.Any(s => s.ToString().Equals(database.Value, StringComparison.CurrentCultureIgnoreCase)))
+                        {
+                            row = r;
+                            break;
+                        }
+                    }
+
+                    var clusterIndex = _databaseMapping.Rows.IndexOf(row);
+                    if (clusterIndex <= (_clusterMapping.Rows.Count - 1))
+                    {
+                        DataRow clusterRow = _clusterMapping.Rows[clusterIndex];
+
+                        if (clusterRow.Table.Columns.Contains(environment))
+                        {
+                            if (!clusterRow.IsNull(environment))
+                            {
+                                targetCluster = clusterRow[environment].ToString();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                //log exception
+            }
+
+            return !string.IsNullOrWhiteSpace(targetCluster);
+        }
+
+        public bool TryGetDatabase(KustoClusterEntry cluster, out string targetDatabase)
+        {
+            return TryGetDatabase(cluster, _cloudEnvironment, out targetDatabase);
+        }
+
+        public bool TryGetDatabase(KustoClusterEntry cluster, string environment, out string targetDatabase)
+        {
+            if (cluster == null)
+            {
+                throw new ArgumentNullException();
+            }
+
+            targetDatabase = null;
+
+            try
+            {
+                if (_clusterMapping.Columns.Contains(environment))
+                {
+                    DataRow row = null;
+
+                    foreach (DataRow r in _clusterMapping.Rows)
+                    {
+                        if (r.ItemArray.Any(s => s.ToString().Equals(cluster.Value, StringComparison.CurrentCultureIgnoreCase)))
+                        {
+                            row = r;
+                            break;
+                        }
+                    }
+
+                    if (row != null)
+                    {
+                        var databaseIndex = _clusterMapping.Rows.IndexOf(row);
+                        if (databaseIndex <= (_databaseMapping.Rows.Count - 1))
+                        {
+                            DataRow databaseRow = _databaseMapping.Rows[databaseIndex];
+
+                            if (databaseRow.Table.Columns.Contains(environment))
+                            {
+                                if (!databaseRow.IsNull(environment))
+                                {
+                                    targetDatabase = databaseRow[environment].ToString();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                //log exception
+            }
+
+            return !string.IsNullOrWhiteSpace(targetDatabase);
         }
     }
 }

@@ -677,7 +677,8 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             if (kustoMappings != null)
             {
-                dataProviderContext.Configuration.KustoConfiguration.KustoMap = new KustoMap(context.CloudDomain, kustoMappings);
+                dataProviderContext.Configuration.KustoConfiguration.KustoMap = new KustoMap(context.CloudDomain == DataProviderConstants.AzureCloud 
+                    ? DataProviderConstants.AzureCloudAlternativeName : context.CloudDomain, kustoMappings);
             }
             
             var dataProviders = new DataProviders.DataProviders(dataProviderContext);

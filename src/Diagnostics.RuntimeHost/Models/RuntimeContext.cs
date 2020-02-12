@@ -1,4 +1,5 @@
-﻿using Diagnostics.ModelsAndUtils.Models;
+﻿using Diagnostics.DataProviders;
+using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.Extensions.Configuration;
 
@@ -13,7 +14,7 @@ namespace Diagnostics.RuntimeHost.Models
 
         public RuntimeContext(IConfiguration configuration)
         {
-            CloudDomain = string.IsNullOrWhiteSpace(configuration.GetValue<string>("CloudDomain")) ? HostConstants.AzureCloud : configuration.GetValue<string>("CloudDomain");
+            CloudDomain = string.IsNullOrWhiteSpace(configuration.GetValue<string>("CloudDomain")) ? DataProviderConstants.AzureCloud : configuration.GetValue<string>("CloudDomain");
         }
     }
 

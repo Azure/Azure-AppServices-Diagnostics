@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders.Interfaces;
@@ -48,15 +49,14 @@ namespace Diagnostics.DataProviders
         public async Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId, string operationName)
         {
             await AddQueryInformationToMetadata(query, cluster, operationName);
-            return await _kustoClient.ExecuteQueryAsync(query, _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(databaseName) ?? databaseName, requestId, operationName);
+            return await _kustoClient.ExecuteQueryAsync(MakeQueryCloudAgnostic(query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(databaseName) ?? databaseName, requestId, operationName);
         }
 
         public async Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
         {
             var cluster = await GetClusterNameFromStamp(stampName);
-            var targetCluster = _kustoMap.MapCluster(cluster);
-            await AddQueryInformationToMetadata(query, targetCluster ?? cluster, operationName);
-            return await _kustoClient.ExecuteQueryAsync(query, targetCluster ?? cluster, _configuration.DBName, requestId, operationName);
+            await AddQueryInformationToMetadata(query, cluster, operationName);
+            return await _kustoClient.ExecuteQueryAsync(MakeQueryCloudAgnostic(query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName);
         }
 
         public Task<KustoQuery> GetKustoClusterQuery(string query)
@@ -72,9 +72,28 @@ namespace Diagnostics.DataProviders
         public async Task<KustoQuery> GetKustoQuery(string query, string stampName, string operationName)
         {
             var cluster = await GetClusterNameFromStamp(stampName);
-            var targetCluster = _kustoMap.MapCluster(cluster);
-            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, targetCluster ?? cluster, _configuration.DBName, operationName);
+            var kustoQuery = await _kustoClient.GetKustoQueryAsync(MakeQueryCloudAgnostic(query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, operationName);
             return kustoQuery;
+        }
+
+        private string MakeQueryCloudAgnostic(string query)
+        {
+            var matches = Regex.Matches(query, @"cluster\((?<cluster>(.+))\).database\((?<database>(.+))\)\.");
+
+            if (matches.Any())
+            {
+                foreach (Match element in matches)
+                {
+                    if (true)
+                    {
+
+                    }
+                    query = query.Replace($"cluster({element.Groups["cluster"].Value})", $"cluster('{_kustoMap.MapCluster(element.Groups["cluster"].Value.Trim(new char[] { '\'', '\"' }))}')");
+                    query = query.Replace($"database({element.Groups["database"].Value})", $"database('{_kustoMap.MapCluster(element.Groups["database"].Value.Trim(new char[] { '\'', '\"' }))}')");
+                }
+            }
+
+            return query;
         }
 
         internal async Task<DataTable> ExecuteQueryForHeartbeat(string query, string cluster, int timeoutSeconds, string requestId = null, string operationName = null)
@@ -89,7 +108,7 @@ namespace Diagnostics.DataProviders
 
         private async Task AddQueryInformationToMetadata(string query, string cluster, string operationName = null)
         {
-            var kustoQuery = await _kustoClient.GetKustoQueryAsync(query, cluster, _configuration.DBName, operationName);
+            var kustoQuery = await _kustoClient.GetKustoQueryAsync(MakeQueryCloudAgnostic(query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, operationName);
             bool queryExists = false;
 
             queryExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&
