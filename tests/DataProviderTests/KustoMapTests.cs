@@ -35,6 +35,15 @@ namespace Diagnostics.Tests.DataProviderTests
                     { $"{DataProviderConstants.AzureChinaCloudCodename}DatabaseName", "fake_database2" },
                     { $"{DataProviderConstants.AzureUSGovernmentCodename}ClusterName", "fake_cluster3" },
                     { $"{DataProviderConstants.AzureUSGovernmentCodename}DatabaseName", "fake_database3" }
+                },
+                new Dictionary<string, string>
+                {
+                    { $"{DataProviderConstants.AzureCloudAlternativeName}ClusterName", "team_cluster1" },
+                    { $"{DataProviderConstants.AzureCloudAlternativeName}DatabaseName", "team_database1" },
+                    { $"{DataProviderConstants.AzureChinaCloudCodename}ClusterName", "team_cluster2" },
+                    { $"{DataProviderConstants.AzureChinaCloudCodename}DatabaseName", "team_database2" },
+                    { $"{DataProviderConstants.AzureUSGovernmentCodename}ClusterName", "team_cluster3" },
+                    { $"{DataProviderConstants.AzureUSGovernmentCodename}DatabaseName", "team_database3" }
                 }
             };
 
@@ -111,7 +120,7 @@ namespace Diagnostics.Tests.DataProviderTests
 	let time = 3d;
 	cluster('fake_cluster1').database('fake_database1').SomeTable
 	| where TIMESTAMP >= ago(time) and RequestId == 'some-request-id'
-	| join (cluster('fake_cluster2').database('fake_database2').SomeTable2 | where TIMESTAMP >= ago(time)
+	| join (cluster('team_cluster2').database('team_database2').SomeTable2 | where TIMESTAMP >= ago(time)
 	) on $left.RequestId == $right.CorrellationId
 	| project TIMESTAMP, ResourceName, StatusCode, Exceptions
 	| order by TIMESTAMP asc
@@ -119,6 +128,8 @@ namespace Diagnostics.Tests.DataProviderTests
             var modifiedQuery = Diagnostics.DataProviders.Utility.Helpers.MakeQueryCloudAgnostic(governmentAzureSampleKustoMap, kustoQuery);
             Assert.Contains("fake_cluster3", modifiedQuery);
             Assert.Contains("fake_database3", modifiedQuery);
+            Assert.Contains("team_cluster3", modifiedQuery);
+            Assert.Contains("team_database3", modifiedQuery);
         }
     }
 }
