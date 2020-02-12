@@ -32,7 +32,7 @@ namespace Diagnostics.DataProviders
             _kustoClient = KustoClientFactory.GetKustoClient(configuration, requestId);
             _requestId = requestId;
             _kustoHeartBeatService = kustoHeartBeat;
-            _kustoMap = configuration.KustoMap;
+            _kustoMap = configuration.KustoMap ?? new NullableKustoMap();
 
             Metadata = new DataProviderMetadata
             {
