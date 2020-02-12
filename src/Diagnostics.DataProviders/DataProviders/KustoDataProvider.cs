@@ -84,12 +84,14 @@ namespace Diagnostics.DataProviders
             {
                 foreach (Match element in matches)
                 {
-                    if (true)
-                    {
+                    var targetCluster = _kustoMap.MapCluster(element.Groups["cluster"].Value.Trim(new char[] { '\'', '\"' }));
+                    var targetDatabase = _kustoMap.MapCluster(element.Groups["database"].Value.Trim(new char[] { '\'', '\"' }));
 
+                    if (!string.IsNullOrWhiteSpace(targetCluster) && !string.IsNullOrWhiteSpace(targetDatabase))
+                    {
+                        query = query.Replace($"cluster({element.Groups["cluster"].Value})", $"cluster('{}')");
+                        query = query.Replace($"database({element.Groups["database"].Value})", $"database('{}')");
                     }
-                    query = query.Replace($"cluster({element.Groups["cluster"].Value})", $"cluster('{_kustoMap.MapCluster(element.Groups["cluster"].Value.Trim(new char[] { '\'', '\"' }))}')");
-                    query = query.Replace($"database({element.Groups["database"].Value})", $"database('{_kustoMap.MapCluster(element.Groups["database"].Value.Trim(new char[] { '\'', '\"' }))}')");
                 }
             }
 
