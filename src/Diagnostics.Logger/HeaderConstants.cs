@@ -51,6 +51,11 @@ namespace Diagnostics.Logger
         public static readonly string GeomasterNameHeader = "x-ms-geomaster-name";
 
         /// <summary>
+        /// Location header name.
+        /// </summary>
+        public static readonly string LocationHeader = "x-ms-location";
+
+        /// <summary>
         /// Etag header name.
         /// </summary>
         public static readonly string EtagHeaderName = "ETag";

@@ -266,6 +266,8 @@ namespace Diagnostics.DataProviders
 
         public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName);
 
+        public abstract Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(OperationContext<App> cxt, string stampName = null, string siteName = null, string slotName = null, DateTime? endTime = null);
+        
         public abstract Task<DataTable> ExecuteSqlQueryAsync(string cloudServiceName, string query);
 
         public abstract HttpClient GetObserverClient();

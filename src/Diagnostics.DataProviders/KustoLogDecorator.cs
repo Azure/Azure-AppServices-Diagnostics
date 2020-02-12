@@ -22,7 +22,7 @@ namespace Diagnostics.DataProviders
 			return ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, operationName);
 		}
 
-		public Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId = null, string operationName = null)
+		public Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId, string operationName)
 		{
 			return ExecuteClusterQuery(query, cluster, databaseName, requestId, operationName);
 		}

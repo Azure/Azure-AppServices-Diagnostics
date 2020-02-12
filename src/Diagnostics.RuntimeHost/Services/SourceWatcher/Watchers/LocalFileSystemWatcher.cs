@@ -29,7 +29,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         protected override string SourceName => "LocalFileSystem";
 
         public LocalFileSystemWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache)
-            : base(env, configuration, invokerCache, gistCache, "LocalFileSystemWatcher")
+            : base(env, configuration, invokerCache, gistCache, null, "LocalFileSystemWatcher")
         {
             LoadConfigurations();
             Start();
