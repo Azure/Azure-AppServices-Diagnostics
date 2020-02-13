@@ -101,6 +101,9 @@ namespace Diagnostics.DataProviders
         /// </summary>
         public IKustoMap KustoMap { get; set; }
 
+        [ConfigurationName("UseKustoMapForPublic")]
+        public bool UseKustoMapForPublic { get; set; }
+
         public string CloudDomain
         {
             get

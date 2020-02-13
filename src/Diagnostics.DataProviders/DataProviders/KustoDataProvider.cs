@@ -30,11 +30,12 @@ namespace Diagnostics.DataProviders
 
         public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration, string requestId, IKustoHeartBeatService kustoHeartBeat) : base(cache)
         {
+            var publicClouds = new string[] { DataProviderConstants.AzureCloud, DataProviderConstants.AzureCloudAlternativeName };
             _configuration = configuration;
             _kustoClient = KustoClientFactory.GetKustoClient(configuration, requestId);
             _requestId = requestId;
             _kustoHeartBeatService = kustoHeartBeat;
-            _kustoMap = configuration.KustoMap ?? new NullableKustoMap();
+            _kustoMap = configuration.UseKustoMapForPublic ? configuration.KustoMap ?? new NullableKustoMap() : new NullableKustoMap();
 
             Metadata = new DataProviderMetadata
             {
