@@ -35,7 +35,18 @@ namespace Diagnostics.DataProviders
             _kustoClient = KustoClientFactory.GetKustoClient(configuration, requestId);
             _requestId = requestId;
             _kustoHeartBeatService = kustoHeartBeat;
-            _kustoMap = configuration.UseKustoMapForPublic ? configuration.KustoMap ?? new NullableKustoMap() : new NullableKustoMap();
+
+            if (publicClouds.Any(s => configuration.CloudDomain.Equals(s, StringComparison.CurrentCultureIgnoreCase)))
+            {
+                if (configuration.UseKustoMapForPublic)
+                {
+                    _kustoMap = configuration.KustoMap ?? new NullableKustoMap();
+                }
+            }
+            else
+            {
+                _kustoMap = configuration.KustoMap ?? new NullableKustoMap();
+            }
 
             Metadata = new DataProviderMetadata
             {
