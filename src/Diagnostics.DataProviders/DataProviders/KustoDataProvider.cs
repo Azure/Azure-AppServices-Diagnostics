@@ -35,6 +35,7 @@ namespace Diagnostics.DataProviders
             _kustoClient = KustoClientFactory.GetKustoClient(configuration, requestId);
             _requestId = requestId;
             _kustoHeartBeatService = kustoHeartBeat;
+            _kustoMap = new NullableKustoMap();
 
             if (publicClouds.Any(s => configuration.CloudDomain.Equals(s, StringComparison.CurrentCultureIgnoreCase)))
             {
