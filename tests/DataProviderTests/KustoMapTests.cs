@@ -156,5 +156,22 @@ union cluster('fake_cluster1').database('fake_database1').SomeTable, cluster('te
             Assert.Contains("central_cluster3", modifiedQuery2);
             Assert.Contains("central_database3", modifiedQuery2);
         }
+
+        [Fact]
+        public void TestKustoQueryManipulationWithNullableKustoMap()
+        {
+            var kustoQuery = @"
+	let time = 3d;
+	cluster('fake_cluster1').database('fake_database1').SomeTable
+	| where TIMESTAMP >= ago(time) and RequestId == 'some-request-id'
+	| join (cluster('team_cluster2').database('team_database2').SomeTable2 | where TIMESTAMP >= ago(time)
+	) on $left.RequestId == $right.CorrellationId
+	| project TIMESTAMP, ResourceName, StatusCode, Exceptions
+	| order by TIMESTAMP asc
+	";
+            var modifiedQuery = Diagnostics.DataProviders.Utility.Helpers.MakeQueryCloudAgnostic(new NullableKustoMap(), kustoQuery);
+            Assert.Contains("fake_cluster1", modifiedQuery);
+            Assert.Contains("fake_database1", modifiedQuery);
+        }
     }
 }
