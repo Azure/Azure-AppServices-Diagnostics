@@ -9,7 +9,7 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
     /// Mdm data provider configuration.
     /// </summary>
     [DataSourceConfiguration(@"Mdm\Networking")]
-    public class NetworkingMdmDataProviderConfiguration : IDataProviderConfiguration, IMdmDataProviderConfiguration
+    public class NetworkingMdmDataProviderConfiguration : DataProviderConfigurationBase, IDataProviderConfiguration, IMdmDataProviderConfiguration
     {
         /// <summary>
         /// Gets or sets the base endpoint.

@@ -81,6 +81,8 @@ namespace Diagnostics.DataProviders
                         return "Heartbeat";
                     case "HeartBeatDelay":
                         return "0";
+                    case "AADKustoResource":
+                        return "windows.net";
                     default: return string.Empty;
                 }
             }

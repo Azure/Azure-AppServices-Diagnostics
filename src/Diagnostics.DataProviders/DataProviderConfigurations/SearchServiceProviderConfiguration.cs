@@ -2,13 +2,8 @@
 namespace Diagnostics.DataProviders.DataProviderConfigurations
 {
     [DataSourceConfiguration("SearchAPI")]
-    public class SearchServiceProviderConfiguration : IDataProviderConfiguration
+    public class SearchServiceProviderConfiguration : DataProviderConfigurationBase, IDataProviderConfiguration
     {
-        /// <summary>
-        /// SearchAPIEnabled
-        /// </summary>
-        [ConfigurationName("SearchAPIEnabled")]
-        public bool SearchAPIEnabled { get; set; }
         /// <summary>
         /// Client Id.
         /// </summary>
@@ -44,9 +39,5 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
         /// </summary>
         [ConfigurationName("TrainingEndpoint")]
         public string TrainingEndpoint { get; set; }
-
-        public void PostInitialize()
-        {
-        }
     }
 }

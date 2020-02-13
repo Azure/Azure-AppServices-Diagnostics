@@ -4,9 +4,12 @@ using System.Data;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -77,6 +80,59 @@ namespace Diagnostics.DataProviders
             {
                 return await GetSupportObserverResourceAsync(uri);
             }
+        }
+
+        public override async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            Dictionary<string, Uri> tests;
+            Dictionary<string, Task<HttpResponseMessage>> testResponses;
+
+            //check fundamental APIs
+            if(Configuration.HealthCheckInputs.TryGetValue("sitename", out String siteName) &&
+                Configuration.HealthCheckInputs.TryGetValue("stampname", out String stampName))
+            {
+                tests = new Dictionary<string, Uri>
+                {
+                    {"RuntimeSiteSlotMap Test", new Uri(new Uri(Configuration.Endpoint), $"/api/stamps/{stampName}/sites/{siteName}/runtimesiteslotmap") },
+                    {"SitePostBody Test", new Uri(new Uri(Configuration.Endpoint), $"/api/stamps/{stampName}/sites/{siteName}/postbody") },
+                    {"StampPostBody Test",  new Uri(new Uri(Configuration.Endpoint), $"/api/hostingEnvironments/{stampName}/postbody") }
+                };
+
+                testResponses = new Dictionary<string, Task<HttpResponseMessage>>();
+
+                foreach (var item in tests)
+                {
+                    var request = new HttpRequestMessage(HttpMethod.Get, item.Value);
+                    testResponses.Add(item.Key, SendObserverRequestAsync(request));
+                }
+
+                bool isHealthy = true;
+                Dictionary<string, object> result = new Dictionary<string, object>();
+
+                foreach (var item in testResponses)
+                {
+                    var httpResult = await item.Value;
+                    result.Add(item.Key, httpResult.StatusCode);
+
+                    if (!httpResult.IsSuccessStatusCode)
+                    {
+                        isHealthy = false;
+                        var responseContent = await httpResult.Content.ReadAsStringAsync();
+
+                        if (!string.IsNullOrWhiteSpace(responseContent))
+                        {
+                            result.Add(item.Key + " HTTP Content", responseContent);
+                        }
+                    }
+                }
+
+                return new HealthCheckResult(isHealthy ? HealthStatus.Healthy : HealthStatus.Unhealthy, "Observer", data: result);
+            }
+            else
+            {
+                return new HealthCheckResult(HealthStatus.Unhealthy, "Cannot check health of Observer due to missing arguments");
+            }
+
         }
 
         private static Uri ConvertToLocalObserverRoute(Uri uri)

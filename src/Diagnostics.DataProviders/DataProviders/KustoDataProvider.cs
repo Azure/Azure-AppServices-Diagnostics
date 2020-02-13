@@ -30,11 +30,24 @@ namespace Diagnostics.DataProviders
 
         public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration, string requestId, IKustoHeartBeatService kustoHeartBeat) : base(cache)
         {
+            var publicClouds = new string[] { DataProviderConstants.AzureCloud, DataProviderConstants.AzureCloudAlternativeName };
             _configuration = configuration;
             _kustoClient = KustoClientFactory.GetKustoClient(configuration, requestId);
             _requestId = requestId;
             _kustoHeartBeatService = kustoHeartBeat;
-            _kustoMap = configuration.KustoMap ?? new NullableKustoMap();
+            _kustoMap = new NullableKustoMap();
+
+            if (publicClouds.Any(s => configuration.CloudDomain.Equals(s, StringComparison.CurrentCultureIgnoreCase)))
+            {
+                if (configuration.UseKustoMapForPublic)
+                {
+                    _kustoMap = configuration.KustoMap ?? new NullableKustoMap();
+                }
+            }
+            else
+            {
+                _kustoMap = configuration.KustoMap ?? new NullableKustoMap();
+            }
 
             Metadata = new DataProviderMetadata
             {
@@ -106,7 +119,7 @@ namespace Diagnostics.DataProviders
             return await _kustoHeartBeatService.GetClusterNameFromStamp(stampName);
         }
 
-        public async override Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+        public async override Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken))
         {
             DataTable response;
             Exception kustoException = null;

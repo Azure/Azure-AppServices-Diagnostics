@@ -5,13 +5,14 @@
 
 using System.Threading.Tasks;
 using Diagnostics.RuntimeHost.Models;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
     /// <summary>
     /// Interface for source watcher.
     /// </summary>
-    public interface ISourceWatcher
+    public interface ISourceWatcher : IHealthCheck
     {
         /// <summary>
         /// Start source watcher.
