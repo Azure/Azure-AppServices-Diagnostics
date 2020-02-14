@@ -351,6 +351,10 @@
             {
               "Name": "WEBSITE_LOCAL_CACHE_OPTION",
               "Value": "Always"
+            },
+            {
+              "Name": "WEBSITE_LOAD_CERTIFICATES",
+              "Value": "*"
             }
           ],
           "autoHealEnabled": true,
@@ -462,6 +466,10 @@
                 {
                   "Name": "WEBSITE_LOCAL_CACHE_OPTION",
                   "Value": "Always"
+                },
+                {
+                  "Name": "WEBSITE_LOAD_CERTIFICATES",
+                  "Value": "*"
                 }
               ]
             }
