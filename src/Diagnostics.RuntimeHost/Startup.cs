@@ -62,7 +62,9 @@ namespace Diagnostics.RuntimeHost
                     options =>
                     {
                         options.AllowedIssuers = Configuration["SecuritySettings:AllowedCertIssuers"].Split("|").Select(p => p.Trim()).ToList();
-                        options.AllowedSubjectNames = Configuration["SecuritySettings:AllowedCertSubjectNames"].Split(",").Select(p => p.Trim()).ToList();
+                        var allowedSubjectNames = Configuration["SecuritySettings:AllowedCertSubjectNames"].Split(", ").Select(p => p.Trim()).ToList();
+                        allowedSubjectNames.AddRange(Configuration["SecuritySettings:AdditionalAllowedCertSubjectNames"].Split(",").Select(p => p.Trim()).ToList());
+                        options.AllowedSubjectNames = allowedSubjectNames;
                     }).AddJwtBearer("AzureAd", options => {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
