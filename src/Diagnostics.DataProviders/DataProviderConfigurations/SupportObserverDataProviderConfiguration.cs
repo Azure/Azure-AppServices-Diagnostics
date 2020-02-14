@@ -6,7 +6,7 @@
 namespace Diagnostics.DataProviders
 {
     [DataSourceConfiguration("SupportObserver")]
-    public class SupportObserverDataProviderConfiguration : IDataProviderConfiguration
+    public class SupportObserverDataProviderConfiguration : DataProviderConfigurationBase, IDataProviderConfiguration
     {
         public SupportObserverDataProviderConfiguration()
         {
@@ -55,11 +55,6 @@ namespace Diagnostics.DataProviders
         public string SupportBayApiObserverResourceId
         {
             get { return "https://microsoft.onmicrosoft.com/SupportObserverResourceApp"; }
-        }
-
-        public void PostInitialize()
-        {
-            //no op
         }
     }
 }

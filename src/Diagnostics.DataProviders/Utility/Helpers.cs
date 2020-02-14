@@ -25,7 +25,17 @@ namespace Diagnostics.DataProviders.Utility
 
         public static string MakeQueryCloudAgnostic(IKustoMap kustoMap, string query)
         {
-            var matches = Regex.Matches(query, @"cluster\((?<cluster>(.+))\).database\((?<database>(.+))\)\.");
+            if (kustoMap == null)
+            {
+                throw new ArgumentNullException();
+            }
+
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                throw new ArgumentNullException();
+            }
+
+            var matches = Regex.Matches(query, @"cluster\((?<cluster>([^\)]+))\).database\((?<database>([^\)]+))\)\.");
 
             if (matches.Any())
             {

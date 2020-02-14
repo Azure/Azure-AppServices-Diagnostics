@@ -6,6 +6,8 @@ namespace Diagnostics.DataProviders.KeyVaultCertLoader
     public abstract class CertLoaderBase
     {
         protected abstract string Thumbprint { get; set; }
+        protected abstract string SubjectName { get; set; }
+
         public X509Certificate2 Cert { get; private set; }
 
         public void LoadCertFromAppService()
@@ -15,10 +17,18 @@ namespace Diagnostics.DataProviders.KeyVaultCertLoader
 
             try
             {
-                X509Certificate2Collection certCollection = certStore.Certificates.Find(
+                if (!string.IsNullOrWhiteSpace(SubjectName) && SubjectName.StartsWith("CN=", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    SubjectName = SubjectName.Substring(3);
+                }
+
+                X509Certificate2Collection certCollection = string.IsNullOrWhiteSpace(SubjectName) ? certStore.Certificates.Find(
                                                             X509FindType.FindByThumbprint,
                                                             Thumbprint,
-                                                            false);
+                                                            true) : certStore.Certificates.Find(
+                                                            X509FindType.FindBySubjectName,
+                                                            SubjectName,
+                                                            true);
 
                 // Get the first cert with the thumbprint
                 if (certCollection.Count > 0)

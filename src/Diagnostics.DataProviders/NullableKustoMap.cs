@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Diagnostics.DataProviders.Interfaces;
-using Microsoft.Extensions.FileSystemGlobbing.Internal.PathSegments;
+﻿using Diagnostics.DataProviders.Interfaces;
 
 namespace Diagnostics.DataProviders
 {

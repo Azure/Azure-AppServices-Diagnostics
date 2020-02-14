@@ -177,7 +177,7 @@ namespace Diagnostics.RuntimeHost
                 CompilerHostTokenService.Instance.Initialize(Configuration);
             }
 
-            if (searchApiConfiguration.SearchAPIEnabled)
+            if (searchApiConfiguration.Enabled || searchApiConfiguration.SearchAPIEnabled)
             {
                 services.AddSingleton<ISearchService, SearchService>();
                 SearchServiceTokenService.Instance.Initialize(dataSourcesConfigService.Config.SearchServiceProviderConfiguration);
