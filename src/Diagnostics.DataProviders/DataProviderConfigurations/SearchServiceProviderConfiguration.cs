@@ -4,6 +4,12 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
     [DataSourceConfiguration("SearchAPI")]
     public class SearchServiceProviderConfiguration : DataProviderConfigurationBase, IDataProviderConfiguration
     {
+        /// <summary>	
+        /// SearchAPIEnabled	
+        /// </summary>	
+        [ConfigurationName("SearchAPIEnabled")]
+        public bool SearchAPIEnabled { get; set; }
+
         /// <summary>
         /// Client Id.
         /// </summary>
