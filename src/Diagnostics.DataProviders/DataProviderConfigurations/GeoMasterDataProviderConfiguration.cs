@@ -24,5 +24,11 @@
         /// </summary>
         [ConfigurationName("CertificateName")]
         public string CertificateName { get; set; }
+
+        /// <summary>
+        /// Subject name of the certificate
+        /// </summary>
+        [ConfigurationName("GeoCertSubjectName")]
+        public string GeoCertSubjectName { get; set; }
     }
 }

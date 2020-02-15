@@ -46,7 +46,7 @@ namespace Diagnostics.DataProviders
         private IGeoMasterClient InitClient()
         {
             IGeoMasterClient geoMasterClient;
-            bool isAppService = !string.IsNullOrWhiteSpace(_configuration.CertificateName);
+            bool isAppService = !string.IsNullOrWhiteSpace(_configuration.CertificateName) || !string.IsNullOrWhiteSpace(_configuration.GeoCertSubjectName);
             if (isAppService)
             {
                 geoMasterClient = new GeoMasterCertClient(_configuration, _geoMasterHostName);
