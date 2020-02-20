@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.Win32;
 using System;
@@ -90,6 +91,19 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
+
+            services.AddLogging(config =>
+            {
+                config.ClearProviders();
+                config.AddConfiguration(Configuration.GetSection("Logging"));
+                config.AddDebug();
+                config.AddEventSourceLogger();
+                
+                if (Environment.IsDevelopment())
+                {
+                    config.AddConsole();
+                }
+            });
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
