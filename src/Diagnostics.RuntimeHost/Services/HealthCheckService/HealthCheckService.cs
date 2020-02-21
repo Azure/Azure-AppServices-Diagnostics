@@ -22,12 +22,14 @@ namespace Diagnostics.RuntimeHost.Services
         private HttpClient _httpClient;
         private readonly ISourceWatcher _sourceWatcher;
         IConfiguration _configuration;
+        IDataSourcesConfigurationService _dataSourcesConfigurationService;
         bool IsOutboundConnectivityCheckEnabled = false;
 
-        public HealthCheckService(IConfiguration Configuration, ISourceWatcherService sourceWatcherService)
+        public HealthCheckService(IConfiguration Configuration, ISourceWatcherService sourceWatcherService, IDataSourcesConfigurationService dataProviderConfigurationService)
         {
             _configuration = Configuration;
             _sourceWatcher = sourceWatcherService.Watcher;
+            _dataSourcesConfigurationService = dataProviderConfigurationService;
             IsOutboundConnectivityCheckEnabled = Convert.ToBoolean(_configuration["HealthCheckSettings:IsOutboundConnectivityCheckEnabled"]);
             if (IsOutboundConnectivityCheckEnabled)
             {
@@ -77,6 +79,7 @@ namespace Diagnostics.RuntimeHost.Services
             }
 
             healthCheckResultsTask.Add(_sourceWatcher.CheckHealthAsync(null));
+            healthCheckResultsTask.Add(((DiagnosticDataProvider)dataProviders.MdmGeneric(_dataSourcesConfigurationService.Config.AntaresMdmConfiguration)).CheckHealthAsync(null));
 
             return await Task.WhenAll(healthCheckResultsTask);
         }
