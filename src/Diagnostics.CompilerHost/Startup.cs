@@ -21,6 +21,7 @@ using System.IO;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
+using Microsoft.Extensions.Logging;
 
 namespace Diagnostics.CompilerHost
 {
@@ -33,7 +34,8 @@ namespace Diagnostics.CompilerHost
         /// Initializes a new instance of the <see cref="Startup"/> class.
         /// </summary>
         /// <param name="configuration">The configuration.</param>
-        public Startup(IHostingEnvironment hostingEnvironment)
+        /// <param name="hostingEnvironment">The hostingEnvironment.</param>
+        public Startup(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
             var builder = new ConfigurationBuilder()
               .SetBasePath(AppContext.BaseDirectory)
@@ -54,7 +56,14 @@ namespace Diagnostics.CompilerHost
             builder.AddAzureKeyVault(builtConfig[keyVaultConfig], keyVaultClient, new DefaultKeyVaultSecretManager());
 
             Configuration = builder.Build();
+            Environment = hostingEnvironment;
         }
+
+
+        /// <summary>
+        /// Gets the hosting environment.
+        /// </summary>
+        public IHostingEnvironment Environment { get; }
 
         /// <summary>
         /// Gets the configuration.
@@ -107,6 +116,20 @@ namespace Diagnostics.CompilerHost
             services.AddApplicationInsightsTelemetry();
             services.AddMvc();
             CustomStartup();
+
+            services.AddLogging(loggingConfig =>
+            {
+                loggingConfig.ClearProviders();
+                loggingConfig.AddConfiguration(Configuration.GetSection("Logging"));
+                loggingConfig.AddDebug();
+                loggingConfig.AddEventSourceLogger();
+                loggingConfig.AddAzureWebAppDiagnostics();
+
+                if (Environment.IsDevelopment())
+                {
+                    loggingConfig.AddConsole();
+                }
+            });
         }
 
         /// <summary>

@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Protocols;
@@ -186,8 +187,22 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
-            // Initialize on startup
             servicesProvider.GetService<ISourceWatcherService>();
+
+            services.AddLogging(loggingConfig =>
+            {
+                loggingConfig.ClearProviders();
+                loggingConfig.AddConfiguration(Configuration.GetSection("Logging"));
+                loggingConfig.AddDebug();
+                loggingConfig.AddEventSourceLogger();
+                loggingConfig.AddEventLog();
+                loggingConfig.AddAzureWebAppDiagnostics();
+
+                if (Environment.IsDevelopment())
+                {
+                    loggingConfig.AddConsole();
+                }
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
