@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.ModelsAndUtils.Models;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Diagnostics.DataProviders
 {
@@ -31,7 +31,7 @@ namespace Diagnostics.DataProviders
             return Convert.ChangeType(_cache.GetOrAdd(key, addFunction), typeof(Task<T>)) as Task<T>;
         }
 
-        public virtual Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             return null;
         }

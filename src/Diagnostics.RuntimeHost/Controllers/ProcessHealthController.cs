@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Diagnostics.DataProviders;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {

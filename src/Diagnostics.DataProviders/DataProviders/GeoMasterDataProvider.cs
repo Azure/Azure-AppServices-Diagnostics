@@ -11,6 +11,7 @@ using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using Diagnostics.Logger;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Diagnostics.DataProviders
 {
@@ -683,6 +684,39 @@ namespace Diagnostics.DataProviders
             }
 
             return geoMasterName;
+        }
+
+        public override async Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default)
+        {
+            HealthCheckResult result = null;
+
+            if (_configuration.HealthCheckInputs != null && _configuration.HealthCheckInputs.Any())
+            {
+                _configuration.HealthCheckInputs.TryGetValue("subscription", out string subscription);
+                _configuration.HealthCheckInputs.TryGetValue("resourceGroupName", out string resourceGroupName);
+                _configuration.HealthCheckInputs.TryGetValue("siteName", out string siteName);
+
+                var inputs = new string[] { subscription, resourceGroupName, siteName };
+
+                if (inputs.All(s => !string.IsNullOrWhiteSpace(s)))
+                {
+                    Exception geomasterException = null;
+                    try
+                    {
+                        var response = await this.GetAppSettings(subscription, resourceGroupName, siteName);
+                    }
+                    catch (Exception ex)
+                    {
+                        geomasterException = ex;
+                    }
+                    finally
+                    {
+                        result = new HealthCheckResult(geomasterException == null ? HealthStatus.Healthy : HealthStatus.Unhealthy, "Geomaster", "Run a test against geomaster by simply getting app settings", geomasterException, (IReadOnlyDictionary<string,object>)_configuration.HealthCheckInputs);
+                    }
+                }
+            }
+
+            return result ?? await base.CheckHealthAsync(cancellationToken);
         }
     }
 }

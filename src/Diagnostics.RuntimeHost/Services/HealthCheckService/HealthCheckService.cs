@@ -5,7 +5,6 @@ using Microsoft.Extensions.Configuration;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.DataProviders;
 using System.Collections.Generic;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 
 namespace Diagnostics.RuntimeHost.Services
@@ -74,12 +73,12 @@ namespace Diagnostics.RuntimeHost.Services
                 {
                     DiagnosticDataProvider dp = ((LogDecoratorBase)dataProviderField.GetValue(dataProviders)).DataProvider;
                     if (dp != null)
-                        healthCheckResultsTask.Add(dp.CheckHealthAsync(null));
+                        healthCheckResultsTask.Add(dp.CheckHealthAsync());
                 }
             }
 
-            healthCheckResultsTask.Add(_sourceWatcher.CheckHealthAsync(null));
-            healthCheckResultsTask.Add(((DiagnosticDataProvider)dataProviders.MdmGeneric(_dataSourcesConfigurationService.Config.AntaresMdmConfiguration)).CheckHealthAsync(null));
+            healthCheckResultsTask.Add(_sourceWatcher.CheckHealthAsync());
+            healthCheckResultsTask.Add(((DiagnosticDataProvider)dataProviders.MdmGeneric(_dataSourcesConfigurationService.Config.AntaresMdmConfiguration)).CheckHealthAsync());
 
             return await Task.WhenAll(healthCheckResultsTask);
         }

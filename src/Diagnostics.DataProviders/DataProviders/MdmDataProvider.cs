@@ -212,7 +212,7 @@ namespace Diagnostics.DataProviders
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2007:Consider calling ConfigureAwait on the awaited task", Justification = "<Pending>")]
-        public override async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             HealthCheckResult result;
             if (_configuration.HealthCheckInputs != null && _configuration.HealthCheckInputs.Any())
@@ -227,7 +227,7 @@ namespace Diagnostics.DataProviders
 
                 if (parameters.Any(s => string.IsNullOrWhiteSpace(s)))
                 {
-                    return await base.CheckHealthAsync(context, cancellationToken);
+                    return await base.CheckHealthAsync(cancellationToken);
                 }
 
                 if (Enum.TryParse<Sampling>(mdmSamplingString, out Sampling mdmSampling))
@@ -248,14 +248,15 @@ namespace Diagnostics.DataProviders
                     {
                         result = new HealthCheckResult(
                             exception == null ? HealthStatus.Healthy : HealthStatus.Unhealthy,
-                            description: "MDM Data Provider",
+                            "MDM Data Provider",
+                            description: "Get time series data from Mdm",
                             exception);
                     }
 
                     return result;
                 }
             }
-            return await base.CheckHealthAsync(context, cancellationToken);
+            return await base.CheckHealthAsync(cancellationToken);
         }
     }
 }
