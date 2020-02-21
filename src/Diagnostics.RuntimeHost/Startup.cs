@@ -197,7 +197,9 @@ namespace Diagnostics.RuntimeHost
                 loggingConfig.AddConfiguration(Configuration.GetSection("Logging"));
                 loggingConfig.AddDebug();
                 loggingConfig.AddEventSourceLogger();
-                
+                loggingConfig.AddEventLog();
+                loggingConfig.AddAzureWebAppDiagnostics();
+
                 if (Environment.IsDevelopment())
                 {
                     loggingConfig.AddConsole();
