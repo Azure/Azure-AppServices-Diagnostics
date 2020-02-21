@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Diagnostics.CompilerHost
 {
@@ -21,10 +22,18 @@ namespace Diagnostics.CompilerHost
         /// Initializes a new instance of the <see cref="Startup"/> class.
         /// </summary>
         /// <param name="configuration">The configuration.</param>
-        public Startup(IConfiguration configuration)
+        /// <param name="environment">The environment.</param>
+        public Startup(IConfiguration configuration, IHostingEnvironment environment)
         {
             Configuration = configuration;
+            Environment = environment;
         }
+
+
+        /// <summary>
+        /// Gets the hosting environment.
+        /// </summary>
+        public IHostingEnvironment Environment { get; }
 
         /// <summary>
         /// Gets the configuration.
@@ -40,6 +49,19 @@ namespace Diagnostics.CompilerHost
         {
             services.AddMvc();
             CustomStartup();
+
+            services.AddLogging(config =>
+            {
+                config.ClearProviders();
+                config.AddConfiguration(Configuration.GetSection("Logging"));
+                config.AddDebug();
+                config.AddEventSourceLogger();
+
+                if (Environment.IsDevelopment())
+                {
+                    config.AddConsole();
+                }
+            });
         }
 
         /// <summary>
