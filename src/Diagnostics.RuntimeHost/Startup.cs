@@ -24,6 +24,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.IdentityModel.Logging;
 using System.Net;
+using Newtonsoft.Json;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -114,11 +115,18 @@ namespace Diagnostics.RuntimeHost
                 services.AddMvc(options =>
                 {
                     options.Filters.Add(new AllowAnonymousFilter());
+
+                }).AddJsonOptions(options =>
+                {
+                    options.SerializerSettings.Formatting = Formatting.Indented;
                 });
             }
             else
             {
-                services.AddMvc();
+                services.AddMvc().AddJsonOptions(options =>
+                {
+                    options.SerializerSettings.Formatting = Formatting.Indented;
+                });
             }
 
             services.AddSingleton<IDataSourcesConfigurationService, DataSourcesConfigurationService>();
