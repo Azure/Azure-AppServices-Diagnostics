@@ -711,7 +711,7 @@ namespace Diagnostics.DataProviders
                     }
                     finally
                     {
-                        result = new HealthCheckResult(geomasterException == null ? HealthStatus.Healthy : HealthStatus.Unhealthy, "Geomaster", "Run a test against geomaster by simply getting app settings", geomasterException, (IReadOnlyDictionary<string,object>)_configuration.HealthCheckInputs);
+                        result = new HealthCheckResult(geomasterException == null ? HealthStatus.Healthy : HealthStatus.Unhealthy, "Geomaster", "Run a test against geomaster by simply getting app settings", geomasterException, _configuration.HealthCheckInputs.ToDictionary((k) => k.Key, v => (object) v.Value));
                     }
                 }
                 else

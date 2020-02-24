@@ -235,7 +235,7 @@ namespace Diagnostics.DataProviders
                     Exception exception = null;
                     try
                     {
-                        var resp = await this.GetTimeSeriesAsync(DateTime.UtcNow, DateTime.UtcNow - TimeSpan.FromMinutes(45), mdmSampling, mdmNamespace, mdmMetric, new Dictionary<string, string>
+                        var resp = await this.GetTimeSeriesAsync(DateTime.UtcNow - TimeSpan.FromMinutes(45), DateTime.UtcNow, mdmSampling, mdmNamespace, mdmMetric, new Dictionary<string, string>
                         {
                             { "ResourceId", resourceId }
                         });
