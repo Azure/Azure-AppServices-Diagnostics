@@ -227,7 +227,7 @@ namespace Diagnostics.DataProviders
 
                 if (parameters.Any(s => string.IsNullOrWhiteSpace(s)))
                 {
-                    return await base.CheckHealthAsync(cancellationToken);
+                    return new HealthCheckResult(HealthStatus.Unknown, $"Missing required parameters for health check {string.Join(",", parameters.Where(s => string.IsNullOrWhiteSpace(s)))}");
                 }
 
                 if (Enum.TryParse<Sampling>(mdmSamplingString, out Sampling mdmSampling))

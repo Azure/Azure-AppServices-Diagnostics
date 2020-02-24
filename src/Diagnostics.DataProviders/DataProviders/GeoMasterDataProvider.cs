@@ -714,6 +714,11 @@ namespace Diagnostics.DataProviders
                         result = new HealthCheckResult(geomasterException == null ? HealthStatus.Healthy : HealthStatus.Unhealthy, "Geomaster", "Run a test against geomaster by simply getting app settings", geomasterException, (IReadOnlyDictionary<string,object>)_configuration.HealthCheckInputs);
                     }
                 }
+                else
+                {
+                    var missingValues = inputs.Where(s => string.IsNullOrWhiteSpace(s));
+                    result = new HealthCheckResult(HealthStatus.Unknown, $"Missing required parameters for health check {string.Join(",", missingValues)}");
+                }
             }
 
             return result ?? await base.CheckHealthAsync(cancellationToken);
