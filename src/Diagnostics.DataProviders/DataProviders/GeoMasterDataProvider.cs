@@ -35,7 +35,7 @@ namespace Diagnostics.DataProviders
 
         public string RequestId { get; set; }
 
-        public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache)
+        public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache, context.Configuration.GeoMasterConfiguration)
         {
             _geoMasterHostName = string.IsNullOrWhiteSpace(context.GeomasterHostName) ? context.Configuration.GeoMasterConfiguration.GeoEndpointAddress : context.GeomasterHostName;
             _configuration = context.Configuration.GeoMasterConfiguration;

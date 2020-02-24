@@ -29,7 +29,7 @@ namespace Diagnostics.DataProviders
         /// <param name="requestId">Request id.</param>
         /// <param name="generalDataProviderConfiguration">Generic data provider configuration.</param>
         public MdmDataProvider(OperationDataCache cache, IMdmDataProviderConfiguration configuration, string requestId, IHeaderDictionary headers = null)
-            : base(cache)
+            : base(cache, configuration)
         {
             _configuration = configuration;
             _mdmClient = MdmClientFactory.GetMdmClient(configuration, requestId);

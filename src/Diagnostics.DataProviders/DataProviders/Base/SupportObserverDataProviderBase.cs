@@ -29,7 +29,7 @@ namespace Diagnostics.DataProviders
             return client;
         });
 
-        public SupportObserverDataProviderBase(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, DataProviderContext dataProviderContext) : base(cache)
+        public SupportObserverDataProviderBase(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, DataProviderContext dataProviderContext) : base(cache, configuration)
         {
             Configuration = configuration;
             RequestId = dataProviderContext.RequestId;

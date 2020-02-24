@@ -6,6 +6,8 @@ using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.DataProviders;
 using System.Collections.Generic;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Microsoft.IdentityModel.Tokens;
+using System.Linq;
 
 namespace Diagnostics.RuntimeHost.Services
 {
@@ -62,9 +64,10 @@ namespace Diagnostics.RuntimeHost.Services
             await RetryHelper.RetryAsync(HealthCheckPing, "Healthping", "", 3, 100);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2007:Consider calling ConfigureAwait on the awaited task", Justification = "<Pending>")]
         public async Task<IEnumerable<HealthCheckResult>> RunDependencyCheck(DataProviders.DataProviders dataProviders)
         {
-            var healthCheckResultsTask = new List<Task<HealthCheckResult>>();
+            var healthCheckResultsTasks = new Dictionary<string, Task<HealthCheckResult>>();
             var dataProviderFields = dataProviders.GetType().GetFields();
 
             foreach (var dataProviderField in dataProviderFields)
@@ -72,15 +75,37 @@ namespace Diagnostics.RuntimeHost.Services
                 if (dataProviderField.FieldType.IsInterface)
                 {
                     DiagnosticDataProvider dp = ((LogDecoratorBase)dataProviderField.GetValue(dataProviders)).DataProvider;
-                    if (dp != null)
-                        healthCheckResultsTask.Add(dp.CheckHealthAsync());
+                    if (dp != null && ((dp.DataProviderConfiguration?.Enabled).HasValue && dp.DataProviderConfiguration.Enabled))
+                        healthCheckResultsTasks.Add(dp.GetType().Name, dp.CheckHealthAsync());
                 }
             }
 
-            healthCheckResultsTask.Add(_sourceWatcher.CheckHealthAsync());
-            healthCheckResultsTask.Add(((DiagnosticDataProvider)dataProviders.MdmGeneric(_dataSourcesConfigurationService.Config.AntaresMdmConfiguration)).CheckHealthAsync());
+            healthCheckResultsTasks.Add(_sourceWatcher.GetType().Name, _sourceWatcher.CheckHealthAsync());
+            healthCheckResultsTasks.Add("Mdm", ((LogDecoratorBase)dataProviders.MdmGeneric(_dataSourcesConfigurationService.Config.AntaresMdmConfiguration)).DataProvider.CheckHealthAsync());
 
-            return await Task.WhenAll(healthCheckResultsTask);
+            return await Task.Run<IEnumerable<HealthCheckResult>>(async () =>
+            {
+                List<HealthCheckResult> healthCheckResults = new List<HealthCheckResult>();
+                foreach (var kv in healthCheckResultsTasks)
+                {
+                    Exception healthCheckException = null;
+                    try
+                    {
+                        var result = await kv.Value;
+                        healthCheckResults.Add(result);
+                    }
+                    catch (Exception ex)
+                    {
+                        healthCheckException = ex;
+                        if (ex != null)
+                        {
+                            healthCheckResults.Add(new HealthCheckResult(HealthStatus.Unhealthy, kv.Key, ex: ex));
+                        }
+                    }
+                }
+
+                return healthCheckResults.OrderBy(x => x.Status);
+            });
         }
 
         public void Dispose()

@@ -11,7 +11,7 @@ namespace Diagnostics.DataProviders
 
         public string GeoMasterName => DataProvider.GeoMasterName;
 
-        public GeoMasterLogDecorator(DataProviderContext context, IGeoMasterDataProvider dataProvider) : base(context, dataProvider.GetMetadata())
+        public GeoMasterLogDecorator(DataProviderContext context, IGeoMasterDataProvider dataProvider) : base(dataProvider as DiagnosticDataProvider, context, dataProvider.GetMetadata())
         {
             DataProvider = dataProvider;
         }

@@ -10,6 +10,7 @@ namespace Diagnostics.DataProviders
     {
         private OperationDataCache _cache;
         private IDataProviderConfiguration _configuration;
+        private const string baseMessage = @"The underlying data source with {Name} may not fully implement the health check interface or it may be missing data to complete a successful health check";
 
         public DiagnosticDataProvider(OperationDataCache cache)
         {
@@ -33,7 +34,7 @@ namespace Diagnostics.DataProviders
 
         public virtual Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            return null;
+            return Task.FromResult(new HealthCheckResult(HealthStatus.Unknown, this.GetType().Name, baseMessage));
         }
     }
 }

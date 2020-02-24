@@ -28,7 +28,7 @@ namespace Diagnostics.DataProviders
         private IKustoHeartBeatService _kustoHeartBeatService;
         private IKustoMap _kustoMap;
 
-        public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration, string requestId, IKustoHeartBeatService kustoHeartBeat) : base(cache)
+        public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration, string requestId, IKustoHeartBeatService kustoHeartBeat) : base(cache, configuration)
         {
             var publicClouds = new string[] { DataProviderConstants.AzureCloud, DataProviderConstants.AzureCloudAlternativeName };
             _configuration = configuration;
