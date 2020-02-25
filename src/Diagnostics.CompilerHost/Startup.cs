@@ -122,7 +122,6 @@ namespace Diagnostics.CompilerHost
                 loggingConfig.ClearProviders();
                 loggingConfig.AddConfiguration(Configuration.GetSection("Logging"));
                 loggingConfig.AddDebug();
-                loggingConfig.AddEventSourceLogger();
                 loggingConfig.AddAzureWebAppDiagnostics();
 
                 if (Environment.IsDevelopment())
