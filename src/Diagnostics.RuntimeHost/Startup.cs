@@ -195,9 +195,13 @@ namespace Diagnostics.RuntimeHost
                 loggingConfig.AddConfiguration(Configuration.GetSection("Logging"));
                 loggingConfig.AddDebug();
                 loggingConfig.AddEventSourceLogger();
-                loggingConfig.AddEventLog();
-                loggingConfig.AddAzureWebAppDiagnostics();
 
+                if (string.Compare(Configuration.GetValue<string>("CloudDomain"), DataProviderConstants.AzureCloud, true) == 0 || string.Compare(Configuration.GetValue<string>("CloudDomain"), DataProviderConstants.AzureCloudAlternativeName, true) == 0)
+                {
+                    loggingConfig.AddEventLog();
+                    loggingConfig.AddAzureWebAppDiagnostics();
+                }
+             
                 if (Environment.IsDevelopment())
                 {
                     loggingConfig.AddConsole();
