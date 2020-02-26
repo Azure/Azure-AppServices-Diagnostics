@@ -42,20 +42,13 @@
     },
     "enabledForTemplateDeployment": {
       "type": "bool",
-      "defaultValue": false,
+      "defaultValue": true,
       "allowedValues": [
         true,
         false
       ],
       "metadata": {
         "description": "Specifies whether Azure Resource Manager is permitted to retrieve secrets from the key vault."
-      }
-    },
-    "tenantId": {
-      "type": "string",
-      "defaultValue": "[subscription().tenantId]",
-      "metadata": {
-        "description": "Specifies the Azure Active Directory tenant ID that should be used for authenticating requests to the key vault. Get it by using Get-AzSubscription cmdlet."
       }
     },
     "keysPermissions": {
@@ -99,17 +92,7 @@
         "enabledForDeployment": "[parameters('enabledForDeployment')]",
         "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
         "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
-        "tenantId": "[parameters('tenantId')]",
-        "accessPolicies": [
-          {
-            "objectId": "[reference(concat(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Web/sites', parameters('siteName')), '2018-02-01', 'Full')).identity.principalId]",
-            "tenantId": "[parameters('tenantId')]",
-            "permissions": {
-              "keys": "[parameters('keysPermissions')]",
-              "secrets": "[parameters('secretsPermissions')]"      
-            }
-          }
-        ],
+        "tenantId": "[subscription().tenantId]",
         "sku": {
           "name": "[parameters('skuName')]",
           "family": "A"
@@ -118,6 +101,23 @@
             "defaultAction": "Allow",
             "bypass": "AzureServices"
         }
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/accessPolicies",
+      "name": "[concat(parameters('keyVaultName'), '/add')]",
+      "apiVersion": "2018-02-14",
+      "properties": {
+        "accessPolicies": [
+          {
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('siteName')), '2018-02-01', 'Full').identity.principalId]",
+            "tenantId": "[reference(resourceId('Microsoft.Web/sites', parameters('siteName')), '2018-02-01', 'Full').identity.tenantId]",
+            "permissions": {
+              "keys": "[parameters('keysPermissions')]",
+              "secrets": "[parameters('secretsPermissions')]"      
+            }
+          }
+        ]
       }
     }
   ]
