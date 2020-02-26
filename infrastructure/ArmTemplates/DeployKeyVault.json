@@ -93,21 +93,6 @@
         "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
         "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
         "tenantId": "[subscription().tenantId]",
-        "sku": {
-          "name": "[parameters('skuName')]",
-          "family": "A"
-        },
-        "networkAcls": {
-            "defaultAction": "Allow",
-            "bypass": "AzureServices"
-        }
-      }
-    },
-    {
-      "type": "Microsoft.KeyVault/vaults/accessPolicies",
-      "name": "[concat(parameters('keyVaultName'), '/add')]",
-      "apiVersion": "2018-02-14",
-      "properties": {
         "accessPolicies": [
           {
             "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('siteName')), '2018-02-01', 'Full').identity.principalId]",
@@ -117,7 +102,15 @@
               "secrets": "[parameters('secretsPermissions')]"      
             }
           }
-        ]
+        ],
+        "sku": {
+          "name": "[parameters('skuName')]",
+          "family": "A"
+        },
+        "networkAcls": {
+            "defaultAction": "Allow",
+            "bypass": "AzureServices"
+        }
       }
     }
   ]
