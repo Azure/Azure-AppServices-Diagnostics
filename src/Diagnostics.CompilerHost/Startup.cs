@@ -43,16 +43,18 @@ namespace Diagnostics.CompilerHost
 
             var builtConfig = builder.Build();
 
-            string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(hostingEnvironment.EnvironmentName);
-            var tokenProvider = new AzureServiceTokenProvider(azureAdInstance: builtConfig["Secrets:AzureAdInstance"]);
-            var keyVaultClient = new KeyVaultClient(
-                new KeyVaultClient.AuthenticationCallback(
-                    tokenProvider.KeyVaultTokenCallback
-                )
-            );
-
-            builder.AddAzureKeyVault(builtConfig[keyVaultConfig], keyVaultClient, new DefaultKeyVaultSecretManager());
-            builder.AddEnvironmentVariables();
+            if (builtConfig.GetValue<bool>("KeyVault:Enabled", false))
+            {
+                string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(hostingEnvironment.EnvironmentName);
+                var tokenProvider = new AzureServiceTokenProvider(azureAdInstance: builtConfig["AzureAd:AzureAdInstance"]);
+                var keyVaultClient = new KeyVaultClient(
+                    new KeyVaultClient.AuthenticationCallback(
+                        tokenProvider.KeyVaultTokenCallback
+                    )
+                );
+                builder.AddAzureKeyVault(builtConfig[keyVaultConfig], keyVaultClient, new DefaultKeyVaultSecretManager());
+                builder.AddEnvironmentVariables();
+            }
 
             Configuration = builder.Build();
         }
