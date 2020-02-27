@@ -14,7 +14,7 @@ private static string GetQuery(OperationContext<ArmResource> cxt)
 }
 
 
-[ArmResourceFilter(provider: "Microsoft.EventGrid", resourceTypeName: "namespaces")]
+[ArmResourceFilter(provider: "Microsoft.EventGrid", resourceTypeName: "topics")]
 [Definition(Id = "YOUR_DETECTOR_ID", Name = "", Author = "YOUR_ALIAS", Description = "")]
 public async static Task<Response> Run(DataProviders dp, OperationContext<ArmResource> cxt, Response res)
 {
