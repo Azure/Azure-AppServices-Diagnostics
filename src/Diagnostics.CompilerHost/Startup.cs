@@ -52,6 +52,7 @@ namespace Diagnostics.CompilerHost
             );
 
             builder.AddAzureKeyVault(builtConfig[keyVaultConfig], keyVaultClient, new DefaultKeyVaultSecretManager());
+            builder.AddEnvironmentVariables();
 
             Configuration = builder.Build();
         }
