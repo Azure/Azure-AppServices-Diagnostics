@@ -4,6 +4,7 @@ using Diagnostics.Logger;
 using System.Linq;
 using System.Net;
 using Microsoft.AspNetCore.Http;
+using Diagnostics.RuntimeHost.Utilities;
 
 namespace Diagnostics.RuntimeHost.Utilities
 {
@@ -15,7 +16,7 @@ namespace Diagnostics.RuntimeHost.Utilities
         {
             var request = context.HttpContext.Request;
             // Partner teams using Diagnose and Solve, make the request to api/invoke from their RP.
-            if (!request.Path.Value.Equals("/api/invoke", StringComparison.OrdinalIgnoreCase))
+            if (!request.Path.Value.Equals(UriElements.PassThroughAPIRoute, StringComparison.OrdinalIgnoreCase))
             {
                 context.Result = RuleResult.ContinueRules;
                 return;

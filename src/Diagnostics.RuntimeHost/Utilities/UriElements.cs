@@ -54,7 +54,7 @@
         public const string TrainModel = "trainmodel";
         public const string RefreshModel = "refreshmodel";
         public const string UpdateResourceConfig = "updateResourceConfig";
-        public const string PassThroughAPIRoute = "api/invoke";
+        public const string PassThroughAPIRoute = "/api/invoke";
         #region Observer Urls
 
         public const string Observer = "observer";
