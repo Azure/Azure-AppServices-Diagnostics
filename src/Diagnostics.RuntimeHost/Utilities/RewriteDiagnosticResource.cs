@@ -5,6 +5,8 @@ using System.Linq;
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using Diagnostics.RuntimeHost.Utilities;
+using System.Text;
+using System.IO;
 
 namespace Diagnostics.RuntimeHost.Utilities
 {
@@ -20,7 +22,8 @@ namespace Diagnostics.RuntimeHost.Utilities
             {
                 context.Result = RuleResult.ContinueRules;
                 return;
-            } else
+            }
+            else
             {
                 // Check for required headers and send 400 if not present.
                 if (!request.Headers.TryGetValue(HeaderConstants.ApiPathHeader, out var apiPaths) || !apiPaths.Any() || string.IsNullOrWhiteSpace(apiPaths.FirstOrDefault()))
@@ -28,7 +31,11 @@ namespace Diagnostics.RuntimeHost.Utilities
                     var response = context.HttpContext.Response;
                     response.StatusCode = this.StatusCode;
                     response.ContentType = "text/plain";
-                    response.WriteAsync($"Missing {HeaderConstants.ApiPathHeader} header").Wait();
+                    byte[] errorMessage = Encoding.ASCII.GetBytes($"Missing {HeaderConstants.ApiPathHeader} header");
+                    using (MemoryStream memoryStream = new MemoryStream(errorMessage))
+                    {
+                        memoryStream.WriteTo(response.Body);
+                    }                  
                     context.Result = RuleResult.EndResponse; // Send response and do not continue the request.
                     return;
                 }
@@ -38,7 +45,11 @@ namespace Diagnostics.RuntimeHost.Utilities
                     var response = context.HttpContext.Response;
                     response.StatusCode = this.StatusCode;
                     response.ContentType = "text/plain";
-                    response.WriteAsync($"Missing {HeaderConstants.ApiVerbHeader} header").Wait();
+                    byte[] errorMessage = Encoding.ASCII.GetBytes($"Missing {HeaderConstants.ApiVerbHeader} header");
+                    using (MemoryStream memoryStream = new MemoryStream(errorMessage))
+                    {
+                        memoryStream.WriteTo(response.Body);
+                    }
                     context.Result = RuleResult.EndResponse; // Send response and do not continue the request.
                     return;
                 }
