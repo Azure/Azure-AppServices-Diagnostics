@@ -25,6 +25,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.IdentityModel.Logging;
 using System.Net;
+using Diagnostics.RuntimeHost.Utilities;
+using Microsoft.AspNetCore.Rewrite;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -217,6 +219,7 @@ namespace Diagnostics.RuntimeHost
                 app.UseDeveloperExceptionPage();
             }
             app.UseAuthentication();
+            app.UseRewriter(new RewriteOptions().Add(new RewriteDiagnosticResource()));
             app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseMvc();
         }
