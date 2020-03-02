@@ -16,11 +16,6 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
         public string Endpoint { get; set; }
 
         /// <summary>
-        /// Gets or sets the certificate thumbprint.
-        /// </summary>
-        public string CertificateThumbprint { get; set; }
-
-        /// <summary>
         /// Gets or sets monitoring account.
         /// </summary>
         public string MonitoringAccount { get; set; }
