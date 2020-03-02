@@ -164,7 +164,6 @@ namespace Diagnostics.RuntimeHost.Utilities
                 });
 
             // TODO: emit ETW event
-            ////DiagnosticsETWProvider.Instance.LogRuntimeHostMessage(info.Message);
         }
 
         public IEnumerable<RuntimeLogEntry> GetAndClear(string category)
