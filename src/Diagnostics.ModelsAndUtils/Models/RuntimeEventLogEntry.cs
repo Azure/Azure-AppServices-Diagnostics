@@ -10,7 +10,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         public Dictionary<string, object> Properties { get; set; }
     }
 
-    public class RuntimeEventLogEntry
+    public class RuntimeLogEntry
     {
         public DateTime TimeStamp { get; private set; }
         public LogLevel Level { get; set; }
@@ -23,7 +23,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         public Dictionary<string, object> StateProperties { get; set; }
         public List<RuntimeLogScope> Scopes { get; set; }
 
-        public RuntimeEventLogEntry()
+        public RuntimeLogEntry()
         {
             this.TimeStamp = DateTime.UtcNow;
         }

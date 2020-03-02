@@ -16,8 +16,8 @@ namespace Diagnostics.RuntimeHost.Utilities
 {
     public interface IRuntimeLoggerProvider : ILoggerProvider
     {
-        void WriteLog(RuntimeEventLogEntry info);
-        IEnumerable<RuntimeEventLogEntry> GetAndClear(string category);
+        void WriteLog(RuntimeLogEntry info);
+        IEnumerable<RuntimeLogEntry> GetAndClear(string category);
     }
 
     // Documents used to develop this class:
@@ -54,7 +54,7 @@ namespace Diagnostics.RuntimeHost.Utilities
                 return;
             }
 
-            var entry = new RuntimeEventLogEntry
+            var entry = new RuntimeLogEntry
             {
                 Category = this.Category,
                 Level = logLevel,
@@ -120,7 +120,7 @@ namespace Diagnostics.RuntimeHost.Utilities
         public LogLevel LogLevel { get; set; } = LogLevel.Information;
         private IDisposable _settingsChangeToken;
         private bool _disposed = false;
-        private static ConcurrentDictionary<string, List<RuntimeEventLogEntry>> _runtimeLogs = new ConcurrentDictionary<string, List<RuntimeEventLogEntry>>();
+        private static ConcurrentDictionary<string, List<RuntimeLogEntry>> _runtimeLogs = new ConcurrentDictionary<string, List<RuntimeLogEntry>>();
 
         public RuntimeLogProvider()
         {
@@ -147,7 +147,7 @@ namespace Diagnostics.RuntimeHost.Utilities
             }
         }
 
-        public void WriteLog(RuntimeEventLogEntry info)
+        public void WriteLog(RuntimeLogEntry info)
         {
             if (info == null || info.Message == null)
             {
@@ -156,7 +156,7 @@ namespace Diagnostics.RuntimeHost.Utilities
 
             var reqid = info.Category;
             _runtimeLogs.AddOrUpdate(reqid,
-                id => new List<RuntimeEventLogEntry> { info }, // Adding
+                id => new List<RuntimeLogEntry> { info }, // Adding
                 (id, logs) => // Updating
                 {
                     logs.Add(info);
@@ -167,10 +167,10 @@ namespace Diagnostics.RuntimeHost.Utilities
             ////DiagnosticsETWProvider.Instance.LogRuntimeHostMessage(info.Message);
         }
 
-        public IEnumerable<RuntimeEventLogEntry> GetAndClear(string category)
+        public IEnumerable<RuntimeLogEntry> GetAndClear(string category)
         {
             var reqid = category;
-            List<RuntimeEventLogEntry> logs = null;
+            List<RuntimeLogEntry> logs = null;
 
             _runtimeLogs.TryRemove(reqid, out logs);
 
