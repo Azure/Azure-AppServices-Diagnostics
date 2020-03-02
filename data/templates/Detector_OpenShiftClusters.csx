@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-private static string GetQuery(OperationContext<ArmResource> cxt)
+private static string Table = await dp.Kusto.ExecuteClusterQuery(GetQueryToGetHostingInstances(cxt), null , "GetQueryToGetHostingInstances"),(OperationContext<ArmResource> cxt)
 {
     return
     $@"
@@ -20,7 +20,7 @@ public async static Task<Response> Run(DataProviders dp, OperationContext<ArmRes
 {
     res.Dataset.Add(new DiagnosticData()
     {
-        Table = await dp.Kusto.ExecuteClusterQuery(GetQuery(cxt)),
+        Table = await dp.Kusto.ExecuteClusterQuery(GetQueryToGetHostingInstances(cxt), null , "GetQueryToGetHostingInstances"),
         RenderingProperties = new Rendering(RenderingType.Table){
             Title = "Sample Table",
             Description = "Some description here"
