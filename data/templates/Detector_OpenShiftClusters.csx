@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-private static string Table = await dp.Kusto.ExecuteClusterQuery(GetQueryToGetHostingInstances(cxt), null , "GetQueryToGetHostingInstances"),(OperationContext<ArmResource> cxt)
+private static string GetQueryToGetHostingInstances(OperationContext<ArmResource> cxt)
 {
     return
     $@"
