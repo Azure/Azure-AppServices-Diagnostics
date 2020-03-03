@@ -197,6 +197,7 @@ namespace Diagnostics.RuntimeHost
                 loggingConfig.AddConfiguration(Configuration.GetSection("Logging"));
                 loggingConfig.AddDebug();
                 loggingConfig.AddEventSourceLogger();
+                loggingConfig.AddRuntimeLogger();
 
                 if (!IsPublicAzure())
                 {

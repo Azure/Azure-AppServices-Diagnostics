@@ -5,6 +5,7 @@ using System.Linq;
 using Diagnostics.ModelsAndUtils.Models;
 
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
+using Newtonsoft.Json;
 
 namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 {
@@ -220,6 +221,15 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         public static IEnumerable<FormInputBase> GetFormInputsByType(Form form, FormInputTypes filterInputType)
         {
             return form.FormInputs.Where(input => input.InputType == filterInputType);
+        }
+    }
+
+    public static class RuntimeExtensions
+    {
+        public static string Stringify(this object o)
+        {
+            string s = JsonConvert.SerializeObject(o);
+            return s;
         }
     }
 }
