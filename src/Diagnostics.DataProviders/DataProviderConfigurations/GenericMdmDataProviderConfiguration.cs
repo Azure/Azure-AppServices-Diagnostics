@@ -64,7 +64,7 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
         {
             if (config == null)
             {
-                throw new ArgumentNullException("Configuration is null.");
+                throw new ArgumentNullException("Supplied MDM configuration is null.");
             }
             if (config.MonitoringAccount != null && config.MonitoringAccount.StartsWith("Mock"))
             {
@@ -73,18 +73,14 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
             else
             {
                 using (X509Store store = new X509Store(StoreName.My, StoreLocation.LocalMachine))
-                using (X509Store userStore = new X509Store(StoreName.My, StoreLocation.CurrentUser))
                 {
                     store.Open(OpenFlags.ReadOnly);
-                    userStore.Open(OpenFlags.ReadOnly);
 
-                    var certificateCollection = store.Certificates;
-                    certificateCollection.AddRange(userStore.Certificates);
-                    var certificates = certificateCollection.Find(X509FindType.FindBySubjectName, config.CertificateName, true);
+                    var certificates = store.Certificates.Find(X509FindType.FindBySubjectName, config.CertificateName, true);
 
                     if (certificates.Count == 0)
                     {
-                        throw new SystemException("Certificate is not found.");
+                        throw new SystemException($"MDM certificate with subject name {config.CertificateName} not found in Computer store.");
                     }
 
                     CertificateThumbprint = certificates[0].Thumbprint;
