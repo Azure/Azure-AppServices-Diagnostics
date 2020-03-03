@@ -16,7 +16,7 @@ namespace Diagnostics.DataProviders
         public IChangeAnalysisDataProvider ChangeAnalysis;
         public IAscDataProvider Asc;
         public Func<MdmDataSource, IMdmDataProvider> Mdm;
-        public Func<IMdmDataProviderConfiguration, IMdmDataProvider> MdmGeneric;
+        public Func<GenericMdmDataProviderConfiguration, IMdmDataProvider> MdmGeneric;
 
         public DataProviders(DataProviderContext context)
         {
@@ -38,7 +38,7 @@ namespace Diagnostics.DataProviders
                         throw new NotSupportedException($"{ds} is not supported.");
                 }
             };
-            MdmGeneric = (IMdmDataProviderConfiguration config) => new MdmLogDecorator(context, new MdmDataProvider(_cache, config, context.RequestId, context.receivedHeaders));
+            MdmGeneric = (GenericMdmDataProviderConfiguration config) => new MdmLogDecorator(context, new MdmDataProvider(_cache, new GenericMdmDataProviderConfigurationWrapper(config), context.RequestId, context.receivedHeaders));
         }
     }
 }
