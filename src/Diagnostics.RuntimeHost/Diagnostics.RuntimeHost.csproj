@@ -48,8 +48,4 @@
     </Content>
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
-    <Exec Command="taskkill /f /fi &quot;WINDOWTITLE eq Diagnostics.RuntimeHost&quot;" />
-  </Target>
-
 </Project>
