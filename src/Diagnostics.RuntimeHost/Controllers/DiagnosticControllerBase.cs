@@ -308,7 +308,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
                         queryRes.RuntimeSucceeded = true;
                         queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse, dataProvidersMetadata, utterancesResults);
-                        queryRes.RuntimeOutput = _loggerProvider.GetAndClear(runtimeContext.OperationContext.RequestId);
+                        queryRes.RuntimeLogOutput = _loggerProvider.GetAndClear(runtimeContext.OperationContext.RequestId);
                     }
                     catch (Exception ex)
                     {
@@ -317,7 +317,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                             runtimeContext.OperationContext.Logger.LogInformation(invocationResponse.ToString());
                         }
                         runtimeContext.OperationContext.Logger.LogError(FlattenIfAggregatedException(ex).ToString());
-                        queryRes.RuntimeOutput = _loggerProvider.GetAndClear(runtimeContext.OperationContext.RequestId);
+                        queryRes.RuntimeLogOutput = _loggerProvider.GetAndClear(runtimeContext.OperationContext.RequestId);
                         if (isInternalCall)
                         {
                             queryRes.RuntimeSucceeded = false;

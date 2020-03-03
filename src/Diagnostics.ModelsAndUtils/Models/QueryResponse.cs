@@ -5,7 +5,7 @@ namespace Diagnostics.ModelsAndUtils.Models
     public class QueryResponse<T>
     {
         public CompilerResponse CompilationOutput;
-        public IEnumerable<RuntimeLogEntry> RuntimeOutput;
+        public IEnumerable<RuntimeLogEntry> RuntimeLogOutput;
 
         public bool RuntimeSucceeded;
 
