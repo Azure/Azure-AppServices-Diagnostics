@@ -2,6 +2,7 @@
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.ModelsAndUtils.Utilities;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {
@@ -66,13 +67,15 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public Dictionary<string, string> QueryParams { get; set; }
 
+        public ILogger Logger { get; private set; }
+
         public static implicit operator OperationContext(OperationContext<TResource> context)
         {
             return new OperationContext(context.Resource, context.StartTime, context.EndTime, context.IsInternalCall,
                 context.RequestId, context.TimeGrain, context.SupportTopic);
         }
 
-        public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, string timeGrain = "5", SupportTopic supportTopic = null, Form form = null, string cloudDomain = null, string ascParams = null)
+        public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, string timeGrain = "5", SupportTopic supportTopic = null, Form form = null, string cloudDomain = null, string ascParams = null, ILogger logger = null)
         {
             Resource = resource;
             StartTime = startTimeStr;
@@ -85,14 +88,15 @@ namespace Diagnostics.ModelsAndUtils.Models
             CloudDomain = cloudDomain;
             QueryParams = new Dictionary<string, string>();
             ASCParameters = ascParams;
+            Logger = logger;
         }
     }
 
     public class OperationContext : OperationContext<IResource>
     {
         public OperationContext(IResource resource, string startTimeStr, string endTimeStr, bool isInternalCall,
-            string requestId, string timeGrain = "5", SupportTopic supportTopic = null, string ascParams = null) :
-            base(resource, startTimeStr, endTimeStr, isInternalCall, requestId, timeGrain, supportTopic, null, null, ascParams)
+            string requestId, string timeGrain = "5", SupportTopic supportTopic = null, string ascParams = null, ILogger logger = null) :
+            base(resource, startTimeStr, endTimeStr, isInternalCall, requestId, timeGrain, supportTopic, null, null, ascParams, logger)
         {
         }
     }

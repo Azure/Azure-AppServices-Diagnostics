@@ -98,6 +98,7 @@ namespace Diagnostics.RuntimeHost
                 config.AddConfiguration(Configuration.GetSection("Logging"));
                 config.AddDebug();
                 config.AddEventSourceLogger();
+                config.AddRuntimeLogger();
                 
                 if (Environment.IsDevelopment())
                 {

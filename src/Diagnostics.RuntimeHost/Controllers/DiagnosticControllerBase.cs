@@ -28,6 +28,7 @@ using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Diagnostics.RuntimeHost.Models.Exceptions;
 using Diagnostics.DataProviders.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -42,6 +43,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IAssemblyCacheService _assemblyCacheService;
         protected ISearchService _searchService;
         protected IRuntimeContext<TResource> _runtimeContext;
+        protected IRuntimeLoggerProvider _loggerProvider;
 
         private InternalAPIHelper _internalApiHelper;
 
@@ -55,6 +57,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._stampService = (IStampService)services.GetService(typeof(IStampService));
             this._assemblyCacheService = (IAssemblyCacheService)services.GetService(typeof(IAssemblyCacheService));
             this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
+            this._loggerProvider = (IRuntimeLoggerProvider)services.GetService(typeof(IRuntimeLoggerProvider));
 
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
@@ -305,9 +308,16 @@ namespace Diagnostics.RuntimeHost.Controllers
 
                         queryRes.RuntimeSucceeded = true;
                         queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse, dataProvidersMetadata, utterancesResults);
+                        queryRes.RuntimeLogOutput = _loggerProvider.GetAndClear(runtimeContext.OperationContext.RequestId);
                     }
                     catch (Exception ex)
                     {
+                        if (invocationResponse != null)
+                        {
+                            runtimeContext.OperationContext.Logger.LogInformation(invocationResponse.ToString());
+                        }
+                        runtimeContext.OperationContext.Logger.LogError(FlattenIfAggregatedException(ex).ToString());
+                        queryRes.RuntimeLogOutput = _loggerProvider.GetAndClear(runtimeContext.OperationContext.RequestId);
                         if (isInternalCall)
                         {
                             queryRes.RuntimeSucceeded = false;
@@ -344,6 +354,17 @@ namespace Diagnostics.RuntimeHost.Controllers
             };
             response.AddMarkdownView($"<pre><code>Exception message:<strong> {ex.Message}</strong><br>Stack trace: {ex.StackTrace}</code></pre>", "Detector Runtime Exception");
             return DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata);
+        }
+
+        private Exception FlattenIfAggregatedException(Exception ex)
+        {
+            if (ex is AggregateException)
+            {
+                var flatten = ((AggregateException)ex).Flatten();
+                return flatten.InnerException;
+            }
+
+            return ex;
         }
 
         protected async Task<IActionResult> GetInsights(TResource resource, string pesId, string supportTopicId, string startTime, string endTime, string timeGrain)
@@ -553,15 +574,17 @@ namespace Diagnostics.RuntimeHost.Controllers
                 }
             }
 
+            var requestId = requestIds.FirstOrDefault();
             var operationContext = new OperationContext<TResource>(
                 resource,
                 DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(DataProviderConstants.KustoTimeFormat),
                 DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(DataProviderConstants.KustoTimeFormat),
                 internalViewRequested || forceInternal,
-                requestIds.FirstOrDefault(),
+                requestId,
                 supportTopic: supportTopic,
                 form: Form,
-                cloudDomain: _runtimeContext.CloudDomain
+                cloudDomain: _runtimeContext.CloudDomain,
+                logger: _loggerProvider.CreateLogger(requestId)
             );
 
             _runtimeContext.ClientIsInternal = isInternalClient || forceInternal;
