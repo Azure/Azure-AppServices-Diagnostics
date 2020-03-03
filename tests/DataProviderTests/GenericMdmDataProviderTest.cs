@@ -23,7 +23,6 @@ namespace Diagnostics.Tests.DataProviderTests
 
             var mdmConfig = new GenericMdmDataProviderConfiguration
             {
-                CertificateName = "mock.azurewebsites.windows.net",
                 Endpoint = "http://0.0.0.0",
                 MonitoringAccount = "Mock"
             };
@@ -71,7 +70,6 @@ public static class MDMConfiguration
     public static GenericMdmDataProviderConfiguration GetConfiguration() =>
         new GenericMdmDataProviderConfiguration()
         {
-            CertificateName = ""mock.azurewebsites.windows.net"",
             Endpoint = ""http://0.0.0.0"",
             MonitoringAccount = ""Mock""
         };
