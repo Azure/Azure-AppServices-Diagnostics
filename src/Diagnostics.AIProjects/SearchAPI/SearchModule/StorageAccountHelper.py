@@ -22,6 +22,11 @@ class StorageAccountHelper:
 			self.firstTime[productId] = True
 		while True:
 			for productId in productIds:
+				modelOnDisk = None
+				try:
+					modelOnDisk = open(os.path.join(os.getcwd(), app.config["TRAINED_MODELS_PATH"], productId, "trainingId.txt")).read()
+				except:
+					pass
 				self.loggerInstance.logInsights("modelRefreshTask: Running model watcher for {0}".format(productId))
 				isChanged = False
 				try:
@@ -33,9 +38,14 @@ class StorageAccountHelper:
 							continue
 						folders = list(set([int(blob.name.split("/")[2]) for blob in allblobsList]))
 						latestFolder = str(max(folders))
-						downloadList = [blob for blob in allblobsList if blob.name.startswith("{0}/models/{1}".format(productId, latestFolder))]
-						for blob in downloadList:
-							if self.firstTime[productId] or (now - blob.properties.last_modified).seconds/60 < 5:
+						trainingId = self.blob_service.get_blob_to_text(app.config["STORAGE_ACCOUNT_CONTAINER_NAME"], f"{productId}/models/{latestFolder}/trainingId.txt")
+						if trainingId:
+							trainingId = trainingId.content
+						if modelOnDisk and trainingId and trainingId==modelOnDisk:
+							isChanged = False
+						else:
+							downloadList = [blob for blob in allblobsList if blob.name.startswith("{0}/models/{1}".format(productId, latestFolder))]
+							for blob in downloadList:
 								blobname = blob.name
 								dirpath = os.path.join(os.getcwd(), app.config["TRAINED_MODELS_PATH"], productId)
 								try:
