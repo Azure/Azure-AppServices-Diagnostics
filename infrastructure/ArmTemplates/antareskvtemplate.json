@@ -321,8 +321,9 @@
           "webSocketsEnabled": false,
           "alwaysOn": "[parameters('alwaysOn')]",
           "healthCheckPath": "[parameters('pingPath')]",
-          "httpLoggingEnabled": true,
+          "httpLoggingEnabled": false,
           "logsDirectorySizeLimit": 50,
+          "detailedErrorLoggingEnabled": false,
           "appSettings": [
             {
               "Name": "DIAG_HOST",
@@ -440,8 +441,9 @@
               "webSocketsEnabled": false,
               "alwaysOn": false,
               "healthCheckPath": null,
-              "httpLoggingEnabled": true,
+              "httpLoggingEnabled": false,
               "logsDirectorySizeLimit": 50,
+              "detailedErrorLoggingEnabled": false,
               "appSettings": [
                 {
                   "Name": "DIAG_HOST",
