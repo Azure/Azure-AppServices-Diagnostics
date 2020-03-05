@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.Logger;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -14,6 +16,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         protected IConfiguration _config;
         protected IInvokerCacheService _invokerCache;
         protected IGistCacheService _gistCache;
+        protected IKustoMappingsCacheService _kustoMappingsCache;
         protected string _eventSource;
 
         protected abstract string SourceName { get; }
@@ -26,12 +29,15 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         public abstract Task CreateOrUpdatePackage(Package pkg);
 
-        protected SourceWatcherBase(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, string eventSource)
+        public abstract Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken));
+
+        protected SourceWatcherBase(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, IKustoMappingsCacheService kustoMappingsCache, string eventSource)
         {
             _env = env;
             _config = configuration;
             _invokerCache = invokerCache;
             _gistCache = gistCache;
+            _kustoMappingsCache = kustoMappingsCache;
             _eventSource = eventSource;
         }
 

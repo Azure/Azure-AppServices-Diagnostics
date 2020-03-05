@@ -44,6 +44,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         public SupportTopic SupportTopic { get; private set; }
 
         /// <summary>
+        /// If this detector is being called from Azure Support Center
+        /// then this value will be populated with the provided parameters from ASC
+        /// </summary>
+        public string ASCParameters { get; private set; }
+
+        /// <summary>
         /// TimeGrain in minutes for aggregating data.
         /// </summary>
         public string TimeGrain { get; private set; }
@@ -66,7 +72,7 @@ namespace Diagnostics.ModelsAndUtils.Models
                 context.RequestId, context.TimeGrain, context.SupportTopic);
         }
 
-        public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, string timeGrain = "5", SupportTopic supportTopic = null, Form form = null, string cloudDomain = null)
+        public OperationContext(TResource resource, string startTimeStr, string endTimeStr, bool isInternalCall, string requestId, string timeGrain = "5", SupportTopic supportTopic = null, Form form = null, string cloudDomain = null, string ascParams = null)
         {
             Resource = resource;
             StartTime = startTimeStr;
@@ -78,14 +84,15 @@ namespace Diagnostics.ModelsAndUtils.Models
             Form = form;
             CloudDomain = cloudDomain;
             QueryParams = new Dictionary<string, string>();
+            ASCParameters = ascParams;
         }
     }
 
     public class OperationContext : OperationContext<IResource>
     {
         public OperationContext(IResource resource, string startTimeStr, string endTimeStr, bool isInternalCall,
-            string requestId, string timeGrain = "5", SupportTopic supportTopic = null) :
-            base(resource, startTimeStr, endTimeStr, isInternalCall, requestId, timeGrain, supportTopic)
+            string requestId, string timeGrain = "5", SupportTopic supportTopic = null, string ascParams = null) :
+            base(resource, startTimeStr, endTimeStr, isInternalCall, requestId, timeGrain, supportTopic, null, null, ascParams)
         {
         }
     }

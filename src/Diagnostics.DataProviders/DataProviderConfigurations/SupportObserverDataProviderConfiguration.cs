@@ -6,7 +6,7 @@
 namespace Diagnostics.DataProviders
 {
     [DataSourceConfiguration("SupportObserver")]
-    public class SupportObserverDataProviderConfiguration : IDataProviderConfiguration
+    public class SupportObserverDataProviderConfiguration : DataProviderConfigurationBase, IDataProviderConfiguration
     {
         public SupportObserverDataProviderConfiguration()
         {
@@ -44,13 +44,9 @@ namespace Diagnostics.DataProviders
         /// </summary>
         public string AADAuthority { get; set; }
 
-        /// <summary>
-        /// Gets resourceId for WAWSObserver AAD app.
-        /// </summary>
-        public string WawsObserverResourceId
-        {
-            get { return "d1abfd91-e19c-426e-802f-a6c55421a5ef"; }
-        }
+
+        [ConfigurationName("AADResource")]
+        public string AADResource { get; set; }
 
         /// <summary>
         /// Gets uri for SupportObserverResourceAAD app.
@@ -59,11 +55,6 @@ namespace Diagnostics.DataProviders
         public string SupportBayApiObserverResourceId
         {
             get { return "https://microsoft.onmicrosoft.com/SupportObserverResourceApp"; }
-        }
-
-        public void PostInitialize()
-        {
-            //no op
         }
     }
 }

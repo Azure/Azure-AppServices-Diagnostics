@@ -44,6 +44,8 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IAssemblyCacheService _assemblyCacheService;
         protected ISearchService _searchService;
         protected IRuntimeContext<TResource> _runtimeContext;
+        protected ISupportTopicService _supportTopicService;
+        protected IKustoMappingsCacheService _kustoMappingCacheService;
 
         private InternalAPIHelper _internalApiHelper;
 
@@ -57,6 +59,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._stampService = (IStampService)services.GetService(typeof(IStampService));
             this._assemblyCacheService = (IAssemblyCacheService)services.GetService(typeof(IAssemblyCacheService));
             this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
+            this._supportTopicService = (ISupportTopicService)services.GetService(typeof(ISupportTopicService));
+            this._kustoMappingCacheService = (IKustoMappingsCacheService)services.GetService(typeof(IKustoMappingsCacheService));
 
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
@@ -348,8 +352,17 @@ namespace Diagnostics.RuntimeHost.Controllers
             return DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata);
         }
 
-        protected async Task<IActionResult> GetInsights(TResource resource, string pesId, string supportTopicId, string startTime, string endTime, string timeGrain)
+        protected async Task<IActionResult> GetInsights(TResource resource, string pesId, string supportTopicId, string startTime, string endTime, string timeGrain, string supportTopicPath = null, string postBody = null)
         {
+            if (supportTopicPath != null)
+            {
+                SupportTopicModel supportTopicMap = await this._supportTopicService.GetSupportTopicFromString(supportTopicPath, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+                if (supportTopicMap != null)
+                {
+                    pesId = supportTopicMap.ProductId;
+                    supportTopicId = supportTopicMap.SupportTopicId;
+                }
+            }
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
             {
                 return BadRequest(errorMessage);
@@ -357,7 +370,8 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             supportTopicId = ParseCorrectSupportTopicId(supportTopicId);
             var supportTopic = new SupportTopic() { Id = supportTopicId, PesId = pesId };
-            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, true, supportTopic);
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, true, supportTopic, null, postBody);
+            DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId, "AzureSupportCenter", "ASCAdditionalParameters", postBody);
 
             List<AzureSupportCenterInsight> insights = null;
             string error = null;
@@ -438,7 +452,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         // Purposefully leaving this method in Base class. This method is shared between two resources right now - HostingEnvironment and WebApp
-        protected async Task<HostingEnvironment> GetHostingEnvironment(string subscriptionId, string resourceGroup, string name, DiagnosticStampData stampPostBody, DateTime startTime, DateTime endTime, string kind)
+        protected async Task<HostingEnvironment> GetHostingEnvironment(string subscriptionId, string resourceGroup, string name, DiagnosticStampData stampPostBody, DateTime startTime, DateTime endTime, PlatformType? platformType = null)
         {
             if (stampPostBody == null)
             {
@@ -487,7 +501,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             else
             {
-                hostingEnv.PlatformType = (!string.IsNullOrWhiteSpace(kind) && kind.ToLower().Contains("linux")) ? PlatformType.Linux : PlatformType.Windows;
+                hostingEnv.PlatformType = platformType ?? PlatformType.Windows;
             }
             
             return hostingEnv;
@@ -535,7 +549,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return systemContext;
         }
 
-        private RuntimeContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, SupportTopic supportTopic = null, Form Form = null)
+        private RuntimeContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, SupportTopic supportTopic = null, Form Form = null, string ascParams = null)
         {
             this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
             this.Request.Headers.TryGetValue(HeaderConstants.InternalClientHeader, out StringValues internalCallHeader);
@@ -563,7 +577,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 requestIds.FirstOrDefault(),
                 supportTopic: supportTopic,
                 form: Form,
-                cloudDomain: _runtimeContext.CloudDomain
+                cloudDomain: _runtimeContext.CloudDomain,
+                ascParams: ascParams
             );
 
             _runtimeContext.ClientIsInternal = isInternalClient || forceInternal;
@@ -654,7 +669,19 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var queryParams = Request.Query;
-            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+            
+            var dataProviderContext = (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey];
+            
+            _kustoMappingCacheService.TryGetValue($"{context.OperationContext.Resource.Provider?.Replace(".", string.Empty)}Configuration",
+                out List <Dictionary<string, string>> kustoMappings);
+
+            if (kustoMappings != null)
+            {
+                dataProviderContext.Configuration.KustoConfiguration.KustoMap = new KustoMap(context.CloudDomain == DataProviderConstants.AzureCloud 
+                    ? DataProviderConstants.AzureCloudAlternativeName : context.CloudDomain, kustoMappings);
+            }
+            
+            var dataProviders = new DataProviders.DataProviders(dataProviderContext);
             List<DataProviderMetadata> dataProvidersMetadata = null;
             if (context.ClientIsInternal)
             {

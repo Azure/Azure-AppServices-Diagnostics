@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
+using Diagnostics.DataProviders.Interfaces;
 
 namespace Diagnostics.DataProviders
 {
     [DataSourceConfiguration("Kusto")]
-    public class KustoDataProviderConfiguration : IDataProviderConfiguration
+    public class KustoDataProviderConfiguration : DataProviderConfigurationBase, IDataProviderConfiguration
     {
         /// <summary>
         /// Client Id
@@ -95,6 +96,14 @@ namespace Diagnostics.DataProviders
         /// </summary>
         public ConcurrentDictionary<string, string> FailoverClusterNameCollection { get; set; }
 
+        /// <summary>
+        /// Kusto map.
+        /// </summary>
+        public IKustoMap KustoMap { get; set; }
+
+        [ConfigurationName("UseKustoMapForPublic")]
+        public bool UseKustoMapForPublic { get; set; }
+
         public string CloudDomain
         {
             get
@@ -130,7 +139,7 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        public void PostInitialize()
+        public override void PostInitialize()
         {
             RegionSpecificClusterNameCollection = new ConcurrentDictionary<string, string>();
             FailoverClusterNameCollection = new ConcurrentDictionary<string, string>();

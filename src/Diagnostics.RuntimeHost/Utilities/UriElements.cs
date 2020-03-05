@@ -42,6 +42,9 @@
         public const string StatisticsResource = "/{invokerId}";
         public const string StatisticsQuery = "/statisticsQuery";
         public const string AppStack = "appstack";
+        public const string Configurations = "configurations";
+        public const string KustoClusterMappings = Configurations + "/kustoClusterMappings";
+        public const string UniqueResourceId = "/{id}";
 
         // Constants for internal api interactions
         public const string Internal = "/internal";
@@ -51,7 +54,7 @@
         public const string TrainModel = "trainmodel";
         public const string RefreshModel = "refreshmodel";
         public const string UpdateResourceConfig = "updateResourceConfig";
-
+        public const string PassThroughAPIRoute = "/api/invoke";
         #region Observer Urls
 
         public const string Observer = "observer";

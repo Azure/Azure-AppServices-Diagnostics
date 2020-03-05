@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
+using Microsoft.Extensions.Logging;
 using Diagnostics.DataProviders;
 using System;
 using Microsoft.CodeAnalysis;
@@ -41,11 +42,11 @@ namespace Diagnostics.RuntimeHost
             return WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((context, config) =>
                 {
-                    var (keyVaultConfig, keyVaultClient) = GetKeyVaultSettings(context, config);
+                    var (keyVaultUri, keyVaultClient) = GetKeyVaultSettings(context, config);
 
                     config
                         .AddAzureKeyVault(
-                            $"https://{keyVaultConfig}.vault.azure.net/",
+                            keyVaultUri,
                             keyVaultClient,
                             new DefaultKeyVaultSecretManager())
                         .AddEnvironmentVariables()
@@ -58,15 +59,13 @@ namespace Diagnostics.RuntimeHost
 
         private static Tuple<string, KeyVaultClient> GetKeyVaultSettings(WebHostBuilderContext context, IConfigurationBuilder config)
         {
-            var azureServiceTokenProvider = new AzureServiceTokenProvider();
+            var builtConfig = config.Build();
+            var azureServiceTokenProvider = new AzureServiceTokenProvider(azureAdInstance: builtConfig["Secrets:AzureAdInstance"]);
             var keyVaultClient = new KeyVaultClient(
                 new KeyVaultClient.AuthenticationCallback(
                     azureServiceTokenProvider.KeyVaultTokenCallback));
 
             string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(context.HostingEnvironment.EnvironmentName);
-
-            var builtConfig = config.Build();
-
             return new Tuple<string, KeyVaultClient>(builtConfig[keyVaultConfig], keyVaultClient);
         }
     }

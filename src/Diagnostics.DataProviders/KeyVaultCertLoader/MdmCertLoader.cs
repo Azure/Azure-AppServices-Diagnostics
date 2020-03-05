@@ -11,10 +11,12 @@ namespace Diagnostics.DataProviders
         public static MdmCertLoader Instance => _instance.Value;
 
         protected override string Thumbprint { get; set; }
+        protected override string SubjectName { get; set; }
 
         public void Initialize(IConfiguration configuration)
         {
            Thumbprint = configuration["Mdm:MdmRegistrationCertThumbprint"];
+           SubjectName = configuration["Mdm:MdmCertSubjectName"];
            LoadCertFromAppService();
         }
     }

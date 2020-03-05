@@ -104,5 +104,15 @@ namespace Diagnostics.Logger
         /// Subscription Location Placement id.
         /// </summary>
         public static readonly string SubscriptionLocationPlacementId = "x-ms-subscription-location-placementid";
+
+        /// <summary>
+        /// Used by partner teams as part of the incoming headers.
+        /// </summary>
+        public static readonly string ApiPathHeader = "x-ms-path-query";
+
+        /// <summary>
+        /// Used by partner teams as part of the incoming headers.
+        /// </summary>
+        public static readonly string ApiVerbHeader = "x-ms-verb";
     }
 }

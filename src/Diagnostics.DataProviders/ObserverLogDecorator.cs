@@ -11,7 +11,7 @@ namespace Diagnostics.DataProviders
 	{
 		public ISupportObserverDataProvider DataProvider;
 
-		public ObserverLogDecorator(DataProviderContext context, ISupportObserverDataProvider dataProvider) : base(context, dataProvider.GetMetadata())
+		public ObserverLogDecorator(DataProviderContext context, ISupportObserverDataProvider dataProvider) : base((DiagnosticDataProvider)dataProvider, context, dataProvider.GetMetadata())
 		{
 			DataProvider = dataProvider;
 		}
@@ -36,7 +36,12 @@ namespace Diagnostics.DataProviders
 			return MakeDependencyCall(DataProvider.GetRuntimeSiteSlotMap(stampName, siteName, slotName));
 		}
 
-		public Task<dynamic> GetServerFarmsInResourceGroupAsync(string subscriptionName, string resourceGroupName)
+        public Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(OperationContext<App> cxt, string stampName = null, string siteName = null, string slotName = null, DateTime? endTime = null)
+        {
+            return MakeDependencyCall(DataProvider.GetRuntimeSiteSlotMap(cxt, stampName, siteName, slotName, endTime));
+        }
+
+        public Task<dynamic> GetServerFarmsInResourceGroupAsync(string subscriptionName, string resourceGroupName)
 		{
 			return MakeDependencyCall(DataProvider.GetServerFarmsInResourceGroupAsync(subscriptionName, resourceGroupName));
 		}

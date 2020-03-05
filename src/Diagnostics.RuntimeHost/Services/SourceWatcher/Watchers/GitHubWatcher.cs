@@ -21,6 +21,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 using System.Diagnostics;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using System.Threading;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -59,8 +61,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         /// <param name="invokerCache">Invoker cache.</param>
         /// <param name="gistCache">Gist cache.</param>
         /// <param name="githubClient">Github client.</param>
-        public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, IGithubClient githubClient)
-            : base(env, configuration, invokerCache, gistCache, "GithubWatcher")
+        public GitHubWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, IKustoMappingsCacheService kustoMappingsCache, IGithubClient githubClient)
+            : base(env, configuration, invokerCache, gistCache, kustoMappingsCache,  "GithubWatcher")
         {
             _githubClient = githubClient;
 
@@ -69,13 +71,15 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             #region Initialize Github Worker
 
             // TODO: Register the github worker with destination path.
-            var gistWorker = new GithubGistWorker(gistCache, _loadOnlyPublicDetectors);
-            var detectorWorker = new GithubDetectorWorker(invokerCache, _loadOnlyPublicDetectors);
+            var gistWorker = new GithubGistWorker(gistCache, _loadOnlyPublicDetectors, _githubClient);
+            var detectorWorker = new GithubDetectorWorker(invokerCache, _loadOnlyPublicDetectors, _githubClient);
+            var kustoMappingsWorker = new GithubKustoConfigurationWorker(kustoMappingsCache, _githubClient);
 
             GithubWorkers = new Dictionary<string, IGithubWorker>
             {
                 { gistWorker.Name, gistWorker },
-                { detectorWorker.Name, detectorWorker }
+                { detectorWorker.Name, detectorWorker },
+                { kustoMappingsWorker.Name, kustoMappingsWorker }
             };
 
             #endregion Initialize Github Worker
@@ -105,6 +109,32 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             }
 
             await _githubClient.CreateOrUpdateFiles(pkg.GetCommitContents(), pkg.GetCommitMessage());
+        }
+
+        public override async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            HttpResponseMessage response = null;
+            Exception healthCheckException = null;
+            HealthCheckResult result;
+
+            try
+            {
+                response = await _githubClient.Get(_rootContentApiPath);
+            }
+            catch(Exception ex)
+            {
+                healthCheckException = ex;
+            }
+            finally
+            {
+                result = new HealthCheckResult(healthCheckException == null ? response != null && response.IsSuccessStatusCode ? HealthStatus.Healthy : HealthStatus.Unhealthy : HealthStatus.Unhealthy,
+                    "GitHubWatcherService", healthCheckException, new Dictionary<string, object>
+                    {
+                        { "HTTP Status Code", response != null ? response.StatusCode : 0 }
+                    });
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -147,26 +177,22 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     LogMessage($"Checking if any invoker present locally needs to be added in cache");
                     var directories = destDirInfo.EnumerateDirectories();
                     List<Task> tasks = new List<Task>(directories.Count());
+                    
                     foreach (DirectoryInfo subDir in directories)
                     {
-                        var workerId = await GetWorkerIdAsync(subDir);
-
-                        if (GithubWorkers.ContainsKey(workerId))
+                        foreach (var githubWorker in GithubWorkers.Values)
                         {
                             if (startup)
                             {
-                                tasks.Add(GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir));
+                                tasks.Add(githubWorker.CreateOrUpdateCacheAsync(subDir));
                             }
                             else
                             {
-                                await GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir);
+                                await githubWorker.CreateOrUpdateCacheAsync(subDir);
                             }
                         }
-                        else
-                        {
-                            LogWarning($"Cannot find github worker with id {workerId}. Directory: {subDir.FullName}.");
-                        }
                     }
+
                     if (startup)
                     {
                         await Task.WhenAll(tasks);
@@ -197,15 +223,9 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     // ETag matches
                     if (subDirModifiedMarker == gitHubDir.Sha)
                     {
-                        var workerId = await GetWorkerIdAsync(subDir);
-
-                        if (GithubWorkers.ContainsKey(workerId))
+                        foreach (var githubWorker in GithubWorkers.Values)
                         {
-                            await GithubWorkers[workerId].CreateOrUpdateCacheAsync(subDir);
-                        }
-                        else
-                        {
-                            LogWarning($"Cannot find github worker with id {workerId}. Directory: {subDir.FullName}.");
+                            await githubWorker.CreateOrUpdateCacheAsync(subDir);
                         }
 
                         continue;
@@ -260,12 +280,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         private async Task DownloadContentAndUpdateCache(GithubEntry parentGithubEntry, DirectoryInfo destDir, string folderName)
         {
-            var assemblyName = Guid.NewGuid().ToString();
-            var csxFilePath = string.Empty;
-            var confFilePath = string.Empty;
-            var metadataFilePath = string.Empty;
-            var lastCacheId = string.Empty;
-            var cacheIdFilePath = Path.Combine(destDir.FullName, _cacheIdFileName);
+            var searchModelFiles = new string[] { "model", "index", "dict", "npy" };
 
             var response = await _githubClient.Get(parentGithubEntry.Url);
             if (!response.IsSuccessStatusCode)
@@ -276,62 +291,31 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
             var githubFiles = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
 
-            foreach (GithubEntry githubFile in githubFiles)
+            // Skip extensions used in search model files
+            if (githubFiles.Any(x => searchModelFiles.Any(searchModelExtension => !string.IsNullOrWhiteSpace(x.Name) 
+            && x.Name.EndsWith("." + searchModelExtension, StringComparison.CurrentCultureIgnoreCase))))
             {
-                var fileExtension = githubFile.Name.Split(new char[] { '.' }).LastOrDefault();
-                if (string.IsNullOrWhiteSpace(githubFile.Download_url) || string.IsNullOrWhiteSpace(fileExtension))
-                {
-                    // Skip Downloading any directory (with empty download url) or any file without an extension.
-                    continue;
-                }
-
-                var downloadFilePath = Path.Combine(destDir.FullName, githubFile.Name.ToLower());
-                if (fileExtension.Equals("csx", StringComparison.OrdinalIgnoreCase))
-                {
-                    csxFilePath = downloadFilePath;
-                }
-                else if (githubFile.Name.Equals("package.json", StringComparison.OrdinalIgnoreCase))
-                {
-                    confFilePath = downloadFilePath;
-                }
-                else if (githubFile.Name.Equals("metadata.json", StringComparison.OrdinalIgnoreCase))
-                {
-                    metadataFilePath = downloadFilePath;
-                }
-                // Extensions used in search model files
-                else if (githubFile.Name.Split(".").Last() == "model" || githubFile.Name.Split(".").Last() == "index" || githubFile.Name.Split(".").Last() == "dict" || githubFile.Name.Split(".").Last() == "npy")
-                {
-                    LogMessage($"Found a search model, skipping the folder {folderName}");
-                    return;
-                }
-                else
-                {
-                    // Use Guids for Assembly and PDB Names to ensure uniqueness.
-                    downloadFilePath = Path.Combine(destDir.FullName, $"{assemblyName}.{fileExtension.ToLower()}");
-                }
-
-                LogMessage($"Begin downloading File : {githubFile.Name.ToLower()} and saving it as : {downloadFilePath}");
-                await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
+                return;
             }
 
-            var scriptText = await FileHelper.GetFileContentAsync(csxFilePath);
-            var assemblyPath = Path.Combine(destDir.FullName, $"{assemblyName}.dll");
+            var selectedGithubFiles = githubFiles
+                // Skip Downloading any directory (with empty download url) or any file without an extension.
+                .Where(x => !string.IsNullOrWhiteSpace(x.Download_url) 
+                && !string.IsNullOrWhiteSpace(x.Name.Split(new char[] { '.' }).LastOrDefault()));
 
-            var configFile = await FileHelper.GetFileContentAsync(confFilePath);
-            var config = JsonConvert.DeserializeObject<PackageConfig>(configFile);
-
-            var metadata = await FileHelper.GetFileContentAsync(metadataFilePath);
-
-            var workerId = string.Equals(config?.Type, "gist", StringComparison.OrdinalIgnoreCase) ? "GistWorker" : "DetectorWorker";
-            await FileHelper.WriteToFileAsync(destDir.FullName, _workerIdFileName, workerId);
-
-            if (GithubWorkers.ContainsKey(workerId))
+            if (selectedGithubFiles.Any())
             {
-                await GithubWorkers[workerId].CreateOrUpdateCacheAsync(destDir, parentGithubEntry.Sha, scriptText, assemblyPath, metadata);
-            }
-            else
-            {
-                LogWarning($"Cannot find github worker with id {workerId}. Directory: {destDir.FullName}.");
+                foreach (IGithubWorker githubWorker in GithubWorkers.Values)
+                {
+                    try
+                    {
+                        await githubWorker.CreateOrUpdateCacheAsync(selectedGithubFiles, destDir, parentGithubEntry.Sha);
+                    }
+                    catch(Exception ex)
+                    {
+                        LogException($"Failed to execute github worker with id {githubWorker.Name}. Directory: {destDir.FullName}", ex);
+                    }
+                }
             }
         }
 
@@ -358,20 +342,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                         // No action.
                     }
 
+                    _kustoMappingsCache.TryRemoveValue(subDir.Name, out var throwAway);
+
                     await FileHelper.WriteToFileAsync(subDir.FullName, _deleteMarkerName, "true");
                 }
             }
-        }
-
-        private async Task<string> GetWorkerIdAsync(DirectoryInfo subDir)
-        {
-            var workerId = await FileHelper.GetFileContentAsync(subDir.FullName, _workerIdFileName);
-            if (string.IsNullOrWhiteSpace(workerId))
-            {
-                return "DetectorWorker";
-            }
-
-            return workerId;
         }
 
         private static string GetHeaderValue(HttpResponseMessage responseMsg, string headerName)

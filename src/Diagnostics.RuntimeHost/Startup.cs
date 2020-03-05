@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Protocols;
@@ -22,7 +23,10 @@ using System.Diagnostics;
 using Diagnostics.RuntimeHost.Security.CertificateAuth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.IdentityModel.Logging;
 using System.Net;
+using Diagnostics.RuntimeHost.Utilities;
+using Microsoft.AspNetCore.Rewrite;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -48,6 +52,7 @@ namespace Diagnostics.RuntimeHost
 
         public void ConfigureServices(IServiceCollection services)
         {
+            IdentityModelEventSource.ShowPII = Configuration.GetValue("ShowIdentityModelErrors", false);
             var openIdConfigEndpoint = $"{Configuration["SecuritySettings:AADAuthority"]}/.well-known/openid-configuration";
             var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(openIdConfigEndpoint, new OpenIdConnectConfigurationRetriever());
             var config = configManager.GetConfigurationAsync().Result;
@@ -104,6 +109,7 @@ namespace Diagnostics.RuntimeHost
 
             // Enable App Insights telemetry
             services.AddApplicationInsightsTelemetry();
+            services.AddAppServiceApplicationLogging();
             if(Environment.IsDevelopment())
             {
                 services.AddMvc(options =>
@@ -121,7 +127,9 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<ISourceWatcherService, SourceWatcherService>();
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
             services.AddSingleton<IGistCacheService, GistCacheService>();
+            services.AddSingleton<IKustoMappingsCacheService, KustoMappingsCacheService>();
             services.AddSingleton<ISiteService, SiteService>();
+            services.AddSingleton<ISupportTopicService, SupportTopicService>();
             services.AddScoped(typeof(IRuntimeContext<>), typeof(RuntimeContext<>));
             services.AddSingleton<IStampService>((serviceProvider) =>
             {
@@ -130,6 +138,8 @@ namespace Diagnostics.RuntimeHost
                 {
                     case DataProviderConstants.AzureChinaCloud:
                     case DataProviderConstants.AzureUSGovernment:
+                    case DataProviderConstants.AzureUSNat:
+                    case DataProviderConstants.AzureUSSec:
                         return new NationalCloudStampService();
                     default:
                         return new StampService();
@@ -147,7 +157,7 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
 
             observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
-            var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.WawsObserverResourceId, observerConfiguration);
+            var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.AADResource, observerConfiguration);
             var supportBayApiObserverTokenService = new ObserverTokenService(observerConfiguration.SupportBayApiObserverResourceId, observerConfiguration);
             services.AddSingleton<IWawsObserverTokenService>(wawsObserverTokenService);
             services.AddSingleton<ISupportBayApiObserverTokenService>(supportBayApiObserverTokenService);
@@ -155,10 +165,22 @@ namespace Diagnostics.RuntimeHost
             observerServicePoint.ConnectionLeaseTimeout = 60 * 1000;
 
 
-            ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
-            AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
-            CompilerHostTokenService.Instance.Initialize(Configuration);
-            if (searchApiConfiguration.SearchAPIEnabled)
+            if (Configuration.GetValue("ChangeAnalysis:Enabled", true))
+            {
+                ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
+            }
+
+            if (Configuration.GetValue("AzureSupportCenter:Enabled", true))
+            {
+                AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
+            }
+
+            if (Configuration.GetValue("CompilerHost:Enabled", true))
+            {
+                CompilerHostTokenService.Instance.Initialize(Configuration);
+            }
+
+            if (searchApiConfiguration.Enabled || searchApiConfiguration.SearchAPIEnabled)
             {
                 services.AddSingleton<ISearchService, SearchService>();
                 SearchServiceTokenService.Instance.Initialize(dataSourcesConfigService.Config.SearchServiceProviderConfiguration);
@@ -167,8 +189,26 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
-            // Initialize on startup
             servicesProvider.GetService<ISourceWatcherService>();
+
+            services.AddLogging(loggingConfig =>
+            {
+                loggingConfig.ClearProviders();
+                loggingConfig.AddConfiguration(Configuration.GetSection("Logging"));
+                loggingConfig.AddDebug();
+                loggingConfig.AddEventSourceLogger();
+
+                if (!IsPublicAzure())
+                {
+                    loggingConfig.AddEventLog();
+                    loggingConfig.AddAzureWebAppDiagnostics();
+                }
+             
+                if (Environment.IsDevelopment())
+                {
+                    loggingConfig.AddConsole();
+                }
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -179,8 +219,15 @@ namespace Diagnostics.RuntimeHost
                 app.UseDeveloperExceptionPage();
             }
             app.UseAuthentication();
+            app.UseRewriter(new RewriteOptions().Add(new RewriteDiagnosticResource()));
             app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseMvc();
+        }
+
+        private bool IsPublicAzure()
+        {
+            return Configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureCloud, StringComparison.CurrentCultureIgnoreCase)
+                || Configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureCloudAlternativeName, StringComparison.CurrentCultureIgnoreCase);
         }
     }
 }

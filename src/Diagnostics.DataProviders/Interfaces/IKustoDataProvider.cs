@@ -7,6 +7,8 @@ namespace Diagnostics.DataProviders
     {
         Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null);
 
+        Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId, string operationName);
+
         Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null);
 
         Task<KustoQuery> GetKustoQuery(string query, string stampName);

@@ -10,6 +10,11 @@ from SearchModule.MessageStrings import loadModelMessage, refreshModelMessage, f
 #### Text Search model for Queries ####
 class TextSearchModel():
     def __init__(self, modelpackagepath):
+        self.trainingId = None
+        try:
+            self.trainingId = open(absPath(os.path.join(modelpackagepath, "trainingId.txt"))).read()
+        except:
+            pass
         modelInfo = ModelInfo(json.loads(open(absPath(os.path.join(modelpackagepath, "ModelInfo.json"))).read()))
         loggerInstance.logInsights(f"Model type is {modelInfo.modelType}")
         if modelInfo.modelType == "TfIdfSearchModel":

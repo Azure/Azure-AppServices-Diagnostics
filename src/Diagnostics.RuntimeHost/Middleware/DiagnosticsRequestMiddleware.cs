@@ -13,16 +13,21 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
 using static Diagnostics.Logger.HeaderConstants;
 using Diagnostics.RuntimeHost.Models.Exceptions;
+using System.Diagnostics;
+using Microsoft.Extensions.Logging;
+using Octokit;
 
 namespace Diagnostics.RuntimeHost.Middleware
 {
     public class DiagnosticsRequestMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly ILogger<DiagnosticsRequestMiddleware> _logger;
 
-        public DiagnosticsRequestMiddleware(RequestDelegate next)
+        public DiagnosticsRequestMiddleware(RequestDelegate next, ILogger<DiagnosticsRequestMiddleware> logger)
         {
             _next = next;
+            _logger = logger;
         }
 
         public async Task Invoke(HttpContext httpContext)
@@ -52,6 +57,7 @@ namespace Diagnostics.RuntimeHost.Middleware
             {
                 exception = ex;
                 statusCode = (int)HttpStatusCode.InternalServerError;
+                throw;
             }
             finally
             {
@@ -146,6 +152,8 @@ namespace Diagnostics.RuntimeHost.Middleware
 
         private void LogException(HttpContext context, Exception ex)
         {
+            _logger.LogError(ex, "Failed to process request for {request} Exception Type: {type} Exception Message: {message}", context.Request.Path.Value, ex.GetType().ToString(), ex.Message);
+
             try
             {
                 var logger = (ApiMetricsLogger)context.Items[HostConstants.ApiLoggerKey] ?? new ApiMetricsLogger(context);

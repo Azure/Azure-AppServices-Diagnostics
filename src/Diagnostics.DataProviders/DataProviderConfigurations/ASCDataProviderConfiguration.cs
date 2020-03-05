@@ -1,7 +1,7 @@
 ﻿namespace Diagnostics.DataProviders.DataProviderConfigurations
 {
     [DataSourceConfiguration("AzureSupportCenter")]
-    public class AscDataProviderConfiguration : IDataProviderConfiguration
+    public class AscDataProviderConfiguration : DataProviderConfigurationBase, IDataProviderConfiguration
     {
         /// <summary>
         /// Base address for zure Support Center api endpoint.
@@ -51,14 +51,9 @@
         [ConfigurationName("AppKey")]
         public string AppKey { get; set; }
 
-        /// <summary>
         /// Header value based on which we block calls to ASC
         /// </summary>
         [ConfigurationName("DiagAscHeader")]
         public string DiagAscHeader { get; set; }
-
-        public void PostInitialize()
-        {
-        }
     }
 }

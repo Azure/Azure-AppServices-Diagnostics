@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services.CacheService;
@@ -11,6 +12,7 @@ using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Win32;
 using Newtonsoft.Json;
 
@@ -27,7 +29,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         protected override string SourceName => "LocalFileSystem";
 
         public LocalFileSystemWatcher(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache)
-            : base(env, configuration, invokerCache, gistCache, "LocalFileSystemWatcher")
+            : base(env, configuration, invokerCache, gistCache, null, "LocalFileSystemWatcher")
         {
             LoadConfigurations();
             Start();
@@ -47,6 +49,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         public override Task CreateOrUpdatePackage(Package pkg)
         {
             throw new NotImplementedException("Local Source Watcher Mode right now doesnt support live detector deployment.");
+        }
+
+        public override Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return null;
         }
 
         private async Task StartWatcherInternal()
