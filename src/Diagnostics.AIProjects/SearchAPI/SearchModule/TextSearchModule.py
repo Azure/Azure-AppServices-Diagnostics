@@ -44,7 +44,9 @@ def loadModel(productId, model=None):
         moveModels(productId, "SearchModule")
     try:
         loaded_models[productId] = TextSearchModel(modelpackagepath)
-    except ModelFileVerificationFailed:
+    except Exception as e:
+        if type(e).__name__ == "ModelFileVerificationFailed":
+            loggerInstance.logInsights(f"Loading model failed for {productId} in ModelFileVerification step. Will copy the model folder and reload.")
         moveModels(productId, "SearchModule")
         loaded_models[productId] = TextSearchModel(modelpackagepath)
 

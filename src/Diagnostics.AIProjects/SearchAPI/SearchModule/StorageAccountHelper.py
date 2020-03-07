@@ -13,6 +13,7 @@ class StorageAccountHelper:
 	def watchModels(self, productIds):
 		# Run coinitialize for the new thread to be able to log
 		pythoncom.CoInitialize()
+		productIds = list(set(productIds))
 		if ("STORAGE_ACCOUNT_NAME" in app.config and app.config["STORAGE_ACCOUNT_NAME"]) and ("STORAGE_ACCOUNT_KEY" in app.config and app.config["STORAGE_ACCOUNT_KEY"]):
 			self.blob_service = BlockBlobService(account_name=app.config["STORAGE_ACCOUNT_NAME"], account_key=app.config["STORAGE_ACCOUNT_KEY"])
 		else:
