@@ -34,20 +34,20 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
             return workerId;
         }
 
-        protected static void LogMessage(string message)
+        protected static void LogMessage(string message, string worker = "GithubWatcher")
         {
-            DiagnosticsETWProvider.Instance.LogSourceWatcherMessage("GithubWatcher", message);
+            DiagnosticsETWProvider.Instance.LogSourceWatcherMessage(worker, message);
         }
 
-        protected static void LogWarning(string message)
+        protected static void LogWarning(string message, string worker = "GithubWatcher")
         {
-            DiagnosticsETWProvider.Instance.LogSourceWatcherWarning("GithubWatcher", message);
+            DiagnosticsETWProvider.Instance.LogSourceWatcherWarning(worker, message);
         }
 
-        protected static void LogException(string message, Exception ex)
+        protected static void LogException(string message, Exception ex, string worker = "GithubWatcher")
         {
-            var exception = new SourceWatcherException("Github", message, ex);
-            DiagnosticsETWProvider.Instance.LogSourceWatcherException("GithubWatcher", message, exception.GetType().ToString(), exception.ToString());
+            var exception = new SourceWatcherException(worker, message, ex);
+            DiagnosticsETWProvider.Instance.LogSourceWatcherException(worker, message, exception.GetType().ToString(), exception.ToString());
         }
 
         protected static FileInfo GetMostRecentFileByExtension(DirectoryInfo dir, string extension)
