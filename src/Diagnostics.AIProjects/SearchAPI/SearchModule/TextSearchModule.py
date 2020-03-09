@@ -12,7 +12,7 @@ class TextSearchModel():
     def __init__(self, modelpackagepath):
         self.trainingId = None
         try:
-            self.trainingId = open(absPath(os.path.join(modelpackagepath, "trainingId.txt"))).read()
+            self.trainingId = open(absPath(os.path.join(modelpackagepath, "trainingId.txt"))).read().strip()
         except:
             pass
         modelInfo = ModelInfo(json.loads(open(absPath(os.path.join(modelpackagepath, "ModelInfo.json"))).read()))
@@ -28,13 +28,13 @@ class TextSearchModel():
     def queryUtterances(self, query=None, existing_utterances=[]):
         return self.model.queryUtterances(query, existing_utterances)
 
-def loadModel(productId, model=None):
+def loadModel(productId, model=None, forced=False):
     prelogMessage = loadModelMessage.format(productId)
     if model:
         loggerInstance.logInsights(f"{prelogMessage}From provided pre-loaded model.")
         loaded_models[productId] = model
         return
-    if productId in loaded_models:
+    if (productId in loaded_models) and (not forced):
         loggerInstance.logInsights(f"{prelogMessage}Model is already loaded in app")
         return
     modelpackagepath = os.path.join("SearchModule", productId)
