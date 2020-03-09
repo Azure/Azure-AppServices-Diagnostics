@@ -25,7 +25,7 @@ class StorageAccountHelper:
 			for productId in productIds:
 				modelOnDisk = None
 				try:
-					modelOnDisk = open(os.path.join(os.getcwd(), app.config["TRAINED_MODELS_PATH"], productId, "trainingId.txt")).read()
+					modelOnDisk = open(os.path.join(os.getcwd(), app.config["TRAINED_MODELS_PATH"], productId, "trainingId.txt")).read().strip()
 				except:
 					pass
 				loadedModelId = None
@@ -51,7 +51,7 @@ class StorageAccountHelper:
 							if modelOnDisk != loadedModelId:
 								try:
 									self.loggerInstance.logInsights("modelReloadTask: Models are changed for {0}. Reloading the latest model.".format(productId))
-									loadModel(productId)
+									loadModel(productId, None, forced=True)
 								except Exception as e:
 									self.loggerInstance.logHandledException("modelReloadTask", "Failed to reload the latest model: {0}".format(str(e)))
 						else:
