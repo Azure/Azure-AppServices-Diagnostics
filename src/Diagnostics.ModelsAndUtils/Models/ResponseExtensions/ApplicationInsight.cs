@@ -37,18 +37,27 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="renderingProperties">The rendering properties to render the application insight query result</param>
         /// <returns>AppInsightsOperationContext Object</returns>
         /// <example>
-        public AppInsightsOperationContext(string title, string description, string query, BladeInfo portalBladeInfo, Rendering renderingProperties, DataTable dataTable = null)
+        public AppInsightsOperationContext(string title, string description, string query, BladeInfo portalBladeInfo, Rendering renderingProperties)
         {
             this.Title = title;
             this.Description = description;
             this.Query = query;
             this.PortalBladeInfo = portalBladeInfo;
             this.RenderingProperties = renderingProperties;
-            if(dataTable != null)
+        }
+
+        public AppInsightsOperationContext(string title, string description, string query, BladeInfo portalBladeInfo, Rendering renderingProperties, DataTable dataTable)
+        {
+            this.Title = title;
+            this.Description = description;
+            this.Query = query;
+            this.PortalBladeInfo = portalBladeInfo;
+            this.RenderingProperties = renderingProperties;
+            if (dataTable != null && dataTable.Rows.Count > 0)
             {
                 this.DataTable = dataTable.ToDataTableResponseObject();
             }
-            
+
         }
         /// <summary>
         /// Application Insights rendering title
