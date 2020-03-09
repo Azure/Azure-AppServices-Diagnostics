@@ -65,7 +65,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                 foreach (var githubFile in githubEntries)
                 {
                     string downloadFilePath = Path.Combine(artifactsDestination.FullName, githubFile.Name.ToLower());
-                    LogMessage($"Begin downloading File : {githubFile.Name.ToLower()} and saving it as : {downloadFilePath}", Name);
+                    LogMessage($"Begin downloading File : {githubFile.Name.ToLower()} and saving it as : {downloadFilePath}", this.Name);
                     await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
 
                     _cacheService.TryRemoveValue(artifactsDestination.Name, out List<Dictionary<string, string>> throwAway);
