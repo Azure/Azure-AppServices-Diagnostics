@@ -37,13 +37,18 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="renderingProperties">The rendering properties to render the application insight query result</param>
         /// <returns>AppInsightsOperationContext Object</returns>
         /// <example>
-        public AppInsightsOperationContext(string title, string description, string query, BladeInfo portalBladeInfo, Rendering renderingProperties)
+        public AppInsightsOperationContext(string title, string description, string query, BladeInfo portalBladeInfo, Rendering renderingProperties, DataTable dataTable = null)
         {
             this.Title = title;
             this.Description = description;
             this.Query = query;
             this.PortalBladeInfo = portalBladeInfo;
             this.RenderingProperties = renderingProperties;
+            if(dataTable != null)
+            {
+                this.DataTable = dataTable.ToDataTableResponseObject();
+            }
+            
         }
         /// <summary>
         /// Application Insights rendering title
@@ -69,6 +74,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// Rendering type
         /// </summary>
         public Rendering RenderingProperties { get; set; }
+
+        public DataTableResponseObject DataTable { get; private set; }
     }
     public static class ApplicationInsight
     {
@@ -108,7 +115,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public static DiagnosticData AddApplicationInsightsViewList(this Response response, List<AppInsightsOperationContext> applicationInsightsList)
         {
             if (applicationInsightsList == null || !applicationInsightsList.Any())
-                throw new ArgumentNullException("Paramter applicationInsightsList is null or contains no elements.");
+                throw new ArgumentNullException("Parameter applicationInsightsList is null or contains no elements.");
 
             var table = new DataTable();
             table.Columns.Add("Title", typeof(string));
@@ -116,6 +123,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             table.Columns.Add("Query", typeof(string));
             table.Columns.Add("PortalBladeInfo", typeof(BladeInfo));
             table.Columns.Add("RenderingProperties", typeof(Rendering));
+            table.Columns.Add("DataTable", typeof(DataTableResponseObject));
 
             foreach (AppInsightsOperationContext context in applicationInsightsList)
             {
@@ -124,7 +132,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                     context.Description,
                     context.Query,
                     context.PortalBladeInfo,
-                    context.RenderingProperties
+                    context.RenderingProperties,
+                    context.DataTable
                     );
             }
 
