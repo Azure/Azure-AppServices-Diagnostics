@@ -874,7 +874,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             List<EntityInvoker> allDetectors = this._invokerCache.GetAll().ToList();
 
-            var detectorWithSameId = allDetectors.FirstOrDefault(d => d.EntryPointDefinitionAttribute.Id == invoker.EntryPointDefinitionAttribute.Id);
+            var detectorWithSameId = allDetectors.FirstOrDefault(d => d.EntryPointDefinitionAttribute.Id.Equals(invoker.EntryPointDefinitionAttribute.Id, StringComparison.OrdinalIgnoreCase));
             if (detectorWithSameId != default(EntityInvoker) && publishingDetectorId == HostConstants.NewDetectorId)
             {
                 // There exists a detector which has same Id as this one
@@ -891,7 +891,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return false;
             }
 
-            if (!string.IsNullOrEmpty(publishingDetectorId) 
+            if (!string.IsNullOrWhiteSpace(publishingDetectorId) 
                 && !publishingDetectorId.Equals(HostConstants.NewDetectorId, StringComparison.OrdinalIgnoreCase) 
                 && !invoker.EntryPointDefinitionAttribute.Id.Equals(publishingDetectorId, StringComparison.OrdinalIgnoreCase))
             {
@@ -903,7 +903,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 queryRes.CompilationOutput.CompilationTraces = queryRes.CompilationOutput.CompilationTraces.Concat(new List<string>()
                     {
                         $"Error : You cannot change the Id attribute for your {detectorType} as that might end up creating a duplicate {detectorType} with the same name. " +
-                        $"So copy the code and create a new {detectorType} with a new Id and reach out to AppLens Team to delete the old detector."
+                        $"So copy the code and create a new {detectorType} with a new Id and reach out to AppLens Team to delete the old {detectorType}."
                     });
 
                 return false;
