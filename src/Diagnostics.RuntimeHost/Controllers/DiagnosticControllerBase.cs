@@ -200,6 +200,12 @@ namespace Diagnostics.RuntimeHost.Controllers
                 assemblyFullName = HttpUtility.UrlDecode(Request.Headers["diag-assembly-name"]);
             }
 
+            string publishingDetectorId = string.Empty;
+            if (Request.Headers.ContainsKey("diag-publishing-detector-id"))
+            {
+                publishingDetectorId = Request.Headers["diag-publishing-detector-id"]; ;
+            }
+
             Assembly tempAsm = null;
 
             bool isCompilationNeeded = !ScriptCompilation.IsSameScript(jsonBody.Script, scriptETag) || !_assemblyCacheService.IsAssemblyLoaded(assemblyFullName, out tempAsm);
@@ -277,7 +283,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     {
                         if (detectorId == null)
                         {
-                            if (!VerifyEntity(invoker, ref queryRes)) return Ok(queryRes);
+                            if (!VerifyEntity(invoker, ref queryRes, publishingDetectorId)) return Ok(queryRes);
                             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
 
                             var responseInput = new Response()
@@ -864,9 +870,44 @@ namespace Diagnostics.RuntimeHost.Controllers
             return dataprovidersMetadata;
         }
 
-        private bool VerifyEntity(EntityInvoker invoker, ref QueryResponse<DiagnosticApiResponse> queryRes)
+        private bool VerifyEntity(EntityInvoker invoker, ref QueryResponse<DiagnosticApiResponse> queryRes, string publishingDetectorId)
         {
             List<EntityInvoker> allDetectors = this._invokerCache.GetAll().ToList();
+
+            var detectorWithSameId = allDetectors.FirstOrDefault(d => d.EntryPointDefinitionAttribute.Id == invoker.EntryPointDefinitionAttribute.Id);
+            if (detectorWithSameId != default(EntityInvoker) && publishingDetectorId == HostConstants.NewDetectorId)
+            {
+                // There exists a detector which has same Id as this one
+                queryRes.CompilationOutput.CompilationSucceeded = false;
+                queryRes.CompilationOutput.AssemblyBytes = string.Empty;
+                queryRes.CompilationOutput.PdbBytes = string.Empty;
+                var detectorType = invoker.EntityMetadata.Type > EntityType.Signal ? invoker.EntityMetadata.Type : EntityType.Detector;
+                queryRes.CompilationOutput.CompilationTraces = queryRes.CompilationOutput.CompilationTraces.Concat(new List<string>()
+                    {
+                        $"Error : There is already a {detectorType} (id : {detectorWithSameId.EntryPointDefinitionAttribute.Id}, name : {detectorWithSameId.EntryPointDefinitionAttribute.Name})" +
+                        $" for resource type '{detectorWithSameId.ResourceFilter.ResourceType.ToString()}'. System can't have two {detectorType}s with the same Id. "
+                    });
+
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(publishingDetectorId) 
+                && !publishingDetectorId.Equals(HostConstants.NewDetectorId, StringComparison.OrdinalIgnoreCase) 
+                && !invoker.EntryPointDefinitionAttribute.Id.Equals(publishingDetectorId, StringComparison.OrdinalIgnoreCase))
+            {
+                // User is trying to change the ID of the detector, reject this request
+                queryRes.CompilationOutput.CompilationSucceeded = false;
+                queryRes.CompilationOutput.AssemblyBytes = string.Empty;
+                queryRes.CompilationOutput.PdbBytes = string.Empty;
+                var detectorType = invoker.EntityMetadata.Type > EntityType.Signal ? invoker.EntityMetadata.Type : EntityType.Detector;
+                queryRes.CompilationOutput.CompilationTraces = queryRes.CompilationOutput.CompilationTraces.Concat(new List<string>()
+                    {
+                        $"Error : You cannot change the Id attribute for your {detectorType} as that might end up creating a duplicate {detectorType} with the same name. " +
+                        $"So copy the code and create a new {detectorType} with a new Id and reach out to AppLens Team to delete the old detector."
+                    });
+
+                return false;
+            }
 
             foreach (var topicId in invoker.EntryPointDefinitionAttribute.SupportTopicList)
             {
@@ -880,7 +921,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     queryRes.CompilationOutput.PdbBytes = string.Empty;
                     queryRes.CompilationOutput.CompilationTraces = queryRes.CompilationOutput.CompilationTraces.Concat(new List<string>()
                     {
-                        $"Error : There is already a detector(id : {existingDetector.EntryPointDefinitionAttribute.Id}, name : {existingDetector.EntryPointDefinitionAttribute.Name})" +
+                        $"Error : There is already a {invoker.EntityMetadata.Type} (id : {existingDetector.EntryPointDefinitionAttribute.Id}, name : {existingDetector.EntryPointDefinitionAttribute.Name})" +
                         $" that uses the SupportTopic (id : {topicId.Id}, pesId : {topicId.PesId}). System can't have two detectors for same support topic id. Consider merging these two detectors."
                     });
 

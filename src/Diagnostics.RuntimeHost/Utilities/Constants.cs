@@ -10,6 +10,7 @@
         internal const string AzureChinaCloud = "China";
         internal const string AzureUSGovernment = "Government";
         internal const double KustoDelayInMinutes = 14.5;
+        internal const string NewDetectorId = "NEW_DETECTOR";
     }
 
     internal class RegistryConstants
