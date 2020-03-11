@@ -1,0 +1,39 @@
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/scopeBindings.json",
+  "scopeBindings": [
+    {
+      "scopeTagName": "AppRegion1",
+      "bindings": [
+        {
+          "find": "__SERVICE.NAME__",
+          "replaceWith": "9d335939-1985-4625-a140-00413abab1c7-Test-West"
+        },
+        {
+          "find": "__APPSERVICEPLAN.LOCATION__",
+          "replaceWith": "West US"
+        },
+        {
+          "find": "__APPSERVICEPLAN.NAME__",
+          "replaceWith": "ContosoServiceWest-wus-AppPlan"
+        }
+      ]
+    },
+    {
+      "scopeTagName": "AppRegion2",
+      "bindings": [
+        {
+          "find": "__SERVICE.NAME__",
+          "replaceWith": "9d335939-1985-4625-a140-00413abab1c7-Test-East"
+        },
+        {
+          "find": "__APPSERVICEPLAN.LOCATION__",
+          "replaceWith": "East US"
+        },
+        {
+          "find": "__APPSERVICEPLAN.NAME__",
+          "replaceWith": "ContosoServiceEast-eus-AppPlan"
+        }
+      ]
+    }
+  ]
+}

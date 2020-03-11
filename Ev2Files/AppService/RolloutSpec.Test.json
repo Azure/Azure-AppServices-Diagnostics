@@ -1,0 +1,41 @@
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+  "rolloutMetadata": {
+    "serviceModelPath": "ServiceModel.Test.json",
+    "scopeBindingsPath": "ScopeBindings.Test.json",
+    "name": "Contoso SampleApp",
+    "rolloutType": "Major",
+    "buildSource": {
+      "parameters": {
+        "versionFile": "buildver.txt"
+      }
+    },
+    "notification": {
+      "email": {
+        "to": "hawfor@microsoft.com"
+      }
+    }
+  },
+  "orchestratedsteps": [
+    {
+      "name": "Region1",
+      "targetType": "ServiceResource",
+      "targetName": "ContosoWebAppWestUS",
+      "actions": [
+        "Deploy",
+        "Wait/wait3Minutes"
+      ]
+    },
+    {
+      "name": "Region2",
+      "targetType": "ServiceResource",
+      "targetName": "ContosoWebAppEastUS",
+      "actions": [
+        "Deploy"
+      ],
+      "dependsOn": [
+        "Region1"
+      ]
+    }
+  ]
+}

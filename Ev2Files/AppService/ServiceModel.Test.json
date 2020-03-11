@@ -1,0 +1,52 @@
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+    "serviceMetadata": {
+        "serviceGroup": "ContosoServiceGroup",
+        "environment": "Ev2Environment"
+    },
+    "serviceResourceGroupDefinitions": [
+        {
+            "name": "ContosoAppGroup",
+            "serviceResourceDefinitions": [
+              {
+                "name": "ContosoWebApp",
+                "composedOf": {
+                  "arm": {
+                    "templatePath": "Templates\\WebApp.Template.json",
+                    "parametersPath": "Parameters\\WebApp.Parameters.json"
+                  }
+                }
+              }
+            ]
+        }
+    ],
+    "serviceResourceGroups": [
+        {
+            "azureResourceGroupName": "AzureResourceGroup1Test",
+            "location": "West US",
+            "instanceOf": "ContosoAppGroup",
+            "azureSubscriptionId": "6a205b0a-6b5a-4346-8468-f4b6367f7efa",
+            "scopeTags": [ { "name": "AppRegion1" } ],
+            "serviceResources": [
+                {
+                    "name": "ContosoWebAppWestUS",
+                    "instanceOf": "ContosoWebApp",
+                    "rolloutParametersPath": "Parameters\\WebApp.RolloutParameters.json"
+                }
+            ]
+        },
+        {
+            "azureResourceGroupName": "AzureResourceGroup2Test",
+            "location": "East US",
+            "instanceOf": "ContosoAppGroup",
+            "azureSubscriptionId": "6a205b0a-6b5a-4346-8468-f4b6367f7efa",
+            "scopeTags": [ { "name": "AppRegion2" } ],
+            "serviceResources": [
+                {
+                    "name": "ContosoWebAppEastUS",
+                    "instanceOf": "ContosoWebApp"
+                }
+            ]
+        }
+    ]
+}

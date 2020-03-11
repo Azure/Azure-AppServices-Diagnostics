@@ -1,0 +1,36 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "paths": [
+        "servicePackageLink"
+    ],
+    "parameters": {
+        "appService_name": {
+            "value": "__SERVICE.NAME__"
+        },
+        "appServicePlan_location": {
+            "value": "__APPSERVICEPLAN.LOCATION__"
+        },
+        "appServicePlan_name": {
+            "value": "__APPSERVICEPLAN.NAME__"
+        },
+        "appServicePlan_skuName": {
+            "value": "S1"
+        },
+        "appServicePlan_skuTier": {
+            "value": "Standard"
+        },
+        "appServicePlan_skuFamily": {
+            "value": "S1"
+        },
+        "appServicePlan_skuSize": {
+            "value": "S"
+        },
+        "appServicePlan_workerSizeId": {
+            "value": 0
+        },
+        "servicePackageLink": {
+            "value": "AspNetCoreSample.zip"
+        }
+    }
+}
