@@ -16,7 +16,7 @@ namespace Diagnostics.RuntimeHost.Utilities
 {
     public interface IRuntimeLoggerProvider : ILoggerProvider
     {
-        void WriteLog(RuntimeLogEntry info);
+        void WriteLog(RuntimeLogEntry info, IResource resource, string detectorId);
         IEnumerable<RuntimeLogEntry> GetAndClear(string category);
     }
 
@@ -28,6 +28,8 @@ namespace Diagnostics.RuntimeHost.Utilities
     {
         public RuntimeLogProvider Provider { get; }
         public string Category { get; }
+        public IResource Resource { get; set; }
+        public string DetectorId { get; set; }
 
         public RuntimeLogger(RuntimeLogProvider provider, string category)
         {
@@ -58,7 +60,7 @@ namespace Diagnostics.RuntimeHost.Utilities
             {
                 Category = this.Category,
                 Level = logLevel,
-                Message = exception?.Message ?? state.ToString(),
+                Message = state.ToString(),
                 Exception = exception,
                 EventId = eventId.Id,
                 State = state,
@@ -108,7 +110,7 @@ namespace Diagnostics.RuntimeHost.Utilities
                 }, state);
             }
 
-            this.Provider.WriteLog(entry);
+            this.Provider.WriteLog(entry, this.Resource, this.DetectorId);
         }
     }
 
@@ -147,7 +149,7 @@ namespace Diagnostics.RuntimeHost.Utilities
             }
         }
 
-        public void WriteLog(RuntimeLogEntry info)
+        public void WriteLog(RuntimeLogEntry info, IResource resource, string detectorId)
         {
             if (info == null || info.Message == null)
             {
@@ -163,7 +165,68 @@ namespace Diagnostics.RuntimeHost.Utilities
                     return logs;
                 });
 
-            // TODO: emit ETW event
+            string message;
+            if (info.Exception != null)
+            {
+                message = info.Message + ": " + info.Exception.Message;
+            }
+            else
+            {
+                message = info.Message ?? "";
+            }
+
+            switch(info.Level)
+            {
+                case LogLevel.Critical:
+                case LogLevel.Error:
+                    DiagnosticsETWProvider.Instance.LogRuntimeLogError(
+                            reqid,
+                            detectorId ?? "",
+                            resource?.SubscriptionId ?? "",
+                            resource?.ResourceGroup ?? "",
+                            resource?.Name ?? "",
+                            info.Exception?.GetType()?.ToString() ?? "",
+                            info.Exception?.ToString() ?? "",
+                            message);
+                    break;
+
+                case LogLevel.Warning:
+                    DiagnosticsETWProvider.Instance.LogRuntimeLogWarning(
+                            reqid,
+                            detectorId ?? "",
+                            resource?.SubscriptionId ?? "",
+                            resource?.ResourceGroup ?? "",
+                            resource?.Name ?? "",
+                            info.Exception?.GetType()?.ToString() ?? "",
+                            info.Exception?.ToString() ?? "",
+                            message);
+                    break;
+
+                case LogLevel.Information:
+                    DiagnosticsETWProvider.Instance.LogRuntimeLogInformation(
+                            reqid,
+                            detectorId ?? "",
+                            resource?.SubscriptionId ?? "",
+                            resource?.ResourceGroup ?? "",
+                            resource?.Name ?? "",
+                            info.Exception?.GetType()?.ToString() ?? "",
+                            info.Exception?.ToString() ?? "",
+                            message);
+                    break;
+
+                case LogLevel.Trace:
+                case LogLevel.Debug:
+                    DiagnosticsETWProvider.Instance.LogRuntimeLogTrace(
+                            reqid,
+                            detectorId ?? "",
+                            resource?.SubscriptionId ?? "",
+                            resource?.ResourceGroup ?? "",
+                            resource?.Name ?? "",
+                            info.Exception?.GetType()?.ToString() ?? "",
+                            info.Exception?.ToString() ?? "",
+                            message);
+                    break;
+            }
         }
 
         public IEnumerable<RuntimeLogEntry> GetAndClear(string category)

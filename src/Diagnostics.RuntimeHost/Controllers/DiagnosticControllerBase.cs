@@ -85,7 +85,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest(errorMessage);
             }
 
-            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: form);
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: form, detectorId: detectorId);
             var detectorResponse = await GetDetectorInternal(detectorId, cxt);
             return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2));
         }
@@ -171,7 +171,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
 
-            var runtimeContext = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
+            var runtimeContext = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form, detectorId: detectorId);
 
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
 
@@ -328,12 +328,13 @@ namespace Diagnostics.RuntimeHost.Controllers
                         {
                             runtimeContext.OperationContext.Logger.LogInformation(invocationResponse.ToString());
                         }
-                        runtimeContext.OperationContext.Logger.LogError(FlattenIfAggregatedException(ex).ToString());
+                        var baseException = FlattenIfAggregatedException(ex);
+                        runtimeContext.OperationContext.Logger.LogError(baseException, "Runtime exception has occurred");
                         queryRes.RuntimeLogOutput = _loggerProvider.GetAndClear(runtimeContext.OperationContext.RequestId);
                         if (isInternalCall)
                         {
                             queryRes.RuntimeSucceeded = false;
-                            queryRes.InvocationOutput = CreateQueryExceptionResponse(ex, invoker.EntryPointDefinitionAttribute, isInternalCall, GetDataProvidersMetadata(dataProviders));
+                            queryRes.InvocationOutput = CreateQueryExceptionResponse(baseException, invoker.EntryPointDefinitionAttribute, isInternalCall, GetDataProvidersMetadata(dataProviders));
                         }
                         else
                         {
@@ -364,7 +365,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 Metadata = RemovePIIFromDefinition(detectorDefinition, isInternal),
                 IsInternalCall = isInternal
             };
-            response.AddMarkdownView($"<pre><code>Exception message:<strong> {ex.Message}</strong><br>Stack trace: {ex.StackTrace}</code></pre>", "Detector Runtime Exception");
+            response.AddMarkdownView($"<pre><code>Exception message:<strong> {ex.GetType().FullName}: {ex.Message}</strong><br>Stack trace: {ex.StackTrace}</code></pre>", "Detector Runtime Exception");
             return DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata);
         }
 
@@ -576,7 +577,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return systemContext;
         }
 
-        private RuntimeContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, SupportTopic supportTopic = null, Form Form = null, string ascParams = null)
+        private RuntimeContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, SupportTopic supportTopic = null, Form Form = null, string ascParams = null, string detectorId = null)
         {
             this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
             this.Request.Headers.TryGetValue(HeaderConstants.InternalClientHeader, out StringValues internalCallHeader);
@@ -610,6 +611,11 @@ namespace Diagnostics.RuntimeHost.Controllers
                 logger: _loggerProvider.CreateLogger(requestId)
             );
 
+            if (operationContext.Logger is RuntimeLogger runtimeLogger)
+            {
+                runtimeLogger.Resource = resource;
+                runtimeLogger.DetectorId = detectorId;
+            }
             _runtimeContext.ClientIsInternal = isInternalClient || forceInternal;
             _runtimeContext.OperationContext = operationContext;
             var queryParamCollection = Request.Query;
