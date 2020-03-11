@@ -596,5 +596,113 @@ namespace Diagnostics.Logger
         }
 
         #endregion Internal AI API Events (ID Range : 4000 - 4199)
+
+        #region Runtime Events (ID Range: 5000 - 5199)
+
+        /// <summary>
+        /// Log runtime host message (Error/Critical).
+        /// </summary>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="SubscriptionId">Subscription id.</param>
+        /// <param name="ResourceGroup">Resource group.</param>
+        /// <param name="Resource">The resource.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
+        /// <param name="Message">The message.</param>
+        [Event(5000, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage)]
+        public void LogRuntimeLogError(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message)
+        {
+            WriteDiagnosticsEvent(
+                5000,
+                RequestId,
+                Source,
+                SubscriptionId,
+                ResourceGroup,
+                Resource,
+                ExceptionType,
+                ExceptionDetails,
+                Message);
+        }
+
+        /// <summary>
+        /// Log runtime host message (Warning).
+        /// </summary>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="SubscriptionId">Subscription id.</param>
+        /// <param name="ResourceGroup">Resource group.</param>
+        /// <param name="Resource">The resource.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
+        /// <param name="Message">The message.</param>
+        [Event(5001, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage)]
+        public void LogRuntimeLogWarning(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message)
+        {
+            WriteDiagnosticsEvent(
+                5001,
+                RequestId,
+                Source,
+                SubscriptionId,
+                ResourceGroup,
+                Resource,
+                ExceptionType,
+                ExceptionDetails,
+                Message);
+        }
+
+        /// <summary>
+        /// Log runtime host message (Information).
+        /// </summary>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="SubscriptionId">Subscription id.</param>
+        /// <param name="ResourceGroup">Resource group.</param>
+        /// <param name="Resource">The resource.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
+        /// <param name="Message">The message.</param>
+        [Event(5002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage)]
+        public void LogRuntimeLogInformation(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message)
+        {
+            WriteDiagnosticsEvent(
+                5002,
+                RequestId,
+                Source,
+                SubscriptionId,
+                ResourceGroup,
+                Resource,
+                ExceptionType,
+                ExceptionDetails,
+                Message);
+        }
+
+        /// <summary>
+        /// Log runtime host message (Trace/Debug).
+        /// </summary>
+        /// <param name="RequestId">Request id.</param>
+        /// <param name="Source">The source.</param>
+        /// <param name="SubscriptionId">Subscription id.</param>
+        /// <param name="ResourceGroup">Resource group.</param>
+        /// <param name="Resource">The resource.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
+        /// <param name="Message">The message.</param>
+        [Event(5003, Level = EventLevel.Verbose, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage)]
+        public void LogRuntimeLogTrace(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message)
+        {
+            WriteDiagnosticsEvent(
+                5003,
+                RequestId,
+                Source,
+                SubscriptionId,
+                ResourceGroup,
+                Resource,
+                ExceptionType,
+                ExceptionDetails,
+                Message);
+        }
+
+        #endregion
     }
 }
