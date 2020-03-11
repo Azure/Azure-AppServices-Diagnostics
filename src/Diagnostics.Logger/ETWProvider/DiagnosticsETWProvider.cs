@@ -688,7 +688,7 @@ namespace Diagnostics.Logger
         /// <param name="ExceptionType">Exception type.</param>
         /// <param name="ExceptionDetails">Exception details.</param>
         /// <param name="Message">The message.</param>
-        [Event(5003, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage)]
+        [Event(5003, Level = EventLevel.Verbose, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage)]
         public void LogRuntimeLogTrace(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message)
         {
             WriteDiagnosticsEvent(
