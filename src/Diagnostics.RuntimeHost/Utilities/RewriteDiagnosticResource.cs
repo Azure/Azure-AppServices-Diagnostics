@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Http;
 using Diagnostics.RuntimeHost.Utilities;
 using System.Text;
 using System.IO;
+using Microsoft.Extensions.Primitives;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Diagnostics.RuntimeHost.Utilities
 {
@@ -58,6 +61,19 @@ namespace Diagnostics.RuntimeHost.Utilities
                 string apiPath = apiPaths.First().ToLower();
                 request.Path = apiPath;
                 request.Method = apiVerb.ToUpper();
+
+                const string contentTypeHeader = "Content-Type";
+                const string contentTypeHeaderValue = "application/json";
+
+                if (!request.Headers.TryGetValue(contentTypeHeader, out StringValues requestedContentTypes))
+                {
+                    request.Headers.Add(contentTypeHeader, new StringValues(contentTypeHeaderValue));
+                }
+                else if (!requestedContentTypes.Any(hv => hv.Equals("application/json")))
+                {
+                    request.Headers.Append(contentTypeHeader, new StringValues(contentTypeHeaderValue));
+                }
+
                 context.Result = RuleResult.SkipRemainingRules; // Continue request to next middleware.
             }
         }
