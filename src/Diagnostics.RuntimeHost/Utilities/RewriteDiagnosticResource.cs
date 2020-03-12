@@ -10,6 +10,9 @@ using System.IO;
 using Microsoft.Extensions.Primitives;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Policy;
+using System.Web;
+using Microsoft.AspNetCore.Rewrite.Internal;
 
 namespace Diagnostics.RuntimeHost.Utilities
 {
@@ -57,11 +60,6 @@ namespace Diagnostics.RuntimeHost.Utilities
                     return;
                 }
 
-                string apiVerb = apiVerbs.First().ToLower();
-                string apiPath = apiPaths.First().ToLower();
-                request.Path = apiPath;
-                request.Method = apiVerb.ToUpper();
-
                 const string contentTypeHeader = "Content-Type";
                 const string contentTypeHeaderValue = "application/json";
 
@@ -74,7 +72,9 @@ namespace Diagnostics.RuntimeHost.Utilities
                     request.Headers.Append(contentTypeHeader, new StringValues(contentTypeHeaderValue));
                 }
 
-                context.Result = RuleResult.SkipRemainingRules; // Continue request to next middleware.
+                request.Method = apiVerbs.First().ToLower();
+                var rewriteRule = new RewriteRule(UriElements.PassThroughAPIRoute.Substring(1), apiPaths.First().ToLower(), true);
+                rewriteRule.ApplyRule(context);
             }
         }
     }
