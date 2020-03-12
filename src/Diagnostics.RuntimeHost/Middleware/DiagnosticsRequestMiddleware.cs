@@ -152,7 +152,7 @@ namespace Diagnostics.RuntimeHost.Middleware
 
         private void LogException(HttpContext context, Exception ex)
         {
-            _logger.LogError(ex, $"Failed to process request for {context.Request.Path.Value}", null);
+            _logger.LogError(ex, "Failed to process request for {request} Exception Type: {type} Exception Message: {message}", context.Request.Path.Value, ex.GetType().ToString(), ex.Message);
 
             try
             {

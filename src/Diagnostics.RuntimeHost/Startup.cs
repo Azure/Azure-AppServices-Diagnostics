@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Protocols;
@@ -24,6 +25,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.IdentityModel.Logging;
 using System.Net;
+using Diagnostics.RuntimeHost.Utilities;
+using Microsoft.AspNetCore.Rewrite;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -177,7 +180,7 @@ namespace Diagnostics.RuntimeHost
                 CompilerHostTokenService.Instance.Initialize(Configuration);
             }
 
-            if (searchApiConfiguration.SearchAPIEnabled)
+            if (searchApiConfiguration.Enabled || searchApiConfiguration.SearchAPIEnabled)
             {
                 services.AddSingleton<ISearchService, SearchService>();
                 SearchServiceTokenService.Instance.Initialize(dataSourcesConfigService.Config.SearchServiceProviderConfiguration);
@@ -186,8 +189,26 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
-            // Initialize on startup
             servicesProvider.GetService<ISourceWatcherService>();
+
+            services.AddLogging(loggingConfig =>
+            {
+                loggingConfig.ClearProviders();
+                loggingConfig.AddConfiguration(Configuration.GetSection("Logging"));
+                loggingConfig.AddDebug();
+                loggingConfig.AddEventSourceLogger();
+
+                if (!IsPublicAzure())
+                {
+                    loggingConfig.AddEventLog();
+                    loggingConfig.AddAzureWebAppDiagnostics();
+                }
+             
+                if (Environment.IsDevelopment())
+                {
+                    loggingConfig.AddConsole();
+                }
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -198,8 +219,15 @@ namespace Diagnostics.RuntimeHost
                 app.UseDeveloperExceptionPage();
             }
             app.UseAuthentication();
+            app.UseRewriter(new RewriteOptions().Add(new RewriteDiagnosticResource()));
             app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseMvc();
+        }
+
+        private bool IsPublicAzure()
+        {
+            return Configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureCloud, StringComparison.CurrentCultureIgnoreCase)
+                || Configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureCloudAlternativeName, StringComparison.CurrentCultureIgnoreCase);
         }
     }
 }

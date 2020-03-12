@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
+using Diagnostics.Logger;
+using System.Text;
 
 namespace Diagnostics.RuntimeHost.Security.CertificateAuth
 {
@@ -55,9 +57,9 @@ namespace Diagnostics.RuntimeHost.Security.CertificateAuth
                 return AuthenticateResult.NoResult();
             }
             try
-            {                
+            {
                 byte[] clientCertBytes = Convert.FromBase64String(certHeader);
-                using ( var certificate = new X509Certificate2(clientCertBytes))
+                using (var certificate = new X509Certificate2(clientCertBytes))
                 {
                     var certSubject = certificate.Subject;
                     var certIssuer = certificate.Issuer;
@@ -74,10 +76,11 @@ namespace Diagnostics.RuntimeHost.Security.CertificateAuth
                         return certificateValidatedContext.Result;
                     }
                     return AuthenticateResult.Fail("Request is not authorized");
-      
+
                 }
 
-            } catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 var authenticationFailedContext = new CertificateFailedContext(Context, Scheme, Options)
                 {
@@ -105,9 +108,55 @@ namespace Diagnostics.RuntimeHost.Security.CertificateAuth
 
         private bool IsValidCert(X509Certificate2 certificate)
         {
+
+            if (!AllowedCertSubjectNames.Contains(certificate.GetNameInfo(X509NameType.SimpleName, false), StringComparer.OrdinalIgnoreCase))
+            {
+                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Certificate authentication failed. Supplied certificate with SubjectName: {certificate.GetNameInfo(X509NameType.SimpleName, false)} is not in the allowed list of certificate subject names.");
+            }
+
+            if (!AllowedCertIssuers.Contains(certificate.IssuerName.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Certificate authentication failed. Supplied certificate with Issuer: {certificate.IssuerName.Name} is not in the allowed list of certificate issuer names.");
+            }
+
+            bool certVerificationResult = certificate.Verify();
+
+            if (!certVerificationResult)
+            {
+                try
+                {
+                    StringBuilder chainValidationFailure = new StringBuilder();
+                    chainValidationFailure.AppendLine("Certificate validation failed with the following error.");
+
+                    X509Chain chain = new X509Chain();
+                    bool chainBuilt = chain.Build(certificate);
+                    chainValidationFailure.AppendLine($"Chain building status: {chainBuilt.ToString()}");
+
+                    if (chainBuilt == false)
+                    {
+                        foreach (X509ChainStatus chainStatus in chain.ChainStatus)
+                        {
+                            chainValidationFailure.AppendLine($"Chain error: {chainStatus.Status.ToString()} {chainStatus.StatusInformation}");
+
+                        }
+                    }
+                    else
+                    {
+                        chainValidationFailure.AppendLine($"Cert chain built sucessfully. We shouldn't be here. Needs further investigation.");
+                    }
+                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"{chainValidationFailure.ToString()}");
+                }
+                catch (Exception ex)
+                {
+                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Failure while building cert chain error reason. {ex.ToString()}");
+                }
+            }
+
+
+
             return AllowedCertSubjectNames.Contains(certificate.GetNameInfo(X509NameType.SimpleName, false), StringComparer.OrdinalIgnoreCase)
                 && AllowedCertIssuers.Contains(certificate.IssuerName.Name, StringComparer.OrdinalIgnoreCase)
-                && certificate.Verify();
+                && certVerificationResult;
         }
 
         private ClaimsPrincipal CreatePrincipal(X509Certificate2 certificate)
@@ -135,17 +184,17 @@ namespace Diagnostics.RuntimeHost.Security.CertificateAuth
                                     ClaimTypes.Email,
                                     ClaimTypes.Upn,
                                     ClaimTypes.Uri };
-           
+
             var certDetailsMapping = certValues.Zip(claimTypes, (key, val) => new KeyValuePair<string, string>(key, val));
 
             foreach (var certPair in certDetailsMapping)
             {
-                if(!string.IsNullOrWhiteSpace(certPair.Key))
+                if (!string.IsNullOrWhiteSpace(certPair.Key))
                 {
                     claims.Add(new Claim(certPair.Value, certPair.Key, ClaimValueTypes.String, Options.ClaimsIssuer));
                 }
             }
-          
+
             var identity = new ClaimsIdentity(claims, CertificateAuthDefaults.AuthenticationScheme);
             return new ClaimsPrincipal(identity);
         }

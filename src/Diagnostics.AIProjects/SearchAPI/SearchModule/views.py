@@ -11,6 +11,7 @@ from SearchModule.TextSearchModule import loadModel, refreshModel, freeModel, lo
 from SearchModule.Utilities import resourceConfig, getProductId, getAllProductIds
 from SearchModule.StorageAccountHelper import StorageAccountHelper
 from SearchModule.Logger import loggerInstance
+import urllib.parse
 
 translator = Translator()
 
@@ -95,7 +96,7 @@ def queryDetectorsMethod():
     data = json.loads(request.data.decode('utf-8'))
     requestId = data['requestId']
 
-    txt_data = translator.translate(data['text']).text
+    txt_data = translator.translate(urllib.parse.unquote(data['text'])).text
     if not txt_data:
         return ("No text provided for search", 400)
     productid = getProductId(data)

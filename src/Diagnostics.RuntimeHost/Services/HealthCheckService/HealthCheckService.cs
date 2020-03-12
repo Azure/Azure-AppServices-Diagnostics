@@ -6,6 +6,7 @@ using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.DataProviders;
 using System.Collections.Generic;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Diagnostics.RuntimeHost.Services.SourceWatcher;
 
 namespace Diagnostics.RuntimeHost.Services
 {
@@ -19,12 +20,14 @@ namespace Diagnostics.RuntimeHost.Services
     {
         private string OutboundConnectivityCheckUrl;
         private HttpClient _httpClient;
+        private readonly ISourceWatcher _sourceWatcher;
         IConfiguration _configuration;
         bool IsOutboundConnectivityCheckEnabled = false;
 
-        public HealthCheckService(IConfiguration Configuration)
+        public HealthCheckService(IConfiguration Configuration, ISourceWatcherService sourceWatcherService)
         {
             _configuration = Configuration;
+            _sourceWatcher = sourceWatcherService.Watcher;
             IsOutboundConnectivityCheckEnabled = Convert.ToBoolean(_configuration["HealthCheckSettings:IsOutboundConnectivityCheckEnabled"]);
             if (IsOutboundConnectivityCheckEnabled)
             {
@@ -60,10 +63,22 @@ namespace Diagnostics.RuntimeHost.Services
 
         public async Task<IEnumerable<HealthCheckResult>> RunDependencyCheck(DataProviders.DataProviders dataProviders)
         {
-            var results = new List<HealthCheckResult>();
-            DiagnosticDataProvider dp = ((LogDecoratorBase)dataProviders.Kusto).DataProvider;
-            results.Add(await dp.CheckHealthAsync(null));
-            return results;
+            var healthCheckResultsTask = new List<Task<HealthCheckResult>>();
+            var dataProviderFields = dataProviders.GetType().GetFields();
+
+            foreach (var dataProviderField in dataProviderFields)
+            {
+                if (dataProviderField.FieldType.IsInterface)
+                {
+                    DiagnosticDataProvider dp = ((LogDecoratorBase)dataProviderField.GetValue(dataProviders)).DataProvider;
+                    if (dp != null)
+                        healthCheckResultsTask.Add(dp.CheckHealthAsync(null));
+                }
+            }
+
+            healthCheckResultsTask.Add(_sourceWatcher.CheckHealthAsync(null));
+
+            return await Task.WhenAll(healthCheckResultsTask);
         }
 
         public void Dispose()

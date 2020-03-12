@@ -1,0 +1,49 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "existingServerFarmId": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing App Service Plan resource id that contains the App Service being updated"
+      }
+    },
+    "certificateName": {
+      "type": "string",
+      "metadata": {
+        "description": "User friendly certificate resource name"
+      }
+    },
+    "existingKeyVaultId": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing Key Vault resource Id with an access policy to allow Microsoft.Web RP to read Key Vault secrets (Checkout README.md for more information)"
+      }
+    },
+    "existingKeyVaultSecretName": {
+      "type": "string",
+      "metadata": {
+        "description": "Key Vault Secret that contains a PFX certificate"
+      }
+    },
+    "existingAppLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "App location"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/certificates",
+      "name": "[parameters('certificateName')]",
+      "apiVersion": "2016-03-01",
+      "location": "[parameters('existingAppLocation')]",
+      "properties": {
+        "keyVaultId": "[parameters('existingKeyVaultId')]",
+        "keyVaultSecretName": "[parameters('existingKeyVaultSecretName')]",
+        "serverFarmId": "[parameters('existingServerFarmId')]"
+      }
+    }
+  ]
+}

@@ -11,7 +11,7 @@ namespace Diagnostics.DataProviders
 	{
 		public ISupportObserverDataProvider DataProvider;
 
-		public ObserverLogDecorator(DataProviderContext context, ISupportObserverDataProvider dataProvider) : base(context, dataProvider.GetMetadata())
+		public ObserverLogDecorator(DataProviderContext context, ISupportObserverDataProvider dataProvider) : base((DiagnosticDataProvider)dataProvider, context, dataProvider.GetMetadata())
 		{
 			DataProvider = dataProvider;
 		}

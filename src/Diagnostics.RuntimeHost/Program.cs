@@ -53,13 +53,6 @@ namespace Diagnostics.RuntimeHost
                         .AddCommandLine(args)
                         .Build();
                 })
-                .ConfigureLogging(loggingBuilder =>
-                {
-                    //Send log output to text file application logs
-                    loggingBuilder.AddAzureWebAppDiagnostics();
-                    //Send log output to the Windows Event Log
-                    loggingBuilder.AddEventLog();
-                })
                 .UseStartup<Startup>()
                 .Build();
         }

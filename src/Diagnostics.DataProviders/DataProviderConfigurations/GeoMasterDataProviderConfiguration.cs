@@ -1,12 +1,8 @@
 ﻿namespace Diagnostics.DataProviders
 {
     [DataSourceConfiguration("GeoMaster")]
-    public class GeoMasterDataProviderConfiguration : IDataProviderConfiguration
+    public class GeoMasterDataProviderConfiguration : DataProviderConfigurationBase, IDataProviderConfiguration
     {
-        public void PostInitialize()
-        {
-        }
-
         public GeoMasterDataProviderConfiguration()
         {
         }
