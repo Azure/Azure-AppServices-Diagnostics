@@ -20,13 +20,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
     public abstract class GithubScriptWorkerBase : GithubWorkerBase
     {
         private readonly bool _loadOnlyPublicDetectors;
-        private IGithubClient _githubClient;
         private static Regex regexPublicDetectors = new Regex(@"InternalOnly\s*=\s*false", RegexOptions.IgnoreCase);
 
-        public GithubScriptWorkerBase(bool loadOnlyPublicDetectors, IGithubClient githubClient)
+        public GithubScriptWorkerBase(bool loadOnlyPublicDetectors)
         {
             _loadOnlyPublicDetectors = loadOnlyPublicDetectors;
-            _githubClient = githubClient;
         }
 
         protected abstract ICache<string, EntityInvoker> GetCacheService();
@@ -110,12 +108,13 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 
         public override async Task CreateOrUpdateCacheAsync(IEnumerable<GithubEntry> githubEntries, DirectoryInfo artifactsDestination, string lastModifiedMarker)
         {
-            var assemblyName = Guid.NewGuid().ToString();
+            var assemblyPath = string.Empty;
             var csxFilePath = string.Empty;
             var confFilePath = string.Empty;
             var metadataFilePath = string.Empty;
             var expectedFiles = new string[] { "csx", "package.json", "metadata.json" };
 
+            // Check if worker applicable for any of the downloaded files.
             if (!githubEntries.Any(x => expectedFiles.Any(y => x.Name.Contains(y, StringComparison.CurrentCultureIgnoreCase))))
             {
                 return;
@@ -141,16 +140,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                 }
                 else
                 {
-                    // Use Guids for Assembly and PDB Names to ensure uniqueness.
-                    downloadFilePath = Path.Combine(artifactsDestination.FullName, $"{assemblyName}.{fileExtension.ToLower()}");
+                    assemblyPath = downloadFilePath;
                 }
-
-                LogMessage($"Begin downloading File : {githubFile.Name.ToLower()} and saving it as : {downloadFilePath}", this.Name);
-                await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
             }
 
             var scriptText = await FileHelper.GetFileContentAsync(csxFilePath);
-            var assemblyPath = Path.Combine(artifactsDestination.FullName, $"{assemblyName}.dll");
 
             var configFile = await FileHelper.GetFileContentAsync(confFilePath);
             var config = JsonConvert.DeserializeObject<PackageConfig>(configFile);
