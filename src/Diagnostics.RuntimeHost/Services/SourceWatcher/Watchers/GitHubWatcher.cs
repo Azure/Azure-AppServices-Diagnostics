@@ -303,20 +303,46 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 .Where(x => !string.IsNullOrWhiteSpace(x.Download_url) 
                 && !string.IsNullOrWhiteSpace(x.Name.Split(new char[] { '.' }).LastOrDefault()));
 
-            if (selectedGithubFiles.Any())
+            var assemblyName = Guid.NewGuid().ToString();
+            var expectedFiles = new string[] { "csx", "package.json", "metadata.json" , "kustoClusterMappings"};
+
+            // Identify files to be downloaded
+            if (!selectedGithubFiles.Any(x => expectedFiles.Any(y => x.Name.Contains(y, StringComparison.CurrentCultureIgnoreCase))))
             {
-                foreach (IGithubWorker githubWorker in GithubWorkers.Values)
+                return;
+            }
+
+            foreach (GithubEntry githubFile in selectedGithubFiles)
+            {
+                var fileExtension = githubFile.Name.Split(new char[] { '.' }).LastOrDefault();
+
+                var downloadFilePath = Path.Combine(destDir.FullName, githubFile.Name.ToLower());
+
+                // Use Guids for Assembly and PDB Names to ensure uniqueness.
+                if (fileExtension.Equals("dll") || fileExtension.Equals("pdb"))
                 {
-                    try
-                    {
-                        await githubWorker.CreateOrUpdateCacheAsync(selectedGithubFiles, destDir, parentGithubEntry.Sha);
-                    }
-                    catch(Exception ex)
-                    {
-                        LogException($"Failed to execute github worker with id {githubWorker.Name}. Directory: {destDir.FullName}", ex);
-                    }
+                    downloadFilePath = Path.Combine(destDir.FullName, $"{assemblyName}.{fileExtension.ToLower()}");
+                }
+
+                LogMessage($"Begin downloading File : {githubFile.Name.ToLower()} and saving it as : {downloadFilePath}");
+                await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
+                
+            }
+
+            //At this point, required file have been downloaded by GitHubWatcher to destination folder. 
+            // Source watcher should just read from the destination folder and update their respective cache.
+            foreach (IGithubWorker githubWorker in GithubWorkers.Values)
+            {
+                try
+                {
+                    await githubWorker.CreateOrUpdateCacheAsync(selectedGithubFiles, destDir, parentGithubEntry.Sha);
+                }
+                catch (Exception ex)
+                {
+                    LogException($"Failed to execute github worker with id {githubWorker.Name}. Directory: {destDir.FullName}", ex);
                 }
             }
+            
         }
 
         private async Task SyncLocalDirForDeletedEntriesInGitHub(GithubEntry[] githubDirectories, DirectoryInfo destDirInfo)
@@ -381,6 +407,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             {
                 Directory.CreateDirectory(_destinationCsxPath);
             }
-        }
+        }       
     }
 }
