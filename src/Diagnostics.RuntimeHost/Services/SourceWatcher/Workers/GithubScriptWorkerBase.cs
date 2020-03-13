@@ -51,13 +51,13 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 
                 if (string.IsNullOrWhiteSpace(cacheId) || !GetCacheService().TryGetValue(cacheId, out EntityInvoker invoker) || invoker.EntityMetadata.Sha != subDirSha)
                 {
-                    LogMessage($"Folder : {subDir.FullName} missing in invoker cache.", this.Name);
+                    LogMessage($"Folder : {subDir.FullName} missing in invoker cache.", $"{nameof(CreateOrUpdateCacheAsync)} in {this.Name}");
 
                     // Check if delete marker file exists.
                     var deleteMarkerFile = new FileInfo(Path.Combine(subDir.FullName, _deleteMarkerName));
                     if (deleteMarkerFile.Exists)
                     {
-                        LogMessage("Folder marked for deletion. Skipping cache update", this.Name);
+                        LogMessage("Folder marked for deletion. Skipping cache update", $"{nameof(CreateOrUpdateCacheAsync)} in {this.Name}");
                         return;
                     }
 
@@ -66,7 +66,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                     var metadataFile = Path.Combine(subDir.FullName, "metadata.json");
                     if (mostRecentAssembly == default(FileInfo) || csxScriptFile == default(FileInfo))
                     {
-                        LogWarning("No Assembly file (.dll) or Csx File found (.csx). Skipping cache update", this.Name);
+                        LogWarning("No Assembly file (.dll) or Csx File found (.csx). Skipping cache update", $"{nameof(CreateOrUpdateCacheAsync)} in {this.Name}");
                         return;
                     }
 
@@ -83,20 +83,20 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                         metadata = await FileHelper.GetFileContentAsync(metadataFile);
                     }
 
-                    LogMessage($"Loading assembly : {mostRecentAssembly.FullName}", this.Name);
+                    LogMessage($"Loading assembly : {mostRecentAssembly.FullName}", $"{nameof(CreateOrUpdateCacheAsync)} in {this.Name}");
                     var asm = Assembly.LoadFrom(mostRecentAssembly.FullName);
                     invoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata, subDirSha));
                     invoker.InitializeEntryPoint(asm);
 
                     if (invoker.EntryPointDefinitionAttribute != null)
                     {
-                        LogMessage($"Updating cache with new invoker with id : {invoker.EntryPointDefinitionAttribute.Id}", this.Name);
+                        LogMessage($"Updating cache with new invoker with id : {invoker.EntryPointDefinitionAttribute.Id}", $"{nameof(CreateOrUpdateCacheAsync)} in {this.Name}");
                         GetCacheService().AddOrUpdate(invoker.EntryPointDefinitionAttribute.Id, invoker);
                         await FileHelper.WriteToFileAsync(subDir.FullName, _cacheIdFileName, invoker.EntryPointDefinitionAttribute.Id);
                     }
                     else
                     {
-                        LogWarning("Missing Entry Point Definition attribute. skipping cache update", this.Name);
+                        LogWarning("Missing Entry Point Definition attribute. skipping cache update", $"{nameof(CreateOrUpdateCacheAsync)} in {this.Name}");
                     }
                 }
             }
@@ -196,7 +196,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                 // Add new invoker to Cache and update Cache Id File
                 if (newInvoker.EntryPointDefinitionAttribute != null)
                 {
-                    LogMessage($"Updating cache with  new invoker with id : {newInvoker.EntryPointDefinitionAttribute.Id}", this.Name);
+                    LogMessage($"Updating cache with new invoker with id : {newInvoker.EntryPointDefinitionAttribute.Id}", this.Name);
                     GetCacheService().AddOrUpdate(newInvoker.EntryPointDefinitionAttribute.Id, newInvoker);
                     await FileHelper.WriteToFileAsync(cacheIdFilePath, newInvoker.EntryPointDefinitionAttribute.Id);
                 }

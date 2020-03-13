@@ -147,7 +147,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             stopWatch.Start();
             try
             {
-                LogMessage("SourceWatcher : Start");
+                LogMessage($"SourceWatcher : Start, startup = {startup.ToString()}");
                 var destDirInfo = new DirectoryInfo(_destinationCsxPath);
                 var destLastModifiedMarker = await FileHelper.GetFileContentAsync(destDirInfo.FullName, _lastModifiedMarkerName);
 
@@ -331,17 +331,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
             //At this point, required file have been downloaded by GitHubWatcher to destination folder. 
             // Source watcher should just read from the destination folder and update their respective cache.
-            foreach (IGithubWorker githubWorker in GithubWorkers.Values)
-            {
-                try
-                {
-                    await githubWorker.CreateOrUpdateCacheAsync(selectedGithubFiles, destDir, parentGithubEntry.Sha);
-                }
-                catch (Exception ex)
-                {
-                    LogException($"Failed to execute github worker with id {githubWorker.Name}. Directory: {destDir.FullName}", ex);
-                }
-            }
+          
             
         }
 
