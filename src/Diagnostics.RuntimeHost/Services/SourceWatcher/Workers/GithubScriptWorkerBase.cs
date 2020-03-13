@@ -138,7 +138,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                 {
                     metadataFilePath = downloadFilePath;
                 }
-                else
+                else if(fileExtension.Equals("dll", StringComparison.OrdinalIgnoreCase))
                 {
                     assemblyPath = downloadFilePath;
                 }
