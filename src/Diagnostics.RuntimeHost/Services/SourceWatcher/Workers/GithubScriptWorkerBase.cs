@@ -20,13 +20,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
     public abstract class GithubScriptWorkerBase : GithubWorkerBase
     {
         private readonly bool _loadOnlyPublicDetectors;
-        private IGithubClient _githubClient;
         private static Regex regexPublicDetectors = new Regex(@"InternalOnly\s*=\s*false", RegexOptions.IgnoreCase);
 
-        public GithubScriptWorkerBase(bool loadOnlyPublicDetectors, IGithubClient githubClient)
+        public GithubScriptWorkerBase(bool loadOnlyPublicDetectors)
         {
             _loadOnlyPublicDetectors = loadOnlyPublicDetectors;
-            _githubClient = githubClient;
         }
 
         protected abstract ICache<string, EntityInvoker> GetCacheService();

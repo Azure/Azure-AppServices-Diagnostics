@@ -71,9 +71,9 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             #region Initialize Github Worker
 
             // TODO: Register the github worker with destination path.
-            var gistWorker = new GithubGistWorker(gistCache, _loadOnlyPublicDetectors, _githubClient);
-            var detectorWorker = new GithubDetectorWorker(invokerCache, _loadOnlyPublicDetectors, _githubClient);
-            var kustoMappingsWorker = new GithubKustoConfigurationWorker(kustoMappingsCache, _githubClient);
+            var gistWorker = new GithubGistWorker(gistCache, _loadOnlyPublicDetectors);
+            var detectorWorker = new GithubDetectorWorker(invokerCache, _loadOnlyPublicDetectors);
+            var kustoMappingsWorker = new GithubKustoConfigurationWorker(kustoMappingsCache);
 
             GithubWorkers = new Dictionary<string, IGithubWorker>
             {

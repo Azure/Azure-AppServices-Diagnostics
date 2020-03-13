@@ -18,13 +18,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
     public class GithubKustoConfigurationWorker : GithubWorkerBase
     {
         public override string Name { get { return "KustoConfigurationWorker"; } }
-        private IGithubClient _githubClient;
         private IKustoMappingsCacheService _cacheService;
         private const string _kustoClusterFileName = "kustoClusterMappings";
 
-        public GithubKustoConfigurationWorker(IKustoMappingsCacheService cacheService, IGithubClient githubClient)
+        public GithubKustoConfigurationWorker(IKustoMappingsCacheService cacheService)
         {
-            _githubClient = githubClient;
             _cacheService = cacheService;
         }
 
