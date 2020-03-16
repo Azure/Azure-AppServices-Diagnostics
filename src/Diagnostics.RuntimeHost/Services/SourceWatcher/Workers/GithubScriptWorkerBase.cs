@@ -140,7 +140,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                 }
                 else if(fileExtension.Equals("dll", StringComparison.OrdinalIgnoreCase))
                 {
-                    assemblyPath = downloadFilePath;
+                    //Getting most recent downloaded dll file for the corresponding Github entry.
+                    assemblyPath = GetMostRecentFileByExtension(artifactsDestination, ".dll").FullName;
                 }
             }
 
