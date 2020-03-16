@@ -23,7 +23,6 @@ namespace Diagnostics.Tests.DataProviderTests
 
             var mdmConfig = new GenericMdmDataProviderConfiguration
             {
-                CertificateThumbprint = "BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0",
                 Endpoint = "http://0.0.0.0",
                 MonitoringAccount = "Mock"
             };
@@ -71,7 +70,6 @@ public static class MDMConfiguration
     public static GenericMdmDataProviderConfiguration GetConfiguration() =>
         new GenericMdmDataProviderConfiguration()
         {
-            CertificateThumbprint = ""BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0BAD0"",
             Endpoint = ""http://0.0.0.0"",
             MonitoringAccount = ""Mock""
         };

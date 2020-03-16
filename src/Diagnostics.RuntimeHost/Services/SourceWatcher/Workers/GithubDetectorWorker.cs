@@ -23,7 +23,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
         /// Initializes a new instance of the <see cref="GithubDetectorWorker"/> class.
         /// </summary>
         /// <param name="invokerCache">Invoker cache.</param>
-        public GithubDetectorWorker(IInvokerCacheService invokerCache, bool loadOnlyPublicDetectors, IGithubClient githubClient) : base(loadOnlyPublicDetectors, githubClient)
+        public GithubDetectorWorker(IInvokerCacheService invokerCache, bool loadOnlyPublicDetectors) : base(loadOnlyPublicDetectors)
         {
             InvokerCache = invokerCache;
         }

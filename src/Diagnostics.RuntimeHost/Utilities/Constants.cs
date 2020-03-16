@@ -7,6 +7,7 @@
         internal const string DataProviderContextKey = "DATA_PROVIDER_CONTEXT";
         internal const int TimeoutInMilliSeconds = 60 * 1000;
         internal const double KustoDelayInMinutes = 14.5;
+        internal const string NewDetectorId = "NEW_DETECTOR";
     }
 
     internal class RegistryConstants

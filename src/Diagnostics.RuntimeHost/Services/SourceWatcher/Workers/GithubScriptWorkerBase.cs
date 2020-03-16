@@ -20,13 +20,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
     public abstract class GithubScriptWorkerBase : GithubWorkerBase
     {
         private readonly bool _loadOnlyPublicDetectors;
-        private IGithubClient _githubClient;
         private static Regex regexPublicDetectors = new Regex(@"InternalOnly\s*=\s*false", RegexOptions.IgnoreCase);
 
-        public GithubScriptWorkerBase(bool loadOnlyPublicDetectors, IGithubClient githubClient)
+        public GithubScriptWorkerBase(bool loadOnlyPublicDetectors)
         {
             _loadOnlyPublicDetectors = loadOnlyPublicDetectors;
-            _githubClient = githubClient;
         }
 
         protected abstract ICache<string, EntityInvoker> GetCacheService();
@@ -53,13 +51,13 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
 
                 if (string.IsNullOrWhiteSpace(cacheId) || !GetCacheService().TryGetValue(cacheId, out EntityInvoker invoker) || invoker.EntityMetadata.Sha != subDirSha)
                 {
-                    LogMessage($"Folder : {subDir.FullName} missing in invoker cache.");
+                    LogMessage($"Folder : {subDir.FullName} missing in invoker cache.", this.Name);
 
                     // Check if delete marker file exists.
                     var deleteMarkerFile = new FileInfo(Path.Combine(subDir.FullName, _deleteMarkerName));
                     if (deleteMarkerFile.Exists)
                     {
-                        LogMessage("Folder marked for deletion. Skipping cache update");
+                        LogMessage("Folder marked for deletion. Skipping cache update", this.Name);
                         return;
                     }
 
@@ -68,7 +66,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                     var metadataFile = Path.Combine(subDir.FullName, "metadata.json");
                     if (mostRecentAssembly == default(FileInfo) || csxScriptFile == default(FileInfo))
                     {
-                        LogWarning("No Assembly file (.dll) or Csx File found (.csx). Skipping cache update");
+                        LogWarning("No Assembly file (.dll) or Csx File found (.csx). Skipping cache update", this.Name);
                         return;
                     }
 
@@ -85,37 +83,38 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                         metadata = await FileHelper.GetFileContentAsync(metadataFile);
                     }
 
-                    LogMessage($"Loading assembly : {mostRecentAssembly.FullName}");
+                    LogMessage($"Loading assembly : {mostRecentAssembly.FullName}", this.Name);
                     var asm = Assembly.LoadFrom(mostRecentAssembly.FullName);
                     invoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata, subDirSha));
                     invoker.InitializeEntryPoint(asm);
 
                     if (invoker.EntryPointDefinitionAttribute != null)
                     {
-                        LogMessage($"Updating cache with new invoker with id : {invoker.EntryPointDefinitionAttribute.Id}");
+                        LogMessage($"Updating cache with new invoker with id : {invoker.EntryPointDefinitionAttribute.Id}", this.Name);
                         GetCacheService().AddOrUpdate(invoker.EntryPointDefinitionAttribute.Id, invoker);
                         await FileHelper.WriteToFileAsync(subDir.FullName, _cacheIdFileName, invoker.EntryPointDefinitionAttribute.Id);
                     }
                     else
                     {
-                        LogWarning("Missing Entry Point Definition attribute. skipping cache update");
+                        LogWarning("Missing Entry Point Definition attribute. skipping cache update", this.Name);
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogException(ex.Message, ex);
+                LogException(ex.Message, ex, this.Name);
             }
         }
 
         public override async Task CreateOrUpdateCacheAsync(IEnumerable<GithubEntry> githubEntries, DirectoryInfo artifactsDestination, string lastModifiedMarker)
         {
-            var assemblyName = Guid.NewGuid().ToString();
+            var assemblyPath = string.Empty;
             var csxFilePath = string.Empty;
             var confFilePath = string.Empty;
             var metadataFilePath = string.Empty;
             var expectedFiles = new string[] { "csx", "package.json", "metadata.json" };
 
+            // Check if worker applicable for any of the downloaded files.
             if (!githubEntries.Any(x => expectedFiles.Any(y => x.Name.Contains(y, StringComparison.CurrentCultureIgnoreCase))))
             {
                 return;
@@ -141,16 +140,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                 }
                 else
                 {
-                    // Use Guids for Assembly and PDB Names to ensure uniqueness.
-                    downloadFilePath = Path.Combine(artifactsDestination.FullName, $"{assemblyName}.{fileExtension.ToLower()}");
+                    assemblyPath = downloadFilePath;
                 }
-
-                LogMessage($"Begin downloading File : {githubFile.Name.ToLower()} and saving it as : {downloadFilePath}");
-                await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
             }
 
             var scriptText = await FileHelper.GetFileContentAsync(csxFilePath);
-            var assemblyPath = Path.Combine(artifactsDestination.FullName, $"{assemblyName}.dll");
 
             var configFile = await FileHelper.GetFileContentAsync(confFilePath);
             var config = JsonConvert.DeserializeObject<PackageConfig>(configFile);
@@ -176,38 +170,48 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
         /// <returns>Task for downloading and updating cache.</returns>
         public override async Task CreateOrUpdateCacheAsync(DirectoryInfo destDir, string sha, string scriptText, string assemblyPath, string metadata)
         {
-            if (_loadOnlyPublicDetectors && !regexPublicDetectors.Match(scriptText).Success)
+            try
             {
-                return;
-            }
+                if (_loadOnlyPublicDetectors && !regexPublicDetectors.Match(scriptText).Success)
+                {
+                    return;
+                }
 
-            LogMessage($"Loading assembly : {assemblyPath}");
-            var asm = Assembly.LoadFrom(assemblyPath);
+                LogMessage($"Loading assembly : {assemblyPath}", this.Name);
+                var asm = Assembly.LoadFrom(assemblyPath);
 
-            var newInvoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata, sha));
-            newInvoker.InitializeEntryPoint(asm);
+                var newInvoker = new EntityInvoker(new EntityMetadata(scriptText, GetEntityType(), metadata, sha));
+                newInvoker.InitializeEntryPoint(asm);
 
-            var cacheIdFilePath = Path.Combine(destDir.FullName, _cacheIdFileName);
+                var cacheIdFilePath = Path.Combine(destDir.FullName, _cacheIdFileName);
 
-            // Remove the Old Invoker from Cache
-            var lastCacheId = await FileHelper.GetFileContentAsync(cacheIdFilePath);
-            if (!string.IsNullOrWhiteSpace(lastCacheId) && GetCacheService().TryRemoveValue(lastCacheId, out EntityInvoker oldInvoker))
+                // Remove the Old Invoker from Cache
+                var lastCacheId = await FileHelper.GetFileContentAsync(cacheIdFilePath);
+                if (!string.IsNullOrWhiteSpace(lastCacheId) && GetCacheService().TryRemoveValue(lastCacheId, out EntityInvoker oldInvoker))
+                {
+                    LogMessage($"Removing old invoker with id : {oldInvoker.EntryPointDefinitionAttribute.Id} from Cache", this.Name);
+                    oldInvoker.Dispose();
+                }
+
+                // Add new invoker to Cache and update Cache Id File
+                if (newInvoker.EntryPointDefinitionAttribute != null)
+                {
+                    LogMessage($"Updating cache with  new invoker with id : {newInvoker.EntryPointDefinitionAttribute.Id}", this.Name);
+                    GetCacheService().AddOrUpdate(newInvoker.EntryPointDefinitionAttribute.Id, newInvoker);
+                    await FileHelper.WriteToFileAsync(cacheIdFilePath, newInvoker.EntryPointDefinitionAttribute.Id);
+                }
+                else
+                {
+                    LogWarning("Missing Entry Point Definition attribute. skipping cache update", this.Name);
+                }
+            } catch (Exception ex)
             {
-                LogMessage($"Removing old invoker with id : {oldInvoker.EntryPointDefinitionAttribute.Id} from Cache");
-                oldInvoker.Dispose();
+                if(!ex.ToString().Contains("process cannot access the file"))
+                {
+                    throw;
+                }
             }
-
-            // Add new invoker to Cache and update Cache Id File
-            if (newInvoker.EntryPointDefinitionAttribute != null)
-            {
-                LogMessage($"Updating cache with  new invoker with id : {newInvoker.EntryPointDefinitionAttribute.Id}");
-                GetCacheService().AddOrUpdate(newInvoker.EntryPointDefinitionAttribute.Id, newInvoker);
-                await FileHelper.WriteToFileAsync(cacheIdFilePath, newInvoker.EntryPointDefinitionAttribute.Id);
-            }
-            else
-            {
-                LogWarning("Missing Entry Point Definition attribute. skipping cache update");
-            }
+            
         }
     }
 }

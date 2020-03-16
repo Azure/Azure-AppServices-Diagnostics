@@ -43,7 +43,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             response.Dataset.Add(diagData);
             return diagData;
         }
-        public static DiagnosticData AddSearch(this Response response, bool detectorSearchEnabled=true, bool webSearchEnabled=true, DetectorSearchConfiguration detectorSearchConfiguration=null, WebSearchConfiguration webSearchConfiguration=null, string customQueryString=null)
+        public static DiagnosticData AddSearch(this Response response, string customQueryString = null, bool detectorSearchEnabled=true, bool webSearchEnabled=true, DetectorSearchConfiguration detectorSearchConfiguration=null, WebSearchConfiguration webSearchConfiguration=null)
         {
             var table = new DataTable();
             table.Columns.Add("DetectorSearchEnabled", typeof(bool));
