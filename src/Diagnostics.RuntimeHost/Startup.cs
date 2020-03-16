@@ -189,7 +189,7 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
-            servicesProvider.GetService<ISourceWatcherService>();
+            
 
             services.AddLogging(loggingConfig =>
             {
