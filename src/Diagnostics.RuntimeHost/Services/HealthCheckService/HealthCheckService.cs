@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Microsoft.IdentityModel.Tokens;
 using System.Linq;
+using Diagnostics.DataProviders.DataProviderConfigurations;
 
 namespace Diagnostics.RuntimeHost.Services
 {
@@ -81,7 +82,7 @@ namespace Diagnostics.RuntimeHost.Services
             }
 
             healthCheckResultsTasks.Add(_sourceWatcher.GetType().Name, _sourceWatcher.CheckHealthAsync());
-            healthCheckResultsTasks.Add("Mdm", ((LogDecoratorBase)dataProviders.MdmGeneric(_dataSourcesConfigurationService.Config.AntaresMdmConfiguration)).DataProvider.CheckHealthAsync());
+            healthCheckResultsTasks.Add("Mdm", ((LogDecoratorBase)dataProviders.Mdm(MdmDataSource.Antares)).DataProvider.CheckHealthAsync());
 
             return await Task.Run<IEnumerable<HealthCheckResult>>(async () =>
             {

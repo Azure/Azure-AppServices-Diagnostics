@@ -37,6 +37,7 @@ using Microsoft.IdentityModel.Logging;
 using System.Net;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Rewrite;
+using Newtonsoft.Json;
 
 namespace Diagnostics.RuntimeHost
 {
