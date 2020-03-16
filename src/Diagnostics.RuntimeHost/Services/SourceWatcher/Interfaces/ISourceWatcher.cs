@@ -6,7 +6,6 @@
 using System.Threading.Tasks;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.RuntimeHost.Models;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
