@@ -38,7 +38,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             get
             {
                 var resourceName = Name;
-                if (!string.IsNullOrWhiteSpace(Slot) && !Slot.Equals("production", StringComparison.OrdinalIgnoreCase) == false)
+                if (!string.IsNullOrWhiteSpace(Slot) && !Slot.Equals("production", StringComparison.OrdinalIgnoreCase))
                 {
                     resourceName = $"{resourceName}({Slot})";
                 }
