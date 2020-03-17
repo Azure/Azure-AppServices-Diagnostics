@@ -37,7 +37,13 @@ namespace Diagnostics.ModelsAndUtils.Models
         {
             get
             {
-                return UriUtilities.BuildAzureResourceUri(SubscriptionId, ResourceGroup, Name, Provider, ResourceTypeName);
+                var resourceName = Name;
+                if (!string.IsNullOrWhiteSpace(Slot) && !Slot.Equals("production", StringComparison.OrdinalIgnoreCase) == false)
+                {
+                    resourceName = $"{resourceName}({Slot})";
+                }
+
+                return UriUtilities.BuildAzureResourceUri(SubscriptionId, ResourceGroup, resourceName, Provider, ResourceTypeName);
             }
         }
 
