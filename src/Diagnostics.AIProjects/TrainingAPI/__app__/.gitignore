@@ -133,6 +133,7 @@ serverless-python.zip
 **/SampleUtterances.json
 **.model
 **.index
+**.npy
 **.dat.npy
 **.dict
 **/Mappings.json
