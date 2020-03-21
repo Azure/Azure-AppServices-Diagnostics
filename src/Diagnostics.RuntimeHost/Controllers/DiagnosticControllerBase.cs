@@ -69,6 +69,10 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
+            if (queryText != null && queryText.Length < 2)
+            {
+                return BadRequest("Search query term should be at least two characters");
+            }
             return Ok(await this.ListDetectorsInternal(cxt, queryText));
         }
 
@@ -641,7 +645,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 try
                 {
                     var res = await _searchService.SearchDetectors(context.OperationContext.RequestId, queryText, resourceParams);
-                    if (res != null && res.Content != null)
+                    if (res.IsSuccessStatusCode && res != null && res.Content != null)
                     {
                         string resultContent = await res.Content.ReadAsStringAsync();
                         searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
