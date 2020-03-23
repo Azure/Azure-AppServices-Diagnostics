@@ -19,6 +19,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
                 "System.Collections.Generic",
                 "System.Data",
                 "System.Threading.Tasks",
+                "Microsoft.Extensions.Logging",
                 "Diagnostics.DataProviders",
                 "Diagnostics.ModelsAndUtils",
                 "Diagnostics.ModelsAndUtils.Attributes",
