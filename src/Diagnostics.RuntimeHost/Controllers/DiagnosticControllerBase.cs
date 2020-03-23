@@ -72,6 +72,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
+            queryText = HttpUtility.UrlDecode(queryText);
             if (queryText != null && queryText.Length < 2)
             {
                 return BadRequest("Search query term should be at least two characters");
