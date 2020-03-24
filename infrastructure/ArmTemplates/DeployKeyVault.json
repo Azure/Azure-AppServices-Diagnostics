@@ -99,19 +99,11 @@
         "enabledForDeployment": "[parameters('enabledForDeployment')]",
         "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
         "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
-<<<<<<< HEAD
         "tenantId": "[subscription().tenantId]",
         "accessPolicies": [
           {
             "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('siteName')), '2018-02-01', 'Full').identity.principalId]",
             "tenantId": "[reference(resourceId('Microsoft.Web/sites', parameters('siteName')), '2018-02-01', 'Full').identity.tenantId]",
-=======
-        "tenantId": "[parameters('tenantId')]",
-        "accessPolicies": [
-          {
-            "objectId": "[reference(concat(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Web/sites', parameters('siteName')), '2018-02-01', 'Full')).identity.principalId]",
-            "tenantId": "[parameters('tenantId')]",
->>>>>>> 1395bc7db82eeedf4d2db7e92e026f22412f0f63
             "permissions": {
               "keys": "[parameters('keysPermissions')]",
               "secrets": "[parameters('secretsPermissions')]"      
