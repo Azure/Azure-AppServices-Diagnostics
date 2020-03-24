@@ -28,6 +28,11 @@ def getProductId(resourceObj):
                         productids.append(resourceConfig[resourceObj["ResourceType"]][app][platform])
                     except KeyError:
                         pass
+            elif app == "FunctionApp":
+                try:
+                    productids.append(resourceConfig[resourceObj["ResourceType"]][app])
+                except KeyError:
+                    pass
     else:
         try:
             productids.append(resourceConfig[resourceObj["ResourceType"]])

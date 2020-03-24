@@ -12,7 +12,8 @@
       },
       "MobileApp": {
         "Windows": "14748"
-      }
+      },
+      "FunctionApp": "16072"
     }
   },
   "internalApiPort":  "2743"

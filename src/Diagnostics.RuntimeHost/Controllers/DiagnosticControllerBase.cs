@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Web;
 using Diagnostics.DataProviders;
+using Diagnostics.DataProviders.Exceptions;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
@@ -15,6 +16,7 @@ using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using Diagnostics.ModelsAndUtils.Utilities;
 using Diagnostics.RuntimeHost.Models;
+using Diagnostics.RuntimeHost.Models.Exceptions;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
@@ -23,12 +25,11 @@ using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Scripts.Utilities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
-using Diagnostics.RuntimeHost.Models.Exceptions;
-using Diagnostics.DataProviders.Exceptions;
-using Microsoft.AspNetCore.Authorization;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -46,6 +47,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IRuntimeContext<TResource> _runtimeContext;
         protected ISupportTopicService _supportTopicService;
         protected IKustoMappingsCacheService _kustoMappingCacheService;
+        protected IRuntimeLoggerProvider _loggerProvider;
 
         private InternalAPIHelper _internalApiHelper;
 
@@ -61,6 +63,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
             this._supportTopicService = (ISupportTopicService)services.GetService(typeof(ISupportTopicService));
             this._kustoMappingCacheService = (IKustoMappingsCacheService)services.GetService(typeof(IKustoMappingsCacheService));
+            this._loggerProvider = (IRuntimeLoggerProvider)services.GetService(typeof(IRuntimeLoggerProvider));
 
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
@@ -82,7 +85,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest(errorMessage);
             }
 
-            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: form);
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: form, detectorId: detectorId);
             var detectorResponse = await GetDetectorInternal(detectorId, cxt);
             return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2));
         }
@@ -168,7 +171,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
 
-            var runtimeContext = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
+            var runtimeContext = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form, detectorId: detectorId);
 
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
 
@@ -317,13 +320,21 @@ namespace Diagnostics.RuntimeHost.Controllers
 
                         queryRes.RuntimeSucceeded = true;
                         queryRes.InvocationOutput = DiagnosticApiResponse.FromCsxResponse(invocationResponse, dataProvidersMetadata, utterancesResults);
+                        queryRes.RuntimeLogOutput = _loggerProvider.GetAndClear(runtimeContext.OperationContext.RequestId);
                     }
                     catch (Exception ex)
                     {
+                        if (invocationResponse != null)
+                        {
+                            runtimeContext.OperationContext.Logger.LogInformation(invocationResponse.ToString());
+                        }
+                        var baseException = FlattenIfAggregatedException(ex);
+                        runtimeContext.OperationContext.Logger.LogError(baseException, "Runtime exception has occurred");
+                        queryRes.RuntimeLogOutput = _loggerProvider.GetAndClear(runtimeContext.OperationContext.RequestId);
                         if (isInternalCall)
                         {
                             queryRes.RuntimeSucceeded = false;
-                            queryRes.InvocationOutput = CreateQueryExceptionResponse(ex, invoker.EntryPointDefinitionAttribute, isInternalCall, GetDataProvidersMetadata(dataProviders));
+                            queryRes.InvocationOutput = CreateQueryExceptionResponse(baseException, invoker.EntryPointDefinitionAttribute, isInternalCall, GetDataProvidersMetadata(dataProviders));
                         }
                         else
                         {
@@ -354,8 +365,19 @@ namespace Diagnostics.RuntimeHost.Controllers
                 Metadata = RemovePIIFromDefinition(detectorDefinition, isInternal),
                 IsInternalCall = isInternal
             };
-            response.AddMarkdownView($"<pre><code>Exception message:<strong> {ex.Message}</strong><br>Stack trace: {ex.StackTrace}</code></pre>", "Detector Runtime Exception");
+            response.AddMarkdownView($"<pre><code>Exception message:<strong> {ex.GetType().FullName}: {ex.Message}</strong><br>Stack trace: {ex.StackTrace}</code></pre>", "Detector Runtime Exception");
             return DiagnosticApiResponse.FromCsxResponse(response, dataProvidersMetadata);
+        }
+
+        private Exception FlattenIfAggregatedException(Exception ex)
+        {
+            if (ex is AggregateException)
+            {
+                var flatten = ((AggregateException)ex).Flatten();
+                return flatten.InnerException;
+            }
+
+            return ex;
         }
 
         protected async Task<IActionResult> GetInsights(TResource resource, string pesId, string supportTopicId, string startTime, string endTime, string timeGrain, string supportTopicPath = null, string postBody = null)
@@ -555,7 +577,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return systemContext;
         }
 
-        private RuntimeContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, SupportTopic supportTopic = null, Form Form = null, string ascParams = null)
+        private RuntimeContext<TResource> PrepareContext(TResource resource, DateTime startTime, DateTime endTime, bool forceInternal = false, SupportTopic supportTopic = null, Form Form = null, string ascParams = null, string detectorId = null)
         {
             this.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
             this.Request.Headers.TryGetValue(HeaderConstants.InternalClientHeader, out StringValues internalCallHeader);
@@ -575,18 +597,25 @@ namespace Diagnostics.RuntimeHost.Controllers
                 }
             }
 
+            var requestId = requestIds.FirstOrDefault();
             var operationContext = new OperationContext<TResource>(
                 resource,
                 DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(DataProviderConstants.KustoTimeFormat),
                 DateTimeHelper.GetDateTimeInUtcFormat(endTime).ToString(DataProviderConstants.KustoTimeFormat),
                 internalViewRequested || forceInternal,
-                requestIds.FirstOrDefault(),
+                requestId,
                 supportTopic: supportTopic,
                 form: Form,
                 cloudDomain: _runtimeContext.CloudDomain,
-                ascParams: ascParams
+                ascParams: ascParams,
+                logger: _loggerProvider.CreateLogger(requestId)
             );
 
+            if (operationContext.Logger is RuntimeLogger runtimeLogger)
+            {
+                runtimeLogger.Resource = resource;
+                runtimeLogger.DetectorId = detectorId;
+            }
             _runtimeContext.ClientIsInternal = isInternalClient || forceInternal;
             _runtimeContext.OperationContext = operationContext;
             var queryParamCollection = Request.Query;
