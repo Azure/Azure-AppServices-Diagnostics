@@ -11,10 +11,10 @@ from SearchModule.TextSearchModule import loadModel, refreshModel, freeModel, lo
 from SearchModule.Utilities import resourceConfig, getProductId, getAllProductIds
 from SearchModule.StorageAccountHelper import StorageAccountHelper
 from SearchModule.Logger import loggerInstance
-import urllib.parse
+import urllib.parse, re
 
 translator = Translator()
-
+specialChars = r'[”\]\\><\)\(&\[,“!:]'
 ######## RUN THE API SERVER IN FLASK  #############
 def getUTCTime():
     return datetime.now(timezone.utc)
@@ -97,8 +97,10 @@ def queryDetectorsMethod():
     requestId = data['requestId']
 
     txt_data = translator.translate(urllib.parse.unquote(data['text'])).text
-    if not txt_data:
-        return ("No text provided for search", 400)
+    original_query = txt_data
+    txt_data = " ".join(re.sub(specialChars, " ", txt_data).split())
+    if (not txt_data) or len(txt_data)<2:
+        return ("Minimum query length is 2", 400)
     productid = getProductId(data)
     if not productid:
         return ('Resource data not available', 404)
@@ -107,7 +109,7 @@ def queryDetectorsMethod():
         loadModel(productid)
     except Exception as e:
         loggerInstance.logHandledException(requestId, e)
-        return (json.dumps({"query": txt_data, "results": [], "exception": str(e)}), 404)
+        return (json.dumps({"query_received": original_query, "query": txt_data, "results": [], "exception": str(e)}), 404)
     results = loaded_models[productid].queryDetectors(txt_data)
     res = json.dumps(results)
     return (res, 200)
