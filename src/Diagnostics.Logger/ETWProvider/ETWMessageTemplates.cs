@@ -34,6 +34,7 @@ namespace Diagnostics.Logger
         public const string LogRuntimeHostHandledException = "Runtime Host Handled Exception : {3}";
         public const string LogRuntimeHostDetectorAscInsight = "ASC Insight Detail for Detector";
         public const string LogRuntimeHostSupportTopicAscInsight = "ASC Insight Detail for Detector";
+        public const string LogRuntimeMessage = "Runtime Log from Detector";
 
         #endregion Runtime Host Event Message Templates
 

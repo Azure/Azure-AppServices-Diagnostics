@@ -9,6 +9,7 @@ models/
 **.dict
 **.index
 **.model
+**.npy
 **.dat.npy
 **/Mappings.json
 **/ModelInfo.json

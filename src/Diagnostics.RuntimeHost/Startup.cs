@@ -189,7 +189,7 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
-            servicesProvider.GetService<ISourceWatcherService>();
+            
 
             services.AddLogging(loggingConfig =>
             {
@@ -197,6 +197,7 @@ namespace Diagnostics.RuntimeHost
                 loggingConfig.AddConfiguration(Configuration.GetSection("Logging"));
                 loggingConfig.AddDebug();
                 loggingConfig.AddEventSourceLogger();
+                loggingConfig.AddRuntimeLogger();
 
                 if (!IsPublicAzure())
                 {

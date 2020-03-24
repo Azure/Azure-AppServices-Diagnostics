@@ -56,10 +56,16 @@ def getProductId(resourceObj):
     if resourceObj["ResourceType"] == "App":
         apptypes = resourceObj["AppType"].split(",")
         for app in apptypes:
-            platformtypes = resourceObj["PlatformType"].split(",")
-            for platform in platformtypes:
+            if app == "WebApp":
+                platformtypes = resourceObj["PlatformType"].split(",")
+                for platform in platformtypes:
+                    try:
+                        productids.append(resourceConfig[resourceObj["ResourceType"]][app][platform])
+                    except KeyError:
+                        pass
+            elif app == "FunctionApp":
                 try:
-                    productids.append(resourceConfig[resourceObj["ResourceType"]][app][platform])
+                    productids.append(resourceConfig[resourceObj["ResourceType"]][app])
                 except KeyError:
                     pass
     if productids:
