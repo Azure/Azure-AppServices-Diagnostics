@@ -3,7 +3,8 @@ from nltk import ngrams
 import itertools
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-
+import re
+specialChars = r'[”\]\\><\)\(&\[,“!:]'
 try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
@@ -29,4 +30,5 @@ def getNGrams(sentence, n, lemmatize=True):
 def getAllNGrams(sentence, n=1, lemmatize=True):
     if not sentence:
         return []
+    sentence = " ".join(re.sub(specialChars, " ", sentence).split())
     return list(itertools.chain.from_iterable([getNGrams(sentence, i, lemmatize) for i in range(1, min([n, len(sentence.split())])+1)]))
