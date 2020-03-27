@@ -98,6 +98,8 @@ def queryDetectorsMethod():
 
     txt_data = translator.translate(urllib.parse.unquote(data['text'])).text
     original_query = txt_data
+    if (len(original_query)>250):
+        return ("Maximum query length is 250", 400)
     txt_data = " ".join(re.sub(specialChars, " ", txt_data).split())
     if (not txt_data) or len(txt_data)<2:
         return ("Minimum query length is 2", 400)
