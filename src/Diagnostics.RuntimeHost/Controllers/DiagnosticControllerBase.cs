@@ -396,7 +396,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     supportTopicId = supportTopicMap.SupportTopicId;
                 }
             }
-            if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
+            if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage, true))
             {
                 return BadRequest(errorMessage);
             }
