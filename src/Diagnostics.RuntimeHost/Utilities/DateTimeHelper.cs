@@ -7,14 +7,14 @@ namespace Diagnostics.RuntimeHost.Utilities
 {
     internal class DateTimeHelper
     {
-        internal static bool PrepareStartEndTimeWithTimeGrain(string startTime, string endTime, string timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage)
+        internal static bool PrepareStartEndTimeWithTimeGrain(string startTime, string endTime, string timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage, bool forceAdjustStartAndEndTimes = false)
         {
             Tuple<TimeSpan, TimeSpan, bool> selectedTimeGrainOption = null;
             const string timeGrainParameterName = "timeGrain";
             bool result = true;
             errorMessage = string.Empty;
 
-            result = PrepareStartEndTimeUtc(startTime, endTime, out startTimeUtc, out endTimeUtc, out errorMessage);
+            result = PrepareStartEndTimeUtc(startTime, endTime, out startTimeUtc, out endTimeUtc, out errorMessage, forceAdjustStartAndEndTimes);
 
             var defaultTimeGrainOption = DataProviderConstants.TimeGrainOptions.FirstOrDefault(t => t.Item3);
             timeGrainTimeSpan = defaultTimeGrainOption.Item1;
@@ -56,7 +56,15 @@ namespace Diagnostics.RuntimeHost.Utilities
             return result;
         }
 
-        internal static bool PrepareStartEndTimeUtc(string startTime, string endTime, out DateTime startTimeUtc, out DateTime endTimeUtc, out string errorMessage)
+        internal static void GetDefaultStartAndEndTimeUtc(out DateTime startTimeUtc, out DateTime endTimeUtc)
+        {
+            DateTime currentUtcTime = GetDateTimeInUtcFormat(DateTime.UtcNow);
+            double kustoDelayInMinutes = -HostConstants.KustoDelayInMinutes;
+            ParseDateTimeParameter("startTime", string.Empty, currentUtcTime.AddMinutes(kustoDelayInMinutes).AddDays(-1), out startTimeUtc);
+            endTimeUtc = startTimeUtc.AddDays(1);
+        }
+
+        internal static bool PrepareStartEndTimeUtc(string startTime, string endTime, out DateTime startTimeUtc, out DateTime endTimeUtc, out string errorMessage, bool forceAdjustStartAndEndTimes = false)
         {
             //1. no startTime, no endTime => return current time - 24 hours, current time
             //2. startTime, no endTime => return start time, end time = start time + 24 hours
@@ -75,12 +83,12 @@ namespace Diagnostics.RuntimeHost.Utilities
             }
             else if (string.IsNullOrWhiteSpace(startTime))
             {
-                result = ParseDateTimeParameter("endTime", endTime, currentUtcTime, out endTimeUtc);
+                result = ParseDateTimeParameter("endTime", endTime, currentUtcTime.AddMinutes(kustoDelayInMinutes), out endTimeUtc);
                 startTimeUtc = endTimeUtc.AddDays(-1);
             }
             else if (string.IsNullOrWhiteSpace(endTime))
             {
-                result = ParseDateTimeParameter("startTime", startTime, currentUtcTime.AddDays(-1), out startTimeUtc);
+                result = ParseDateTimeParameter("startTime", startTime, currentUtcTime.AddMinutes(kustoDelayInMinutes).AddDays(-1), out startTimeUtc);
                 endTimeUtc = startTimeUtc.AddDays(1);
                 if (endTimeUtc > currentUtcTime.AddMinutes(kustoDelayInMinutes))
                 {
@@ -95,36 +103,101 @@ namespace Diagnostics.RuntimeHost.Utilities
 
             if (!result)
             {
-                errorMessage = "Cannot parse invalid date time. Valid Time format is yyyy-mm-ddThh:mm";
-                return false;
+                if (forceAdjustStartAndEndTimes)
+                {
+                    GetDefaultStartAndEndTimeUtc(out startTimeUtc, out endTimeUtc);
+                }
+                else
+                {
+                    errorMessage = "Cannot parse invalid date time. Valid Time format is yyyy-mm-ddThh:mm";
+                    return false;
+                }
             }
 
             if (startTimeUtc > endTimeUtc)
             {
-                errorMessage = "Invalid Start Time and End Time. End Time cannot be earlier than Start Time.";
-                return false;
+                if(forceAdjustStartAndEndTimes)
+                {
+                    if(startTimeUtc < currentUtcTime.AddMinutes(kustoDelayInMinutes).AddDays(-1))
+                    {
+                        endTimeUtc = startTimeUtc.AddDays(1);
+                    }
+                    else
+                    {
+                        if (endTimeUtc < currentUtcTime.AddMinutes(kustoDelayInMinutes))
+                        {
+                            startTimeUtc = endTimeUtc.AddDays(-1);
+                        }
+                        else
+                        {
+                            GetDefaultStartAndEndTimeUtc(out startTimeUtc, out endTimeUtc);
+                        }
+                    }
+                }
+                else
+                {
+                    errorMessage = "Invalid Start Time and End Time. End Time cannot be earlier than Start Time.";
+                    return false;
+                }                
             }
+
             if (endTimeUtc > currentUtcTime.AddMinutes(kustoDelayInMinutes))
             {
-                errorMessage = $"Invalid End Time. End Time should be less by at least {HostConstants.KustoDelayInMinutes} minutes from now";
-                return false;
+                if (forceAdjustStartAndEndTimes)
+                {
+                    if(endTimeUtc - startTimeUtc < TimeSpan.FromHours(24))
+                    {
+                        endTimeUtc = currentUtcTime.AddMinutes(kustoDelayInMinutes);
+                        startTimeUtc = endTimeUtc.AddHours((endTimeUtc - startTimeUtc).TotalHours * -1);
+                    }
+                    else
+                    {
+                        GetDefaultStartAndEndTimeUtc(out startTimeUtc, out endTimeUtc);
+                    }
+                }
+                else
+                {
+                    errorMessage = $"Invalid End Time. End Time should be less by at least {HostConstants.KustoDelayInMinutes} minutes from now";
+                    return false;
+                }
             }
             else if (startTimeUtc > currentUtcTime.AddMinutes(kustoDelayInMinutes))
             {
-                errorMessage = $"Invalid Start Time. Start Time should be less by at least {HostConstants.KustoDelayInMinutes} minutes from now";
-                return false;
+                if (forceAdjustStartAndEndTimes)
+                {
+                    GetDefaultStartAndEndTimeUtc(out startTimeUtc, out endTimeUtc);
+                }
+                else
+                {
+                    errorMessage = $"Invalid Start Time. Start Time should be less by at least {HostConstants.KustoDelayInMinutes} minutes from now";
+                    return false;
+                }
             }
 
             if (startTimeUtc < DateTime.UtcNow.Add(DataProviderConstants.KustoDataRetentionPeriod))
             {
-                errorMessage = $"Invalid Start Time. Start Time cannot be earlier than {Math.Abs(DataProviderConstants.KustoDataRetentionPeriod.Days)} days.";
-                return false;
+                if (forceAdjustStartAndEndTimes)
+                {
+                    GetDefaultStartAndEndTimeUtc(out startTimeUtc, out endTimeUtc);
+                }
+                else
+                {
+                    errorMessage = $"Invalid Start Time. Start Time cannot be earlier than {Math.Abs(DataProviderConstants.KustoDataRetentionPeriod.Days)} days.";
+                    return false;
+                }
             }
 
             if (endTimeUtc - startTimeUtc > TimeSpan.FromHours(72))
             {
-                errorMessage = "Invalid Time Range. Time Range cannot be more than 72 hours.";
-                return false;
+                if (forceAdjustStartAndEndTimes)
+                {
+                    GetDefaultStartAndEndTimeUtc(out startTimeUtc, out endTimeUtc);
+                }
+                else
+                {
+                    errorMessage = "Invalid Time Range. Time Range cannot be more than 72 hours.";
+                    return false;
+                }
             }
 
             return true;
