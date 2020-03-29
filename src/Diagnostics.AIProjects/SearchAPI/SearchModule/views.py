@@ -98,12 +98,14 @@ def queryDetectorsMethod():
 
     txt_data = translator.translate(urllib.parse.unquote(data['text'])).text
     original_query = txt_data
+    if (len(original_query)>250):
+        return ("Query length exceeded the maximum limit of 250", 400)
     txt_data = " ".join(re.sub(specialChars, " ", txt_data).split())
     if (not txt_data) or len(txt_data)<2:
         return ("Minimum query length is 2", 400)
     productid = getProductId(data)
     if not productid:
-        return ('Resource data not available', 404)
+        return (f'Resource not supported in search. Request data: {json.dumps(data)}', 404)
     productid = productid[0]
     try:
         loadModel(productid)
