@@ -7,7 +7,7 @@
             "type": "string"
         },
         "location": {
-			"defaultValue": "[resourceGroup().location]"
+			"defaultValue": "[resourceGroup().location]",
             "type": "string"
         },
         "container_Name": {
