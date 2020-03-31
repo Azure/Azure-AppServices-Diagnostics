@@ -61,8 +61,8 @@ namespace Diagnostics.DataProviders
             string kustoClusterName = null;
             string appserviceRegion = ParseRegionFromStamp(stampName);
 
-            if ((!_configuration.CloudDomain.Equals(DataProviderConstants.AzureCloud, StringComparison.CurrentCultureIgnoreCase) || 
-                !_configuration.CloudDomain.Equals(DataProviderConstants.AzureCloudAlternativeName, StringComparison.CurrentCultureIgnoreCase)) &&
+            if (!_configuration.CloudDomain.Equals(DataProviderConstants.AzureCloud, StringComparison.CurrentCultureIgnoreCase) && 
+                !_configuration.CloudDomain.Equals(DataProviderConstants.AzureCloudAlternativeName, StringComparison.CurrentCultureIgnoreCase) &&
                 stampName.Equals(DataProviderConstants.FakeStampForAnalyticsCluster, StringComparison.CurrentCultureIgnoreCase))
             {
                 kustoClusterName = _configuration.RegionSpecificClusterNameCollection.Values.First();
