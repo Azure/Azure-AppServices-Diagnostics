@@ -677,32 +677,6 @@ namespace Diagnostics.Logger
                 Message);
         }
 
-        /// <summary>
-        /// Log runtime host message (Trace/Debug).
-        /// </summary>
-        /// <param name="RequestId">Request id.</param>
-        /// <param name="Source">The source.</param>
-        /// <param name="SubscriptionId">Subscription id.</param>
-        /// <param name="ResourceGroup">Resource group.</param>
-        /// <param name="Resource">The resource.</param>
-        /// <param name="ExceptionType">Exception type.</param>
-        /// <param name="ExceptionDetails">Exception details.</param>
-        /// <param name="Message">The message.</param>
-        [Event(5003, Level = EventLevel.Verbose, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage)]
-        public void LogRuntimeLogTrace(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message)
-        {
-            WriteDiagnosticsEvent(
-                5003,
-                RequestId,
-                Source,
-                SubscriptionId,
-                ResourceGroup,
-                Resource,
-                ExceptionType,
-                ExceptionDetails,
-                Message);
-        }
-
         #endregion
     }
 }
