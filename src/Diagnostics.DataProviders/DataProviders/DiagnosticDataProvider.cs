@@ -10,7 +10,7 @@ namespace Diagnostics.DataProviders
     {
         private OperationDataCache _cache;
         private IDataProviderConfiguration _configuration;
-        private const string baseMessage = @"The underlying data source with {Name} may not fully implement the health check interface or it may be missing data to complete a successful health check";
+        private const string baseMessage = @"The underlying data source may not fully implement the health check interface or it may be missing data to complete a successful health check";
 
         public DiagnosticDataProvider(OperationDataCache cache)
         {
