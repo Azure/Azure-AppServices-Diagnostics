@@ -42,7 +42,7 @@
     },
     "enabledForTemplateDeployment": {
       "type": "bool",
-      "defaultValue": false,
+      "defaultValue": true,
       "allowedValues": [
         true,
         false
@@ -99,11 +99,11 @@
         "enabledForDeployment": "[parameters('enabledForDeployment')]",
         "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
         "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
-        "tenantId": "[parameters('tenantId')]",
+        "tenantId": "[subscription().tenantId]",
         "accessPolicies": [
           {
-            "objectId": "[reference(concat(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Web/sites', parameters('siteName')), '2018-02-01', 'Full')).identity.principalId]",
-            "tenantId": "[parameters('tenantId')]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites', parameters('siteName')), '2018-02-01', 'Full').identity.principalId]",
+            "tenantId": "[reference(resourceId('Microsoft.Web/sites', parameters('siteName')), '2018-02-01', 'Full').identity.tenantId]",
             "permissions": {
               "keys": "[parameters('keysPermissions')]",
               "secrets": "[parameters('secretsPermissions')]"      

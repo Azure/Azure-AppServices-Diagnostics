@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders;
 using Diagnostics.Logger;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -29,7 +29,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         public abstract Task CreateOrUpdatePackage(Package pkg);
 
-        public abstract Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken));
+        public abstract Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default(CancellationToken));
 
         protected SourceWatcherBase(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCache, IGistCacheService gistCache, IKustoMappingsCacheService kustoMappingsCache, string eventSource)
         {

@@ -26,7 +26,7 @@ namespace Diagnostics.DataProviders
         /// <param name="configuration">Configuration for calling into Azure Support Center.</param>
         /// <param name="requestId">AppLens request id.</param>
         public AscDataProvider(OperationDataCache cache, AscDataProviderConfiguration configuration, string requestId, DataProviderContext context)
-            : base(cache)
+            : base(cache, configuration)
         {
             dataProviderConfiguration = configuration;
             dataProviderRequestId = requestId;

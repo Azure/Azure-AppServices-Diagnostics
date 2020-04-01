@@ -5,8 +5,10 @@ using Microsoft.Extensions.Configuration;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.DataProviders;
 using System.Collections.Generic;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Microsoft.IdentityModel.Tokens;
+using System.Linq;
+using Diagnostics.DataProviders.DataProviderConfigurations;
 
 namespace Diagnostics.RuntimeHost.Services
 {
@@ -22,12 +24,14 @@ namespace Diagnostics.RuntimeHost.Services
         private HttpClient _httpClient;
         private readonly ISourceWatcher _sourceWatcher;
         IConfiguration _configuration;
+        IDataSourcesConfigurationService _dataSourcesConfigurationService;
         bool IsOutboundConnectivityCheckEnabled = false;
 
-        public HealthCheckService(IConfiguration Configuration, ISourceWatcherService sourceWatcherService)
+        public HealthCheckService(IConfiguration Configuration, ISourceWatcherService sourceWatcherService, IDataSourcesConfigurationService dataProviderConfigurationService)
         {
             _configuration = Configuration;
             _sourceWatcher = sourceWatcherService.Watcher;
+            _dataSourcesConfigurationService = dataProviderConfigurationService;
             IsOutboundConnectivityCheckEnabled = Convert.ToBoolean(_configuration["HealthCheckSettings:IsOutboundConnectivityCheckEnabled"]);
             if (IsOutboundConnectivityCheckEnabled)
             {
@@ -61,9 +65,10 @@ namespace Diagnostics.RuntimeHost.Services
             await RetryHelper.RetryAsync(HealthCheckPing, "Healthping", "", 3, 100);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2007:Consider calling ConfigureAwait on the awaited task", Justification = "<Pending>")]
         public async Task<IEnumerable<HealthCheckResult>> RunDependencyCheck(DataProviders.DataProviders dataProviders)
         {
-            var healthCheckResultsTask = new List<Task<HealthCheckResult>>();
+            var healthCheckResultsTasks = new Dictionary<string, Task<HealthCheckResult>>();
             var dataProviderFields = dataProviders.GetType().GetFields();
 
             foreach (var dataProviderField in dataProviderFields)
@@ -71,14 +76,37 @@ namespace Diagnostics.RuntimeHost.Services
                 if (dataProviderField.FieldType.IsInterface)
                 {
                     DiagnosticDataProvider dp = ((LogDecoratorBase)dataProviderField.GetValue(dataProviders)).DataProvider;
-                    if (dp != null)
-                        healthCheckResultsTask.Add(dp.CheckHealthAsync(null));
+                    if (dp != null && ((dp.DataProviderConfiguration?.Enabled).HasValue && dp.DataProviderConfiguration.Enabled))
+                        healthCheckResultsTasks.Add(dp.GetType().Name, dp.CheckHealthAsync());
                 }
             }
 
-            healthCheckResultsTask.Add(_sourceWatcher.CheckHealthAsync(null));
+            healthCheckResultsTasks.Add(_sourceWatcher.GetType().Name, _sourceWatcher.CheckHealthAsync());
+            healthCheckResultsTasks.Add("Mdm", ((LogDecoratorBase)dataProviders.Mdm(MdmDataSource.Antares)).DataProvider.CheckHealthAsync());
 
-            return await Task.WhenAll(healthCheckResultsTask);
+            return await Task.Run<IEnumerable<HealthCheckResult>>(async () =>
+            {
+                List<HealthCheckResult> healthCheckResults = new List<HealthCheckResult>();
+                foreach (var kv in healthCheckResultsTasks)
+                {
+                    Exception healthCheckException = null;
+                    try
+                    {
+                        var result = await kv.Value;
+                        healthCheckResults.Add(result);
+                    }
+                    catch (Exception ex)
+                    {
+                        healthCheckException = ex;
+                        if (ex != null)
+                        {
+                            healthCheckResults.Add(new HealthCheckResult(HealthStatus.Unhealthy, kv.Key, ex: ex));
+                        }
+                    }
+                }
+
+                return healthCheckResults.OrderBy(x => x.Status);
+            });
         }
 
         public void Dispose()

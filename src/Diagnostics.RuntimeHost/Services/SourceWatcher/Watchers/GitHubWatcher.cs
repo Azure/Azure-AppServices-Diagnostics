@@ -18,11 +18,9 @@ using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Win32;
-using Newtonsoft.Json;
 using System.Diagnostics;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System.Threading;
+using Diagnostics.DataProviders;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -111,7 +109,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             await _githubClient.CreateOrUpdateFiles(pkg.GetCommitContents(), pkg.GetCommitMessage());
         }
 
-        public override async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             HttpResponseMessage response = null;
             Exception healthCheckException = null;
@@ -128,7 +126,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             finally
             {
                 result = new HealthCheckResult(healthCheckException == null ? response != null && response.IsSuccessStatusCode ? HealthStatus.Healthy : HealthStatus.Unhealthy : HealthStatus.Unhealthy,
-                    "GitHubWatcherService", healthCheckException, new Dictionary<string, object>
+                    "GitHubWatcherService", null, healthCheckException, new Dictionary<string, object>
                     {
                         { "HTTP Status Code", response != null ? response.StatusCode : 0 }
                     });

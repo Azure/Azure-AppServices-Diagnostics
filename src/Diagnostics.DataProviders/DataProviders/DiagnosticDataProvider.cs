@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.ModelsAndUtils.Models;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Diagnostics.DataProviders
 {
@@ -10,11 +10,7 @@ namespace Diagnostics.DataProviders
     {
         private OperationDataCache _cache;
         private IDataProviderConfiguration _configuration;
-
-        public DiagnosticDataProvider(OperationDataCache cache)
-        {
-            _cache = cache;
-        }
+        private const string baseMessage = @"The underlying data source may not fully implement the health check interface or it may be missing data to complete a successful health check";
 
         public DiagnosticDataProvider(OperationDataCache cache, IDataProviderConfiguration configuration)
         {
@@ -31,9 +27,9 @@ namespace Diagnostics.DataProviders
             return Convert.ChangeType(_cache.GetOrAdd(key, addFunction), typeof(Task<T>)) as Task<T>;
         }
 
-        public virtual Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            return null;
+            return Task.FromResult(new HealthCheckResult(HealthStatus.Unknown, this.GetType().Name, baseMessage));
         }
     }
 }
