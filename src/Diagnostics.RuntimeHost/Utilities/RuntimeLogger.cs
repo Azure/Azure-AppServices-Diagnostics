@@ -216,15 +216,7 @@ namespace Diagnostics.RuntimeHost.Utilities
 
                 case LogLevel.Trace:
                 case LogLevel.Debug:
-                    DiagnosticsETWProvider.Instance.LogRuntimeLogTrace(
-                            reqid,
-                            detectorId ?? "",
-                            resource?.SubscriptionId ?? "",
-                            resource?.ResourceGroup ?? "",
-                            resource?.Name ?? "",
-                            info.Exception?.GetType()?.ToString() ?? "",
-                            info.Exception?.ToString() ?? "",
-                            message);
+                    // No trace/debug messages are emitted.
                     break;
             }
         }
