@@ -1,23 +1,37 @@
-cd /D "%~dp0"
-SET output=%~dp0target\distrib\
-SET slnFile=%~dp0\AppServiceSample.sln
+@echo off
 
-rem Build and publish the solution
-dotnet build --no-incremental --no-restore "%slnFile%" /p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PublishProfile=Release /p:PackageAsSingleFile=true --output "%output%"
-if %errorlevel% neq 0 (
-    popd
-    echo "Failed to build and publish the solution correctly. Error level is %ERRORLEVEL%"
-    exit /B %errorlevel%
+:: Delete existing build drop
+@RD /S /Q "build"
+
+:: Build all the projects in the solution
+dotnet build Diagnostics.sln
+
+IF %ERRORLEVEL% NEQ 0 (
+echo "Build Failed."
+exit /b %errorlevel%
 )
+echo\
 
-rem Update the version for buildver.txt used by EV2
-Copy "%~dp0/buildver.txt" "%output%/buildver.txt"
-powershell -File "%~dp0UpdateVersion.ps1" "%output%\buildver.txt"
-if %ERRORLEVEL% neq 0 (
-    popd
-    echo "Failed to update version correctly. Error level is %ERRORLEVEL%"
-	exit /b %ERRORLEVEL%
+:: Publish Compiler Host to Build Location
+echo\
+echo "------------------- Publishing Compiler Host to build directory -------------------"
+echo\
+dotnet publish src\\Diagnostics.CompilerHost\\Diagnostics.CompilerHost.csproj -c Release -o ..\\..\\build\\antares.external.diagnostics.compilerhost.1.0.0
+
+IF %ERRORLEVEL% NEQ 0 (
+echo "Diagnostics.CompilerHost Publish Failed."
+exit /b %errorlevel%
 )
+echo\
 
-rem Exit with explicit 0 code so that build does not fail.
-exit /B 0
+:: Publish Runtime Host to Build Location
+echo\
+echo "------------------- Publishing Runtime Host to build directory -------------------"
+echo\
+dotnet publish src\\Diagnostics.RuntimeHost\\Diagnostics.RuntimeHost.csproj -c Release -o ..\\..\\build\\antares.external.diagnostics.runtimehost.1.0.0
+
+
+IF %ERRORLEVEL% NEQ 0 (
+echo "Diagnostics.RuntimeHost Publish Failed."
+exit /b %errorlevel%
+)

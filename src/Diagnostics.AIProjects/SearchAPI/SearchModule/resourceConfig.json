@@ -1,0 +1,24 @@
+{
+  "resourceConfig": {
+    "App": {
+      "WebApp": {
+        "Windows": "14748",
+        "Linux": "16170"
+      },
+      "ApiApp": {
+        "Windows": "14748",
+        "Linux": "16170"
+      },
+      "GatewayApp": {
+        "Windows": "14748",
+        "Linux": "16170"
+      },
+      "MobileApp": {
+        "Windows": "14748",
+        "Linux": "16170"
+      },
+      "FunctionApp": "16072"
+    }
+  },
+  "internalApiPort":  "2743"
+}
