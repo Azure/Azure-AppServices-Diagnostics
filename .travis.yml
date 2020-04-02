@@ -1,8 +1,0 @@
-language: csharp
-mono: none
-dist: xenial
-dotnet: 2.2
-script:
- - dotnet build Diagnostics.sln
- - cd tests
- - dotnet test
