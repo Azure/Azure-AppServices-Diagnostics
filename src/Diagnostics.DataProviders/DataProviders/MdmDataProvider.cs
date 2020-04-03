@@ -1,15 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 
 namespace Diagnostics.DataProviders
 {
+    public class MdmQueryParameters
+    {
+        public string query { get; set; }
+        public string key { get; set; } = "value";
+        public string replacement { get; set; }
+    }
+
     /// <summary>
     /// Mdm data provider
     /// </summary>
@@ -29,6 +38,10 @@ namespace Diagnostics.DataProviders
         {
             _configuration = configuration;
             _mdmClient = MdmClientFactory.GetMdmClient(configuration, requestId);
+            Metadata = new DataProviderMetadata
+            {
+                ProviderName = "MDM"
+            };
         }
 
         /// <summary>
@@ -37,7 +50,7 @@ namespace Diagnostics.DataProviders
         /// <returns>Data provider metadata.</returns>
         public DataProviderMetadata GetMetadata()
         {
-            return null;
+            return Metadata;
         }
 
         /// <summary>
@@ -185,6 +198,11 @@ namespace Diagnostics.DataProviders
 
             var result = new List<DataTable>();
 
+            AddMdmInformationToMetadata(definitions,
+                startTimeUtc,
+                endTimeUtc,
+                seriesResolutionInMinutes);
+
             // Generate data table.
             foreach (var serie in series)
             {
@@ -205,6 +223,72 @@ namespace Diagnostics.DataProviders
             }
 
             return result;
+        }
+
+        private void AddMdmInformationToMetadata(IEnumerable<Tuple<string, string, IEnumerable<KeyValuePair<string, string>>>> definitions, 
+            DateTime startTimeUtc, 
+            DateTime endTimeUtc, 
+            int seriesResolutionInMinutes)
+        {
+
+            var queryParameters = new List<MdmQueryParameters>();
+            var dashboard = string.Empty;
+
+            foreach (var d in definitions)
+            {
+                //Item1 - NameSpace
+                //Item2 - MetricName
+
+                if (string.IsNullOrWhiteSpace(dashboard))
+                {
+                    if (d.Item1 == "Microsoft/Web/AppServicePlans")
+                    {
+                        dashboard = "WAWS Shoebox/App Service Plans/Per Resource Instance";
+                    }
+                    else if (d.Item1 == "Microsoft/Web/WebApps")
+                    {
+                        dashboard = "WAWS Shoebox/Web Apps/Per Resource";
+                    }
+                }
+
+                foreach (var instanceDimension in d.Item3.Where(x => x.Key != "ServerName"))
+                {
+
+                    var queryValue = $"//*[id='{instanceDimension.Key}']";
+                    if (!queryParameters.Any(x => x.query == queryValue))
+                    {
+                        var mdmParameter = new MdmQueryParameters
+                        {
+                            query = queryValue,
+                            replacement = instanceDimension.Value
+                        };
+
+                        queryParameters.Add(mdmParameter);
+                    }
+                }
+            }
+
+            if (queryParameters.Count > 0 && !string.IsNullOrWhiteSpace(dashboard))
+            {
+                bool urlExists = false;
+                string finalUrl = string.Empty;
+                var urlParmeters = $"dashboard/{dashboard}?overrides={JsonConvert.SerializeObject(queryParameters)}&globalStartTime={GetDateTimeInEpochMilliseconds(startTimeUtc)}&globalEndTime={GetDateTimeInEpochMilliseconds(endTimeUtc)}&pinGlobalTimeRange=true";
+
+                finalUrl = $"https://jarvis-west.dc.ad.msft.net/{urlParmeters} ";
+
+                urlExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&
+                                                            x.Value.GetType() == typeof(DataProviderMetadataQuery) &&
+                                                            x.Value.CastTo<DataProviderMetadataQuery>().Url.Equals(finalUrl, StringComparison.OrdinalIgnoreCase));
+                if (!urlExists)
+                {
+                    Metadata.PropertyBag.Add(new KeyValuePair<string, object>("Query", new DataProviderMetadataQuery() { Text = finalUrl, Url = finalUrl }));
+                }
+            }           
+        }
+
+        private double GetDateTimeInEpochMilliseconds(DateTime dateTimeUtc)
+        {
+            return Math.Round((dateTimeUtc.ToUniversalTime() - new DateTime(1970, 1, 1)).TotalMilliseconds);
         }
     }
 }
