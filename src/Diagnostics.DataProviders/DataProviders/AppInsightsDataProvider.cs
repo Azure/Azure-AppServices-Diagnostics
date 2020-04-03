@@ -102,14 +102,39 @@ namespace Diagnostics.DataProviders
             return tagValue;
         }
 
+        public async Task<DataTable> ExecuteAppInsightsQuery(string query, string operationName)
+        {
+            AddQueryInformationToMetadata(query, operationName);
+            return await _appInsightsClient.ExecuteQueryAsync(query);
+        }
+
         public async Task<DataTable> ExecuteAppInsightsQuery(string query)
         {
-            return await _appInsightsClient.ExecuteQueryAsync(query);
+            return await ExecuteAppInsightsQuery(query, "AppInsightsQuery");
+        }
+
+        private void AddQueryInformationToMetadata(string query, string operationName = "AppInsightsQuery")
+        {
+            bool queryExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&
+                                                            x.Value.GetType() == typeof(DataProviderMetadataQuery) &&
+                                                            x.Value.CastTo<DataProviderMetadataQuery>().Text.Equals(query, StringComparison.OrdinalIgnoreCase));
+
+            if (!queryExists)
+            {
+                Metadata.PropertyBag.Add(new KeyValuePair<string, object>("Query",
+                    new DataProviderMetadataQuery()
+                    {
+                        Text = query,
+                        Url = "https://docs.microsoft.com/en-us/azure/azure-monitor/log-query/log-query-overview",
+                        OperationName = operationName
+                    }
+                ));
+            }
         }
 
         public DataProviderMetadata GetMetadata()
         {
-            return null;
+            return Metadata;
         }
     }
 
