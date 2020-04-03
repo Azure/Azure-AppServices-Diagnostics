@@ -407,7 +407,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             if (supportTopicId == null)
             {
                 DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.OperationContext.RequestId, "GetInsights", cxt.OperationContext.Resource.SubscriptionId,
-                    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, "ASCSupportTopicIdNull", "Support Topic Id is null or there is no mapping for the Support topic path provided.");
+                    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, "ASCSupportTopicIdNull", $"Support Topic Id is null or there is no mapping for the Support topic path provided - {supportTopicPath}");
             }
             DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId, "AzureSupportCenter", "ASCAdditionalParameters", postBody);
 
