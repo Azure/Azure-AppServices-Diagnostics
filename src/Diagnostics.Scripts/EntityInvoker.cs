@@ -11,6 +11,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.Scripts.CompilationService;
 using Diagnostics.Scripts.CompilationService.Gist;
 using Diagnostics.Scripts.CompilationService.Interfaces;
@@ -173,6 +174,12 @@ namespace Diagnostics.Scripts
             if (!IsCompilationSuccessful)
             {
                 throw new ScriptCompilationException(CompilationOutput);
+            }
+
+            if (EntityMetadata.Type == EntityType.Gist)
+            {
+                // This is a gist. We cannot invoke it. Let's return an empty response object.
+                return new Response();
             }
 
             var methodInfo = memberInfo as MethodInfo;
