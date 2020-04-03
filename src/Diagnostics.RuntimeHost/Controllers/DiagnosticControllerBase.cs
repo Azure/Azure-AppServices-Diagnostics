@@ -404,6 +404,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             supportTopicId = ParseCorrectSupportTopicId(supportTopicId);
             var supportTopic = new SupportTopic() { Id = supportTopicId, PesId = pesId };
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, true, supportTopic, null, postBody);
+            if (supportTopicId == null)
+            {
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.OperationContext.RequestId, "GetInsights", cxt.OperationContext.Resource.SubscriptionId,
+                    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, "ASCSupportTopicIdNull", $"Support Topic Id is null or there is no mapping for the Support topic path provided - {supportTopicPath}");
+            }
             DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId, "AzureSupportCenter", "ASCAdditionalParameters", postBody);
 
             List<AzureSupportCenterInsight> insights = null;
@@ -415,7 +420,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 allDetectors = (await ListDetectorsInternal(cxt)).Select(detectorResponse => detectorResponse.Metadata);
 
                 var applicableDetectors = allDetectors
-                    .Where(detector => string.IsNullOrWhiteSpace(supportTopicId) || detector.SupportTopicList.FirstOrDefault(st => st.Id == supportTopicId) != null);
+                    .Where(detector => detector.SupportTopicList.FirstOrDefault(st => st.Id == supportTopicId) != null);
 
                 var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => GetInsightsFromDetector(cxt, detector, detectorsRun)));
 
