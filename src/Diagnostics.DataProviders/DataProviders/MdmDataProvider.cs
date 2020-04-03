@@ -288,7 +288,7 @@ namespace Diagnostics.DataProviders
 
         private double GetDateTimeInEpochMilliseconds(DateTime dateTimeUtc)
         {
-            return Math.Round((dateTimeUtc.ToUniversalTime() - new DateTime(1970, 1, 1)).TotalMilliseconds);
+            return Math.Round((double)new DateTimeOffset(dateTimeUtc).ToUnixTimeMilliseconds());
         }
     }
 }
