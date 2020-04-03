@@ -283,7 +283,7 @@ namespace Diagnostics.DataProviders
                 {
                     Metadata.PropertyBag.Add(new KeyValuePair<string, object>("Query", new DataProviderMetadataQuery() { Text = finalUrl, Url = finalUrl }));
                 }
-            }           
+            }
         }
 
         private double GetDateTimeInEpochMilliseconds(DateTime dateTimeUtc)
