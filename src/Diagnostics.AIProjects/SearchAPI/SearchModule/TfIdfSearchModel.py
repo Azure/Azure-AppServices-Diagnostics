@@ -108,7 +108,7 @@ class TfIdfSearchModel:
                 else:
                     similar_doc_indices = sorted(enumerate(self.models["m1Index"][vector]), key=lambda item: -item[1])
                     similar_docs = list(map(lambda x: {"detector": self.models["detectors"][x[0]]["id"], "score": str(x[1])}, similar_doc_indices))
-                return {"query": query, "results": similar_docs}
+                return {"query": query, "results": [x for x in similar_docs if float(x["score"])>=0.3]}
             except Exception as e:
                 return {"query": query, "results": [], "exception": str(e)}
         return None
