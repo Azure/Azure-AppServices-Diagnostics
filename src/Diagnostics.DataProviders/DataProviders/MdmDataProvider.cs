@@ -230,9 +230,9 @@ namespace Diagnostics.DataProviders
             DateTime endTimeUtc, 
             int seriesResolutionInMinutes)
         {
-
             var queryParameters = new List<MdmQueryParameters>();
             var dashboard = string.Empty;
+            string resourceId = string.Empty;
 
             foreach (var d in definitions)
             {
@@ -253,6 +253,11 @@ namespace Diagnostics.DataProviders
 
                 foreach (var instanceDimension in d.Item3.Where(x => x.Key != "ServerName"))
                 {
+                    if (string.Equals(instanceDimension.Key, "ResourceId", StringComparison.OrdinalIgnoreCase)
+                        && !string.IsNullOrWhiteSpace(instanceDimension.Value))
+                    {
+                        resourceId = instanceDimension.Value;
+                    }
 
                     var queryValue = $"//*[id='{instanceDimension.Key}']";
                     if (!queryParameters.Any(x => x.query == queryValue))
@@ -266,6 +271,12 @@ namespace Diagnostics.DataProviders
                         queryParameters.Add(mdmParameter);
                     }
                 }
+
+                if (dashboard == "WAWS Shoebox/Web Apps/Per Resource")
+                {
+                    AddRemainingParametersForWebApps(queryParameters, resourceId);
+                }
+
             }
 
             if (queryParameters.Count > 0 && !string.IsNullOrWhiteSpace(dashboard))
@@ -284,6 +295,29 @@ namespace Diagnostics.DataProviders
                     Metadata.PropertyBag.Add(new KeyValuePair<string, object>("Query", new DataProviderMetadataQuery() { Text = finalUrl, Url = finalUrl }));
                 }
             }
+        }
+
+        private void AddRemainingParametersForWebApps(List<MdmQueryParameters> queryParameters, string resourceId)
+        {
+            var hostArray = resourceId.Split(".");
+            if (hostArray.Length < 3)
+            {
+                return;
+            }
+
+            var paramDnsSuffix = new MdmQueryParameters
+            {
+                query = $"//*[id='DNSSuffix']",
+                replacement = $"{hostArray[1]}.{hostArray[2]}"
+            };
+            queryParameters.Add(paramDnsSuffix);
+
+            var paramAppName = new MdmQueryParameters
+            {
+                query = $"//*[id='appName']",
+                replacement = hostArray[0]
+            };
+            queryParameters.Add(paramAppName);
         }
 
         private double GetDateTimeInEpochMilliseconds(DateTime dateTimeUtc)
