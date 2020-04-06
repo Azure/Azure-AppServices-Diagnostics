@@ -868,7 +868,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     if (dataProvider.GetValue(dataProviders) is IMetadataProvider metadataProvider)
                     {
                         var metadata = metadataProvider.GetMetadata();
-                        if (metadata != null)
+                        if (metadata != null && metadata.PropertyBag.Count > 0)
                         {
                             dataprovidersMetadata.Add(metadata);
                         }
@@ -899,10 +899,10 @@ namespace Diagnostics.RuntimeHost.Controllers
                                         foreach (var e in enumArray)
                                         {
                                             var output = m.Method.Invoke(m.Target, new object[] { e }) as IMetadataProvider;
-                                            var metdata = output.GetMetadata();
-                                            if (metdata != null && metdata.PropertyBag.Count > 0)
+                                            var metadata = output.GetMetadata();
+                                            if (metadata != null && metadata.PropertyBag.Count > 0)
                                             {
-                                                dataprovidersMetadata.Add(metdata);
+                                                dataprovidersMetadata.Add(metadata);
                                             }
                                         }
                                     }
