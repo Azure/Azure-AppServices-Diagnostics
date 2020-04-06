@@ -274,7 +274,7 @@ namespace Diagnostics.DataProviders
 
                 if (dashboard == "WAWS Shoebox/Web Apps/Per Resource")
                 {
-                    AddRemainingParametersForWebApps(queryParameters, resourceId);
+                    AddRemainingParametersForWebApps(queryParameters, resourceId, seriesResolutionInMinutes);
                 }
 
             }
@@ -297,7 +297,7 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        private void AddRemainingParametersForWebApps(List<MdmQueryParameters> queryParameters, string resourceId)
+        private void AddRemainingParametersForWebApps(List<MdmQueryParameters> queryParameters, string resourceId, int seriesResolutionInMinutes)
         {
             var hostArray = resourceId.Split(".");
             if (hostArray.Length < 3)
@@ -318,6 +318,13 @@ namespace Diagnostics.DataProviders
                 replacement = hostArray[0]
             };
             queryParameters.Add(paramAppName);
+
+            var paramTimeResolution = new MdmQueryParameters
+            {
+                query = $"//*[id='timeResolution']",
+                replacement = seriesResolutionInMinutes.ToString()
+            };
+            queryParameters.Add(paramTimeResolution);
         }
 
         private double GetDateTimeInEpochMilliseconds(DateTime dateTimeUtc)
