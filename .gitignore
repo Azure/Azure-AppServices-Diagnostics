@@ -319,3 +319,7 @@ aot/
 appsettings.*.json
 
 [Dd]etectorsCache
+
+# Azure Functions localsettings file
+local.settings.json
+configuration.json
