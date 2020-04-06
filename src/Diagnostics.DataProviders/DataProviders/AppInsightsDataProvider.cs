@@ -24,6 +24,10 @@ namespace Diagnostics.DataProviders
         {
             _configuration = configuration;
             _appInsightsClient = new AppInsightsClient(_configuration);
+            Metadata = new DataProviderMetadata
+            {
+                ProviderName = "AppInsights"
+            };
         }
 
         public Task<bool> SetAppInsightsKey(string appId, string apiKey)
@@ -110,10 +114,10 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteAppInsightsQuery(string query)
         {
-            return await ExecuteAppInsightsQuery(query, "AppInsightsQuery");
+            return await ExecuteAppInsightsQuery(query, "");
         }
 
-        private void AddQueryInformationToMetadata(string query, string operationName = "AppInsightsQuery")
+        private void AddQueryInformationToMetadata(string query, string operationName = "")
         {
             bool queryExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&
                                                             x.Value.GetType() == typeof(DataProviderMetadataQuery) &&
