@@ -868,7 +868,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     if (dataProvider.GetValue(dataProviders) is IMetadataProvider metadataProvider)
                     {
                         var metadata = metadataProvider.GetMetadata();
-                        if (metadata != null && metadata.PropertyBag.Count > 0)
+                        if (metadata != null)
                         {
                             dataprovidersMetadata.Add(metadata);
                         }
@@ -876,42 +876,43 @@ namespace Diagnostics.RuntimeHost.Controllers
                 }
                 else if (dataProvider.FieldType.UnderlyingSystemType.Name.StartsWith("Func`2", StringComparison.OrdinalIgnoreCase))
                 {
-                    //
-                    // run this logic in a try..catch as we don't want this part 
-                    // to break the detector execution 
-                    //
-                    try
-                    {
-                        if (dataProvider.GetValue(dataProviders) is MulticastDelegate m)
-                        {
-                            if (m.Method.ReturnType.IsInterface &&
-                                m.Method.ReturnType.GetInterfaces().Count() > 0
-                                && m.Method.ReturnType.GetInterfaces().Contains(typeof(IMetadataProvider)))
-                            {
-                                var methodParameters = m.Method.GetParameters();
-                                if (methodParameters.Count() == 1)
-                                {
-                                    var firstParameter = methodParameters.FirstOrDefault();
-                                    if (firstParameter.ParameterType.BaseType == typeof(Enum))
-                                    {
-                                        var enumArray = Enum.GetValues(firstParameter.ParameterType);
 
-                                        foreach (var e in enumArray)
+                    if (dataProvider.GetValue(dataProviders) is MulticastDelegate m)
+                    {
+                        if (m.Method.ReturnType.IsInterface &&
+                            m.Method.ReturnType.GetInterfaces().Count() > 0
+                            && m.Method.ReturnType.GetInterfaces().Contains(typeof(IMetadataProvider)))
+                        {
+                            var methodParameters = m.Method.GetParameters();
+                            if (methodParameters.Count() == 1)
+                            {
+                                var firstParameter = methodParameters.FirstOrDefault();
+                                if (firstParameter.ParameterType.BaseType == typeof(Enum))
+                                {
+                                    var enumArray = Enum.GetValues(firstParameter.ParameterType);
+
+                                    foreach (var e in enumArray)
+                                    {
+                                        //
+                                        // run this logic in a try..catch as we don't want this part 
+                                        // to break the detector execution 
+                                        //
+                                        try
                                         {
                                             var output = m.Method.Invoke(m.Target, new object[] { e }) as IMetadataProvider;
                                             var metadata = output.GetMetadata();
-                                            if (metadata != null && metadata.PropertyBag.Count > 0)
+                                            if (metadata != null)
                                             {
                                                 dataprovidersMetadata.Add(metadata);
                                             }
+                                        }
+                                        catch (Exception)
+                                        {
                                         }
                                     }
                                 }
                             }
                         }
-                    }
-                    catch (Exception)
-                    {
                     }
                 }
             }
