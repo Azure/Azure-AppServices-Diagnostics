@@ -34,8 +34,7 @@ stages:
       displayName: Build
       inputs:
         command: 'build'
-        projects: |
-          SourceWatcherFuncApp.csproj/*.csproj
+        projects: SourceWatcherFuncApp.csproj
         arguments: --output $(System.DefaultWorkingDirectory)/publish_output --configuration Release
 
     - task: ArchiveFiles@2
