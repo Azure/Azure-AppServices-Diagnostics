@@ -1,4 +1,5 @@
-﻿using Diagnostics.DataProviders.DataProviderConfigurations;
+﻿using System;
+using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.DataProviders.Interfaces;
 
 namespace Diagnostics.DataProviders
@@ -10,7 +11,7 @@ namespace Diagnostics.DataProviders
     {
         internal static IMdmClient GetMdmClient(IMdmDataProviderConfiguration config, string requestId)
         {
-            if (config.MonitoringAccount.StartsWith("Mock"))
+            if (config.MonitoringAccount != null && config.MonitoringAccount.StartsWith("Mock", StringComparison.OrdinalIgnoreCase))
             {
                 return new MockMdmClient();
             }
