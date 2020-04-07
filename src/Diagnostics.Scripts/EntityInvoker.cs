@@ -178,8 +178,9 @@ namespace Diagnostics.Scripts
 
             if (EntityMetadata.Type == EntityType.Gist)
             {
-                // This is a gist. We cannot invoke it. Let's return an empty response object.
-                return new Response();
+                // This is a gist. We cannot invoke it. Let's return the Response object that was given.
+                var response = parameters.FirstOrDefault(arg => arg is Response) ?? new Response();
+                return response;
             }
 
             var methodInfo = memberInfo as MethodInfo;
