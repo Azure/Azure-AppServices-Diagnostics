@@ -53,7 +53,7 @@ namespace SourceWatcherFuncApp.Services
 
             httpClient.DefaultRequestHeaders.Add("Authorization", $@"token {AccessToken}");
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            httpClient.DefaultRequestHeaders.Add("User-Agent", "applensv3");
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "sourcewatcherfuncapp");
         } 
 
         public async Task<Reference> CreateBranchIfNotExists()
