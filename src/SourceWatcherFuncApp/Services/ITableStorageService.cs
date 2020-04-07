@@ -44,7 +44,7 @@ namespace SourceWatcherFuncApp.Services
             // Create a table client for interacting with the table service 
             CloudTable table = tableClient.GetTableReference(tableName);
 
-            if(detectorEntity == null)
+            if(detectorEntity == null || detectorEntity.PartitionKey == null || detectorEntity.RowKey == null)
             {
                 throw new ArgumentNullException(nameof(detectorEntity));
             }

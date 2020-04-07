@@ -5,6 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Azure.Storage.Blobs;
 using Azure;
+using System.Net.Http;
+using Azure.Core.Pipeline;
 
 namespace SourceWatcherFuncApp.Services
 {
@@ -25,6 +27,8 @@ namespace SourceWatcherFuncApp.Services
 
         private Uri containerUri;
 
+        private static HttpClient httpClient = new HttpClient();
+
         public BlobService(IConfigurationRoot configuration, ILogger<BlobService> logger)
         {
             var accountname = configuration["AzureStorageAccount"];
@@ -33,10 +37,15 @@ namespace SourceWatcherFuncApp.Services
             storageUri = $"https://{accountname}.blob.core.windows.net";
             containerUri = new Uri($"{storageUri}/{containerName}");
             StorageSharedKeyCredential credential = new StorageSharedKeyCredential(accountname, key);
-            cloudBobClient = new BlobContainerClient(containerUri, credential);
+            httpClient.Timeout = TimeSpan.FromSeconds(102);
+            cloudBobClient = new BlobContainerClient(containerUri, credential, new BlobClientOptions
+            {
+               Transport = new HttpClientTransport(httpClient)
+            });
             this.blobServiceLogger = logger ?? logger;
         }
 
+      
         public async void LoadBlobToContainer(string name, Stream uploadStream)
         {
             try
@@ -48,15 +57,10 @@ namespace SourceWatcherFuncApp.Services
             catch (RequestFailedException e) when (e.Status == 409)
             {
                 // handle existing blob;
-                blobServiceLogger.LogInformation($"Conflict occured for {name}, trying to delete and upload");
-                var deleteOperation = await cloudBobClient.DeleteBlobAsync(name);
-                blobServiceLogger.LogInformation($"Response from deleting {name} : {deleteOperation.Status}, {deleteOperation.ReasonPhrase}");
-                if(deleteOperation.Status >= 200)
-                {
-                    blobServiceLogger.LogInformation($"Uploading {name} to blob");
-                    var uploadResponse = await cloudBobClient.UploadBlobAsync(name, uploadStream);
-                    blobServiceLogger.LogInformation($"Upload response for {name} : {uploadResponse.GetRawResponse().Status}, {uploadResponse.GetRawResponse().ReasonPhrase}");
-                }
+                blobServiceLogger.LogInformation($"Conflict occured for {name}, trying to override upload");
+                var blobClient = cloudBobClient.GetBlobClient(name);
+                var uploadExistingBlob = await blobClient.UploadAsync(uploadStream, true);
+                blobServiceLogger.LogInformation($"Updated existing blob {name}, response: {uploadExistingBlob.GetRawResponse().Status}, {uploadExistingBlob.GetRawResponse().ReasonPhrase}");
             }
             catch (Exception ex)
             {
