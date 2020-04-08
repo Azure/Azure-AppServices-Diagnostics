@@ -389,6 +389,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             if (supportTopicPath != null)
             {
+                supportTopicPath = HttpUtility.UrlDecode(supportTopicPath);
                 SupportTopicModel supportTopicMap = await this._supportTopicService.GetSupportTopicFromString(supportTopicPath, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
                 if (supportTopicMap != null)
                 {
