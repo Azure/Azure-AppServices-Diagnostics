@@ -39,7 +39,7 @@ namespace Diagnostics.DataProviders
         public async Task<bool> SetAppInsightsKey(OperationContext<IResource> cxt)
         {
             bool keyFound = false;
-            if (cxt.Resource is App app)
+            if (cxt.Resource is App app && app.Tags != null)
             {
                 var tag = GetAppIdAndKeyFromAppSettingsTags(app.Tags);
                 if (tag != null)
