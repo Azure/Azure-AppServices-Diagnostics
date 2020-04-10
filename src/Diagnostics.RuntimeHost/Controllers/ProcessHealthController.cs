@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Diagnostics.DataProviders;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -36,6 +37,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok("Server is up and running.");
         }
 
+        [Authorize]
         [HttpGet("/dependencyCheck")]
         public async Task<IActionResult> DependencyCheck()
         {

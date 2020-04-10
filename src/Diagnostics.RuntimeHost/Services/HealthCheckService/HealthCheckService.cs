@@ -9,6 +9,7 @@ using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Microsoft.IdentityModel.Tokens;
 using System.Linq;
 using Diagnostics.DataProviders.DataProviderConfigurations;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Diagnostics.RuntimeHost.Services
 {
@@ -26,8 +27,10 @@ namespace Diagnostics.RuntimeHost.Services
         IConfiguration _configuration;
         IDataSourcesConfigurationService _dataSourcesConfigurationService;
         bool IsOutboundConnectivityCheckEnabled = false;
+        private IMemoryCache cache;
+        private const string DEPENDENCYCHECK_CACHE_KEY = "dependencycheck";
 
-        public HealthCheckService(IConfiguration Configuration, ISourceWatcherService sourceWatcherService, IDataSourcesConfigurationService dataProviderConfigurationService)
+        public HealthCheckService(IConfiguration Configuration, ISourceWatcherService sourceWatcherService, IDataSourcesConfigurationService dataProviderConfigurationService, IMemoryCache cache)
         {
             _configuration = Configuration;
             _sourceWatcher = sourceWatcherService.Watcher;
@@ -45,6 +48,7 @@ namespace Diagnostics.RuntimeHost.Services
                     throw new Exception("Invalid configuration for parameter - HealthCheckSettings:OutboundConnectivityCheckUrl");
                 }
             }
+            this.cache = cache;
         }
 
         private Task<HttpResponseMessage> Get(HttpRequestMessage request)
@@ -68,6 +72,11 @@ namespace Diagnostics.RuntimeHost.Services
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2007:Consider calling ConfigureAwait on the awaited task", Justification = "<Pending>")]
         public async Task<IEnumerable<HealthCheckResult>> RunDependencyCheck(DataProviders.DataProviders dataProviders)
         {
+            if (cache.TryGetValue(DEPENDENCYCHECK_CACHE_KEY, out object cachedDependencyChecks))
+            {
+                return (IEnumerable<HealthCheckResult>)cachedDependencyChecks;
+            }
+
             var healthCheckResultsTasks = new Dictionary<string, Task<HealthCheckResult>>();
             var dataProviderFields = dataProviders.GetType().GetFields();
 
@@ -84,7 +93,7 @@ namespace Diagnostics.RuntimeHost.Services
             healthCheckResultsTasks.Add(_sourceWatcher.GetType().Name, _sourceWatcher.CheckHealthAsync());
             healthCheckResultsTasks.Add("Mdm", ((LogDecoratorBase)dataProviders.Mdm(MdmDataSource.Antares)).DataProvider.CheckHealthAsync());
 
-            return await Task.Run<IEnumerable<HealthCheckResult>>(async () =>
+            IEnumerable<HealthCheckResult> dependencyChecks = await Task.Run<IEnumerable<HealthCheckResult>>(async () =>
             {
                 List<HealthCheckResult> healthCheckResults = new List<HealthCheckResult>();
                 foreach (var kv in healthCheckResultsTasks)
@@ -107,6 +116,14 @@ namespace Diagnostics.RuntimeHost.Services
 
                 return healthCheckResults.OrderBy(x => x.Status);
             });
+
+            var cacheExpirationInSeconds = _configuration.GetValue("HealthCheckSettings:DependencyCheckCacheExpirationInSeconds", 300);
+            cache.Set(DEPENDENCYCHECK_CACHE_KEY, dependencyChecks, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cacheExpirationInSeconds)
+            });
+
+            return dependencyChecks;
         }
 
         public void Dispose()
