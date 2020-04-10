@@ -78,7 +78,7 @@ namespace Diag.SourceWatcher
                     }
                 } catch (Exception ex)
                 {
-                    log.LogInformation($"Exception occured while processing {githubdir.Name}: {ex.ToString()} ");
+                    log.LogError($"Exception occured while processing {githubdir.Name}: {ex.ToString()} ");
                 }          
             }
 

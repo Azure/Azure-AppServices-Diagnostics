@@ -69,6 +69,7 @@ namespace SourceWatcherFuncApp.Services
                 return existingDetectors.Contains(currentDetector);
             } catch(Exception ex)
             {
+                storageServiceLogger.LogError(ex.ToString());
                 return false;
             }
         }
