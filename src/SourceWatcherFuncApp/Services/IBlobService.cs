@@ -7,17 +7,24 @@ using Azure.Storage.Blobs;
 using Azure;
 using System.Net.Http;
 using Azure.Core.Pipeline;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using Azure.Storage.Blobs.Models;
+using System.Net;
 
 namespace SourceWatcherFuncApp.Services
 {
     public interface IBlobService
     {
         void LoadBlobToContainer(string name, Stream uploadStream);
+        Task<bool> CheckBlobExists(string blobName);
     }
 
     public class BlobService : IBlobService
     {
         private static BlobContainerClient cloudBobClient;
+
+        private static HttpClient httpClient;
 
         private ILogger<BlobService> blobServiceLogger;
 
@@ -26,8 +33,8 @@ namespace SourceWatcherFuncApp.Services
         private string storageUri;
 
         private Uri containerUri;
-
-        private static HttpClient httpClient = new HttpClient();
+        
+        private List<string> existingBlobs;
 
         public BlobService(IConfigurationRoot configuration, ILogger<BlobService> logger)
         {
@@ -37,12 +44,9 @@ namespace SourceWatcherFuncApp.Services
             storageUri = $"https://{accountname}.blob.core.windows.net";
             containerUri = new Uri($"{storageUri}/{containerName}");
             StorageSharedKeyCredential credential = new StorageSharedKeyCredential(accountname, key);
-            httpClient.Timeout = TimeSpan.FromSeconds(102);
-            cloudBobClient = new BlobContainerClient(containerUri, credential, new BlobClientOptions
-            {
-               Transport = new HttpClientTransport(httpClient)
-            });
+            cloudBobClient = new BlobContainerClient(containerUri, credential);
             this.blobServiceLogger = logger ?? logger;
+            existingBlobs = new List<string>();
         }
 
       
@@ -65,6 +69,27 @@ namespace SourceWatcherFuncApp.Services
             catch (Exception ex)
             {
                 blobServiceLogger.LogError(ex.ToString());
+            }
+        }
+
+        public async Task<bool> CheckBlobExists(string blobName)
+        {
+            try
+            {
+                if(existingBlobs.Count < 1)
+                {
+                    // List all the blobs
+                    var tasks = cloudBobClient.GetBlobsAsync().GetAsyncEnumerator();
+                    while (await tasks.MoveNextAsync())
+                    {
+                        existingBlobs.Add(tasks.Current.Name);
+                    }
+                }
+
+                return existingBlobs.Contains(blobName);            
+            } catch (RequestFailedException e) 
+            {
+                return false;
             }
         }
     }
