@@ -784,6 +784,15 @@ namespace Diagnostics.RuntimeHost.Controllers
                 var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
                 response.UpdateDetectorStatusFromInsights();
 
+                //
+                // update the dataProvidersMetdata after detector execution to update data source
+                // information for parameterized data sources like MDM
+                //
+                if (context.ClientIsInternal)
+                {
+                    dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
+                }
+
                 return new Tuple<Response, List<DataProviderMetadata>>(response, dataProvidersMetadata);
             }
             catch (Exception ex)
@@ -896,64 +905,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private List<DataProviderMetadata> GetDataProvidersMetadata(DataProviders.DataProviders dataProviders)
         {
-            var dataprovidersMetadata = new List<DataProviderMetadata>();
-            foreach (var dataProvider in dataProviders.GetType().GetFields())
-            {
-                if (dataProvider.FieldType.IsInterface)
-                {
-                    if (dataProvider.GetValue(dataProviders) is IMetadataProvider metadataProvider)
-                    {
-                        var metadata = metadataProvider.GetMetadata();
-                        if (metadata != null)
-                        {
-                            dataprovidersMetadata.Add(metadata);
-                        }
-                    }
-                }
-                else if (dataProvider.FieldType.UnderlyingSystemType.Name.StartsWith("Func`2", StringComparison.OrdinalIgnoreCase))
-                {
-
-                    if (dataProvider.GetValue(dataProviders) is MulticastDelegate m)
-                    {
-                        if (m.Method.ReturnType.IsInterface &&
-                            m.Method.ReturnType.GetInterfaces().Count() > 0
-                            && m.Method.ReturnType.GetInterfaces().Contains(typeof(IMetadataProvider)))
-                        {
-                            var methodParameters = m.Method.GetParameters();
-                            if (methodParameters.Count() == 1)
-                            {
-                                var firstParameter = methodParameters.FirstOrDefault();
-                                if (firstParameter.ParameterType.BaseType == typeof(Enum))
-                                {
-                                    var enumArray = Enum.GetValues(firstParameter.ParameterType);
-
-                                    foreach (var e in enumArray)
-                                    {
-                                        //
-                                        // run this logic in a try..catch as we don't want this part 
-                                        // to break the detector execution 
-                                        //
-                                        try
-                                        {
-                                            var output = m.Method.Invoke(m.Target, new object[] { e }) as IMetadataProvider;
-                                            var metadata = output.GetMetadata();
-                                            if (metadata != null)
-                                            {
-                                                dataprovidersMetadata.Add(metadata);
-                                            }
-                                        }
-                                        catch (Exception)
-                                        {
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return dataprovidersMetadata;
+            return dataProviders.GetMetadata();
         }
 
         private bool VerifyEntity(EntityInvoker invoker, ref QueryResponse<DiagnosticApiResponse> queryRes, string publishingDetectorId)
