@@ -24,6 +24,10 @@ namespace Diagnostics.DataProviders
         {
             _configuration = configuration;
             _appInsightsClient = new AppInsightsClient(_configuration);
+            Metadata = new DataProviderMetadata
+            {
+                ProviderName = "AppInsights"
+            };
         }
 
         public Task<bool> SetAppInsightsKey(string appId, string apiKey)
@@ -35,7 +39,7 @@ namespace Diagnostics.DataProviders
         public async Task<bool> SetAppInsightsKey(OperationContext<IResource> cxt)
         {
             bool keyFound = false;
-            if (cxt.Resource is App app)
+            if (cxt.Resource is App app && app.Tags != null)
             {
                 var tag = GetAppIdAndKeyFromAppSettingsTags(app.Tags);
                 if (tag != null)
@@ -102,14 +106,39 @@ namespace Diagnostics.DataProviders
             return tagValue;
         }
 
+        public async Task<DataTable> ExecuteAppInsightsQuery(string query, string operationName)
+        {
+            AddQueryInformationToMetadata(query, operationName);
+            return await _appInsightsClient.ExecuteQueryAsync(query);
+        }
+
         public async Task<DataTable> ExecuteAppInsightsQuery(string query)
         {
-            return await _appInsightsClient.ExecuteQueryAsync(query);
+            return await ExecuteAppInsightsQuery(query, "");
+        }
+
+        private void AddQueryInformationToMetadata(string query, string operationName = "")
+        {
+            bool queryExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&
+                                                            x.Value.GetType() == typeof(DataProviderMetadataQuery) &&
+                                                            x.Value.CastTo<DataProviderMetadataQuery>().Text.Equals(query, StringComparison.OrdinalIgnoreCase));
+
+            if (!queryExists)
+            {
+                Metadata.PropertyBag.Add(new KeyValuePair<string, object>("Query",
+                    new DataProviderMetadataQuery()
+                    {
+                        Text = query,
+                        Url = "https://docs.microsoft.com/en-us/azure/azure-monitor/log-query/log-query-overview",
+                        OperationName = operationName
+                    }
+                ));
+            }
         }
 
         public DataProviderMetadata GetMetadata()
         {
-            return null;
+            return Metadata;
         }
     }
 

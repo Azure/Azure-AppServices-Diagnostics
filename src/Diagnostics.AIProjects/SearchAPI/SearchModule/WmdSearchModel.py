@@ -87,10 +87,10 @@ class WmdSearchModel:
                     for x in similar_doc_indices:
                         detector = self.getDetectorByIndex(x[0])
                         if detector and (not (detector in [p["detector"] for p in similar_docs])):
-                            similar_docs.append({"detector": self.getDetectorByIndex(x[0]), "score": str(x[1])})
+                            similar_docs.append({"detector": self.getDetectorByIndex(x[0]), "score": round(float(x[1]), 3)})
                 else:
-                    similar_docs = list(map(lambda x: {"detector": self.models["detectors"][x[0]]["id"], "score": str(x[1])}, similar_doc_indices))
-                return {"query": query, "results": similar_docs}
+                    similar_docs = list(map(lambda x: {"detector": self.models["detectors"][x[0]]["id"], "score": round(float(x[1]), 3)}, similar_doc_indices))
+                return {"query": query, "results": [x for x in similar_docs if x["score"]>0.30]}
             except Exception as e:
                 return {"query": query, "results": [], "exception": str(e)}
         return None

@@ -389,6 +389,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             if (supportTopicPath != null)
             {
+                supportTopicPath = HttpUtility.UrlDecode(supportTopicPath);
                 SupportTopicModel supportTopicMap = await this._supportTopicService.GetSupportTopicFromString(supportTopicPath, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
                 if (supportTopicMap != null)
                 {
@@ -404,6 +405,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             supportTopicId = ParseCorrectSupportTopicId(supportTopicId);
             var supportTopic = new SupportTopic() { Id = supportTopicId, PesId = pesId };
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, true, supportTopic, null, postBody);
+            if (supportTopicId == null)
+            {
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.OperationContext.RequestId, "GetInsights", cxt.OperationContext.Resource.SubscriptionId,
+                    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, "ASCSupportTopicIdNull", $"Support Topic Id is null or there is no mapping for the Support topic path provided - {supportTopicPath}");
+            }
             DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId, "AzureSupportCenter", "ASCAdditionalParameters", postBody);
 
             List<AzureSupportCenterInsight> insights = null;
@@ -415,7 +421,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 allDetectors = (await ListDetectorsInternal(cxt)).Select(detectorResponse => detectorResponse.Metadata);
 
                 var applicableDetectors = allDetectors
-                    .Where(detector => string.IsNullOrWhiteSpace(supportTopicId) || detector.SupportTopicList.FirstOrDefault(st => st.Id == supportTopicId) != null);
+                    .Where(detector => detector.SupportTopicList.FirstOrDefault(st => st.Id == supportTopicId) != null);
 
                 var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => GetInsightsFromDetector(cxt, detector, detectorsRun)));
 
@@ -778,6 +784,15 @@ namespace Diagnostics.RuntimeHost.Controllers
                 var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
                 response.UpdateDetectorStatusFromInsights();
 
+                //
+                // update the dataProvidersMetdata after detector execution to update data source
+                // information for parameterized data sources like MDM
+                //
+                if (context.ClientIsInternal)
+                {
+                    dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
+                }
+
                 return new Tuple<Response, List<DataProviderMetadata>>(response, dataProvidersMetadata);
             }
             catch (Exception ex)
@@ -890,24 +905,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private List<DataProviderMetadata> GetDataProvidersMetadata(DataProviders.DataProviders dataProviders)
         {
-            var dataprovidersMetadata = new List<DataProviderMetadata>();
-            foreach (var dataProvider in dataProviders.GetType().GetFields())
-            {
-                if (dataProvider.FieldType.IsInterface)
-                {
-                    var metadataProvider = dataProvider.GetValue(dataProviders) as IMetadataProvider;
-                    if (metadataProvider != null)
-                    {
-                        var metadata = metadataProvider.GetMetadata();
-                        if (metadata != null)
-                        {
-                            dataprovidersMetadata.Add(metadata);
-                        }
-                    }
-                }
-            }
-
-            return dataprovidersMetadata;
+            return dataProviders.GetMetadata();
         }
 
         private bool VerifyEntity(EntityInvoker invoker, ref QueryResponse<DiagnosticApiResponse> queryRes, string publishingDetectorId)
