@@ -6,26 +6,35 @@ using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Table;
 using Microsoft.Extensions.Logging;
 using CloudStorageAccount = Microsoft.WindowsAzure.Storage.CloudStorageAccount;
+using Microsoft.WindowsAzure.Storage.Blob;
+using System.Collections.Generic;
+using System.IO;
 
 namespace SourceWatcherFuncApp.Services
 {
-    public interface ITableStorageService
+    public interface IStorageService
     {
         Task<DetectorEntity> LoadDataToTable(DetectorEntity detectorEntity);
         Task<DetectorEntity> GetEntityFromTable(string partitionKey, string rowKey);
+        Task<bool> CheckDetectorExists(string currentDetector);
+        void LoadBlobToContainer(string name, Stream uploadStream);
     }
 
-    public class TableStorageService : ITableStorageService
+    public class StorageService : IStorageService
     {
         private static CloudTableClient tableClient;
+
+        private static CloudBlobContainer blobContainer;
         
         private string blobContainerName;
 
         private string tableName;
 
-        private ILogger<TableStorageService> storageServiceLogger;
+        private ILogger<StorageService> storageServiceLogger;
 
-        public TableStorageService(IConfigurationRoot configuration, ILogger<TableStorageService> logger)
+        private List<string> existingDetectors;
+
+        public StorageService(IConfigurationRoot configuration, ILogger<StorageService> logger)
         {
             blobContainerName = configuration["BlobContainerName"];
             tableName = configuration["TableName"];
@@ -35,15 +44,53 @@ namespace SourceWatcherFuncApp.Services
             var tableUri = new Uri($"https://{accountname}.table.core.windows.net/{tableName}");
             var storageAccount = new CloudStorageAccount(new StorageCredentials(accountname, key), accountname, "core.windows.net", true);
             tableClient = storageAccount.CreateCloudTableClient();
+            blobContainer = new CloudBlobContainer(containerUri, new StorageCredentials(accountname, key));
             storageServiceLogger = logger ?? logger;
+            existingDetectors = new List<string>();
         }
-    
+
+        public async Task<bool> CheckDetectorExists(string currentDetector)
+        {
+            try
+            {
+                if (existingDetectors.Count < 1)
+                {
+                    var blobsList = await blobContainer.ListBlobsSegmentedAsync(null);
+                    foreach (var blobItem in blobsList.Results)
+                    {
+                        if(blobItem is CloudBlobDirectory)
+                        {
+                            var directory = (CloudBlobDirectory)blobItem;
+                            var name = directory.Prefix.Replace("/", "");
+                            existingDetectors.Add(name);
+                        } 
+                    }
+                }
+                return existingDetectors.Contains(currentDetector);
+            } catch(Exception ex)
+            {
+                storageServiceLogger.LogError(ex.ToString());
+                return false;
+            }
+        }
+
+        public async void LoadBlobToContainer(string name, Stream uploadStream)
+        {
+            try
+            {
+                storageServiceLogger.LogInformation($"Uploading {name} blob");
+                var cloudBlob = blobContainer.GetBlockBlobReference(name);
+                await cloudBlob.UploadFromStreamAsync(uploadStream);
+            } catch (Exception ex)
+            {
+                storageServiceLogger.LogError(ex.ToString());
+            }    
+        }
         public async Task<DetectorEntity> LoadDataToTable(DetectorEntity detectorEntity)
         {
             try { 
             // Create a table client for interacting with the table service 
             CloudTable table = tableClient.GetTableReference(tableName);
-
             if(detectorEntity == null || detectorEntity.PartitionKey == null || detectorEntity.RowKey == null)
             {
                 throw new ArgumentNullException(nameof(detectorEntity));

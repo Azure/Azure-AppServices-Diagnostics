@@ -23,8 +23,7 @@ namespace ContentModeratorFunction
             builder.Services.AddLogging();
             builder.Services.AddSingleton(Configuration);
             builder.Services.AddSingleton<IGithubService, GithubService>();
-            builder.Services.AddSingleton<ITableStorageService, TableStorageService>();
-            builder.Services.AddSingleton<IBlobService, BlobService>();
+            builder.Services.AddSingleton<IStorageService, StorageService>();
         }
     }
 }
