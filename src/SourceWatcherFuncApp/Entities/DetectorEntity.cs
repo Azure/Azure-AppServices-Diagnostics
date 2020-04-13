@@ -65,5 +65,15 @@ namespace SourceWatcherFuncApp.Entities
                 AnalysisTypesRaw = JsonConvert.SerializeObject(value);
             }
         }
+
+        public string PlatForm { get; set; }
+
+        public string AppType { get; set; }
+
+        public string StackType { get; set; }
+
+        public string HostingEnvironmentType { get; set; }
+
+        public string ResourceProvider { get; set; }
     }
 }
