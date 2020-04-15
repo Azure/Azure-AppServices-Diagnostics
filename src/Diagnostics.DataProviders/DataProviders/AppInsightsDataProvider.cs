@@ -20,7 +20,7 @@ namespace Diagnostics.DataProviders
         private readonly IAppInsightsClient _appInsightsClient;
         private AppInsightsDataProviderConfiguration _configuration;
 
-        public AppInsightsDataProvider(OperationDataCache cache, AppInsightsDataProviderConfiguration configuration) : base(cache)
+        public AppInsightsDataProvider(OperationDataCache cache, AppInsightsDataProviderConfiguration configuration) : base(cache, configuration)
         {
             _configuration = configuration;
             _appInsightsClient = new AppInsightsClient(_configuration);

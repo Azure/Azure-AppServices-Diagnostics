@@ -29,7 +29,7 @@ namespace Diagnostics.DataProviders
             return client;
         });
 
-        public SupportObserverDataProviderBase(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, DataProviderContext dataProviderContext) : base(cache)
+        public SupportObserverDataProviderBase(OperationDataCache cache, SupportObserverDataProviderConfiguration configuration, DataProviderContext dataProviderContext) : base(cache, configuration)
         {
             Configuration = configuration;
             RequestId = dataProviderContext.RequestId;
@@ -82,7 +82,7 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        public override async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             Dictionary<string, Uri> tests;
             Dictionary<string, Task<HttpResponseMessage>> testResponses;

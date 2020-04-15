@@ -23,7 +23,7 @@ namespace Diagnostics.DataProviders
 
         private IKustoDataProvider kustoDataProvider;
         
-        public ChangeAnalysisDataProvider(OperationDataCache cache, ChangeAnalysisDataProviderConfiguration configuration, string requestId, string clientObjectId, string principalName, IKustoDataProvider kustoDataProvider, IHeaderDictionary incomingRequestHeaders) : base(cache)
+        public ChangeAnalysisDataProvider(OperationDataCache cache, ChangeAnalysisDataProviderConfiguration configuration, string requestId, string clientObjectId, string principalName, IKustoDataProvider kustoDataProvider, IHeaderDictionary incomingRequestHeaders) : base(cache, configuration)
         {
             dataProviderConfiguration = configuration;
             dataProviderRequestId = requestId;

@@ -10,7 +10,7 @@ namespace Diagnostics.DataProviders
 	{
 		public IMdmDataProvider DataProvider;
 
-		public MdmLogDecorator(DataProviderContext context, IMdmDataProvider dataProvider) : base(context, dataProvider.GetMetadata())
+		public MdmLogDecorator(DataProviderContext context, IMdmDataProvider dataProvider) : base(dataProvider as DiagnosticDataProvider, context, dataProvider.GetMetadata())
 		{
 			DataProvider = dataProvider;
 		}
