@@ -21,6 +21,12 @@ steps:
     projects: '$(solution)'
     configuration: '$(buildConfiguration)'
 
+
+- task: CmdLine@2
+  displayName: 'Run Azure Storage Emulator'
+  inputs:
+    script: "%ProgramFiles(x86)%\Microsoft SDKs\Azure\Storage Emulator\AzureStorageEmulator.exe" start
+
 - task: DotNetCoreCLI@2
   inputs:
     command: 'test'
