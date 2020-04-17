@@ -6,6 +6,7 @@ using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Diagnostics.RuntimeHost.Services.StorageService;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -189,8 +190,8 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
-            
-
+            services.AddSingleton<IStorageService, StorageService>();
+            services.AddSingleton<ITableCacheService, TableCacheService>();
             services.AddLogging(loggingConfig =>
             {
                 loggingConfig.ClearProviders();
@@ -219,7 +220,10 @@ namespace Diagnostics.RuntimeHost
             {
                 app.UseDeveloperExceptionPage();
             }
-            app.UseAuthentication();
+            if (!env.IsDevelopment())
+            {
+                app.UseAuthentication();
+            }
             app.UseRewriter(new RewriteOptions().Add(new RewriteDiagnosticResource()));
             app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseMvc();

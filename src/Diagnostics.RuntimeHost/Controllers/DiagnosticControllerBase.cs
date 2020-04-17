@@ -21,6 +21,7 @@ using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Diagnostics.RuntimeHost.Services.StorageService;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
@@ -50,6 +51,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IRuntimeLoggerProvider _loggerProvider;
 
         private InternalAPIHelper _internalApiHelper;
+        private ITableCacheService tableCacheService;
 
         public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext)
         {
@@ -64,7 +66,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._supportTopicService = (ISupportTopicService)services.GetService(typeof(ISupportTopicService));
             this._kustoMappingCacheService = (IKustoMappingsCacheService)services.GetService(typeof(IKustoMappingsCacheService));
             this._loggerProvider = (IRuntimeLoggerProvider)services.GetService(typeof(IRuntimeLoggerProvider));
-
+            tableCacheService = (ITableCacheService)services.GetService(typeof(ITableCacheService));
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
         }
@@ -640,6 +642,20 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private async Task<IEnumerable<DiagnosticApiResponse>> ListGistsInternal(RuntimeContext<TResource> context)
         {
+            if (tableCacheService.IsStorageAsSourceEnabled())
+            {
+                var allGistsFromStorage = await tableCacheService.GetEntityListByType<TResource>(context, "Gist");
+                return allGistsFromStorage.Select(p => new DiagnosticApiResponse
+                {
+                    Metadata = RemovePIIFromDefinition(new Definition
+                    {
+                        Id = p.RowKey,
+                        Name = p.DetectorName,
+                        Author = p.Author,
+                        Category = p.Category
+                    }, context.ClientIsInternal)
+                });
+            }
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
             return _gistCache.GetEntityInvokerList(context).Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
         }
@@ -659,12 +675,11 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private async Task<IEnumerable<DiagnosticApiResponse>> ListDetectorsInternal(RuntimeContext<TResource> context, string queryText = null)
         {
-            await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
-            var allDetectors = _invokerCache.GetEntityInvokerList<TResource>(context).ToList();
+
+            SearchResults searchResults = null;
 
             if (queryText != null && queryText.Length > 1)
             {
-                SearchResults searchResults = null;
                 var resourceParams = _internalApiHelper.GetResourceParams(context.OperationContext.Resource as IResourceFilter);
                 try
                 {
@@ -675,29 +690,10 @@ namespace Diagnostics.RuntimeHost.Controllers
                         searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
                         // Select search results (Detectors) whose score is greater than 0.3 (considering anything below that should not be relevant for the search query)
                         searchResults.Results = searchResults.Results.Where(result => result.Score > 0.3).ToArray();
-
-                        allDetectors.ForEach(detector =>
-                        {
-                            // Assign the score to detector if it exists in search results, else default to 0
-                            var detectorWithScore = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == detector.EntryPointDefinitionAttribute.Id) : null;
-                            if (detectorWithScore != null)
-                            {
-                                detector.EntryPointDefinitionAttribute.Score = detectorWithScore.Score;
-                            }
-                            else
-                            {
-                                detector.EntryPointDefinitionAttribute.Score = 0;
-                            }
-                        });
-                        // Finally select only those detectors that have a positive score value
-                        allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
-                        // Log the filtered public search results
-                        var logMessage = new { InsightName = "SearchResultsPublic", InsightData = allDetectors.Select(p => new { Id = p.EntryPointDefinitionAttribute.Id, Score = p.EntryPointDefinitionAttribute.Score }) };
-                        DiagnosticsETWProvider.Instance.LogInternalAPIInsights(context.OperationContext.RequestId, JsonConvert.SerializeObject(logMessage));
                     }
                     else
                     {
-                        DiagnosticsETWProvider.Instance.LogInternalAPIHandledException(context.OperationContext.RequestId, "SearchServiceReturnedNull", "Search service returned null. This might be because search api is disabled in the project" );
+                        DiagnosticsETWProvider.Instance.LogInternalAPIHandledException(context.OperationContext.RequestId, "SearchServiceReturnedNull", "Search service returned null. This might be because search api is disabled in the project");
                         return new List<DiagnosticApiResponse>();
                     }
                 }
@@ -708,6 +704,52 @@ namespace Diagnostics.RuntimeHost.Controllers
                 }
             }
 
+            if (tableCacheService.IsStorageAsSourceEnabled())
+            {
+                var allDetectorsFromStorage = await tableCacheService.GetEntityListByType<TResource>(context);
+                if (searchResults != null)
+                {
+                    allDetectorsFromStorage = tableCacheService.ApplySearchEngineFiltering(searchResults, allDetectorsFromStorage);
+                }
+                return allDetectorsFromStorage.Select(p => new DiagnosticApiResponse
+                {
+                    Metadata = RemovePIIFromDefinition(new Definition
+                    {
+                        Id = p.RowKey,
+                        Name = p.DetectorName,
+                        Author = p.Author,
+                        Category = p.Category,
+                        SupportTopicList = p.SupportTopicList,
+                        AnalysisTypes = p.AnalysisTypes,
+                        Type = Enum.Parse<DetectorType>(p.EntityType),  
+                        Score = p.Score
+                    }, context.ClientIsInternal)
+                });
+            }
+
+            await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+            var allDetectors = _invokerCache.GetEntityInvokerList<TResource>(context).ToList();
+            if(searchResults != null)
+            {
+                allDetectors.ForEach(detector =>
+                {
+                    // Assign the score to detector if it exists in search results, else default to 0
+                    var detectorWithScore = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == detector.EntryPointDefinitionAttribute.Id) : null;
+                    if (detectorWithScore != null)
+                    {
+                        detector.EntryPointDefinitionAttribute.Score = detectorWithScore.Score;
+                    }
+                    else
+                    {
+                        detector.EntryPointDefinitionAttribute.Score = 0;
+                    }
+                });
+                // Finally select only those detectors that have a positive score value
+                allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
+                // Log the filtered public search results
+                var logMessage = new { InsightName = "SearchResultsPublic", InsightData = allDetectors.Select(p => new { Id = p.EntryPointDefinitionAttribute.Id, Score = p.EntryPointDefinitionAttribute.Score }) };
+                DiagnosticsETWProvider.Instance.LogInternalAPIInsights(context.OperationContext.RequestId, JsonConvert.SerializeObject(logMessage));
+            }   
             return allDetectors.Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
         }
 
