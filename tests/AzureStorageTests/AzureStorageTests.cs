@@ -9,6 +9,7 @@ using Diagnostics.ModelsAndUtils.Models.Storage;
 using System.Diagnostics;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.ModelsAndUtils.Models;
+using System.Linq;
 
 namespace Diagnostics.Tests.AzureStorageTests
 {
@@ -49,8 +50,11 @@ namespace Diagnostics.Tests.AzureStorageTests
             }
             };
 
-            StartAndWaitForExit("stop");
-            StartAndWaitForExit("start");
+            bool isRunning = Process.GetProcessesByName("AzureStorageEmulator.exe").Any();
+            if(!isRunning)
+            {
+                StartAndWaitForExit("start");
+            }
         }
 
         public void Dispose()
