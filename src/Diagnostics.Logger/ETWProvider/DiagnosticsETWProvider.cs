@@ -738,7 +738,7 @@ namespace Diagnostics.Logger
         /// </summary>
         /// <param name="Source">The source.</param>
         /// <param name="Message">The message.</param>
-        [Event(5500, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogSourceWatcherMessage)]
+        [Event(5500, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogAzureStorageMessage)]
         public void LogAzureStorageMessage(string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
             WriteDiagnosticsEvent(5500, Source, Message, EnvironmentName, WebsiteHostName);
@@ -749,7 +749,7 @@ namespace Diagnostics.Logger
         /// </summary>
         /// <param name="Source">The source.</param>
         /// <param name="Message">The message.</param>
-        [Event(5501, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogSourceWatcherWarning)]
+        [Event(5501, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogAzureStorageWarning)]
         public void LogAzureStorageWarning(string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
             WriteDiagnosticsEvent(5501, Source, Message, EnvironmentName, WebsiteHostName);
@@ -762,7 +762,7 @@ namespace Diagnostics.Logger
         /// <param name="Message">The message.</param>
         /// <param name="ExceptionType">Exception type.</param>
         /// <param name="ExceptionDetails">Exception details.</param>
-        [Event(5502, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogSourceWatcherException)]
+        [Event(5502, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogAzureStorageException)]
         public void LogAzureStorageException(string Source, string Message, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
             WriteDiagnosticsEvent(5502, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
