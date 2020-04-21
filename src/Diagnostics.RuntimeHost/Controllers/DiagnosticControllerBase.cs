@@ -721,6 +721,9 @@ namespace Diagnostics.RuntimeHost.Controllers
 
                     // Filter only postive score detectors.
                     allDetectorsFromStorage = allDetectorsFromStorage.Where(x => x.Score > 0).ToList();
+                    // Log the filtered public search results
+                    var logMessage = new { InsightName = "SearchResultsPublic", InsightData = allDetectorsFromStorage.Select(p => new { Id = p.RowKey, Score = p.Score }) };
+                    DiagnosticsETWProvider.Instance.LogInternalAPIInsights(context.OperationContext.RequestId, JsonConvert.SerializeObject(logMessage));
                 }
                 return allDetectorsFromStorage.Select(p => new DiagnosticApiResponse
                 {
