@@ -191,7 +191,7 @@ namespace Diagnostics.RuntimeHost
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
             services.AddSingleton<IStorageService, StorageService>();
-            services.AddSingleton<ITableCacheService, TableCacheService>();
+            services.AddSingleton<IDiagEntityTableCacheService, DiagEntityTableCacheService>();
             services.AddLogging(loggingConfig =>
             {
                 loggingConfig.ClearProviders();

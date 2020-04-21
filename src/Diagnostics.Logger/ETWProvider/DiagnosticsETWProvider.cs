@@ -730,5 +730,44 @@ namespace Diagnostics.Logger
         }
 
         #endregion
+
+        #region AzureStorage Events (ID Range : 5500 - 5599)
+
+        /// <summary>
+        /// Log azure storage message.
+        /// </summary>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
+        [Event(5500, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogSourceWatcherMessage)]
+        public void LogAzureStorageMessage(string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
+        {
+            WriteDiagnosticsEvent(5500, Source, Message, EnvironmentName, WebsiteHostName);
+        }
+
+        /// <summary>
+        /// Log azure storage warning.
+        /// </summary>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
+        [Event(5501, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogSourceWatcherWarning)]
+        public void LogAzureStorageWarning(string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
+        {
+            WriteDiagnosticsEvent(5501, Source, Message, EnvironmentName, WebsiteHostName);
+        }
+
+        /// <summary>
+        /// Log azure storage exception.
+        /// </summary>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
+        [Event(5502, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogSourceWatcherException)]
+        public void LogAzureStorageException(string Source, string Message, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
+        {
+            WriteDiagnosticsEvent(5502, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
+        }
+
+        #endregion AzureStorage Events (ID Range : 5500 - 5599)
     }
 }

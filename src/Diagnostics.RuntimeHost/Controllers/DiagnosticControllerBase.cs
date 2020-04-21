@@ -51,7 +51,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IRuntimeLoggerProvider _loggerProvider;
 
         private InternalAPIHelper _internalApiHelper;
-        private ITableCacheService tableCacheService;
+        private IDiagEntityTableCacheService tableCacheService;
 
         public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext)
         {
@@ -66,7 +66,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._supportTopicService = (ISupportTopicService)services.GetService(typeof(ISupportTopicService));
             this._kustoMappingCacheService = (IKustoMappingsCacheService)services.GetService(typeof(IKustoMappingsCacheService));
             this._loggerProvider = (IRuntimeLoggerProvider)services.GetService(typeof(IRuntimeLoggerProvider));
-            tableCacheService = (ITableCacheService)services.GetService(typeof(ITableCacheService));
+            tableCacheService = (IDiagEntityTableCacheService)services.GetService(typeof(IDiagEntityTableCacheService));
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
         }
@@ -709,7 +709,18 @@ namespace Diagnostics.RuntimeHost.Controllers
                 var allDetectorsFromStorage = await tableCacheService.GetEntityListByType<TResource>(context);
                 if (searchResults != null)
                 {
-                    allDetectorsFromStorage = tableCacheService.ApplySearchEngineFiltering(searchResults, allDetectorsFromStorage);
+                    // Return those detectors that have positive search score and present in searchResult.
+                    List<string> potentialDetectors = searchResults.Results.Where(s => s.Score > 0).Select(x => x.Detector).ToList();
+
+                    // Assign the score to detector if it exists in search results, else default to 0
+                    allDetectorsFromStorage.ForEach(entity =>
+                    {
+                        var detectorWithScore = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == entity.RowKey) : null;
+                        entity.Score = detectorWithScore != null ? detectorWithScore.Score : 0;
+                    });
+
+                    // Filter only postive score detectors.
+                    allDetectorsFromStorage = allDetectorsFromStorage.Where(x => x.Score > 0).ToList();
                 }
                 return allDetectorsFromStorage.Select(p => new DiagnosticApiResponse
                 {

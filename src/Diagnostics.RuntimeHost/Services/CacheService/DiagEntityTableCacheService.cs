@@ -7,17 +7,16 @@ using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models.Storage;
 using Diagnostics.RuntimeHost.Models;
 using System.Linq;
-using System;
 
 namespace Diagnostics.RuntimeHost.Services.CacheService
 {
-    public class TableCacheService : ITableCacheService
+    public class DiagEntityTableCacheService : IDiagEntityTableCacheService
     {
         private ConcurrentDictionary<string, List<DiagEntity>> cache;
 
         private IStorageService storageService;
 
-        public TableCacheService(IStorageService service)
+        public DiagEntityTableCacheService(IStorageService service)
         {
             cache = new ConcurrentDictionary<string, List<DiagEntity>>();
             storageService = service;
@@ -56,7 +55,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
 
             while (!TryGetValue(entityType, out result))
             {
-                var tableResult = await storageService.RetieveEntitiesByPartitionkey(entityType);
+                var tableResult = await storageService.GetEntitiesByPartitionkey(entityType);
                 AddOrUpdate(entityType, tableResult);            
             }
 
@@ -64,36 +63,9 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
             return result;
         }
 
-
         public bool IsStorageAsSourceEnabled()
         {
             return storageService.GetStorageFlag();
-        }
-
-        public List<DiagEntity> ApplySearchEngineFiltering(SearchResults searchResults, List<DiagEntity> currentEntities)
-        {
-            if(searchResults == null || searchResults.Results.Count() < 1)
-            {
-                return currentEntities;
-            }
-
-            if(currentEntities == null)
-            {
-                return new List<DiagEntity>();
-            }
-
-            // Return those detectors that have positive search score and present in searchResult.
-            List<string> potentialDetectors = searchResults.Results.Where(s => s.Score > 0).Select(x => x.Detector).ToList();
-
-            // Assign the score to detector if it exists in search results, else default to 0
-            currentEntities.ForEach(entity =>
-            {
-                var detectorWithScore = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == entity.RowKey) : null;
-                entity.Score = detectorWithScore != null ? detectorWithScore.Score : 0;
-            });
-            
-            // Filter only postive score detectors.
-            return currentEntities.Where(x => x.Score > 0).ToList();
         }
     }
 }

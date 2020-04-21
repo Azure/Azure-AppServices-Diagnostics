@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models.Storage;
 using Microsoft.Extensions.Configuration;
@@ -10,12 +9,13 @@ using Microsoft.WindowsAzure.Storage.Table;
 using Diagnostics.Logger;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Hosting;
+
 namespace Diagnostics.RuntimeHost.Services.StorageService
 {
     public interface IStorageService
     {
         bool GetStorageFlag();
-        Task<List<DiagEntity>> RetieveEntitiesByPartitionkey(string partitionKey = null);
+        Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null);
         Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity);
     }
     public class StorageService : IStorageService
@@ -28,6 +28,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         private string tableName;
         private bool loadOnlyPublicDetectors;
         private bool isStorageEnabled;
+        private CloudTable cloudTable;
 
         public StorageService(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
@@ -52,24 +53,16 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             {
                 isStorageEnabled = false;
             }
-
-            CheckTable();
+            cloudTable = tableClient.GetTableReference(tableName);
         }
 
-
-        private void CheckTable()
-        {
-            CloudTable table = tableClient.GetTableReference(tableName);
-            table.CreateIfNotExistsAsync();
-        }
-
-        public async Task<List<DiagEntity>> RetieveEntitiesByPartitionkey(string partitionKey = null)
+        public async Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null)
         {
             try
             {
                 CloudTable table = tableClient.GetTableReference(tableName);
-
-                DiagnosticsETWProvider.Instance.LogSourceWatcherMessage(nameof(StorageService), $"Retrieving detectors from table");
+                await table.CreateIfNotExistsAsync();
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Retrieving detectors from table");
                 partitionKey = partitionKey == null ? "Detector" : partitionKey;
                 var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionKey);
                 var tableQuery = new TableQuery<DiagEntity>();
@@ -99,7 +92,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             }
             catch (Exception ex)
             {
-                DiagnosticsETWProvider.Instance.LogSourceWatcherException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
+                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
                 return null;
             }
         }
@@ -115,25 +108,26 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             {
                 // Create a table client for interacting with the table service 
                 CloudTable table = tableClient.GetTableReference(tableName);
+                await table.CreateIfNotExistsAsync();
                 if (detectorEntity == null || detectorEntity.PartitionKey == null || detectorEntity.RowKey == null)
                 {
                     throw new ArgumentNullException(nameof(detectorEntity));
                 }
 
-                DiagnosticsETWProvider.Instance.LogSourceWatcherMessage(nameof(StorageService), $"Insert or Replace {detectorEntity.RowKey} into {tableName}");
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Insert or Replace {detectorEntity.RowKey} into {tableName}");
                 // Create the InsertOrReplace table operation
                 TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(detectorEntity);
 
                 // Execute the operation.
                 TableResult result = await table.ExecuteAsync(insertOrReplaceOperation);
 
-                DiagnosticsETWProvider.Instance.LogSourceWatcherMessage(nameof(StorageService), $"InsertOrReplace result : {result.HttpStatusCode}");
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"InsertOrReplace result : {result.HttpStatusCode}");
                 DiagEntity insertedCustomer = result.Result as DiagEntity;
                 return detectorEntity;
             }
             catch (Exception ex)
             {
-                DiagnosticsETWProvider.Instance.LogSourceWatcherException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
+                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
                 return null;
             }
         }

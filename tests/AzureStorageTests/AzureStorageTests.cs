@@ -18,7 +18,7 @@ namespace Diagnostics.Tests.AzureStorageTests
 
         IStorageService storageService;
 
-        ITableCacheService tableCacheService;
+        IDiagEntityTableCacheService tableCacheService;
 
         IConfiguration configuration;
 
@@ -37,16 +37,17 @@ namespace Diagnostics.Tests.AzureStorageTests
                 configuration["SourceWatcher:TableName"] = "diagentities";
             }           
             storageService = new StorageService(configuration, environment);
-            tableCacheService = new TableCacheService(storageService);
+            tableCacheService = new DiagEntityTableCacheService(storageService);
         }
 
         private void StartStorageEmulator()
         {
+            var programFilesPath = Environment.GetEnvironmentVariable("ProgramFiles(x86)");
             process = new Process
             {
                 StartInfo = {
                 UseShellExecute = false,
-                FileName = @"C:\Program Files (x86)\Microsoft SDKs\Azure\Storage Emulator\AzureStorageEmulator.exe",
+                FileName = $@"{programFilesPath}\Microsoft SDKs\Azure\Storage Emulator\AzureStorageEmulator.exe",
             }
             };
 
@@ -66,7 +67,6 @@ namespace Diagnostics.Tests.AzureStorageTests
         {
             process.StartInfo.Arguments = arguments;
             process.Start();
-            process.WaitForExit(10000);
         }
 
         private IConfiguration InitConfig()
@@ -91,10 +91,10 @@ namespace Diagnostics.Tests.AzureStorageTests
             };
             var insertResult = await storageService.LoadDataToTable(diagEntity);
             Assert.NotNull(insertResult);
-            var retrieveResult = await storageService.RetieveEntitiesByPartitionkey("Detector");
+            var retrieveResult = await storageService.GetEntitiesByPartitionkey("Detector");
             Assert.NotNull(retrieveResult);
             Assert.NotEmpty(retrieveResult);
-            var gistResult = await storageService.RetieveEntitiesByPartitionkey("Gist");
+            var gistResult = await storageService.GetEntitiesByPartitionkey("Gist");
             Assert.Empty(gistResult);
         }
 
