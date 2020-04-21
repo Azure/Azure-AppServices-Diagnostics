@@ -10,6 +10,8 @@ using System.Diagnostics;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.ModelsAndUtils.Models;
 using System.Linq;
+using System.Threading;
+using RimDev.Automation.StorageEmulator;
 
 namespace Diagnostics.Tests.AzureStorageTests
 {
@@ -24,7 +26,7 @@ namespace Diagnostics.Tests.AzureStorageTests
 
         IHostingEnvironment environment;
 
-        Process process;
+        AzureStorageEmulatorAutomation emulator;
 
         public AzureStorageTests()
         {
@@ -42,31 +44,14 @@ namespace Diagnostics.Tests.AzureStorageTests
 
         private void StartStorageEmulator()
         {
-            var programFilesPath = Environment.GetEnvironmentVariable("ProgramFiles(x86)");
-            process = new Process
-            {
-                StartInfo = {
-                UseShellExecute = false,
-                FileName = $@"{programFilesPath}\Microsoft SDKs\Azure\Storage Emulator\AzureStorageEmulator.exe",
-            }
-            };
-
-            bool isRunning = Process.GetProcessesByName("AzureStorageEmulator.exe").Any();
-            if(!isRunning)
-            {
-                StartAndWaitForExit("start");
-            }
+            emulator = new AzureStorageEmulatorAutomation();
+            emulator.Init();
+            emulator.Start();
         }
 
         public void Dispose()
         {
-            StartAndWaitForExit("stop");
-        }
-
-        void StartAndWaitForExit(string arguments)
-        {
-            process.StartInfo.Arguments = arguments;
-            process.Start();
+            emulator.Stop();
         }
 
         private IConfiguration InitConfig()
@@ -74,28 +59,47 @@ namespace Diagnostics.Tests.AzureStorageTests
              var builder = new ConfigurationBuilder()
                     .AddEnvironmentVariables();
             return builder.Build();
-       }
+        }
+
+        private bool CheckProcessRunning(int maxAttempts)
+        {
+            bool isRunning = AzureStorageEmulatorAutomation.IsEmulatorRunning();
+            int currentAttempt = 0;
+            while (!isRunning && currentAttempt <= maxAttempts)
+            {
+                currentAttempt++;
+                // Wait for 15s and then try 
+                Thread.Sleep(15 * 1000);          
+                isRunning = AzureStorageEmulatorAutomation.IsEmulatorRunning();
+            }
+            return isRunning;
+        }
 
         [Fact]
         /// <summary>
         /// Tests load entity and insert entity
         /// </summary>
         public async void TestTableOperations()
-        {          
-            // Generate fake entity;
-            var diagEntity = new DiagEntity
+        {
+            // First check if emulator is running before proceeding. 
+            bool isEmulatorRunning = CheckProcessRunning(4);
+            if(isEmulatorRunning)
             {
-                PartitionKey = "Detector",
-                RowKey = "xyz",
-                GithubLastModified = DateTime.UtcNow
-            };
-            var insertResult = await storageService.LoadDataToTable(diagEntity);
-            Assert.NotNull(insertResult);
-            var retrieveResult = await storageService.GetEntitiesByPartitionkey("Detector");
-            Assert.NotNull(retrieveResult);
-            Assert.NotEmpty(retrieveResult);
-            var gistResult = await storageService.GetEntitiesByPartitionkey("Gist");
-            Assert.Empty(gistResult);
+                // Generate fake entity;
+                var diagEntity = new DiagEntity
+                {
+                    PartitionKey = "Detector",
+                    RowKey = "xyz",
+                    GithubLastModified = DateTime.UtcNow
+                };
+                var insertResult = await storageService.LoadDataToTable(diagEntity);
+                Assert.NotNull(insertResult);
+                var retrieveResult = await storageService.GetEntitiesByPartitionkey("Detector");
+                Assert.NotNull(retrieveResult);
+                Assert.NotEmpty(retrieveResult);
+                var gistResult = await storageService.GetEntitiesByPartitionkey("Gist");
+                Assert.Empty(gistResult);
+            }          
         }
 
         [Fact]
@@ -104,47 +108,53 @@ namespace Diagnostics.Tests.AzureStorageTests
         /// </summary>
         public async void TestCacheOperations()
         {
-            var windowsDiagEntity = new DiagEntity
+
+            // First check if emulator is running before proceeding. 
+            bool isEmulatorRunning = CheckProcessRunning(4);
+            if(isEmulatorRunning)
             {
-                PartitionKey = "Detector",
-                RowKey = "webappDown",
-                GithubLastModified = DateTime.UtcNow,
-                PlatForm = "Windows",
-                ResourceProvider = "Microsoft.Web",
-                ResourceType = "sites",
-                StackType = "AspNet,NetCore",
-                AppType = "WebApp"
-            };
+                var windowsDiagEntity = new DiagEntity
+                {
+                    PartitionKey = "Detector",
+                    RowKey = "webappDown",
+                    GithubLastModified = DateTime.UtcNow,
+                    PlatForm = "Windows",
+                    ResourceProvider = "Microsoft.Web",
+                    ResourceType = "sites",
+                    StackType = "AspNet,NetCore",
+                    AppType = "WebApp"
+                };
 
-            var insertResult = await storageService.LoadDataToTable(windowsDiagEntity);
-            var webApp = new App("72383ac7-d6f4-4a5e-bf56-b172f2fdafb2", "resourcegp-default", "diag-test");
-            var operationContext = new OperationContext<App>(
-                                     webApp,
-                                     DateTime.Now.ToString(),
-                                     DateTime.Now.AddHours(1).ToString(),
-                                     true,
-                                     new Guid().ToString()
-                                    );
-            var context = new RuntimeContext<App>(configuration);
-            context.OperationContext = operationContext;
+                var insertResult = await storageService.LoadDataToTable(windowsDiagEntity);
+                var webApp = new App("72383ac7-d6f4-4a5e-bf56-b172f2fdafb2", "resourcegp-default", "diag-test");
+                var operationContext = new OperationContext<App>(
+                                         webApp,
+                                         DateTime.Now.ToString(),
+                                         DateTime.Now.AddHours(1).ToString(),
+                                         true,
+                                         new Guid().ToString()
+                                        );
+                var context = new RuntimeContext<App>(configuration);
+                context.OperationContext = operationContext;
 
-            var detectorsForWebApps = await tableCacheService.GetEntityListByType(context, "Detector");
-            Assert.NotNull(detectorsForWebApps);
-            Assert.NotEmpty(detectorsForWebApps);
+                var detectorsForWebApps = await tableCacheService.GetEntityListByType(context, "Detector");
+                Assert.NotNull(detectorsForWebApps);
+                Assert.NotEmpty(detectorsForWebApps);
 
-            var logicApp = new LogicApp("72383ac7-d6f4-4a5e-bf56-b172f2fdafb2", "resourcegp-default", "la-test");
-            var logicAppOperContext = new OperationContext<LogicApp>(logicApp,
-                                             DateTime.Now.ToString(),
-                                             DateTime.Now.AddHours(1).ToString(),
-                                             true,
-                                             new Guid().ToString());
+                var logicApp = new LogicApp("72383ac7-d6f4-4a5e-bf56-b172f2fdafb2", "resourcegp-default", "la-test");
+                var logicAppOperContext = new OperationContext<LogicApp>(logicApp,
+                                                 DateTime.Now.ToString(),
+                                                 DateTime.Now.AddHours(1).ToString(),
+                                                 true,
+                                                 new Guid().ToString());
 
-            var runtimeContextLogicApp = new RuntimeContext<LogicApp>(configuration);
-            runtimeContextLogicApp.OperationContext = logicAppOperContext;
+                var runtimeContextLogicApp = new RuntimeContext<LogicApp>(configuration);
+                runtimeContextLogicApp.OperationContext = logicAppOperContext;
 
-            var detectorsForLogicApps = await tableCacheService.GetEntityListByType(runtimeContextLogicApp, "Detector");
-            Assert.NotNull(detectorsForLogicApps);
-            Assert.Empty(detectorsForLogicApps);
+                var detectorsForLogicApps = await tableCacheService.GetEntityListByType(runtimeContextLogicApp, "Detector");
+                Assert.NotNull(detectorsForLogicApps);
+                Assert.Empty(detectorsForLogicApps);
+            }    
         }
     }
 }
