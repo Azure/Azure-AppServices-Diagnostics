@@ -60,6 +60,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return app;
         }
 
+        // Method taken from master2 to derive platform type - skipping the logic of Xenon and Hyper-V
         private PlatformType GetPlatformType(DiagnosticSiteData postBody)
         {
             return (!string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Kind.ToLower().Contains("linux")) ? PlatformType.Linux :
