@@ -77,6 +77,13 @@ namespace Diagnostics.Logger
 
         #endregion Internal AI API Event Message Templates
 
+        #region Azure Storage Event Message Templates 
+
+        public const string LogAzureStorageMessage = "StorageService: {0}, Message: {1}";
+        public const string LogAzureStorageWarning = "StorageService: {0}, Message: {1}";
+        public const string LogAzureStorageException = "StorageService: {0}, Exception: {3}";
+
+        #endregion
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
