@@ -56,7 +56,10 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
             while (!TryGetValue(entityType, out result))
             {
                 var tableResult = await storageService.GetEntitiesByPartitionkey(entityType);
-                AddOrUpdate(entityType, tableResult);            
+                if(tableResult != null)
+                {
+                    AddOrUpdate(entityType, tableResult);
+                }         
             }
 
             result = result.Where(tableEntity => context.OperationContext.Resource.IsApplicable(tableEntity)).OrderBy(tableRow => tableRow.DetectorName).ToList();
