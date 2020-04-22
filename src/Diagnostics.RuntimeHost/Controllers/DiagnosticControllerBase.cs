@@ -446,15 +446,13 @@ namespace Diagnostics.RuntimeHost.Controllers
                 defaultInsightReturned = true;
                 insights.Add(AzureSupportCenterInsightUtilites.CreateDefaultInsight(cxt.OperationContext, detectorsRun));
             }
-            else if (!detectorsRun.Any())
+
+            var defaultDetector = allDetectors.FirstOrDefault(detector => detector.Id.StartsWith("default_asc_insights_", StringComparison.InvariantCultureIgnoreCase));
+            if (defaultDetector != null)
             {
-                var defaultDetector = allDetectors.FirstOrDefault(detector => detector.Id.StartsWith("default_insights"));
-                if (defaultDetector != null)
-                {
-                    var defaultDetectorInsights = await GetInsightsFromDetector(cxt, defaultDetector, new List<Definition>());
-                    defaultInsightReturned = defaultDetectorInsights.Any();
-                    insights.AddRange(defaultDetectorInsights);
-                }
+                var defaultDetectorInsights = await GetInsightsFromDetector(cxt, defaultDetector, new List<Definition>());
+                defaultInsightReturned = defaultDetectorInsights.Any();
+                insights.AddRange(defaultDetectorInsights);
             }
 
             var insightInfo = new
