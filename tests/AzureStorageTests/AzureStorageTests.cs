@@ -10,6 +10,7 @@ using Diagnostics.RuntimeHost.Models;
 using Diagnostics.ModelsAndUtils.Models;
 using System.Threading;
 using RimDev.Automation.StorageEmulator;
+using System.Linq;
 
 namespace Diagnostics.Tests.AzureStorageTests
 {
@@ -152,6 +153,28 @@ namespace Diagnostics.Tests.AzureStorageTests
                 var detectorsForLogicApps = await tableCacheService.GetEntityListByType(runtimeContextLogicApp, "Detector");
                 Assert.NotNull(detectorsForLogicApps);
                 Assert.Empty(detectorsForLogicApps);
+
+                // Test Analysis detectors
+
+                var appDownAnalysisEntity = new DiagEntity
+                {
+                    PartitionKey = "Detector",
+                    RowKey = "appDownAnalysis",
+                    GithubLastModified = DateTime.UtcNow,
+                    PlatForm = "Windows",
+                    ResourceProvider = "Microsoft.Web",
+                    ResourceType = "sites",
+                    StackType = "AspNet,NetCore",
+                    AppType = "WebApp",
+                    DetectorType = "Analysis"
+                };
+
+                insertResult = await storageService.LoadDataToTable(appDownAnalysisEntity);
+                var detectorsFromStorage = await tableCacheService.GetEntityListByType(context, "Detector");
+                var analysisDetectors = detectorsFromStorage.Where(s => s.DetectorType.Equals("Analysis", StringComparison.CurrentCultureIgnoreCase));
+                Assert.NotNull(detectorsFromStorage);
+                Assert.NotEmpty(analysisDetectors);
+
             }    
         }
     }
