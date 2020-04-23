@@ -171,9 +171,8 @@ namespace Diagnostics.Tests.AzureStorageTests
 
                 insertResult = await storageService.LoadDataToTable(appDownAnalysisEntity);
                 var detectorsFromStorage = await tableCacheService.GetEntityListByType(context, "Detector");
-                var analysisDetectors = detectorsFromStorage.Where(s => s.DetectorType.Equals("Analysis", StringComparison.CurrentCultureIgnoreCase));
                 Assert.NotNull(detectorsFromStorage);
-                Assert.NotEmpty(analysisDetectors);
+                Assert.NotEmpty(detectorsFromStorage.Where(s => s.DetectorType.Equals("Analysis", StringComparison.CurrentCultureIgnoreCase);
 
             }    
         }
