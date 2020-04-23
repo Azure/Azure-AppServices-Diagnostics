@@ -1,4 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.Models.Storage;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {
@@ -48,5 +49,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <param name="filter">Resource Filter</param>
         /// <returns>True, if resource passes the filter. False otherwise</returns>
         bool IsApplicable(IResourceFilter filter);
+
+        /// <summary>
+        /// Determines whether the diag entity retrieved from table is applicable after filtering.
+        /// </summary>
+        /// <param name="diagEntity">Diag Entity from table</param>
+        /// <returns>True, if resource passes the filter. False otherwise</returns>
+        bool IsApplicable(DiagEntity diagEntity);
     }
 }

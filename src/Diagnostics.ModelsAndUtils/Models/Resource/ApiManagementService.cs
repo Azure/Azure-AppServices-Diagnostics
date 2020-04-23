@@ -1,4 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.Models.Storage;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 
 namespace Diagnostics.ModelsAndUtils.Models
@@ -80,6 +81,20 @@ namespace Diagnostics.ModelsAndUtils.Models
         public bool IsApplicable(IResourceFilter filter)
         {
             return filter is ApiManagementServiceFilter;
+        }
+
+        /// <summary>
+        /// Determines whether the diag entity retrieved from table is applicable after filtering.
+        /// </summary>
+        /// <param name="diagEntity">Diag Entity from table</param>
+        /// <returns>True, if resource passes the filter. False otherwise</returns>
+        public bool IsApplicable(DiagEntity diagEntity)
+        {
+            if(diagEntity == null || diagEntity.ResourceType == null || diagEntity.ResourceProvider == null)
+            {
+                return false;
+            }
+            return diagEntity.ResourceProvider == this.Provider && diagEntity.ResourceType == this.ResourceTypeName;
         }
     }
 }
