@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.Models.Storage;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 
 namespace Diagnostics.ModelsAndUtils.Models
@@ -125,6 +126,26 @@ namespace Diagnostics.ModelsAndUtils.Models
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Determines whether the diag entity retrieved from table is applicable after filtering.
+        /// </summary>
+        /// <param name="diagEntity">Diag Entity from table</param>
+        /// <returns>True, if resource passes the filter. False otherwise</returns>
+        public bool IsApplicable(DiagEntity diagEntity)
+        {
+            if(diagEntity == null || diagEntity.AppType == null || diagEntity.PlatForm == null || diagEntity.StackType == null)
+            {
+                return false;
+            }
+            AppType tableRowAppType = (AppType)Enum.Parse(typeof(AppType), diagEntity.AppType);
+            PlatformType tableRowPlatformType = (PlatformType)Enum.Parse(typeof(PlatformType), diagEntity.PlatForm);
+            StackType tableRowStacktype = (StackType)Enum.Parse(typeof(StackType), diagEntity.StackType);
+
+            return ((tableRowAppType & this.AppType) > 0) &&
+                    ((tableRowPlatformType & this.PlatformType) > 0) &&
+                    ((this.StackType == StackType.None) || (tableRowStacktype & this.StackType) > 0);
         }
     }
 }

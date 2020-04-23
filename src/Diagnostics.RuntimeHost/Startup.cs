@@ -12,6 +12,7 @@ using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Diagnostics.RuntimeHost.Services.StorageService;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -76,7 +77,7 @@ namespace Diagnostics.RuntimeHost
                     options =>
                     {
                         options.AllowedIssuers = Configuration["SecuritySettings:AllowedCertIssuers"].Split("|").Select(p => p.Trim()).ToList();
-                        var allowedSubjectNames = Configuration["SecuritySettings:AllowedCertSubjectNames"].Split(", ").Select(p => p.Trim()).ToList();
+                        var allowedSubjectNames = Configuration["SecuritySettings:AllowedCertSubjectNames"].Split(",").Select(p => p.Trim()).ToList();
                         allowedSubjectNames.AddRange(Configuration["SecuritySettings:AdditionalAllowedCertSubjectNames"].Split(",").Select(p => p.Trim()).ToList());
                         options.AllowedSubjectNames = allowedSubjectNames;
                     }).AddJwtBearer("AzureAd", options => {
@@ -209,8 +210,8 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
-            
-
+            services.AddSingleton<IStorageService, StorageService>();
+            services.AddSingleton<IDiagEntityTableCacheService, DiagEntityTableCacheService>();
             services.AddLogging(loggingConfig =>
             {
                 loggingConfig.ClearProviders();
@@ -239,7 +240,10 @@ namespace Diagnostics.RuntimeHost
             {
                 app.UseDeveloperExceptionPage();
             }
-            app.UseAuthentication();
+            if (!env.IsDevelopment())
+            {
+                app.UseAuthentication();
+            }
             app.UseRewriter(new RewriteOptions().Add(new RewriteDiagnosticResource()));
             app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseMvc();
