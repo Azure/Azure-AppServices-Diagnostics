@@ -121,38 +121,12 @@ namespace Diagnostics.Tests.AzureStorageTests
                     ResourceProvider = "Microsoft.Web",
                     ResourceType = "sites",
                     StackType = "AspNet,NetCore",
-                    AppType = "WebApp"
+                    AppType = "WebApp",
+                    DetectorType = "Detector"
                 };
 
+
                 var insertResult = await storageService.LoadDataToTable(windowsDiagEntity);
-                var webApp = new App("72383ac7-d6f4-4a5e-bf56-b172f2fdafb2", "resourcegp-default", "diag-test");
-                var operationContext = new OperationContext<App>(
-                                         webApp,
-                                         DateTime.Now.ToString(),
-                                         DateTime.Now.AddHours(1).ToString(),
-                                         true,
-                                         new Guid().ToString()
-                                        );
-                var context = new RuntimeContext<App>(configuration);
-                context.OperationContext = operationContext;
-
-                var detectorsForWebApps = await tableCacheService.GetEntityListByType(context, "Detector");
-                Assert.NotNull(detectorsForWebApps);
-                Assert.NotEmpty(detectorsForWebApps);
-
-                var logicApp = new LogicApp("72383ac7-d6f4-4a5e-bf56-b172f2fdafb2", "resourcegp-default", "la-test");
-                var logicAppOperContext = new OperationContext<LogicApp>(logicApp,
-                                                 DateTime.Now.ToString(),
-                                                 DateTime.Now.AddHours(1).ToString(),
-                                                 true,
-                                                 new Guid().ToString());
-
-                var runtimeContextLogicApp = new RuntimeContext<LogicApp>(configuration);
-                runtimeContextLogicApp.OperationContext = logicAppOperContext;
-
-                var detectorsForLogicApps = await tableCacheService.GetEntityListByType(runtimeContextLogicApp, "Detector");
-                Assert.NotNull(detectorsForLogicApps);
-                Assert.Empty(detectorsForLogicApps);
 
                 // Test Analysis detectors
 
@@ -170,9 +144,36 @@ namespace Diagnostics.Tests.AzureStorageTests
                 };
 
                 insertResult = await storageService.LoadDataToTable(appDownAnalysisEntity);
-                var detectorsFromStorage = await tableCacheService.GetEntityListByType(context, "Detector");
-                Assert.NotNull(detectorsFromStorage);
-                Assert.NotEmpty(detectorsFromStorage.Where(s => s.DetectorType != null && s.DetectorType.Equals("Analysis", StringComparison.CurrentCultureIgnoreCase)));
+                var webApp = new App("72383ac7-d6f4-4a5e-bf56-b172f2fdafb2", "resourcegp-default", "diag-test");
+                var operationContext = new OperationContext<App>(
+                                         webApp,
+                                         DateTime.Now.ToString(),
+                                         DateTime.Now.AddHours(1).ToString(),
+                                         true,
+                                         new Guid().ToString()
+                                        );
+                var context = new RuntimeContext<App>(configuration);
+                context.OperationContext = operationContext;
+
+                var detectorsForWebApps = await tableCacheService.GetEntityListByType(context, "Detector");
+                Assert.NotNull(detectorsForWebApps);
+                Assert.NotEmpty(detectorsForWebApps);
+                Assert.NotEmpty(detectorsForWebApps.Where(s => s.DetectorType != null && s.DetectorType.Equals("Analysis", StringComparison.CurrentCultureIgnoreCase)));
+
+                var logicApp = new LogicApp("72383ac7-d6f4-4a5e-bf56-b172f2fdafb2", "resourcegp-default", "la-test");
+                var logicAppOperContext = new OperationContext<LogicApp>(logicApp,
+                                                 DateTime.Now.ToString(),
+                                                 DateTime.Now.AddHours(1).ToString(),
+                                                 true,
+                                                 new Guid().ToString());
+
+                var runtimeContextLogicApp = new RuntimeContext<LogicApp>(configuration);
+                runtimeContextLogicApp.OperationContext = logicAppOperContext;
+
+                var detectorsForLogicApps = await tableCacheService.GetEntityListByType(runtimeContextLogicApp, "Detector");
+                Assert.NotNull(detectorsForLogicApps);
+                Assert.Empty(detectorsForLogicApps);            
+                
 
             }    
         }
