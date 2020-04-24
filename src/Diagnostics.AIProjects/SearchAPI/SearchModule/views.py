@@ -14,7 +14,7 @@ from SearchModule.Logger import loggerInstance
 import urllib.parse, re
 
 translator = Translator()
-specialChars = r'[”\]\\><\)\(&\[,“!:]'
+specialChars = r'[”\]\\><\)\(&\[,“!:/-]'
 ######## RUN THE API SERVER IN FLASK  #############
 def getUTCTime():
     return datetime.now(timezone.utc)
