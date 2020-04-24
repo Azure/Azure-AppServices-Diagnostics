@@ -143,5 +143,10 @@ namespace Diagnostics.ModelsAndUtils.Models.Storage
         /// Search result score retrieved from search service.
         /// </summary>
         public float Score { get; set; }
+
+        /// <summary>
+        /// Detector type - Detector, Analysis, CategoryOverview
+        /// </summary>
+        public string DetectorType { get; set; }
     }
 }

@@ -6,7 +6,7 @@ using System;
 using System.Linq;
 using SourceWatcherFuncApp.Services;
 using SourceWatcherFuncApp.Utilities;
-using SourceWatcherFuncApp.Entities;
+using Diagnostics.ModelsAndUtils.Models.Storage;
 using System.Net;
 
 namespace Diag.SourceWatcher
@@ -55,7 +55,7 @@ namespace Diag.SourceWatcher
                         var assemblyData = await githubService.GetFileContentStream(assemblyFile.Download_url);
 
                         //log.LogInformation("Reading detector metadata");
-                        var configFileData = await githubService.GetFileContentByType<DetectorEntity>(configFile.Download_url);
+                        var configFileData = await githubService.GetFileContentByType<DiagEntity>(configFile.Download_url);
 
                         configFileData = EntityHelper.PrepareEntityForLoad(assemblyData, string.Empty, configFileData);
                         configFileData.GitHubSha = githubdir.Sha;

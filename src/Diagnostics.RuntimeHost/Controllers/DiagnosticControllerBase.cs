@@ -733,7 +733,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         Category = p.Category,
                         SupportTopicList = p.SupportTopicList,
                         AnalysisTypes = p.AnalysisTypes,
-                        Type = Enum.Parse<DetectorType>(p.EntityType),  
+                        Type = p.DetectorType != null ? Enum.Parse<DetectorType>(p.DetectorType) : DetectorType.Detector,  
                         Score = p.Score
                     }, context.ClientIsInternal)
                 });

@@ -144,7 +144,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             }
 
             PlatformType tableRowPlatformType = (PlatformType)Enum.Parse(typeof(PlatformType), diagEntity.PlatForm);
-            HostingEnvironmentType tableRowHostingEnv = (HostingEnvironmentType)Enum.Parse(typeof(HostingEnvironment), diagEntity.HostingEnvironmentType);
+            HostingEnvironmentType tableRowHostingEnv = (HostingEnvironmentType)Enum.Parse(typeof(HostingEnvironmentType), diagEntity.HostingEnvironmentType);
             return ((tableRowPlatformType & this.PlatformType) > 0) &&
                  ((tableRowHostingEnv & this.HostingEnvironmentType) > 0);
         }
