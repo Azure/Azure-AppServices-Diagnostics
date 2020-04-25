@@ -75,7 +75,10 @@ namespace Diagnostics.DataProviders
             var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId}##{0}_{Guid.NewGuid().ToString()}";
             clientRequestProperties.ClientRequestId = kustoClientId;
             clientRequestProperties.SetOption("servertimeout", new TimeSpan(0,0,timeoutSeconds));
-
+            if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase))
+            {
+                clientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Weak);
+            }
             try
             {
                 timeTakenStopWatch.Start();
