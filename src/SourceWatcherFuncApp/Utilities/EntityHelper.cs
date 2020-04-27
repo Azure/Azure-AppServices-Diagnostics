@@ -2,19 +2,18 @@
 using System.Reflection;
 using System.IO;
 using Diagnostics.Scripts;
-using SourceWatcherFuncApp.Entities;
 using Diagnostics.Scripts.Models;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using System.Collections.Generic;
 using Diagnostics.ModelsAndUtils.Attributes;
-using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.ModelsAndUtils.Models.Storage;
 using System.Linq;
 
 namespace SourceWatcherFuncApp.Utilities
 {
     public static class EntityHelper
     {
-        public static DetectorEntity PrepareEntityForLoad(Stream streamAssemblyData, string detectorScript, DetectorEntity detectorPackage)
+        public static DiagEntity PrepareEntityForLoad(Stream streamAssemblyData, string detectorScript, DiagEntity detectorPackage)
         {
             byte[] assemblyData = GetByteFromStream(streamAssemblyData);
             Assembly temp = Assembly.Load(assemblyData);
@@ -31,7 +30,7 @@ namespace SourceWatcherFuncApp.Utilities
                 detectorPackage.IsInternal = resourceFilter != null? resourceFilter.InternalOnly : false;
                 detectorPackage.SupportTopicList = invoker.EntryPointDefinitionAttribute != null ? invoker.EntryPointDefinitionAttribute.SupportTopicList : new List<SupportTopic>() ;
                 detectorPackage.AnalysisTypes = invoker.EntryPointDefinitionAttribute != null ? invoker.EntryPointDefinitionAttribute.AnalysisTypes : new List<string>();
-
+                detectorPackage.DetectorType = invoker.EntryPointDefinitionAttribute != null ? invoker.EntryPointDefinitionAttribute.Type.ToString() : "Detector";
                 if(invoker.ResourceFilter != null)
                 {
                     if (invoker.ResourceFilter is AppFilter)

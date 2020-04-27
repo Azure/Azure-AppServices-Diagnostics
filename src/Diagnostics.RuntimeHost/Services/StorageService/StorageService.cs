@@ -66,9 +66,9 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 partitionKey = partitionKey == null ? "Detector" : partitionKey;
                 var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionKey);
                 var tableQuery = new TableQuery<DiagEntity>();
-                if (partitionKey.Equals("Detector", StringComparison.CurrentCultureIgnoreCase))
+                if (partitionKey.Equals("Detector", StringComparison.CurrentCultureIgnoreCase) && loadOnlyPublicDetectors)
                 {
-                    var conditionInternal = TableQuery.GenerateFilterConditionForBool("IsInternal", QueryComparisons.Equal, loadOnlyPublicDetectors);
+                    var conditionInternal = TableQuery.GenerateFilterConditionForBool("IsInternal", QueryComparisons.Equal, !loadOnlyPublicDetectors);
                     var combinedFilter = TableQuery.CombineFilters(filterPartitionKey, TableOperators.And, conditionInternal);
                     tableQuery.Where(combinedFilter);
                 } else

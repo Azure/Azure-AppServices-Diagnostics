@@ -10,6 +10,7 @@ using Diagnostics.RuntimeHost.Models;
 using Diagnostics.ModelsAndUtils.Models;
 using System.Threading;
 using RimDev.Automation.StorageEmulator;
+using System.Linq;
 
 namespace Diagnostics.Tests.AzureStorageTests
 {
@@ -120,10 +121,29 @@ namespace Diagnostics.Tests.AzureStorageTests
                     ResourceProvider = "Microsoft.Web",
                     ResourceType = "sites",
                     StackType = "AspNet,NetCore",
-                    AppType = "WebApp"
+                    AppType = "WebApp",
+                    DetectorType = "Detector"
                 };
 
+
                 var insertResult = await storageService.LoadDataToTable(windowsDiagEntity);
+
+                // Test Analysis detectors
+
+                var appDownAnalysisEntity = new DiagEntity
+                {
+                    PartitionKey = "Detector",
+                    RowKey = "appDownAnalysis",
+                    GithubLastModified = DateTime.UtcNow,
+                    PlatForm = "Windows",
+                    ResourceProvider = "Microsoft.Web",
+                    ResourceType = "sites",
+                    StackType = "AspNet,NetCore",
+                    AppType = "WebApp",
+                    DetectorType = "Analysis"
+                };
+
+                insertResult = await storageService.LoadDataToTable(appDownAnalysisEntity);
                 var webApp = new App("72383ac7-d6f4-4a5e-bf56-b172f2fdafb2", "resourcegp-default", "diag-test");
                 var operationContext = new OperationContext<App>(
                                          webApp,
@@ -138,6 +158,7 @@ namespace Diagnostics.Tests.AzureStorageTests
                 var detectorsForWebApps = await tableCacheService.GetEntityListByType(context, "Detector");
                 Assert.NotNull(detectorsForWebApps);
                 Assert.NotEmpty(detectorsForWebApps);
+                Assert.NotEmpty(detectorsForWebApps.Where(s => s.DetectorType != null && s.DetectorType.Equals("Analysis", StringComparison.CurrentCultureIgnoreCase)));
 
                 var logicApp = new LogicApp("72383ac7-d6f4-4a5e-bf56-b172f2fdafb2", "resourcegp-default", "la-test");
                 var logicAppOperContext = new OperationContext<LogicApp>(logicApp,
@@ -151,7 +172,9 @@ namespace Diagnostics.Tests.AzureStorageTests
 
                 var detectorsForLogicApps = await tableCacheService.GetEntityListByType(runtimeContextLogicApp, "Detector");
                 Assert.NotNull(detectorsForLogicApps);
-                Assert.Empty(detectorsForLogicApps);
+                Assert.Empty(detectorsForLogicApps);            
+                
+
             }    
         }
     }
