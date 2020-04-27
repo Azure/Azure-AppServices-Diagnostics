@@ -7,7 +7,6 @@ using Diagnostics.Logger;
 using System.Data;
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Hosting;
-using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 
 namespace Diagnostics.DataProviders
 {
