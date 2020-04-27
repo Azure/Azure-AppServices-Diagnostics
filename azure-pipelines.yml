@@ -1,4 +1,5 @@
 # ASP.NET Core (.NET Framework)
+
 # Build and test ASP.NET Core projects targeting the full .NET Framework.
 # Add steps that publish symbols, save build artifacts, and more:
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
@@ -6,33 +7,86 @@
 trigger:
 - master2
 
-pool:
-  vmImage: 'windows-latest'
-
 variables:
   solution: '**/*.sln'
+
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
-steps:
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'build'
-    projects: '$(solution)'
-    configuration: '$(buildConfiguration)'
+jobs:
+- job: Build
+  pool:
+    vmImage: 'ubuntu-latest'
 
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'test'
+  steps:
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'build'
+        projects: '$(solution)'
+        configuration: '$(buildConfiguration)'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathtoPublish: '$(System.DefaultWorkingDirectory)'
+        artifactName: Build
 
-- task: DotNetCoreCLI@2
-  inputs:
-    command: publish
-    publishWebProjects: True
-    arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-    zipAfterPublish: True
+- job: 'IntegrationTests'
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: backend-drop1
+  pool:
+    name: IntegrationTestPool  # name of the pool to run this job in
+
+
+  steps:
+  - checkout: none #skip checking out the default repository resource
+  - task: DownloadBuildArtifacts@0
+    displayName: 'Download Build Artifacts'
+    inputs:
+      artifactName: Build
+      downloadPath: $(System.DefaultWorkingDirectory)
+  
+  
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: 'az login --identity'
+      noProfile: false
+      noRc: false
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'test'
+      projects: '**/Diagnostics.Tests.Integration.*.csproj'
+  dependsOn: Build
+  condition: succeeded()
+
+
+- job: 'UnitTestAndPublish'
+
+  pool:
+    vmImage: 'windows-latest'
+  
+  steps:
+  - checkout: none #skip checking out the default repository resource
+  - task: DownloadBuildArtifacts@0
+    displayName: 'Download Build Artifacts'
+    inputs:
+      artifactName: Build
+      downloadPath: $(System.DefaultWorkingDirectory)
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'test'
+      projects: '**/Diagnostics.Tests.csproj'
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: publish
+      publishWebProjects: True
+      arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+      zipAfterPublish: True
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: backend-drop1
+
+  dependsOn: Build
+  condition: succeeded()
