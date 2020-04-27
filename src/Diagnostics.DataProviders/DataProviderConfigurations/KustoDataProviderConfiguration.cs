@@ -104,6 +104,12 @@ namespace Diagnostics.DataProviders
         [ConfigurationName("UseKustoMapForPublic")]
         public bool UseKustoMapForPublic { get; set; }
 
+        /// <summary>
+        /// Flag to control heart beat query.
+        /// </summary>
+        [ConfigurationName("EnableHeartBeatQuery")]
+        public bool EnableHeartBeatQuery { get; set; }
+
         public string CloudDomain
         {
             get
