@@ -96,11 +96,11 @@ namespace Diagnostics.RuntimeHost.Middleware
                 out DateTime endTimeUtc,
                 out TimeSpan timeGrainTimeSpan,
                 out string errorMessage);
-
-            var dataSourcesConfigurationService = ((ServiceProvider)httpContext.RequestServices).GetService<IDataSourcesConfigurationService>();
-            var wawsObserverTokenService = ((ServiceProvider)httpContext.RequestServices).GetService<IWawsObserverTokenService>();
-            var supportBayApiObserverTokenService = ((ServiceProvider)httpContext.RequestServices).GetService<ISupportBayApiObserverTokenService>();
-            var kustoHeartBeatService = ((ServiceProvider)httpContext.RequestServices).GetService<IKustoHeartBeatService>();
+            
+            var dataSourcesConfigurationService = ((IServiceProvider)httpContext.RequestServices).GetService<IDataSourcesConfigurationService>();
+            var wawsObserverTokenService = ((IServiceProvider)httpContext.RequestServices).GetService<IWawsObserverTokenService>();
+            var supportBayApiObserverTokenService = ((IServiceProvider)httpContext.RequestServices).GetService<ISupportBayApiObserverTokenService>();
+            var kustoHeartBeatService = ((IServiceProvider)httpContext.RequestServices).GetService<IKustoHeartBeatService>();
 
             httpContext.Items.Add(HostConstants.ApiLoggerKey, logger);
             var clientObjId = string.Empty;
