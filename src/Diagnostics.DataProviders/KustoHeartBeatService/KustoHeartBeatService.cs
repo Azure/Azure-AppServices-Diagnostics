@@ -4,9 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
 using Diagnostics.Logger;
-using Microsoft.AspNetCore.Http.Features;
 using System.Data;
 using System.Collections.Concurrent;
+using Microsoft.AspNetCore.Hosting;
+using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 
 namespace Diagnostics.DataProviders
 {
@@ -21,6 +22,7 @@ namespace Diagnostics.DataProviders
         private ConcurrentDictionary<string, KustoHeartBeat> _heartbeats;
         private KustoDataProvider _kustoDataProvider;
         private CancellationTokenSource _cancellationToken;
+        private bool runHeartBeatQuery;
 
         private void Initialize()
         {
@@ -36,7 +38,7 @@ namespace Diagnostics.DataProviders
                 {
                     failoverCluster = _configuration.FailoverClusterNameCollection[primaryCluster];
                 }
-                if (!_heartbeats.ContainsKey(primaryCluster) && _heartbeats.TryAdd(primaryCluster, new KustoHeartBeat(primaryCluster, failoverCluster, _kustoDataProvider, _configuration)))
+                if (runHeartBeatQuery && !_heartbeats.ContainsKey(primaryCluster) && _heartbeats.TryAdd(primaryCluster, new KustoHeartBeat(primaryCluster, failoverCluster, _kustoDataProvider, _configuration)))
                 {
                     // Start threads for each heartbeat on the thread pool
                     Task.Run(() => _heartbeats[primaryCluster].RunHeartBeatTask(_cancellationToken.Token));
@@ -50,9 +52,10 @@ namespace Diagnostics.DataProviders
             _cancellationToken.Cancel();
         }
 
-        public KustoHeartBeatService(KustoDataProviderConfiguration configuration)
+        public KustoHeartBeatService(KustoDataProviderConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
             _configuration = configuration;
+            runHeartBeatQuery = hostingEnvironment.IsProduction() || hostingEnvironment.IsEnvironment("UnitTest");
             Initialize();
         }
 

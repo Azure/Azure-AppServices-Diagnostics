@@ -175,7 +175,8 @@ namespace Diagnostics.RuntimeHost
             var kustoConfiguration = dataSourcesConfigService.Config.KustoConfiguration;
             var searchApiConfiguration = dataSourcesConfigService.Config.SearchServiceProviderConfiguration;
 
-            services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
+            services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration, Environment));
+    
 
             observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
             var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.AADResource, observerConfiguration);

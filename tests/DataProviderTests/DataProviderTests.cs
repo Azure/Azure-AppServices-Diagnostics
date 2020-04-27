@@ -11,6 +11,7 @@ using Diagnostics.Scripts;
 using Diagnostics.Tests.Helpers;
 using Xunit;
 using Xunit.Abstractions;
+using Diagnostics.Tests.AzureStorageTests;
 
 namespace Diagnostics.Tests.DataProviderTests
 {
@@ -184,8 +185,9 @@ namespace Diagnostics.Tests.DataProviderTests
 
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
-
-            var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration);
+            var env = new MockHostingEnvironment();
+            env.EnvironmentName = "UnitTest";
+            var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration, env);
             var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString(), kustoHeartBeatService: kustoHeartBeatService));
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
@@ -205,7 +207,9 @@ namespace Diagnostics.Tests.DataProviderTests
         {
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
-            var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration);
+            var env = new MockHostingEnvironment();
+            env.EnvironmentName = "UnitTest";
+            var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration, env);
 
             MockKustoClient.ShouldHeartbeatSucceed = true;
             int startingHeartBeatRuns = MockKustoClient.HeartBeatRuns;
