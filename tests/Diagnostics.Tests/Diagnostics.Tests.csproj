@@ -17,11 +17,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Diagnostics.CompilerHost\Diagnostics.CompilerHost.csproj" />
-    <ProjectReference Include="..\src\Diagnostics.DataProviders\Diagnostics.DataProviders.csproj" />
-    <ProjectReference Include="..\src\Diagnostics.ModelsAndUtils\Diagnostics.ModelsAndUtils.csproj" />
-    <ProjectReference Include="..\src\Diagnostics.RuntimeHost\Diagnostics.RuntimeHost.csproj" />
-    <ProjectReference Include="..\src\Diagnostics.Scripts\Diagnostics.Scripts.csproj" />
+    <ProjectReference Include="..\..\src\Diagnostics.CompilerHost\Diagnostics.CompilerHost.csproj" />
+    <ProjectReference Include="..\..\src\Diagnostics.DataProviders\Diagnostics.DataProviders.csproj" />
+    <ProjectReference Include="..\..\src\Diagnostics.ModelsAndUtils\Diagnostics.ModelsAndUtils.csproj" />
+    <ProjectReference Include="..\..\src\Diagnostics.RuntimeHost\Diagnostics.RuntimeHost.csproj" />
+    <ProjectReference Include="..\..\src\Diagnostics.Scripts\Diagnostics.Scripts.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -50,6 +50,6 @@
     <Copy SourceFiles="..\data\templates\Gist_HostingEnvironment.csx" DestinationFolder="$(OutputPath)\templates" ContinueOnError="true" />
   </Target>
 
-  <Import Project="..\data\samples\Diagnostics.Samples\Diagnostics.Samples.projitems" Label="Shared" />
+  <Import Project="..\..\data\samples\Diagnostics.Samples\Diagnostics.Samples.projitems" Label="Shared" />
   
 </Project>
