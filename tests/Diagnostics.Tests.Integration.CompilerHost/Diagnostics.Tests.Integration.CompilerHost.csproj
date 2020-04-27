@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Diagnostics.RuntimeHost\Diagnostics.RuntimeHost.csproj" />
+    <ProjectReference Include="..\..\src\Diagnostics.CompilerHost\Diagnostics.CompilerHost.csproj" />
   </ItemGroup>
 
 </Project>
