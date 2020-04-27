@@ -185,9 +185,8 @@ namespace Diagnostics.Tests.DataProviderTests
 
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
-            var env = new MockHostingEnvironment();
-            env.EnvironmentName = "UnitTest";
-            var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration, env);
+            config.KustoConfiguration.EnableHeartBeatQuery = true;
+            var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration);
             var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString(), kustoHeartBeatService: kustoHeartBeatService));
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
@@ -207,9 +206,8 @@ namespace Diagnostics.Tests.DataProviderTests
         {
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
-            var env = new MockHostingEnvironment();
-            env.EnvironmentName = "UnitTest";
-            var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration, env);
+            config.KustoConfiguration.EnableHeartBeatQuery = true;
+            var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration);
 
             MockKustoClient.ShouldHeartbeatSucceed = true;
             int startingHeartBeatRuns = MockKustoClient.HeartBeatRuns;

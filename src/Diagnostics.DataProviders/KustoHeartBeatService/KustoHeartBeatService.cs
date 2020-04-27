@@ -51,10 +51,10 @@ namespace Diagnostics.DataProviders
             _cancellationToken.Cancel();
         }
 
-        public KustoHeartBeatService(KustoDataProviderConfiguration configuration, IHostingEnvironment hostingEnvironment)
+        public KustoHeartBeatService(KustoDataProviderConfiguration configuration)
         {
             _configuration = configuration;
-            runHeartBeatQuery = hostingEnvironment.IsProduction() || hostingEnvironment.IsEnvironment("UnitTest");
+            runHeartBeatQuery = _configuration.EnableHeartBeatQuery;
             Initialize();
         }
 
