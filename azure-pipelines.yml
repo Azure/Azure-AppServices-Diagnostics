@@ -6,6 +6,8 @@
 trigger:
 - master2
 
+
+
 pool:
   vmImage: 'windows-latest'
 
@@ -13,8 +15,14 @@ variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
+  azureSubscription: 'Private Test Sub CMAHER'
 
 steps:
+- task: AzureKeyVault@1
+  inputs:
+    azureSubscription: 'Private Test Sub CMAHER'
+    KeyVaultName: 'AppServiceDiagnostics'
+    SecretsFilter: '*'
 - task: DotNetCoreCLI@2
   inputs:
     command: 'build'
@@ -23,7 +31,6 @@ steps:
 
 - task: DotNetCoreCLI@2
   inputs:
-    azureSubscription: 'Private Test Sub CMAHER'
     command: 'test'
 
 - task: DotNetCoreCLI@2
