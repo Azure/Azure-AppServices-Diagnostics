@@ -37,7 +37,7 @@ namespace Diagnostics.DataProviders
                 {
                     failoverCluster = _configuration.FailoverClusterNameCollection[primaryCluster];
                 }
-                if (runHeartBeatQuery && !_heartbeats.ContainsKey(primaryCluster) && _heartbeats.TryAdd(primaryCluster, new KustoHeartBeat(primaryCluster, failoverCluster, _kustoDataProvider, _configuration)))
+                if (!_heartbeats.ContainsKey(primaryCluster) && _heartbeats.TryAdd(primaryCluster, new KustoHeartBeat(primaryCluster, failoverCluster, _kustoDataProvider, _configuration)) && runHeartBeatQuery)
                 {
                     // Start threads for each heartbeat on the thread pool
                     Task.Run(() => _heartbeats[primaryCluster].RunHeartBeatTask(_cancellationToken.Token));
