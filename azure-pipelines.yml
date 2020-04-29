@@ -6,10 +6,8 @@
 trigger:
 - master2
 
-azureSubscription: 'Private Test Sub CMAHER'
-
 pool:
-  vmImage: 'windows-latest'
+  name: CraigsTestPool  # name of the pool to run this job in
 
 variables:
   solution: '**/*.sln'
