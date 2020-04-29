@@ -663,7 +663,7 @@ namespace Diagnostics.Logger
         /// <param name="ExceptionDetails">Exception details.</param>
         /// <param name="Message">The message.</param>
         [Event(5000, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage)]
-        public void LogRuntimeLogError(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message)
+        public void LogRuntimeLogError(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
             WriteDiagnosticsEvent(
                 5000,
@@ -674,7 +674,9 @@ namespace Diagnostics.Logger
                 Resource,
                 ExceptionType,
                 ExceptionDetails,
-                Message);
+                Message,
+                EnvironmentName,
+                WebsiteHostName);
         }
 
         /// <summary>
@@ -689,7 +691,7 @@ namespace Diagnostics.Logger
         /// <param name="ExceptionDetails">Exception details.</param>
         /// <param name="Message">The message.</param>
         [Event(5001, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage)]
-        public void LogRuntimeLogWarning(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message)
+        public void LogRuntimeLogWarning(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
             WriteDiagnosticsEvent(
                 5001,
@@ -700,7 +702,9 @@ namespace Diagnostics.Logger
                 Resource,
                 ExceptionType,
                 ExceptionDetails,
-                Message);
+                Message,
+                EnvironmentName,
+                WebsiteHostName);
         }
 
         /// <summary>
@@ -715,7 +719,7 @@ namespace Diagnostics.Logger
         /// <param name="ExceptionDetails">Exception details.</param>
         /// <param name="Message">The message.</param>
         [Event(5002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage)]
-        public void LogRuntimeLogInformation(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message)
+        public void LogRuntimeLogInformation(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
             WriteDiagnosticsEvent(
                 5002,
@@ -726,7 +730,9 @@ namespace Diagnostics.Logger
                 Resource,
                 ExceptionType,
                 ExceptionDetails,
-                Message);
+                Message,
+                EnvironmentName,
+                WebsiteHostName);
         }
 
         #endregion
