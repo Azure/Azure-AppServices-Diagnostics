@@ -43,10 +43,12 @@ namespace Diagnostics.RuntimeHost.Services
         private string GetSupportTopicKustoQuery() {
             string query = $@"cluster('azsupport').database('AzureSupportability').ActiveSupportTopicTree
                             | where Timestamp > ago(3d)
-                            | summarize by ProductId, SupportTopicId = SupportTopicL3Id, ProductName, SupportTopicL2Name, SupportTopicL3Name
+                            | extend SupportTopicId = iff(SupportTopicL3Id != '' and SupportTopicL3Id != ' ', SupportTopicL3Id, SupportTopicL2Id) 
                             | where SupportTopicId != ''
-                            | extend SupportTopicPath = strcat(ProductName, '\\', SupportTopicL2Name,'\\', SupportTopicL3Name)
+                            | summarize by ProductId, SupportTopicId, ProductName, SupportTopicL2Name, SupportTopicL3Name                            
+                            | extend SupportTopicPath = iff(SupportTopicL3Name != '' and SupportTopicL3Name != ' ', strcat(ProductName, '\\', SupportTopicL2Name,'\\', SupportTopicL3Name), strcat(ProductName, '\\', SupportTopicL2Name))
                             | project ProductId, SupportTopicId, SupportTopicPath";
+
             return query;
         }
 
