@@ -70,6 +70,11 @@ namespace Diagnostics.DataProviders
             request.Headers.Add("Authorization", authorizationToken);
             request.Headers.Add(HeaderConstants.ClientRequestIdHeader, kustoClientId ?? Guid.NewGuid().ToString());
             request.Headers.UserAgent.ParseAdd("appservice-diagnostics");
+            string queryConsistency = "strongconsistency";
+            if (cluster.StartsWith("waws", StringComparison.OrdinalIgnoreCase))
+            {
+                queryConsistency = "weakconsistency";
+            }
             var requestPayload = new
             {
                 db = database,
@@ -79,7 +84,8 @@ namespace Diagnostics.DataProviders
                     ClientRequestId = kustoClientId,
                     Options = new
                     {
-                        servertimeout = new TimeSpan(0, 1, 0)
+                        servertimeout = new TimeSpan(0, 1, 0),
+                        queryconsistency = queryConsistency
                     }
                 }
             };
