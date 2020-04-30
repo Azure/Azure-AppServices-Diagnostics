@@ -62,7 +62,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
                 }         
             }
 
-            result = result.Where(tableEntity => context.OperationContext.Resource.IsApplicable(tableEntity)).OrderBy(tableRow => tableRow.DetectorName).ToList();
+            result = result.Where(tableEntity => context.OperationContext.Resource.IsApplicable(tableEntity) && (context.ClientIsInternal || !tableEntity.IsInternal)).OrderBy(tableRow => tableRow.DetectorName).ToList();
             return result;
         }
 

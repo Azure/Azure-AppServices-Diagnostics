@@ -9,6 +9,7 @@ using Microsoft.WindowsAzure.Storage.Table;
 using Diagnostics.Logger;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace Diagnostics.RuntimeHost.Services.StorageService
 {
@@ -66,15 +67,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 partitionKey = partitionKey == null ? "Detector" : partitionKey;
                 var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionKey);
                 var tableQuery = new TableQuery<DiagEntity>();
-                if (partitionKey.Equals("Detector", StringComparison.CurrentCultureIgnoreCase) && loadOnlyPublicDetectors)
-                {
-                    var conditionInternal = TableQuery.GenerateFilterConditionForBool("IsInternal", QueryComparisons.Equal, !loadOnlyPublicDetectors);
-                    var combinedFilter = TableQuery.CombineFilters(filterPartitionKey, TableOperators.And, conditionInternal);
-                    tableQuery.Where(combinedFilter);
-                } else
-                {
-                    tableQuery.Where(filterPartitionKey);
-                }
+                tableQuery.Where(filterPartitionKey);
+                
                 TableContinuationToken tableContinuationToken = null;
                 var detectorsResult = new List<DiagEntity>();
                 do
@@ -131,6 +125,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 return null;
             }
         }
+
 
     }
 }
