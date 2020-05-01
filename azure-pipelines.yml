@@ -16,11 +16,12 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- task: BatchScript@1
+- task: Bash@3
   inputs:
-    filename: 'az'
-    arguments: 'login --identity azure pipelines'
-    
+    targetType: 'inline'
+    script: 'az login --identity azure pipelines'
+    noProfile: false
+    noRc: false
 - task: DotNetCoreCLI@2
   inputs:
     command: 'build'
