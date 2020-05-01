@@ -36,7 +36,11 @@ namespace Diagnostics.Tests.AzureStorageTests
             if(string.IsNullOrWhiteSpace(configuration["SourceWatcher:TableName"]))
             {
                 configuration["SourceWatcher:TableName"] = "diagentities";
-            }           
+            }
+            if (string.IsNullOrWhiteSpace(configuration["SourceWatcher:BlobContainerName"]))
+            {
+                configuration["SourceWatcher:BlobContainerName"] = "detectors";
+            }
             storageService = new StorageService(configuration, environment);
             tableCacheService = new DiagEntityTableCacheService(storageService);
         }
@@ -176,6 +180,23 @@ namespace Diagnostics.Tests.AzureStorageTests
                 
 
             }    
+        }
+
+        [Fact]
+        /// <summary>
+        /// Test blob upload operation
+        /// </summary>
+        public async void TestBlobOperations()
+        {
+            // First check if emulator is running before proceeding. 
+            bool isEmulatorRunning = CheckProcessRunning(4);
+            if(isEmulatorRunning)
+            {
+                var sampleBlobName = "MyFile.txt";
+                var sampleContent = "Hello World";
+                var etag = await storageService.LoadBlobToContainer(sampleBlobName, sampleContent);
+                Assert.NotNull(etag);
+            }
         }
     }
 }
