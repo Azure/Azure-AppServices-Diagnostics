@@ -9,12 +9,12 @@ using Diagnostics.ModelsAndUtils.Models.Storage;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.ModelsAndUtils.Models;
 using System.Threading;
-using RimDev.Automation.StorageEmulator;
 using System.Linq;
+using Microsoft.WindowsAzure.Storage;
 
 namespace Diagnostics.Tests.AzureStorageTests
 {
-    public class AzureStorageTests: IDisposable
+    public class AzureStorageTests
     {
 
         IStorageService storageService;
@@ -25,11 +25,9 @@ namespace Diagnostics.Tests.AzureStorageTests
 
         IHostingEnvironment environment;
 
-        AzureStorageEmulatorAutomation emulator;
-
         public AzureStorageTests()
         {
-            StartStorageEmulator();
+            /*StartStorageEmulator();*/
             configuration = InitConfig();
             environment = new MockHostingEnvironment();
             environment.EnvironmentName = "UnitTest";
@@ -41,17 +39,17 @@ namespace Diagnostics.Tests.AzureStorageTests
             tableCacheService = new DiagEntityTableCacheService(storageService);
         }
 
-        private void StartStorageEmulator()
+        /*private void StartStorageEmulator()
         {
             emulator = new AzureStorageEmulatorAutomation();
             emulator.Init();
             emulator.Start();
-        }
+        }*/
 
-        public void Dispose()
-        {
-            emulator.Stop();
-        }
+        //public void Dispose()
+        //{
+        //    emulator.Stop();
+        //}
 
         private IConfiguration InitConfig()
         {
@@ -62,16 +60,17 @@ namespace Diagnostics.Tests.AzureStorageTests
 
         private bool CheckProcessRunning(int maxAttempts)
         {
-            bool isRunning = AzureStorageEmulatorAutomation.IsEmulatorRunning();
-            int currentAttempt = 0;
-            while (!isRunning && currentAttempt <= maxAttempts)
-            {
-                currentAttempt++;
-                // Wait for 15s and then try 
-                Thread.Sleep(15 * 1000);          
-                isRunning = AzureStorageEmulatorAutomation.IsEmulatorRunning();
-            }
-            return isRunning;
+            return true;
+            //bool isRunning = AzureStorageEmulatorAutomation.IsEmulatorRunning();
+            //int currentAttempt = 0;
+            //while (!isRunning && currentAttempt <= maxAttempts)
+            //{
+            //    currentAttempt++;
+            //    // Wait for 15s and then try 
+            //    Thread.Sleep(15 * 1000);          
+            //    isRunning = AzureStorageEmulatorAutomation.IsEmulatorRunning();
+            //}
+            //return isRunning;
         }
 
         [Fact]
