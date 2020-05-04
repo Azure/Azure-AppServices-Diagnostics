@@ -20,7 +20,7 @@ steps:
     azureSubscription: 'Private Test Sub CMAHER'
     scriptType: 'ps'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az login'
+    inlineScript: 'echo hello world'
 
 - task: DotNetCoreCLI@2
   inputs:
