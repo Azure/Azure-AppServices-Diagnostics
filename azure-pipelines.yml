@@ -15,12 +15,15 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- task: AzureCLI@2
+- task: AzurePowerShell@5
   inputs:
     azureSubscription: 'Private Test Sub CMAHER'
-    scriptType: 'ps'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'echo hello world'
+    ScriptType: 'InlineScript'
+    Inline: |
+      # You can write your azure powershell scripts inline here. 
+      # You can also pass predefined and custom variables to this script using arguments
+      az login --identity
+    azurePowerShellVersion: 'LatestVersion'
 
 - task: DotNetCoreCLI@2
   inputs:
