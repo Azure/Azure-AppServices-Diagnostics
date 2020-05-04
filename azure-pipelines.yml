@@ -18,11 +18,12 @@ steps:
 - task: AzureCLI@2
   inputs:
     azureSubscription: 'Private Test Sub CMAHER'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: 'az'
+    scriptType: 'ps'
+    scriptLocation: 'scriptPath'
+    scriptPath: 'az'
     arguments: 'login'
-    addSpnToEnvironment: true
+    powerShellErrorActionPreference: 'continue'
+    powerShellIgnoreLASTEXITCODE: true
 
 - task: DotNetCoreCLI@2
   inputs:
