@@ -7,7 +7,7 @@ trigger:
 - master2
 
 pool:
-  name: CraigsTestPool  # name of the pool to run this job in
+  vmImage: 'windows-latest'
 
 variables:
   solution: '**/*.sln'
