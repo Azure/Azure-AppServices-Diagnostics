@@ -12,6 +12,7 @@ pool:
 
 variables:
   solution: '**/*.sln'
+
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
@@ -23,11 +24,6 @@ steps:
     noProfile: false
     noRc: false
 
-- task: NodeTool@0 
-  inputs:
-    versionSpec: '12.x'
-- script: npx azurite@2.7.0 &
-
 - task: DotNetCoreCLI@2
   inputs:
     command: 'build'
@@ -37,6 +33,7 @@ steps:
 - task: DotNetCoreCLI@2
   inputs:
     command: 'test'
+    projects: '**/Diagnostics.Tests.Integration.*.csproj'
 
 - task: DotNetCoreCLI@2
   inputs:
