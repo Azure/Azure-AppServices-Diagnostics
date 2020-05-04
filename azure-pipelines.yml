@@ -17,7 +17,7 @@ jobs:
 - job: 'IntegrationTests'
 
   pool:
-    name: CraigsTestPool  # name of the pool to run this job in
+    name: IntegrationTestPool  # name of the pool to run this job in
 
   
 
