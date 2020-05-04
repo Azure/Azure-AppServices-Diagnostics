@@ -10,8 +10,7 @@ using Diagnostics.ModelsAndUtils.Models.Storage;
 using Newtonsoft.Json;
 using Diagnostics.RuntimeHost.Utilities;
 using System.IO;
-using System.Text;
-using Octokit;
+using Diagnostics.Logger;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
 {
@@ -40,18 +39,32 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             {
                 throw new ArgumentNullException(nameof(pkg));
             }
-            var blobName = $"{pkg.Id.ToLower()}/{pkg.Id.ToLower()}.dll";
-            var etag = await storageService.LoadBlobToContainer(blobName, pkg.DllBytes);
-            var gitCommit = await gitHubClient.GetCommitByPath(blobName);
-            var diagEntity = JsonConvert.DeserializeObject<DiagEntity>(pkg.PackageConfig);
-            if(gitCommit != null)
+            try
             {
-                diagEntity.GitHubSha = gitCommit.Commit.Tree.Sha;
-                diagEntity.GithubLastModified = gitCommit.Commit.Author.Date.DateTime.ToUniversalTime();
-            }
-            var assemblyData = new MemoryStream(Convert.FromBase64String(pkg.DllBytes));
-            diagEntity = DiagEntityHelper.PrepareEntityForLoad(assemblyData, pkg.CodeString, diagEntity);
-            await storageService.LoadDataToTable(diagEntity);
+                var blobName = $"{pkg.Id.ToLower()}/{pkg.Id.ToLower()}.dll";
+                var etag = await storageService.LoadBlobToContainer(blobName, pkg.DllBytes);
+                if (string.IsNullOrEmpty(etag))
+                {
+                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Uploading {pkg.Id} to blob failed, not proceeding further");
+                    return;
+                }
+                var gitCommit = await gitHubClient.GetCommitByPath(blobName);
+                var diagEntity = JsonConvert.DeserializeObject<DiagEntity>(pkg.PackageConfig);
+                if (gitCommit != null)
+                {
+                    diagEntity.GitHubSha = gitCommit.Commit.Tree.Sha;
+                    diagEntity.GithubLastModified = gitCommit.Commit.Author.Date.DateTime.ToUniversalTime();
+                }
+                using (var ms = new MemoryStream(Convert.FromBase64String(pkg.DllBytes)))
+                {
+                    var assemblyBytes = DiagEntityHelper.GetByteFromStream(ms);
+                    diagEntity = DiagEntityHelper.PrepareEntityForLoad(assemblyBytes, pkg.CodeString, diagEntity);
+                }
+                await storageService.LoadDataToTable(diagEntity);
+            } catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageWatcher), ex.Message, ex.GetType().ToString(), ex.ToString());
+            }         
         }
 
         public void Start()

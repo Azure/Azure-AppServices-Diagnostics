@@ -12,6 +12,9 @@
     <None Include="$(MSBuildThisFileDirectory)BackupCheckDetector.csx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="$(MSBuildThisFileDirectory)blobDetector.csx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="$(MSBuildThisFileDirectory)GetRuntimeSiteSlotMapData.csx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

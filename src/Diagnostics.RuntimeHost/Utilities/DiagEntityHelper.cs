@@ -13,9 +13,8 @@ namespace Diagnostics.RuntimeHost.Utilities
 {
     public static class DiagEntityHelper
     {
-        public static DiagEntity PrepareEntityForLoad(Stream streamAssemblyData, string detectorScript, DiagEntity detectorPackage)
+        public static DiagEntity PrepareEntityForLoad(byte[] assemblyData, string detectorScript, DiagEntity detectorPackage)
         {
-            byte[] assemblyData = GetByteFromStream(streamAssemblyData);
             Assembly temp = Assembly.Load(assemblyData);
 
             if (!Enum.TryParse(detectorPackage.EntityType, true, out EntityType entityType))

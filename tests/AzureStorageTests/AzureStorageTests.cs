@@ -11,6 +11,18 @@ using Diagnostics.ModelsAndUtils.Models;
 using System.Threading;
 using RimDev.Automation.StorageEmulator;
 using System.Linq;
+using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.Tests.Helpers;
+using Diagnostics.Scripts.Models;
+using Diagnostics.Scripts.CompilationService;
+using Diagnostics.Scripts.CompilationService.Interfaces;
+using Microsoft.CodeAnalysis.Scripting;
+using Octokit;
+using Diagnostics.RuntimeHost.Utilities;
+using System.Reflection;
+using Diagnostics.Scripts;
+using System.IO;
+using Diagnostics.ModelsAndUtils.ScriptUtilities;
 
 namespace Diagnostics.Tests.AzureStorageTests
 {
@@ -190,13 +202,42 @@ namespace Diagnostics.Tests.AzureStorageTests
         {
             // First check if emulator is running before proceeding. 
             bool isEmulatorRunning = CheckProcessRunning(4);
-            if(isEmulatorRunning)
+            if (isEmulatorRunning)
             {
-                var sampleBlobName = "MyFile.txt";
-                var sampleContent = "Hello World";
-                var etag = await storageService.LoadBlobToContainer(sampleBlobName, sampleContent);
-                Assert.NotNull(etag);
+                // Test .dll blob upload 
+
+                Definition definitonAttribute = new Definition()
+                {
+                    Id = "blobDetector"
+                };
+
+                EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
+                metadata.ScriptText = await File.ReadAllTextAsync("blobDetector.csx");
+                var scriptOptions = ScriptTestDataHelper.GetScriptOption(ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports());
+                var serviceInstance = CompilationServiceFactory.CreateService(metadata, scriptOptions);
+                ICompilation compilation = await serviceInstance.GetCompilationAsync();
+
+                var assemblyBytes = await compilation.GetAssemblyBytesAsync();
+                var blobName = $"{definitonAttribute.Id}/{definitonAttribute.Id}.dll";
+                var etagdetector = await storageService.LoadBlobToContainer(blobName, assemblyBytes.Item1);
+                Assert.NotNull(etagdetector);
+                var assemblyData = await storageService.GetBlobByName(blobName);
+                Assert.NotNull(assemblyData);
+
+                // Now test initializing Entry Point of Invoker using assembly
+                Assembly temp = Assembly.Load(assemblyData);
+                using (EntityInvoker invoker = new EntityInvoker(metadata))
+                {
+                    Exception ex = Record.Exception(() =>
+                    {
+                        invoker.InitializeEntryPoint(temp);
+                    });
+
+                    Assert.Null(ex);
+                    Assert.True(invoker.IsCompilationSuccessful);
+                    Assert.Equal(definitonAttribute.Id, invoker.EntryPointDefinitionAttribute.Id);
+                }
             }
         }
-    }
+     }       
 }

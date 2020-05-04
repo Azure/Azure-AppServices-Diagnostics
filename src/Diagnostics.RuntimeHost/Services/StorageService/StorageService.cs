@@ -22,6 +22,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null);
         Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity);
         Task<string> LoadBlobToContainer(string blobname, string contents);
+        Task<byte[]> GetBlobByName(string name);
     }
     public class StorageService : IStorageService
     {
@@ -144,16 +145,39 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             try
             {
                 var timeTakenStopWatch = new Stopwatch();
-                await containerClient.CreateIfNotExistsAsync();
-                var uploadStream = new MemoryStream(Convert.FromBase64String(contents));
+                await containerClient.CreateIfNotExistsAsync();       
                 timeTakenStopWatch.Start();
                 var cloudBlob = containerClient.GetBlockBlobReference(blobname);
-                await cloudBlob.UploadFromStreamAsync(uploadStream);
+                using (var uploadStream = new MemoryStream(Convert.FromBase64String(contents)))
+                {
+                    await cloudBlob.UploadFromStreamAsync(uploadStream);               
+                }
                 await cloudBlob.FetchAttributesAsync();
                 timeTakenStopWatch.Stop();
                 var uploadResult = cloudBlob.Properties;  
                 DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Loaded {blobname}, etag {uploadResult.ETag}, time taken {timeTakenStopWatch.ElapsedMilliseconds}");
                 return uploadResult.ETag;
+            } catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
+                return null;
+            }
+        }
+
+        public async Task<byte[]> GetBlobByName(string name)
+        {
+            try
+            {
+                var timeTakenStopWatch = new Stopwatch();
+                await containerClient.CreateIfNotExistsAsync();
+                timeTakenStopWatch.Start();
+                var cloudBlob = containerClient.GetBlockBlobReference(name);
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    await cloudBlob.DownloadToStreamAsync(ms);
+                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Downloaded {name} to memory stream, time taken {timeTakenStopWatch.ElapsedMilliseconds}");
+                    return ms.ToArray();
+                }              
             } catch (Exception ex)
             {
                 DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
