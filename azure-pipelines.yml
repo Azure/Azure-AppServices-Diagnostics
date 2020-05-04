@@ -7,17 +7,19 @@
 trigger:
 - master2
 
+variables:
+  solution: '**/*.sln'
+
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
 jobs:
 - job: 'IntegrationTests'
 
   pool:
     name: CraigsTestPool  # name of the pool to run this job in
 
-  variables:
-    solution: '**/*.sln'
-
-    buildPlatform: 'Any CPU'
-    buildConfiguration: 'Release'
+  
 
   steps:
   - task: Bash@3
