@@ -21,7 +21,7 @@ steps:
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
     inlineScript: 'az'
-    arguments: 'login --identity'
+    arguments: 'login'
     addSpnToEnvironment: true
 
 - task: DotNetCoreCLI@2
