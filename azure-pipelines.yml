@@ -21,8 +21,6 @@ steps:
     scriptType: 'ps'
     scriptLocation: 'inlineScript'
     inlineScript: 'az login'
-    powerShellErrorActionPreference: 'continue'
-    powerShellIgnoreLASTEXITCODE: true
 
 - task: DotNetCoreCLI@2
   inputs:
