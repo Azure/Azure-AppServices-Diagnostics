@@ -7,42 +7,63 @@
 trigger:
 - master2
 
-pool:
-  name: CraigsTestPool  # name of the pool to run this job in
+jobs:
+- job: 'IntegrationTests'
 
-variables:
-  solution: '**/*.sln'
+  pool:
+    name: CraigsTestPool  # name of the pool to run this job in
 
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
+  variables:
+    solution: '**/*.sln'
 
-steps:
-- task: Bash@3
-  inputs:
-    targetType: 'inline'
-    script: 'az login --identity'
-    noProfile: false
-    noRc: false
+    buildPlatform: 'Any CPU'
+    buildConfiguration: 'Release'
 
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'build'
-    projects: '$(solution)'
-    configuration: '$(buildConfiguration)'
+  steps:
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: 'az login --identity'
+      noProfile: false
+      noRc: false
 
-- task: DotNetCoreCLI@2
-  inputs:
-    command: 'test'
-    projects: '**/Diagnostics.Tests.Integration.*.csproj'
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'build'
+      projects: '$(solution)'
+      configuration: '$(buildConfiguration)'
 
-- task: DotNetCoreCLI@2
-  inputs:
-    command: publish
-    publishWebProjects: True
-    arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-    zipAfterPublish: True
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'test'
+      projects: '**/Diagnostics.Tests.Integration.*.csproj'
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    artifactName: backend-drop1
+
+
+- job: 'UnitTestAndPublish'
+
+  pool:
+    vmImage: 'windows-latest'
+  
+  steps:
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'build'
+      projects: '$(solution)'
+      configuration: '$(buildConfiguration)'
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'test'
+      projects: '**/Diagnostics.Tests.csproj'
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: publish
+      publishWebProjects: True
+      arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+      zipAfterPublish: True
+
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      artifactName: backend-drop1
