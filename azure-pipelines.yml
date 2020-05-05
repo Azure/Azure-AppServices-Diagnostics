@@ -41,6 +41,11 @@ jobs:
       artifactName: Build
       downloadPath: $(System.DefaultWorkingDirectory)
 
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'restore'
+      projects: '**/Diagnostics.Tests.Integration.*.csproj'
+
   - task: Bash@3
     inputs:
       targetType: 'inline'
@@ -69,6 +74,11 @@ jobs:
     inputs:
       artifactName: Build
       downloadPath: $(System.DefaultWorkingDirectory)
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'restore'
+      projects: '**/Diagnostics.Tests.Integration.*.csproj'
 
   - task: DotNetCoreCLI@2
     inputs:
