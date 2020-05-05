@@ -184,7 +184,7 @@ namespace Diagnostics.RuntimeHost.Services
         {
             var request = new CommitRequest { Path = filePath, Sha = _branch };
             var commitLists = await _octokitClient.Repository.Commit.GetAll(_userName, _repoName, request);
-            return commitLists != null ? commitLists[0] : null;
+            return commitLists.FirstOrDefault();
         }
 
         public void Dispose()
