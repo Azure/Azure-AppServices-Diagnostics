@@ -13,33 +13,16 @@ variables:
   buildConfiguration: 'Release'
 
 jobs:
-- job: Build
-  pool:
-    vmImage: 'ubuntu-latest'
-
-  steps:
-    - task: DotNetCoreCLI@2
-      inputs:
-        command: 'build'
-        projects: '$(solution)'
-        configuration: '$(buildConfiguration)'
-    - task: PublishBuildArtifacts@1
-      inputs:
-        pathtoPublish: '$(System.DefaultWorkingDirectory)'
-        artifactName: Build
-
-
 - job: 'IntegrationTests'
   pool:
     name: IntegrationTestPool  # name of the pool to run this job in
 
   steps:
-  - checkout: none #skip checking out the default repository resource
-  - task: DownloadBuildArtifacts@0
-    displayName: 'Download Build Artifacts'
+  - task: DotNetCoreCLI@2
     inputs:
-      artifactName: Build
-      downloadPath: $(System.DefaultWorkingDirectory)
+      command: 'build'
+      projects: '$(solution)'
+      configuration: '$(buildConfiguration)'
 
   - task: Bash@3
     inputs:
@@ -52,9 +35,7 @@ jobs:
     inputs:
       command: 'test'
       projects: '**/Diagnostics.Tests.Integration.*.csproj'
-
-  dependsOn: Build
-  condition: succeeded()
+      arguments: '--configuration $(buildConfiguration)'
 
 
 - job: 'UnitTestAndPublish'
@@ -62,17 +43,17 @@ jobs:
     vmImage: 'windows-latest'
   
   steps:
-  - checkout: none #skip checking out the default repository resource
-  - task: DownloadBuildArtifacts@0
-    displayName: 'Download Build Artifacts'
+  - task: DotNetCoreCLI@2
     inputs:
-      artifactName: Build
-      downloadPath: $(System.DefaultWorkingDirectory)
+      command: 'build'
+      projects: '$(solution)'
+      configuration: '$(buildConfiguration)'
 
   - task: DotNetCoreCLI@2
     inputs:
       command: 'test'
       projects: '**/Diagnostics.Tests.csproj'
+      arguments: '--configuration $(buildConfiguration)'
 
   - task: DotNetCoreCLI@2
     inputs:
@@ -85,6 +66,3 @@ jobs:
     inputs:
       pathtoPublish: '$(Build.ArtifactStagingDirectory)'
       artifactName: backend-drop1
-
-  dependsOn: Build
-  condition: succeeded()
