@@ -1,23 +1,22 @@
 using System;
 using Xunit;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Diagnostics;
 using System.Threading.Tasks;
 
-namespace Diagnostics.Tests.Integration.CompilerHost
+namespace Diagnostics.Tests.Integration.RuntimeHost
 {
-    public class UnitTest1 : IClassFixture<WebApplicationFactory<Diagnostics.CompilerHost.Startup>>
+    public class IntegrationTests : IClassFixture<WebApplicationFactory<Diagnostics.RuntimeHost.Startup>>
     {
-        private readonly WebApplicationFactory<Diagnostics.CompilerHost.Startup> _factory;
+        private readonly WebApplicationFactory<Diagnostics.RuntimeHost.Startup> _factory;
 
-        public UnitTest1(WebApplicationFactory<Diagnostics.CompilerHost.Startup> factory)
+        public IntegrationTests(WebApplicationFactory<Diagnostics.RuntimeHost.Startup> factory)
         {
             _factory = factory;
         }
 
         [Theory]
-        [InlineData("/api/CompilerHost/healthping")]
-        public async Task Test1(string url)
+        [InlineData("/healthping")]
+        public async Task HealthPingTest(string url)
         {
             WebApplicationFactoryClientOptions options = new WebApplicationFactoryClientOptions();
             // Arrange
@@ -28,7 +27,7 @@ namespace Diagnostics.Tests.Integration.CompilerHost
 
             // Assert
             response.EnsureSuccessStatusCode(); // Status Code 200-299
-            Assert.Equal("text/plain; charset=utf-8",
+            Assert.Equal("application/json; charset=utf-8",
                 response.Content.Headers.ContentType.ToString());
         }
     }
