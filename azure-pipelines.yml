@@ -13,38 +13,16 @@ variables:
   buildConfiguration: 'Release'
 
 jobs:
-- job: Build
-  pool:
-    vmImage: 'ubuntu-latest'
-
-  steps:
-    - task: DotNetCoreCLI@2
-      inputs:
-        command: 'build'
-        projects: '$(solution)'
-        configuration: '$(buildConfiguration)'
-    - task: PublishBuildArtifacts@1
-      inputs:
-        pathtoPublish: '$(System.DefaultWorkingDirectory)'
-        artifactName: Build
-
-
 - job: 'IntegrationTests'
   pool:
     name: IntegrationTestPool  # name of the pool to run this job in
 
   steps:
-  - checkout: none #skip checking out the default repository resource
-  - task: DownloadBuildArtifacts@0
-    displayName: 'Download Build Artifacts'
-    inputs:
-      artifactName: Build
-      downloadPath: $(System.DefaultWorkingDirectory)
-
   - task: DotNetCoreCLI@2
-    inputs:
-      command: 'restore'
-      projects: '**/Diagnostics.Tests.Integration.*.csproj'
+      inputs:
+        command: 'build'
+        projects: '$(solution)'
+        configuration: '$(buildConfiguration)'
 
   - task: Bash@3
     inputs:
@@ -59,9 +37,6 @@ jobs:
       projects: '**/Diagnostics.Tests.Integration.*.csproj'
       arguments: '--configuration $(buildConfiguration)'
 
-  dependsOn: Build
-  condition: succeeded()
-
 
 - job: 'UnitTestAndPublish'
   pool:
@@ -69,16 +44,11 @@ jobs:
   
   steps:
   - checkout: none #skip checking out the default repository resource
-  - task: DownloadBuildArtifacts@0
-    displayName: 'Download Build Artifacts'
-    inputs:
-      artifactName: Build
-      downloadPath: $(System.DefaultWorkingDirectory)
-
   - task: DotNetCoreCLI@2
     inputs:
-      command: 'restore'
-      projects: '**/Diagnostics.Tests.Integration.*.csproj'
+      command: 'build'
+      projects: '$(solution)'
+      configuration: '$(buildConfiguration)'
 
   - task: DotNetCoreCLI@2
     inputs:
@@ -97,6 +67,3 @@ jobs:
     inputs:
       pathtoPublish: '$(Build.ArtifactStagingDirectory)'
       artifactName: backend-drop1
-
-  dependsOn: Build
-  condition: succeeded()
