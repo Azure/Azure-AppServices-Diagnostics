@@ -9,7 +9,6 @@ trigger:
 
 variables:
   solution: '**/*.sln'
-
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
@@ -29,11 +28,10 @@ jobs:
         pathtoPublish: '$(System.DefaultWorkingDirectory)'
         artifactName: Build
 
-- job: 'IntegrationTests'
 
+- job: 'IntegrationTests'
   pool:
     name: IntegrationTestPool  # name of the pool to run this job in
-
 
   steps:
   - checkout: none #skip checking out the default repository resource
@@ -42,8 +40,7 @@ jobs:
     inputs:
       artifactName: Build
       downloadPath: $(System.DefaultWorkingDirectory)
-  
-  
+
   - task: Bash@3
     inputs:
       targetType: 'inline'
@@ -55,12 +52,12 @@ jobs:
     inputs:
       command: 'test'
       projects: '**/Diagnostics.Tests.Integration.*.csproj'
+
   dependsOn: Build
   condition: succeeded()
 
 
 - job: 'UnitTestAndPublish'
-
   pool:
     vmImage: 'windows-latest'
   
@@ -76,6 +73,7 @@ jobs:
     inputs:
       command: 'test'
       projects: '**/Diagnostics.Tests.csproj'
+
   - task: DotNetCoreCLI@2
     inputs:
       command: publish
