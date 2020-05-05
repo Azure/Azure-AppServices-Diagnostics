@@ -43,7 +43,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             {
                 var blobName = $"{pkg.Id.ToLower()}/{pkg.Id.ToLower()}.dll";
                 var etag = await storageService.LoadBlobToContainer(blobName, pkg.DllBytes);
-                if (string.IsNullOrEmpty(etag))
+                if (string.IsNullOrWhiteSpace(etag))
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Uploading {pkg.Id} to blob failed, not proceeding further");
                     return;
