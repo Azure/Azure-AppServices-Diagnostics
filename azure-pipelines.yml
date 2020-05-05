@@ -19,10 +19,10 @@ jobs:
 
   steps:
   - task: DotNetCoreCLI@2
-      inputs:
-        command: 'build'
-        projects: '$(solution)'
-        configuration: '$(buildConfiguration)'
+    inputs:
+      command: 'build'
+      projects: '$(solution)'
+      configuration: '$(buildConfiguration)'
 
   - task: Bash@3
     inputs:
