@@ -43,7 +43,6 @@ jobs:
     vmImage: 'windows-latest'
   
   steps:
-  - checkout: none #skip checking out the default repository resource
   - task: DotNetCoreCLI@2
     inputs:
       command: 'build'
