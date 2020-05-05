@@ -4,7 +4,7 @@ import itertools
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 import re
-specialChars = r'[”\]\\><\)\(&\[,“!:/-]'
+specialChars = r'[^0-9a-zA-Z ]+'
 try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
