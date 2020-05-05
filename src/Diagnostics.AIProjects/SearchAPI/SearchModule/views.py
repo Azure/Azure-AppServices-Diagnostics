@@ -14,7 +14,7 @@ from SearchModule.Logger import loggerInstance
 import urllib.parse, re
 
 translator = Translator()
-specialChars = r'[”\]\\><\)\(&\[,“!:]'
+specialChars = r'[^(0-9a-zA-Z )]+'
 ######## RUN THE API SERVER IN FLASK  #############
 def getUTCTime():
     return datetime.now(timezone.utc)
@@ -96,7 +96,11 @@ def queryDetectorsMethod():
     data = json.loads(request.data.decode('utf-8'))
     requestId = data['requestId']
 
-    txt_data = translator.translate(urllib.parse.unquote(data['text'])).text
+    try:
+        txt_data = translator.translate(urllib.parse.unquote(data['text'])).text
+    except Exception as e:
+        loggerInstance.logHandledException(requestId, Exception(f"Failed to translate the query -> {str(e)}"))
+        txt_data = urllib.parse.unquote(data['text'])
     original_query = txt_data
     if (len(original_query)>250):
         return ("Query length exceeded the maximum limit of 250", 400)
