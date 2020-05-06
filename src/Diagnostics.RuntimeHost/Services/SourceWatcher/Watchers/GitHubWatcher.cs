@@ -21,6 +21,7 @@ using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
 using System.Threading;
 using Diagnostics.DataProviders;
+using System.Security.Policy;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -322,9 +323,19 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     downloadFilePath = Path.Combine(destDir.FullName, $"{assemblyName}.{fileExtension.ToLower()}");
                 }
 
+                // Remove token from download Url as this is now deperecated.
+                // https://developer.github.com/changes/2020-02-10-deprecating-auth-through-query-param/
+                // We already add the token in the header so the token in the Uri is redundant anyway.
+                var downloadUrl = new UriBuilder(githubFile.Download_url);
+                var paramValues = System.Web.HttpUtility.ParseQueryString(downloadUrl.Query);
+                if (paramValues.AllKeys.Contains("token"))
+                {
+                    paramValues.Remove("token");
+                }
+                downloadUrl.Query = paramValues.ToString();
+
                 LogMessage($"Begin downloading File : {githubFile.Name.ToLower()} and saving it as : {downloadFilePath}");
-                await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
-                
+                await _githubClient.DownloadFile(downloadUrl.Uri.ToString(), downloadFilePath);
             }
 
             //At this point, required file have been downloaded by GitHubWatcher to destination folder. 
