@@ -22,7 +22,6 @@ namespace Diagnostics.Tests.Integration.RuntimeHost
         [InlineData("/healthping")]
         public async Task HealthPingTest(string url)
         {
-            WebApplicationFactoryClientOptions options = new WebApplicationFactoryClientOptions();
             // Arrange
             var client = _factory.CreateClient();
 
@@ -39,11 +38,9 @@ namespace Diagnostics.Tests.Integration.RuntimeHost
         [InlineData("/subscriptions/ef90e930-9d7f-4a60-8a99-748e0eea69de/resourceGroups/detector-development/providers/Microsoft.Web/sites/buggybakery/detectors")]
         public async Task ListDetectorsTest(string url)
         {
-            WebApplicationFactoryClientOptions options = new WebApplicationFactoryClientOptions();
             // Arrange
             var client = _factory.CreateClient();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            
             HttpContent content = new StringContent(string.Empty, System.Text.Encoding.UTF8, "application/json");
 
             // Act
@@ -60,6 +57,32 @@ namespace Diagnostics.Tests.Integration.RuntimeHost
 
             // Assert
             Assert.True(detectors.Length > 5);
+        }
+
+        [Theory]
+        [InlineData("/subscriptions/ef90e930-9d7f-4a60-8a99-748e0eea69de/resourceGroups/detector-development/providers/Microsoft.Web/sites/buggybakery/detectors/httpservererrors")]
+        public async Task CallDetectorTest(string url)
+        {
+            // Arrange
+            var client = _factory.CreateClient();
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            HttpContent content = new StringContent(string.Empty, System.Text.Encoding.UTF8, "application/json");
+
+            // Act
+            var response = await client.PostAsync(url, content);
+
+            // Assert
+            response.EnsureSuccessStatusCode(); // Status Code 200-299
+            Assert.Equal("application/json; charset=utf-8",
+                response.Content.Headers.ContentType.ToString());
+
+            // Act
+            string responseString = await response.Content.ReadAsStringAsync();
+            var detector = JsonConvert.DeserializeObject<DiagnosticApiResponse>(responseString);
+
+            // Assert
+            Assert.True(detector != null);
+            Assert.True(detector.Dataset.Count >= 4);
         }
     }
 }
