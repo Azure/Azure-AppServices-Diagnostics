@@ -214,7 +214,13 @@ namespace Diagnostics.RuntimeHost
             }
             services.AddSingleton<IStorageService, StorageService>();
             services.AddSingleton<IDiagEntityTableCacheService, DiagEntityTableCacheService>();
-            services.AddSingleton<ISourceWatcher, StorageWatcher>();
+            if(IsPublicAzure())
+            {
+                services.AddSingleton<ISourceWatcher, StorageWatcher>();
+            } else
+            {
+                services.AddSingleton<ISourceWatcher, NationalCloudStorageWatcher>();
+            }
             services.AddLogging(loggingConfig =>
             {
                 loggingConfig.ClearProviders();

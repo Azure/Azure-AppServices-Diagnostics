@@ -33,7 +33,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             throw new NotImplementedException();
         }
 
-        public async Task CreateOrUpdatePackage(Package pkg)
+        public virtual async Task CreateOrUpdatePackage(Package pkg)
         {
             if (pkg == null)
             {
