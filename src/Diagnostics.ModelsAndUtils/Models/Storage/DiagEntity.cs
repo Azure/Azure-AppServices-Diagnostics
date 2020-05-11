@@ -148,5 +148,36 @@ namespace Diagnostics.ModelsAndUtils.Models.Storage
         /// Detector type - Detector, Analysis, CategoryOverview
         /// </summary>
         public string DetectorType { get; set; }
+
+        /// <summary>
+        /// List of dependencies for a detector
+        /// </summary>
+        [IgnoreProperty]
+        public Dictionary<string, string> Dependencies
+        {
+            get
+            {
+                if(string.IsNullOrWhiteSpace(GistReferencesRaw))
+                {
+                    return null;
+                }
+                return JsonConvert.DeserializeObject<Dictionary<string,string>>(GistReferencesRaw);
+            } 
+            set
+            {
+                if(value == null)
+                {
+                    GistReferencesRaw = string.Empty;
+                } else
+                {
+                    GistReferencesRaw = JsonConvert.SerializeObject(value);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gist References stored as raw string in table.
+        /// </summary>
+        public string GistReferencesRaw { get; set; } = string.Empty;
     }
 }
