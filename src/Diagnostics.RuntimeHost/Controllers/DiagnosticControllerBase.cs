@@ -21,6 +21,7 @@ using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
 using Diagnostics.RuntimeHost.Services.StorageService;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
@@ -52,6 +53,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private InternalAPIHelper _internalApiHelper;
         private IDiagEntityTableCacheService tableCacheService;
+        private ISourceWatcher storageWatcher;
 
         public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext)
         {
@@ -67,6 +69,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._kustoMappingCacheService = (IKustoMappingsCacheService)services.GetService(typeof(IKustoMappingsCacheService));
             this._loggerProvider = (IRuntimeLoggerProvider)services.GetService(typeof(IRuntimeLoggerProvider));
             tableCacheService = (IDiagEntityTableCacheService)services.GetService(typeof(IDiagEntityTableCacheService));
+            storageWatcher = ((StorageWatcher)services.GetService(typeof(ISourceWatcher)));
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
         }
@@ -362,6 +365,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             await _sourceWatcherService.Watcher.CreateOrUpdatePackage(pkg);
+            await storageWatcher.CreateOrUpdatePackage(pkg);
             return Ok();
         }
 
