@@ -24,7 +24,7 @@ namespace Diagnostics.CompilerHost
         {
             try
             {
-                BuildWebHost(args).Run();
+                CreateWebHostBuilder(args).Build().Run();
             }
             catch (Exception ex)
             {
@@ -44,7 +44,7 @@ namespace Diagnostics.CompilerHost
         /// </summary>
         /// <param name="args">The arguments.</param>
         /// <returns>The web host.</returns>
-        public static IWebHost BuildWebHost(string[] args)
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
         {
             var config = new ConfigurationBuilder()
                 .AddCommandLine(args)
@@ -53,8 +53,8 @@ namespace Diagnostics.CompilerHost
             return
             WebHost.CreateDefaultBuilder(args)
                 .UseConfiguration(config)
-                .UseStartup<Startup>()
-                .Build();
+                .UseStartup<Startup>();
+
         }
     }
 }
