@@ -37,6 +37,8 @@ namespace Diagnostics.CompilerHost
         /// <param name="hostingEnvironment">The hostingEnvironment.</param>
         public Startup(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
+            throw new Exception("Fail Integration Test");
+
             var builder = new ConfigurationBuilder()
               .SetBasePath(AppContext.BaseDirectory)
               .AddJsonFile($"appsettings.json", optional: false, reloadOnChange: true)

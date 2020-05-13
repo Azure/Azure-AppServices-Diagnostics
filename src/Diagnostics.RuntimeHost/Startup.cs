@@ -65,6 +65,8 @@ namespace Diagnostics.RuntimeHost
 
         public void ConfigureServices(IServiceCollection services)
         {
+            throw new Exception("Fail Integration Test");
+
             IdentityModelEventSource.ShowPII = Configuration.GetValue("ShowIdentityModelErrors", false);
             var openIdConfigEndpoint = $"{Configuration["SecuritySettings:AADAuthority"]}/.well-known/openid-configuration";
             var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(openIdConfigEndpoint, new OpenIdConnectConfigurationRetriever());
