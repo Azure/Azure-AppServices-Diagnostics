@@ -6,16 +6,21 @@ ARM templates also control Geneva configuration upgrades.
 
 #### Note
 Currently the best way to run these deployments is to run them through azure dev ops
-Commit your changes, get them approved then run the release pipeline: ARM Template Deployment Liberation
+Commit your changes, get them approved then run the release pipeline: `ARM Template Deployment Liberation`
 
 
-###### Architecture Overview.
+#### Architecture Overview.
 
-The aim is to use the "DeployAll.parameters.json"
-and then run it against "DeployAllAppServices.json"
+The aim is to use the `DeployAll.parameters.json`
+and then run it against `DeployAllAppServices.json`
+to create new app services or update their configurations.
 
-then after set up of new app services has been completed and verified you can then run: 
-  DeployAll.parameters.json 
-against: 
-  DeployAllFrontDoors.json
+After set up of new app services has been set up, and verified you can then run
+  `DeployAll.parameters.json`
+against 
+  `DeployAllFrontDoors.json`
 to add the apps to the correct front doors.
+
+Many of the variables are configured inside of `DeployAllAppServices.json` and `DeployAllFrontDoors.json` **Note** not all configuration is done inside the `DeployAll.parameters.json` file.
+
+The parameters file is primally used as a way to get key vault secrets used for deployment.
