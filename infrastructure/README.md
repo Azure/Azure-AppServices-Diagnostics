@@ -15,12 +15,12 @@ The aim is to use the `DeployAll.parameters.json`
 and then run it against `DeployAllAppServices.json`
 to create new app services or update their configurations.
 
-After set up of new app services has been set up, and verified you can then run
+After set up of new app services and deployments have been tested and verified you can then run
   `DeployAll.parameters.json`
-against 
+with 
   `DeployAllFrontDoors.json`
 to add the apps to the correct front doors.
 
 Many of the variables are configured inside of `DeployAllAppServices.json` and `DeployAllFrontDoors.json` **Note** not all configuration is done inside the `DeployAll.parameters.json` file.
 
-The parameters file is primally used as a way to get key vault secrets used for deployment.
+The parameters file is primarily used as a way to get key vault secrets used for deployment.
