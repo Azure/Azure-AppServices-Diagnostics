@@ -1,0 +1,115 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "CompilerHostEUAP":{
+            "type" :"string"
+        },
+        "RuntimeHostEUAP":{
+            "type" :"string"
+        },
+        "RuntimeHostProd1":{
+            "type" :"string"
+        },
+        "RuntimeHostProd2":{
+            "type" :"string"
+        },
+        "RuntimeHostProd3":{
+            "type" :"string"
+        },
+        "RuntimeHostProd4":{
+            "type" :"string"
+        },
+        "RuntimeHostProd5":{
+            "type" :"string"
+        },
+        "RuntimeHostProd6":{
+            "type" :"string"
+        },
+        "TemplateBaseURI": {
+            "type": "string"
+        }
+    },
+    "variables": {       
+        "FrontDoors":
+        [
+            {
+                "ResourceGroup" : "RuntimeHost-RG",
+                "pingPath":"/healthping",
+                "FrontDoorName": "diag-runtimehost-euap",
+                "Apps":
+                [
+                    {
+                        "siteName": "[parameters('RuntimeHostEUAP')]"
+                    },
+                    {
+                        "siteName": "[replace(parameters('RuntimeHostEUAP'),'1','2')]"
+                    }
+                ]
+            },
+            {
+                "ResourceGroup" : "RuntimeHost-RG",
+                "pingPath":"/healthping",
+                "FrontDoorName": "diag-runtimehost",
+                "Apps":
+                [
+                    {
+                        "siteName": "[parameters('RuntimeHostProd1')]"
+                    },
+                    {
+                        "siteName": "[parameters('RuntimeHostProd2')]"
+                    },
+                    {
+                        "siteName": "[parameters('RuntimeHostProd3')]"
+                    },
+                    {
+                        "siteName": "[parameters('RuntimeHostProd4')]"
+                    },
+                    {
+                        "siteName": "[parameters('RuntimeHostProd5')]"
+                    },
+                    {
+                        "siteName": "[parameters('RuntimeHostProd6')]"
+                    }
+                ]
+            },
+            {
+                "ResourceGroup" : "CompilerHost-RG",
+                "pingPath":"/api/CompilerHost/healthping",
+                "FrontDoorName": "diag-compilerhost",
+                "Apps":
+                [
+                    {
+                        "siteName": "[parameters('CompilerHostEUAP')]"
+                    },
+                    {
+                        "siteName": "[replace(parameters('CompilerHostEUAP'),'1','2')]"
+                    }
+                ]
+            }
+        ]
+    },
+    "resources": [
+            {
+                "type": "Microsoft.Resources/deployments",
+                "apiVersion": "2017-05-10",
+                "name": "[concat('linkedTemplateFrontDoor', copyIndex())]",
+                "resourceGroup": "[variables('FrontDoors')[copyIndex()].ResourceGroup]",
+                "properties": {
+                    "mode": "Incremental",
+                    "templateLink": {
+                        "uri": "[concat(parameters('TemplateBaseURI'),'FrontDoorDeploy.json')]"
+                    },
+                    "parameters": {
+                        "sites":{"value": "[variables('FrontDoors')[copyIndex()].Apps]"},
+                        "frontDoorName":{"value": "[variables('FrontDoors')[copyIndex()].FrontDoorName]"},
+                        "healthPingPath":{"value": "[variables('FrontDoors')[copyIndex()].pingPath]"}
+                    }
+                },
+                "copy": {
+                    "count": "[length(variables('FrontDoors'))]",
+                    "name": "linkedTemplateFrontDoorCopy"
+                }
+            }
+        ]
+}

@@ -31,6 +31,9 @@
         },
         "RuntimeHostProd6":{
             "type" :"string"
+        },
+        "TemplateBaseURI": {
+            "type": "string"
         }
     },
     "variables": {
@@ -125,8 +128,7 @@
         "monitoringGcsEnvironment": "Diagnostics Prod",
         "monitoringGcsAccount": "DiagWebAppWarm",
         "monitoringConfigVersion": "1.0",
-        "KeyVaultResourceGroup": "AppServiceDiagnosticsResources",
-        "TemplateBaseURI": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/master2/infrastructure/ArmTemplates/"
+        "KeyVaultResourceGroup": "AppServiceDiagnosticsResources"
     },
     "resources": [
             {
@@ -137,7 +139,7 @@
                 "properties": {
                     "mode": "Incremental",
                     "templateLink": {
-                        "uri": "[concat(variables('TemplateBaseURI'),'DeployAppServices.json')]"
+                        "uri": "[concat(parameters('TemplateBaseURI'),'DeployAppServices.json')]"
                     },
                     "parameters": {
                         "AppServices":{"value": "[variables('AppServices')[copyIndex()].Apps]"},
@@ -153,7 +155,7 @@
                         "monitoringGcsAccount":{"value": "[variables('monitoringGcsAccount')]"},
                         "monitoringGcsAuthId":{"value": "[variables('monitoringGcsAuthId')]"},
                         "monitoringConfigVersion":{"value": "[variables('monitoringConfigVersion')]"},
-                        "TemplateBaseURI":{"value": "[variables('TemplateBaseURI')]"}
+                        "TemplateBaseURI":{"value": "[parameters('TemplateBaseURI')]"}
                     }
                 },
                 "copy": {
@@ -173,7 +175,7 @@
                 "properties": {
                     "mode": "Incremental",
                     "templateLink": {
-                        "uri": "[concat(variables('TemplateBaseURI'),'KeyVaultDeploy.json')]"
+                        "uri": "[concat(parameters('TemplateBaseURI'),'KeyVaultDeploy.json')]"
                     },
                     "parameters": {
                         "sites":{"value": "[variables('AppServices')[copyIndex()].Apps]"},
