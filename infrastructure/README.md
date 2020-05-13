@@ -5,27 +5,17 @@ This will make it trivial to create the resources needed to deploy ASD into new 
 ARM templates also control Geneva configuration upgrades.
 
 #### Note
-Currently these deployments only work in the Azure Portal Powershell terminal
+Currently the best way to run these deployments is to run them through azure dev ops
+Commit your changes, get them approved then run the release pipeline: ARM Template Deployment Liberation
 
-## Commands
-To deploy an ARM template from Powershell:
-- Get portal access for the Diag Production WebApp subscription
-- Find the subscription on Azure Portal
-- Upload the template and parameter files from this directory to the Portal terminal
-- `cd` to the uploaded directory
-- Enter the following commands in the Portal Powershell terminal
 
-```PS
-Select-AzureRmSubscription `
-  -SubscriptionId "..."
+###### Architecture Overview.
 
-New-AzureRmResourceGroupDeployment `
-  -ResourceGroupName "..." `
-  -TemplateFile ".\antareskvtemplate.json" `
-  -TemplateParameterFile ".\{appname}-antareskvparameters.json"
-```
+The aim is to use the "DeployAll.parameters.json"
+and then run it against "DeployAllAppServices.json"
 
-Useful command to get current settings:
-```PS
-Get-AzureRmResourceGroupDeployment -ResourceGroupName "..."
-```
+then after set up of new app services has been completed and verified you can then run: 
+  DeployAll.parameters.json 
+against: 
+  DeployAllFrontDoors.json
+to add the apps to the correct front doors.
