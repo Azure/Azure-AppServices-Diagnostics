@@ -89,7 +89,7 @@
                             "secrets": [
                                 "get"
                             ],
-                            "certificates ": [
+                            "certificates": [
                                 "get"
                             ]
                         } 
