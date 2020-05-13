@@ -26,12 +26,26 @@
               "secretName": "DiagRuntimehostNameEUAP"
             }
         },
-        "RuntimeHostProd1": "todo1",
-        "RuntimeHostProd2": "todo2",
-        "RuntimeHostProd3": "todo3",
-        "RuntimeHostProd4": "todo4",
-        "RuntimeHostProd5": "todo5",
-        "RuntimeHostProd6": "todo6",
-        "TemplateBaseURI": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/master2/infrastructure/ArmTemplates/"
+        "RuntimeHostProd1": {
+          "value": "todo"
+        },
+        "RuntimeHostProd2": {
+          "value": "todo2"
+        },
+        "RuntimeHostProd3": {
+          "value": "todo3"
+        },
+        "RuntimeHostProd4": {
+          "value": "todo4"
+        },
+        "RuntimeHostProd5": {
+          "value": "todo5"
+        },
+        "RuntimeHostProd6": {
+          "value": "todo6"
+        },
+        "TemplateBaseURI": {
+          "value": "https://raw.githubusercontent.com/Azure/Azure-AppServices-Diagnostics/master2/infrastructure/ArmTemplates/"
+        }
     }
 }

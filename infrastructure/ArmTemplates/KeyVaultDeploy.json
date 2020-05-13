@@ -84,7 +84,8 @@
                 "accessPolicies": [
                     {
                         "tenantId": "[variables('tenantId')]",
-                        "objectId": "abfa0a7c-a6b6-4736-8310-5855508787cd",
+                        // todo this changes if the tennant ID changes.
+                        "objectId": "f8daea97-62e7-4026-becf-13c2ea98e8b4",
                         "permissions": {
                             "secrets": [
                                 "get"
@@ -96,6 +97,6 @@
                     }
                 ]
             }
-        },
+        }
     ]
 }
