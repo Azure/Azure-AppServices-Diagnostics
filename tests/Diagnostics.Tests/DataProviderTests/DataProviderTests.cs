@@ -11,6 +11,7 @@ using Diagnostics.Scripts;
 using Diagnostics.Tests.Helpers;
 using Xunit;
 using Xunit.Abstractions;
+using Diagnostics.Tests.AzureStorageTests;
 
 namespace Diagnostics.Tests.DataProviderTests
 {
@@ -184,7 +185,7 @@ namespace Diagnostics.Tests.DataProviderTests
 
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
-
+            config.KustoConfiguration.EnableHeartBeatQuery = true;
             var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration);
             var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString(), kustoHeartBeatService: kustoHeartBeatService));
 
@@ -205,6 +206,7 @@ namespace Diagnostics.Tests.DataProviderTests
         {
             var configFactory = new MockDataProviderConfigurationFactory();
             var config = configFactory.LoadConfigurations();
+            config.KustoConfiguration.EnableHeartBeatQuery = true;
             var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration);
 
             MockKustoClient.ShouldHeartbeatSucceed = true;

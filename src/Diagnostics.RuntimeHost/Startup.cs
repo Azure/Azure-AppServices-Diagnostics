@@ -39,6 +39,7 @@ using System.Net;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Rewrite;
 using Newtonsoft.Json;
+using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -176,6 +177,7 @@ namespace Diagnostics.RuntimeHost
             var searchApiConfiguration = dataSourcesConfigService.Config.SearchServiceProviderConfiguration;
 
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
+    
 
             observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
             var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.AADResource, observerConfiguration);
@@ -212,6 +214,13 @@ namespace Diagnostics.RuntimeHost
             }
             services.AddSingleton<IStorageService, StorageService>();
             services.AddSingleton<IDiagEntityTableCacheService, DiagEntityTableCacheService>();
+            if(IsPublicAzure())
+            {
+                services.AddSingleton<ISourceWatcher, StorageWatcher>();
+            } else
+            {
+                services.AddSingleton<ISourceWatcher, NationalCloudStorageWatcher>();
+            }
             services.AddLogging(loggingConfig =>
             {
                 loggingConfig.ClearProviders();
