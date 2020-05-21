@@ -225,18 +225,13 @@ namespace Diagnostics.RuntimeHost
             {
                 loggingConfig.ClearProviders();
                 loggingConfig.AddConfiguration(Configuration.GetSection("Logging"));
-                loggingConfig.AddDebug();
+                loggingConfig.AddApplicationInsights();
                 loggingConfig.AddEventSourceLogger();
                 loggingConfig.AddRuntimeLogger();
-
-                if (!IsPublicAzure())
-                {
-                    loggingConfig.AddEventLog();
-                    loggingConfig.AddAzureWebAppDiagnostics();
-                }
              
                 if (Environment.IsDevelopment())
                 {
+                    loggingConfig.AddDebug();
                     loggingConfig.AddConsole();
                 }
             });
