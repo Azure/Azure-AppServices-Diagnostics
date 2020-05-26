@@ -11,6 +11,8 @@ class DevelopmentConfig(Config):
     STORAGE_ACCOUNT_KEY = devJson.get('STORAGE_ACCOUNT_KEY', None)
     STORAGE_ACCOUNT_CONTAINER_NAME = devJson.get('STORAGE_ACCOUNT_CONTAINER_NAME', None)
     TRAINED_MODELS_PATH = devJson.get('TRAINED_MODELS_PATH', 'models')
+    LUIS_APP_ID = devJson.get('LUIS_APP_ID', None)
+    LUIS_APP_KEY = devJson.get('LUIS_APP_KEY', None)
 
 class ProductionConfig(Config):
     ENVIRONMENT = "PRODUCTION"
@@ -21,3 +23,5 @@ class ProductionConfig(Config):
     STORAGE_ACCOUNT_KEY = os.getenv('STORAGE_ACCOUNT_KEY', None)
     STORAGE_ACCOUNT_CONTAINER_NAME = os.getenv('STORAGE_ACCOUNT_CONTAINER_NAME', None)
     TRAINED_MODELS_PATH = os.getenv('TRAINED_MODELS_PATH', 'models')
+    LUIS_APP_ID = os.getenv('LUIS_APP_ID', None)
+    LUIS_APP_KEY = os.getenv('LUIS_APP_KEY', None)
