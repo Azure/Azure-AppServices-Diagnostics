@@ -11,6 +11,7 @@ from SearchModule.TextSearchModule import loadModel, refreshModel, freeModel, lo
 from SearchModule.Utilities import resourceConfig, getProductId, getAllProductIds
 from SearchModule.StorageAccountHelper import StorageAccountHelper
 from SearchModule.Logger import loggerInstance
+from SearchModule.LuisProvider import getLuisPredictions, mergeLuisResults
 import urllib.parse, re
 
 translator = Translator()
@@ -117,6 +118,12 @@ def queryDetectorsMethod():
         loggerInstance.logHandledException(requestId, e)
         return (json.dumps({"query_received": original_query, "query": txt_data, "results": [], "exception": str(e)}), 404)
     results = loaded_models[productid].queryDetectors(txt_data)
+    try:
+        results["luis_results"] = getLuisPredictions(txt_data)
+    except Exception as e:
+        results["luis_results"] = []
+        results["luis_exception"] = f"LUISProviderError: {str(e)}"
+    results = mergeLuisResults(results)
     res = json.dumps(results)
     return (res, 200)
 
