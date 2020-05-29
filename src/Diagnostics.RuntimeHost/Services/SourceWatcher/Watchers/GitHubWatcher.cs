@@ -175,6 +175,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                      */
                     LogMessage($"Checking if any invoker present locally needs to be added in cache");
                     var directories = destDirInfo.EnumerateDirectories();
+                    LogMessage($"Github directories present locally in {destDirInfo.FullName} : {directories.Count()}");
                     List<Task> tasks = new List<Task>(directories.Count());
                     
                     foreach (DirectoryInfo subDir in directories)
@@ -203,7 +204,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 LogMessage("Syncing local directories with github changes");
                 var githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
                 var githubDirectories = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
-
+                LogMessage($"Total number of directors returned by Github: {githubDirectories.Length}");
                 List<Task> downloadContentUpdateCacheAndModifiedMarkerTasks = new List<Task>();
                 foreach (var gitHubDir in githubDirectories)
                 {

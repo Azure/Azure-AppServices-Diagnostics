@@ -57,7 +57,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                     var deleteMarkerFile = new FileInfo(Path.Combine(subDir.FullName, _deleteMarkerName));
                     if (deleteMarkerFile.Exists)
                     {
-                        LogMessage("Folder marked for deletion. Skipping cache update", $"{nameof(CreateOrUpdateCacheAsync)} in {this.Name}");
+                        LogMessage($"Folder {subDir.FullName} marked for deletion. Skipping cache update", $"{nameof(CreateOrUpdateCacheAsync)} in {this.Name}");
                         return;
                     }
 
@@ -66,7 +66,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                     var metadataFile = Path.Combine(subDir.FullName, "metadata.json");
                     if (mostRecentAssembly == default(FileInfo) || csxScriptFile == default(FileInfo))
                     {
-                        LogWarning("No Assembly file (.dll) or Csx File found (.csx). Skipping cache update", $"{nameof(CreateOrUpdateCacheAsync)} in {this.Name}");
+                        LogWarning($"No Assembly file (.dll) or Csx File found (.csx) for {subDir.FullName}. Skipping cache update", $"{nameof(CreateOrUpdateCacheAsync)} in {this.Name}");
                         return;
                     }
 
