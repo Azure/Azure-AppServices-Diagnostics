@@ -35,8 +35,8 @@ namespace Diagnostics.Tests.Integration.RuntimeHost
         }
 
         [Theory]
-        [InlineData("/subscriptions/ef90e930-9d7f-4a60-8a99-748e0eea69de/resourceGroups/detector-development/providers/Microsoft.Web/sites/buggybakery/detectors")]
-        public async Task ListDetectorsTest(string url)
+        [JsonFileData("TestData.json", "ListDetector")]
+        public async Task ListDetectorsTest(string url, int expectedResult)
         {
             // Arrange
             var client = _factory.CreateClient();
@@ -56,12 +56,12 @@ namespace Diagnostics.Tests.Integration.RuntimeHost
             var detectors = JsonConvert.DeserializeObject<DiagnosticApiResponse[]>(responseString);
 
             // Assert
-            Assert.True(detectors.Length > 5);
+            Assert.True(detectors.Length >= expectedResult);
         }
 
         [Theory]
-        [InlineData("/subscriptions/ef90e930-9d7f-4a60-8a99-748e0eea69de/resourceGroups/detector-development/providers/Microsoft.Web/sites/buggybakery/detectors/httpservererrors")]
-        public async Task CallDetectorTest(string url)
+        [JsonFileData("TestData.json", "GetDetector")]
+        public async Task CallDetectorTest(string url, int expectedResult)
         {
             // Arrange
             var client = _factory.CreateClient();
@@ -82,7 +82,7 @@ namespace Diagnostics.Tests.Integration.RuntimeHost
 
             // Assert
             Assert.True(detector != null);
-            Assert.True(detector.Dataset.Count >= 4);
+            Assert.True(detector.Dataset.Count >= expectedResult);
         }
     }
 }
