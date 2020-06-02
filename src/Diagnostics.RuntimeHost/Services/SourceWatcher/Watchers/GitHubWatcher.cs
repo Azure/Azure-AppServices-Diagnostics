@@ -92,6 +92,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         public override void Start()
         {
             _firstTimeCompletionTask = StartWatcherInternal(true);
+            CleanupFilesForDeletion();
             StartPollingForChanges();
         }
 
@@ -418,5 +419,55 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 Directory.CreateDirectory(_destinationCsxPath);
             }
         }       
+
+        private async void CleanupFilesForDeletion()
+        {
+            try
+            {
+                DirectoryInfo scriptsDir = new DirectoryInfo(_destinationCsxPath);
+
+                if (!scriptsDir.Exists) return;
+
+                foreach (DirectoryInfo subDir in scriptsDir.GetDirectories())
+                {
+                    if (File.Exists(Path.Combine(subDir.FullName, _deleteMarkerName)))
+                    {
+                        LogMessage($"Delete Marker Found. Deleting Directory : {subDir.FullName}");
+                        DeleteFolderRecursive(subDir);
+                    }
+                    else
+                    {
+                        var assemblyFiles = subDir.GetFiles("*.dll").OrderByDescending(f => f.LastWriteTimeUtc).Skip(1).ToList();
+                        var pdbFiles = subDir.GetFiles("*.pdb").OrderByDescending(f => f.LastWriteTimeUtc).Skip(1).ToList();
+
+                        if(assemblyFiles != null && pdbFiles != null)
+                        {
+                            assemblyFiles.Concat(pdbFiles).ToList().ForEach((item) =>
+                            {
+                                LogMessage($"Deleting File : {item.FullName}");
+                                item.IsReadOnly = false;
+                                item.Delete();
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException($"CleanupDataFilesMarkedForDeletion Failed. Exception : {ex.ToString()}", ex);
+            }
+        }
+
+        private void DeleteFolderRecursive(DirectoryInfo baseDir)
+        {
+            baseDir.Attributes = FileAttributes.Normal;
+            foreach (var childDir in baseDir.GetDirectories())
+                DeleteFolderRecursive(childDir);
+
+            foreach (var file in baseDir.GetFiles())
+                file.IsReadOnly = false;
+
+            baseDir.Delete(true);
+        }
     }
 }
