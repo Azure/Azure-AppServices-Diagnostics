@@ -420,20 +420,23 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             }
         }       
 
-        private async void CleanupFilesForDeletion()
+        private async Task CleanupFilesForDeletion()
         {
+
+            Stopwatch stopwatch = new Stopwatch();
             try
             {
                 DirectoryInfo scriptsDir = new DirectoryInfo(_destinationCsxPath);
 
                 if (!scriptsDir.Exists) return;
-
+                stopwatch.Start();
+                LogMessage($"Starting clean up method for directory {_destinationCsxPath}");
                 foreach (DirectoryInfo subDir in scriptsDir.GetDirectories())
                 {
                     if (File.Exists(Path.Combine(subDir.FullName, _deleteMarkerName)))
                     {
                         LogMessage($"Delete Marker Found. Deleting Directory : {subDir.FullName}");
-                        DeleteFolderRecursive(subDir);
+                        FileHelper.DeleteFolderRecursive(subDir);
                     }
                     else
                     {
@@ -456,18 +459,12 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             {
                 LogException($"CleanupDataFilesMarkedForDeletion Failed. Exception : {ex.ToString()}", ex);
             }
+            finally
+            {
+                stopwatch.Stop();
+                LogMessage($"Clean up completed, time taken {stopwatch.ElapsedMilliseconds}");
+            }
         }
 
-        private void DeleteFolderRecursive(DirectoryInfo baseDir)
-        {
-            baseDir.Attributes = FileAttributes.Normal;
-            foreach (var childDir in baseDir.GetDirectories())
-                DeleteFolderRecursive(childDir);
-
-            foreach (var file in baseDir.GetFiles())
-                file.IsReadOnly = false;
-
-            baseDir.Delete(true);
-        }
     }
 }
