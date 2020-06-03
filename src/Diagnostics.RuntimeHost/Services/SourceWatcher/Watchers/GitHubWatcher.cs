@@ -32,6 +32,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
     {
         private Task _firstTimeCompletionTask;
         private string _rootContentApiPath;
+        private Task cleanDeletedFileTask;
 
         public readonly IGithubClient _githubClient;
         private readonly string _workerIdFileName = "workerId.txt";
@@ -92,7 +93,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         public override void Start()
         {
             _firstTimeCompletionTask = StartWatcherInternal(true);
-            CleanupFilesForDeletion();
+            cleanDeletedFileTask = CleanupFilesForDeletion();
+            StartCleanupTask();
             StartPollingForChanges();
         }
 
@@ -419,6 +421,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 Directory.CreateDirectory(_destinationCsxPath);
             }
         }       
+
+        private async void StartCleanupTask()
+        {
+            await cleanDeletedFileTask;
+        }
 
         private async Task CleanupFilesForDeletion()
         {
