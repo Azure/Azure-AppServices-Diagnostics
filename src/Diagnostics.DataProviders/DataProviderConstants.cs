@@ -38,6 +38,8 @@ namespace Diagnostics.DataProviders
 
         public const string FakeStampForAnalyticsCluster = "waws-prod-blu-000";
 
+        public const string kustoFollowerClusterSuffix = "follower";
+
         #endregion Kusto Constants
 
         #region Time Grain Constants

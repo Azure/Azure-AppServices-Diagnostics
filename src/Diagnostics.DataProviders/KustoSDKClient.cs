@@ -3,7 +3,6 @@ using System.Text;
 using System.Data;
 using System.Threading.Tasks;
 using Kusto.Data;
-using Kusto.Data.Net.Client;
 using Kusto.Data.Common;
 using Kusto.Cloud.Platform.Data;
 using System.Collections.Concurrent;
@@ -15,7 +14,7 @@ using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using Diagnostics.DataProviders.Exceptions;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace Diagnostics.DataProviders
 {
@@ -27,11 +26,12 @@ namespace Diagnostics.DataProviders
         private string _clientId;
         private string _aadAuthority;
         private static ConcurrentDictionary<Tuple<string, string>, ICslQueryProvider> QueryProviderMapping;
+        private static List<string> exceptionsToRetryFor = new List<string>() { "" };
 
         /// <summary>
         /// Failover cluster mapping
         /// </summary>
-        public ConcurrentDictionary<string, string> FailoverClusterMapping { get; set; }
+        private ConcurrentDictionary<string, string> FailoverClusterMapping { get; set; }
 
         public KustoSDKClient(KustoDataProviderConfiguration config, string requestId)
         {
@@ -52,11 +52,14 @@ namespace Diagnostics.DataProviders
             var key = Tuple.Create(cluster, database);
             if (!QueryProviderMapping.ContainsKey(key))
             {
-                KustoConnectionStringBuilder connectionStringBuilder = new KustoConnectionStringBuilder(_kustoApiQueryEndpoint.Replace("{cluster}", cluster), database);
-                connectionStringBuilder.FederatedSecurity = true;
-                connectionStringBuilder.ApplicationClientId = _clientId;
-                connectionStringBuilder.ApplicationKey = _appKey;
-                connectionStringBuilder.Authority = _aadAuthority;
+                KustoConnectionStringBuilder connectionStringBuilder = new KustoConnectionStringBuilder(_kustoApiQueryEndpoint.Replace("{cluster}", cluster), database)
+                {
+                    FederatedSecurity = true,
+                    ApplicationClientId = _clientId,
+                    ApplicationKey = _appKey,
+                    Authority = _aadAuthority
+                };
+
                 var queryProvider = Kusto.Data.Net.Client.KustoClientFactory.CreateCslQueryProvider(connectionStringBuilder);
                 if (!QueryProviderMapping.TryAdd(key, queryProvider))
                 {
@@ -117,7 +120,90 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
         {
-            return await ExecuteQueryAsync(query, cluster, database, DataProviderConstants.DefaultTimeoutInSeconds, requestId, operationName);
+            bool useBackupClusterForLastAttempt = true;
+            int retryCount = 0;
+            int retryDelayInSeconds = 10;
+            int maxRetries = 5;
+            double maxFailureResponseTimeInSecondsForRetry = 10.0;
+
+            string source = string.IsNullOrWhiteSpace(operationName) ? "KustoSDKClient_ExecuteQueryAsync" : operationName;
+            
+            DateTime invocationStartTime = default;
+            DateTime invocationEndTime = default;
+            Task<DataTable> executeQueryTask = default;
+            DataTable dtResult = default;
+            Exception attemptException = default;
+            var exceptions = new List<Exception>();
+
+            do
+            {
+                try
+                {
+                    if(retryCount == maxRetries && maxRetries != 0 && useBackupClusterForLastAttempt)
+                    {
+                        // Last Retry Attempt
+                        // Switch to backup cluster since useBackupClusterForLastAttempt is set to true.
+                        cluster = GetBackupClusterName(cluster);
+                    }
+
+                    DiagnosticsETWProvider.Instance.LogRetryAttemptMessage(
+                        requestId ?? string.Empty,
+                        source,
+                        $"Starting Attempt : {retryCount}, Cluster: {cluster}, Query : {query}"
+                        );
+
+                    invocationStartTime = DateTime.UtcNow;
+                    attemptException = null;
+                    executeQueryTask = ExecuteQueryAsync(query, cluster, database, DataProviderConstants.DefaultTimeoutInSeconds, requestId, operationName);
+                    dtResult = await executeQueryTask;
+                }
+                catch (Exception ex)
+                {
+                    attemptException = ex;
+                    exceptions.Add(ex);
+                }
+                finally
+                {
+                    invocationEndTime = DateTime.UtcNow;
+                    var totalResponseTime = invocationEndTime - invocationStartTime;
+                    string exceptionType = attemptException != null ? attemptException.GetType().ToString() : string.Empty;
+                    string exceptionDetails = attemptException != null ? attemptException.ToString() : string.Empty;
+
+                    DiagnosticsETWProvider.Instance.LogRetryAttemptSummary(
+                            requestId ?? string.Empty,
+                            source,
+                            $"Attempt : {retryCount},  IsSuccessful : {attemptException == null}, Cluster: {cluster}, Query : {query}",
+                            Convert.ToInt64(totalResponseTime.TotalMilliseconds),
+                            invocationStartTime.ToString("HH:mm:ss.fff"),
+                            invocationEndTime.ToString("HH:mm:ss.fff"),
+                            exceptionType,
+                            exceptionDetails
+                            );
+
+                    // Logic to check if retry needs to continue
+                    if(totalResponseTime.TotalSeconds > maxFailureResponseTimeInSecondsForRetry || !IsExceptionRetryable(attemptException))
+                    {
+                        DiagnosticsETWProvider.Instance.LogRetryAttemptMessage(
+                        requestId ?? string.Empty,
+                        source,
+                        $"Not continuing Retries after Attempt : {retryCount}, Cluster: {cluster}, Query : {query}"
+                        );
+
+                        retryCount = maxRetries;
+                    }
+
+                    retryCount++;
+                }
+
+                if (retryCount < maxRetries) await Task.Delay(retryDelayInSeconds * 1000);
+            } while (retryCount < maxRetries);
+
+            if(executeQueryTask.IsCompleted && !executeQueryTask.IsFaulted && !executeQueryTask.IsCanceled)
+            {
+                return dtResult;
+            }
+
+            throw new AggregateException($"{source} failed all attempts. Look at inner exceptions", exceptions);
         }
 
         public async Task<KustoQuery> GetKustoQueryAsync(string query, string cluster, string database)
@@ -177,7 +263,7 @@ namespace Diagnostics.DataProviders
         {
             var status = kustoApiException == null ? "Success" : "Failed";
 
-            kustoResponse = (kustoResponse != "") ? $" {Environment.NewLine} KustoResponseBody : {kustoResponse} " : string.Empty;
+            kustoResponse = (!string.IsNullOrWhiteSpace(kustoResponse)) ? $" {Environment.NewLine} KustoResponseBody : {kustoResponse} " : string.Empty;
 
             object stats = null;
             if (dataSet != null && dataSet.Tables != null && dataSet.Tables.Count >= 4)
@@ -198,6 +284,48 @@ namespace Diagnostics.DataProviders
                query,
                kustoApiException != null ? kustoApiException.GetType().ToString() : string.Empty,
                kustoApiException != null ? $"{kustoApiException.ToString()}{kustoResponse}" : string.Empty);
+        }
+
+        /// <summary>
+        /// Fetches backup cluster name for a given cluster.
+        /// If there is no backup cluster, it returns the same cluster.
+        /// </summary>
+        /// <param name="cluster">cluster name</param>
+        /// <returns>Backup cluster name</returns>
+        private string GetBackupClusterName(string cluster)
+        {
+            string backupCluster = cluster;
+
+            if (string.IsNullOrWhiteSpace(cluster))
+            {
+                return backupCluster;
+            }
+
+            if (cluster.EndsWith(DataProviderConstants.kustoFollowerClusterSuffix, StringComparison.OrdinalIgnoreCase))
+            {
+                backupCluster = cluster.Trim().Replace(DataProviderConstants.kustoFollowerClusterSuffix, string.Empty, StringComparison.OrdinalIgnoreCase);
+            }
+            else if (FailoverClusterMapping.Keys.Contains(cluster))
+            {
+                backupCluster = FailoverClusterMapping[cluster];
+            }
+
+            return backupCluster;
+        }
+
+        /// <summary>
+        /// Indicates if an requst with exception can be retried
+        /// </summary>
+        /// <param name="ex">Exception</param>
+        /// <returns>true, if the request can be retried</returns>
+        private bool IsExceptionRetryable(Exception ex)
+        {
+            if (ex is null)
+            {
+                return false;
+            }
+
+            return exceptionsToRetryFor.Exists(item => ex.ToString().ToLower().Contains(item.ToLower()));
         }
     }
 }
