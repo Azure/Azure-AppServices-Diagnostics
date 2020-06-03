@@ -319,7 +319,7 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
-        /// Indicates if an requst with exception can be retried
+        /// Indicates if an request with exception can be retried
         /// </summary>
         /// <param name="ex">Exception</param>
         /// <returns>true, if the request can be retried</returns>
