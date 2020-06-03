@@ -15,18 +15,20 @@ using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using Diagnostics.DataProviders.Exceptions;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Diagnostics.DataProviders
 {
     class KustoSDKClient : IKustoClient
     {
+        private readonly KustoDataProviderConfiguration _config;
         private string _requestId;
         private string _kustoApiQueryEndpoint;
         private string _appKey;
         private string _clientId;
         private string _aadAuthority;
         private static ConcurrentDictionary<Tuple<string, string>, ICslQueryProvider> QueryProviderMapping;
-        private static List<string> exceptionsToRetryFor = new List<string>() { "" };
+        private static List<string> exceptionsToRetryFor = new List<string>();
 
         /// <summary>
         /// Failover cluster mapping
@@ -39,12 +41,19 @@ namespace Diagnostics.DataProviders
             {
                 QueryProviderMapping = new ConcurrentDictionary<Tuple<string, string>, ICslQueryProvider>();
             }
+
+            _config = config;
             _requestId = requestId;
             _kustoApiQueryEndpoint = config.KustoApiEndpoint + ":443";
             _appKey = config.AppKey;
             _clientId = config.ClientId;
             _aadAuthority = config.AADAuthority;
             FailoverClusterMapping = config.FailoverClusterNameCollection;
+
+            if (!string.IsNullOrWhiteSpace(_config.ExceptionsToRetryFor))
+            {
+                exceptionsToRetryFor = _config.ExceptionsToRetryFor.Split(DataProviderConstants.CommonSeparationChars).Select(p => p.Trim()).ToList();
+            }
         }
 
         private ICslQueryProvider Client(string cluster, string database)
@@ -120,12 +129,7 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
         {
-            bool useBackupClusterForLastAttempt = true;
             int retryCount = 0;
-            int retryDelayInSeconds = 10;
-            int maxRetries = 5;
-            double maxFailureResponseTimeInSecondsForRetry = 10.0;
-
             string source = string.IsNullOrWhiteSpace(operationName) ? "KustoSDKClient_ExecuteQueryAsync" : operationName;
             
             DateTime invocationStartTime = default;
@@ -139,7 +143,7 @@ namespace Diagnostics.DataProviders
             {
                 try
                 {
-                    if(retryCount == maxRetries && maxRetries != 0 && useBackupClusterForLastAttempt)
+                    if(retryCount == _config.MaxRetryCount && _config.MaxRetryCount != 0 && _config.UseBackupClusterForLastRetryAttempt)
                     {
                         // Last Retry Attempt
                         // Switch to backup cluster since useBackupClusterForLastAttempt is set to true.
@@ -181,7 +185,7 @@ namespace Diagnostics.DataProviders
                             );
 
                     // Logic to check if retry needs to continue
-                    if(totalResponseTime.TotalSeconds > maxFailureResponseTimeInSecondsForRetry || !IsExceptionRetryable(attemptException))
+                    if(totalResponseTime.TotalSeconds > _config.MaxFailureResponseTimeInSecondsForRetry || !IsExceptionRetryable(attemptException))
                     {
                         DiagnosticsETWProvider.Instance.LogRetryAttemptMessage(
                         requestId ?? string.Empty,
@@ -189,14 +193,14 @@ namespace Diagnostics.DataProviders
                         $"Not continuing Retries after Attempt : {retryCount}, Cluster: {cluster}, Query : {query}"
                         );
 
-                        retryCount = maxRetries;
+                        retryCount = _config.MaxRetryCount;
                     }
 
                     retryCount++;
                 }
 
-                if (retryCount < maxRetries) await Task.Delay(retryDelayInSeconds * 1000);
-            } while (retryCount < maxRetries);
+                if (retryCount < _config.MaxRetryCount) await Task.Delay(_config.RetryDelayInSeconds * 1000);
+            } while (retryCount < _config.MaxRetryCount);
 
             if(executeQueryTask.IsCompleted && !executeQueryTask.IsFaulted && !executeQueryTask.IsCanceled)
             {

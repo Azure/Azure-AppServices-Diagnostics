@@ -26,6 +26,8 @@ namespace Diagnostics.DataProviders
 
         public const string AzureUSNat = "USNat";
 
+        public static readonly char[] CommonSeparationChars = { '|', ',' };
+
         #region Kusto Constants
 
         public static TimeSpan KustoDataRetentionPeriod = TimeSpan.FromDays(-30);
