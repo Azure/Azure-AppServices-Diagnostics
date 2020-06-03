@@ -129,7 +129,7 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
         {
-            int retryCount = 0;
+            int attempt = 0;
             string source = string.IsNullOrWhiteSpace(operationName) ? "KustoSDKClient_ExecuteQueryAsync" : operationName;
             
             DateTime invocationStartTime = default;
@@ -143,7 +143,7 @@ namespace Diagnostics.DataProviders
             {
                 try
                 {
-                    if(retryCount == _config.MaxRetryCount && _config.MaxRetryCount != 0 && _config.UseBackupClusterForLastRetryAttempt)
+                    if(attempt == _config.MaxRetryCount && _config.MaxRetryCount != 0 && _config.UseBackupClusterForLastRetryAttempt)
                     {
                         // Last Retry Attempt
                         // Switch to backup cluster since useBackupClusterForLastAttempt is set to true.
@@ -153,7 +153,7 @@ namespace Diagnostics.DataProviders
                     DiagnosticsETWProvider.Instance.LogRetryAttemptMessage(
                         requestId ?? string.Empty,
                         source,
-                        $"Starting Attempt : {retryCount}, Cluster: {cluster}, Query : {query}"
+                        $"Starting Attempt : {attempt}, Cluster: {cluster}, Query : {query}"
                         );
 
                     invocationStartTime = DateTime.UtcNow;
@@ -176,7 +176,7 @@ namespace Diagnostics.DataProviders
                     DiagnosticsETWProvider.Instance.LogRetryAttemptSummary(
                             requestId ?? string.Empty,
                             source,
-                            $"Attempt : {retryCount},  IsSuccessful : {attemptException == null}, Cluster: {cluster}, Query : {query}",
+                            $"Attempt : {attempt},  IsSuccessful : {attemptException == null}, Cluster: {cluster}, Query : {query}",
                             Convert.ToInt64(totalResponseTime.TotalMilliseconds),
                             invocationStartTime.ToString("HH:mm:ss.fff"),
                             invocationEndTime.ToString("HH:mm:ss.fff"),
@@ -190,17 +190,18 @@ namespace Diagnostics.DataProviders
                         DiagnosticsETWProvider.Instance.LogRetryAttemptMessage(
                         requestId ?? string.Empty,
                         source,
-                        $"Not continuing Retries after Attempt : {retryCount}, Cluster: {cluster}, Query : {query}"
+                        $"Not continuing Retries after Attempt : {attempt}, Cluster: {cluster}, Query : {query}"
                         );
 
-                        retryCount = _config.MaxRetryCount;
+                        attempt = _config.MaxRetryCount;
                     }
 
-                    retryCount++;
+                    attempt++;
                 }
 
-                if (retryCount < _config.MaxRetryCount) await Task.Delay(_config.RetryDelayInSeconds * 1000);
-            } while (retryCount < _config.MaxRetryCount);
+                if (attempt <= _config.MaxRetryCount) await Task.Delay(_config.RetryDelayInSeconds * 1000);
+
+            } while (attempt <= _config.MaxRetryCount);
 
             if(executeQueryTask.IsCompleted && !executeQueryTask.IsFaulted && !executeQueryTask.IsCanceled)
             {
