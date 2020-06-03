@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Diagnostics.DataProviders.Interfaces;
 
@@ -145,6 +146,36 @@ namespace Diagnostics.DataProviders
             }
         }
 
+        /// <summary>
+        /// Max Retry Count
+        /// </summary>
+        [ConfigurationName("Retry:MaxRetryCount")]
+        public int MaxRetryCount { get; set; }
+
+        /// <summary>
+        /// Delay in Seconds between two retries
+        /// </summary>
+        [ConfigurationName("Retry:RetryDelayInSeconds")]
+        public int RetryDelayInSeconds { get; set; }
+
+        /// <summary>
+        /// Flag indicating whether to use Backup cluster (if available) for last retry
+        /// </summary>
+        [ConfigurationName("Retry:UseBackupClusterForLastAttempt")]
+        public bool UseBackupClusterForLastRetryAttempt { get; set; }
+
+        /// <summary>
+        /// Maximum Response time for failed requests to qualify for Retry
+        /// </summary>
+        [ConfigurationName("Retry:MaxFailureResponseTimeInSecondsForRetry")]
+        public double MaxFailureResponseTimeInSecondsForRetry { get; set; }
+
+        /// <summary>
+        /// List of | separated Exceptions to retry for.
+        /// </summary>
+        [ConfigurationName("Retry:ExceptionsToRetryFor")]
+        public string ExceptionsToRetryFor { get; set; }
+        
         public override void PostInitialize()
         {
             RegionSpecificClusterNameCollection = new ConcurrentDictionary<string, string>();
