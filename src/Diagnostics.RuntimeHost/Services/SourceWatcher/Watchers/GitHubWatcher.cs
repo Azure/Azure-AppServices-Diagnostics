@@ -94,7 +94,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         {
             _firstTimeCompletionTask = StartWatcherInternal(true);
             cleanDeletedFileTask = CleanupFilesForDeletion();
-            StartCleanupTask();
             StartPollingForChanges();
         }
 
@@ -421,12 +420,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 Directory.CreateDirectory(_destinationCsxPath);
             }
         }       
-
-        private async void StartCleanupTask()
-        {
-            await cleanDeletedFileTask;
-        }
-
+     
         private async Task CleanupFilesForDeletion()
         {
 
