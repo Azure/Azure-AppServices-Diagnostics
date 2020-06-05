@@ -382,11 +382,11 @@ namespace Diagnostics.DataProviders
             }
             if (string.IsNullOrWhiteSpace(path))
             {
-                path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}";
+                path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName)}";
             }
             else
             {
-                path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}/{path}";
+                path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName)}/{path}";
             }
 
             return HttpGet<T>(path);
