@@ -456,7 +456,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                             {
                                 LogMessage($"Deleting File : {item.FullName}");
                                 item.IsReadOnly = false;
-                                item.Delete();
+                                FileHelper.DeleteFileAsync(item.FullName);
                             });
                         }
                     }

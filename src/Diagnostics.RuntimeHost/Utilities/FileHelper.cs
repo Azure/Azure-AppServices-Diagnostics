@@ -98,5 +98,17 @@ namespace Diagnostics.RuntimeHost.Utilities
 
             baseDir.Delete(true);
         }
+
+        internal static Task DeleteFileAsync(string path)
+        {
+            return Task.Run(() =>
+            {
+                using (FileStream fs = new FileStream(path, FileMode.Truncate, FileAccess.ReadWrite, FileShare.Delete, 1, FileOptions.DeleteOnClose | FileOptions.Asynchronous))
+                {
+                    fs.SetLength(0);
+                }
+            });
+           
+        }
     }
 }
