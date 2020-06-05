@@ -32,6 +32,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
     {
         private Task _firstTimeCompletionTask;
         private string _rootContentApiPath;
+        private Task cleanDeletedFileTask;
 
         public readonly IGithubClient _githubClient;
         private readonly string _workerIdFileName = "workerId.txt";
@@ -92,6 +93,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         public override void Start()
         {
             _firstTimeCompletionTask = StartWatcherInternal(true);
+            cleanDeletedFileTask = CleanupFilesForDeletion();
             StartPollingForChanges();
         }
 
@@ -418,5 +420,52 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 Directory.CreateDirectory(_destinationCsxPath);
             }
         }       
+     
+        private async Task CleanupFilesForDeletion()
+        {
+
+            Stopwatch stopwatch = new Stopwatch();
+            try
+            {
+                DirectoryInfo scriptsDir = new DirectoryInfo(_destinationCsxPath);
+
+                if (!scriptsDir.Exists) return;
+                stopwatch.Start();
+                LogMessage($"Starting clean up method for directory {_destinationCsxPath}");
+                foreach (DirectoryInfo subDir in scriptsDir.GetDirectories())
+                {
+                    if (File.Exists(Path.Combine(subDir.FullName, _deleteMarkerName)))
+                    {
+                        LogMessage($"Delete Marker Found. Deleting Directory : {subDir.FullName}");
+                        FileHelper.DeleteFolderRecursive(subDir);
+                    }
+                    else
+                    {
+                        var assemblyFiles = subDir.GetFiles("*.dll").OrderByDescending(f => f.LastWriteTimeUtc).Skip(1).ToList();
+                        var pdbFiles = subDir.GetFiles("*.pdb").OrderByDescending(f => f.LastWriteTimeUtc).Skip(1).ToList();
+
+                        if(assemblyFiles != null && pdbFiles != null)
+                        {
+                            assemblyFiles.Concat(pdbFiles).ToList().ForEach((item) =>
+                            {
+                                LogMessage($"Deleting File : {item.FullName}");
+                                item.IsReadOnly = false;
+                                FileHelper.DeleteFileAsync(item.FullName);
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException($"CleanupDataFilesMarkedForDeletion Failed. Exception : {ex.ToString()}", ex);
+            }
+            finally
+            {
+                stopwatch.Stop();
+                LogMessage($"Clean up completed, time taken {stopwatch.ElapsedMilliseconds}");
+            }
+        }
+
     }
 }
