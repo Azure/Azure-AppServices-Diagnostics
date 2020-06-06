@@ -37,14 +37,7 @@ build:
       name: 'Build App Service Diagnostics'
       fail_on_stderr: true
       ignore_exitcode: false
-      command: 'onebranch_build.cmd'
-      artifacts:
-        - from: 'src\Diagnostics.RuntimeHost'
-          to: 'antares.external.diagnostics.runtimehost.build'
-          include:
-            - '**/*'
-          signing_options:  # Signing profile defaults can be overridden on the artifacts level
-            sign_inline: true  # Sign immediately after this build command so the next build command can package it!      
+      command: 'onebranch_build.cmd'     
 
 package:
   commands:
