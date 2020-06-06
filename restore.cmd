@@ -1,3 +1,5 @@
+@echo off
+
 pushd "%~dp0"
 
 dotnet restore "%~dp0Diagnostics.sln"
