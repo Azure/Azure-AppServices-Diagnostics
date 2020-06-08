@@ -1,0 +1,153 @@
+﻿{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/serviceModel.json",
+  "serviceMetadata": {
+    "serviceGroup": "DiagnosticsBackend",
+    "environment": "Test"
+  },
+  "serviceResourceGroupDefinitions": [
+    {
+      "name": "WebAppResourceGroupDefinitions",
+      "serviceResourceDefinitions": [
+        {
+          "name": "KeyVaultDefinition",
+          "composedOf": {
+            "arm": {
+              "templatePath": "Templates\\CreateOrUpdateKeyVault.json",
+              "parametersPath": "Parameters\\CreateOrUpdateKeyVault.Parameters.json"
+            },
+            "extension": {
+              "rolloutParametersPath": "Parameters\\WebApp.KeyvaultIntegrated.RolloutParameters.json"
+            }
+          }
+        },
+        {
+          "name": "CreateMSI_Definition",
+          "composedOf": {
+            "arm": {
+              "templatePath": "Templates\\CreateUserAssignedIdentity.json",
+              "parametersPath": "Parameters\\CreateUserAssignedIdentity.Parameters.json"
+            }
+          }
+        },
+        {
+          "name": "CreateMSIRoleDefinitions",
+          "composedOf": {
+            "arm": {
+              "templatePath": "Templates\\CreateRoleAssignments.Template.json",
+              "parametersPath": "Parameters\\CreateRoleAssignments.Parameters.json"
+            },
+            "extension": {
+              "rolloutParametersPath": "Parameters\\WebApp.KeyvaultIntegrated.RolloutParameters.json"
+            }
+          }
+        },        
+        {
+          "name": "WebAppDefinition",
+          "composedOf": {
+            "arm": {
+              "templatePath": "Templates\\DeployWebApp.json",
+              "parametersPath": "Parameters\\WebApp.Parameters.json"
+            },
+            "extension": {
+              "rolloutParametersPath": "Parameters\\WebApp.KeyvaultIntegrated.RolloutParameters.json",
+              "shell":[
+                {
+                  "type": "mySimpleShell",
+                  "properties": {
+                    "imagename": "adm-ubuntu-1804-l",
+                    "imageversion": "v14"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "serviceResourceGroups": [
+    {
+      "azureResourceGroupName": "DiagnosticBackendPublicAzure",
+      "location": "West US",
+      "instanceOf": "WebAppResourceGroupDefinitions",
+      "azureSubscriptionId": "6a205b0a-6b5a-4346-8468-f4b6367f7efa",
+      "scopeTags": [
+        {
+          "name": "MyAppCompute"
+        }
+      ],
+      "serviceResources": [
+        {
+          "name": "KeyVaultResource",
+          "instanceOf": "KeyVaultDefinition"
+        },
+        {
+          "name": "CompilerHostWestUs",
+          "instanceOf": "WebAppDefinition",
+          "scopeTags": [
+            {
+              "name": "WestUSRegion"
+            }
+          ]
+        },
+        {
+          "name": "RuntimeHostWestUs",
+          "instanceOf": "WebAppDefinition",
+          "scopeTags": [
+            {
+              "name": "WestUSRegion"
+            }
+          ]
+        }
+      ]
+    },    
+    {
+      "azureResourceGroupName": "DiagnosticBackendUsNat",
+      "location": "USNat East",
+      "instanceOf": "WebAppResourceGroupDefinitions",
+      "azureSubscriptionId": "237836ad-af13-4e7f-9289-b5f0d3104209",
+      "scopeTags": [
+        {
+          "name": "MyAppCompute"
+        }
+      ],
+      "serviceResources": [
+        {
+          "name": "CreateMSI-UsNat",
+          "instanceOf": "CreateMSI_Definition"
+        },
+        {
+          "name": "CreateMSI-RBAC-UsNat",
+          "instanceOf": "CreateMSIRoleDefinitions",
+          "scopeTags": [
+            {
+              "name": "UsNatEastRegion"
+            }
+          ]
+        },
+        {
+          "name": "KeyVaultResourceUsNat",
+          "instanceOf": "KeyVaultDefinition"
+        },        
+        {
+          "name": "CompilerHostUsNat",
+          "instanceOf": "WebAppDefinition",
+          "scopeTags": [
+            {
+              "name": "UsNatEastRegion"
+            }
+          ]
+        },
+        {
+          "name": "RuntimeHostUsNat",
+          "instanceOf": "WebAppDefinition",
+          "scopeTags": [
+            {
+              "name": "UsNatEastRegion"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

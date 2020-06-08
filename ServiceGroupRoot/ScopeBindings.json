@@ -1,0 +1,106 @@
+{
+  "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/scopeBindings.json",
+  "contentVersion": "0.0.0.1",
+  "scopeBindings": [
+    {
+      "scopeTagName": "MyAppCompute",
+      "bindings": [
+        {
+          "find": "__KEYVAULTNAME__",
+          "replaceWith": "$(KeyVaultName)"
+        },
+        {
+          "find": "__KEY_VAULT_CERTIFICATES_LIST__",
+          "replaceWith": "$(KeyVaultCertificatesList)"
+        },
+        {
+          "find": "__SITENAME__",
+          "replaceWith": "$(SiteName)"
+        },
+        {
+          "find": "__HEALTHCHECK_PATH__",
+          "replaceWith": "$(HealthCheckPath)"
+        },
+        {
+          "find": "__GEOMASTER_CERT_SUBJECT_NAME__",
+          "replaceWith": "$(GeomasterCertificateSubjectName)"
+        },
+        {
+          "find": "__GEOMASTER_ENDPOINT__",
+          "replaceWith": "$(GeomasterEndpoint)"
+        },
+        {
+          "find": "__USER_ASSIGNED_IDENTITY_NAME__",
+          "replaceWith": "diagnostics_resourcegroup_msi"
+        },
+        {
+          "find": "__CREATE_MSI_RBAC_BOOL__",
+          "replaceWith": "$(CreateMsiRbacBool)"
+        },
+        {
+          "find": "__EASY_AUTH_AZURE_AD_CLIENT_ID",
+          "replaceWith": "$(EasyAuthAzureAdClientId)"
+        },
+        {
+          "find": "__SERVICE_PRINCIPAL_APP_ID__",
+          "replaceWith": "$(SubscriptionScopeServicePrincipal)"
+        },
+        {
+          "find": "__TENANT_ID__",
+          "replaceWith": "$callerTenantId()"
+        },
+        {
+          "find": "__KEYVAULT_URI_SERVICE_PRINCIPAL_CLIENT_SECRET_URI__",
+          "replaceWith": "$(KeyvaultUriServicePrincipalClientSecretUri)"
+        },
+        {
+          "find": "__CLOUD_ENVIRONMENT__",
+          "replaceWith": "$rolloutInfra()"
+        },
+        {
+          "find": "__AZURE_WEBSITES_SERVICE_PRINCIPAL_OBJECT_ID__",
+          "replaceWith": "$(AzureWebsitesServicePrincipalObjectId)"
+        }
+      ]
+    },
+    {
+      "scopeTagName": "WestUSRegion",
+      "bindings": [
+        {
+          "find": "__LOCATION_ABBR__",
+          "replaceWith": "wus"
+        },
+        {
+          "find": "__LOCATION__",
+          "replaceWith": "West US"
+        }
+      ]
+    },
+    {
+      "scopeTagName": "EastUSRegion",
+      "bindings": [
+        {
+          "find": "__LOCATION_ABBR__",
+          "replaceWith": "eus"
+        },
+        {
+          "find": "__LOCATION__",
+          "replaceWith": "East US"
+        }
+      ]
+    },
+    {
+      "scopeTagName": "UsNatEastRegion",
+      "bindings": [
+        {
+          "find": "__LOCATION_ABBR__",
+          "replaceWith": "usnateast"
+        },
+        {
+          "find": "__LOCATION__",
+          "replaceWith": "USNat East"
+        }
+      ]
+    }
+  ]
+}

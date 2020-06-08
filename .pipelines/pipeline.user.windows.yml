@@ -45,12 +45,16 @@ package:
       name: 'Package Runtimehost and Compilerhost'
       command: 'publish.cmd'
       artifacts:
+        - from: 'ServiceGroupRoot'
+          to: 'Ev2ServiceGroupRoot'
+          include:
+            - '**/*'      
         - from: 'build'
-          to: 'Diagnostics.Runtimehost'
+          to: 'Ev2ServiceGroupRoot\bin'
           include:
             - '**/DiagnosticsRuntimeHost.zip'
         - from: 'build'
-          to: 'Diagnostics.CompilerHost'
+          to: 'Ev2ServiceGroupRoot\bin'
           include:
             - '**/DiagnosticsCompilerHost.zip'
 

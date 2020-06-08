@@ -1,0 +1,38 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "paths": [
+      {
+        "parameterReference": "servicePackageLink"
+      }
+    ],
+    "parameters": {
+      "siteName": {
+        "value": "__SITENAME__-__LOCATION_ABBR__"
+      },
+      "location": {
+        "value": "__LOCATION__"
+      },
+      "appServicePlanName": {
+        "value": "__SITENAME__-__LOCATION_ABBR__-asp"
+      },
+      "sku": {
+        "value": "S1"
+      },
+      "keyVaultName": {
+        "value": "__KEYVAULTNAME__"
+      },
+      "pingPath":{
+        "value": "__HEALTHCHECK_PATH__"
+      },
+      "geomasterCertificateSubjectName": {
+        "value": "__GEOMASTER_CERT_SUBJECT_NAME__"
+      },
+      "geomasterEndPoint": {
+        "value": "__GEOMASTER_ENDPOINT__"
+      },
+      "servicePackageLink": {
+        "value": "bin\\DiagnosticsRuntimeHost.zip"
+      }
+    }
+}
