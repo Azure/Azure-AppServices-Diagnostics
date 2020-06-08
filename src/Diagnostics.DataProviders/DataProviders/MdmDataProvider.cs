@@ -1,15 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 
 namespace Diagnostics.DataProviders
 {
+    public class MdmQueryParameters
+    {
+        public string query { get; set; }
+        public string key { get; set; } = "value";
+        public string replacement { get; set; }
+    }
+
     /// <summary>
     /// Mdm data provider
     /// </summary>
@@ -24,11 +34,16 @@ namespace Diagnostics.DataProviders
         /// <param name="cache">Operation cache.</param>
         /// <param name="configuration">Data provider configuration.</param>
         /// <param name="requestId">Request id.</param>
+        /// <param name="generalDataProviderConfiguration">Generic data provider configuration.</param>
         public MdmDataProvider(OperationDataCache cache, IMdmDataProviderConfiguration configuration, string requestId, IHeaderDictionary headers = null)
-            : base(cache)
+            : base(cache, configuration)
         {
             _configuration = configuration;
             _mdmClient = MdmClientFactory.GetMdmClient(configuration, requestId);
+            Metadata = new DataProviderMetadata
+            {
+                ProviderName = "MDM"
+            };
         }
 
         /// <summary>
@@ -37,7 +52,7 @@ namespace Diagnostics.DataProviders
         /// <returns>Data provider metadata.</returns>
         public DataProviderMetadata GetMetadata()
         {
-            return null;
+            return Metadata;
         }
 
         /// <summary>
@@ -185,6 +200,11 @@ namespace Diagnostics.DataProviders
 
             var result = new List<DataTable>();
 
+            AddMdmInformationToMetadata(definitions,
+                startTimeUtc,
+                endTimeUtc,
+                seriesResolutionInMinutes);
+
             // Generate data table.
             foreach (var serie in series)
             {
@@ -205,6 +225,161 @@ namespace Diagnostics.DataProviders
             }
 
             return result;
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2007:Consider calling ConfigureAwait on the awaited task", Justification = "<Pending>")]
+        public override async Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            HealthCheckResult result;
+            if (_configuration.HealthCheckInputs != null && _configuration.HealthCheckInputs.Any())
+            {
+                //namespace=Microsoft/Web/WebApps;sampling=average;metric=PrivateBytes
+                _configuration.HealthCheckInputs.TryGetValue("namespace", out string mdmNamespace);
+                _configuration.HealthCheckInputs.TryGetValue("sampling", out string mdmSamplingString);
+                _configuration.HealthCheckInputs.TryGetValue("metric", out string mdmMetric);
+                _configuration.HealthCheckInputs.TryGetValue("resourceId", out string resourceId);
+
+                var parameters = new string[] { mdmNamespace, mdmSamplingString, mdmMetric };
+
+                if (parameters.Any(s => string.IsNullOrWhiteSpace(s)))
+                {
+                    return new HealthCheckResult(HealthStatus.Unknown, $"Missing required parameters for health check {string.Join(",", parameters.Where(s => string.IsNullOrWhiteSpace(s)))}");
+                }
+
+                if (Enum.TryParse<Sampling>(mdmSamplingString, out Sampling mdmSampling))
+                {
+                    Exception exception = null;
+                    try
+                    {
+                        var resp = await this.GetTimeSeriesAsync(DateTime.UtcNow - TimeSpan.FromMinutes(45), DateTime.UtcNow, mdmSampling, mdmNamespace, mdmMetric, new Dictionary<string, string>
+                        {
+                            { "ResourceId", resourceId }
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        exception = ex;
+                    }
+                    finally
+                    {
+                        result = new HealthCheckResult(
+                            exception == null ? HealthStatus.Healthy : HealthStatus.Unhealthy,
+                            "MDM Data Provider",
+                            description: "Get time series data from Mdm",
+                            exception);
+                    }
+
+                    return result;
+                }
+            }
+            return await base.CheckHealthAsync(cancellationToken);
+        }
+
+        private void AddMdmInformationToMetadata(IEnumerable<Tuple<string, string, IEnumerable<KeyValuePair<string, string>>>> definitions, 
+            DateTime startTimeUtc, 
+            DateTime endTimeUtc, 
+            int seriesResolutionInMinutes)
+        {
+            var queryParameters = new List<MdmQueryParameters>();
+            var dashboard = string.Empty;
+            string resourceId = string.Empty;
+
+            foreach (var d in definitions)
+            {
+                //Item1 - NameSpace
+                //Item2 - MetricName
+
+                if (string.IsNullOrWhiteSpace(dashboard))
+                {
+                    if (d.Item1 == "Microsoft/Web/AppServicePlans")
+                    {
+                        dashboard = "WAWS Shoebox/App Service Plans/Per Resource Instance";
+                    }
+                    else if (d.Item1 == "Microsoft/Web/WebApps")
+                    {
+                        dashboard = "WAWS Shoebox/Web Apps/Per Resource";
+                    }
+                }
+
+                foreach (var instanceDimension in d.Item3.Where(x => x.Key != "ServerName"))
+                {
+                    if (string.Equals(instanceDimension.Key, "ResourceId", StringComparison.OrdinalIgnoreCase)
+                        && !string.IsNullOrWhiteSpace(instanceDimension.Value))
+                    {
+                        resourceId = instanceDimension.Value;
+                    }
+
+                    var queryValue = $"//*[id='{instanceDimension.Key}']";
+                    if (!queryParameters.Any(x => x.query == queryValue))
+                    {
+                        var mdmParameter = new MdmQueryParameters
+                        {
+                            query = queryValue,
+                            replacement = instanceDimension.Value
+                        };
+
+                        queryParameters.Add(mdmParameter);
+                    }
+                }
+
+                if (dashboard == "WAWS Shoebox/Web Apps/Per Resource")
+                {
+                    AddRemainingParametersForWebApps(queryParameters, resourceId, seriesResolutionInMinutes);
+                }
+
+            }
+
+            if (queryParameters.Count > 0 && !string.IsNullOrWhiteSpace(dashboard))
+            {
+                bool urlExists = false;
+                string finalUrl = string.Empty;
+                var urlParmeters = $"dashboard/{dashboard}?overrides={JsonConvert.SerializeObject(queryParameters)}&globalStartTime={GetDateTimeInEpochMilliseconds(startTimeUtc)}&globalEndTime={GetDateTimeInEpochMilliseconds(endTimeUtc)}&pinGlobalTimeRange=true";
+
+                finalUrl = $"https://jarvis-west.dc.ad.msft.net/{urlParmeters} ";
+
+                urlExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&
+                                                            x.Value.GetType() == typeof(DataProviderMetadataQuery) &&
+                                                            x.Value.CastTo<DataProviderMetadataQuery>().Url.Equals(finalUrl, StringComparison.OrdinalIgnoreCase));
+                if (!urlExists)
+                {
+                    Metadata.PropertyBag.Add(new KeyValuePair<string, object>("Query", new DataProviderMetadataQuery() { Text = finalUrl, Url = finalUrl }));
+                }
+            }
+        }
+
+        private void AddRemainingParametersForWebApps(List<MdmQueryParameters> queryParameters, string resourceId, int seriesResolutionInMinutes)
+        {
+            var hostArray = resourceId.Split(".");
+            if (hostArray.Length < 3)
+            {
+                return;
+            }
+
+            var paramDnsSuffix = new MdmQueryParameters
+            {
+                query = $"//*[id='DNSSuffix']",
+                replacement = $"{hostArray[1]}.{hostArray[2]}"
+            };
+            queryParameters.Add(paramDnsSuffix);
+
+            var paramAppName = new MdmQueryParameters
+            {
+                query = $"//*[id='appName']",
+                replacement = hostArray[0]
+            };
+            queryParameters.Add(paramAppName);
+
+            var paramTimeResolution = new MdmQueryParameters
+            {
+                query = $"//*[id='timeResolution']",
+                replacement = seriesResolutionInMinutes.ToString()
+            };
+            queryParameters.Add(paramTimeResolution);
+        }
+
+        private double GetDateTimeInEpochMilliseconds(DateTime dateTimeUtc)
+        {
+            return Math.Round((double)new DateTimeOffset(dateTimeUtc).ToUnixTimeMilliseconds());
         }
     }
 }

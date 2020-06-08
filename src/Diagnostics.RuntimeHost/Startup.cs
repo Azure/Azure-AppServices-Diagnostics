@@ -1,14 +1,25 @@
-﻿using Diagnostics.DataProviders;
+﻿using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+using Diagnostics.DataProviders;
 using Diagnostics.DataProviders.TokenService;
 using Diagnostics.RuntimeHost.Middleware;
 using Diagnostics.RuntimeHost.Models;
+using Diagnostics.RuntimeHost.Security.CertificateAuth;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Diagnostics.RuntimeHost.Services.StorageService;
 using Diagnostics.RuntimeHost.Utilities;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -27,6 +38,8 @@ using Microsoft.IdentityModel.Logging;
 using System.Net;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Rewrite;
+using Newtonsoft.Json;
+using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -65,7 +78,9 @@ namespace Diagnostics.RuntimeHost
                     options =>
                     {
                         options.AllowedIssuers = Configuration["SecuritySettings:AllowedCertIssuers"].Split("|").Select(p => p.Trim()).ToList();
-                        options.AllowedSubjectNames = Configuration["SecuritySettings:AllowedCertSubjectNames"].Split(",").Select(p => p.Trim()).ToList();
+                        var allowedSubjectNames = Configuration["SecuritySettings:AllowedCertSubjectNames"].Split(",").Select(p => p.Trim()).ToList();
+                        allowedSubjectNames.AddRange(Configuration["SecuritySettings:AdditionalAllowedCertSubjectNames"].Split(",").Select(p => p.Trim()).ToList());
+                        options.AllowedSubjectNames = allowedSubjectNames;
                     }).AddJwtBearer("AzureAd", options => {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
@@ -115,11 +130,18 @@ namespace Diagnostics.RuntimeHost
                 services.AddMvc(options =>
                 {
                     options.Filters.Add(new AllowAnonymousFilter());
+
+                }).AddJsonOptions(options =>
+                {
+                    options.SerializerSettings.Formatting = Formatting.Indented;
                 });
             }
             else
             {
-                services.AddMvc();
+                services.AddMvc().AddJsonOptions(options =>
+                {
+                    options.SerializerSettings.Formatting = Formatting.Indented;
+                });
             }
 
             services.AddSingleton<IDataSourcesConfigurationService, DataSourcesConfigurationService>();
@@ -155,6 +177,7 @@ namespace Diagnostics.RuntimeHost
             var searchApiConfiguration = dataSourcesConfigService.Config.SearchServiceProviderConfiguration;
 
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
+    
 
             observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
             var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.AADResource, observerConfiguration);
@@ -189,24 +212,26 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
-            
-
+            services.AddSingleton<IStorageService, StorageService>();
+            services.AddSingleton<IDiagEntityTableCacheService, DiagEntityTableCacheService>();
+            if(IsPublicAzure())
+            {
+                services.AddSingleton<ISourceWatcher, StorageWatcher>();
+            } else
+            {
+                services.AddSingleton<ISourceWatcher, NationalCloudStorageWatcher>();
+            }
             services.AddLogging(loggingConfig =>
             {
                 loggingConfig.ClearProviders();
                 loggingConfig.AddConfiguration(Configuration.GetSection("Logging"));
-                loggingConfig.AddDebug();
+                loggingConfig.AddApplicationInsights();
                 loggingConfig.AddEventSourceLogger();
                 loggingConfig.AddRuntimeLogger();
-
-                if (!IsPublicAzure())
-                {
-                    loggingConfig.AddEventLog();
-                    loggingConfig.AddAzureWebAppDiagnostics();
-                }
              
                 if (Environment.IsDevelopment())
                 {
+                    loggingConfig.AddDebug();
                     loggingConfig.AddConsole();
                 }
             });
@@ -219,7 +244,10 @@ namespace Diagnostics.RuntimeHost
             {
                 app.UseDeveloperExceptionPage();
             }
-            app.UseAuthentication();
+            if (!env.IsDevelopment())
+            {
+                app.UseAuthentication();
+            }
             app.UseRewriter(new RewriteOptions().Add(new RewriteDiagnosticResource()));
             app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseMvc();

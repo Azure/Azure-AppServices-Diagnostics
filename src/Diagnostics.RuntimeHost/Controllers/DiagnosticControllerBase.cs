@@ -21,6 +21,8 @@ using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
+using Diagnostics.RuntimeHost.Services.StorageService;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
@@ -50,6 +52,8 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IRuntimeLoggerProvider _loggerProvider;
 
         private InternalAPIHelper _internalApiHelper;
+        private IDiagEntityTableCacheService tableCacheService;
+        private ISourceWatcher storageWatcher;
 
         public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext)
         {
@@ -64,7 +68,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._supportTopicService = (ISupportTopicService)services.GetService(typeof(ISupportTopicService));
             this._kustoMappingCacheService = (IKustoMappingsCacheService)services.GetService(typeof(IKustoMappingsCacheService));
             this._loggerProvider = (IRuntimeLoggerProvider)services.GetService(typeof(IRuntimeLoggerProvider));
-
+            tableCacheService = (IDiagEntityTableCacheService)services.GetService(typeof(IDiagEntityTableCacheService));
+            storageWatcher = ((StorageWatcher)services.GetService(typeof(ISourceWatcher)));
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
         }
@@ -360,6 +365,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             await _sourceWatcherService.Watcher.CreateOrUpdatePackage(pkg);
+            await storageWatcher.CreateOrUpdatePackage(pkg);
             return Ok();
         }
 
@@ -389,6 +395,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             if (supportTopicPath != null)
             {
+                supportTopicPath = HttpUtility.UrlDecode(supportTopicPath);
                 SupportTopicModel supportTopicMap = await this._supportTopicService.GetSupportTopicFromString(supportTopicPath, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
                 if (supportTopicMap != null)
                 {
@@ -404,6 +411,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             supportTopicId = ParseCorrectSupportTopicId(supportTopicId);
             var supportTopic = new SupportTopic() { Id = supportTopicId, PesId = pesId };
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, true, supportTopic, null, postBody);
+            if (supportTopicId == null)
+            {
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.OperationContext.RequestId, "GetInsights", cxt.OperationContext.Resource.SubscriptionId,
+                    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, "ASCSupportTopicIdNull", $"Support Topic Id is null or there is no mapping for the Support topic path provided - {supportTopicPath}");
+            }
             DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId, "AzureSupportCenter", "ASCAdditionalParameters", postBody);
 
             List<AzureSupportCenterInsight> insights = null;
@@ -415,7 +427,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 allDetectors = (await ListDetectorsInternal(cxt)).Select(detectorResponse => detectorResponse.Metadata);
 
                 var applicableDetectors = allDetectors
-                    .Where(detector => string.IsNullOrWhiteSpace(supportTopicId) || detector.SupportTopicList.FirstOrDefault(st => st.Id == supportTopicId) != null);
+                    .Where(detector => detector.SupportTopicList.FirstOrDefault(st => st.Id == supportTopicId) != null);
 
                 var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => GetInsightsFromDetector(cxt, detector, detectorsRun)));
 
@@ -438,15 +450,13 @@ namespace Diagnostics.RuntimeHost.Controllers
                 defaultInsightReturned = true;
                 insights.Add(AzureSupportCenterInsightUtilites.CreateDefaultInsight(cxt.OperationContext, detectorsRun));
             }
-            else if (!detectorsRun.Any())
+
+            var defaultDetector = allDetectors.FirstOrDefault(detector => detector.Id.StartsWith("default_asc_insights_", StringComparison.InvariantCultureIgnoreCase));
+            if (defaultDetector != null)
             {
-                var defaultDetector = allDetectors.FirstOrDefault(detector => detector.Id.StartsWith("default_insights"));
-                if (defaultDetector != null)
-                {
-                    var defaultDetectorInsights = await GetInsightsFromDetector(cxt, defaultDetector, new List<Definition>());
-                    defaultInsightReturned = defaultDetectorInsights.Any();
-                    insights.AddRange(defaultDetectorInsights);
-                }
+                var defaultDetectorInsights = await GetInsightsFromDetector(cxt, defaultDetector, new List<Definition>());
+                defaultInsightReturned = defaultDetectorInsights.Any();
+                insights.AddRange(defaultDetectorInsights);
             }
 
             var insightInfo = new
@@ -527,7 +537,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             string stampName = !string.IsNullOrWhiteSpace(hostingEnv.InternalName) ? hostingEnv.InternalName : hostingEnv.Name;
 
-            if (stampPostBody.Kind == DiagnosticStampType.ASEV1 || stampPostBody.Kind == DiagnosticStampType.ASEV2)
+            if (platformType==null && (stampPostBody.Kind == DiagnosticStampType.ASEV1 || stampPostBody.Kind == DiagnosticStampType.ASEV2))
             {
                 var result = await this._stampService.GetTenantIdForStamp(stampName, hostingEnv.HostingEnvironmentType == HostingEnvironmentType.None, startTime, endTime, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
                 hostingEnv.PlatformType = result.Item2;
@@ -634,6 +644,20 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private async Task<IEnumerable<DiagnosticApiResponse>> ListGistsInternal(RuntimeContext<TResource> context)
         {
+            if (tableCacheService.IsStorageAsSourceEnabled())
+            {
+                var allGistsFromStorage = await tableCacheService.GetEntityListByType<TResource>(context, "Gist");
+                return allGistsFromStorage.Select(p => new DiagnosticApiResponse
+                {
+                    Metadata = RemovePIIFromDefinition(new Definition
+                    {
+                        Id = p.RowKey,
+                        Name = p.DetectorName,
+                        Author = p.Author,
+                        Category = p.Category
+                    }, context.ClientIsInternal)
+                });
+            }
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
             return _gistCache.GetEntityInvokerList(context).Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
         }
@@ -653,12 +677,11 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private async Task<IEnumerable<DiagnosticApiResponse>> ListDetectorsInternal(RuntimeContext<TResource> context, string queryText = null)
         {
-            await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
-            var allDetectors = _invokerCache.GetEntityInvokerList<TResource>(context).ToList();
+
+            SearchResults searchResults = null;
 
             if (queryText != null && queryText.Length > 1)
             {
-                SearchResults searchResults = null;
                 var resourceParams = _internalApiHelper.GetResourceParams(context.OperationContext.Resource as IResourceFilter);
                 try
                 {
@@ -669,29 +692,10 @@ namespace Diagnostics.RuntimeHost.Controllers
                         searchResults = JsonConvert.DeserializeObject<SearchResults>(resultContent);
                         // Select search results (Detectors) whose score is greater than 0.3 (considering anything below that should not be relevant for the search query)
                         searchResults.Results = searchResults.Results.Where(result => result.Score > 0.3).ToArray();
-
-                        allDetectors.ForEach(detector =>
-                        {
-                            // Assign the score to detector if it exists in search results, else default to 0
-                            var detectorWithScore = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == detector.EntryPointDefinitionAttribute.Id) : null;
-                            if (detectorWithScore != null)
-                            {
-                                detector.EntryPointDefinitionAttribute.Score = detectorWithScore.Score;
-                            }
-                            else
-                            {
-                                detector.EntryPointDefinitionAttribute.Score = 0;
-                            }
-                        });
-                        // Finally select only those detectors that have a positive score value
-                        allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
-                        // Log the filtered public search results
-                        var logMessage = new { InsightName = "SearchResultsPublic", InsightData = allDetectors.Select(p => new { Id = p.EntryPointDefinitionAttribute.Id, Score = p.EntryPointDefinitionAttribute.Score }) };
-                        DiagnosticsETWProvider.Instance.LogInternalAPIInsights(context.OperationContext.RequestId, JsonConvert.SerializeObject(logMessage));
                     }
                     else
                     {
-                        DiagnosticsETWProvider.Instance.LogInternalAPIHandledException(context.OperationContext.RequestId, "SearchServiceReturnedNull", "Search service returned null. This might be because search api is disabled in the project" );
+                        DiagnosticsETWProvider.Instance.LogInternalAPIHandledException(context.OperationContext.RequestId, "SearchServiceReturnedNull", "Search service returned null. This might be because search api is disabled in the project");
                         return new List<DiagnosticApiResponse>();
                     }
                 }
@@ -702,6 +706,66 @@ namespace Diagnostics.RuntimeHost.Controllers
                 }
             }
 
+            if (tableCacheService.IsStorageAsSourceEnabled())
+            {
+                var allDetectorsFromStorage = await tableCacheService.GetEntityListByType<TResource>(context);
+                if (searchResults != null)
+                {
+                    // Return those detectors that have positive search score and present in searchResult.
+                    List<string> potentialDetectors = searchResults.Results.Where(s => s.Score > 0).Select(x => x.Detector).ToList();
+
+                    // Assign the score to detector if it exists in search results, else default to 0
+                    allDetectorsFromStorage.ForEach(entity =>
+                    {
+                        var detectorWithScore = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == entity.RowKey) : null;
+                        entity.Score = detectorWithScore != null ? detectorWithScore.Score : 0;
+                    });
+
+                    // Filter only postive score detectors.
+                    allDetectorsFromStorage = allDetectorsFromStorage.Where(x => x.Score > 0).ToList();
+                    // Log the filtered public search results
+                    var logMessage = new { InsightName = "SearchResultsPublic", InsightData = allDetectorsFromStorage.Select(p => new { Id = p.RowKey, Score = p.Score }) };
+                    DiagnosticsETWProvider.Instance.LogInternalAPIInsights(context.OperationContext.RequestId, JsonConvert.SerializeObject(logMessage));
+                }
+                return allDetectorsFromStorage.Select(p => new DiagnosticApiResponse
+                {
+                    Metadata = RemovePIIFromDefinition(new Definition
+                    {
+                        Id = p.RowKey,
+                        Name = p.DetectorName,
+                        Author = p.Author,
+                        Category = p.Category,
+                        SupportTopicList = p.SupportTopicList,
+                        AnalysisTypes = p.AnalysisTypes,
+                        Type = p.DetectorType != null ? Enum.Parse<DetectorType>(p.DetectorType) : DetectorType.Detector,  
+                        Score = p.Score
+                    }, context.ClientIsInternal)
+                });
+            }
+
+            await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+            var allDetectors = _invokerCache.GetEntityInvokerList<TResource>(context).ToList();
+            if(searchResults != null)
+            {
+                allDetectors.ForEach(detector =>
+                {
+                    // Assign the score to detector if it exists in search results, else default to 0
+                    var detectorWithScore = (searchResults != null) ? searchResults.Results.FirstOrDefault(x => x.Detector == detector.EntryPointDefinitionAttribute.Id) : null;
+                    if (detectorWithScore != null)
+                    {
+                        detector.EntryPointDefinitionAttribute.Score = detectorWithScore.Score;
+                    }
+                    else
+                    {
+                        detector.EntryPointDefinitionAttribute.Score = 0;
+                    }
+                });
+                // Finally select only those detectors that have a positive score value
+                allDetectors = allDetectors.Where(x => x.EntryPointDefinitionAttribute.Score > 0).ToList();
+                // Log the filtered public search results
+                var logMessage = new { InsightName = "SearchResultsPublic", InsightData = allDetectors.Select(p => new { Id = p.EntryPointDefinitionAttribute.Id, Score = p.EntryPointDefinitionAttribute.Score }) };
+                DiagnosticsETWProvider.Instance.LogInternalAPIInsights(context.OperationContext.RequestId, JsonConvert.SerializeObject(logMessage));
+            }   
             return allDetectors.Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
         }
 
@@ -777,6 +841,15 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
                 response.UpdateDetectorStatusFromInsights();
+
+                //
+                // update the dataProvidersMetdata after detector execution to update data source
+                // information for parameterized data sources like MDM
+                //
+                if (context.ClientIsInternal)
+                {
+                    dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
+                }
 
                 return new Tuple<Response, List<DataProviderMetadata>>(response, dataProvidersMetadata);
             }
@@ -890,24 +963,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private List<DataProviderMetadata> GetDataProvidersMetadata(DataProviders.DataProviders dataProviders)
         {
-            var dataprovidersMetadata = new List<DataProviderMetadata>();
-            foreach (var dataProvider in dataProviders.GetType().GetFields())
-            {
-                if (dataProvider.FieldType.IsInterface)
-                {
-                    var metadataProvider = dataProvider.GetValue(dataProviders) as IMetadataProvider;
-                    if (metadataProvider != null)
-                    {
-                        var metadata = metadataProvider.GetMetadata();
-                        if (metadata != null)
-                        {
-                            dataprovidersMetadata.Add(metadata);
-                        }
-                    }
-                }
-            }
-
-            return dataprovidersMetadata;
+            return dataProviders.GetMetadata();
         }
 
         private bool VerifyEntity(EntityInvoker invoker, ref QueryResponse<DiagnosticApiResponse> queryRes, string publishingDetectorId)

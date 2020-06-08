@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Diagnostics.DataProviders;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -37,11 +37,24 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok("Server is up and running.");
         }
 
+        [Authorize]
         [HttpGet("/dependencyCheck")]
-        public async Task<IEnumerable<HealthCheckResult>> DependencyCheck()
+        public async Task<IActionResult> DependencyCheck()
         {
-            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
-            return await _healthCheckService.RunDependencyCheck(dataProviders);
+            try
+            {
+                var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+                return Ok(await _healthCheckService.RunDependencyCheck(dataProviders));
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    ex.Message,
+                    ExceptonType = ex.GetType().ToString(),
+                    ex.StackTrace
+                });
+            }
         }
     }
 }

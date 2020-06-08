@@ -3,6 +3,7 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using Diagnostics.RuntimeHost.Utilities;
@@ -76,15 +77,26 @@ namespace Diagnostics.RuntimeHost.Models
             var metadataFilePath = $"{Id.ToLower()}/metadata.json";
             var configPath = $"{Id.ToLower()}/package.json";
             Metadata = Metadata ?? string.Empty;
-
-            return new List<CommitContent>
+            bool includeMetadata = false;
+            try
             {
-                new CommitContent(csxFilePath, CodeString),
-                new CommitContent(configPath, PackageConfig),
-                new CommitContent(dllFilePath, DllBytes, EncodingType.Base64),
-                new CommitContent(pdbFilePath, PdbBytes, EncodingType.Base64),
-                new CommitContent(metadataFilePath, Metadata)
-            };
+                var metadata = JsonConvert.DeserializeObject<dynamic>(Metadata);
+                if (metadata != null && (metadata["utterances"] != null) && (metadata["utterances"].Count > 0))
+                {
+                    includeMetadata = true;
+                }
+            }
+            catch (Exception ex){
+            }
+            List<CommitContent> commits = new List<CommitContent>();
+            commits.Add(new CommitContent(csxFilePath, CodeString));
+            commits.Add(new CommitContent(configPath, PackageConfig));
+            commits.Add(new CommitContent(dllFilePath, DllBytes, EncodingType.Base64));
+            commits.Add(new CommitContent(pdbFilePath, PdbBytes, EncodingType.Base64));
+            if (includeMetadata)
+            commits.Add(new CommitContent(metadataFilePath, Metadata));
+
+            return commits;
         }
 
         /// <summary>

@@ -26,6 +26,8 @@ namespace Diagnostics.DataProviders
 
         public const string AzureUSNat = "USNat";
 
+        public static readonly char[] CommonSeparationChars = { '|', ',' };
+
         #region Kusto Constants
 
         public static TimeSpan KustoDataRetentionPeriod = TimeSpan.FromDays(-30);
@@ -37,6 +39,8 @@ namespace Diagnostics.DataProviders
         public const string KustoTimeFormat = "yyyy-MM-dd HH:mm:ss";
 
         public const string FakeStampForAnalyticsCluster = "waws-prod-blu-000";
+
+        public const string kustoFollowerClusterSuffix = "follower";
 
         #endregion Kusto Constants
 

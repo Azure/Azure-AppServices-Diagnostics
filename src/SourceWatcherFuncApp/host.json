@@ -1,0 +1,16 @@
+{
+    "version": "2.0",
+  "logging": {
+      "fileLoggingMode": "debugOnly",
+        "logLevel": {
+          "Function": "Information",
+          "default": "Information"
+        },
+    "applicationInsights": {
+      "samplingExcludedTypes": "Request",
+      "samplingSettings": {
+        "isEnabled": true
+      }
+    }
+  }
+}

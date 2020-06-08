@@ -11,6 +11,7 @@ using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using Diagnostics.Logger;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Diagnostics.DataProviders
 {
@@ -34,7 +35,7 @@ namespace Diagnostics.DataProviders
 
         public string RequestId { get; set; }
 
-        public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache)
+        public GeoMasterDataProvider(OperationDataCache cache, DataProviderContext context) : base(cache, context.Configuration.GeoMasterConfiguration)
         {
             _geoMasterHostName = string.IsNullOrWhiteSpace(context.GeomasterHostName) ? context.Configuration.GeoMasterConfiguration.GeoEndpointAddress : context.GeomasterHostName;
             _configuration = context.Configuration.GeoMasterConfiguration;
@@ -46,7 +47,7 @@ namespace Diagnostics.DataProviders
         private IGeoMasterClient InitClient()
         {
             IGeoMasterClient geoMasterClient;
-            bool isAppService = !string.IsNullOrWhiteSpace(_configuration.CertificateName);
+            bool isAppService = !string.IsNullOrWhiteSpace(_configuration.CertificateName) || !string.IsNullOrWhiteSpace(_configuration.GeoCertSubjectName);
             if (isAppService)
             {
                 geoMasterClient = new GeoMasterCertClient(_configuration, _geoMasterHostName);
@@ -381,11 +382,11 @@ namespace Diagnostics.DataProviders
             }
             if (string.IsNullOrWhiteSpace(path))
             {
-                path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}";
+                path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName)}";
             }
             else
             {
-                path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name)}/{path}";
+                path = $"{SitePathUtility.GetSitePath(subscriptionId, resourceGroupName, name, slotName)}/{path}";
             }
 
             return HttpGet<T>(path);
@@ -683,6 +684,44 @@ namespace Diagnostics.DataProviders
             }
 
             return geoMasterName;
+        }
+
+        public override async Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default)
+        {
+            HealthCheckResult result = null;
+
+            if (_configuration.HealthCheckInputs != null && _configuration.HealthCheckInputs.Any())
+            {
+                _configuration.HealthCheckInputs.TryGetValue("subscription", out string subscription);
+                _configuration.HealthCheckInputs.TryGetValue("resourceGroupName", out string resourceGroupName);
+                _configuration.HealthCheckInputs.TryGetValue("siteName", out string siteName);
+
+                var inputs = new string[] { subscription, resourceGroupName, siteName };
+
+                if (inputs.All(s => !string.IsNullOrWhiteSpace(s)))
+                {
+                    Exception geomasterException = null;
+                    try
+                    {
+                        var response = await this.GetAppSettings(subscription, resourceGroupName, siteName);
+                    }
+                    catch (Exception ex)
+                    {
+                        geomasterException = ex;
+                    }
+                    finally
+                    {
+                        result = new HealthCheckResult(geomasterException == null ? HealthStatus.Healthy : HealthStatus.Unhealthy, "Geomaster", "Run a test against geomaster by simply getting app settings", geomasterException, _configuration.HealthCheckInputs.ToDictionary((k) => k.Key, v => (object) v.Value));
+                    }
+                }
+                else
+                {
+                    var missingValues = inputs.Where(s => string.IsNullOrWhiteSpace(s));
+                    result = new HealthCheckResult(HealthStatus.Unknown, $"Missing required parameters for health check {string.Join(",", missingValues)}");
+                }
+            }
+
+            return result ?? await base.CheckHealthAsync(cancellationToken);
         }
     }
 }

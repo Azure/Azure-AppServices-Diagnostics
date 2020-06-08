@@ -11,10 +11,11 @@ from SearchModule.TextSearchModule import loadModel, refreshModel, freeModel, lo
 from SearchModule.Utilities import resourceConfig, getProductId, getAllProductIds
 from SearchModule.StorageAccountHelper import StorageAccountHelper
 from SearchModule.Logger import loggerInstance
+from SearchModule.LuisProvider import getLuisPredictions, mergeLuisResults
 import urllib.parse, re
 
 translator = Translator()
-specialChars = r'[”\]\\><\)\(&\[,“!:]'
+specialChars = r'[^(0-9a-zA-Z )]+'
 ######## RUN THE API SERVER IN FLASK  #############
 def getUTCTime():
     return datetime.now(timezone.utc)
@@ -96,7 +97,11 @@ def queryDetectorsMethod():
     data = json.loads(request.data.decode('utf-8'))
     requestId = data['requestId']
 
-    txt_data = translator.translate(urllib.parse.unquote(data['text'])).text
+    try:
+        txt_data = translator.translate(urllib.parse.unquote(data['text'])).text
+    except Exception as e:
+        loggerInstance.logHandledException(requestId, Exception(f"Failed to translate the query -> {str(e)}"))
+        txt_data = urllib.parse.unquote(data['text'])
     original_query = txt_data
     if (len(original_query)>250):
         return ("Query length exceeded the maximum limit of 250", 400)
@@ -113,6 +118,12 @@ def queryDetectorsMethod():
         loggerInstance.logHandledException(requestId, e)
         return (json.dumps({"query_received": original_query, "query": txt_data, "results": [], "exception": str(e)}), 404)
     results = loaded_models[productid].queryDetectors(txt_data)
+    try:
+        results["luis_results"] = getLuisPredictions(txt_data)
+    except Exception as e:
+        results["luis_results"] = []
+        results["luis_exception"] = f"LUISProviderError: {str(e)}"
+    results = mergeLuisResults(results)
     res = json.dumps(results)
     return (res, 200)
 

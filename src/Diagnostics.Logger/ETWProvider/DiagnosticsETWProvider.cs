@@ -662,8 +662,8 @@ namespace Diagnostics.Logger
         /// <param name="ExceptionType">Exception type.</param>
         /// <param name="ExceptionDetails">Exception details.</param>
         /// <param name="Message">The message.</param>
-        [Event(5000, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage)]
-        public void LogRuntimeLogError(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message)
+        [Event(5000, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage, Version = 2)]
+        public void LogRuntimeLogError(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
             WriteDiagnosticsEvent(
                 5000,
@@ -674,7 +674,9 @@ namespace Diagnostics.Logger
                 Resource,
                 ExceptionType,
                 ExceptionDetails,
-                Message);
+                Message,
+                EnvironmentName,
+                WebsiteHostName);
         }
 
         /// <summary>
@@ -688,8 +690,8 @@ namespace Diagnostics.Logger
         /// <param name="ExceptionType">Exception type.</param>
         /// <param name="ExceptionDetails">Exception details.</param>
         /// <param name="Message">The message.</param>
-        [Event(5001, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage)]
-        public void LogRuntimeLogWarning(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message)
+        [Event(5001, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage, Version = 2)]
+        public void LogRuntimeLogWarning(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
             WriteDiagnosticsEvent(
                 5001,
@@ -700,7 +702,9 @@ namespace Diagnostics.Logger
                 Resource,
                 ExceptionType,
                 ExceptionDetails,
-                Message);
+                Message,
+                EnvironmentName,
+                WebsiteHostName);
         }
 
         /// <summary>
@@ -714,8 +718,8 @@ namespace Diagnostics.Logger
         /// <param name="ExceptionType">Exception type.</param>
         /// <param name="ExceptionDetails">Exception details.</param>
         /// <param name="Message">The message.</param>
-        [Event(5002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage)]
-        public void LogRuntimeLogInformation(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message)
+        [Event(5002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage, Version = 2)]
+        public void LogRuntimeLogInformation(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
             WriteDiagnosticsEvent(
                 5002,
@@ -726,9 +730,50 @@ namespace Diagnostics.Logger
                 Resource,
                 ExceptionType,
                 ExceptionDetails,
-                Message);
+                Message,
+                EnvironmentName,
+                WebsiteHostName);
         }
 
         #endregion
+
+        #region AzureStorage Events (ID Range : 5500 - 5599)
+
+        /// <summary>
+        /// Log azure storage message.
+        /// </summary>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
+        [Event(5500, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogAzureStorageMessage)]
+        public void LogAzureStorageMessage(string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
+        {
+            WriteDiagnosticsEvent(5500, Source, Message, EnvironmentName, WebsiteHostName);
+        }
+
+        /// <summary>
+        /// Log azure storage warning.
+        /// </summary>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
+        [Event(5501, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogAzureStorageWarning)]
+        public void LogAzureStorageWarning(string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
+        {
+            WriteDiagnosticsEvent(5501, Source, Message, EnvironmentName, WebsiteHostName);
+        }
+
+        /// <summary>
+        /// Log azure storage exception.
+        /// </summary>
+        /// <param name="Source">The source.</param>
+        /// <param name="Message">The message.</param>
+        /// <param name="ExceptionType">Exception type.</param>
+        /// <param name="ExceptionDetails">Exception details.</param>
+        [Event(5502, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogAzureStorageException)]
+        public void LogAzureStorageException(string Source, string Message, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
+        {
+            WriteDiagnosticsEvent(5502, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
+        }
+
+        #endregion AzureStorage Events (ID Range : 5500 - 5599)
     }
 }

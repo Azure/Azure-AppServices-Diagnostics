@@ -318,4 +318,8 @@ aot/
 # Appsettings file that may contain secrets
 appsettings.*.json
 
-DetectorsCache
+[Dd]etectorsCache
+
+# Azure Functions localsettings file
+local.settings.json
+configuration.json

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.ModelsAndUtils.Models.Storage;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 
 namespace Diagnostics.ModelsAndUtils.Models
@@ -128,6 +129,24 @@ namespace Diagnostics.ModelsAndUtils.Models
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Determines whether the diag entity retrieved from table is applicable after filtering.
+        /// </summary>
+        /// <param name="diagEntity">Diag Entity from table</param>
+        /// <returns>True, if resource passes the filter. False otherwise</returns>
+        public bool IsApplicable(DiagEntity diagEntity)
+        {
+            if (diagEntity == null || diagEntity.PlatForm == null || diagEntity.HostingEnvironmentType == null)
+            {
+                return false;
+            }
+
+            PlatformType tableRowPlatformType = (PlatformType)Enum.Parse(typeof(PlatformType), diagEntity.PlatForm);
+            HostingEnvironmentType tableRowHostingEnv = (HostingEnvironmentType)Enum.Parse(typeof(HostingEnvironmentType), diagEntity.HostingEnvironmentType);
+            return ((tableRowPlatformType & this.PlatformType) > 0) &&
+                 ((tableRowHostingEnv & this.HostingEnvironmentType) > 0);
         }
     }
 }

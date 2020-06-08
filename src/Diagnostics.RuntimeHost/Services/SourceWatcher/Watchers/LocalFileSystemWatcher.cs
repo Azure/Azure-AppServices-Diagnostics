@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Utilities;
@@ -12,8 +13,6 @@ using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Win32;
 using Newtonsoft.Json;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
@@ -51,7 +50,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             throw new NotImplementedException("Local Source Watcher Mode right now doesnt support live detector deployment.");
         }
 
-        public override Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default(CancellationToken))
+        public override Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             return null;
         }
