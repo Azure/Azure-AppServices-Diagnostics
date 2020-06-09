@@ -92,7 +92,8 @@
       }
     },
     "azureWebsitesServicePrincipalObjectId": {
-      "type": "string"
+      "type": "string",
+      "defaultValue": "f8daea97-62e7-4026-becf-13c2ea98e8b4"
     }
   },
   "resources": [
@@ -105,6 +106,7 @@
         "enabledForDeployment": "[parameters('enabledForDeployment')]",
         "enabledForDiskEncryption": "[parameters('enabledForDiskEncryption')]",
         "enabledForTemplateDeployment": "[parameters('enabledForTemplateDeployment')]",
+        "enableSoftDelete": false,
         "tenantId": "[parameters('tenantId')]",
         "sku": {
           "name": "[parameters('skuName')]",
@@ -127,5 +129,11 @@
         ]
       }
     }
-  ]
+  ],
+  "outputs": {
+    "keyVaultUri": {
+      "type": "string",
+      "value": "[reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))).vaultUri]"
+    }
+  }
 }

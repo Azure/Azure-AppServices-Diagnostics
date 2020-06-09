@@ -60,6 +60,10 @@
         {
           "find": "__AZURE_WEBSITES_SERVICE_PRINCIPAL_OBJECT_ID__",
           "replaceWith": "$(AzureWebsitesServicePrincipalObjectId)"
+        },
+        {
+          "find": "__AZURE_ACTIVE_DIRECTORY_AUTHORITY__",
+          "replaceWith": "$(AzureActiveDirectoryAuthority)"
         }
       ]
     },

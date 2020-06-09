@@ -1,11 +1,5 @@
 Because Ev2 deploys ARM templates at the resource group scope, it will not be able to deploy resources at the tenant scope. Hence adding a role assignment at the tenant scope is not supported. Therefore we must manually create AAD apps (these are the only things as of 05.28.20 that we are concerned with at the tenant scope).
 
-A few prerequisites to running this Ev2 template
-1. Create necessary KeyVault certificates beforehand and add them to the approved list of certs for geomaster, mdm, etc.
-2. Create AAD app EasyAuth
-3. Update ADO pipeline variables
-
-
 As of 05.29.2020, we will not be able to see Ev2 deployment status of airgapped releases from the client side. Before the lift and shift, you may be able to use XTS tool to observe the deployment status. Builds will not get replicated to the high side immedietely and they have an SLA of 12 hours.
 
 Instructions to see deployment status using XTS
@@ -42,8 +36,15 @@ New-AzRoleAssignment -ObjectId 402aadec-e3d1-4d30-a348-677dacc19548 -RoleDefinit
 New-AzRoleAssignment -ObjectId 402aadec-e3d1-4d30-a348-677dacc19548 -RoleDefinitionName "User Access Administrator" -Scope "/subscriptions/237836ad-af13-4e7f-9289-b5f0d3104209"
 ```
 
-## Create KeyVault used specifically for during deployment
+## Deployment Keyvault
 
+During an Ev2 deployment, we execute shell scripts for some initial setup. The shell scripts use a service principal to execute all authorized actions. Every cloud environment needs to have a keyvault that holds the client secret for the service principal. Ev2 uses a compound identity to access the keyvault during deployment time. Learn more https://ev2docs.azure.net/features/security/secrets/permissions.html
+
+Here we are creating compound identity between onebranch service principal and Ev2 Prod Infra service principal
+``` 
+$principal = Get-AzADServicePrincipal -ObjectId 402aadec-e3d1-4d30-a348-677dacc19548
+Set-AzKeyVaultAccessPolicy -VaultName 'AppServiceDiagnosticsKV' -ObjectId $principal.Id -ApplicationId 5b306cba-9c71-49db-96c3-d17ca2379c4d -PermissionsToCertificates get -PermissionsToSecrets get
+```
 
 ## Create Service Principal for Azure CLI and Powershell scripts
 
@@ -53,15 +54,8 @@ az ad app create
 UsNat service principal name: DiagnosticsSub d6c8f27b-27f5-469f-8e4c-bc14681454c3
 Test  service principal name: 1160435e-725a-479f-bcbb-f533d011862e
 
-## KeyVault
-Shell scripts use a service principal to execute all authorized actions. Every cloud environment needs to have a keyvault that holds the client secret for the service principal. Ev2 uses a compound identity to access the keyvault during deployment time. Learn more https://ev2docs.azure.net/features/security/secrets/permissions.html
-
-``` 
-$principal = Get-AzADServicePrincipal -ObjectId 402aadec-e3d1-4d30-a348-677dacc19548
-Set-AzKeyVaultAccessPolicy -VaultName 'AppServiceDiagnosticsKV' -ObjectId $principal.Id -ApplicationId 5b306cba-9c71-49db-96c3-d17ca2379c4d -PermissionsToCertificates get -PermissionsToSecrets get
-```
-
 ```
     az login --service-principal -u $env:ServicePrincipalApplicationId -p $env:ServicePrincipalClientSecret
     az account set --subscription $env:SubscriptionId   
-```
+``` 
+

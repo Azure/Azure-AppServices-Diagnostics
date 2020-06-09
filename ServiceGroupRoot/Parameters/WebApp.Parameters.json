@@ -31,6 +31,9 @@
       "geomasterEndPoint": {
         "value": "__GEOMASTER_ENDPOINT__"
       },
+      "azureAdAuthority": {
+        "value": "__AZURE_ACTIVE_DIRECTORY_AUTHORITY__"
+      },
       "servicePackageLink": {
         "value": "bin\\DiagnosticsRuntimeHost.zip"
       }

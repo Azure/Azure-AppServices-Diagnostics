@@ -125,17 +125,15 @@
         "description": "The name of the keyvault this resource should have access to"
       }
     },
-    "geomasterCertificateSubjectName": {
+    "azureAdAuthority": {
       "type": "string",
-      "metadata": {
-        "description": "Subject name of the geomaster cerificate"
-      }
-    },
-    "geomasterEndPoint": {
-      "type": "string",
-      "metadata": {
-        "description": "Endpoint for geomaster"
-      }
+      "defaultValue": "https://login.microsoftonline.com/",
+      "allowedValues": [
+        "https://login.microsoftonline.us",
+        "https://login.partner.microsoftonline.cn",
+        "https://login.microsoftonline.eaglex.ic.gov",
+        "https://login.microsoftonline.microsoft.scloud"
+      ]
     },
     "servicePackageLink": {
       "type": "securestring",
@@ -285,13 +283,17 @@
               "Value": "Disabled"
             },
             {
-              "Name": "GeoCertSubjectName",
-              "Value": "[parameters('geomasterCertificateSubjectName')]"
+              "Name": "Secrets:AzureAdInstance",
+              "Value": "[parameters('azureAdAuthority')]"
             },
             {
-              "Name": "GeomasterEndPoint",
-              "Value": "[parameters('geomasterEndPoint')]"
-            }
+              "Name": "Secrets:ProdKeyVaultName",
+              "Value": "[reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))).vaultUri]"
+            },
+            {
+              "Name": "WEBSITE_LOAD_CERTIFICATES",
+              "Value": "*"
+            }            
           ],
           "autoHealEnabled": true,
           "autoHealRules": {
@@ -375,7 +377,7 @@
               "netFrameworkVersion": "v4.0",
               "use32BitWorkerProcess": false,
               "webSocketsEnabled": false,
-              "alwaysOn": false,
+              "alwaysOn": "[parameters('alwaysOn')]",
               "healthCheckPath": null,
               "httpLoggingEnabled": true,
               "logsDirectorySizeLimit": 50,
@@ -401,12 +403,16 @@
                   "Value": "Disabled"
                 },
                 {
-                  "Name": "GeoCertSubjectName",
-                  "Value": "[parameters('geomasterCertificateSubjectName')]"
+                  "Name": "WEBSITE_LOAD_CERTIFICATES",
+                  "Value": "*"
                 },
                 {
-                  "Name": "GeomasterEndPoint",
-                  "Value": "[parameters('geomasterEndPoint')]"
+                  "Name": "Secrets:AzureAdInstance",
+                  "Value": "[parameters('azureAdAuthority')]"
+                },
+                {
+                  "Name": "Secrets:ProdKeyVaultName",
+                  "Value": "[reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))).vaultUri]"
                 }
               ]
             }
