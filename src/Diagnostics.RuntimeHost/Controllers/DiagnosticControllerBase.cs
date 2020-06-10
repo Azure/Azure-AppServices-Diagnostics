@@ -790,40 +790,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             if (context.ClientIsInternal)
             {
                 dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
-            }
-
-            var changeSetId = queryParams.Where(s => s.Key.Equals("changeSetId")).Select(pair => pair.Value);
-            if (changeSetId.Any())
-            {
-                var resourceUriFromQuery = queryParams.Where(s => s.Key.Equals("resourceUri")).Select(pair => pair.Value);
-                var resourceUri = context.OperationContext.Resource.ResourceUri;
-                var changeSetIdValue = changeSetId.First();
-                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Change set id received - {changeSetIdValue}");
-                if (resourceUriFromQuery.Any())
-                {
-                    resourceUri = resourceUriFromQuery.First();
-                }
-
-                // Gets all change sets for the resource uri
-                if (changeSetIdValue.Equals("*"))
-                {
-                    var changesets = await GetAllChangeSets(resourceUri, DateTime.Now.AddDays(-13), DateTime.Now, dataProviders.ChangeAnalysis);
-                    return new Tuple<Response, List<DataProviderMetadata>>(changesets, dataProvidersMetadata);
-                }
-
-                var changesResponse = await GetChangesByChangeSetId(changeSetIdValue, resourceUri, dataProviders.ChangeAnalysis);
-                return new Tuple<Response, List<DataProviderMetadata>>(changesResponse, dataProvidersMetadata);
-            }
-
-            var actionQuery = queryParams.Where(s => s.Key.Equals("scanAction")).Select(pair => pair.Value);
-            if (actionQuery.Any())
-            {
-                var scanActionResponse = await HandleScanActionRequest(context.OperationContext.Resource.ResourceUri,
-                                                actionQuery.First(),
-                                                dataProviders.ChangeAnalysis);
-                return new Tuple<Response, List<DataProviderMetadata>>(scanActionResponse, dataProvidersMetadata);
-            }
-
+            }       
             var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
 
             if (invoker == null)
