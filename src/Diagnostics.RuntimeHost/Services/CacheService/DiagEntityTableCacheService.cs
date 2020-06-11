@@ -16,11 +16,33 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
 
         private IStorageService storageService;
 
+        int cacheExpirationTimeInSecs = 60;
+
         public DiagEntityTableCacheService(IStorageService service)
         {
             cache = new ConcurrentDictionary<string, List<DiagEntity>>();
             storageService = service;
+            StartPolling();
         }
+
+        private async void StartPolling()
+        {
+            do
+            {
+                await Task.Delay(cacheExpirationTimeInSecs * 1000);
+                var detectorResult = await storageService.GetEntitiesByPartitionkey("Detector");
+                if (detectorResult != null)
+                {
+                    AddOrUpdate("Detector", detectorResult);
+                }
+                var gistResult = await storageService.GetEntitiesByPartitionkey("Gist");
+                if(gistResult != null)
+                {
+                    AddOrUpdate("Gist", gistResult);
+                }
+            } while (true);
+        }
+
         public void AddOrUpdate(string key, List<DiagEntity> value)
         {
             cache.AddOrUpdate(key, value, (existingKey, existingValue) => value);
@@ -70,5 +92,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
         {
             return storageService.GetStorageFlag();
         }
+
+      
     }
 }
