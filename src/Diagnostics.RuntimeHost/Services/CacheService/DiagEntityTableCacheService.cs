@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models.Storage;
 using Diagnostics.RuntimeHost.Models;
 using System.Linq;
+using Diagnostics.Logger;
+using System.Diagnostics;
 
 namespace Diagnostics.RuntimeHost.Services.CacheService
 {
@@ -16,11 +18,41 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
 
         private IStorageService storageService;
 
+        int cacheExpirationTimeInSecs = 30;
+
         public DiagEntityTableCacheService(IStorageService service)
         {
             cache = new ConcurrentDictionary<string, List<DiagEntity>>();
             storageService = service;
+            StartPolling();
         }
+
+        private async void StartPolling()
+        {
+            do
+            {
+                await Task.Delay(cacheExpirationTimeInSecs * 1000);
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(DiagEntityTableCacheService), "Start polling Azure Storage for refreshing cache");
+                var detectorTask = storageService.GetEntitiesByPartitionkey("Detector");
+                var gistTask = storageService.GetEntitiesByPartitionkey("Gist");
+                await Task.WhenAll(new Task[] { detectorTask, gistTask });
+                var detectorResult = await detectorTask;
+                if (detectorResult != null)
+                {
+                    AddOrUpdate("Detector", detectorResult);
+                }          
+                var gistResult = await gistTask;
+                if (gistResult != null)
+                {
+                    AddOrUpdate("Gist", gistResult);
+                }
+                stopwatch.Stop();
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(DiagEntityTableCacheService), $"Polling completed, time taken {stopwatch.ElapsedMilliseconds} milliseconds");
+            } while (true);
+        }
+
         public void AddOrUpdate(string key, List<DiagEntity> value)
         {
             cache.AddOrUpdate(key, value, (existingKey, existingValue) => value);
@@ -70,5 +102,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
         {
             return storageService.GetStorageFlag();
         }
+
+      
     }
 }
