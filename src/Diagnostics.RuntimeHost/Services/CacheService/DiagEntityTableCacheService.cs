@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models.Storage;
 using Diagnostics.RuntimeHost.Models;
 using System.Linq;
+using Diagnostics.Logger;
 
 namespace Diagnostics.RuntimeHost.Services.CacheService
 {
@@ -30,6 +31,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
             do
             {
                 await Task.Delay(cacheExpirationTimeInSecs * 1000);
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(DiagEntityTableCacheService), "Polling Azure Storage for refreshing cache");
                 var detectorResult = await storageService.GetEntitiesByPartitionkey("Detector");
                 if (detectorResult != null)
                 {
