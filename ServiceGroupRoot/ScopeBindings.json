@@ -22,14 +22,6 @@
           "replaceWith": "$(HealthCheckPath)"
         },
         {
-          "find": "__GEOMASTER_CERT_SUBJECT_NAME__",
-          "replaceWith": "$(GeomasterCertificateSubjectName)"
-        },
-        {
-          "find": "__GEOMASTER_ENDPOINT__",
-          "replaceWith": "$(GeomasterEndpoint)"
-        },
-        {
           "find": "__USER_ASSIGNED_IDENTITY_NAME__",
           "replaceWith": "diagnostics_resourcegroup_msi"
         },

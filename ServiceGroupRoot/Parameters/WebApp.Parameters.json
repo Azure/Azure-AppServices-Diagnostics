@@ -25,12 +25,6 @@
       "pingPath":{
         "value": "__HEALTHCHECK_PATH__"
       },
-      "geomasterCertificateSubjectName": {
-        "value": "__GEOMASTER_CERT_SUBJECT_NAME__"
-      },
-      "geomasterEndPoint": {
-        "value": "__GEOMASTER_ENDPOINT__"
-      },
       "azureAdAuthority": {
         "value": "__AZURE_ACTIVE_DIRECTORY_AUTHORITY__"
       },
