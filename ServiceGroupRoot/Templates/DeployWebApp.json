@@ -289,7 +289,7 @@
             },
             {
               "Name": "Secrets:ProdKeyVaultName",
-              "Value": "[reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))).vaultUri]"
+              "Value": "[reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2019-09-01', 'Full').properties.vaultUri]"
             },
             {
               "Name": "WEBSITE_LOAD_CERTIFICATES",
@@ -413,7 +413,7 @@
                 },
                 {
                   "Name": "Secrets:ProdKeyVaultName",
-                  "Value": "[reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))).vaultUri]"
+                  "Value": "[reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2019-09-01', 'Full').properties.vaultUri]"
                 }
               ]
             }
