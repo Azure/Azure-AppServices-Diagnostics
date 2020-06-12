@@ -179,5 +179,10 @@ namespace Diagnostics.ModelsAndUtils.Models.Storage
         /// Gist References stored as raw string in table.
         /// </summary>
         public string GistReferencesRaw { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Is detector marked for deletion in github.
+        /// </summary>
+        public bool IsMarkedForDeletion { get; set; } = false;
     }
 }
