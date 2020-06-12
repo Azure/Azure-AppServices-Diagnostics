@@ -129,6 +129,7 @@
       "type": "string",
       "defaultValue": "https://login.microsoftonline.com/",
       "allowedValues": [
+        "https://login.microsoftonline.com/",
         "https://login.microsoftonline.us",
         "https://login.partner.microsoftonline.cn",
         "https://login.microsoftonline.eaglex.ic.gov",
