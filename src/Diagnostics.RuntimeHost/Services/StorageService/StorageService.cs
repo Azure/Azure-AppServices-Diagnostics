@@ -93,7 +93,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 } while (tableContinuationToken != null);
                 timeTakenStopWatch.Stop();
                 DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by Parition key {partitionKey} took {timeTakenStopWatch.ElapsedMilliseconds}");
-                return detectorsResult.Where(result => !result.IsMarkedForDeletion).ToList();
+                return detectorsResult.Where(result => !result.IsDisabled).ToList();
             }
             catch (Exception ex)
             {

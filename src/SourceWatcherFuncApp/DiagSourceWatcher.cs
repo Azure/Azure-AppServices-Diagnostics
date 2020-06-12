@@ -99,7 +99,7 @@ namespace Diag.SourceWatcher
             var updatetasks = new List<Task>();
             deletedIds.ForEach(deletedRow =>
             {
-                deletedRow.IsMarkedForDeletion = true;
+                deletedRow.IsDisabled = true;
                 updatetasks.Add(storageService.LoadDataToTable(deletedRow));
             });
             await Task.WhenAll(updatetasks);

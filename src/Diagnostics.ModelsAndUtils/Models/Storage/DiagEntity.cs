@@ -183,6 +183,6 @@ namespace Diagnostics.ModelsAndUtils.Models.Storage
         /// <summary>
         /// Is detector marked for deletion in github.
         /// </summary>
-        public bool IsMarkedForDeletion { get; set; } = false;
+        public bool IsDisabled { get; set; } = false;
     }
 }
