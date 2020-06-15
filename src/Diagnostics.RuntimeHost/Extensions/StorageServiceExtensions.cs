@@ -18,7 +18,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection AddDiagEntitiesStorageService(this IServiceCollection services, IConfiguration configuration)
         {
-            if (IsPublicAzure(configuration))
+            if (configuration.IsPublicAzure())
             {
                 services.AddSingleton<IStorageService, StorageService>();
             }
@@ -28,12 +28,6 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             return services;
-        }
-
-        private static bool IsPublicAzure(IConfiguration configuration)
-        {
-            return configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureCloud, StringComparison.CurrentCultureIgnoreCase)
-                || configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureCloudAlternativeName, StringComparison.CurrentCultureIgnoreCase);
         }
     }
 }

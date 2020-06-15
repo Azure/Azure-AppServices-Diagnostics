@@ -216,7 +216,7 @@ namespace Diagnostics.RuntimeHost
             services.AddDiagEntitiesStorageService(Configuration);
             services.AddDiagEntitiesTableCacheService(Configuration);
 
-            if(IsPublicAzure())
+            if(Configuration.IsPublicAzure())
             {
                 services.AddSingleton<ISourceWatcher, StorageWatcher>();
             } else
@@ -253,12 +253,6 @@ namespace Diagnostics.RuntimeHost
             app.UseRewriter(new RewriteOptions().Add(new RewriteDiagnosticResource()));
             app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseMvc();
-        }
-
-        private bool IsPublicAzure()
-        {
-            return Configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureCloud, StringComparison.CurrentCultureIgnoreCase)
-                || Configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureCloudAlternativeName, StringComparison.CurrentCultureIgnoreCase);
         }
     }
 }

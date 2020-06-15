@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Diagnostics.DataProviders;
-using Diagnostics.RuntimeHost.Services.CacheService;
+﻿using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Microsoft.Extensions.Configuration;
 
@@ -23,7 +18,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
         private static IServiceCollection AddDiagEntitiesTableCacheServiceInternal(this IServiceCollection services, IConfiguration configuration)
         {
-            if (IsPublicAzure(configuration))
+            if (configuration.IsPublicAzure())
             {
                 services.AddSingleton<IDiagEntityTableCacheService, DiagEntityTableCacheService>();
             }
@@ -33,12 +28,6 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             return services;
-        }
-
-        private static bool IsPublicAzure(IConfiguration configuration)
-        {
-            return configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureCloud, StringComparison.CurrentCultureIgnoreCase)
-                || configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureCloudAlternativeName, StringComparison.CurrentCultureIgnoreCase);
         }
     }
 }
