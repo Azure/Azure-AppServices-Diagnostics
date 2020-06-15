@@ -100,6 +100,7 @@ namespace Diag.SourceWatcher
             deletedIds.ForEach(deletedRow =>
             {
                 deletedRow.IsDisabled = true;
+                log.LogInformation($"Marking {deletedRow.RowKey} as disabled");
                 updatetasks.Add(storageService.LoadDataToTable(deletedRow));
             });
             await Task.WhenAll(updatetasks);
