@@ -212,8 +212,10 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
-            services.AddSingleton<IStorageService, StorageService>();
-            services.AddSingleton<IDiagEntityTableCacheService, DiagEntityTableCacheService>();
+
+            services.AddDiagEntitiesStorageService(Configuration);
+            services.AddDiagEntitiesTableCacheService(Configuration);
+
             if(IsPublicAzure())
             {
                 services.AddSingleton<ISourceWatcher, StorageWatcher>();
