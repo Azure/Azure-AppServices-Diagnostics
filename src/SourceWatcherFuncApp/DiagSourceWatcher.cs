@@ -95,7 +95,8 @@ namespace Diag.SourceWatcher
 
             var existingRows = await storageService.GetAllEntities();
             var currentGitHubDirs = githubDirectories.Select(dir => dir.Name).ToList();
-            var deletedIds = existingRows.Where(row => !currentGitHubDirs.Contains(row.RowKey)).ToList();
+            var deletedIds = existingRows.Where(row => !currentGitHubDirs.Contains(row.RowKey.ToLower())).ToList();
+            var currentIds = existingRows.Where(row => currentGitHubDirs.Contains(row.RowKey.ToLower())).ToList();
             var updatetasks = new List<Task>();
             deletedIds.ForEach(deletedRow =>
             {
@@ -103,6 +104,14 @@ namespace Diag.SourceWatcher
                 log.LogInformation($"Marking {deletedRow.RowKey} as disabled");
                 updatetasks.Add(storageService.LoadDataToTable(deletedRow));
             });
+
+            currentIds.ForEach(currentDetector =>
+            {
+                currentDetector.IsDisabled = false;
+                log.LogInformation($"Marking {currentDetector.RowKey} as active");
+                updatetasks.Add(storageService.LoadDataToTable(currentDetector));
+            });
+
             await Task.WhenAll(updatetasks);
             log.LogInformation($"C# Timer trigger function finished at: {DateTime.Now}");
         }
