@@ -1,4 +1,4 @@
-import os, shutil, json
+import os, shutil, json, re
 from SearchModule.Logger import loggerInstance
 from SearchModule.ModelInfo import ModelInfo
 from SearchModule.TfIdfSearchModel import TfIdfSearchModel
@@ -6,7 +6,22 @@ from SearchModule.WmdSearchModel import WmdSearchModel
 from SearchModule.Exceptions import *
 from SearchModule.Utilities import absPath, copyFolder, moveModels, modelsPath
 from SearchModule.MessageStrings import loadModelMessage, refreshModelMessage, fileMissingMessage
-        
+
+def breakQuery(query):
+    queries = [y for y in list(map(lambda x: " ".join(re.sub(r'[^(0-9a-zA-Z )]+', " ", x).split()), re.split(r'[\.,]', query))) if (y and len(y)>=2)]
+    return queries
+def mergeResults(query, resultsList):
+    finalResults = {}
+    exceptions = []
+    for result in resultsList:
+        for x in result["results"]:
+            finalResults[x["detector"]] = max([x["score"], finalResults.get(x["detector"], 0)])
+            if "exception" in x:
+                exceptions.append(x["exception"])
+    mergedResult = {"query": query, "results": [{"detector": key, "score": value} for key, value in finalResults.items()]}
+    if exceptions and len(exceptions) > 0:
+        mergedResult["exception"] = " | ".join(exceptions)
+    return mergedResult
 #### Text Search model for Queries ####
 class TextSearchModel():
     def __init__(self, modelpackagepath):
@@ -23,7 +38,14 @@ class TextSearchModel():
             self.model = WmdSearchModel(modelpackagepath)
 
     def queryDetectors(self, query=None):
-        return self.model.queryDetectors(query)
+        cleansed_query = " ".join(re.sub(r'[^(0-9a-zA-Z )]+', " ", query).split())
+        # Break the query into smaller chunks if number of word is greater than 6
+        if len(cleansed_query.split())>6:
+            queries = breakQuery(query)
+            queries = [cleansed_query] + queries
+            return mergeResults(cleansed_query, [self.model.queryDetectors(query) for query in queries])
+        else:
+            return self.model.queryDetectors(cleansed_query)
     
     def queryUtterances(self, query=None, existing_utterances=[]):
         return self.model.queryUtterances(query, existing_utterances)
