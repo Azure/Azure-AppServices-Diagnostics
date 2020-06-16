@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
+using System.Linq;
 
 namespace Diagnostics.RuntimeHost.Services.StorageService
 {
@@ -93,7 +93,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 } while (tableContinuationToken != null);
                 timeTakenStopWatch.Stop();
                 DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by Parition key {partitionKey} took {timeTakenStopWatch.ElapsedMilliseconds}");
-                return detectorsResult;
+                return detectorsResult.Where(result => !result.IsDisabled).ToList();
             }
             catch (Exception ex)
             {
