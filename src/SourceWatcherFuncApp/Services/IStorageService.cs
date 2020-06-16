@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.Extensions.Configuration;
-using SourceWatcherFuncApp.Entities;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Table;
@@ -9,15 +8,17 @@ using CloudStorageAccount = Microsoft.WindowsAzure.Storage.CloudStorageAccount;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System.Collections.Generic;
 using System.IO;
+using Diagnostics.ModelsAndUtils.Models.Storage;
 
 namespace SourceWatcherFuncApp.Services
 {
     public interface IStorageService
     {
-        Task<DetectorEntity> LoadDataToTable(DetectorEntity detectorEntity);
-        Task<DetectorEntity> GetEntityFromTable(string partitionKey, string rowKey);
+        Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity);
+        Task<DiagEntity> GetEntityFromTable(string partitionKey, string rowKey);
         Task<bool> CheckDetectorExists(string currentDetector);
         void LoadBlobToContainer(string name, Stream uploadStream);
+        Task<List<DiagEntity>> GetAllEntities();
     }
 
     public class StorageService : IStorageService
@@ -33,6 +34,8 @@ namespace SourceWatcherFuncApp.Services
         private ILogger<StorageService> storageServiceLogger;
 
         private List<string> existingDetectors;
+
+        public static readonly string PartitionKey = "PartitionKey";
 
         public StorageService(IConfigurationRoot configuration, ILogger<StorageService> logger)
         {
@@ -86,7 +89,7 @@ namespace SourceWatcherFuncApp.Services
                 storageServiceLogger.LogError(ex.ToString());
             }    
         }
-        public async Task<DetectorEntity> LoadDataToTable(DetectorEntity detectorEntity)
+        public async Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity)
         {
             try { 
             // Create a table client for interacting with the table service 
@@ -104,7 +107,7 @@ namespace SourceWatcherFuncApp.Services
                 TableResult result = await table.ExecuteAsync(insertOrReplaceOperation);
 
                 storageServiceLogger.LogInformation($"InsertOrReplace result : {result.HttpStatusCode}");
-                DetectorEntity insertedCustomer = result.Result as DetectorEntity;          
+                var insertedEntity = result.Result as DiagEntity;          
                 return detectorEntity;
             }
             catch (Exception ex)
@@ -114,7 +117,7 @@ namespace SourceWatcherFuncApp.Services
             }
         }
 
-        public async Task<DetectorEntity> GetEntityFromTable(string partitionKey, string rowKey)
+        public async Task<DiagEntity> GetEntityFromTable(string partitionKey, string rowKey)
         {
             try
             {
@@ -126,12 +129,44 @@ namespace SourceWatcherFuncApp.Services
                 }
 
                 storageServiceLogger.LogInformation($"Retrieving info from table for {rowKey}, {partitionKey}");
-                TableOperation retrieveOperation = TableOperation.Retrieve<DetectorEntity>(partitionKey, rowKey);
+                TableOperation retrieveOperation = TableOperation.Retrieve<DiagEntity>(partitionKey, rowKey);
                 // Execute the operation.
                 TableResult result = await table.ExecuteAsync(retrieveOperation);
-                DetectorEntity existingEntity = result.Result as DetectorEntity;
+                var existingEntity = result.Result as DiagEntity;
                 return existingEntity;
             } catch (Exception ex)
+            {
+                storageServiceLogger.LogError(ex.ToString());
+                return null;
+            }
+        }
+
+        public async Task<List<DiagEntity>> GetAllEntities()
+        {
+            try
+            {
+                CloudTable table = tableClient.GetTableReference(tableName);
+                storageServiceLogger.LogInformation($"Retrieving all rows from {tableName}");
+                var detectorFilter = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, "Detector");
+                var gistFilter = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, "Gist");
+                var combinedFilter = TableQuery.CombineFilters(detectorFilter, TableOperators.Or, gistFilter);
+                var tableQuery = new TableQuery<DiagEntity>();
+                tableQuery.Where(combinedFilter);
+                TableContinuationToken tableContinuationToken = null;
+                var allRows = new List<DiagEntity>();
+                do
+                {
+                    // Execute the operation.
+                    var detectorList = await table.ExecuteQuerySegmentedAsync(tableQuery, tableContinuationToken);
+                    tableContinuationToken = detectorList.ContinuationToken;
+                    if (detectorList.Results != null) 
+                    {
+                      allRows.AddRange(detectorList.Results);                      
+                    }                           
+                } while (tableContinuationToken != null);
+                return allRows;
+            }
+            catch (Exception ex)
             {
                 storageServiceLogger.LogError(ex.ToString());
                 return null;

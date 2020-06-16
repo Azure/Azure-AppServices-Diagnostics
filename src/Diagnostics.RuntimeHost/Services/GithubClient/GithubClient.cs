@@ -33,6 +33,8 @@ namespace Diagnostics.RuntimeHost.Services
         Task CreateOrUpdateFile(string destinationFilePath, string content, string commitMessage, bool convertContentToBase64 = true);
 
         Task CreateOrUpdateFiles(IEnumerable<CommitContent> commits, string commitMessage);
+
+        Task<GitHubCommit> GetCommitByPath(string filePath);
     }
 
     public class GithubClient : IGithubClient
@@ -176,6 +178,13 @@ namespace Diagnostics.RuntimeHost.Services
 
             // Update current head ref.
             await _octokitClient.Git.Reference.Update(_userName, _repoName, headRef, new ReferenceUpdate(commit.Sha));
+        }
+
+        public async Task<GitHubCommit> GetCommitByPath(string filePath)
+        {
+            var request = new CommitRequest { Path = filePath, Sha = _branch };
+            var commitLists = await _octokitClient.Repository.Commit.GetAll(_userName, _repoName, request);
+            return commitLists.FirstOrDefault();
         }
 
         public void Dispose()

@@ -21,6 +21,7 @@ using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
 using System.Threading;
 using Diagnostics.DataProviders;
+using System.Security.Policy;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -31,6 +32,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
     {
         private Task _firstTimeCompletionTask;
         private string _rootContentApiPath;
+        private Task cleanDeletedFileTask;
 
         public readonly IGithubClient _githubClient;
         private readonly string _workerIdFileName = "workerId.txt";
@@ -91,6 +93,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         public override void Start()
         {
             _firstTimeCompletionTask = StartWatcherInternal(true);
+            cleanDeletedFileTask = CleanupFilesForDeletion();
             StartPollingForChanges();
         }
 
@@ -174,6 +177,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                      */
                     LogMessage($"Checking if any invoker present locally needs to be added in cache");
                     var directories = destDirInfo.EnumerateDirectories();
+                    LogMessage($"Github directories present locally in {destDirInfo.FullName} : {directories.Count()}");
                     List<Task> tasks = new List<Task>(directories.Count());
                     
                     foreach (DirectoryInfo subDir in directories)
@@ -202,7 +206,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 LogMessage("Syncing local directories with github changes");
                 var githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
                 var githubDirectories = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
-
+                LogMessage($"Total number of directors returned by Github: {githubDirectories.Length}");
                 List<Task> downloadContentUpdateCacheAndModifiedMarkerTasks = new List<Task>();
                 foreach (var gitHubDir in githubDirectories)
                 {
@@ -322,9 +326,19 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     downloadFilePath = Path.Combine(destDir.FullName, $"{assemblyName}.{fileExtension.ToLower()}");
                 }
 
+                // Remove token from download Url as this is now deperecated.
+                // https://developer.github.com/changes/2020-02-10-deprecating-auth-through-query-param/
+                // We already add the token in the header so the token in the Uri is redundant anyway.
+                var downloadUrl = new UriBuilder(githubFile.Download_url);
+                var paramValues = System.Web.HttpUtility.ParseQueryString(downloadUrl.Query);
+                if (paramValues.AllKeys.Contains("token"))
+                {
+                    paramValues.Remove("token");
+                }
+                downloadUrl.Query = paramValues.ToString();
+
                 LogMessage($"Begin downloading File : {githubFile.Name.ToLower()} and saving it as : {downloadFilePath}");
-                await _githubClient.DownloadFile(githubFile.Download_url, downloadFilePath);
-                
+                await _githubClient.DownloadFile(downloadUrl.Uri.ToString(), downloadFilePath);
             }
 
             //At this point, required file have been downloaded by GitHubWatcher to destination folder. 
@@ -406,5 +420,52 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 Directory.CreateDirectory(_destinationCsxPath);
             }
         }       
+     
+        private async Task CleanupFilesForDeletion()
+        {
+
+            Stopwatch stopwatch = new Stopwatch();
+            try
+            {
+                DirectoryInfo scriptsDir = new DirectoryInfo(_destinationCsxPath);
+
+                if (!scriptsDir.Exists) return;
+                stopwatch.Start();
+                LogMessage($"Starting clean up method for directory {_destinationCsxPath}");
+                foreach (DirectoryInfo subDir in scriptsDir.GetDirectories())
+                {
+                    if (File.Exists(Path.Combine(subDir.FullName, _deleteMarkerName)))
+                    {
+                        LogMessage($"Delete Marker Found. Deleting Directory : {subDir.FullName}");
+                        FileHelper.DeleteFolderRecursive(subDir);
+                    }
+                    else
+                    {
+                        var assemblyFiles = subDir.GetFiles("*.dll").OrderByDescending(f => f.LastWriteTimeUtc).Skip(1).ToList();
+                        var pdbFiles = subDir.GetFiles("*.pdb").OrderByDescending(f => f.LastWriteTimeUtc).Skip(1).ToList();
+
+                        if(assemblyFiles != null && pdbFiles != null)
+                        {
+                            assemblyFiles.Concat(pdbFiles).ToList().ForEach((item) =>
+                            {
+                                LogMessage($"Deleting File : {item.FullName}");
+                                item.IsReadOnly = false;
+                                FileHelper.DeleteFileAsync(item.FullName);
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException($"CleanupDataFilesMarkedForDeletion Failed. Exception : {ex.ToString()}", ex);
+            }
+            finally
+            {
+                stopwatch.Stop();
+                LogMessage($"Clean up completed, time taken {stopwatch.ElapsedMilliseconds}");
+            }
+        }
+
     }
 }

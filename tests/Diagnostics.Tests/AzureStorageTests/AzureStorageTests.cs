@@ -10,6 +10,19 @@ using Diagnostics.RuntimeHost.Models;
 using Diagnostics.ModelsAndUtils.Models;
 using System.Threading;
 using RimDev.Automation.StorageEmulator;
+using System.Linq;
+using Diagnostics.ModelsAndUtils.Attributes;
+using Diagnostics.Tests.Helpers;
+using Diagnostics.Scripts.Models;
+using Diagnostics.Scripts.CompilationService;
+using Diagnostics.Scripts.CompilationService.Interfaces;
+using Microsoft.CodeAnalysis.Scripting;
+using Octokit;
+using Diagnostics.RuntimeHost.Utilities;
+using System.Reflection;
+using Diagnostics.Scripts;
+using System.IO;
+using Diagnostics.ModelsAndUtils.ScriptUtilities;
 
 namespace Diagnostics.Tests.AzureStorageTests
 {
@@ -35,7 +48,11 @@ namespace Diagnostics.Tests.AzureStorageTests
             if(string.IsNullOrWhiteSpace(configuration["SourceWatcher:TableName"]))
             {
                 configuration["SourceWatcher:TableName"] = "diagentities";
-            }           
+            }
+            if (string.IsNullOrWhiteSpace(configuration["SourceWatcher:BlobContainerName"]))
+            {
+                configuration["SourceWatcher:BlobContainerName"] = "detectors";
+            }
             storageService = new StorageService(configuration, environment);
             tableCacheService = new DiagEntityTableCacheService(storageService);
         }
@@ -120,10 +137,29 @@ namespace Diagnostics.Tests.AzureStorageTests
                     ResourceProvider = "Microsoft.Web",
                     ResourceType = "sites",
                     StackType = "AspNet,NetCore",
-                    AppType = "WebApp"
+                    AppType = "WebApp",
+                    DetectorType = "Detector"
                 };
 
+
                 var insertResult = await storageService.LoadDataToTable(windowsDiagEntity);
+
+                // Test Analysis detectors
+
+                var appDownAnalysisEntity = new DiagEntity
+                {
+                    PartitionKey = "Detector",
+                    RowKey = "appDownAnalysis",
+                    GithubLastModified = DateTime.UtcNow,
+                    PlatForm = "Windows",
+                    ResourceProvider = "Microsoft.Web",
+                    ResourceType = "sites",
+                    StackType = "AspNet,NetCore",
+                    AppType = "WebApp",
+                    DetectorType = "Analysis"
+                };
+
+                insertResult = await storageService.LoadDataToTable(appDownAnalysisEntity);
                 var webApp = new App("72383ac7-d6f4-4a5e-bf56-b172f2fdafb2", "resourcegp-default", "diag-test");
                 var operationContext = new OperationContext<App>(
                                          webApp,
@@ -138,6 +174,7 @@ namespace Diagnostics.Tests.AzureStorageTests
                 var detectorsForWebApps = await tableCacheService.GetEntityListByType(context, "Detector");
                 Assert.NotNull(detectorsForWebApps);
                 Assert.NotEmpty(detectorsForWebApps);
+                Assert.NotEmpty(detectorsForWebApps.Where(s => s.DetectorType != null && s.DetectorType.Equals("Analysis", StringComparison.CurrentCultureIgnoreCase)));
 
                 var logicApp = new LogicApp("72383ac7-d6f4-4a5e-bf56-b172f2fdafb2", "resourcegp-default", "la-test");
                 var logicAppOperContext = new OperationContext<LogicApp>(logicApp,
@@ -151,8 +188,56 @@ namespace Diagnostics.Tests.AzureStorageTests
 
                 var detectorsForLogicApps = await tableCacheService.GetEntityListByType(runtimeContextLogicApp, "Detector");
                 Assert.NotNull(detectorsForLogicApps);
-                Assert.Empty(detectorsForLogicApps);
+                Assert.Empty(detectorsForLogicApps);            
+                
+
             }    
         }
-    }
+
+        [Fact]
+        /// <summary>
+        /// Test blob upload operation
+        /// </summary>
+        public async void TestBlobOperations()
+        {
+            // First check if emulator is running before proceeding. 
+            bool isEmulatorRunning = CheckProcessRunning(4);
+            if (isEmulatorRunning)
+            {
+                // Test .dll blob upload 
+
+                Definition definitonAttribute = new Definition()
+                {
+                    Id = "blobDetector"
+                };
+
+                EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
+                metadata.ScriptText = await File.ReadAllTextAsync("blobDetector.csx");
+                var scriptOptions = ScriptTestDataHelper.GetScriptOption(ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports());
+                var serviceInstance = CompilationServiceFactory.CreateService(metadata, scriptOptions);
+                ICompilation compilation = await serviceInstance.GetCompilationAsync();
+
+                var assemblyBytes = await compilation.GetAssemblyBytesAsync();
+                var blobName = $"{definitonAttribute.Id}/{definitonAttribute.Id}.dll";
+                var etagdetector = await storageService.LoadBlobToContainer(blobName, assemblyBytes.Item1);
+                Assert.NotNull(etagdetector);
+                var assemblyData = await storageService.GetBlobByName(blobName);
+                Assert.NotNull(assemblyData);
+
+                // Now test initializing Entry Point of Invoker using assembly
+                Assembly temp = Assembly.Load(assemblyData);
+                using (EntityInvoker invoker = new EntityInvoker(metadata))
+                {
+                    Exception ex = Record.Exception(() =>
+                    {
+                        invoker.InitializeEntryPoint(temp);
+                    });
+
+                    Assert.Null(ex);
+                    Assert.True(invoker.IsCompilationSuccessful);
+                    Assert.Equal(definitonAttribute.Id, invoker.EntryPointDefinitionAttribute.Id);
+                }
+            }
+        }
+     }       
 }

@@ -27,12 +27,12 @@ namespace Diagnostics.DataProviders.Utility
         {
             if (kustoMap == null)
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(kustoMap));
             }
 
             if (string.IsNullOrWhiteSpace(query))
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException(nameof(query));
             }
 
             var matches = Regex.Matches(query, @"cluster\((?<cluster>([^\)]+))\).database\((?<database>([^\)]+))\)\.");

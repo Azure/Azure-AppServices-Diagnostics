@@ -21,6 +21,7 @@ using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
 using Diagnostics.RuntimeHost.Services.StorageService;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
@@ -52,6 +53,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private InternalAPIHelper _internalApiHelper;
         private IDiagEntityTableCacheService tableCacheService;
+        private ISourceWatcher storageWatcher;
 
         public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext)
         {
@@ -67,6 +69,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._kustoMappingCacheService = (IKustoMappingsCacheService)services.GetService(typeof(IKustoMappingsCacheService));
             this._loggerProvider = (IRuntimeLoggerProvider)services.GetService(typeof(IRuntimeLoggerProvider));
             tableCacheService = (IDiagEntityTableCacheService)services.GetService(typeof(IDiagEntityTableCacheService));
+            storageWatcher = ((StorageWatcher)services.GetService(typeof(ISourceWatcher)));
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
         }
@@ -362,6 +365,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             await _sourceWatcherService.Watcher.CreateOrUpdatePackage(pkg);
+            await storageWatcher.CreateOrUpdatePackage(pkg);
             return Ok();
         }
 
@@ -733,7 +737,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         Category = p.Category,
                         SupportTopicList = p.SupportTopicList,
                         AnalysisTypes = p.AnalysisTypes,
-                        Type = Enum.Parse<DetectorType>(p.EntityType),  
+                        Type = p.DetectorType != null ? Enum.Parse<DetectorType>(p.DetectorType) : DetectorType.Detector,  
                         Score = p.Score
                     }, context.ClientIsInternal)
                 });
@@ -786,40 +790,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             if (context.ClientIsInternal)
             {
                 dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
-            }
-
-            var changeSetId = queryParams.Where(s => s.Key.Equals("changeSetId")).Select(pair => pair.Value);
-            if (changeSetId.Any())
-            {
-                var resourceUriFromQuery = queryParams.Where(s => s.Key.Equals("resourceUri")).Select(pair => pair.Value);
-                var resourceUri = context.OperationContext.Resource.ResourceUri;
-                var changeSetIdValue = changeSetId.First();
-                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Change set id received - {changeSetIdValue}");
-                if (resourceUriFromQuery.Any())
-                {
-                    resourceUri = resourceUriFromQuery.First();
-                }
-
-                // Gets all change sets for the resource uri
-                if (changeSetIdValue.Equals("*"))
-                {
-                    var changesets = await GetAllChangeSets(resourceUri, DateTime.Now.AddDays(-13), DateTime.Now, dataProviders.ChangeAnalysis);
-                    return new Tuple<Response, List<DataProviderMetadata>>(changesets, dataProvidersMetadata);
-                }
-
-                var changesResponse = await GetChangesByChangeSetId(changeSetIdValue, resourceUri, dataProviders.ChangeAnalysis);
-                return new Tuple<Response, List<DataProviderMetadata>>(changesResponse, dataProvidersMetadata);
-            }
-
-            var actionQuery = queryParams.Where(s => s.Key.Equals("scanAction")).Select(pair => pair.Value);
-            if (actionQuery.Any())
-            {
-                var scanActionResponse = await HandleScanActionRequest(context.OperationContext.Resource.ResourceUri,
-                                                actionQuery.First(),
-                                                dataProviders.ChangeAnalysis);
-                return new Tuple<Response, List<DataProviderMetadata>>(scanActionResponse, dataProvidersMetadata);
-            }
-
+            }       
             var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
 
             if (invoker == null)
@@ -1065,110 +1036,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Retreives Changes and returns the data in rows and columns format.
-        /// </summary>
-        /// <param name="changeSetId">changeSet Id.</param>
-        /// <param name="resourceId">Resource Id.</param>
-        /// <param name="changeAnalysisDataProvider">Change Analysis Data Provider.</param>
-        /// <returns>Changes for given change set id.</returns>
-        private async Task<Response> GetChangesByChangeSetId(string changeSetId, string resourceId, IChangeAnalysisDataProvider changeAnalysisDataProvider)
-        {
-            changeSetId = changeSetId.Replace(" ", "+");
-            var changes = await changeAnalysisDataProvider.GetChangesByChangeSetId(changeSetId, resourceId);
-            if (changes == null || changes.Count <= 0)
-            {
-                return new Response();
-            }
-
-            Response changesResponse = new Response();
-            var table = new DataTable();
-            table.TableName = "Changes";
-            table.Columns.Add(new DataColumn("TimeStamp", typeof(string)));
-            table.Columns.Add(new DataColumn("Category", typeof(string)));
-            table.Columns.Add(new DataColumn("Level", typeof(string)));
-            table.Columns.Add(new DataColumn("DisplayName", typeof(string)));
-            table.Columns.Add(new DataColumn("Description", typeof(string)));
-            table.Columns.Add(new DataColumn("OldValue", typeof(string)));
-            table.Columns.Add(new DataColumn("NewValue", typeof(string)));
-            table.Columns.Add(new DataColumn("InitiatedBy", typeof(string)));
-            table.Columns.Add(new DataColumn("JsonPath", typeof(string)));
-            changes.ForEach(change =>
-            {
-                table.Rows.Add(new object[]
-                {
-                        change.TimeStamp,
-                        change.Category,
-                        change.Level,
-                        change.DisplayName,
-                        change.Description,
-                        change.OldValue,
-                        change.NewValue,
-                        change.InitiatedBy,
-                        change.JsonPath
-                });
-            });
-
-            var diagData = new DiagnosticData()
-            {
-                Table = table,
-                RenderingProperties = new Rendering(RenderingType.ChangesView)
-            };
-
-            changesResponse.Dataset.Add(diagData);
-            return changesResponse;
-        }
-
-        /// <summary>
-        /// Submits request to scan for changes and returns response in <see cref="DataTable"/> format.
-        /// </summary>
-        private async Task<Response> HandleScanActionRequest(string resourceId, string action, IChangeAnalysisDataProvider changeAnalysisDataProvider)
-        {
-            var scanRequest = await changeAnalysisDataProvider.ScanActionRequest(resourceId, action);
-            if (scanRequest == null)
-            {
-                return new Response();
-            }
-
-            Response scanRequestData = new Response();
-            var table = new DataTable();
-            table.TableName = action;
-            table.Columns.Add(new DataColumn("Operation Id", typeof(string)));
-            table.Columns.Add(new DataColumn("State", typeof(string)));
-            table.Columns.Add(new DataColumn("SubmissionTime", typeof(string)));
-            table.Columns.Add(new DataColumn("CompletionTime", typeof(string)));
-            table.Rows.Add(new object[]
-            {
-                scanRequest.OperationId,
-                scanRequest.State,
-                scanRequest.SubmissionTime,
-                scanRequest.CompletionTime
-            });
-
-            var diagData = new DiagnosticData()
-            {
-                Table = table,
-                RenderingProperties = new Rendering(RenderingType.ChangesView)
-            };
-
-            scanRequestData.Dataset.Add(diagData);
-            return scanRequestData;
-        }
-
-        /// <summary>
-        /// Retreives all change sets for the resource id.
-        /// </summary>
-        /// <param name="resourceId">Resource Id.</param>
-        /// <param name="changeAnalysisDataProvider">Change Analysis Data Provider.</param>
-        /// <returns>All Changesets for the given resource id.</returns>
-        private async Task<Response> GetAllChangeSets(string resourceId, DateTime startTime, DateTime endTime, IChangeAnalysisDataProvider changeAnalysisDataProvider)
-        {
-            var changeSets = await changeAnalysisDataProvider.GetChangeSetsForResource(resourceId, startTime, endTime);
-            Response dataSetResponse = new Response();
-            dataSetResponse.AddChangeSets(changeSets);
-            return dataSetResponse;
         }
     }
 }

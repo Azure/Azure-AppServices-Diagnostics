@@ -86,5 +86,29 @@ namespace Diagnostics.RuntimeHost.Utilities
 
             return output;
         }
+
+        internal static void DeleteFolderRecursive(DirectoryInfo baseDir)
+        {
+            baseDir.Attributes = FileAttributes.Normal;
+            foreach (var childDir in baseDir.GetDirectories())
+                DeleteFolderRecursive(childDir);
+
+            foreach (var file in baseDir.GetFiles())
+                file.IsReadOnly = false;
+
+            baseDir.Delete(true);
+        }
+
+        internal static Task DeleteFileAsync(string path)
+        {
+            return Task.Run(() =>
+            {
+                using (FileStream fs = new FileStream(path, FileMode.Truncate, FileAccess.ReadWrite, FileShare.Delete, 1, FileOptions.DeleteOnClose | FileOptions.Asynchronous))
+                {
+                    fs.SetLength(0);
+                }
+            });
+           
+        }
     }
 }

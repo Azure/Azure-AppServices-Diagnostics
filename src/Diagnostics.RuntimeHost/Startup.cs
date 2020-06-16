@@ -39,6 +39,7 @@ using System.Net;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Rewrite;
 using Newtonsoft.Json;
+using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -176,6 +177,7 @@ namespace Diagnostics.RuntimeHost
             var searchApiConfiguration = dataSourcesConfigService.Config.SearchServiceProviderConfiguration;
 
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
+    
 
             observerConfiguration.AADAuthority = dataSourcesConfigService.Config.KustoConfiguration.AADAuthority;
             var wawsObserverTokenService = new ObserverTokenService(observerConfiguration.AADResource, observerConfiguration);
@@ -210,24 +212,28 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchServiceDisabled>();
             }
-            services.AddSingleton<IStorageService, StorageService>();
-            services.AddSingleton<IDiagEntityTableCacheService, DiagEntityTableCacheService>();
+
+            services.AddDiagEntitiesStorageService(Configuration);
+            services.AddDiagEntitiesTableCacheService(Configuration);
+
+            if(Configuration.IsPublicAzure())
+            {
+                services.AddSingleton<ISourceWatcher, StorageWatcher>();
+            } else
+            {
+                services.AddSingleton<ISourceWatcher, NationalCloudStorageWatcher>();
+            }
             services.AddLogging(loggingConfig =>
             {
                 loggingConfig.ClearProviders();
                 loggingConfig.AddConfiguration(Configuration.GetSection("Logging"));
-                loggingConfig.AddDebug();
+                loggingConfig.AddApplicationInsights();
                 loggingConfig.AddEventSourceLogger();
                 loggingConfig.AddRuntimeLogger();
-
-                if (!IsPublicAzure())
-                {
-                    loggingConfig.AddEventLog();
-                    loggingConfig.AddAzureWebAppDiagnostics();
-                }
              
                 if (Environment.IsDevelopment())
                 {
+                    loggingConfig.AddDebug();
                     loggingConfig.AddConsole();
                 }
             });
@@ -247,12 +253,6 @@ namespace Diagnostics.RuntimeHost
             app.UseRewriter(new RewriteOptions().Add(new RewriteDiagnosticResource()));
             app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseMvc();
-        }
-
-        private bool IsPublicAzure()
-        {
-            return Configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureCloud, StringComparison.CurrentCultureIgnoreCase)
-                || Configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureCloudAlternativeName, StringComparison.CurrentCultureIgnoreCase);
         }
     }
 }

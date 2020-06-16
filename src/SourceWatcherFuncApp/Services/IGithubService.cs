@@ -6,7 +6,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.IO;
-using SourceWatcherFuncApp.Entities;
+using Diagnostics.ModelsAndUtils.Models.Storage;
 
 namespace SourceWatcherFuncApp.Services
 {
@@ -16,7 +16,7 @@ namespace SourceWatcherFuncApp.Services
 
         Task<GithubEntry[]> DownloadGithubDirectories(string branchName = "", string branchdownloadUrl = "");
         Task<Stream> GetFileContentStream(string url);
-        Task<DetectorEntity> GetFileContentJson(string url);
+        Task<DiagEntity> GetFileContentJson(string url);
         Task<T> GetFileContentByType<T>(string url);
 
         Task<DateTime> GetCommitDate(string path);
@@ -91,11 +91,11 @@ namespace SourceWatcherFuncApp.Services
            
         }
 
-        public async Task<DetectorEntity> GetFileContentJson(string url)
+        public async Task<DiagEntity> GetFileContentJson(string url)
         {
             var response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, url));
             var responsestring = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<DetectorEntity>(responsestring);
+            return JsonConvert.DeserializeObject<DiagEntity>(responsestring);
         }
 
         public async Task<Stream> GetFileContentStream(string url)

@@ -19,7 +19,7 @@ namespace Diagnostics.RuntimeHost
         {
             try
             {
-                BuildWebHost(args).Run();
+                CreateWebHostBuilder(args).Build().Run();
             }
             catch (Exception ex)
             {
@@ -37,7 +37,7 @@ namespace Diagnostics.RuntimeHost
             }
         }
 
-        public static IWebHost BuildWebHost(string[] args)
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
         {
             return WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((context, config) =>
@@ -53,8 +53,7 @@ namespace Diagnostics.RuntimeHost
                         .AddCommandLine(args)
                         .Build();
                 })
-                .UseStartup<Startup>()
-                .Build();
+                .UseStartup<Startup>();
         }
 
         private static Tuple<string, KeyVaultClient> GetKeyVaultSettings(WebHostBuilderContext context, IConfigurationBuilder config)

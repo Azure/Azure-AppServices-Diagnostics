@@ -92,6 +92,14 @@
             {
               "name": "ENVIRONMENT",
               "value": "__ENVIRONMENT__"
+            },
+            {
+              "name": "LUIS_APP_ID",
+              "value": "__LUIS_APP_ID__"
+            },
+            {
+              "name": "LUIS_APP_KEY",
+              "value": "__LUIS_APP_KEY__"
             }
           ],
           "parameters": {
@@ -159,6 +167,14 @@
             {
               "name": "ENVIRONMENT",
               "value": "__ENVIRONMENT__"
+            },
+            {
+              "name": "LUIS_APP_ID",
+              "value": "__LUIS_APP_ID__"
+            },
+            {
+              "name": "LUIS_APP_KEY",
+              "value": "__LUIS_APP_KEY__"
             }
           ],
           "parameters": {

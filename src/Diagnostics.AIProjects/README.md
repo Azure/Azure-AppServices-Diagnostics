@@ -23,7 +23,7 @@ Also verify if you can run pip python package manager by running command
 If you face issues like command pip not found, look at your environment path variable and hunt down the path to python (let's call it PYTHON_PATH). Add a new value to PATH which is PYTHON_PATH\Scripts (this is the folder where pip executable resides).
 
 #### Second Step : Create Development Environment
-Go to the folder on your machine where you can allow python to do all its package shit and open it in command prompt. (Recommended folder is Diagnostics.AIProjects\Scripts)
+Go to the folder on your machine where you can allow python to do all its package stuff and open it in command prompt. (Recommended folder is Diagnostics.AIProjects\Scripts)
 Run
 ```python -m venv searchenv```
 This will create a development environment called searchenv in the folder.

@@ -1,21 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.IO;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
-using System.Collections.Generic;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models.Storage;
-using System.Linq;
 
-namespace SourceWatcherFuncApp.Utilities
+namespace Diagnostics.RuntimeHost.Utilities
 {
-    public static class EntityHelper
+    public static class DiagEntityHelper
     {
-        public static DiagEntity PrepareEntityForLoad(Stream streamAssemblyData, string detectorScript, DiagEntity detectorPackage)
+        public static DiagEntity PrepareEntityForLoad(byte[] assemblyData, string detectorScript, DiagEntity detectorPackage)
         {
-            byte[] assemblyData = GetByteFromStream(streamAssemblyData);
             Assembly temp = Assembly.Load(assemblyData);
 
             if (!Enum.TryParse(detectorPackage.EntityType, true, out EntityType entityType))
@@ -27,11 +26,11 @@ namespace SourceWatcherFuncApp.Utilities
             {
                 invoker.InitializeEntryPoint(temp);
                 var resourceFilter = invoker.ResourceFilter;
-                detectorPackage.IsInternal = resourceFilter != null? resourceFilter.InternalOnly : false;
-                detectorPackage.SupportTopicList = invoker.EntryPointDefinitionAttribute != null ? invoker.EntryPointDefinitionAttribute.SupportTopicList : new List<SupportTopic>() ;
+                detectorPackage.IsInternal = resourceFilter != null ? resourceFilter.InternalOnly : false;
+                detectorPackage.SupportTopicList = invoker.EntryPointDefinitionAttribute != null ? invoker.EntryPointDefinitionAttribute.SupportTopicList : new List<SupportTopic>();
                 detectorPackage.AnalysisTypes = invoker.EntryPointDefinitionAttribute != null ? invoker.EntryPointDefinitionAttribute.AnalysisTypes : new List<string>();
                 detectorPackage.DetectorType = invoker.EntryPointDefinitionAttribute != null ? invoker.EntryPointDefinitionAttribute.Type.ToString() : "Detector";
-                if(invoker.ResourceFilter != null)
+                if (invoker.ResourceFilter != null)
                 {
                     if (invoker.ResourceFilter is AppFilter)
                     {
@@ -52,22 +51,22 @@ namespace SourceWatcherFuncApp.Utilities
 
                         detectorPackage.ResourceProvider = "Microsoft.Web";
                         detectorPackage.ResourceType = "sites";
-                    } 
+                    }
                     else if (invoker.ResourceFilter is ApiManagementServiceFilter)
                     {
                         detectorPackage.ResourceProvider = "Microsoft.ApiManagement";
                         detectorPackage.ResourceType = "service";
-                    } 
+                    }
                     else if (invoker.ResourceFilter is AppServiceCertificateFilter)
                     {
                         detectorPackage.ResourceProvider = "Microsoft.CertificateRegistration";
                         detectorPackage.ResourceType = "certificateOrders";
-                    } 
+                    }
                     else if (invoker.ResourceFilter is AppServiceDomainFilter)
                     {
                         detectorPackage.ResourceProvider = "Microsoft.DomainRegistration";
                         detectorPackage.ResourceType = "domains";
-                    } 
+                    }
                     else if (invoker.ResourceFilter is AzureKubernetesServiceFilter)
                     {
                         detectorPackage.ResourceProvider = "Microsoft.ContainerService";
@@ -103,7 +102,7 @@ namespace SourceWatcherFuncApp.Utilities
                         detectorPackage.ResourceType = resourceInfo.ResourceTypeName;
                     }
                 }
-                
+
             }
             detectorPackage.PartitionKey = detectorPackage.EntityType;
             detectorPackage.RowKey = detectorPackage.DetectorId;
@@ -111,7 +110,7 @@ namespace SourceWatcherFuncApp.Utilities
 
         }
 
-        
+
         public static byte[] GetByteFromStream(Stream input)
         {
             using (MemoryStream ms = new MemoryStream())
