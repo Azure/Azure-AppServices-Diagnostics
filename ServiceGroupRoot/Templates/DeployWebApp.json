@@ -331,7 +331,7 @@
       "resources": [
         {
           "apiVersion": "2014-06-01",
-          "name": "MSDeploy",
+          "name": "ZipDeploy",
           "type": "Extensions",
           "dependsOn": [
               "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]"
