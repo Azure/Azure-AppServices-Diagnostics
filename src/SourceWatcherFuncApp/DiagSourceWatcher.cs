@@ -71,15 +71,15 @@ namespace Diag.SourceWatcher
                             configFileData.GithubLastModified = await githubService.GetCommitDate(scriptFile.Path);
 
                             //First check if entity exists in blob or table
-                            var existingDetectorEntity = await storageService.GetEntityFromTable(configFileData.PartitionKey, configFileData.RowKey);
+                            var existingDetectorEntity = await storageService.GetEntityFromTable(configFileData.PartitionKey, configFileData.RowKey, githubdir.Name);
                             var doesBlobExists = await storageService.CheckDetectorExists(githubdir.Name);
                             //If there is no entry in table or blob or github last modifed date has been changed, upload to blob
                             if (existingDetectorEntity == null || !doesBlobExists || existingDetectorEntity.GithubLastModified != configFileData.GithubLastModified)
                             {
                                 var assemblyLastModified = await githubService.GetCommitDate(assemblyFile.Path);
                                 storageService.LoadBlobToContainer(assemblyFile.Path, assemblyData);
+                                await storageService.LoadDataToTable(configFileData, githubdir.Name);
                             }
-                            await storageService.LoadDataToTable(configFileData);
                         }
                         else
                         {
@@ -102,7 +102,7 @@ namespace Diag.SourceWatcher
             {
                 deletedRow.IsDisabled = true;
                 log.LogInformation($"Marking {deletedRow.RowKey} as disabled");
-                updatetasks.Add(storageService.LoadDataToTable(deletedRow));
+                updatetasks.Add(storageService.LoadDataToTable(deletedRow, ""));
             });
 
             currentIds.ForEach(currentDetector =>
