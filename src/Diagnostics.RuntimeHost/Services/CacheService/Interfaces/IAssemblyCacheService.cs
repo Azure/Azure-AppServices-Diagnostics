@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using Diagnostics.ModelsAndUtils.Models;
+using System.Reflection;
 
 namespace Diagnostics.RuntimeHost.Services.CacheService.Interfaces
 {
@@ -12,11 +13,15 @@ namespace Diagnostics.RuntimeHost.Services.CacheService.Interfaces
         /// </summary>
         /// <param name="assemblyName">Full Qualified name of the DLL to cache</param>
         /// <param name="assemblyDll">DLL to add to cache</param>
-        void AddAssemblyToCache(string assemblyName, Assembly assemblyDll);
+        void AddAssemblyToCache(string assemblyName, Assembly assemblyDll, CompilerResponse compilerResponse);
 
         /// <summary>
         /// Checks if a <paramref name="assemblyName"/> is loaded in cache and returns <paramref name="loadedAssembly"/>
         /// </summary>
-        bool IsAssemblyLoaded(string assemblyName, out Assembly loadedAssembly);
+        bool IsAssemblyLoaded(string assemblyName);
+
+
+        CompilerResponse GetCachedCompilerResponse(string assemblyName);
+        Assembly GetCachedAssembly(string assemblyName);
     }
 }
