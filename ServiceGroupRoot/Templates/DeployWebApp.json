@@ -1,0 +1,442 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subscriptionId": {
+      "type": "string",
+      "defaultValue": "[subscription().subscriptionId]",
+      "metadata": {
+        "description": "The ID of the subscription the Azure App Service Plan belongs to."
+      }
+    },
+    "resourceGroup": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().name]",
+      "metadata": {
+        "description": "The name of the resource group the Azure App Service Plan belongs to."
+      }
+    },
+    "appServicePlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of Azure App Service Plan this web app belongs to."
+      }
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "S1",
+      "metadata": {
+        "description": "Describes plan's pricing tier and capacity. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+      },
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ]
+    },
+    "siteName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the web app."
+      }
+    },
+    "alwaysOn": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Whether the web app should remain loaded after 20 minutes of inactivity."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "pingPath": {
+      "type": "string",
+      "defaultValue": "/",
+      "metadata": {
+        "description": "The path to ping to warm up your site"
+      }
+    },
+    "autoScaleMinimumCapacity": {
+      "type": "Int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "The minimum capacity.  Autoscale engine will ensure the instance count is at least this value."
+      }
+    },
+    "autoScaleMaximumCapacity": {
+      "type": "Int",
+      "defaultValue": 10,
+      "metadata": {
+        "description": "The maximum capacity.  Autoscale engine will ensure the instance count is not greater than this value."
+      }
+    },
+    "autoScaleDefaultCapacity": {
+      "type": "Int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "The default capacity.  Autoscale engine will preventively set the instance count to be this value if it can not find any metric data."
+      }
+    },
+    "autoScaleMetricName": {
+      "type": "string",
+      "defaultValue": "CpuPercentage",
+      "metadata": {
+        "description": "The metric name."
+      }
+    },
+    "autoScaleMetricThresholdToScaleOut": {
+      "type": "Int",
+      "defaultValue": 70,
+      "metadata": {
+        "description": "The metric upper threshold.  If the metric value is above this threshold then autoscale engine will initiate scale out action."
+      }
+    },
+    "autoScaleMetricThresholdToScaleIn": {
+      "type": "Int",
+      "defaultValue": 30,
+      "metadata": {
+        "description": "The metric lower threshold.  If the metric value is below this threshold then autoscale engine will initiate scale in action."
+      }
+    },
+    "autoscaleEnabled": {
+      "type": "Bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "A boolean to indicate whether the autoscale policy is enabled or disabled."
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the keyvault this resource should have access to"
+      }
+    },
+    "azureAdAuthority": {
+      "type": "string",
+      "defaultValue": "https://login.microsoftonline.com/",
+      "allowedValues": [
+        "https://login.microsoftonline.com/",
+        "https://login.microsoftonline.us",
+        "https://login.partner.microsoftonline.cn",
+        "https://login.microsoftonline.eaglex.ic.gov",
+        "https://login.microsoftonline.microsoft.scloud"
+      ]
+    },
+    "servicePackageLink": {
+      "type": "securestring",
+        "metadata": {
+            "description": "The URL for the GitHub repository that contains the project to deploy."
+        }
+    }
+  },
+  "variables": {
+    "targetResourceId": "[resourceId('Microsoft.Web/serverFarms/', parameters('appServicePlanName'))]"
+  },
+  "resources": [
+    {
+      "comments": "Defines an Azure App Service Plan.",
+      "type": "Microsoft.Web/serverfarms",
+      "name": "[parameters('appServicePlanName')]",
+      "apiVersion": "2015-08-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('sku')]"
+      },
+      "properties": {
+        "name": "[parameters('appServicePlanName')]"
+      }
+    },
+    {
+      "comments": "Configure auto scaling.",
+      "type": "Microsoft.Insights/autoscalesettings",
+      "name": "[concat(toLower(parameters('appServicePlanName')), '-setting')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+      ],
+      "apiVersion": "2014-04-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "profiles": [
+          {
+            "name": "DefaultAutoscaleProfile",
+            "capacity": {
+              "minimum": "[parameters('autoScaleMinimumCapacity')]",
+              "maximum": "[parameters('autoScaleMaximumCapacity')]",
+              "default": "[parameters('autoScaleDefaultCapacity')]"
+            },
+            "rules": [
+              {
+                "metricTrigger": {
+                  "metricName": "[parameters('autoScaleMetricName')]",
+                  "metricNamespace": "",
+                  "metricResourceUri": "[variables('targetResourceId')]",
+                  "timeGrain": "PT5M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "GreaterThan",
+                  "threshold": "[parameters('autoScaleMetricThresholdToScaleOut')]"
+                },
+                "scaleAction": {
+                  "direction": "Increase",
+                  "type": "ChangeCount",
+                  "value": 1,
+                  "cooldown": "PT10M"
+                }
+              },
+              {
+                "metricTrigger": {
+                  "metricName": "[parameters('autoScaleMetricName')]",
+                  "metricNamespace": "",
+                  "metricResourceUri": "[variables('targetResourceId')]",
+                  "timeGrain": "PT5M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "LessThan",
+                  "threshold": "[parameters('autoScaleMetricThresholdToScaleIn')]"
+                },
+                "scaleAction": {
+                  "direction": "Decrease",
+                  "type": "ChangeCount",
+                  "value": 1,
+                  "cooldown": "PT10M"
+                }
+              }
+            ]
+          }
+        ],
+        "enabled": "[parameters('autoscaleEnabled')]",
+        "targetResourceUri": "[variables('targetResourceId')]"
+      }
+    },
+    {
+      "comments": "Defines an Azure Web App.",
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('siteName')]",
+      "apiVersion": "2018-11-01",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]": "empty"
+      },
+      "properties": {
+        "sourcePlatform": "Unknown",
+        "targetPlatform": "Unknown",
+        "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('resourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]",
+        "WEBSITE_LOCAL_CACHE_OPTION": "Disabled",
+        "WEBSITE_LOCAL_CACHE_SIZEINMB": "300",
+        "WEBSITE_SWAP_WARMUP_PING_PATH": "[parameters('pingPath')]",
+        "WEBSITE_ENABLE_SYNC_UPDATE_SITE": "true",
+        "clientAffinityEnabled": false,
+        "siteConfig": {
+          "phpVersion": "off",
+          "scmType": "None",
+          "netFrameworkVersion": "v4.0",
+          "use32BitWorkerProcess": false,
+          "webSocketsEnabled": false,
+          "alwaysOn": "[parameters('alwaysOn')]",
+          "healthCheckPath": "[parameters('pingPath')]",
+          "httpLoggingEnabled": true,
+          "logsDirectorySizeLimit": 50,
+          "appSettings": [
+            {
+              "Name": "DIAG_HOST",
+              "Value": "[parameters('siteName')]"
+            },
+            {
+              "Name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "Value": "6.7.0"
+            },
+            {
+              "Name": "ASPNETCORE_ENVIRONMENT",
+              "Value": "Production"
+            },
+            {
+              "Name": "WEBSITE_SWAP_WARMUP_PING_PATH",
+              "Value": "[parameters('pingPath')]"
+            },
+            {
+              "Name": "WEBSITE_ADD_SITENAME_BINDINGS_IN_APPHOST_CONFIG",
+              "Value": 1
+            },
+            {
+              "Name": "WEBSITE_LOCAL_CACHE_OPTION",
+              "Value": "Disabled"
+            },
+            {
+              "Name": "Secrets:AzureAdInstance",
+              "Value": "[parameters('azureAdAuthority')]"
+            },
+            {
+              "Name": "Secrets:ProdKeyVaultName",
+              "Value": "[reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2019-09-01', 'Full').properties.vaultUri]"
+            },
+            {
+              "Name": "WEBSITE_LOAD_CERTIFICATES",
+              "Value": "*"
+            }            
+          ],
+          "autoHealEnabled": true,
+          "autoHealRules": {
+            "triggers": {
+              "requests": null,
+              "privateBytesInKB": 0,
+              "statusCodes": [
+                {
+                  "status": 500,
+                  "subStatus": 0,
+                  "count": 100,
+                  "timeInterval": "00:10:00"
+                },
+                {
+                  "status": 503,
+                  "subStatus": 0,
+                  "count": 100,
+                  "timeInterval": "00:10:00"
+                }
+              ],
+              "slowRequests": null
+            },
+            "actions": {
+              "actionType": "CustomAction",
+              "customAction": {
+                "exe": "D:\\home\\data\\DaaS\\bin\\DaasConsole.exe",
+                "parameters": "-CollectKillAnalyze \"Memory Dump\"  60"
+              },
+              "minProcessExecutionTime": "00:05:00"
+            }
+          }
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2014-06-01",
+          "name": "ZipDeploy",
+          "type": "Extensions",
+          "dependsOn": [
+              "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]"
+          ],
+          "properties": {
+              "packageUri": "[parameters('servicePackageLink')]"
+          }
+        },
+        {
+          "apiVersion": "2015-08-01",
+          "name": "slotconfignames",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]"
+          ],
+          "properties": {
+            "appSettingNames": [
+              "ASPNETCORE_ENVIRONMENT",
+              "DIAG_HOST"
+            ]
+          }
+        },
+        {
+          "comments": "Defines an Azure Web App slot.",
+          "type": "slots",
+          "name": "staging",
+          "apiVersion": "2015-08-01",
+          "location": "[parameters('location')]",
+          "identity": {
+            "type": "SystemAssigned"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+          ],
+          "tags": {
+            "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]": "empty"
+          },
+          "properties": {
+            "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('resourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]",
+            "clientAffinityEnabled": false,
+            "siteConfig": {
+              "phpVersion": "off",
+              "scmType": "LocalGit",
+              "netFrameworkVersion": "v4.0",
+              "use32BitWorkerProcess": false,
+              "webSocketsEnabled": false,
+              "alwaysOn": "[parameters('alwaysOn')]",
+              "healthCheckPath": null,
+              "httpLoggingEnabled": true,
+              "logsDirectorySizeLimit": 50,
+              "appSettings": [
+                {
+                  "Name": "DIAG_HOST",
+                  "Value": "[concat(parameters('siteName'),'-staging')]"
+                },
+                {
+                  "Name": "ASPNETCORE_ENVIRONMENT",
+                  "Value": "Staging"
+                },
+                {
+                  "Name": "WEBSITE_SWAP_WARMUP_PING_PATH",
+                  "Value": "[parameters('pingPath')]"
+                },
+                {
+                  "Name": "WEBSITE_ADD_SITENAME_BINDINGS_IN_APPHOST_CONFIG",
+                  "Value": 1
+                },
+                {
+                  "Name": "WEBSITE_LOCAL_CACHE_OPTION",
+                  "Value": "Disabled"
+                },
+                {
+                  "Name": "WEBSITE_LOAD_CERTIFICATES",
+                  "Value": "*"
+                },
+                {
+                  "Name": "Secrets:AzureAdInstance",
+                  "Value": "[parameters('azureAdAuthority')]"
+                },
+                {
+                  "Name": "Secrets:ProdKeyVaultName",
+                  "Value": "[reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2019-09-01', 'Full').properties.vaultUri]"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/accessPolicies",
+      "name": "[concat(parameters('keyVaultName'), '/add')]",
+      "apiVersion": "2018-02-14",
+      "properties": {
+        "accessPolicies": [
+          {
+            "tenantId": "[subscription().tenantId]",
+            "objectId": "[reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Web/sites', parameters('siteName')), '2018-02-01', 'Full').identity.principalId]",
+            "permissions": {
+              "secrets": ["get"],
+              "certificates": ["get", "list"]
+            }
+          }
+        ]
+      }
+    }    
+  ]
+}

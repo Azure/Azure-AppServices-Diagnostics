@@ -1,6 +1,8 @@
+@echo off
+
 pushd "%~dp0"
 
-dotnet restore "%~dp0..\AppServiceSample.sln"
+dotnet restore "%~dp0Diagnostics.sln"
 
 if %ERRORLEVEL% neq 0 (
     popd
@@ -8,7 +10,7 @@ if %ERRORLEVEL% neq 0 (
 )
 
 rem Install code coverage tool
-dotnet tool install dotnet-reportgenerator-globaltool --tool-path coveragetool
+rem dotnet tool install dotnet-reportgenerator-globaltool --tool-path coveragetool
 
 popd
 exit /B %ERRORLEVEL%

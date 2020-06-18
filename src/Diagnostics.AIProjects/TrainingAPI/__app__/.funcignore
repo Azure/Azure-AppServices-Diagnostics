@@ -1,0 +1,11 @@
+.git*
+.vscode
+local.settings.json
+test
+.venv
+resourceConfig
+**/__pycache__
+**/14748
+**/16072
+**/16170
+**.json

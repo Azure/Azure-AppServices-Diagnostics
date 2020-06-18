@@ -1,0 +1,25 @@
+pool:
+  name: Hosted Windows 2019 with VS2019
+
+trigger:
+  branches:
+    include:
+    - master2
+  paths:
+    include:
+    - src/Diagnostics.AIProjects/SearchAPI/*
+
+steps:
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.SourcesDirectory)/src/Diagnostics.AIProjects/SearchAPI'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/Application$(Build.BuildId).zip'
+    replaceExistingArchive: true
+    verbose: # (no value); this input is optional
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)/Application$(Build.BuildId).zip'
+    artifactName: BuildOutput

@@ -1,0 +1,551 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "subscriptionId": {
+      "type": "string",
+      "metadata": {
+        "description": "The ID of the subscription the Azure App Service Plan belongs to."
+      }
+    },
+    "appServicePlanResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the resource group the Azure App Service Plan belongs to."
+      }
+    },
+    "appServicePlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of Azure App Service Plan this web app belongs to."
+      }
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "S1",
+      "metadata": {
+        "description": "The SKU of App Service Plan, by default is Standard S1"
+      }
+    },
+    "siteName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the web app."
+      }
+    },
+    "alwaysOn": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Whether the web app should remain loaded after 20 minutes of inactivity."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "pingPath": {
+      "type": "string",
+      "defaultValue": "/",
+      "metadata": {
+        "description": "The path to ping to warm up your site"
+      }
+    },
+    "genevaCertContent": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The PFX to be put in the AntMDS certificate store to be used to decrypt the encrypted storage account key and authenticate to MDM."
+      }
+    },
+    "monitoringTenant": {
+      "type": "string",
+      "metadata": {
+        "description": "Sets the MONITORING_TENANT environment variable "
+      }
+    },
+    "monitoringRole": {
+      "type": "string",
+      "metadata": {
+        "description": "Sets the MONITORING_ROLE environment variable"
+      }
+    },
+    "monitoringGcsEnvironment": {
+      "type": "string",
+      "allowedValues": [
+        "Diagnostics Prod",
+        "Test",
+        "Stage",
+        "FirstPartyProd",
+        "BillingProd",
+        "ExternalProd",
+        "CA BlackForest",
+        "CA Fairfax",
+        "CA Mooncake"
+      ],
+      "metadata": {
+        "description": "The endpoint for your Geneva Account.  Sets the MONITORING_GCS_ENVIRONMENT environment variable."
+      }
+    },
+    "monitoringGcsAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "Sets the MONITORING_GCS_ACCOUNT environment variable."
+      }
+    },
+    "monitoringGcsNamespace": {
+      "type": "string",
+      "metadata": {
+        "description": "Sets the MONITORING_GCS_NAMESPACE environment variable"
+      }
+    },
+    "monitoringGcsAuthId": {
+      "type": "string",
+      "metadata": {
+        "description": "Sets the MONITORING_GCS_AUTH_ID environment variable."
+      }
+    },
+    "monitoringConfigVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "Sets the MONITORING_CONFIG_VERSION environment variable."
+      }
+    },
+    "autoScaleMinimumCapacity": {
+      "type": "Int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "The minimum capacity.  Autoscale engine will ensure the instance count is at least this value."
+      }
+    },
+    "autoScaleMaximumCapacity": {
+      "type": "Int",
+      "defaultValue": 10,
+      "metadata": {
+        "description": "The maximum capacity.  Autoscale engine will ensure the instance count is not greater than this value."
+      }
+    },
+    "autoScaleDefaultCapacity": {
+      "type": "Int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "The default capacity.  Autoscale engine will preventively set the instance count to be this value if it can not find any metric data."
+      }
+    },
+    "autoScaleMetricName": {
+      "type": "string",
+      "defaultValue": "CpuPercentage",
+      "metadata": {
+        "description": "The metric name."
+      }
+    },
+    "autoScaleMetricThresholdToScaleOut": {
+      "type": "Int",
+      "defaultValue": 70,
+      "metadata": {
+        "description": "The metric upper threshold.  If the metric value is above this threshold then autoscale engine will initiate scale out action."
+      }
+    },
+    "autoScaleMetricThresholdToScaleIn": {
+      "type": "Int",
+      "defaultValue": 30,
+      "metadata": {
+        "description": "The metric lower threshold.  If the metric value is below this threshold then autoscale engine will initiate scale in action."
+      }
+    },
+    "autoscaleEnabled": {
+      "type": "Bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "A boolean to indicate whether the autoscale policy is enabled or disabled."
+      }
+    }
+  },
+  "variables": {
+    "configJson": {
+      "MONITORING_TENANT": "[parameters('monitoringTenant')]",
+      "MONITORING_ROLE": "[parameters('monitoringRole')]",
+      "MONITORING_XSTORE_ACCOUNTS": "GCSPlaceholder",
+      "AdditionalEnvironmentVariables": [
+        {
+          "Key": "DATACENTER",
+          "Value": "[parameters('location')]"
+        },
+        {
+          "Key": "MONITORING_GCS_ENVIRONMENT",
+          "Value": "[parameters('monitoringGcsEnvironment')]"
+        },
+        {
+          "Key": "MONITORING_GCS_ACCOUNT",
+          "Value": "[parameters('monitoringGcsAccount')]"
+        },
+        {
+          "Key": "MONITORING_GCS_NAMESPACE",
+          "Value": "[parameters('monitoringGcsNamespace')]"
+        },
+        {
+          "Key": "MONITORING_GCS_REGION",
+          "Value": "[parameters('location')]"
+        },
+        {
+          "Key": "MONITORING_GCS_AUTH_ID",
+          "Value": "[parameters('monitoringGcsAuthId')]"
+        },
+        {
+          "Key": "MONITORING_GCS_AUTH_ID_TYPE",
+          "Value": "AuthKeyVault"
+        },
+        {
+          "Key": "MONITORING_CONFIG_VERSION",
+          "Value": "[parameters('monitoringConfigVersion')]"
+        },
+        {
+          "Key": "MONITORING_USE_GENEVA_CONFIG_SERVICE",
+          "Value": "true"
+        }
+
+      ]
+
+    },
+    "configXml": "<MonitoringManagement eventVersion=\"1\" version=\"1.0\" timestamp=\"2017-12-29T00:00:00Z\" namespace=\"PlaceHolder\"></MonitoringManagement>",
+    "targetResourceId": "[resourceId('Microsoft.Web/serverFarms/', parameters('appServicePlanName'))]"
+  },
+  "resources": [
+    {
+      "comments": "Defines an Azure App Service Plan.",
+      "type": "Microsoft.Web/serverfarms",
+      "name": "[parameters('appServicePlanName')]",
+      "apiVersion": "2015-08-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('sku')]"
+      },
+      "properties": {
+        "name": "[parameters('appServicePlanName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/autoscalesettings",
+      "name": "[concat(toLower(parameters('appServicePlanName')), '-setting')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+      ],
+      "apiVersion": "2014-04-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "profiles": [
+          {
+            "name": "DefaultAutoscaleProfile",
+            "capacity": {
+              "minimum": "[parameters('autoScaleMinimumCapacity')]",
+              "maximum": "[parameters('autoScaleMaximumCapacity')]",
+              "default": "[parameters('autoScaleDefaultCapacity')]"
+            },
+            "rules": [
+              {
+                "metricTrigger": {
+                  "metricName": "[parameters('autoScaleMetricName')]",
+                  "metricNamespace": "",
+                  "metricResourceUri": "[variables('targetResourceId')]",
+                  "timeGrain": "PT5M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "GreaterThan",
+                  "threshold": "[parameters('autoScaleMetricThresholdToScaleOut')]"
+                },
+                "scaleAction": {
+                  "direction": "Increase",
+                  "type": "ChangeCount",
+                  "value": 1,
+                  "cooldown": "PT10M"
+                }
+              },
+              {
+                "metricTrigger": {
+                  "metricName": "[parameters('autoScaleMetricName')]",
+                  "metricNamespace": "",
+                  "metricResourceUri": "[variables('targetResourceId')]",
+                  "timeGrain": "PT5M",
+                  "statistic": "Average",
+                  "timeWindow": "PT10M",
+                  "timeAggregation": "Average",
+                  "operator": "LessThan",
+                  "threshold": "[parameters('autoScaleMetricThresholdToScaleIn')]"
+                },
+                "scaleAction": {
+                  "direction": "Decrease",
+                  "type": "ChangeCount",
+                  "value": 1,
+                  "cooldown": "PT10M"
+                }
+              }
+            ]
+          }
+        ],
+        "enabled": "[parameters('autoscaleEnabled')]",
+        "targetResourceUri": "[variables('targetResourceId')]"
+      }
+    },
+    {
+      "comments": "Defines an Azure Web App integrated with Geneva.",
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('siteName')]",
+      "apiVersion": "2018-11-01",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]": "empty"
+      },
+      "properties": {
+        "sourcePlatform": "Unknown",
+        "targetPlatform": "Unknown",
+        "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('appServicePlanResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]",
+        "WEBSITE_LOCAL_CACHE_OPTION": "Always",
+        "WEBSITE_LOCAL_CACHE_SIZEINMB": "300",
+        "WEBSITE_SWAP_WARMUP_PING_PATH": "[parameters('pingPath')]",
+        "WEBSITE_ENABLE_SYNC_UPDATE_SITE": "true",
+        "clientAffinityEnabled": false,
+        "siteConfig": {
+          "phpVersion": "off",
+          "scmType": null,
+          "netFrameworkVersion": "v4.0",
+          "use32BitWorkerProcess": false,
+          "webSocketsEnabled": false,
+          "alwaysOn": "[parameters('alwaysOn')]",
+          "healthCheckPath": "[parameters('pingPath')]",
+          "httpLoggingEnabled": false,
+          "logsDirectorySizeLimit": 50,
+          "detailedErrorLoggingEnabled": false,
+          "appSettings": [
+            {
+              "Name": "DIAG_HOST",
+              "Value": "[parameters('siteName')]"
+            },
+            {
+              "Name": "WEBSITE_FIRST_PARTY_ID",
+              "Value": "AntMDS"
+            },
+            {
+              "Name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "Value": "6.7.0"
+            },
+            {
+              "Name": "ASPNETCORE_ENVIRONMENT",
+              "Value": "Production"
+            },
+            {
+              "Name": "WEBSITE_SWAP_WARMUP_PING_PATH",
+              "Value": "[parameters('pingPath')]"
+            },
+            {
+              "Name": "WEBSITE_ADD_SITENAME_BINDINGS_IN_APPHOST_CONFIG",
+              "Value": 1
+            },
+            {
+              "Name": "WEBSITE_LOCAL_CACHE_OPTION",
+              "Value": "Always"
+            },
+            {
+              "Name": "WEBSITE_LOAD_CERTIFICATES",
+              "Value": "*"
+            }
+          ],
+          "autoHealEnabled": true,
+          "autoHealRules": {
+            "triggers": {
+              "requests": null,
+              "privateBytesInKB": 0,
+              "statusCodes": [
+                {
+                  "status": 500,
+                  "subStatus": 0,
+                  "count": 100,
+                  "timeInterval": "00:10:00"
+                },
+                {
+                  "status": 503,
+                  "subStatus": 0,
+                  "count": 100,
+                  "timeInterval": "00:10:00"
+                },
+                {
+                  "status": 502,
+                  "subStatus": 0,
+                  "count": 100,
+                  "timeInterval": "00:10:00"
+                }              
+              ],
+              "slowRequests": {
+                "timeTaken": "00:01:30",
+                "count": 100,
+                "timeInterval": "00:10:00"
+              }
+            },
+            "actions": {
+              "actionType": "CustomAction",
+              "customAction": {
+                "exe": "D:\\home\\data\\DaaS\\bin\\DaasConsole.exe",
+                "parameters": "-CollectKillAnalyze \"Memory Dump\"  60"
+              },
+              "minProcessExecutionTime": "00:05:00"
+            }
+          }
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "slotconfignames",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]"
+          ],
+          "properties": {
+            "appSettingNames": [
+              "ASPNETCORE_ENVIRONMENT",
+              "DIAG_HOST"
+            ]
+          }
+        },
+        {
+          "comments": "Defines an Azure Web App slot.",
+          "type": "slots",
+          "name": "staging",
+          "apiVersion": "2015-08-01",
+          "location": "[parameters('location')]",
+          "identity": {
+            "type": "SystemAssigned"
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+          ],
+          "tags": {
+            "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]": "empty"
+          },
+          "properties": {
+            "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('appServicePlanResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]",
+            "clientAffinityEnabled": false,
+            "siteConfig": {
+              "phpVersion": "off",
+              "scmType": "LocalGit",
+              "netFrameworkVersion": "v4.0",
+              "use32BitWorkerProcess": false,
+              "webSocketsEnabled": false,
+              "alwaysOn": false,
+              "healthCheckPath": null,
+              "httpLoggingEnabled": false,
+              "logsDirectorySizeLimit": 50,
+              "detailedErrorLoggingEnabled": false,
+              "appSettings": [
+                {
+                  "Name": "DIAG_HOST",
+                  "Value": "[concat(parameters('siteName'),'-staging')]"
+                },
+                {
+                  "Name": "WEBSITE_FIRST_PARTY_ID",
+                  "Value": "AntMDS"
+                },
+                {
+                  "Name": "ASPNETCORE_ENVIRONMENT",
+                  "Value": "Staging"
+                },
+                {
+                  "Name": "WEBSITE_SWAP_WARMUP_PING_PATH",
+                  "Value": "[parameters('pingPath')]"
+                },
+                {
+                  "Name": "WEBSITE_ADD_SITENAME_BINDINGS_IN_APPHOST_CONFIG",
+                  "Value": 1
+                },
+                {
+                  "Name": "WEBSITE_LOCAL_CACHE_OPTION",
+                  "Value": "Always"
+                },
+                {
+                  "Name": "WEBSITE_LOAD_CERTIFICATES",
+                  "Value": "*"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "comments": "Defines how the Geneva Monitoring Agent should be configured.",
+          "type": "Microsoft.Web/serverfarms/firstPartyApps/settings",
+          "name": "[concat(parameters('appServicePlanName'), '/AntMDS/ConfigJson')]",
+          "apiVersion": "2015-08-01",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+            "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+          ],
+          "properties": {
+            "firstPartyId": "AntMDS",
+            "settingName": "ConfigJson",
+            "settingValue": "[string(variables('configJson'))]"
+          }
+        },
+        {
+          "comments": "Defines what events the Geneva Monitoring Agent should upload. This should be a placeholder configuration for services using GCS.",
+          "type": "Microsoft.Web/serverfarms/firstPartyApps/settings",
+          "name": "[concat(parameters('appServicePlanName'), '/AntMDS/MdsConfigXml')]",
+          "apiVersion": "2015-08-01",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+            "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+          ],
+          "properties": {
+            "firstPartyId": "AntMDS",
+            "settingName": "MdsConfigXml",
+            "settingValue": "[variables('configXml')]"
+          }
+        },
+        {
+          "type": "Microsoft.Web/serverfarms/firstPartyApps/settings",
+          "name": "[concat(parameters('appServicePlanName'), '/AntMDS/CERTIFICATE_PFX_GENEVACERT')]",
+          "apiVersion": "2015-08-01",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+            "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+          ],
+          "properties": {
+            "firstPartyId": "AntMDS",
+            "settingName": "CERTIFICATE_PFX_GENEVACERT",
+            "settingValue": "[parameters('genevaCertContent')]"
+          }
+        },
+        {
+          "type": "Microsoft.Web/serverfarms/firstPartyApps/settings",
+          "name": "[concat(parameters('appServicePlanName'), '/AntMDS/CERTIFICATE_PASSWORD_GENEVACERT')]",
+          "apiVersion": "2015-08-01",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+            "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+          ],
+          "properties": {
+            "firstPartyId": "AntMDS",
+            "settingName": "CERTIFICATE_PASSWORD_GENEVACERT",
+            "settingValue": ""
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "jsonconfig": {
+      "type": "object",
+      "value": "[variables('configJson')]"
+    }
+  }
+}

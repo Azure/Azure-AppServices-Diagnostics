@@ -1,0 +1,32 @@
+﻿using System.Collections.Immutable;
+
+namespace Diagnostics.ModelsAndUtils.ScriptUtilities
+{
+    public class ScriptHelper
+    {
+        public static ImmutableArray<string> GetFrameworkReferences() => ImmutableArray.Create(
+                "System",
+                "System.Collections",
+                "System.Data",
+                "Diagnostics.DataProviders",
+                "Diagnostics.ModelsAndUtils",
+                "Newtonsoft.Json"
+            );
+
+        public static ImmutableArray<string> GetFrameworkImports() => ImmutableArray.Create(
+                "System",
+                "System.Collections",
+                "System.Collections.Generic",
+                "System.Data",
+                "System.Threading.Tasks",
+                "Microsoft.Extensions.Logging",
+                "Diagnostics.DataProviders",
+                "Diagnostics.ModelsAndUtils",
+                "Diagnostics.ModelsAndUtils.Attributes",
+                "Diagnostics.ModelsAndUtils.Models",
+                "Diagnostics.ModelsAndUtils.ScriptUtilities",
+                "Diagnostics.ModelsAndUtils.Models.ResponseExtensions",
+                "Newtonsoft.Json"
+            );
+    }
+}

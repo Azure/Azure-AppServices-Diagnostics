@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>antares.external.diagnostics.compilerhost</id>
+    <version>1.0.27</version>
+    <authors>Ajay Sharma</authors>
+    <owners>ajsharm</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <iconUrl>http://github.com/contoso/UsefulStuff/nuget_icon.png</iconUrl>
+    <description>external package packed for use with internal nuget</description>
+    <releaseNotes>external package packed for use with internal nuget</releaseNotes>
+    <copyright>Copyright 2018 Microsoft Corporation</copyright>
+  </metadata>
+</package>
