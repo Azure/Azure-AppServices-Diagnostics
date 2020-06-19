@@ -23,6 +23,7 @@ using System.Threading;
 using Diagnostics.DataProviders;
 using System.Security.Policy;
 using Newtonsoft.Json.Linq;
+using Kusto.Cloud.Platform.Utils;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -151,8 +152,9 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             {
                 LogMessage($"SourceWatcher : Start, startup = {startup.ToString()}");
                 var destDirInfo = new DirectoryInfo(_destinationCsxPath);
-                var destLastModifiedMarker = await FileHelper.GetFileContentAsync(destDirInfo.FullName, _lastModifiedMarkerName);           
-                if (string.IsNullOrWhiteSpace(destLastModifiedMarker))
+                var destLastModifiedMarker = await FileHelper.GetFileContentAsync(destDirInfo.FullName, _lastModifiedMarkerName);
+                
+                if(string.IsNullOrWhiteSpace(destLastModifiedMarker))
                 {
                     destLastModifiedMarker = await _githubClient.GetLatestSha();
                 }
@@ -210,12 +212,14 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 }
 
                 LogMessage("Syncing local directories with github changes");
-                var githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
                 var rawGithubResponse = await response.Content.ReadAsStringAsync();
                 var githubTrees = JObject.Parse(rawGithubResponse);
                 var githubDirectories = githubTrees["tree"].ToObject<GithubEntry[]>();
-
-                //var githubDirectories = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
+                var githubLatestSha = (string)githubTrees["sha"];
+                githubDirectories.ForEach(githubDir =>
+                {
+                    githubDir.Name = githubDir.Name ?? githubDir.Path;
+                });
 
                 LogMessage($"Total number of directors returned by Github: {githubDirectories.Length}");
                 List<Task> downloadContentUpdateCacheAndModifiedMarkerTasks = new List<Task>();
@@ -253,7 +257,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
                 await SyncLocalDirForDeletedEntriesInGitHub(githubDirectories, destDirInfo);
 
-                await FileHelper.WriteToFileAsync(destDirInfo.FullName, _lastModifiedMarkerName, githubRootContentETag);
+                await FileHelper.WriteToFileAsync(destDirInfo.FullName, _lastModifiedMarkerName, githubLatestSha);
             }
             catch (Exception ex)
             {

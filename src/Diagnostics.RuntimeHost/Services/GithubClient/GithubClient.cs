@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Policy;
 using System.Threading.Tasks;
 using System.Web;
 using Diagnostics.RuntimeHost.Models;
@@ -86,7 +87,7 @@ namespace Diagnostics.RuntimeHost.Services
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, AppendQueryStringParams(url));
             if (!string.IsNullOrWhiteSpace(etag))
             {
-                request.Headers.Add(IfNoneMatchHeaderName, etag);
+                request.Headers.Add(IfNoneMatchHeaderName, $"\"{etag}\"");
             }
 
             return Get(request);
@@ -209,8 +210,9 @@ namespace Diagnostics.RuntimeHost.Services
 
         public Task<HttpResponseMessage> GetTreeBySha(string sha)
         {
-            string url = $"https://api.github.com/repos/{_userName}/{_repoName}/git/trees/{sha}";
-            return Get(url);
+            var urlSha = sha.Trim('"');
+            string url = $"https://api.github.com/repos/{_userName}/{_repoName}/git/trees/{urlSha}";
+            return Get(url, sha);
         }
 
         public string GetContentUrl(string path)

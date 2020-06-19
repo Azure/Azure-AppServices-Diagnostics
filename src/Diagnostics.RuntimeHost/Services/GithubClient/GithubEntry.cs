@@ -15,9 +15,8 @@ namespace Diagnostics.RuntimeHost.Services
         /// <summary>
         /// Gets or sets the name.
         /// </summary>
-        [JsonProperty("path")]
         public string Name { get; set; }
-
+       
         /// <summary>
         /// Gets or sets the path.
         /// </summary>
