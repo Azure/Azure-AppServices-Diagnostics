@@ -34,7 +34,8 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
         }
 
         /// <summary>
-        /// Adds a given <paramref name="assemblyName"/> to the cache. If a limit of <see cref="MaxQueueSize"/> is reached, oldest assembly is removed
+        /// For a given <paramref name="assemblyName"/>, adds the <paramref name="assemblyDll"/> and <paramref name="compilerResponse"/> to the cache.
+        /// If a limit of <see cref="MaxQueueSize"/> is reached, oldest assembly is removed
         /// </summary>
         /// <param name="assemblyName">Full Qualified name of the DLL to cache</param>
         /// <param name="assemblyDll">DLL to add to cache</param>
@@ -54,7 +55,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
         }
 
         /// <summary>
-        /// Checks if a <paramref name="assemblyName"/> is loaded in cache and returns <paramref name="loadedAssembly"/>
+        /// Checks if a <paramref name="assemblyName"/> is loaded in cache 
         /// </summary>
         public bool IsAssemblyLoaded(string assemblyName)
         {
@@ -65,6 +66,10 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
             return CompilationCache.TryGetValue(assemblyName, out CompilationCache compilationCache);
         }
 
+        /// <summary>
+        /// For the given <paramref name="assemblyName"/> fetches the cached compiler response
+        /// </summary>
+        /// <param name="assemblyName"></param>
         public CompilerResponse GetCachedCompilerResponse(string assemblyName)
         {
             if(CompilationCache.TryGetValue(assemblyName, out CompilationCache cacheItem))
@@ -74,6 +79,10 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
             return new CompilerResponse();
         }
 
+        /// <summary>
+        /// For the given <paramref name="assemblyName"/> fetches the cached assembly 
+        /// </summary>
+        /// <param name="assemblyName"></param>
         public Assembly GetCachedAssembly(string assemblyName)
         {
             if(CompilationCache.TryGetValue(assemblyName, out CompilationCache cacheItem))
