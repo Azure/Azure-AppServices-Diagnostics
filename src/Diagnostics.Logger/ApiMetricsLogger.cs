@@ -153,7 +153,7 @@ namespace Diagnostics.Logger
         {
             if (context.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values) && values != default(StringValues) && values.Count > 0)
             {
-                requestId = values[0];
+                requestId = values.FirstOrDefault().Split(new char[] { ',' })[0];
             }
 
             startTime = DateTime.UtcNow;

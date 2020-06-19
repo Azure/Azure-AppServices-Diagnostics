@@ -562,7 +562,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 "",
                 "",
                 true,
-                requestIds.FirstOrDefault()
+                requestIds.FirstOrDefault().Split(new char[] { ',' })[0]
             );
 
             _runtimeContext.ClientIsInternal = true;
@@ -583,7 +583,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             Dictionary<string, dynamic> systemContext = new Dictionary<string, dynamic>();
             systemContext.Add("detectorId", detectorId);
-            systemContext.Add("requestIds", requestIds);
+            systemContext.Add("requestIds", requestIds.FirstOrDefault().Split(new char[] { ',' })[0]);
             systemContext.Add("isInternal", true);
             systemContext.Add("dataSource", dataSource);
             systemContext.Add("timeRange", timeRange);
@@ -612,7 +612,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 }
             }
 
-            var requestId = requestIds.FirstOrDefault();
+            var requestId = requestIds.FirstOrDefault().Split(new char[] { ','})[0];
             var operationContext = new OperationContext<TResource>(
                 resource,
                 DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(DataProviderConstants.KustoTimeFormat),
