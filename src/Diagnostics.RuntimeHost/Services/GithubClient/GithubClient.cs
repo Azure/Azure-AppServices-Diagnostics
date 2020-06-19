@@ -35,6 +35,12 @@ namespace Diagnostics.RuntimeHost.Services
         Task CreateOrUpdateFiles(IEnumerable<CommitContent> commits, string commitMessage);
 
         Task<GitHubCommit> GetCommitByPath(string filePath);
+
+        Task<string> GetLatestSha();
+
+        Task<HttpResponseMessage> GetTreeBySha(string sha);
+
+        string GetContentUrl(string path);
     }
 
     public class GithubClient : IGithubClient
@@ -115,7 +121,6 @@ namespace Diagnostics.RuntimeHost.Services
             {
                 // try to get the file (and with the file the last commit sha)
                 var existingFile = await _octokitClient.Repository.Content.GetAllContentsByRef(_userName, _repoName, filePath, _branch);
-
                 // update the existing file
                 var updateChangeSet = await _octokitClient.Repository.Content.UpdateFile(_userName, _repoName, filePath,
                    new UpdateFileRequest(commitMessage, content, existingFile.First().Sha, _branch, convertContentToBase64));
@@ -195,6 +200,23 @@ namespace Diagnostics.RuntimeHost.Services
             }
         }
 
+        public async Task<string> GetLatestSha()
+        {         
+            var branchInfo = await _octokitClient.Repository.Branch.Get(owner: _userName, name: _repoName, branch: _branch);
+            return branchInfo.Commit.Sha;
+
+        }
+
+        public Task<HttpResponseMessage> GetTreeBySha(string sha)
+        {
+            string url = $"https://api.github.com/repos/{_userName}/{_repoName}/git/trees/{sha}";
+            return Get(url);
+        }
+
+        public string GetContentUrl(string path)
+        {
+            return $"https://api.github.com/repos/{_userName}/{_repoName}/contents/{path}?ref={_branch}";
+        }
         private void LoadConfigurations()
         {
             _userName = _config[$"SourceWatcher:Github:{RegistryConstants.GithubUserNameKey}"];

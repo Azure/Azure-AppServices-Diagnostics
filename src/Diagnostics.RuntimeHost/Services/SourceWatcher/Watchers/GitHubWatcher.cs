@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Threading;
 using Diagnostics.DataProviders;
 using System.Security.Policy;
+using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -150,9 +151,14 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             {
                 LogMessage($"SourceWatcher : Start, startup = {startup.ToString()}");
                 var destDirInfo = new DirectoryInfo(_destinationCsxPath);
-                var destLastModifiedMarker = await FileHelper.GetFileContentAsync(destDirInfo.FullName, _lastModifiedMarkerName);
+                var destLastModifiedMarker = await FileHelper.GetFileContentAsync(destDirInfo.FullName, _lastModifiedMarkerName);           
+                if (string.IsNullOrWhiteSpace(destLastModifiedMarker))
+                {
+                    destLastModifiedMarker = await _githubClient.GetLatestSha();
+                }
 
-                var response = await _githubClient.Get(_rootContentApiPath, etag: destLastModifiedMarker);
+                var response = await _githubClient.GetTreeBySha(destLastModifiedMarker);
+
                 LogMessage($"Http call to repository root path completed. Status Code : {response.StatusCode.ToString()}");
 
                 if (response.StatusCode >= HttpStatusCode.NotFound)
@@ -205,12 +211,17 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
                 LogMessage("Syncing local directories with github changes");
                 var githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
-                var githubDirectories = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
+                var rawGithubResponse = await response.Content.ReadAsStringAsync();
+                var githubTrees = JObject.Parse(rawGithubResponse);
+                var githubDirectories = githubTrees["tree"].ToObject<GithubEntry[]>();
+
+                //var githubDirectories = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
+
                 LogMessage($"Total number of directors returned by Github: {githubDirectories.Length}");
                 List<Task> downloadContentUpdateCacheAndModifiedMarkerTasks = new List<Task>();
                 foreach (var gitHubDir in githubDirectories)
                 {
-                    if (!gitHubDir.Type.Equals("dir", StringComparison.OrdinalIgnoreCase)) continue;
+                   // if (!gitHubDir.Type.Equals("dir", StringComparison.OrdinalIgnoreCase)) continue;
 
                     var subDir = new DirectoryInfo(Path.Combine(destDirInfo.FullName, gitHubDir.Name.ToLower()));
                     if (!subDir.Exists)
@@ -284,6 +295,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         {
             var searchModelFiles = new string[] { "model", "index", "dict", "npy" };
 
+            if(parentGithubEntry.Url.Contains("trees"))
+            {
+                parentGithubEntry.Url = _githubClient.GetContentUrl(parentGithubEntry.Name);
+            }
             var response = await _githubClient.Get(parentGithubEntry.Url);
             if (!response.IsSuccessStatusCode)
             {
