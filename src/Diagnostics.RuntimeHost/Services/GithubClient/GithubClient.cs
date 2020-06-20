@@ -39,7 +39,7 @@ namespace Diagnostics.RuntimeHost.Services
 
         Task<string> GetLatestSha();
 
-        Task<HttpResponseMessage> GetTreeBySha(string sha);
+        Task<HttpResponseMessage> GetTreeBySha(string sha, string etag = "");
 
         string GetContentUrl(string path);
     }
@@ -87,7 +87,7 @@ namespace Diagnostics.RuntimeHost.Services
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, AppendQueryStringParams(url));
             if (!string.IsNullOrWhiteSpace(etag))
             {
-                request.Headers.Add(IfNoneMatchHeaderName, $"\"{etag}\"");
+                request.Headers.Add(IfNoneMatchHeaderName, etag);
             }
 
             return Get(request);
@@ -204,15 +204,15 @@ namespace Diagnostics.RuntimeHost.Services
         public async Task<string> GetLatestSha()
         {         
             var branchInfo = await _octokitClient.Repository.Branch.Get(owner: _userName, name: _repoName, branch: _branch);
-            return branchInfo.Commit.Sha;
+            return branchInfo !=null && branchInfo.Commit != null ?  branchInfo.Commit.Sha : string.Empty;
 
         }
 
-        public Task<HttpResponseMessage> GetTreeBySha(string sha)
+        public Task<HttpResponseMessage> GetTreeBySha(string sha, string etag = "")
         {
             var urlSha = sha.Trim('"');
             string url = $"https://api.github.com/repos/{_userName}/{_repoName}/git/trees/{urlSha}";
-            return Get(url, sha);
+            return Get(url, etag);
         }
 
         public string GetContentUrl(string path)

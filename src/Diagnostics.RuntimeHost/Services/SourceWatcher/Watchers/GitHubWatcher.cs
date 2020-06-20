@@ -24,6 +24,8 @@ using Diagnostics.DataProviders;
 using System.Security.Policy;
 using Newtonsoft.Json.Linq;
 using Kusto.Cloud.Platform.Utils;
+using Newtonsoft.Json;
+using System.Security.Cryptography;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -54,6 +56,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         protected override string SourceName => "GitHub";
 
         private IDictionary<string, IGithubWorker> GithubWorkers { get; }
+
+        /// <summary>
+        /// Latest Sha received from GitHub API
+        /// </summary>
+        private string LatestSha { get; set; } = string.Empty;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="GitHubWatcher" /> class.
@@ -154,12 +161,12 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 var destDirInfo = new DirectoryInfo(_destinationCsxPath);
                 var destLastModifiedMarker = await FileHelper.GetFileContentAsync(destDirInfo.FullName, _lastModifiedMarkerName);
                 
-                if(string.IsNullOrWhiteSpace(destLastModifiedMarker))
+                if(string.IsNullOrWhiteSpace(LatestSha))
                 {
-                    destLastModifiedMarker = await _githubClient.GetLatestSha();
+                    LatestSha = await _githubClient.GetLatestSha();
                 }
 
-                var response = await _githubClient.GetTreeBySha(destLastModifiedMarker);
+                var response = await _githubClient.GetTreeBySha(sha: LatestSha, etag: destLastModifiedMarker);
 
                 LogMessage($"Http call to repository root path completed. Status Code : {response.StatusCode.ToString()}");
 
@@ -212,6 +219,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 }
 
                 LogMessage("Syncing local directories with github changes");
+                var githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
                 var rawGithubResponse = await response.Content.ReadAsStringAsync();
                 var githubTrees = JObject.Parse(rawGithubResponse);
                 var githubDirectories = githubTrees["tree"].ToObject<GithubEntry[]>();
@@ -257,7 +265,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
                 await SyncLocalDirForDeletedEntriesInGitHub(githubDirectories, destDirInfo);
 
-                await FileHelper.WriteToFileAsync(destDirInfo.FullName, _lastModifiedMarkerName, githubLatestSha);
+                await FileHelper.WriteToFileAsync(destDirInfo.FullName, _lastModifiedMarkerName, githubRootContentETag);
             }
             catch (Exception ex)
             {
