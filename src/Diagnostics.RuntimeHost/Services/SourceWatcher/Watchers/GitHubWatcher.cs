@@ -21,11 +21,8 @@ using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
 using System.Threading;
 using Diagnostics.DataProviders;
-using System.Security.Policy;
 using Newtonsoft.Json.Linq;
 using Kusto.Cloud.Platform.Utils;
-using Newtonsoft.Json;
-using System.Security.Cryptography;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -233,7 +230,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 List<Task> downloadContentUpdateCacheAndModifiedMarkerTasks = new List<Task>();
                 foreach (var gitHubDir in githubDirectories)
                 {
-                   // if (!gitHubDir.Type.Equals("dir", StringComparison.OrdinalIgnoreCase)) continue;
 
                     var subDir = new DirectoryInfo(Path.Combine(destDirInfo.FullName, gitHubDir.Name.ToLower()));
                     if (!subDir.Exists)
