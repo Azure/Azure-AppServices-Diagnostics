@@ -33,15 +33,20 @@ restore:
 
 build:
   commands:
-    - !!defaultcommand
+    - !!buildcommand
       name: 'Build App Service Diagnostics'
       fail_on_stderr: true
       ignore_exitcode: false
-      command: 'onebranch_build.cmd'     
+      command: 'onebranch_build.cmd'
+      artifacts:
+        include:
+          - 'build/**/*'
+        exclude:
+          - 'build/**/*.pdb'
 
 package:
   commands:
-    - !!buildcommand
+    - !!defaultcommand
       name: 'Package Runtimehost and Compilerhost'
       command: 'publish.cmd'
       artifacts:
