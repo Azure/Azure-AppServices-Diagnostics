@@ -157,12 +157,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 LogMessage($"SourceWatcher : Start, startup = {startup.ToString()}");
                 var destDirInfo = new DirectoryInfo(_destinationCsxPath);
                 var destLastModifiedMarker = await FileHelper.GetFileContentAsync(destDirInfo.FullName, _lastModifiedMarkerName);
-                
-                if(string.IsNullOrWhiteSpace(LatestSha))
-                {
-                    LatestSha = await _githubClient.GetLatestSha();
-                }
-
+                LatestSha = await _githubClient.GetLatestSha();      
                 var response = await _githubClient.GetTreeBySha(sha: LatestSha, etag: destLastModifiedMarker);
 
                 LogMessage($"Http call to repository root path completed. Status Code : {response.StatusCode.ToString()}");
@@ -220,7 +215,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 var rawGithubResponse = await response.Content.ReadAsStringAsync();
                 var githubTrees = JObject.Parse(rawGithubResponse);
                 var githubDirectories = githubTrees["tree"].ToObject<GithubEntry[]>();
-                var githubLatestSha = (string)githubTrees["sha"];
+                LatestSha = (string)githubTrees["sha"];
                 githubDirectories.ForEach(githubDir =>
                 {
                     githubDir.Name = githubDir.Name ?? githubDir.Path;
