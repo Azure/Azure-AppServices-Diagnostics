@@ -205,7 +205,6 @@ namespace Diagnostics.RuntimeHost.Services
         {         
             var branchInfo = await _octokitClient.Repository.Branch.Get(owner: _userName, name: _repoName, branch: _branch);
             return branchInfo !=null && branchInfo.Commit != null ?  branchInfo.Commit.Sha : string.Empty;
-
         }
 
         public Task<HttpResponseMessage> GetTreeBySha(string sha, string etag = "")
