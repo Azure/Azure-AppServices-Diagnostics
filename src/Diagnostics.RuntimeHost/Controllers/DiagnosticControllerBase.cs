@@ -224,7 +224,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             Assembly tempAsm = null;
 
-            bool isCompilationNeeded = !ScriptCompilation.IsSameScript(jsonBody.Script, scriptETag) || !_assemblyCacheService.IsAssemblyLoaded(assemblyFullName, out tempAsm);
+            bool isCompilationNeeded = !ScriptCompilation.IsSameScript(jsonBody.Script, scriptETag) || !_assemblyCacheService.IsAssemblyLoaded(assemblyFullName);
             if (isCompilationNeeded)
             {
                 queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, jsonBody.EntityType, jsonBody.References, runtimeContext.OperationContext.RequestId);
@@ -232,7 +232,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             else
             {
                 // Setting compilation succeeded to be true as it has been successfully compiled before
-                queryRes.CompilationOutput = new CompilerResponse();
+                queryRes.CompilationOutput = _assemblyCacheService.GetCachedCompilerResponse(assemblyFullName);
+                tempAsm = _assemblyCacheService.GetCachedAssembly(assemblyFullName);
                 queryRes.CompilationOutput.CompilationSucceeded = true;
                 queryRes.CompilationOutput.CompilationTraces = new string[] { "No code changes were detected. Detector code was executed using previous compilation." };
             }
@@ -247,7 +248,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         byte[] pdbData = Convert.FromBase64String(queryRes.CompilationOutput.PdbBytes);
                         tempAsm = Assembly.Load(asmData, pdbData);
                         queryRes.CompilationOutput.AssemblyName = tempAsm.FullName;
-                        _assemblyCacheService.AddAssemblyToCache(tempAsm.FullName, tempAsm);
+                        _assemblyCacheService.AddAssemblyToCache(tempAsm.FullName, tempAsm, queryRes.CompilationOutput);
                     }
 
                     Request.HttpContext.Response.Headers.Add("diag-script-etag", Convert.ToBase64String(ScriptCompilation.GetHashFromScript(jsonBody.Script)));
