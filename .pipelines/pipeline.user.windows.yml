@@ -45,7 +45,6 @@ build:
           exclude:
             - '**/*.pdb'
 
-
 package:
   commands:
     - !!buildcommand
@@ -64,6 +63,13 @@ package:
           to: 'Ev2ServiceGroupRoot\bin'
           include:
             - '**/DiagnosticsCompilerHost.zip'
+
+static_analysis_options:
+  binskim_options:
+    files_to_scan:     
+      - from: 'build'
+        include:
+          - '**/Diagnostics.*dll'
 
 artifact_publish_options:
   publish_to_legacy_artifacts: false            # Default is always true
