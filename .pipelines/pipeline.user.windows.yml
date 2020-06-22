@@ -39,10 +39,11 @@ build:
       ignore_exitcode: false
       command: 'onebranch_build.cmd'
       artifacts:
-        include:
-          - 'build/**/*'
-        exclude:
-          - 'build/**/*.pdb'
+        - from: 'build'
+          include:
+            - '**/*'
+          exclude:
+            - '**/*.pdb'
 
 package:
   commands:
