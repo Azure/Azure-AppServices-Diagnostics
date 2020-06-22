@@ -2,7 +2,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
-
 namespace Diagnostics.RuntimeHost.Services
 {
     /// <summary>
@@ -14,7 +13,7 @@ namespace Diagnostics.RuntimeHost.Services
         /// Gets or sets the name.
         /// </summary>
         public string Name { get; set; }
-
+       
         /// <summary>
         /// Gets or sets the path.
         /// </summary>
