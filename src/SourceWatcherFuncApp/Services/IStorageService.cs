@@ -14,8 +14,8 @@ namespace SourceWatcherFuncApp.Services
 {
     public interface IStorageService
     {
-        Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity);
-        Task<DiagEntity> GetEntityFromTable(string partitionKey, string rowKey);
+        Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity, string githubdirname);
+        Task<DiagEntity> GetEntityFromTable(string partitionKey, string rowKey, string dirname = "");
         Task<bool> CheckDetectorExists(string currentDetector);
         void LoadBlobToContainer(string name, Stream uploadStream);
         Task<List<DiagEntity>> GetAllEntities();
@@ -89,13 +89,14 @@ namespace SourceWatcherFuncApp.Services
                 storageServiceLogger.LogError(ex.ToString());
             }    
         }
-        public async Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity)
+        public async Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity, string dirname)
         {
             try { 
             // Create a table client for interacting with the table service 
             CloudTable table = tableClient.GetTableReference(tableName);
             if(detectorEntity == null || detectorEntity.PartitionKey == null || detectorEntity.RowKey == null)
             {
+                 storageServiceLogger.LogError($"Parition key or row key is empty for github directory {dirname}");
                 throw new ArgumentNullException(nameof(detectorEntity));
             }
 
@@ -117,7 +118,7 @@ namespace SourceWatcherFuncApp.Services
             }
         }
 
-        public async Task<DiagEntity> GetEntityFromTable(string partitionKey, string rowKey)
+        public async Task<DiagEntity> GetEntityFromTable(string partitionKey, string rowKey, string dirname)
         {
             try
             {
@@ -125,7 +126,7 @@ namespace SourceWatcherFuncApp.Services
 
                 if(string.IsNullOrWhiteSpace(partitionKey) || string.IsNullOrWhiteSpace(rowKey))
                 {
-                    throw new ArgumentNullException($"{nameof(partitionKey)} or {nameof(rowKey)} is either null or empty");
+                    throw new ArgumentNullException($"{nameof(partitionKey)} or {nameof(rowKey)} is either null or empty for githubdir {dirname}");
                 }
 
                 storageServiceLogger.LogInformation($"Retrieving info from table for {rowKey}, {partitionKey}");
