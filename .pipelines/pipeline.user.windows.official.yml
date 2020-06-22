@@ -10,6 +10,7 @@ environment:
 
 signing_options:
   profile: 'internal_azure_service'   # This service deploys to Azure!
+  codesign_validation_glob_pattern: 'regex|.+(?:dll|exe|sys|ps1|ps1xml|psc1|psd1|cdxml|vbs|js|wsf)$;-:file|**\*.zip*\**'
 
 workspace_options:
  force_workspace_wipe: true
@@ -33,15 +34,20 @@ restore:
 
 build:
   commands:
-    - !!defaultcommand
+    - !!buildcommand
       name: 'Build App Service Diagnostics'
       fail_on_stderr: true
       ignore_exitcode: false
-      command: 'onebranch_build.cmd'     
+      command: 'onebranch_build.cmd'
+      artifacts:
+        include:
+          - 'build/**/*'
+        exclude:
+          - 'build/**/*.pdb'
 
 package:
   commands:
-    - !!buildcommand
+    - !!defaultcommand
       name: 'Package Runtimehost and Compilerhost'
       command: 'publish.cmd'
       artifacts:
@@ -57,6 +63,13 @@ package:
           to: 'Ev2ServiceGroupRoot\bin'
           include:
             - '**/DiagnosticsCompilerHost.zip'
+
+static_analysis_options:
+  binskim_options:
+    files_to_scan:     
+      - from: 'build'
+        include:
+          - '**/Diagnostics.*dll'
 
 artifact_publish_options:
   publish_to_legacy_artifacts: false            # Default is always true
