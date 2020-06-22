@@ -106,7 +106,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         public async Task<IActionResult> RefreshModel(string productId)
         {
             Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
-            var requestId = requestIds.FirstOrDefault();
+            var requestId = requestIds.FirstOrDefault().Split(new char[] { ',' })[0];
             var parameters = new Dictionary<string, string>();
             parameters.Add("productId", productId);
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
@@ -134,7 +134,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         public async Task<IActionResult> TrainModel(string productId, [FromBody]TrainingConfigModel trainingConfigModel)
         {
             Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues requestIds);
-            var requestId = requestIds.FirstOrDefault();
+            var requestId = requestIds.FirstOrDefault().Split(new char[] { ',' })[0];
             var parameters = new Dictionary<string, string>();
             parameters.Add("productId", productId);
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
