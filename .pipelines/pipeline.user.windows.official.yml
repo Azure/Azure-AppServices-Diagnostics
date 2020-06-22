@@ -10,6 +10,7 @@ environment:
 
 signing_options:
   profile: 'internal_azure_service'   # This service deploys to Azure!
+  codesign_validation_glob_pattern: 'regex|.+(?:dll|exe|sys|ps1|ps1xml|psc1|psd1|cdxml|vbs|js|wsf)$;-:file|**\*.zip*\**'
 
 workspace_options:
  force_workspace_wipe: true
