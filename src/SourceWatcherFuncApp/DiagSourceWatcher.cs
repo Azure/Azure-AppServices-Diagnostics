@@ -109,7 +109,7 @@ namespace Diag.SourceWatcher
             {
                 currentDetector.IsDisabled = false;
                 log.LogInformation($"Marking {currentDetector.RowKey} as active");
-                updatetasks.Add(storageService.LoadDataToTable(currentDetector));
+                updatetasks.Add(storageService.LoadDataToTable(currentDetector, ""));
             });
 
             await Task.WhenAll(updatetasks);
