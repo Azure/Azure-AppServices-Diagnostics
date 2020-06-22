@@ -140,7 +140,7 @@ namespace Diagnostics.RuntimeHost.Middleware
                 geomasterName = httpContext.Request.Headers[GeomasterNameHeader];
             }
 
-            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault() ?? string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName, kustoHeartBeatService, geomasterHostName, geomasterName, null, httpContext.Request.Headers));
+            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault().Any() ? values.FirstOrDefault().Split(new char[] { ',' })[0] : string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName, kustoHeartBeatService, geomasterHostName, geomasterName, null, httpContext.Request.Headers));
         }
 
         private void EndRequestHandle(HttpContext httpContext)
@@ -165,7 +165,7 @@ namespace Diagnostics.RuntimeHost.Middleware
                 string requestId = string.Empty;
                 if (context.Request.Headers.TryGetValue(RequestIdHeaderName, out StringValues values) && values != default(StringValues) && values.Any())
                 {
-                    requestId = values.First().ToString();
+                    requestId = values.First().Split(new char[] { ',' })[0];
                 }
 
                 DiagnosticsETWProvider.Instance.LogRuntimeHostUnhandledException(
