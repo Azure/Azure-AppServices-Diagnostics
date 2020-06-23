@@ -173,7 +173,14 @@
       "type": "string",
       "defaultValue": "false"
     },
+    "sourceWatcherUseStorageAsSource": {
+      "type": "string",
+      "defaultValue": "false"
+    },
     "kustoClientId": {
+      "type": "string"
+    },
+    "kustoAadResource": {
       "type": "string"
     },
     "kustoDbName": {
@@ -187,6 +194,10 @@
     },
     "kustoClusterFailoverGroupings": {
       "type": "string"
+    },
+    "kustoEnable": {
+      "type": "string",
+      "defaultValue": "true"
     },
     "enableHeartBeatQuery": {
       "type": "string",
@@ -437,8 +448,24 @@
               "Value": "[parameters('sourceWatcherLoadOnlyPublicDetectors')]"
             },
             {
+              "name": "SourceWatcher:UseStorageAsSource",
+              "value": "[parameters('sourceWatcherUseStorageAsSource')]"
+            },
+            {
               "Name": "Kusto:ClientId",
               "Value": "[parameters('kustoClientId')]"
+            },
+            {
+              "name": "Kusto:AADAuthority",
+              "value": "[parameters('azureAdAuthority')]"
+            },
+            {
+              "name": "Kusto:AADKustoResource",
+              "value": "[parameters('kustoAadResource')]"
+            },
+            {
+              "name": "Kusto:Enabled",
+              "value": "[parameters('kustoEnable')]"
             },
             {
               "Name": "Kusto:DBName",
@@ -693,8 +720,24 @@
                   "Value": "[parameters('sourceWatcherLoadOnlyPublicDetectors')]"
                 },
                 {
+                  "name": "SourceWatcher:UseStorageAsSource",
+                  "value": "[parameters('sourceWatcherUseStorageAsSource')]"
+                },
+                {
                   "Name": "Kusto:ClientId",
                   "Value": "[parameters('kustoClientId')]"
+                },
+                {
+                  "name": "Kusto:AADAuthority",
+                  "value": "[parameters('azureAdAuthority')]"
+                },                
+                {
+                  "name": "Kusto:AADKustoResource",
+                  "value": "[parameters('kustoAadResource')]"
+                },
+                {
+                  "name": "Kusto:Enabled",
+                  "value": "[parameters('kustoEnable')]"
                 },
                 {
                   "Name": "Kusto:DBName",

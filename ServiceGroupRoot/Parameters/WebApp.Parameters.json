@@ -49,6 +49,9 @@
       "sourceWatcherLoadOnlyPublicDetectors": {
         "value": "__SOURCE_WATCHER_LOAD_ONLY_PUBLIC_DETECTORS__"
       },
+      "sourceWatcherUseStorageAsSource": {
+        "value": "__SOURCE_WATCHER_STORAGE_ENABLE__"
+      },
       "kustoClientId": {
         "value": "__KUSTO_AAD_CLIENTID"
       },
@@ -63,6 +66,12 @@
       },
       "kustoClusterFailoverGroupings": {
         "value": "__KUSTO_CLUSTER_FAILOVER_GROUPINGS__"
+      },
+      "kustoEnable": {
+        "value": "__KUSTO_ENABLE__"
+      },
+      "kustoAadResource": {
+        "value": "__KUSTO_AAD_RESOURCE"
       },
       "enableHeartBeatQuery": {
         "value": "__KUSTO_HEARTBEAT_ENABLE__"

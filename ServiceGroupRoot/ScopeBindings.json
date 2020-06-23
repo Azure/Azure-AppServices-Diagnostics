@@ -74,6 +74,18 @@
           "replaceWith": "$(SourceWatcherLoadOnlyPublicDetectors)"
         },
         {
+          "find": "__SOURCE_WATCHER_STORAGE_ENABLE__",
+          "replaceWith": "$(SourceWatcherStorageEnable)"
+        },
+        {
+          "find": "__KUSTO_AAD_RESOURCE",
+          "replaceWith": "$(KustoAadResource)"
+        },
+        {
+          "find": "__KUSTO_ENABLE__",
+          "replaceWith": "$(KustoEnable)"
+        },
+        {
           "find": "__KUSTO_AAD_CLIENTID",
           "replaceWith": "$(KustoAadClientId)"
         },
