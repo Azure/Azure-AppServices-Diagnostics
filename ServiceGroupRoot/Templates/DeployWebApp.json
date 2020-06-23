@@ -517,7 +517,7 @@
               "Value": "[parameters('azureAdAuthority')]"
             },
             {
-              "Name": "SecuritySettings:AADAuthority",
+              "Name": "SecuritySettings:ClientId",
               "Value": "[parameters('securitySettingsClientId')]"
             },
             {
@@ -773,7 +773,7 @@
                   "Value": "[parameters('azureAdAuthority')]"
                 },
                 {
-                  "Name": "SecuritySettings:AADAuthority",
+                  "Name": "SecuritySettings:ClientId",
                   "Value": "[parameters('securitySettingsClientId')]"
                 },
                 {
