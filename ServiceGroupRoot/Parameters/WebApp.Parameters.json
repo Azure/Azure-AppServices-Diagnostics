@@ -79,6 +79,9 @@
       "observerEnabled": {
         "value": "__OBSERVER_ENABLE__"
       },
+      "observerHealthCheckInputs": {
+        "value": "__OBSERVER_HEALTH_CHECK_INPUTS__"
+      },
       "geomasterEndpoint": {
         "value": "__GEOMASTER_ENDPOINT__"
       },

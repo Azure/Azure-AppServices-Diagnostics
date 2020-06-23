@@ -204,6 +204,9 @@
       "type": "string",
       "defaultValue": "false"
     },
+    "observerHealthCheckInputs": {
+      "type": "string"
+    },
     "geomasterEndpoint": {
       "type": "string"
     },
@@ -477,6 +480,10 @@
               "Value": "[parameters('observerEnabled')]"
             },
             {
+              "name": "SupportObserver:HealthCheckInputs",
+              "value": "[parameters('observerHealthCheckInputs')]"
+            },
+            {
               "Name": "GeoMaster:GeoEndpointAddress",
               "Value": "[parameters('geomasterEndpoint')]"
             },
@@ -727,6 +734,10 @@
                 {
                   "Name": "SupportObserver:Enabled",
                   "Value": "[parameters('observerEnabled')]"
+                },
+                {
+                  "name": "SupportObserver:HealthCheckInputs",
+                  "value": "[parameters('observerHealthCheckInputs')]"
                 },
                 {
                   "Name": "GeoMaster:GeoEndpointAddress",
