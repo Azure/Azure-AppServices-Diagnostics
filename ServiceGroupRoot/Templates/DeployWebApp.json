@@ -152,7 +152,8 @@
         "Blackforest",
         "USNat",
         "USSec",
-        "Prod"
+        "Prod",
+        "Test"
       ]
     },
     "compilerHostAzureAdResource": {
@@ -409,7 +410,7 @@
             },
             {
               "Name": "CloudDomain",
-              "Value": "[if(equals(parameters('cloudDomain'), 'Prod'), 'PublicAzure', parameters('cloudDomain'))]"
+              "Value": "[if(or(equals(parameters('cloudDomain'), 'Prod'), equals(parameters('cloudDomain'), 'Test')), 'PublicAzure', parameters('cloudDomain'))]"
             },
             {
               "Name": "CompilerHost:AADAuthority",
