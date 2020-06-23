@@ -48,7 +48,7 @@ build:
 
 package:
   commands:
-    - !!defaultcommand
+    - !!buildcommand
       name: 'Package Runtimehost and Compilerhost'
       command: 'publish.cmd'
       artifacts:
