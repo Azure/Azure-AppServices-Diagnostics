@@ -116,7 +116,7 @@
         {
           "find": "__OBSERVER_HEALTH_CHECK_INPUTS__",
           "replaceWith": "$(ObserverHealthCheckInputs)"
-        }
+        },
         {
           "find": "__GEOMASTER_ENDPOINT__",
           "replaceWith": "$(GeomasterEndpoint)"
