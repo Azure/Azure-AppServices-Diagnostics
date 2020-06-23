@@ -29,7 +29,7 @@ az keyvault secret set --vault-name appservicediagnosticskv --name KustoClientSe
 ```
 
 ## Give Ev2 access to the subscription
-Give Contributor and User Access Administrator access to subscription. We may not need to give Ev2 User Access Administrator rights anymore since it will not set role assignments.
+Give Contributor access to the subscription.
 
 ```
 New-AzRoleAssignment -ObjectId 402aadec-e3d1-4d30-a348-677dacc19548 -RoleDefinitionName "Contributor" -Scope "/subscriptions/237836ad-af13-4e7f-9289-b5f0d3104209"
@@ -40,7 +40,7 @@ New-AzRoleAssignment -ObjectId 402aadec-e3d1-4d30-a348-677dacc19548 -RoleDefinit
 
 During an Ev2 deployment, we execute shell scripts for some initial setup. The shell scripts use a service principal to execute all authorized actions. Every cloud environment needs to have a keyvault that holds the client secret for the service principal. Ev2 uses a compound identity to access the keyvault during deployment time. Learn more https://ev2docs.azure.net/features/security/secrets/permissions.html
 
-Here we are creating compound identity between onebranch service principal and Ev2 Prod Infra service principal
+Create compound identity between onebranch service principal and Ev2 Prod Infra service principal
 ``` 
 $principal = Get-AzADServicePrincipal -ObjectId 402aadec-e3d1-4d30-a348-677dacc19548
 Set-AzKeyVaultAccessPolicy -VaultName 'AppServiceDiagnosticsKV' -ObjectId $principal.Id -ApplicationId 5b306cba-9c71-49db-96c3-d17ca2379c4d -PermissionsToCertificates get -PermissionsToSecrets get

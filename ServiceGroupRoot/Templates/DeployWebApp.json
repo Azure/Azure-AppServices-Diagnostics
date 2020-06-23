@@ -406,7 +406,7 @@
             },
             {
               "Name": "CloudDomain",
-              "Value": "[parameters('cloudDomain')]"
+              "Value": "[if(equals(parameters('cloudDomain'), 'Prod'), 'PublicAzure', parameters('cloudDomain'))]"
             },
             {
               "Name": "CompilerHost:AADAuthority",
@@ -658,7 +658,7 @@
                 },
                 {
                   "Name": "CloudDomain",
-                  "Value": "[parameters('cloudDomain')]"
+                  "Value": "[if(equals(parameters('cloudDomain'), 'Prod'), 'PublicAzure', parameters('cloudDomain'))]"
                 },
                 {
                   "Name": "CompilerHost:AADAuthority",

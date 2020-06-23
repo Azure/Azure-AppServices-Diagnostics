@@ -3,7 +3,7 @@
     "rolloutMetadata": {
       "serviceModelPath": "ServiceModel.json",
       "scopeBindingsPath": "ScopeBindings.json",
-      "name": "Observer",
+      "name": "DiagnosticBackendRollout",
       "rolloutType": "Major",
       "buildSource": {
         "parameters": {
@@ -28,7 +28,7 @@
       {
         "name": "UsNat East(RED) Region",
         "targetType": "ServiceResource",
-        "targetName": "ObserverUsNat",
+        "targetName": "RuntimeHostWestUs",
         "actions": [
           "Deploy",
           "shell/initialsetup"
