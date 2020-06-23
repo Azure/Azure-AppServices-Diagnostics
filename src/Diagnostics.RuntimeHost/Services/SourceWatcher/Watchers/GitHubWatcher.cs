@@ -157,8 +157,15 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 LogMessage($"SourceWatcher : Start, startup = {startup.ToString()}");
                 var destDirInfo = new DirectoryInfo(_destinationCsxPath);
                 var destLastModifiedMarker = await FileHelper.GetFileContentAsync(destDirInfo.FullName, _lastModifiedMarkerName);
-                LatestSha = await _githubClient.GetLatestSha();      
-                var response = await _githubClient.GetTreeBySha(sha: LatestSha, etag: destLastModifiedMarker);
+
+                var response = await _githubClient.Get(_rootContentApiPath, etag: destLastModifiedMarker);
+
+                var githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    LatestSha = await _githubClient.GetLatestSha();
+                    response = await _githubClient.GetTreeBySha(sha: LatestSha, etag: destLastModifiedMarker);
+                }
 
                 LogMessage($"Http call to repository root path completed. Status Code : {response.StatusCode.ToString()}");
 
@@ -211,7 +218,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 }
 
                 LogMessage("Syncing local directories with github changes");
-                var githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
                 var rawGithubResponse = await response.Content.ReadAsStringAsync();
                 var githubTrees = JObject.Parse(rawGithubResponse);
                 var githubDirectories = githubTrees["tree"].ToObject<GithubEntry[]>();
