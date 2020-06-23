@@ -161,13 +161,16 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 var response = await _githubClient.Get(_rootContentApiPath, etag: destLastModifiedMarker);
 
                 var githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
+
+                LogMessage($"Http call to repository root path completed. Status Code : {response.StatusCode.ToString()}");
+
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     LatestSha = await _githubClient.GetLatestSha();
                     response = await _githubClient.GetTreeBySha(sha: LatestSha, etag: destLastModifiedMarker);
+                    LogMessage($"Http call to GetTree by Sha: {LatestSha} completed. Status Code : {response.StatusCode.ToString()}");
                 }
 
-                LogMessage($"Http call to repository root path completed. Status Code : {response.StatusCode.ToString()}");
 
                 if (response.StatusCode >= HttpStatusCode.NotFound)
                 {
