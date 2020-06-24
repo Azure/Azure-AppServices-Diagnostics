@@ -4,10 +4,6 @@ pushd "%~dp0"
 :: Build all the projects in the solution
 ::dotnet build --no-incremental --no-restore -c Release -v detailed %~dp0Diagnostics.sln"
 
-echo "Check if Node is installed"
-npm help
-npm --version
-
 dotnet build --no-incremental --no-restore -c Release -v minimal %~dp0src\Diagnostics.RuntimeHost\Diagnostics.RuntimeHost.csproj
 dotnet build --no-incremental --no-restore -c Release -v minimal %~dp0src\Diagnostics.CompilerHost\Diagnostics.CompilerHost.csproj
 
