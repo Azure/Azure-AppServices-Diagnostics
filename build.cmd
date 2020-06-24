@@ -30,6 +30,9 @@ echo "------------------- Publishing Runtime Host to build directory -----------
 echo\
 dotnet publish src\\Diagnostics.RuntimeHost\\Diagnostics.RuntimeHost.csproj -c Release -o ..\\..\\build\\antares.external.diagnostics.runtimehost.1.0.0
 
+echo "Check if Node is installed"
+npm --version
+
 
 IF %ERRORLEVEL% NEQ 0 (
 echo "Diagnostics.RuntimeHost Publish Failed."
