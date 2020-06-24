@@ -3,6 +3,10 @@
 :: Delete existing build drop
 @RD /S /Q "build"
 
+echo "Check if Node is installed"
+npm help
+npm --version
+
 :: Build all the projects in the solution
 dotnet build Diagnostics.sln
 
@@ -29,10 +33,6 @@ echo\
 echo "------------------- Publishing Runtime Host to build directory -------------------"
 echo\
 dotnet publish src\\Diagnostics.RuntimeHost\\Diagnostics.RuntimeHost.csproj -c Release -o ..\\..\\build\\antares.external.diagnostics.runtimehost.1.0.0
-
-echo "Check if Node is installed"
-npm --version
-
 
 IF %ERRORLEVEL% NEQ 0 (
 echo "Diagnostics.RuntimeHost Publish Failed."
