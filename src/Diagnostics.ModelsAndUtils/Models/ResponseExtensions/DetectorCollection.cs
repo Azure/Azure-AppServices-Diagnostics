@@ -42,7 +42,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         /// <param name="response">Response</param>
         /// <param name="detectorIds">List<![CDATA[<string>]]>,list of detector Ids</param>
-        /// <param name="resourceUri">depended resource Uri</param>
+        /// <param name="resourceUri">dependent resource Uri</param>
         /// <param name="additionalParams">Dictionary<![CDATA[<string,string>]]>,additionalParams will append into Url query string</param>
         /// <returns></returns>
         public static DiagnosticData AddDetectorCollection(this Response response,List<string> detectorIds,string resourceUri,IDictionary<string,string> additionalParams = null)
