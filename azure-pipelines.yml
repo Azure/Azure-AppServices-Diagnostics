@@ -13,6 +13,15 @@ variables:
   buildConfiguration: 'Release'
 
 jobs:
+- job: 'InstallNetSDK'
+  steps:
+  - task: UseDotNet@2
+    displayName: 'Use .NET Core sdk'
+    inputs:
+      packageType: sdk
+      version: 2.2.0
+      installationPath: $(Agent.ToolsDirectory)/dotnet
+  
 - job: 'IntegrationTests'
   pool:
     name: IntegrationTestPool  # name of the pool to run this job in
