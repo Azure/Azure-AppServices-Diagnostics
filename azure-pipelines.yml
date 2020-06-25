@@ -52,8 +52,8 @@ jobs:
     vmImage: 'vs2017-win2016'
   
   steps:
-  - task: InstallDotNetSDK@2
-    displayName: 'Use .NET Core sdk'
+  - task: UseDotNet@2
+    displayName: 'Use .NET Core sdk step'
     inputs:
       packageType: sdk
       version: 2.2.x
