@@ -13,14 +13,6 @@ variables:
   buildConfiguration: 'Release'
 
 jobs:
-- job: 'InstallNetSDK'
-  steps:
-  - task: UseDotNet@2
-    displayName: 'Use .NET Core sdk'
-    inputs:
-      packageType: sdk
-      version: 2.2.x
-      installationPath: $(Agent.ToolsDirectory)/dotnet
   
 - job: 'IntegrationTests'
   pool:
@@ -49,7 +41,7 @@ jobs:
 
 - job: 'UnitTestAndPublish'
   pool:
-    vmImage: 'vs2017-win2016'
+    vmImage: 'windows-latest'
   
   steps:
   - task: UseDotNet@2
