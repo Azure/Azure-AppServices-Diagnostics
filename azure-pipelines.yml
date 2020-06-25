@@ -49,7 +49,7 @@ jobs:
 
 - job: 'UnitTestAndPublish'
   pool:
-    vmImage: 'windows-latest'
+    vmImage: 'vs2017-win2016'
   
   steps:
   - task: DotNetCoreCLI@2
