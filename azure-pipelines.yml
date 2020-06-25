@@ -52,6 +52,13 @@ jobs:
     vmImage: 'vs2017-win2016'
   
   steps:
+  - task: UseDotNet@2Step
+    displayName: 'Use .NET Core sdk'
+    inputs:
+      packageType: sdk
+      version: 2.2.x
+      installationPath: $(Agent.ToolsDirectory)/dotnet
+
   - task: DotNetCoreCLI@2
     inputs:
       command: 'build'
