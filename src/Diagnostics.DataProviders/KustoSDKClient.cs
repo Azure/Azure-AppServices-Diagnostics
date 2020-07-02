@@ -163,6 +163,7 @@ namespace Diagnostics.DataProviders
                 }
                 catch (Exception ex)
                 {
+                    dtResult = default;
                     attemptException = ex;
                     exceptions.Add(ex);
                 }
@@ -203,7 +204,7 @@ namespace Diagnostics.DataProviders
 
             } while (attempt <= _config.MaxRetryCount);
 
-            if(executeQueryTask.IsCompleted && !executeQueryTask.IsFaulted && !executeQueryTask.IsCanceled)
+            if(executeQueryTask.IsCompletedSuccessfully && dtResult!= default)
             {
                 return dtResult;
             }
