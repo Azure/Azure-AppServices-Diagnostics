@@ -101,8 +101,9 @@
         Node = 16,
         Java = 32,
         Static = 64,
-        Other = 128,
-        All = 255
+        Sitecore = 128,
+        Other = 256,
+        All = 511
     }
 
     public enum SkuType
