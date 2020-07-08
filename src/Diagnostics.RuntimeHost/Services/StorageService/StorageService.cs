@@ -13,6 +13,7 @@ using Microsoft.WindowsAzure.Storage.Blob;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Diagnostics.RuntimeHost.Services.SourceWatcher;
 
 namespace Diagnostics.RuntimeHost.Services.StorageService
 {
@@ -60,10 +61,10 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             {
                 loadOnlyPublicDetectors = false;
             }
-
-            if(!bool.TryParse((configuration["SourceWatcher:UseStorageAsSource"]), out isStorageEnabled))
+            var sourceWatcherType = Enum.Parse<SourceWatcherType>(configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]);
+            if (sourceWatcherType.Equals(SourceWatcherType.AzureStorage))
             {
-                isStorageEnabled = false;
+                isStorageEnabled = true;
             }
             cloudTable = tableClient.GetTableReference(tableName);
         }

@@ -16,15 +16,12 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         public ISourceWatcher KustoMappingWatcher;
 
+
         public SourceWatcherService(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCacheService, IGistCacheService gistCacheService, IKustoMappingsCacheService kustoMappingsCacheService, IStorageService storageService)
         {
-            SourceWatcherType watcherType;
-
-            
-            watcherType = Enum.Parse<SourceWatcherType>(configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]);
-
+            var sourceWatcherType = Enum.Parse<SourceWatcherType>(configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]);
             IGithubClient githubClient = new GithubClient(env, configuration);
-            switch (watcherType)
+            switch (sourceWatcherType)
             {
                 case SourceWatcherType.LocalFileSystem:
                     _watcher = new LocalFileSystemWatcher(env, configuration, invokerCacheService, gistCacheService);

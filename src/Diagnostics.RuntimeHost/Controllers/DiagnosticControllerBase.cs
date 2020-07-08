@@ -789,26 +789,33 @@ namespace Diagnostics.RuntimeHost.Controllers
             if (context.ClientIsInternal)
             {
                 dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
-            }       
-
-
-            var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
-            var allDetectors = await this.tableCacheService.GetEntityListByType(context, "Detector");
-            var detectorMetadata = allDetectors.Where(entity => entity.RowKey.ToLower().Equals(detectorId, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
-
-            // This means detector is definitely not present
-            if (invoker == null && detectorMetadata == null)
-            {
-                return null;
             }
+            EntityInvoker invoker = null;
+            if(tableCacheService.IsStorageAsSourceEnabled())
+            {
+                 invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
+                var allDetectors = await this.tableCacheService.GetEntityListByType(context, "Detector");
+                var detectorMetadata = allDetectors.Where(entity => entity.RowKey.ToLower().Equals(detectorId, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
 
-            // If detector is still downloading, then await first completion
-            if (invoker == null && detectorMetadata != null)
+                // This means detector is definitely not present
+                if (invoker == null && detectorMetadata == null)
+                {
+                    return null;
+                }
+
+                // If detector is still downloading, then await first completion
+                if (invoker == null && detectorMetadata != null)
+                {
+                    await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+                    // Refetch from invoker cache
+                    invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
+                }
+            } else
             {
                 await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
-                // Refetch from invoker cache
                 invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
             }
+           
 
             if (invoker == null)
             {
