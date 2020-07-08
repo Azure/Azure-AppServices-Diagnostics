@@ -56,20 +56,16 @@ namespace SourceWatcherFuncApp.Services
         {
             try
             {
-                if (existingDetectors.Count < 1)
+                var cloudBlob = blobContainer.GetBlockBlobReference(currentDetector);
+                var doesExist = await cloudBlob.ExistsAsync();
+                storageServiceLogger.LogInformation($"{currentDetector} exist in blob {doesExist.ToString()}");
+                if (doesExist)
                 {
-                    var blobsList = await blobContainer.ListBlobsSegmentedAsync(null);
-                    foreach (var blobItem in blobsList.Results)
-                    {
-                        if(blobItem is CloudBlobDirectory)
-                        {
-                            var directory = (CloudBlobDirectory)blobItem;
-                            var name = directory.Prefix.Replace("/", "");
-                            existingDetectors.Add(name);
-                        } 
-                    }
+                    await cloudBlob.FetchAttributesAsync();
+                    storageServiceLogger.LogInformation($"Size of {currentDetector} is {cloudBlob.Properties.Length} bytes");
+                    return cloudBlob.Properties.Length > 0;
                 }
-                return existingDetectors.Contains(currentDetector);
+                return false;
             } catch(Exception ex)
             {
                 storageServiceLogger.LogError(ex.ToString());
@@ -83,7 +79,9 @@ namespace SourceWatcherFuncApp.Services
             {
                 storageServiceLogger.LogInformation($"Uploading {name} blob");
                 var cloudBlob = blobContainer.GetBlockBlobReference(name);
+                uploadStream.Position = 0;
                 await cloudBlob.UploadFromStreamAsync(uploadStream);
+                storageServiceLogger.LogInformation($"Loaded {name} to blob");
             } catch (Exception ex)
             {
                 storageServiceLogger.LogError(ex.ToString());

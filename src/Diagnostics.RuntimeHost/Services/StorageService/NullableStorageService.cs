@@ -32,5 +32,10 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         {
             return Task.FromResult(new DiagEntity());
         }
+
+        public async Task<int> ListBlobsInContainer()
+        {
+            return 0;
+        }
     }
 }

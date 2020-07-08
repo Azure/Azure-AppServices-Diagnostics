@@ -61,6 +61,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                         return;
                     }
 
+                    
                     var mostRecentAssembly = GetMostRecentFileByExtension(subDir, ".dll");
                     var csxScriptFile = GetMostRecentFileByExtension(subDir, ".csx");
                     var metadataFile = Path.Combine(subDir.FullName, "metadata.json");

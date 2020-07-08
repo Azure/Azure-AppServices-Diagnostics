@@ -23,6 +23,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity);
         Task<string> LoadBlobToContainer(string blobname, string contents);
         Task<byte[]> GetBlobByName(string name);
+
+        Task<int> ListBlobsInContainer();
     }
     public class StorageService : IStorageService
     {
@@ -175,6 +177,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 using (MemoryStream ms = new MemoryStream())
                 {
                     await cloudBlob.DownloadToStreamAsync(ms);
+                    timeTakenStopWatch.Stop();
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Downloaded {name} to memory stream, time taken {timeTakenStopWatch.ElapsedMilliseconds}");
                     return ms.ToArray();
                 }              
@@ -182,6 +185,23 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             {
                 DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
                 return null;
+            }
+        }
+    
+        public async Task<int> ListBlobsInContainer()
+        {
+            try
+            {
+                var timeTakenStopWatch = new Stopwatch();
+                timeTakenStopWatch.Start();
+                var blobsResult =  await containerClient.ListBlobsSegmentedAsync(null);
+                timeTakenStopWatch.Stop();
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Number of blobs stored in container {container} is {blobsResult.Results.Count()}, time taken {timeTakenStopWatch.ElapsedMilliseconds} milliseconds");
+                return blobsResult.Results != null ? blobsResult.Results.Count() : 0 ;
+            } catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
+                throw ex;
             }
         }
     }
