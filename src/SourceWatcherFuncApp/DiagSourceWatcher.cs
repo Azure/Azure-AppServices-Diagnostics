@@ -72,7 +72,7 @@ namespace Diag.SourceWatcher
 
                             //First check if entity exists in blob or table
                             var existingDetectorEntity = await storageService.GetEntityFromTable(configFileData.PartitionKey, configFileData.RowKey, githubdir.Name);
-                            var doesBlobExists = await storageService.CheckDetectorExists(githubdir.Name);
+                            var doesBlobExists = await storageService.CheckDetectorExists($"{githubdir.Name}/{githubdir.Name}.dll");
                             //If there is no entry in table or blob or github last modifed date has been changed, upload to blob
                             if (existingDetectorEntity == null || !doesBlobExists || existingDetectorEntity.GithubLastModified != configFileData.GithubLastModified)
                             {

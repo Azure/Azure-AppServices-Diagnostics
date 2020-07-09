@@ -76,17 +76,31 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
             #region Initialize Github Worker
 
+            // If AzureStorageWatcher is enabled, use GithubWatcher only for updating KustoMapping Cache
+
+            SourceWatcherType watcherType = Enum.Parse<SourceWatcherType>(configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]);
+
             // TODO: Register the github worker with destination path.
             var gistWorker = new GithubGistWorker(gistCache, _loadOnlyPublicDetectors);
             var detectorWorker = new GithubDetectorWorker(invokerCache, _loadOnlyPublicDetectors);
             var kustoMappingsWorker = new GithubKustoConfigurationWorker(kustoMappingsCache);
 
-            GithubWorkers = new Dictionary<string, IGithubWorker>
+            if(watcherType.Equals(SourceWatcherType.AzureStorage))
             {
-                { gistWorker.Name, gistWorker },
-                { detectorWorker.Name, detectorWorker },
-                { kustoMappingsWorker.Name, kustoMappingsWorker }
-            };
+                GithubWorkers = new Dictionary<string, IGithubWorker>
+                {
+                    { kustoMappingsWorker.Name, kustoMappingsWorker }
+                };
+            } else
+            {
+                GithubWorkers = new Dictionary<string, IGithubWorker>
+                {
+                    { gistWorker.Name, gistWorker },
+                    { detectorWorker.Name, detectorWorker },
+                    { kustoMappingsWorker.Name, kustoMappingsWorker }
+                };
+            }
+         
 
             #endregion Initialize Github Worker
 

@@ -366,7 +366,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             await _sourceWatcherService.Watcher.CreateOrUpdatePackage(pkg);
-            await storageWatcher.CreateOrUpdatePackage(pkg);
+            // If Azure Storage is not enabled, we still want to keep data updated.
+            if(!tableCacheService.IsStorageAsSourceEnabled())
+            {
+                await storageWatcher.CreateOrUpdatePackage(pkg);
+            }
             return Ok();
         }
 
@@ -772,7 +776,6 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private async Task<Tuple<Response, List<DataProviderMetadata>>> GetDetectorInternal(string detectorId, RuntimeContext<TResource> context)
         {
-            await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var queryParams = Request.Query;
             
             var dataProviderContext = (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey];
@@ -791,8 +794,33 @@ namespace Diagnostics.RuntimeHost.Controllers
             if (context.ClientIsInternal)
             {
                 dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
-            }       
-            var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
+            }
+            EntityInvoker invoker = null;
+            if(tableCacheService.IsStorageAsSourceEnabled())
+            {
+                 invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
+                var allDetectors = await this.tableCacheService.GetEntityListByType(context, "Detector");
+                var detectorMetadata = allDetectors.Where(entity => entity.RowKey.ToLower().Equals(detectorId, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+
+                // This means detector is definitely not present
+                if (invoker == null && detectorMetadata == null)
+                {
+                    return null;
+                }
+
+                // If detector is still downloading, then await first completion
+                if (invoker == null && detectorMetadata != null)
+                {
+                    await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+                    // Refetch from invoker cache
+                    invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
+                }
+            } else
+            {
+                await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+                invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
+            }
+           
 
             if (invoker == null)
             {
