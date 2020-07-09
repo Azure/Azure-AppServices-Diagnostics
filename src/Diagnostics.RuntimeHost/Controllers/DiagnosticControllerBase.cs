@@ -366,6 +366,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             await _sourceWatcherService.Watcher.CreateOrUpdatePackage(pkg);
+            // If Azure Storage is not enabled, we still want to keep data updated.
+            if(!tableCacheService.IsStorageAsSourceEnabled())
+            {
+                await storageWatcher.CreateOrUpdatePackage(pkg);
+            }
             return Ok();
         }
 

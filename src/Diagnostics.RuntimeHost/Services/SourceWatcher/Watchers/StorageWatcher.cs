@@ -124,7 +124,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             StartPollingForChanges();
         }
 
-        private async void StartPollingForChanges()
+        private async Task StartPollingForChanges()
         {
             await blobDowloadTask;
             DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Start up blob download task completed at {DateTime.UtcNow}");
@@ -144,7 +144,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             var detectorsList = await storageService.GetEntitiesByPartitionkey("Detector");
             var gists = await storageService.GetEntitiesByPartitionkey("Gist");
             var entitiesToLoad = new List<DiagEntity>();
-            var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList.Where(row => row.IsInternal);
+            var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
             if(!startup)
             {
                 entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= cacheLastModifiedTime).ToList());
@@ -162,6 +162,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     var assemblyData = await storageService.GetBlobByName($"{entity.RowKey.ToLower()}/{entity.RowKey.ToLower()}.dll");
                     if (assemblyData == null || assemblyData.Length == 0)
                     {
+                        DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $" blob {entity.RowKey.ToLower()}.dll is neither null or 0 bytes in length");
                         continue;
                     }
 
