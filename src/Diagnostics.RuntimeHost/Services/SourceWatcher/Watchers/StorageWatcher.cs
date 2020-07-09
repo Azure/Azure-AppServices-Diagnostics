@@ -188,7 +188,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     }
                     else
                     {
-                        DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"No invoker cache exist for {entityType}");
+                        DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $"No invoker cache exist for {entityType}");
                     }
                 }
             } catch (Exception ex)
