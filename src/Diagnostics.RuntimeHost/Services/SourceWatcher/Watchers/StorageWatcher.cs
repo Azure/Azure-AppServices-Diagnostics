@@ -162,7 +162,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     var assemblyData = await storageService.GetBlobByName($"{entity.RowKey.ToLower()}/{entity.RowKey.ToLower()}.dll");
                     if (assemblyData == null || assemblyData.Length == 0)
                     {
-                        DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $" blob {entity.RowKey.ToLower()}.dll is neither null or 0 bytes in length");
+                        DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $" blob {entity.RowKey.ToLower()}.dll is either null or 0 bytes in length");
                         continue;
                     }
 
