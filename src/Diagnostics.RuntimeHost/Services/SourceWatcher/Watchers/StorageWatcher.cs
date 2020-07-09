@@ -173,9 +173,9 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     {
                         entityType = EntityType.Gist;
                     }
-                    else if (!Enum.TryParse<EntityType>(entity.DetectorType, out entityType))
+                    else if (entity.PartitionKey.Equals("Detector"))
                     {
-                        entityType = EntityType.Signal;
+                        entityType = EntityType.Detector;
                     }
                     EntityMetadata metaData = new EntityMetadata(string.Empty, entityType);
                     var newInvoker = new EntityInvoker(metaData);
