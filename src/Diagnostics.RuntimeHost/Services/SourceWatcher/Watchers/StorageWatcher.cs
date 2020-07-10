@@ -17,6 +17,8 @@ using System.Collections.Generic;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Scripts;
 using System.Reflection;
+using System.Net.WebSockets;
+using System.Diagnostics;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
 {
@@ -127,13 +129,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         private async Task StartPollingForChanges()
         {
             await blobDowloadTask;
-            DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Start up blob download task completed at {DateTime.UtcNow}");
             cacheLastModifiedTime = DateTime.UtcNow;
             do
             {
                 await Task.Delay(_pollingIntervalInSeconds * 1000);
                 await StartBlobDownload(false);
-                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Polling for blob download task completed at {DateTime.UtcNow}");
                 cacheLastModifiedTime = DateTime.UtcNow;
             } while (true);
         }
@@ -154,15 +154,20 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 entitiesToLoad.AddRange(filteredDetectors.ToList());
                 entitiesToLoad.AddRange(gists);
             }
-
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
             try
             {
+                if(entitiesToLoad.Count > 0)
+                {
+                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Starting blob download to update cache, startup : {startup.ToString()} at {DateTime.UtcNow}");
+                }
                 foreach (var entity in entitiesToLoad)
                 {
                     var assemblyData = await storageService.GetBlobByName($"{entity.RowKey.ToLower()}/{entity.RowKey.ToLower()}.dll");
                     if (assemblyData == null || assemblyData.Length == 0)
                     {
-                        DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $" blob {entity.RowKey.ToLower()}.dll is neither null or 0 bytes in length");
+                        DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $" blob {entity.RowKey.ToLower()}.dll is either null or 0 bytes in length");
                         continue;
                     }
 
@@ -190,6 +195,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     {
                         DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $"No invoker cache exist for {entityType}");
                     }
+                }
+                stopwatch.Stop();
+                if (entitiesToLoad.Count > 0)
+                {
+                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Blob download complete, startup : {startup.ToString()} time ellapsed {stopwatch.ElapsedMilliseconds} millisecs");
                 }
             } catch (Exception ex)
             {
