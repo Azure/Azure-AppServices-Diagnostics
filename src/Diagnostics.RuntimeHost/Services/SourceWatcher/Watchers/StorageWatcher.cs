@@ -159,7 +159,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             {
                 if(entitiesToLoad.Count > 0)
                 {
-                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Starting blob download to update cache, startup : {startup.ToString()} at {DateTime.UtcNow}");
+                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Starting blob download to update cache, Number of entities: {entitiesToLoad.Count}, startup : {startup.ToString()} at {DateTime.UtcNow}");
                 }
                 foreach (var entity in entitiesToLoad)
                 {
@@ -198,7 +198,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 stopwatch.Stop();
                 if (entitiesToLoad.Count > 0)
                 {
-                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Blob download complete, startup : {startup.ToString()} time ellapsed {stopwatch.ElapsedMilliseconds} millisecs");
+                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Blob download complete, Number of entities {entitiesToLoad.Count}, startup : {startup.ToString()} time ellapsed {stopwatch.ElapsedMilliseconds} millisecs");
                 }
             } catch (Exception ex)
             {
