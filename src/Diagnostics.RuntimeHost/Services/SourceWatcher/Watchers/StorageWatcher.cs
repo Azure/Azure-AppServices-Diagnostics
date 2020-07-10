@@ -17,7 +17,6 @@ using System.Collections.Generic;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Scripts;
 using System.Reflection;
-using System.Net.WebSockets;
 using System.Diagnostics;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
