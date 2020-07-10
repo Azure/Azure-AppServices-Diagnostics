@@ -157,7 +157,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             stopwatch.Start();
             try
             {
-                if(entitiesToLoad.Count > 0)
+                if (entitiesToLoad.Count > 0)
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Starting blob download to update cache, Number of entities: {entitiesToLoad.Count}, startup : {startup.ToString()} at {DateTime.UtcNow}");
                 }
@@ -173,7 +173,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     // initializing Entry Point of Invoker using assembly
                     Assembly temp = Assembly.Load(assemblyData);
                     EntityType entityType = EntityType.Signal;
-                    if(entity.PartitionKey.Equals("Gist"))
+                    if (entity.PartitionKey.Equals("Gist"))
                     {
                         entityType = EntityType.Gist;
                     }
@@ -194,16 +194,21 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     {
                         DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $"No invoker cache exist for {entityType}");
                     }
-                }
+                }           
+            } 
+            catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageWatcher), $"Exception occurred while trying to update cache {ex.Message} ", ex.GetType().ToString(), ex.ToString());
+            } 
+            finally
+            {
                 stopwatch.Stop();
                 if (entitiesToLoad.Count > 0)
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Blob download complete, Number of entities {entitiesToLoad.Count}, startup : {startup.ToString()} time ellapsed {stopwatch.ElapsedMilliseconds} millisecs");
                 }
-            } catch (Exception ex)
-            {
-                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageWatcher), $"Exception occurred while trying to update cache {ex.Message} ", ex.GetType().ToString(), ex.ToString());
             }
+
             
         }
 
