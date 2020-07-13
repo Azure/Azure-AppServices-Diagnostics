@@ -1,0 +1,41 @@
+{
+    "$schema": "https://ev2schema.azure.net/schemas/2020-01-01/rolloutSpecification.json",
+    "rolloutMetadata": {
+      "serviceModelPath": "ServiceModel.json",
+      "scopeBindingsPath": "ScopeBindings.json",
+      "name": "DiagnosticBackendRollout",
+      "rolloutType": "Major",
+      "buildSource": {
+        "parameters": {
+          "versionFile": "buildver.txt"
+        }
+      },
+      "notification": {
+        "email": {
+          "to": "hawfor@microsoft.com"
+        }
+      }
+    },
+    "orchestratedsteps": [
+      {
+        "name": "Create_KeyVault",
+        "targetType": "ServiceResource",
+        "targetName": "KeyVaultResource",
+        "actions": [
+          "Deploy"
+        ]
+      },
+      {
+        "name": "China_North_Region",
+        "targetType": "ServiceResource",
+        "targetName": "RuntimeHostChinaNorth",
+        "actions": [
+          "Deploy",
+          "shell/initialsetup"
+        ],
+        "dependsOn": [
+          "Create_KeyVault"
+        ]
+      }
+    ]
+  }
