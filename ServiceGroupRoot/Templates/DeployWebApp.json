@@ -141,6 +141,130 @@
         "metadata": {
             "description": "The URL for the GitHub repository that contains the project to deploy."
         }
+    },
+    "cloudDomain": {
+      "type": "string",
+      "defaultValue": "PublicAzure",
+      "allowedValues": [
+        "PublicAzure",
+        "Fairfax",
+        "Mooncake",
+        "Blackforest",
+        "USNat",
+        "USSec",
+        "Prod",
+        "Test"
+      ]
+    },
+    "compilerHostAzureAdResource": {
+      "type": "string"
+    },
+    "compilerHostClientId": {
+      "type": "string"
+    },
+    "sourceWatcherGithubUserName": {
+      "type": "string"
+    },
+    "sourceWatcherGithubRepoName": {
+      "type": "string",
+      "defaultValue": "Azure-AppServices-Diagnostics-DataScripts"
+    },
+    "sourceWatcherLoadOnlyPublicDetectors": {
+      "type": "string",
+      "defaultValue": "false"
+    },
+    "sourceWatcherUseStorageAsSource": {
+      "type": "string",
+      "defaultValue": "false"
+    },
+    "kustoClientId": {
+      "type": "string"
+    },
+    "kustoAadResource": {
+      "type": "string"
+    },
+    "kustoDbName": {
+      "type": "string"
+    },
+    "KustoRegionGroupings": {
+      "type": "string"
+    },
+    "kustoClusterNameGroupings": {
+      "type": "string"
+    },
+    "kustoClusterFailoverGroupings": {
+      "type": "string"
+    },
+    "kustoEnable": {
+      "type": "string",
+      "defaultValue": "true"
+    },
+    "enableHeartBeatQuery": {
+      "type": "string",
+      "defaultValue": "false"
+    },
+    "observerClientId": {
+      "type": "string"
+    },
+    "observerEndpoint": {
+      "type": "string"
+    },
+    "observerAadResource": {
+      "type": "string"
+    },
+    "observerEnabled": {
+      "type": "string",
+      "defaultValue": "false"
+    },
+    "observerHealthCheckInputs": {
+      "type": "string"
+    },
+    "geomasterEndpoint": {
+      "type": "string"
+    },
+    "geomasterEnabled": {
+      "type": "string",
+      "defaultValue": "false"
+    },
+    "geomasterCertSubjectName": {
+      "type": "string"
+    },
+    "mdmEndpoint": {
+      "type": "string"
+    },
+    "mdmShoeboxAccount": {
+      "type": "string"
+    },
+    "mdmEnabled": {
+      "type": "string",
+      "defaultValue": "false"
+    },
+    "mdmCertSubjectName": {
+      "type": "string"
+    },
+    "securitySettingsClientId": {
+      "type": "string"
+    },
+    "securitySettingsAllowedAppIds": {
+      "type": "string"
+    },
+    "securitySettingsAllowedCertIssuers": {
+      "type": "string"
+    },
+    "securitySettingsAllowedCertSubjectNames": {
+      "type": "string"
+    },
+    "changeAnalysisEnabled": {
+      "type": "string",
+      "defaultValue": "false"
+    },
+    "azureSupportCenterEnabled": {
+      "type": "string",
+      "defaultValue": "false"
+    },
+    "searchApiEnabled": {
+      "type": "string",
+      "defaultValue": "false"
     }
   },
   "variables": {
@@ -294,7 +418,159 @@
             {
               "Name": "WEBSITE_LOAD_CERTIFICATES",
               "Value": "*"
-            }            
+            },
+            {
+              "Name": "CloudDomain",
+              "Value": "[if(or(equals(parameters('cloudDomain'), 'Prod'), equals(parameters('cloudDomain'), 'Test')), 'PublicAzure', parameters('cloudDomain'))]"
+            },
+            {
+              "Name": "CompilerHost:AADAuthority",
+              "Value": "[parameters('azureAdAuthority')]"
+            },
+            {
+              "Name": "CompilerHost:AADResource",
+              "Value": "[parameters('compilerHostAzureAdResource')]"
+            },
+            {
+              "Name": "CompilerHost:ClientId",
+              "Value": "[parameters('compilerHostClientId')]"
+            },
+            {
+              "Name": "SourceWatcher:Github:UserName",
+              "Value": "[parameters('sourceWatcherGithubUserName')]"
+            },
+            {
+              "Name": "SourceWatcher:Github:RepoName",
+              "Value": "[parameters('sourceWatcherGithubRepoName')]"
+            },
+            {
+              "Name": "SourceWatcher:LoadOnlyPublicDetectors",
+              "Value": "[parameters('sourceWatcherLoadOnlyPublicDetectors')]"
+            },
+            {
+              "name": "SourceWatcher:UseStorageAsSource",
+              "value": "[parameters('sourceWatcherUseStorageAsSource')]"
+            },
+            {
+              "Name": "Kusto:ClientId",
+              "Value": "[parameters('kustoClientId')]"
+            },
+            {
+              "name": "Kusto:AADAuthority",
+              "value": "[parameters('azureAdAuthority')]"
+            },
+            {
+              "name": "Kusto:AADKustoResource",
+              "value": "[parameters('kustoAadResource')]"
+            },
+            {
+              "name": "Kusto:Enabled",
+              "value": "[parameters('kustoEnable')]"
+            },
+            {
+              "Name": "Kusto:DBName",
+              "Value": "[parameters('kustoDbName')]"
+            },
+            {
+              "Name": "Kusto:KustoRegionGroupings",
+              "value": "[parameters('KustoRegionGroupings')]"
+            },
+            {
+              "Name": "Kusto:KustoClusterNameGroupings",
+              "vale": "[parameters('kustoClusterNameGroupings')]"
+            },
+            {
+              "Name": "Kusto:KustoClusterFailoverGroupings",
+              "value": "[parameters('kustoClusterFailoverGroupings')]"
+            },
+            {
+              "Name": "Kusto:HeartBeatQuery",
+              "Value": "RoleInstanceHeartbeat | where TIMESTAMP >= ago(30m) | take 1"
+            },
+            {
+              "Name": "Kusto:EnableHeartBeatQuery",
+              "Value": "[parameters('enableHeartBeatQuery')]"
+            },
+            {
+              "Name": "SupportObserver:ClientId",
+              "Value": "[parameters('observerClientId')]"
+            },
+            {
+              "Name": "SupportObserver:Endpoint",
+              "Value": "[parameters('observerEndpoint')]"
+            },
+            {
+              "Name": "SupportObserver:AADResource",
+              "Value": "[parameters('observerAadResource')]"
+            },
+            {
+              "Name": "SupportObserver:Enabled",
+              "Value": "[parameters('observerEnabled')]"
+            },
+            {
+              "name": "SupportObserver:HealthCheckInputs",
+              "value": "[parameters('observerHealthCheckInputs')]"
+            },
+            {
+              "Name": "GeoMaster:GeoEndpointAddress",
+              "Value": "[parameters('geomasterEndpoint')]"
+            },
+            {
+              "Name": "GeoMaster:Enabled",
+              "Value": "[parameters('geomasterEnabled')]"
+            },
+            {
+              "Name": "GeoMaster:GeoCertSubjectName",
+              "Value": "[parameters('geomasterCertSubjectName')]"
+            },
+            {
+              "Name": "Mdm:MdmShoeboxEndpoint",
+              "Value": "[parameters('mdmEndpoint')]"
+            },
+            {
+              "Name": "Mdm:MdmShoeboxAccount",
+              "Value": "[parameters('mdmShoeboxAccount')]"
+            },
+            {
+              "Name": "Mdm:Enabled",
+              "Value": "[parameters('mdmEnabled')]"
+            },
+            {
+              "Name": "Mdm:MdmCertSubjectName",
+              "Value": "[parameters('mdmCertSubjectName')]"
+            },
+            {
+              "Name": "SecuritySettings:AADAuthority",
+              "Value": "[parameters('azureAdAuthority')]"
+            },
+            {
+              "Name": "SecuritySettings:ClientId",
+              "Value": "[parameters('securitySettingsClientId')]"
+            },
+            {
+              "Name": "SecuritySettings:AllowedAppIds",
+              "Value": "[parameters('securitySettingsAllowedAppIds')]"
+            },
+            {
+              "Name": "SecuritySettings:AllowedCertIssuers",
+              "Value": "[parameters('securitySettingsAllowedCertIssuers')]"
+            },
+            {
+              "Name": "SecuritySettings:AllowedCertSubjectNames",
+              "Value": "[parameters('securitySettingsAllowedCertSubjectNames')]"
+            },
+            {
+              "Name": "ChangeAnalysis:Enabled",
+              "value": "[parameters('changeAnalysisEnabled')]"
+            },
+            {
+              "Name": "AzureSupportCenter:Enabled",
+              "value": "[parameters('azureSupportCenterEnabled')]"
+            },
+            {
+              "Name": "SearchAPI:Enabled",
+              "value": "[parameters('searchApiEnabled')]"
+            }                             
           ],
           "autoHealEnabled": true,
           "autoHealRules": {
@@ -414,6 +690,158 @@
                 {
                   "Name": "Secrets:ProdKeyVaultName",
                   "Value": "[reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.KeyVault/vaults', parameters('keyVaultName')), '2019-09-01', 'Full').properties.vaultUri]"
+                },
+                {
+                  "Name": "CloudDomain",
+                  "Value": "[if(equals(parameters('cloudDomain'), 'Prod'), 'PublicAzure', parameters('cloudDomain'))]"
+                },
+                {
+                  "Name": "CompilerHost:AADAuthority",
+                  "Value": "[parameters('azureAdAuthority')]"
+                },
+                {
+                  "Name": "CompilerHost:AADResource",
+                  "Value": "[parameters('compilerHostAzureAdResource')]"
+                },
+                {
+                  "Name": "CompilerHost:ClientId",
+                  "Value": "[parameters('compilerHostClientId')]"
+                },
+                {
+                  "Name": "SourceWatcher:Github:UserName",
+                  "Value": "[parameters('sourceWatcherGithubUserName')]"
+                },
+                {
+                  "Name": "SourceWatcher:Github:RepoName",
+                  "Value": "[parameters('sourceWatcherGithubRepoName')]"
+                },
+                {
+                  "Name": "SourceWatcher:LoadOnlyPublicDetectors",
+                  "Value": "[parameters('sourceWatcherLoadOnlyPublicDetectors')]"
+                },
+                {
+                  "name": "SourceWatcher:UseStorageAsSource",
+                  "value": "[parameters('sourceWatcherUseStorageAsSource')]"
+                },
+                {
+                  "Name": "Kusto:ClientId",
+                  "Value": "[parameters('kustoClientId')]"
+                },
+                {
+                  "name": "Kusto:AADAuthority",
+                  "value": "[parameters('azureAdAuthority')]"
+                },                
+                {
+                  "name": "Kusto:AADKustoResource",
+                  "value": "[parameters('kustoAadResource')]"
+                },
+                {
+                  "name": "Kusto:Enabled",
+                  "value": "[parameters('kustoEnable')]"
+                },
+                {
+                  "Name": "Kusto:DBName",
+                  "Value": "[parameters('kustoDbName')]"
+                },
+                {
+                  "Name": "Kusto:KustoRegionGroupings",
+                  "value": "[parameters('KustoRegionGroupings')]"
+                },
+                {
+                  "Name": "Kusto:KustoClusterNameGroupings",
+                  "vale": "[parameters('kustoClusterNameGroupings')]"
+                },
+                {
+                  "Name": "Kusto:KustoClusterFailoverGroupings",
+                  "value": "[parameters('kustoClusterFailoverGroupings')]"
+                },
+                {
+                  "Name": "Kusto:HeartBeatQuery",
+                  "Value": "RoleInstanceHeartbeat | where TIMESTAMP >= ago(30m) | take 1"
+                },
+                {
+                  "Name": "Kusto:EnableHeartBeatQuery",
+                  "Value": "[parameters('enableHeartBeatQuery')]"
+                },
+                {
+                  "Name": "SupportObserver:ClientId",
+                  "Value": "[parameters('observerClientId')]"
+                },
+                {
+                  "Name": "SupportObserver:Endpoint",
+                  "Value": "[parameters('observerEndpoint')]"
+                },
+                {
+                  "Name": "SupportObserver:AADResource",
+                  "Value": "[parameters('observerAadResource')]"
+                },
+                {
+                  "Name": "SupportObserver:Enabled",
+                  "Value": "[parameters('observerEnabled')]"
+                },
+                {
+                  "name": "SupportObserver:HealthCheckInputs",
+                  "value": "[parameters('observerHealthCheckInputs')]"
+                },
+                {
+                  "Name": "GeoMaster:GeoEndpointAddress",
+                  "Value": "[parameters('geomasterEndpoint')]"
+                },
+                {
+                  "Name": "GeoMaster:Enabled",
+                  "Value": "[parameters('geomasterEnabled')]"
+                },
+                {
+                  "Name": "GeoMaster:GeoCertSubjectName",
+                  "Value": "[parameters('geomasterCertSubjectName')]"
+                },
+                {
+                  "Name": "Mdm:MdmShoeboxEndpoint",
+                  "Value": "[parameters('mdmEndpoint')]"
+                },
+                {
+                  "Name": "Mdm:MdmShoeboxAccount",
+                  "Value": "[parameters('mdmShoeboxAccount')]"
+                },
+                {
+                  "Name": "Mdm:Enabled",
+                  "Value": "[parameters('mdmEnabled')]"
+                },
+                {
+                  "Name": "Mdm:MdmCertSubjectName",
+                  "Value": "[parameters('mdmCertSubjectName')]"
+                },
+                {
+                  "Name": "SecuritySettings:AADAuthority",
+                  "Value": "[parameters('azureAdAuthority')]"
+                },
+                {
+                  "Name": "SecuritySettings:ClientId",
+                  "Value": "[parameters('securitySettingsClientId')]"
+                },
+                {
+                  "Name": "SecuritySettings:AllowedAppIds",
+                  "Value": "[parameters('securitySettingsAllowedAppIds')]"
+                },
+                {
+                  "Name": "SecuritySettings:AllowedCertIssuers",
+                  "Value": "[parameters('securitySettingsAllowedCertIssuers')]"
+                },
+                {
+                  "Name": "SecuritySettings:AllowedCertSubjectNames",
+                  "Value": "[parameters('securitySettingsAllowedCertSubjectNames')]"
+                },
+                {
+                  "Name": "ChangeAnalysis:Enabled",
+                  "value": "[parameters('changeAnalysisEnabled')]"
+                },
+                {
+                  "Name": "AzureSupportCenter:Enabled",
+                  "value": "[parameters('azureSupportCenterEnabled')]"
+                },
+                {
+                  "Name": "SearchAPI:Enabled",
+                  "value": "[parameters('searchApiEnabled')]"
                 }
               ]
             }

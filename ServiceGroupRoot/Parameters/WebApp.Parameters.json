@@ -30,6 +30,108 @@
       },
       "servicePackageLink": {
         "value": "bin\\DiagnosticsRuntimeHost.zip"
-      }
+      },
+      "cloudDomain": {
+        "value": "__CLOUD_ENVIRONMENT__"
+      },
+      "compilerHostAzureAdResource": {
+        "value": "__COMPILERHOST_AAD_RESOURCE__"
+      },
+      "compilerHostClientId": {
+        "value": "__COMPILERHOST_AAD_CLIENTID"
+      },
+      "sourceWatcherGithubUserName": {
+        "value": "__SOURCE_WATCHER_GITHUB_USERNAME"
+      },
+      "sourceWatcherGithubRepoName": {
+        "value": "Azure-AppServices-Diagnostics-DataScripts"
+      },
+      "sourceWatcherLoadOnlyPublicDetectors": {
+        "value": "__SOURCE_WATCHER_LOAD_ONLY_PUBLIC_DETECTORS__"
+      },
+      "sourceWatcherUseStorageAsSource": {
+        "value": "__SOURCE_WATCHER_STORAGE_ENABLE__"
+      },
+      "kustoClientId": {
+        "value": "__KUSTO_AAD_CLIENTID"
+      },
+      "kustoDbName": {
+        "value": "__KUSTO_ANTARES_DB_NAME__"
+      },
+      "KustoRegionGroupings": {
+        "value": "__KUSTO_REGION_GROUPINGS__"
+      },
+      "kustoClusterNameGroupings": {
+        "value": "__KUSTO_CLUSTER_NAME_GROUPINGS__"
+      },
+      "kustoClusterFailoverGroupings": {
+        "value": "__KUSTO_CLUSTER_FAILOVER_GROUPINGS__"
+      },
+      "kustoEnable": {
+        "value": "__KUSTO_ENABLE__"
+      },
+      "kustoAadResource": {
+        "value": "__KUSTO_AAD_RESOURCE"
+      },
+      "enableHeartBeatQuery": {
+        "value": "__KUSTO_HEARTBEAT_ENABLE__"
+      },
+      "observerClientId": {
+        "value": "__OBSERVER_AAD_CLIENTID__"
+      },
+      "observerEndpoint": {
+        "value": "__OBSERVER_ENDPOINT__"
+      },
+      "observerAadResource": {
+        "value": "__OBSERVER_AAD_RESOURCE"
+      },
+      "observerEnabled": {
+        "value": "__OBSERVER_ENABLE__"
+      },
+      "observerHealthCheckInputs": {
+        "value": "__OBSERVER_HEALTH_CHECK_INPUTS__"
+      },
+      "geomasterEndpoint": {
+        "value": "__GEOMASTER_ENDPOINT__"
+      },
+      "geomasterEnabled": {
+        "value": "__GEOMASTER_ENABLE__"
+      },
+      "geomasterCertSubjectName": {
+        "value": "__GEOMASTER_CERT_SUBJECT_NAME__"
+      },
+      "mdmEndpoint": {
+        "value": "__MDM_ENDPOINT__"
+      },
+      "mdmShoeboxAccount": {
+        "value": "__MDM_SHOEBOX_ACCOUNT__"
+      },
+      "mdmEnabled": {
+        "value": "__MDM_ENABLE__"
+      },
+      "mdmCertSubjectName": {
+        "value": "__MDM_CERT_SUBJECT_NAME__"
+      },
+      "securitySettingsClientId": {
+        "value": "__SECURITY_SETTINGS_CLIENT_ID__"
+      },
+      "securitySettingsAllowedAppIds": {
+        "value": "__SECURITY_SETTINGS_ALLOWED_APP_IDS__"
+      },
+      "securitySettingsAllowedCertIssuers": {
+        "value": "__SECURITY_SETTINGS_ALLOWED_CERT_ISSUERS__"
+      },
+      "securitySettingsAllowedCertSubjectNames": {
+        "value": "__SECURITY_SETTINGS_ALLOWED_CERT_SUBJECT_NAMES__"
+      },
+      "changeAnalysisEnabled": {
+        "value": "__CHANGE_ANALYSIS_ENABLE__"
+      },
+      "azureSupportCenterEnabled": {
+        "value": "__AZURE_SUPPORT_CENTER_ENABLE__"
+      },
+      "searchApiEnabled": {
+        "value": "__SEARCH_API_ENABLE__"
+      }      
     }
 }

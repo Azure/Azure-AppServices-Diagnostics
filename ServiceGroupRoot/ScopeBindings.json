@@ -56,6 +56,134 @@
         {
           "find": "__AZURE_ACTIVE_DIRECTORY_AUTHORITY__",
           "replaceWith": "$(AzureActiveDirectoryAuthority)"
+        },
+        {
+          "find": "__COMPILERHOST_AAD_RESOURCE__",
+          "replaceWith": "$(CompilerHostAadResource)"
+        },
+        {
+          "find": "__COMPILERHOST_AAD_CLIENTID",
+          "replaceWith": "$(CompilerHostAadClientId)"
+        },
+        {
+          "find": "__SOURCE_WATCHER_GITHUB_USERNAME",
+          "replaceWith": "$(SourceWatcherGithubUserName)"
+        },
+        {
+          "find": "__SOURCE_WATCHER_LOAD_ONLY_PUBLIC_DETECTORS__",
+          "replaceWith": "$(SourceWatcherLoadOnlyPublicDetectors)"
+        },
+        {
+          "find": "__SOURCE_WATCHER_STORAGE_ENABLE__",
+          "replaceWith": "$(SourceWatcherStorageEnable)"
+        },
+        {
+          "find": "__KUSTO_AAD_RESOURCE",
+          "replaceWith": "$(KustoAadResource)"
+        },
+        {
+          "find": "__KUSTO_ENABLE__",
+          "replaceWith": "$(KustoEnable)"
+        },
+        {
+          "find": "__KUSTO_AAD_CLIENTID",
+          "replaceWith": "$(KustoAadClientId)"
+        },
+        {
+          "find": "__KUSTO_ANTARES_DB_NAME__",
+          "replaceWith": "$(KustoAntaresDbName)"
+        },
+        {
+          "find": "__KUSTO_REGION_GROUPINGS__",
+          "replaceWith": "$(KustoRegionGroupings)"
+        },
+        {
+          "find": "__KUSTO_CLUSTER_NAME_GROUPINGS__",
+          "replaceWith": "$(KustoClusterNameGroupings)"
+        },
+        {
+          "find": "__KUSTO_CLUSTER_FAILOVER_GROUPINGS__",
+          "replaceWith": "$(KustoClusterFailoverGroupings)"
+        },
+        {
+          "find": "__KUSTO_HEARTBEAT_ENABLE__",
+          "replaceWith": "$(KustoHeartBeatEnable)"
+        },
+        {
+          "find": "__OBSERVER_AAD_CLIENTID__",
+          "replaceWith": "$(ObserverAadClientId)"
+        },
+        {
+          "find": "__OBSERVER_ENDPOINT__",
+          "replaceWith": "$(ObserverEndpoint)"
+        },
+        {
+          "find": "__OBSERVER_AAD_RESOURCE",
+          "replaceWith": "$(ObserverAadResource)"
+        },
+        {
+          "find": "__OBSERVER_ENABLE__",
+          "replaceWith": "$(ObserverEnable)"
+        },
+        {
+          "find": "__OBSERVER_HEALTH_CHECK_INPUTS__",
+          "replaceWith": "$(ObserverHealthCheckInputs)"
+        },
+        {
+          "find": "__GEOMASTER_ENDPOINT__",
+          "replaceWith": "$(GeomasterEndpoint)"
+        },
+        {
+          "find": "__GEOMASTER_ENABLE__",
+          "replaceWith": "$(GeomasterEnable)"
+        },
+        {
+          "find": "__GEOMASTER_CERT_SUBJECT_NAME__",
+          "replaceWith": "$(GeomasterCertSubjectName)"
+        },
+        {
+          "find": "__MDM_ENDPOINT__",
+          "replaceWith": "$(MdmEndpoint)"
+        },
+        {
+          "find": "__MDM_SHOEBOX_ACCOUNT__",
+          "replaceWith": "$(MdmShoeboxAccount)"
+        },
+        {
+          "find": "__MDM_ENABLE__",
+          "replaceWith": "$(MdmEnable)"
+        },
+        {
+          "find": "__MDM_CERT_SUBJECT_NAME__",
+          "replaceWith": "$(MdmCertSubjectName)"
+        },
+        {
+          "find": "__SECURITY_SETTINGS_CLIENT_ID__",
+          "replaceWith": "$(SecuritySettingsClientId)"
+        },
+        {
+          "find": "__SECURITY_SETTINGS_ALLOWED_APP_IDS__",
+          "replaceWith": "$(SecuritySettingsAllowedAppIds)"
+        },
+        {
+          "find": "__SECURITY_SETTINGS_ALLOWED_CERT_ISSUERS__",
+          "replaceWith": "$(SecuritySettingsAllowedCertIssuers)"
+        },
+        {
+          "find": "__SECURITY_SETTINGS_ALLOWED_CERT_SUBJECT_NAMES__",
+          "replaceWith": "$(SecuritySettingsAllowedCertSubjectNames)"
+        },
+        {
+          "find": "__CHANGE_ANALYSIS_ENABLE__",
+          "replaceWith": "$(ChangeAnalysisEnable)"
+        },
+        {
+          "find": "__AZURE_SUPPORT_CENTER_ENABLE__",
+          "replaceWith": "$(AzureSupportCenterEnable)"
+        },
+        {
+          "find": "__SEARCH_API_ENABLE__",
+          "replaceWith": "$(SearchApiEnable)"
         }
       ]
     },
@@ -85,6 +213,19 @@
         }
       ]
     },
+    {
+      "scopeTagName": "ChinaNorthRegion",
+      "bindings": [
+        {
+          "find": "__LOCATION_ABBR__",
+          "replaceWith": "bjb"
+        },
+        {
+          "find": "__LOCATION__",
+          "replaceWith": "China North"
+        }
+      ]
+    },    
     {
       "scopeTagName": "UsNatEastRegion",
       "bindings": [

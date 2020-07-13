@@ -16,19 +16,19 @@
         }
       }
     },
-    "orchestratedsteps": [      
+    "orchestratedsteps": [
       {
         "name": "Create_KeyVault",
         "targetType": "ServiceResource",
-        "targetName": "KeyVaultResourceUsNat",
+        "targetName": "KeyVaultResourceMooncake",
         "actions": [
           "Deploy"
         ]
       },
       {
-        "name": "UsNat East(RED) Region",
+        "name": "China_North_Region",
         "targetType": "ServiceResource",
-        "targetName": "RuntimeHostWestUs",
+        "targetName": "RuntimeHostChinaNorth",
         "actions": [
           "Deploy",
           "shell/initialsetup"

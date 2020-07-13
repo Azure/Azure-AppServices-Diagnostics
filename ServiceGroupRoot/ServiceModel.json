@@ -100,7 +100,42 @@
           ]
         }
       ]
-    },    
+    },
+    {
+      "azureResourceGroupName": "DiagnosticBackendMooncake",
+      "location": "China North",
+      "instanceOf": "WebAppResourceGroupDefinitions",
+      "azureSubscriptionId": "a4935e11-0d76-436e-8114-d29f14c6e724",
+      "scopeTags": [
+        {
+          "name": "MyAppCompute"
+        }
+      ],
+      "serviceResources": [
+        {
+          "name": "KeyVaultResourceMooncake",
+          "instanceOf": "KeyVaultDefinition"
+        },
+        {
+          "name": "CompilerHostChinaNorth",
+          "instanceOf": "WebAppDefinition",
+          "scopeTags": [
+            {
+              "name": "ChinaNorthRegion"
+            }
+          ]
+        },
+        {
+          "name": "RuntimeHostChinaNorth",
+          "instanceOf": "WebAppDefinition",
+          "scopeTags": [
+            {
+              "name": "ChinaNorthRegion"
+            }
+          ]
+        }
+      ]
+    },       
     {
       "azureResourceGroupName": "DiagnosticBackendUsNat",
       "location": "USNat East",
