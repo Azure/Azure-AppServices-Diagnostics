@@ -35,26 +35,6 @@ if($response -ne $null){
     Show-Error -Message "Failed to add keyvault certificate" -Details $response
 }
 
-#Add the AAD auth to this app. First check if the app was created
-$response = az webapp show --resource-group $env:AzureResourceGroupName --name $env:SiteName | ConvertFrom-Json
-$url = "https://$($response.defaultHostName)"
-
-#TODO Find a way to give the MSI object authorization to the tenant so that it may create an AAD app in an automated fashion
-#Write-Host "Create AAD app for $url"
-#az ad app create --display-name $env:AzureResourceGroupName --homepage $url --identifier-uris $url --reply-urls "$url/.auth/login/aad/callback" --required-resource-accesses '@aad_app_create_manifest.json'
-
-$accountJson = az cloud show | ConvertFrom-Json
-$tenantJson = az account show | ConvertFrom-Json
-$issuerUrl = "$($accountJson.endpoints.activeDirectory)/$($tenantJson.tenantId)"
-
-Write-Host "Update EasyAuth settings"
-$response = az webapp auth update --name $env:SiteName --resource-group $env:AzureResourceGroupName --action LoginWithAzureActiveDirectory --enabled true --aad-client-id $env:EasyAuthClientId --aad-token-issuer-url $issuerUrl
-if ($response -ne $null) {
-    Write-Host "Successfully updated EasyAuth settings"
-}else{
-    Show-Error "Failed to update EasyAuth" $response
-}
-
 if ($exitCode -ne 0) {
     throw "setup script failed"
 }
