@@ -20,7 +20,7 @@
       {
         "name": "Create_KeyVault",
         "targetType": "ServiceResource",
-        "targetName": "KeyVaultResource",
+        "targetName": "KeyVaultResourceMooncake",
         "actions": [
           "Deploy"
         ]

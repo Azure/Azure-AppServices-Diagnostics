@@ -113,7 +113,7 @@
       ],
       "serviceResources": [
         {
-          "name": "KeyVaultResource",
+          "name": "KeyVaultResourceMooncake",
           "instanceOf": "KeyVaultDefinition"
         },
         {
