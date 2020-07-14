@@ -224,7 +224,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             Assembly tempAsm = null;
 
-            bool isCompilationNeeded = !ScriptCompilation.IsSameScript(jsonBody.Script, scriptETag) || !_assemblyCacheService.IsAssemblyLoaded(assemblyFullName, out tempAsm);
+            bool isCompilationNeeded = !ScriptCompilation.IsSameScript(jsonBody.Script, scriptETag) || !_assemblyCacheService.IsAssemblyLoaded(assemblyFullName);
             if (isCompilationNeeded)
             {
                 queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, jsonBody.EntityType, jsonBody.References, runtimeContext.OperationContext.RequestId);
@@ -232,7 +232,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             else
             {
                 // Setting compilation succeeded to be true as it has been successfully compiled before
-                queryRes.CompilationOutput = new CompilerResponse();
+                queryRes.CompilationOutput = _assemblyCacheService.GetCachedCompilerResponse(assemblyFullName);
+                tempAsm = _assemblyCacheService.GetCachedAssembly(assemblyFullName);
                 queryRes.CompilationOutput.CompilationSucceeded = true;
                 queryRes.CompilationOutput.CompilationTraces = new string[] { "No code changes were detected. Detector code was executed using previous compilation." };
             }
@@ -247,7 +248,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         byte[] pdbData = Convert.FromBase64String(queryRes.CompilationOutput.PdbBytes);
                         tempAsm = Assembly.Load(asmData, pdbData);
                         queryRes.CompilationOutput.AssemblyName = tempAsm.FullName;
-                        _assemblyCacheService.AddAssemblyToCache(tempAsm.FullName, tempAsm);
+                        _assemblyCacheService.AddAssemblyToCache(tempAsm.FullName, tempAsm, queryRes.CompilationOutput);
                     }
 
                     Request.HttpContext.Response.Headers.Add("diag-script-etag", Convert.ToBase64String(ScriptCompilation.GetHashFromScript(jsonBody.Script)));
@@ -365,7 +366,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             await _sourceWatcherService.Watcher.CreateOrUpdatePackage(pkg);
-            await storageWatcher.CreateOrUpdatePackage(pkg);
+            // If Azure Storage is not enabled, we still want to keep data updated.
+            if(!tableCacheService.IsStorageAsSourceEnabled())
+            {
+                await storageWatcher.CreateOrUpdatePackage(pkg);
+            }
             return Ok();
         }
 
@@ -562,7 +567,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 "",
                 "",
                 true,
-                requestIds.FirstOrDefault()
+                requestIds.FirstOrDefault().Split(new char[] { ',' })[0]
             );
 
             _runtimeContext.ClientIsInternal = true;
@@ -583,7 +588,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             Dictionary<string, dynamic> systemContext = new Dictionary<string, dynamic>();
             systemContext.Add("detectorId", detectorId);
-            systemContext.Add("requestIds", requestIds);
+            systemContext.Add("requestIds", requestIds.FirstOrDefault().Split(new char[] { ',' })[0]);
             systemContext.Add("isInternal", true);
             systemContext.Add("dataSource", dataSource);
             systemContext.Add("timeRange", timeRange);
@@ -612,7 +617,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 }
             }
 
-            var requestId = requestIds.FirstOrDefault();
+            var requestId = requestIds.FirstOrDefault().Split(new char[] { ','})[0];
             var operationContext = new OperationContext<TResource>(
                 resource,
                 DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(DataProviderConstants.KustoTimeFormat),
@@ -771,7 +776,6 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private async Task<Tuple<Response, List<DataProviderMetadata>>> GetDetectorInternal(string detectorId, RuntimeContext<TResource> context)
         {
-            await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var queryParams = Request.Query;
             
             var dataProviderContext = (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey];
@@ -791,40 +795,32 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
             }
-
-            var changeSetId = queryParams.Where(s => s.Key.Equals("changeSetId")).Select(pair => pair.Value);
-            if (changeSetId.Any())
+            EntityInvoker invoker = null;
+            if(tableCacheService.IsStorageAsSourceEnabled())
             {
-                var resourceUriFromQuery = queryParams.Where(s => s.Key.Equals("resourceUri")).Select(pair => pair.Value);
-                var resourceUri = context.OperationContext.Resource.ResourceUri;
-                var changeSetIdValue = changeSetId.First();
-                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Change set id received - {changeSetIdValue}");
-                if (resourceUriFromQuery.Any())
+                 invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
+                var allDetectors = await this.tableCacheService.GetEntityListByType(context, "Detector");
+                var detectorMetadata = allDetectors.Where(entity => entity.RowKey.ToLower().Equals(detectorId, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+
+                // This means detector is definitely not present
+                if (invoker == null && detectorMetadata == null)
                 {
-                    resourceUri = resourceUriFromQuery.First();
+                    return null;
                 }
 
-                // Gets all change sets for the resource uri
-                if (changeSetIdValue.Equals("*"))
+                // If detector is still downloading, then await first completion
+                if (invoker == null && detectorMetadata != null)
                 {
-                    var changesets = await GetAllChangeSets(resourceUri, DateTime.Now.AddDays(-13), DateTime.Now, dataProviders.ChangeAnalysis);
-                    return new Tuple<Response, List<DataProviderMetadata>>(changesets, dataProvidersMetadata);
+                    await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+                    // Refetch from invoker cache
+                    invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
                 }
-
-                var changesResponse = await GetChangesByChangeSetId(changeSetIdValue, resourceUri, dataProviders.ChangeAnalysis);
-                return new Tuple<Response, List<DataProviderMetadata>>(changesResponse, dataProvidersMetadata);
-            }
-
-            var actionQuery = queryParams.Where(s => s.Key.Equals("scanAction")).Select(pair => pair.Value);
-            if (actionQuery.Any())
+            } else
             {
-                var scanActionResponse = await HandleScanActionRequest(context.OperationContext.Resource.ResourceUri,
-                                                actionQuery.First(),
-                                                dataProviders.ChangeAnalysis);
-                return new Tuple<Response, List<DataProviderMetadata>>(scanActionResponse, dataProvidersMetadata);
+                await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+                invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
             }
-
-            var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
+           
 
             if (invoker == null)
             {
@@ -1069,110 +1065,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Retreives Changes and returns the data in rows and columns format.
-        /// </summary>
-        /// <param name="changeSetId">changeSet Id.</param>
-        /// <param name="resourceId">Resource Id.</param>
-        /// <param name="changeAnalysisDataProvider">Change Analysis Data Provider.</param>
-        /// <returns>Changes for given change set id.</returns>
-        private async Task<Response> GetChangesByChangeSetId(string changeSetId, string resourceId, IChangeAnalysisDataProvider changeAnalysisDataProvider)
-        {
-            changeSetId = changeSetId.Replace(" ", "+");
-            var changes = await changeAnalysisDataProvider.GetChangesByChangeSetId(changeSetId, resourceId);
-            if (changes == null || changes.Count <= 0)
-            {
-                return new Response();
-            }
-
-            Response changesResponse = new Response();
-            var table = new DataTable();
-            table.TableName = "Changes";
-            table.Columns.Add(new DataColumn("TimeStamp", typeof(string)));
-            table.Columns.Add(new DataColumn("Category", typeof(string)));
-            table.Columns.Add(new DataColumn("Level", typeof(string)));
-            table.Columns.Add(new DataColumn("DisplayName", typeof(string)));
-            table.Columns.Add(new DataColumn("Description", typeof(string)));
-            table.Columns.Add(new DataColumn("OldValue", typeof(string)));
-            table.Columns.Add(new DataColumn("NewValue", typeof(string)));
-            table.Columns.Add(new DataColumn("InitiatedBy", typeof(string)));
-            table.Columns.Add(new DataColumn("JsonPath", typeof(string)));
-            changes.ForEach(change =>
-            {
-                table.Rows.Add(new object[]
-                {
-                        change.TimeStamp,
-                        change.Category,
-                        change.Level,
-                        change.DisplayName,
-                        change.Description,
-                        change.OldValue,
-                        change.NewValue,
-                        change.InitiatedBy,
-                        change.JsonPath
-                });
-            });
-
-            var diagData = new DiagnosticData()
-            {
-                Table = table,
-                RenderingProperties = new Rendering(RenderingType.ChangesView)
-            };
-
-            changesResponse.Dataset.Add(diagData);
-            return changesResponse;
-        }
-
-        /// <summary>
-        /// Submits request to scan for changes and returns response in <see cref="DataTable"/> format.
-        /// </summary>
-        private async Task<Response> HandleScanActionRequest(string resourceId, string action, IChangeAnalysisDataProvider changeAnalysisDataProvider)
-        {
-            var scanRequest = await changeAnalysisDataProvider.ScanActionRequest(resourceId, action);
-            if (scanRequest == null)
-            {
-                return new Response();
-            }
-
-            Response scanRequestData = new Response();
-            var table = new DataTable();
-            table.TableName = action;
-            table.Columns.Add(new DataColumn("Operation Id", typeof(string)));
-            table.Columns.Add(new DataColumn("State", typeof(string)));
-            table.Columns.Add(new DataColumn("SubmissionTime", typeof(string)));
-            table.Columns.Add(new DataColumn("CompletionTime", typeof(string)));
-            table.Rows.Add(new object[]
-            {
-                scanRequest.OperationId,
-                scanRequest.State,
-                scanRequest.SubmissionTime,
-                scanRequest.CompletionTime
-            });
-
-            var diagData = new DiagnosticData()
-            {
-                Table = table,
-                RenderingProperties = new Rendering(RenderingType.ChangesView)
-            };
-
-            scanRequestData.Dataset.Add(diagData);
-            return scanRequestData;
-        }
-
-        /// <summary>
-        /// Retreives all change sets for the resource id.
-        /// </summary>
-        /// <param name="resourceId">Resource Id.</param>
-        /// <param name="changeAnalysisDataProvider">Change Analysis Data Provider.</param>
-        /// <returns>All Changesets for the given resource id.</returns>
-        private async Task<Response> GetAllChangeSets(string resourceId, DateTime startTime, DateTime endTime, IChangeAnalysisDataProvider changeAnalysisDataProvider)
-        {
-            var changeSets = await changeAnalysisDataProvider.GetChangeSetsForResource(resourceId, startTime, endTime);
-            Response dataSetResponse = new Response();
-            dataSetResponse.AddChangeSets(changeSets);
-            return dataSetResponse;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
+using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 
 namespace Diagnostics.RuntimeHost.Services.CacheService
@@ -15,7 +16,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
         /// <summary>
         /// Dictionary to cache the assemblies
         /// </summary>
-        private Dictionary<string, Assembly> AssemblyCache;
+        private Dictionary<string, CompilationCache> CompilationCache;
 
         /// <summary>
         /// Maximum number of Assemblies to maintain in cache
@@ -29,36 +30,66 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
         public AssemblyCacheService()
         {
             AssemblyQueue = new ConcurrentQueue<string>();
-            AssemblyCache = new Dictionary<string, Assembly>();
+            CompilationCache = new Dictionary<string, CompilationCache>();
         }
 
         /// <summary>
-        /// Adds a given <paramref name="assemblyName"/> to the cache. If a limit of <see cref="MaxQueueSize"/> is reached, oldest assembly is removed
+        /// For a given <paramref name="assemblyName"/>, adds the <paramref name="assemblyDll"/> and <paramref name="compilerResponse"/> to the cache.
+        /// If a limit of <see cref="MaxQueueSize"/> is reached, oldest assembly is removed
         /// </summary>
         /// <param name="assemblyName">Full Qualified name of the DLL to cache</param>
         /// <param name="assemblyDll">DLL to add to cache</param>
-        public void AddAssemblyToCache(string assemblyName, Assembly assemblyDll)
+        public void AddAssemblyToCache(string assemblyName, Assembly assemblyDll, CompilerResponse compilerResponse)
         {
-            AssemblyCache.Add(assemblyName, assemblyDll);
+            CompilationCache.Add(assemblyName, new CompilationCache
+            {
+                AssemblyCache = assemblyDll,
+                CompilerResponseCache = compilerResponse
+            });
             string oldAssembly = null;
             if (AssemblyQueue.Count == MaxQueueSize && AssemblyQueue.TryDequeue(out oldAssembly))
             {
-                AssemblyCache.Remove(oldAssembly);
+                CompilationCache.Remove(oldAssembly);
             }
             AssemblyQueue.Enqueue(assemblyName);
         }
 
         /// <summary>
-        /// Checks if a <paramref name="assemblyName"/> is loaded in cache and returns <paramref name="loadedAssembly"/>
+        /// Checks if a <paramref name="assemblyName"/> is loaded in cache 
         /// </summary>
-        public bool IsAssemblyLoaded(string assemblyName, out Assembly loadedAssembly)
+        public bool IsAssemblyLoaded(string assemblyName)
         {
-            loadedAssembly = null;
             if (string.IsNullOrWhiteSpace(assemblyName))
             {
                 return false;
             }
-            return AssemblyCache.TryGetValue(assemblyName, out loadedAssembly);
+            return CompilationCache.TryGetValue(assemblyName, out CompilationCache compilationCache);
+        }
+
+        /// <summary>
+        /// For the given <paramref name="assemblyName"/> fetches the cached compiler response
+        /// </summary>
+        /// <param name="assemblyName"></param>
+        public CompilerResponse GetCachedCompilerResponse(string assemblyName)
+        {
+            if(CompilationCache.TryGetValue(assemblyName, out CompilationCache cacheItem))
+            {
+                return cacheItem.CompilerResponseCache;
+            }
+            return new CompilerResponse();
+        }
+
+        /// <summary>
+        /// For the given <paramref name="assemblyName"/> fetches the cached assembly 
+        /// </summary>
+        /// <param name="assemblyName"></param>
+        public Assembly GetCachedAssembly(string assemblyName)
+        {
+            if(CompilationCache.TryGetValue(assemblyName, out CompilationCache cacheItem))
+            {
+                return cacheItem.AssemblyCache;
+            }
+            return null;
         }
     }
 }

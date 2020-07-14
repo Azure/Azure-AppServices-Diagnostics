@@ -53,6 +53,7 @@ namespace Diagnostics.Tests.AzureStorageTests
             {
                 configuration["SourceWatcher:BlobContainerName"] = "detectors";
             }
+            configuration[$"SourceWatcher:WatcherType"] = "AzureStorage";
             storageService = new StorageService(configuration, environment);
             tableCacheService = new DiagEntityTableCacheService(storageService);
         }

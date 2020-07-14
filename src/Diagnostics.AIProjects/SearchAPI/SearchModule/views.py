@@ -105,7 +105,7 @@ def queryDetectorsMethod():
     original_query = txt_data
     if (len(original_query)>250):
         return ("Query length exceeded the maximum limit of 250", 400)
-    txt_data = " ".join(re.sub(specialChars, " ", txt_data).split())
+    txt_data = " ".join(txt_data.split()) # remove extra whitespaces
     if (not txt_data) or len(txt_data)<2:
         return ("Minimum query length is 2", 400)
     productid = getProductId(data)

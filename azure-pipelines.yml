@@ -5,7 +5,7 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
-- master2
+- main
 
 variables:
   solution: '**/*.sln'
@@ -13,6 +13,7 @@ variables:
   buildConfiguration: 'Release'
 
 jobs:
+  
 - job: 'IntegrationTests'
   pool:
     name: IntegrationTestPool  # name of the pool to run this job in
@@ -43,6 +44,13 @@ jobs:
     vmImage: 'windows-latest'
   
   steps:
+  - task: UseDotNet@2
+    displayName: 'Use .NET Core sdk step'
+    inputs:
+      packageType: sdk
+      version: 2.2.x
+      installationPath: $(Agent.ToolsDirectory)/dotnet
+
   - task: DotNetCoreCLI@2
     inputs:
       command: 'build'

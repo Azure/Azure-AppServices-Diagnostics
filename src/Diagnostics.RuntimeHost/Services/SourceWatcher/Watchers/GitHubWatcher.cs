@@ -21,7 +21,8 @@ using Microsoft.Extensions.Configuration;
 using System.Diagnostics;
 using System.Threading;
 using Diagnostics.DataProviders;
-using System.Security.Policy;
+using Newtonsoft.Json.Linq;
+using Kusto.Cloud.Platform.Utils;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -54,6 +55,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         private IDictionary<string, IGithubWorker> GithubWorkers { get; }
 
         /// <summary>
+        /// Latest Sha received from GitHub API
+        /// </summary>
+        private string LatestSha { get; set; } = string.Empty;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="GitHubWatcher" /> class.
         /// </summary>
         /// <param name="env">Hosting environment.</param>
@@ -70,17 +76,31 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
             #region Initialize Github Worker
 
+            // If AzureStorageWatcher is enabled, use GithubWatcher only for updating KustoMapping Cache
+
+            SourceWatcherType watcherType = Enum.Parse<SourceWatcherType>(configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]);
+
             // TODO: Register the github worker with destination path.
             var gistWorker = new GithubGistWorker(gistCache, _loadOnlyPublicDetectors);
             var detectorWorker = new GithubDetectorWorker(invokerCache, _loadOnlyPublicDetectors);
             var kustoMappingsWorker = new GithubKustoConfigurationWorker(kustoMappingsCache);
 
-            GithubWorkers = new Dictionary<string, IGithubWorker>
+            if(watcherType.Equals(SourceWatcherType.AzureStorage))
             {
-                { gistWorker.Name, gistWorker },
-                { detectorWorker.Name, detectorWorker },
-                { kustoMappingsWorker.Name, kustoMappingsWorker }
-            };
+                GithubWorkers = new Dictionary<string, IGithubWorker>
+                {
+                    { kustoMappingsWorker.Name, kustoMappingsWorker }
+                };
+            } else
+            {
+                GithubWorkers = new Dictionary<string, IGithubWorker>
+                {
+                    { gistWorker.Name, gistWorker },
+                    { detectorWorker.Name, detectorWorker },
+                    { kustoMappingsWorker.Name, kustoMappingsWorker }
+                };
+            }
+         
 
             #endregion Initialize Github Worker
 
@@ -153,7 +173,18 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 var destLastModifiedMarker = await FileHelper.GetFileContentAsync(destDirInfo.FullName, _lastModifiedMarkerName);
 
                 var response = await _githubClient.Get(_rootContentApiPath, etag: destLastModifiedMarker);
+
+                var githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
+
                 LogMessage($"Http call to repository root path completed. Status Code : {response.StatusCode.ToString()}");
+
+                if (response.StatusCode == HttpStatusCode.OK)
+                {
+                    LatestSha = await _githubClient.GetLatestSha();
+                    response = await _githubClient.GetTreeBySha(sha: LatestSha, etag: destLastModifiedMarker);
+                    LogMessage($"Http call to GetTree by Sha: {LatestSha} completed. Status Code : {response.StatusCode.ToString()}");
+                }
+
 
                 if (response.StatusCode >= HttpStatusCode.NotFound)
                 {
@@ -204,13 +235,19 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 }
 
                 LogMessage("Syncing local directories with github changes");
-                var githubRootContentETag = GetHeaderValue(response, HeaderConstants.EtagHeaderName).Replace("W/", string.Empty);
-                var githubDirectories = await response.Content.ReadAsAsyncCustom<GithubEntry[]>();
+                var rawGithubResponse = await response.Content.ReadAsStringAsync();
+                var githubTrees = JObject.Parse(rawGithubResponse);
+                var githubDirectories = githubTrees["tree"].ToObject<GithubEntry[]>();
+                LatestSha = (string)githubTrees["sha"];
+                githubDirectories.ForEach(githubDir =>
+                {
+                    githubDir.Name = githubDir.Name ?? githubDir.Path;
+                });
+
                 LogMessage($"Total number of directors returned by Github: {githubDirectories.Length}");
                 List<Task> downloadContentUpdateCacheAndModifiedMarkerTasks = new List<Task>();
                 foreach (var gitHubDir in githubDirectories)
                 {
-                    if (!gitHubDir.Type.Equals("dir", StringComparison.OrdinalIgnoreCase)) continue;
 
                     var subDir = new DirectoryInfo(Path.Combine(destDirInfo.FullName, gitHubDir.Name.ToLower()));
                     if (!subDir.Exists)
@@ -284,6 +321,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         {
             var searchModelFiles = new string[] { "model", "index", "dict", "npy" };
 
+            if(parentGithubEntry.Url.Contains("trees"))
+            {
+                parentGithubEntry.Url = _githubClient.GetContentUrl(parentGithubEntry.Name);
+            }
             var response = await _githubClient.Get(parentGithubEntry.Url);
             if (!response.IsSuccessStatusCode)
             {

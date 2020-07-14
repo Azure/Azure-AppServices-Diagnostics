@@ -59,17 +59,26 @@ namespace Diagnostics.RuntimeHost.Services
             supportTopicMappingTable = await dp.Kusto.ExecuteClusterQuery(GetSupportTopicKustoQuery(), requestIdGuid.ToString(), operationName: "PopulateSupportTopicCache");
             foreach(DataRow row in supportTopicMappingTable.Rows)
             {
-                _supportTopicCache[row["SupportTopicPath"].ToString()] = new SupportTopicModel(row);
+                _supportTopicCache[getSupportTopicCacheKey(row["SupportTopicPath"].ToString())] = new SupportTopicModel(row);
             }
+        }
+
+        private string getSupportTopicCacheKey(string supportTopicString)
+        {
+            if(string.IsNullOrWhiteSpace(supportTopicString))
+            {
+                return string.Empty;
+            }
+            return supportTopicString.Replace(@"\", string.Empty, StringComparison.OrdinalIgnoreCase);
         }
 
         public async Task<SupportTopicModel> GetSupportTopicFromString(string supportTopicString, DataProviderContext dataProviderContext)
         {
             SupportTopicModel result = null;
-            if (!_supportTopicCache.TryGetValue(supportTopicString, out result))
+            if (!_supportTopicCache.TryGetValue(getSupportTopicCacheKey(supportTopicString), out result))
             {
                 await PopulateSupportTopicCache(dataProviderContext);
-                _supportTopicCache.TryGetValue(supportTopicString, out result);
+                _supportTopicCache.TryGetValue(getSupportTopicCacheKey(supportTopicString), out result);
             }
             return result;
         }

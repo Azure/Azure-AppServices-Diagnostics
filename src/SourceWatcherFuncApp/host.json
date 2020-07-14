@@ -1,16 +1,17 @@
 {
-    "version": "2.0",
+  "version": "2.0",
   "logging": {
-      "fileLoggingMode": "debugOnly",
-        "logLevel": {
-          "Function": "Information",
-          "default": "Information"
-        },
+    "fileLoggingMode": "debugOnly",
+    "logLevel": {
+      "Function": "Information",
+      "default": "Information"
+    },
     "applicationInsights": {
       "samplingExcludedTypes": "Request",
       "samplingSettings": {
         "isEnabled": true
       }
     }
-  }
+  },
+  "functionTimeout": "01:00:00"
 }
