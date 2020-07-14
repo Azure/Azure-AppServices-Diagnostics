@@ -860,7 +860,7 @@
             "tenantId": "[subscription().tenantId]",
             "objectId": "[reference(resourceId(subscription().subscriptionId, resourceGroup().name, 'Microsoft.Web/sites', parameters('siteName')), '2018-02-01', 'Full').identity.principalId]",
             "permissions": {
-              "secrets": ["get"],
+              "secrets": ["get", "list"],
               "certificates": ["get", "list"]
             }
           }
