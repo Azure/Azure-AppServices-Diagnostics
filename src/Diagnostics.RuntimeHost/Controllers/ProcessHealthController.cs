@@ -37,7 +37,6 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok("Server is up and running.");
         }
 
-        [Authorize]
         [HttpGet("/dependencyCheck")]
         public async Task<IActionResult> DependencyCheck()
         {
