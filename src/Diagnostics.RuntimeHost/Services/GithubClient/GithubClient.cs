@@ -42,6 +42,8 @@ namespace Diagnostics.RuntimeHost.Services
         Task<HttpResponseMessage> GetTreeBySha(string sha, string etag = "");
 
         string GetContentUrl(string path);
+
+        Task<string> GetFileContent(string filepath);
     }
 
     public class GithubClient : IGithubClient
@@ -218,6 +220,21 @@ namespace Diagnostics.RuntimeHost.Services
         {
             return $"https://api.github.com/repos/{_userName}/{_repoName}/contents/{path}?ref={_branch}";
         }
+        
+        public async Task<string> GetFileContent(string filepath)
+        {
+            var downloadUrl = $"https://raw.githubusercontent.com/{_userName}/{_repoName}/{_branch}/{filepath}";
+            var response = await _httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Get, downloadUrl));
+            if(response.IsSuccessStatusCode)
+            {
+                var responsestring = await response.Content.ReadAsStringAsync();
+                return responsestring;
+            } else
+            {
+                return string.Empty;
+            }
+        }
+
         private void LoadConfigurations()
         {
             _userName = _config[$"SourceWatcher:Github:{RegistryConstants.GithubUserNameKey}"];

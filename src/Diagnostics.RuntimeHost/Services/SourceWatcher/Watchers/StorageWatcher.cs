@@ -181,7 +181,13 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     {
                         entityType = EntityType.Detector;
                     }
-                    EntityMetadata metaData = new EntityMetadata(string.Empty, entityType);
+
+                    var script = string.Empty;
+                    if(entity.PartitionKey.Equals("Gist"))
+                    {
+                        script = await gitHubClient.GetFileContent($"{entity.RowKey.ToLower()}/{entity.RowKey.ToLower()}.csx");
+                    }
+                    EntityMetadata metaData = new EntityMetadata(script, entityType);
                     var newInvoker = new EntityInvoker(metaData);
                     newInvoker.InitializeEntryPoint(temp);
 
