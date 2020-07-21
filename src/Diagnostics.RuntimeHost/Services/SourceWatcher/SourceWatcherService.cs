@@ -30,7 +30,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     _watcher = new GitHubWatcher(env, configuration, invokerCacheService, gistCacheService, kustoMappingsCacheService, githubClient);
                     break;
                 case SourceWatcherType.AzureStorage:
-                    _watcher = new StorageWatcher(env, configuration, storageService, invokerCacheService, gistCacheService);
+                    _watcher = new StorageWatcher(env, configuration, storageService, invokerCacheService, gistCacheService, kustoMappingsCacheService);
                     KustoMappingWatcher = new GitHubWatcher(env, configuration, invokerCacheService, gistCacheService, kustoMappingsCacheService, githubClient);
                     break;
                 default:

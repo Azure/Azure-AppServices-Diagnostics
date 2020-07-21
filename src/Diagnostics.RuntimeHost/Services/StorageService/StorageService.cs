@@ -14,6 +14,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Diagnostics.RuntimeHost.Models;
 
 namespace Diagnostics.RuntimeHost.Services.StorageService
 {
@@ -26,6 +27,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         Task<byte[]> GetBlobByName(string name);
 
         Task<int> ListBlobsInContainer();
+        Task<DiagConfiguration> LoadConfiguration(DiagConfiguration configuration);
+        Task<List<DiagConfiguration>> GetKustoConfiguration();
     }
     public class StorageService : IStorageService
     {
@@ -39,11 +42,13 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         private bool loadOnlyPublicDetectors;
         private bool isStorageEnabled;
         private CloudTable cloudTable;
+        private string configurationTable;
 
         public StorageService(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
             tableName = configuration["SourceWatcher:TableName"];
             container = configuration["SourceWatcher:BlobContainerName"];
+            configurationTable = configuration["SourceWatcher:DiagConfiguration"];
             if(hostingEnvironment != null && hostingEnvironment.EnvironmentName.Equals("UnitTest", StringComparison.CurrentCultureIgnoreCase))
             {
                 tableClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudTableClient();
@@ -203,6 +208,72 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             {
                 DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
                 throw ex;
+            }
+        }
+    
+        public async Task<DiagConfiguration> LoadConfiguration(DiagConfiguration configuration)
+        {
+            try
+            {
+                // Create a table client for interacting with the table service 
+                CloudTable table = tableClient.GetTableReference(configurationTable);
+                await table.CreateIfNotExistsAsync();
+                if(configuration == null || configuration.PartitionKey == null || configuration.RowKey == null )
+                {
+                    throw new ArgumentNullException(nameof(configuration));
+                }
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Insert or Replace {configuration.RowKey} into {configurationTable}");
+                var timeTakenStopWatch = new Stopwatch();
+                timeTakenStopWatch.Start();
+
+                // Create the InsertOrReplace table operation
+                TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(configuration);
+
+                // Execute the operation.
+                TableResult result = await table.ExecuteAsync(insertOrReplaceOperation);
+                timeTakenStopWatch.Stop();
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"InsertOrReplace result : {result.HttpStatusCode}, time taken {timeTakenStopWatch.ElapsedMilliseconds}");
+                DiagConfiguration insertedRow = result.Result as DiagConfiguration;
+                return insertedRow;
+            } catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
+                return null;
+            }
+
+        }
+   
+        public async Task<List<DiagConfiguration>> GetKustoConfiguration()
+        {
+            try
+            {
+                CloudTable cloudTable = tableClient.GetTableReference(configurationTable);
+                var timeTakenStopWatch = new Stopwatch();
+                var partitionkey = "KustoClusterMapping";
+                var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionkey);
+                var tableQuery = new TableQuery<DiagConfiguration>();
+                tableQuery.Where(filterPartitionKey);
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetConfiguration by parition key {partitionkey}");
+                TableContinuationToken tableContinuationToken = null;
+                var diagConfigurationsResult = new List<DiagConfiguration>();
+                timeTakenStopWatch.Start();
+                do
+                {
+                    // Execute the operation.
+                    var diagConfigurations = await cloudTable.ExecuteQuerySegmentedAsync(tableQuery, tableContinuationToken);
+                    tableContinuationToken = diagConfigurations.ContinuationToken;
+                    if (diagConfigurations.Results != null)
+                    {
+                        diagConfigurationsResult.AddRange(diagConfigurations.Results);
+                    }
+                } while (tableContinuationToken != null);
+                timeTakenStopWatch.Stop();
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetConfiguration by Parition key {partitionkey} took {timeTakenStopWatch.ElapsedMilliseconds}");
+                return diagConfigurationsResult;
+            } catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
+                return null;
             }
         }
     }

@@ -35,6 +35,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         private Dictionary<EntityType, ICache<string, EntityInvoker>> _invokerDictionary;
         private int _pollingIntervalInSeconds = 30;
         private DateTime cacheLastModifiedTime;
+        private IKustoMappingsCacheService kustoCacheService;
 
         private bool LoadOnlyPublicDetectors
         {
@@ -50,7 +51,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         }
           
 
-        public StorageWatcher(IHostingEnvironment env, IConfiguration config, IStorageService service, IInvokerCacheService invokerCache, IGistCacheService gistCache)
+        public StorageWatcher(IHostingEnvironment env, IConfiguration config, IStorageService service, IInvokerCacheService invokerCache, IGistCacheService gistCache, IKustoMappingsCacheService kustoCache)
         {
             storageService = service;
             hostingEnvironment = env;
@@ -62,6 +63,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 { EntityType.Signal, invokerCache},
                 { EntityType.Gist, gistCache}
             };
+            kustoCacheService = kustoCache;
             Start();
         }
 
@@ -93,6 +95,18 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             try
             {
                 await gitHubClient.CreateOrUpdateFiles(pkg.GetCommitContents(), pkg.GetCommitMessage());
+                if(pkg.GetCommitContents().Any(content => content.FilePath.Contains("kustoClusterMappings", StringComparison.CurrentCultureIgnoreCase)))
+                {
+                    var kustoMappingPackage = pkg.GetCommitContents().Where(c => c.FilePath.Contains("kustoClusterMappings", StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+                    var githubCommit = await gitHubClient.GetCommitByPath(kustoMappingPackage.FilePath);
+                    // store kusto cluster data
+                    var diagconfiguration = new DiagConfiguration{
+                        PartitionKey = "KustoClusterMapping",
+                        RowKey = kustoMappingPackage.FilePath.Split("/kustoClusterMapping.json")[0],
+                        GithubSha = githubCommit != null ? githubCommit.Commit.Tree.Sha : string.Empty,
+                        KustoClusterMapping = kustoMappingPackage.Content
+                    };
+                }
                 var blobName = $"{pkg.Id.ToLower()}/{pkg.Id.ToLower()}.dll";
                 var etag = await storageService.LoadBlobToContainer(blobName, pkg.DllBytes);
                 if (string.IsNullOrWhiteSpace(etag))
@@ -218,5 +232,16 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             
         }
 
+        private async Task StartKustoCacheRefresh(bool startup = false)
+        {
+            var diagConfigRows = await storageService.GetKustoConfiguration();
+            if(!startup)
+            {
+
+            } else
+            {
+
+            }
+        }
     }
 }
