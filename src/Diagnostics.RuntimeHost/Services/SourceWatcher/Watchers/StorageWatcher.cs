@@ -53,7 +53,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         }
           
 
-        public StorageWatcher(IHostingEnvironment env, IConfiguration config, IStorageService service, IInvokerCacheService invokerCache, IGistCacheService gistCache, IKustoMappingsCacheService kustoCache)
+        public StorageWatcher(IHostingEnvironment env, IConfiguration config, IStorageService service, IInvokerCacheService invokerCache, IGistCacheService gistCache, IKustoMappingsCacheService kustoMappingsCache)
         {
             storageService = service;
             hostingEnvironment = env;
@@ -65,7 +65,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 { EntityType.Signal, invokerCache},
                 { EntityType.Gist, gistCache}
             };
-            kustoCacheService = kustoCache;
+            kustoCacheService = kustoMappingsCache;
             Start();
         }
 
@@ -105,7 +105,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     // store kusto cluster data
                     var diagconfiguration = new DiagConfiguration{
                         PartitionKey = "KustoClusterMapping",
-                        RowKey = kustoMappingPackage.FilePath.Split("/kustoClusterMappings.json")[0],
+                        RowKey = pkg.Id.ToLower(),
                         GithubSha = githubCommit != null ? githubCommit.Commit.Tree.Sha : string.Empty,
                         KustoClusterMapping = kustoMappingPackage.Content
                     };
@@ -275,10 +275,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     var kustoMappingsStringContent = config.KustoClusterMapping;
                     var kustoMappings = (List<Dictionary<string, string>>)JsonConvert.DeserializeObject(kustoMappingsStringContent, typeof(List<Dictionary<string, string>>));
                     var resourceProvider = config.RowKey;
-                    if (!kustoCacheService.ContainsKey(resourceProvider) || (kustoCacheService.TryGetValue(resourceProvider, out List<Dictionary<string, string>> value) && !value.Equals(kustoMappings)))
-                    {
-                        kustoCacheService.AddOrUpdate(resourceProvider, kustoMappings);
-                    }
+                    kustoCacheService.AddOrUpdate(resourceProvider, kustoMappings);              
                 }
             } 
             catch (Exception ex)
