@@ -21,11 +21,16 @@ namespace Diagnostics.ModelsAndUtils.Models.Storage
         /// <summary>
         /// Kusto Cluster Mapping 
         /// </summary>
-        public string KustoClusterMapping;
+        public string KustoClusterMapping { get; set; } = string.Empty;
 
         /// <summary>
         /// Github Sha of the json file
         /// </summary>
-        public string GithubSha;
+        public string GithubSha { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Flag to indicate if config is disabled
+        /// </summary>
+        public bool IsDisabled { get; set; } = false;
     }
 }

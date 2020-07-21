@@ -248,6 +248,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             try
             {
                 CloudTable cloudTable = tableClient.GetTableReference(configurationTable);
+                await cloudTable.CreateIfNotExistsAsync();
                 var timeTakenStopWatch = new Stopwatch();
                 var partitionkey = "KustoClusterMapping";
                 var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionkey);
@@ -269,7 +270,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 } while (tableContinuationToken != null);
                 timeTakenStopWatch.Stop();
                 DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetConfiguration by Parition key {partitionkey} took {timeTakenStopWatch.ElapsedMilliseconds}");
-                return diagConfigurationsResult;
+                return diagConfigurationsResult.Where(row => !row.IsDisabled).ToList();
             } catch (Exception ex)
             {
                 DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());

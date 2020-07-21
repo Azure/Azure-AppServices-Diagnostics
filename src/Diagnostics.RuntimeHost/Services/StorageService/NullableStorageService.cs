@@ -37,5 +37,15 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         {
             return 0;
         }
+
+        public Task<DiagConfiguration> LoadConfiguration(DiagConfiguration configuration)
+        {
+            return Task.FromResult(new DiagConfiguration());
+        }
+
+        public Task<List<DiagConfiguration>> GetKustoConfiguration()
+        {
+            return Task.FromResult(new List<DiagConfiguration>());
+        }
     }
 }

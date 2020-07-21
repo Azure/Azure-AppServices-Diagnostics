@@ -34,8 +34,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
 
         private Dictionary<EntityType, ICache<string, EntityInvoker>> _invokerDictionary;
         private int _pollingIntervalInSeconds = 30;
-        private DateTime cacheLastModifiedTime;
+        private DateTime blobCacheLastModifiedTime;
         private IKustoMappingsCacheService kustoCacheService;
+        private DateTime kustoCacheLastModifiedTime;
+        private Task kustoConfigDownloadTask;
 
         private bool LoadOnlyPublicDetectors
         {
@@ -95,6 +97,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             try
             {
                 await gitHubClient.CreateOrUpdateFiles(pkg.GetCommitContents(), pkg.GetCommitMessage());
+                // Insert Kusto Cluster Mapping to Configuration table.
                 if(pkg.GetCommitContents().Any(content => content.FilePath.Contains("kustoClusterMappings", StringComparison.CurrentCultureIgnoreCase)))
                 {
                     var kustoMappingPackage = pkg.GetCommitContents().Where(c => c.FilePath.Contains("kustoClusterMappings", StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
@@ -102,10 +105,12 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     // store kusto cluster data
                     var diagconfiguration = new DiagConfiguration{
                         PartitionKey = "KustoClusterMapping",
-                        RowKey = kustoMappingPackage.FilePath.Split("/kustoClusterMapping.json")[0],
+                        RowKey = kustoMappingPackage.FilePath.Split("/kustoClusterMappings.json")[0],
                         GithubSha = githubCommit != null ? githubCommit.Commit.Tree.Sha : string.Empty,
                         KustoClusterMapping = kustoMappingPackage.Content
                     };
+                    var insertedDiagConfig = await storageService.LoadConfiguration(diagconfiguration);
+                    return;
                 }
                 var blobName = $"{pkg.Id.ToLower()}/{pkg.Id.ToLower()}.dll";
                 var etag = await storageService.LoadBlobToContainer(blobName, pkg.DllBytes);
@@ -136,18 +141,32 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         public void Start()
         {
             blobDowloadTask = StartBlobDownload(true);
-            StartPollingForChanges();
+            kustoConfigDownloadTask = StartKustoCacheRefresh(true);
+            StartPollingBlobChanges();
+            StartPollingKustoConfigChanges();
         }
 
-        private async Task StartPollingForChanges()
+        private async Task StartPollingBlobChanges()
         {
             await blobDowloadTask;
-            cacheLastModifiedTime = DateTime.UtcNow;
+            blobCacheLastModifiedTime = DateTime.UtcNow;
             do
             {
                 await Task.Delay(_pollingIntervalInSeconds * 1000);
                 await StartBlobDownload(false);
-                cacheLastModifiedTime = DateTime.UtcNow;
+                blobCacheLastModifiedTime = DateTime.UtcNow;
+            } while (true);
+        }
+
+        private async Task StartPollingKustoConfigChanges()
+        {
+            await kustoConfigDownloadTask;
+            kustoCacheLastModifiedTime = DateTime.UtcNow;
+            do
+            {
+                await Task.Delay(_pollingIntervalInSeconds * 1000);
+                await StartKustoCacheRefresh(false);
+                kustoCacheLastModifiedTime = DateTime.UtcNow;
             } while (true);
         }
 
@@ -160,8 +179,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
             if(!startup)
             {
-                entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= cacheLastModifiedTime).ToList());
-                entitiesToLoad.AddRange(gists.Where(s => s.Timestamp >= cacheLastModifiedTime).ToList());
+                entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= blobCacheLastModifiedTime).ToList());
+                entitiesToLoad.AddRange(gists.Where(s => s.Timestamp >= blobCacheLastModifiedTime).ToList());
             } else
             {
                 entitiesToLoad.AddRange(filteredDetectors.ToList());
@@ -218,7 +237,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             } 
             catch (Exception ex)
             {
-                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageWatcher), $"Exception occurred while trying to update cache {ex.Message} ", ex.GetType().ToString(), ex.ToString());
+                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageWatcher), $"Exception occurred while trying to update invoker cache {ex.Message} ", ex.GetType().ToString(), ex.ToString());
             } 
             finally
             {
@@ -235,12 +254,43 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         private async Task StartKustoCacheRefresh(bool startup = false)
         {
             var diagConfigRows = await storageService.GetKustoConfiguration();
+            var configsToLoad = new List<DiagConfiguration>();
             if(!startup)
             {
-
+                configsToLoad.AddRange(diagConfigRows.Where(row => row.Timestamp >= kustoCacheLastModifiedTime).ToList());
             } else
             {
-
+                configsToLoad.AddRange(diagConfigRows);
+            }
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            try
+            {
+                if (configsToLoad.Count > 0)
+                {
+                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Starting kusto config download to update cache, Number of configs to load: {configsToLoad.Count}, startup : {startup.ToString()} at {DateTime.UtcNow}");
+                }
+                foreach(var config in configsToLoad)
+                {
+                    var kustoMappingsStringContent = config.KustoClusterMapping;
+                    var kustoMappings = (List<Dictionary<string, string>>)JsonConvert.DeserializeObject(kustoMappingsStringContent, typeof(List<Dictionary<string, string>>));
+                    var resourceProvider = config.RowKey;
+                    if (!kustoCacheService.ContainsKey(resourceProvider) || (kustoCacheService.TryGetValue(resourceProvider, out List<Dictionary<string, string>> value) && !value.Equals(kustoMappings)))
+                    {
+                        kustoCacheService.AddOrUpdate(resourceProvider, kustoMappings);
+                    }
+                }
+            } 
+            catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageWatcher), $"Exception occurred while trying to update kusto cache {ex.Message} ", ex.GetType().ToString(), ex.ToString());
+            } finally
+            {
+                stopwatch.Stop();
+                if (configsToLoad.Count > 0)
+                {
+                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Kusto config download complete, Number of configs {configsToLoad.Count}, startup : {startup.ToString()} time ellapsed {stopwatch.ElapsedMilliseconds} millisecs");
+                }
             }
         }
     }
