@@ -38,14 +38,14 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             return 0;
         }
 
-        public Task<DiagConfiguration> LoadConfiguration(DiagConfiguration configuration)
+        public Task<DetectorRuntimeConfiguration> LoadConfiguration(DetectorRuntimeConfiguration configuration)
         {
-            return Task.FromResult(new DiagConfiguration());
+            return Task.FromResult(new DetectorRuntimeConfiguration());
         }
 
-        public Task<List<DiagConfiguration>> GetKustoConfiguration()
+        public Task<List<DetectorRuntimeConfiguration>> GetKustoConfiguration()
         {
-            return Task.FromResult(new List<DiagConfiguration>());
+            return Task.FromResult(new List<DetectorRuntimeConfiguration>());
         }
     }
 }

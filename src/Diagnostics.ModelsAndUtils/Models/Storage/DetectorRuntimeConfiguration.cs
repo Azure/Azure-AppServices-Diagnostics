@@ -5,14 +5,14 @@ using Microsoft.WindowsAzure.Storage.Table;
 
 namespace Diagnostics.ModelsAndUtils.Models.Storage
 {
-    public class DiagConfiguration: TableEntity
+    public class DetectorRuntimeConfiguration: TableEntity
     {
-        public DiagConfiguration()
+        public DetectorRuntimeConfiguration()
         {
 
         }
 
-        public DiagConfiguration(string entityType, string resourceProvider)
+        public DetectorRuntimeConfiguration(string entityType, string resourceProvider)
         {
             PartitionKey = entityType;
             RowKey = resourceProvider;

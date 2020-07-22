@@ -27,8 +27,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         Task<byte[]> GetBlobByName(string name);
 
         Task<int> ListBlobsInContainer();
-        Task<DiagConfiguration> LoadConfiguration(DiagConfiguration configuration);
-        Task<List<DiagConfiguration>> GetKustoConfiguration();
+        Task<DetectorRuntimeConfiguration> LoadConfiguration(DetectorRuntimeConfiguration configuration);
+        Task<List<DetectorRuntimeConfiguration>> GetKustoConfiguration();
     }
     public class StorageService : IStorageService
     {
@@ -85,7 +85,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionKey);
                 var tableQuery = new TableQuery<DiagEntity>();
                 tableQuery.Where(filterPartitionKey);
-                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by parition key {partitionKey}");
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by partition key {partitionKey}");
                 TableContinuationToken tableContinuationToken = null;
                 var detectorsResult = new List<DiagEntity>();
                 timeTakenStopWatch.Start();
@@ -100,7 +100,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     }
                 } while (tableContinuationToken != null);
                 timeTakenStopWatch.Stop();
-                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by Parition key {partitionKey} took {timeTakenStopWatch.ElapsedMilliseconds}");
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by Partition key {partitionKey} took {timeTakenStopWatch.ElapsedMilliseconds}");
                 return detectorsResult.Where(result => !result.IsDisabled).ToList();
             }
             catch (Exception ex)
@@ -211,7 +211,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             }
         }
     
-        public async Task<DiagConfiguration> LoadConfiguration(DiagConfiguration configuration)
+        public async Task<DetectorRuntimeConfiguration> LoadConfiguration(DetectorRuntimeConfiguration configuration)
         {
             try
             {
@@ -233,7 +233,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 TableResult result = await table.ExecuteAsync(insertOrReplaceOperation);
                 timeTakenStopWatch.Stop();
                 DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"InsertOrReplace result : {result.HttpStatusCode}, time taken {timeTakenStopWatch.ElapsedMilliseconds}");
-                DiagConfiguration insertedRow = result.Result as DiagConfiguration;
+                DetectorRuntimeConfiguration insertedRow = result.Result as DetectorRuntimeConfiguration;
                 return insertedRow;
             } catch (Exception ex)
             {
@@ -243,7 +243,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
 
         }
    
-        public async Task<List<DiagConfiguration>> GetKustoConfiguration()
+        public async Task<List<DetectorRuntimeConfiguration>> GetKustoConfiguration()
         {
             try
             {
@@ -252,11 +252,11 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 var timeTakenStopWatch = new Stopwatch();
                 var partitionkey = "KustoClusterMapping";
                 var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionkey);
-                var tableQuery = new TableQuery<DiagConfiguration>();
+                var tableQuery = new TableQuery<DetectorRuntimeConfiguration>();
                 tableQuery.Where(filterPartitionKey);
-                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetConfiguration by parition key {partitionkey}");
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetConfiguration by partition key {partitionkey}");
                 TableContinuationToken tableContinuationToken = null;
-                var diagConfigurationsResult = new List<DiagConfiguration>();
+                var diagConfigurationsResult = new List<DetectorRuntimeConfiguration>();
                 timeTakenStopWatch.Start();
                 do
                 {
@@ -269,7 +269,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     }
                 } while (tableContinuationToken != null);
                 timeTakenStopWatch.Stop();
-                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetConfiguration by Parition key {partitionkey} took {timeTakenStopWatch.ElapsedMilliseconds}");
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetConfiguration by Partition key {partitionkey} took {timeTakenStopWatch.ElapsedMilliseconds}");
                 return diagConfigurationsResult.Where(row => !row.IsDisabled).ToList();
             } catch (Exception ex)
             {

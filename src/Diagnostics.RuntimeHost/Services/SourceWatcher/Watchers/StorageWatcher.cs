@@ -35,8 +35,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         private Dictionary<EntityType, ICache<string, EntityInvoker>> _invokerDictionary;
         private int _pollingIntervalInSeconds = 30;
         private DateTime blobCacheLastModifiedTime;
-        private IKustoMappingsCacheService kustoCacheService;
-        private DateTime kustoCacheLastModifiedTime;
+        private IKustoMappingsCacheService kustoMappingsCacheService;
+        private DateTime kustoMappingsCacheLastModified;
         private Task kustoConfigDownloadTask;
 
         private bool LoadOnlyPublicDetectors
@@ -65,7 +65,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 { EntityType.Signal, invokerCache},
                 { EntityType.Gist, gistCache}
             };
-            kustoCacheService = kustoMappingsCache;
+            kustoMappingsCacheService = kustoMappingsCache;
             Start();
         }
 
@@ -103,7 +103,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     var kustoMappingPackage = pkg.GetCommitContents().Where(c => c.FilePath.Contains("kustoClusterMappings", StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
                     var githubCommit = await gitHubClient.GetCommitByPath(kustoMappingPackage.FilePath);
                     // store kusto cluster data
-                    var diagconfiguration = new DiagConfiguration{
+                    var diagconfiguration = new DetectorRuntimeConfiguration{
                         PartitionKey = "KustoClusterMapping",
                         RowKey = pkg.Id.ToLower(),
                         GithubSha = githubCommit != null ? githubCommit.Commit.Tree.Sha : string.Empty,
@@ -141,7 +141,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         public void Start()
         {
             blobDowloadTask = StartBlobDownload(true);
-            kustoConfigDownloadTask = StartKustoCacheRefresh(true);
+            kustoConfigDownloadTask = StartKustoMappingsRefresh(true);
             StartPollingBlobChanges();
             StartPollingKustoConfigChanges();
         }
@@ -161,12 +161,12 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         private async Task StartPollingKustoConfigChanges()
         {
             await kustoConfigDownloadTask;
-            kustoCacheLastModifiedTime = DateTime.UtcNow;
+            kustoMappingsCacheLastModified = DateTime.UtcNow;
             do
             {
                 await Task.Delay(_pollingIntervalInSeconds * 1000);
-                await StartKustoCacheRefresh(false);
-                kustoCacheLastModifiedTime = DateTime.UtcNow;
+                await StartKustoMappingsRefresh(false);
+                kustoMappingsCacheLastModified = DateTime.UtcNow;
             } while (true);
         }
 
@@ -251,13 +251,13 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             
         }
 
-        private async Task StartKustoCacheRefresh(bool startup = false)
+        private async Task StartKustoMappingsRefresh(bool startup = false)
         {
             var diagConfigRows = await storageService.GetKustoConfiguration();
-            var configsToLoad = new List<DiagConfiguration>();
+            var configsToLoad = new List<DetectorRuntimeConfiguration>();
             if(!startup)
             {
-                configsToLoad.AddRange(diagConfigRows.Where(row => row.Timestamp >= kustoCacheLastModifiedTime).ToList());
+                configsToLoad.AddRange(diagConfigRows.Where(row => row.Timestamp >= kustoMappingsCacheLastModified).ToList());
             } else
             {
                 configsToLoad.AddRange(diagConfigRows);
@@ -275,7 +275,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     var kustoMappingsStringContent = config.KustoClusterMapping;
                     var kustoMappings = (List<Dictionary<string, string>>)JsonConvert.DeserializeObject(kustoMappingsStringContent, typeof(List<Dictionary<string, string>>));
                     var resourceProvider = config.RowKey;
-                    kustoCacheService.AddOrUpdate(resourceProvider, kustoMappings);              
+                    kustoMappingsCacheService.AddOrUpdate(resourceProvider, kustoMappings);              
                 }
             } 
             catch (Exception ex)
