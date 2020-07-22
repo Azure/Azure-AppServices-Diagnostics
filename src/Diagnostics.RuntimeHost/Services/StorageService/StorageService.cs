@@ -42,13 +42,13 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         private bool loadOnlyPublicDetectors;
         private bool isStorageEnabled;
         private CloudTable cloudTable;
-        private string configurationTable;
+        private string detectorRuntimeConfigTable;
 
         public StorageService(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
             tableName = configuration["SourceWatcher:TableName"];
             container = configuration["SourceWatcher:BlobContainerName"];
-            configurationTable = configuration["SourceWatcher:DiagConfiguration"];
+            detectorRuntimeConfigTable = configuration["SourceWatcher:DetectorRuntimeConfigTable"];
             if(hostingEnvironment != null && hostingEnvironment.EnvironmentName.Equals("UnitTest", StringComparison.CurrentCultureIgnoreCase))
             {
                 tableClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudTableClient();
@@ -216,13 +216,13 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             try
             {
                 // Create a table client for interacting with the table service 
-                CloudTable table = tableClient.GetTableReference(configurationTable);
+                CloudTable table = tableClient.GetTableReference(detectorRuntimeConfigTable);
                 await table.CreateIfNotExistsAsync();
                 if(configuration == null || configuration.PartitionKey == null || configuration.RowKey == null )
                 {
                     throw new ArgumentNullException(nameof(configuration));
                 }
-                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Insert or Replace {configuration.RowKey} into {configurationTable}");
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Insert or Replace {configuration.RowKey} into {detectorRuntimeConfigTable}");
                 var timeTakenStopWatch = new Stopwatch();
                 timeTakenStopWatch.Start();
 
@@ -247,7 +247,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         {
             try
             {
-                CloudTable cloudTable = tableClient.GetTableReference(configurationTable);
+                CloudTable cloudTable = tableClient.GetTableReference(detectorRuntimeConfigTable);
                 await cloudTable.CreateIfNotExistsAsync();
                 var timeTakenStopWatch = new Stopwatch();
                 var partitionkey = "KustoClusterMapping";
