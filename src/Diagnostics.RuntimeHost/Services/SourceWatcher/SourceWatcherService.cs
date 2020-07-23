@@ -30,8 +30,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     _watcher = new GitHubWatcher(env, configuration, invokerCacheService, gistCacheService, kustoMappingsCacheService, githubClient);
                     break;
                 case SourceWatcherType.AzureStorage:
-                    _watcher = new StorageWatcher(env, configuration, storageService, invokerCacheService, gistCacheService);
-                    KustoMappingWatcher = new GitHubWatcher(env, configuration, invokerCacheService, gistCacheService, kustoMappingsCacheService, githubClient);
+                    _watcher = new StorageWatcher(env, configuration, storageService, invokerCacheService, gistCacheService, kustoMappingsCacheService);
                     break;
                 default:
                     throw new NotSupportedException("Source Watcher Type not supported");

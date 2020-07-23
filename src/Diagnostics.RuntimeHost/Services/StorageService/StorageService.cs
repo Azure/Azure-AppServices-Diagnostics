@@ -14,6 +14,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Diagnostics.RuntimeHost.Models;
 
 namespace Diagnostics.RuntimeHost.Services.StorageService
 {
@@ -26,6 +27,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         Task<byte[]> GetBlobByName(string name);
 
         Task<int> ListBlobsInContainer();
+        Task<DetectorRuntimeConfiguration> LoadConfiguration(DetectorRuntimeConfiguration configuration);
+        Task<List<DetectorRuntimeConfiguration>> GetKustoConfiguration();
     }
     public class StorageService : IStorageService
     {
@@ -39,11 +42,13 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         private bool loadOnlyPublicDetectors;
         private bool isStorageEnabled;
         private CloudTable cloudTable;
+        private string detectorRuntimeConfigTable;
 
         public StorageService(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
             tableName = configuration["SourceWatcher:TableName"];
             container = configuration["SourceWatcher:BlobContainerName"];
+            detectorRuntimeConfigTable = configuration["SourceWatcher:DetectorRuntimeConfigTable"];
             if(hostingEnvironment != null && hostingEnvironment.EnvironmentName.Equals("UnitTest", StringComparison.CurrentCultureIgnoreCase))
             {
                 tableClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudTableClient();
@@ -80,7 +85,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionKey);
                 var tableQuery = new TableQuery<DiagEntity>();
                 tableQuery.Where(filterPartitionKey);
-                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by parition key {partitionKey}");
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by partition key {partitionKey}");
                 TableContinuationToken tableContinuationToken = null;
                 var detectorsResult = new List<DiagEntity>();
                 timeTakenStopWatch.Start();
@@ -95,7 +100,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     }
                 } while (tableContinuationToken != null);
                 timeTakenStopWatch.Stop();
-                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by Parition key {partitionKey} took {timeTakenStopWatch.ElapsedMilliseconds}");
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by Partition key {partitionKey} took {timeTakenStopWatch.ElapsedMilliseconds}");
                 return detectorsResult.Where(result => !result.IsDisabled).ToList();
             }
             catch (Exception ex)
@@ -203,6 +208,73 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             {
                 DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
                 throw ex;
+            }
+        }
+    
+        public async Task<DetectorRuntimeConfiguration> LoadConfiguration(DetectorRuntimeConfiguration configuration)
+        {
+            try
+            {
+                // Create a table client for interacting with the table service 
+                CloudTable table = tableClient.GetTableReference(detectorRuntimeConfigTable);
+                await table.CreateIfNotExistsAsync();
+                if(configuration == null || configuration.PartitionKey == null || configuration.RowKey == null )
+                {
+                    throw new ArgumentNullException(nameof(configuration));
+                }
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Insert or Replace {configuration.RowKey} into {detectorRuntimeConfigTable}");
+                var timeTakenStopWatch = new Stopwatch();
+                timeTakenStopWatch.Start();
+
+                // Create the InsertOrReplace table operation
+                TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(configuration);
+
+                // Execute the operation.
+                TableResult result = await table.ExecuteAsync(insertOrReplaceOperation);
+                timeTakenStopWatch.Stop();
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"InsertOrReplace result : {result.HttpStatusCode}, time taken {timeTakenStopWatch.ElapsedMilliseconds}");
+                DetectorRuntimeConfiguration insertedRow = result.Result as DetectorRuntimeConfiguration;
+                return insertedRow;
+            } catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
+                return null;
+            }
+
+        }
+   
+        public async Task<List<DetectorRuntimeConfiguration>> GetKustoConfiguration()
+        {
+            try
+            {
+                CloudTable cloudTable = tableClient.GetTableReference(detectorRuntimeConfigTable);
+                await cloudTable.CreateIfNotExistsAsync();
+                var timeTakenStopWatch = new Stopwatch();
+                var partitionkey = "KustoClusterMapping";
+                var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionkey);
+                var tableQuery = new TableQuery<DetectorRuntimeConfiguration>();
+                tableQuery.Where(filterPartitionKey);
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetConfiguration by partition key {partitionkey}");
+                TableContinuationToken tableContinuationToken = null;
+                var diagConfigurationsResult = new List<DetectorRuntimeConfiguration>();
+                timeTakenStopWatch.Start();
+                do
+                {
+                    // Execute the operation.
+                    var diagConfigurations = await cloudTable.ExecuteQuerySegmentedAsync(tableQuery, tableContinuationToken);
+                    tableContinuationToken = diagConfigurations.ContinuationToken;
+                    if (diagConfigurations.Results != null)
+                    {
+                        diagConfigurationsResult.AddRange(diagConfigurations.Results);
+                    }
+                } while (tableContinuationToken != null);
+                timeTakenStopWatch.Stop();
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetConfiguration by Partition key {partitionkey} took {timeTakenStopWatch.ElapsedMilliseconds}");
+                return diagConfigurationsResult.Where(row => !row.IsDisabled).ToList();
+            } catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
+                return null;
             }
         }
     }
