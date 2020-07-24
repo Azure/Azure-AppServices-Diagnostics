@@ -174,7 +174,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         private async Task StartBlobDownload(bool startup = false)
         {
             var detectorsList = await storageService.GetEntitiesByPartitionkey("Detector");
-            var gists = await storageService.GetEntitiesByPartitionkey("Gist");
+            var gists = !LoadOnlyPublicDetectors ? await storageService.GetEntitiesByPartitionkey("Gist") : new List<DiagEntity>();
             var entitiesToLoad = new List<DiagEntity>();
             var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
             if(!startup)
