@@ -1,4 +1,5 @@
-﻿using Diagnostics.ModelsAndUtils.Attributes;
+﻿using System;
+using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models.Storage;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 
@@ -86,7 +87,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             {
                 return false;
             }
-            return diagEntity.ResourceProvider == this.Provider && diagEntity.ResourceType == this.ResourceTypeName;
+            return diagEntity.ResourceProvider.Equals(this.Provider, StringComparison.CurrentCultureIgnoreCase) && diagEntity.ResourceType.Equals(this.ResourceTypeName, StringComparison.CurrentCultureIgnoreCase);
         }
     }
 }

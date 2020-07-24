@@ -69,7 +69,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._kustoMappingCacheService = (IKustoMappingsCacheService)services.GetService(typeof(IKustoMappingsCacheService));
             this._loggerProvider = (IRuntimeLoggerProvider)services.GetService(typeof(IRuntimeLoggerProvider));
             tableCacheService = (IDiagEntityTableCacheService)services.GetService(typeof(IDiagEntityTableCacheService));
-            storageWatcher = ((StorageWatcher)services.GetService(typeof(ISourceWatcher)));
+            var sourcewatchertype = _sourceWatcherService.Watcher.GetType();
+            if (sourcewatchertype != typeof(StorageWatcher))
+            {
+                storageWatcher = ((StorageWatcher)services.GetService(typeof(ISourceWatcher)));
+            }
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
         }
@@ -714,6 +718,10 @@ namespace Diagnostics.RuntimeHost.Controllers
             if (tableCacheService.IsStorageAsSourceEnabled())
             {
                 var allDetectorsFromStorage = await tableCacheService.GetEntityListByType<TResource>(context);
+                if(allDetectorsFromStorage.Count == 0)
+                {
+                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"No detectors were returned from table cache service for {context.OperationContext.Resource.ResourceUri}");
+                }
                 if (searchResults != null)
                 {
                     // Return those detectors that have positive search score and present in searchResult.
