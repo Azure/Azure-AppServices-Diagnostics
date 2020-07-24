@@ -226,7 +226,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
 
                     if (_invokerDictionary.TryGetValue(entityType, out ICache<string, EntityInvoker> cache) && newInvoker.EntryPointDefinitionAttribute != null)
                     {
-                        DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Updating cache with new invoker with id : {newInvoker.EntryPointDefinitionAttribute.Id}");
+                        DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Updating cache with new invoker with id : {newInvoker.EntryPointDefinitionAttribute.Id} {entity.PartitionKey}");
                         cache.AddOrUpdate(newInvoker.EntryPointDefinitionAttribute.Id, newInvoker);
                     }
                     else
@@ -275,6 +275,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     var kustoMappingsStringContent = config.KustoClusterMapping;
                     var kustoMappings = (List<Dictionary<string, string>>)JsonConvert.DeserializeObject(kustoMappingsStringContent, typeof(List<Dictionary<string, string>>));
                     var resourceProvider = config.RowKey;
+                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Adding {resourceProvider} to kustoMapping cache");
                     kustoMappingsCacheService.AddOrUpdate(resourceProvider, kustoMappings);              
                 }
             } 
