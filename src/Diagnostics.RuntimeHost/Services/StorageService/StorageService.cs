@@ -15,6 +15,7 @@ using System.IO;
 using System.Linq;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Models;
+using System.Net;
 
 namespace Diagnostics.RuntimeHost.Services.StorageService
 {
@@ -43,6 +44,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         private bool isStorageEnabled;
         private CloudTable cloudTable;
         private string detectorRuntimeConfigTable;
+        private bool isSecondaryAccount = false;
 
         public StorageService(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
@@ -57,11 +59,20 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             {
                 var accountname = configuration["SourceWatcher:DiagStorageAccount"];
                 var key = configuration["SourceWatcher:DiagStorageKey"];
-                var storageAccount = new CloudStorageAccount(new StorageCredentials(accountname, key), accountname, "core.windows.net", true);
+                var dnsSuffix = configuration["SourceWatcher:StorageDnsSuffix"];
+                if(string.IsNullOrWhiteSpace(dnsSuffix))
+                {
+                    dnsSuffix = "core.windows.net";
+                }
+                var storageAccount = new CloudStorageAccount(new StorageCredentials(accountname, key), accountname, dnsSuffix, true);        
                 tableClient = storageAccount.CreateCloudTableClient();
                 containerClient = storageAccount.CreateCloudBlobClient().GetContainerReference(container);
-            }
-         
+                if(accountname.Contains("-secondary", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    isSecondaryAccount = true;
+                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService),$"Connected to secondary storage account {accountname}");
+                }
+            }            
             if (!bool.TryParse((configuration[$"SourceWatcher:{RegistryConstants.LoadOnlyPublicDetectorsKey}"]), out loadOnlyPublicDetectors))
             {
                 loadOnlyPublicDetectors = false;
@@ -79,7 +90,10 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             try
             {
                 CloudTable table = tableClient.GetTableReference(tableName);
-                await table.CreateIfNotExistsAsync();
+                if(!isSecondaryAccount)
+                {
+                    await table.CreateIfNotExistsAsync();
+                }
                 var timeTakenStopWatch = new Stopwatch();             
                 partitionKey = partitionKey == null ? "Detector" : partitionKey;
                 var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionKey);
@@ -121,7 +135,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             {
                 // Create a table client for interacting with the table service 
                 CloudTable table = tableClient.GetTableReference(tableName);
-                await table.CreateIfNotExistsAsync();
+                await table.CreateIfNotExistsAsync();             
                 if (detectorEntity == null || detectorEntity.PartitionKey == null || detectorEntity.RowKey == null)
                 {
                     throw new ArgumentNullException(nameof(detectorEntity));
@@ -177,7 +191,10 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             try
             {
                 var timeTakenStopWatch = new Stopwatch();
-                await containerClient.CreateIfNotExistsAsync();
+                if(!isSecondaryAccount)
+                {
+                    await containerClient.CreateIfNotExistsAsync();
+                }
                 timeTakenStopWatch.Start();
                 var cloudBlob = containerClient.GetBlockBlobReference(name);
                 using (MemoryStream ms = new MemoryStream())
@@ -248,7 +265,10 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             try
             {
                 CloudTable cloudTable = tableClient.GetTableReference(detectorRuntimeConfigTable);
-                await cloudTable.CreateIfNotExistsAsync();
+                if(!isSecondaryAccount)
+                {
+                    await cloudTable.CreateIfNotExistsAsync();
+                }
                 var timeTakenStopWatch = new Stopwatch();
                 var partitionkey = "KustoClusterMapping";
                 var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionkey);
