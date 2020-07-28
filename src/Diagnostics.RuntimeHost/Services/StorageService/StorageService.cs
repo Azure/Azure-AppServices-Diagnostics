@@ -15,6 +15,7 @@ using System.IO;
 using System.Linq;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Models;
+using System.Net;
 
 namespace Diagnostics.RuntimeHost.Services.StorageService
 {
@@ -58,7 +59,12 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             {
                 var accountname = configuration["SourceWatcher:DiagStorageAccount"];
                 var key = configuration["SourceWatcher:DiagStorageKey"];
-                var storageAccount = new CloudStorageAccount(new StorageCredentials(accountname, key), accountname, "core.windows.net", true);        
+                var dnsSuffix = configuration["SourceWatcher:StorageDnsSuffix"];
+                if(string.IsNullOrWhiteSpace(dnsSuffix))
+                {
+                    dnsSuffix = "core.windows.net";
+                }
+                var storageAccount = new CloudStorageAccount(new StorageCredentials(accountname, key), accountname, dnsSuffix, true);        
                 tableClient = storageAccount.CreateCloudTableClient();
                 containerClient = storageAccount.CreateCloudBlobClient().GetContainerReference(container);
                 if(accountname.Contains("-secondary", StringComparison.CurrentCultureIgnoreCase))
