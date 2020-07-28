@@ -61,6 +61,11 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(DataProvider.GetLinuxContainerLogs(subscriptionId, resourceGroupName, name, slotName));
         }
 
+        public Task<string> RebootWorker(string subscriptionId, string resourceGroupName, string serverFarmName, string workerName, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return MakeDependencyCall(DataProvider.RebootWorker(subscriptionId, resourceGroupName, serverFarmName, workerName, cancellationToken));
+        }
+
         public Task<T> InvokeDaasExtension<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string daasApiPath, string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
         {
             return MakeDependencyCall(DataProvider.InvokeDaasExtension<T>(subscriptionId, resourceGroupName, name, slotName, daasApiPath, apiVersion, cancellationToken));

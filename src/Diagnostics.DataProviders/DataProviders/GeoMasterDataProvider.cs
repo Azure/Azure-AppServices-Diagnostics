@@ -490,6 +490,39 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
+        /// Reboots a worker
+        /// </summary>
+        /// <param name="subscriptionId">Subscription Id for the resource</param>
+        /// <param name="resourceGroupName">The resource group that the resource is part of </param>
+        /// <param name="serverFarmName">Name of the app service plan</param>
+        /// <param name="workerName">Worker machine name (eg. RD0123456789)</param>
+        /// <returns></returns>
+        /// <example>
+        /// This sample shows how you can call this function to get the NSG rules
+        /// for this App Service environment
+        /// <code>
+        ///  public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext<![CDATA[<App>]]> cxt, Response res)
+        /// {
+        ///     var subId = cxt.Resource.SubscriptionId;
+        ///     var rg = cxt.Resource.ResourceGroup;
+        ///     var name = cxt.Resource.Name;
+        ///     var url = $"https://wawsobserver.azurewebsites.windows.net/sites/{name}"
+        ///
+        ///     var observerData = await dp.Observer.GetResource(url);
+        ///     var serverFarmName = (string)observerData.server_farm_name;
+        ///     var machineName = "RD0123456789";
+        ///
+        ///     var results = await dp.GeoMaster.RebootWorker(subId, rg, serverFarmName, machineName);
+        /// }
+        /// </code>
+        /// </example>
+        public Task<string> RebootWorker(string subscriptionId, string resourceGroup, string serverFarmName, string workerName, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var path = $"subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/serverFarms/{serverFarmName}/workers/{workerName}/reboot";
+            return HttpPost<string, string>(path, cancellationToken: cancellationToken);
+        }
+
+        /// <summary>
         /// Using this method you can invoke any API on a SiteExtension that is installed on the Web App
         /// </summary>
         /// <typeparam name="T"></typeparam>

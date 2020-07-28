@@ -31,6 +31,8 @@ namespace Diagnostics.DataProviders
 
         Task<string> GetLinuxContainerLogs(string subscriptionId, string resourceGroupName, string name, string slotName);
 
+        Task<string> RebootWorker(string subscriptionId, string resourceGroup, string serverFarmName, string workerName, CancellationToken cancellationToken = default(CancellationToken));
+
         Task<T> InvokeDaasExtension<T>(string subscriptionId, string resourceGroupName, string name, string slotName, string daasApiPath, string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken));
     }
 }
