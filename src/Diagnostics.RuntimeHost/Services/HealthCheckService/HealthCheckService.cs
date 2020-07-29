@@ -27,6 +27,7 @@ namespace Diagnostics.RuntimeHost.Services
         IConfiguration _configuration;
         IDataSourcesConfigurationService _dataSourcesConfigurationService;
         bool IsOutboundConnectivityCheckEnabled = false;
+        private const string OUTBOUND_CONNECTIVITY_CACHE_KEY = "outboundconnectivitycheck";
         private IMemoryCache cache;
         private const string DEPENDENCYCHECK_CACHE_KEY = "dependencycheck";
 
@@ -66,7 +67,28 @@ namespace Diagnostics.RuntimeHost.Services
         public async Task RunHealthCheck()
         {
             if (IsOutboundConnectivityCheckEnabled)
-            await RetryHelper.RetryAsync(HealthCheckPing, "Healthping", "", 3, 100);
+            {
+                // If cache has a success result, return it
+                if (cache.TryGetValue(OUTBOUND_CONNECTIVITY_CACHE_KEY, out bool outboundConnectivityCheck))
+                {
+                    if (outboundConnectivityCheck)
+                    return;
+                }
+                // Else conduct a check and store it in cache
+                bool checkSuccess = await RetryHelper.RetryAsync(HealthCheckPing, "Healthping", "", 3, 100);
+                if (checkSuccess)
+                {
+                    var cacheExpirationInSeconds = _configuration.GetValue("HealthCheckSettings:OutboundConnectivityCheckCacheExpirationInSeconds", 120);
+                    cache.Set(OUTBOUND_CONNECTIVITY_CACHE_KEY, true, new MemoryCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cacheExpirationInSeconds)
+                    });
+                }
+                else
+                {
+                    throw new Exception("Connectivity check failed");
+                }
+            }
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2007:Consider calling ConfigureAwait on the awaited task", Justification = "<Pending>")]
