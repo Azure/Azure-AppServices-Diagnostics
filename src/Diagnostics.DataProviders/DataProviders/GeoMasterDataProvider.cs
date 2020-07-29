@@ -518,6 +518,26 @@ namespace Diagnostics.DataProviders
         /// </example>
         public Task<string> RebootWorker(string subscriptionId, string resourceGroup, string serverFarmName, string workerName, CancellationToken cancellationToken = default(CancellationToken))
         {
+            if (string.IsNullOrWhiteSpace(subscriptionId))
+            {
+                throw new ArgumentNullException(nameof(subscriptionId));
+            }
+
+            if (string.IsNullOrWhiteSpace(resourceGroup))
+            {
+                throw new ArgumentNullException(nameof(resourceGroup));
+            }
+
+            if (string.IsNullOrWhiteSpace(serverFarmName))
+            {
+                throw new ArgumentNullException(nameof(serverFarmName));
+            }
+
+            if (string.IsNullOrWhiteSpace(workerName))
+            {
+                throw new ArgumentNullException(nameof(workerName));
+            }
+
             var path = $"subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.Web/serverFarms/{serverFarmName}/workers/{workerName}/reboot";
             return HttpPost<string, string>(path, cancellationToken: cancellationToken);
         }
