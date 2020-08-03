@@ -11,9 +11,11 @@ using System.Threading.Tasks;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Newtonsoft.Json;
 
 namespace Diagnostics.RuntimeHost.Controllers.Configuration
@@ -37,9 +39,12 @@ namespace Diagnostics.RuntimeHost.Controllers.Configuration
         {
             var cacheId = GetGitHubId(provider);
             try
-            {
-                await _sourceWatcherService.Watcher.WaitForFirstCompletion();
-
+            {         
+                var sourcewatchertype = _sourceWatcherService.Watcher.GetType();
+                if (sourcewatchertype != typeof(StorageWatcher))
+                {
+                    await _sourceWatcherService.Watcher.WaitForFirstCompletion();
+                }
                 //TODO the equals condition always fail due to the strings in the data structures are never compared
                 if (_kustoMappingsCache.TryGetValue(cacheId, out List<Dictionary<string, string>> cacheValue) && cacheValue.Equals(kustoMappings))
                 {
@@ -47,8 +52,8 @@ namespace Diagnostics.RuntimeHost.Controllers.Configuration
                 }
 
                 var gitHubPackage = new GithubPackage(cacheId, "kustoClusterMappings", "json", JsonConvert.SerializeObject(kustoMappings));
-                    await _sourceWatcherService.Watcher.CreateOrUpdatePackage(gitHubPackage);
-                    return Ok();
+                await _sourceWatcherService.Watcher.CreateOrUpdatePackage(gitHubPackage);
+                return Ok();
             }
             catch (Exception ex)
             {
@@ -60,8 +65,12 @@ namespace Diagnostics.RuntimeHost.Controllers.Configuration
         public async Task<IActionResult> GetMappings(string provider)
         {
             var cacheId = GetGitHubId(provider);
-            await _sourceWatcherService.Watcher.WaitForFirstCompletion();
-            
+            var sourcewatchertype = _sourceWatcherService.Watcher.GetType();
+            if (sourcewatchertype != typeof(StorageWatcher))
+            {
+                await _sourceWatcherService.Watcher.WaitForFirstCompletion();
+            }
+
             if (_kustoMappingsCache.TryGetValue(cacheId, out List<Dictionary<string, string>> value))
             {
                 return Ok(value);

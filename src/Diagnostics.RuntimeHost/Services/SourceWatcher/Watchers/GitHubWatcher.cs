@@ -85,23 +85,13 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             var detectorWorker = new GithubDetectorWorker(invokerCache, _loadOnlyPublicDetectors);
             var kustoMappingsWorker = new GithubKustoConfigurationWorker(kustoMappingsCache);
 
-            if(watcherType.Equals(SourceWatcherType.AzureStorage))
+            GithubWorkers = new Dictionary<string, IGithubWorker>
             {
-                GithubWorkers = new Dictionary<string, IGithubWorker>
-                {
-                    { kustoMappingsWorker.Name, kustoMappingsWorker }
-                };
-            } else
-            {
-                GithubWorkers = new Dictionary<string, IGithubWorker>
-                {
-                    { gistWorker.Name, gistWorker },
-                    { detectorWorker.Name, detectorWorker },
-                    { kustoMappingsWorker.Name, kustoMappingsWorker }
-                };
-            }
-         
-
+                { gistWorker.Name, gistWorker },
+                { detectorWorker.Name, detectorWorker },
+                { kustoMappingsWorker.Name, kustoMappingsWorker }
+            };
+            
             #endregion Initialize Github Worker
 
             Start();
