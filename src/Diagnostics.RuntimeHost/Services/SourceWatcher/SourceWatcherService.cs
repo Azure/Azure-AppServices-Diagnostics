@@ -1,9 +1,10 @@
 ﻿using System;
 using Diagnostics.RuntimeHost.Services.CacheService;
+using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
+using Diagnostics.RuntimeHost.Services.StorageService;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Win32;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 {
@@ -13,21 +14,23 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
 
         public ISourceWatcher Watcher => _watcher;
 
-        public SourceWatcherService(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCacheService, IGistCacheService gistCacheService, IKustoMappingsCacheService kustoMappingsCacheService)
+        public ISourceWatcher KustoMappingWatcher;
+
+
+        public SourceWatcherService(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCacheService, IGistCacheService gistCacheService, IKustoMappingsCacheService kustoMappingsCacheService, IStorageService storageService)
         {
-            SourceWatcherType watcherType;
-
-            
-            watcherType = Enum.Parse<SourceWatcherType>(configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]);
-
-            switch (watcherType)
+            var sourceWatcherType = Enum.Parse<SourceWatcherType>(configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]);
+            IGithubClient githubClient = new GithubClient(env, configuration);
+            switch (sourceWatcherType)
             {
                 case SourceWatcherType.LocalFileSystem:
                     _watcher = new LocalFileSystemWatcher(env, configuration, invokerCacheService, gistCacheService);
                     break;
                 case SourceWatcherType.Github:
-                    IGithubClient githubClient = new GithubClient(env, configuration);
                     _watcher = new GitHubWatcher(env, configuration, invokerCacheService, gistCacheService, kustoMappingsCacheService, githubClient);
+                    break;
+                case SourceWatcherType.AzureStorage:
+                    _watcher = new StorageWatcher(env, configuration, storageService, invokerCacheService, gistCacheService, kustoMappingsCacheService);
                     break;
                 default:
                     throw new NotSupportedException("Source Watcher Type not supported");

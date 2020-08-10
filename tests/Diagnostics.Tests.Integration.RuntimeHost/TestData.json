@@ -3,6 +3,6 @@
     [ "/subscriptions/ef90e930-9d7f-4a60-8a99-748e0eea69de/resourceGroups/detector-development/providers/Microsoft.Web/sites/buggybakery/detectors", 5 ]
   ],
   "GetDetector": [
-    [ "/subscriptions/ef90e930-9d7f-4a60-8a99-748e0eea69de/resourceGroups/detector-development/providers/Microsoft.Web/sites/buggybakery/detectors/httpservererrors", 4 ]
+    [ "/subscriptions/ef90e930-9d7f-4a60-8a99-748e0eea69de/resourceGroups/detector-development/providers/Microsoft.Web/sites/buggybakery/detectors/httpservererrors", 1 ]
   ]
 }

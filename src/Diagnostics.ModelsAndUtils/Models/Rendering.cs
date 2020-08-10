@@ -30,8 +30,12 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public string AdditionalParams { get; set; }
 
+        public string ResourceUri { get; set; }
+
         public DetectorCollectionRendering() : base(RenderingType.Detector)
         {
+            AdditionalParams = string.Empty;
+            ResourceUri = string.Empty;
         }
     }
 

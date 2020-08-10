@@ -1,4 +1,5 @@
 ﻿using Diagnostics.RuntimeHost.Models;
+using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.StorageService;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -8,7 +9,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
 {
     public sealed class NationalCloudStorageWatcher : StorageWatcher
     {
-        public NationalCloudStorageWatcher(IHostingEnvironment env, IConfiguration configuration, IStorageService service): base(env, configuration, service)
+        public NationalCloudStorageWatcher(IHostingEnvironment env, IConfiguration configuration, IStorageService service, IInvokerCacheService invokerCacheService, IGistCacheService gistCacheService, IKustoMappingsCacheService kustoMappingsCacheService): base(env, configuration, service, invokerCacheService, gistCacheService, kustoMappingsCacheService)
         {
 
         }

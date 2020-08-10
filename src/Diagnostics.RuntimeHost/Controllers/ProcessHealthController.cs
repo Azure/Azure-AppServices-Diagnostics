@@ -29,15 +29,20 @@ namespace Diagnostics.RuntimeHost.Controllers
         public async Task<IActionResult> HealthPing()
         {
             List<Task> allChecks = new List<Task>();
-            Task.Run(_sourceWatcherService.Watcher.WaitForFirstCompletion);
-            Task.Run(_healthCheckService.RunHealthCheck);
+            allChecks.Add(Task.Run(_sourceWatcherService.Watcher.WaitForFirstCompletion));
+            allChecks.Add(Task.Run(_healthCheckService.RunHealthCheck));
 
-            await Task.WhenAll(allChecks);
-
-            return Ok("Server is up and running.");
+            try
+            {
+                await Task.WhenAll(allChecks);
+                return Ok("Server is up and running.");
+            }
+            catch (Exception ex)
+            {
+                return NotFound($"HealthCheck Failed: {ex.Message}");
+            }
         }
 
-        [Authorize]
         [HttpGet("/dependencyCheck")]
         public async Task<IActionResult> DependencyCheck()
         {

@@ -83,7 +83,7 @@ namespace Diagnostics.CompilerHost.Middleware
                 string requestId = string.Empty;
                 if (context.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values) && values != default(StringValues) && values.Any())
                 {
-                    requestId = values.First().ToString();
+                    requestId = values.First().Split(new char[] { ',' })[0];
                 }
 
                 DiagnosticsETWProvider.Instance.LogCompilerHostUnhandledException(

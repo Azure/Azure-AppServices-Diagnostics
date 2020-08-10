@@ -69,7 +69,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._kustoMappingCacheService = (IKustoMappingsCacheService)services.GetService(typeof(IKustoMappingsCacheService));
             this._loggerProvider = (IRuntimeLoggerProvider)services.GetService(typeof(IRuntimeLoggerProvider));
             tableCacheService = (IDiagEntityTableCacheService)services.GetService(typeof(IDiagEntityTableCacheService));
-            storageWatcher = ((StorageWatcher)services.GetService(typeof(ISourceWatcher)));
+            var sourcewatchertype = _sourceWatcherService.Watcher.GetType();
+            if (sourcewatchertype != typeof(StorageWatcher))
+            {
+                storageWatcher = ((StorageWatcher)services.GetService(typeof(ISourceWatcher)));
+            }
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
         }
@@ -224,7 +228,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             Assembly tempAsm = null;
 
-            bool isCompilationNeeded = !ScriptCompilation.IsSameScript(jsonBody.Script, scriptETag) || !_assemblyCacheService.IsAssemblyLoaded(assemblyFullName, out tempAsm);
+            bool isCompilationNeeded = !ScriptCompilation.IsSameScript(jsonBody.Script, scriptETag) || !_assemblyCacheService.IsAssemblyLoaded(assemblyFullName);
             if (isCompilationNeeded)
             {
                 queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, jsonBody.EntityType, jsonBody.References, runtimeContext.OperationContext.RequestId);
@@ -232,7 +236,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             else
             {
                 // Setting compilation succeeded to be true as it has been successfully compiled before
-                queryRes.CompilationOutput = new CompilerResponse();
+                queryRes.CompilationOutput = _assemblyCacheService.GetCachedCompilerResponse(assemblyFullName);
+                tempAsm = _assemblyCacheService.GetCachedAssembly(assemblyFullName);
                 queryRes.CompilationOutput.CompilationSucceeded = true;
                 queryRes.CompilationOutput.CompilationTraces = new string[] { "No code changes were detected. Detector code was executed using previous compilation." };
             }
@@ -247,7 +252,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         byte[] pdbData = Convert.FromBase64String(queryRes.CompilationOutput.PdbBytes);
                         tempAsm = Assembly.Load(asmData, pdbData);
                         queryRes.CompilationOutput.AssemblyName = tempAsm.FullName;
-                        _assemblyCacheService.AddAssemblyToCache(tempAsm.FullName, tempAsm);
+                        _assemblyCacheService.AddAssemblyToCache(tempAsm.FullName, tempAsm, queryRes.CompilationOutput);
                     }
 
                     Request.HttpContext.Response.Headers.Add("diag-script-etag", Convert.ToBase64String(ScriptCompilation.GetHashFromScript(jsonBody.Script)));
@@ -365,7 +370,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             await _sourceWatcherService.Watcher.CreateOrUpdatePackage(pkg);
-            await storageWatcher.CreateOrUpdatePackage(pkg);
+            // If Azure Storage is not enabled, we still want to keep data updated.
+            if(!tableCacheService.IsStorageAsSourceEnabled())
+            {
+                await storageWatcher.CreateOrUpdatePackage(pkg);
+            }
             return Ok();
         }
 
@@ -562,7 +571,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 "",
                 "",
                 true,
-                requestIds.FirstOrDefault()
+                requestIds.FirstOrDefault().Split(new char[] { ',' })[0]
             );
 
             _runtimeContext.ClientIsInternal = true;
@@ -583,7 +592,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             Dictionary<string, dynamic> systemContext = new Dictionary<string, dynamic>();
             systemContext.Add("detectorId", detectorId);
-            systemContext.Add("requestIds", requestIds);
+            systemContext.Add("requestIds", requestIds.FirstOrDefault().Split(new char[] { ',' })[0]);
             systemContext.Add("isInternal", true);
             systemContext.Add("dataSource", dataSource);
             systemContext.Add("timeRange", timeRange);
@@ -612,7 +621,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 }
             }
 
-            var requestId = requestIds.FirstOrDefault();
+            var requestId = requestIds.FirstOrDefault().Split(new char[] { ','})[0];
             var operationContext = new OperationContext<TResource>(
                 resource,
                 DateTimeHelper.GetDateTimeInUtcFormat(startTime).ToString(DataProviderConstants.KustoTimeFormat),
@@ -709,6 +718,10 @@ namespace Diagnostics.RuntimeHost.Controllers
             if (tableCacheService.IsStorageAsSourceEnabled())
             {
                 var allDetectorsFromStorage = await tableCacheService.GetEntityListByType<TResource>(context);
+                if(allDetectorsFromStorage.Count == 0)
+                {
+                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"No detectors were returned from table cache service for {context.OperationContext.Resource.ResourceUri}");
+                }
                 if (searchResults != null)
                 {
                     // Return those detectors that have positive search score and present in searchResult.
@@ -771,7 +784,6 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private async Task<Tuple<Response, List<DataProviderMetadata>>> GetDetectorInternal(string detectorId, RuntimeContext<TResource> context)
         {
-            await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
             var queryParams = Request.Query;
             
             var dataProviderContext = (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey];
@@ -790,8 +802,33 @@ namespace Diagnostics.RuntimeHost.Controllers
             if (context.ClientIsInternal)
             {
                 dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
-            }       
-            var invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
+            }
+            EntityInvoker invoker = null;
+            if(tableCacheService.IsStorageAsSourceEnabled())
+            {
+                 invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
+                var allDetectors = await this.tableCacheService.GetEntityListByType(context, "Detector");
+                var detectorMetadata = allDetectors.Where(entity => entity.RowKey.ToLower().Equals(detectorId, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+
+                // This means detector is definitely not present
+                if (invoker == null && detectorMetadata == null)
+                {
+                    return null;
+                }
+
+                // If detector is still downloading, then await first completion
+                if (invoker == null && detectorMetadata != null)
+                {
+                    await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+                    // Refetch from invoker cache
+                    invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
+                }
+            } else
+            {
+                await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
+                invoker = this._invokerCache.GetEntityInvoker<TResource>(detectorId, context);
+            }
+           
 
             if (invoker == null)
             {

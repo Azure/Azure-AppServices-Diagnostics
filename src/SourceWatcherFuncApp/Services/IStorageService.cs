@@ -14,8 +14,8 @@ namespace SourceWatcherFuncApp.Services
 {
     public interface IStorageService
     {
-        Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity);
-        Task<DiagEntity> GetEntityFromTable(string partitionKey, string rowKey);
+        Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity, string githubdirname);
+        Task<DiagEntity> GetEntityFromTable(string partitionKey, string rowKey, string dirname = "");
         Task<bool> CheckDetectorExists(string currentDetector);
         void LoadBlobToContainer(string name, Stream uploadStream);
         Task<List<DiagEntity>> GetAllEntities();
@@ -56,20 +56,16 @@ namespace SourceWatcherFuncApp.Services
         {
             try
             {
-                if (existingDetectors.Count < 1)
+                var cloudBlob = blobContainer.GetBlockBlobReference(currentDetector);
+                var doesExist = await cloudBlob.ExistsAsync();
+                storageServiceLogger.LogInformation($"{currentDetector} exist in blob {doesExist.ToString()}");
+                if (doesExist)
                 {
-                    var blobsList = await blobContainer.ListBlobsSegmentedAsync(null);
-                    foreach (var blobItem in blobsList.Results)
-                    {
-                        if(blobItem is CloudBlobDirectory)
-                        {
-                            var directory = (CloudBlobDirectory)blobItem;
-                            var name = directory.Prefix.Replace("/", "");
-                            existingDetectors.Add(name);
-                        } 
-                    }
+                    await cloudBlob.FetchAttributesAsync();
+                    storageServiceLogger.LogInformation($"Size of {currentDetector} is {cloudBlob.Properties.Length} bytes");
+                    return cloudBlob.Properties.Length > 0;
                 }
-                return existingDetectors.Contains(currentDetector);
+                return false;
             } catch(Exception ex)
             {
                 storageServiceLogger.LogError(ex.ToString());
@@ -83,19 +79,22 @@ namespace SourceWatcherFuncApp.Services
             {
                 storageServiceLogger.LogInformation($"Uploading {name} blob");
                 var cloudBlob = blobContainer.GetBlockBlobReference(name);
+                uploadStream.Position = 0;
                 await cloudBlob.UploadFromStreamAsync(uploadStream);
+                storageServiceLogger.LogInformation($"Loaded {name} to blob");
             } catch (Exception ex)
             {
                 storageServiceLogger.LogError(ex.ToString());
             }    
         }
-        public async Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity)
+        public async Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity, string dirname)
         {
             try { 
             // Create a table client for interacting with the table service 
             CloudTable table = tableClient.GetTableReference(tableName);
             if(detectorEntity == null || detectorEntity.PartitionKey == null || detectorEntity.RowKey == null)
             {
+                 storageServiceLogger.LogError($"Parition key or row key is empty for github directory {dirname}");
                 throw new ArgumentNullException(nameof(detectorEntity));
             }
 
@@ -117,7 +116,7 @@ namespace SourceWatcherFuncApp.Services
             }
         }
 
-        public async Task<DiagEntity> GetEntityFromTable(string partitionKey, string rowKey)
+        public async Task<DiagEntity> GetEntityFromTable(string partitionKey, string rowKey, string dirname)
         {
             try
             {
@@ -125,7 +124,7 @@ namespace SourceWatcherFuncApp.Services
 
                 if(string.IsNullOrWhiteSpace(partitionKey) || string.IsNullOrWhiteSpace(rowKey))
                 {
-                    throw new ArgumentNullException($"{nameof(partitionKey)} or {nameof(rowKey)} is either null or empty");
+                    throw new ArgumentNullException($"{nameof(partitionKey)} or {nameof(rowKey)} is either null or empty for githubdir {dirname}");
                 }
 
                 storageServiceLogger.LogInformation($"Retrieving info from table for {rowKey}, {partitionKey}");
