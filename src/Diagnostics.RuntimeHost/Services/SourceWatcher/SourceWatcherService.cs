@@ -35,6 +35,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                 default:
                     throw new NotSupportedException("Source Watcher Type not supported");
             }
+
+            _watcher.Start();
         }
     }
 }

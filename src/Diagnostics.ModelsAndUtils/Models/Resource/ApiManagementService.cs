@@ -80,7 +80,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <returns>True, if resource passes the filter. False otherwise</returns>
         public bool IsApplicable(IResourceFilter filter)
         {
-            return filter is ApiManagementServiceFilter;
+            return base.IsApplicable<ApiManagementServiceFilter>(filter, this.Provider, this.ResourceTypeName);
         }
 
         /// <summary>
@@ -90,11 +90,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <returns>True, if resource passes the filter. False otherwise</returns>
         public bool IsApplicable(DiagEntity diagEntity)
         {
-            if(diagEntity == null || diagEntity.ResourceType == null || diagEntity.ResourceProvider == null)
-            {
-                return false;
-            }
-            return diagEntity.ResourceProvider == this.Provider && diagEntity.ResourceType == this.ResourceTypeName;
+            return base.IsApplicable(diagEntity, this.Provider, this.ResourceTypeName);
         }
     }
 }

@@ -66,7 +66,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 { EntityType.Gist, gistCache}
             };
             kustoMappingsCacheService = kustoMappingsCache;
-            Start();
         }
 
         public virtual async Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default(CancellationToken))
