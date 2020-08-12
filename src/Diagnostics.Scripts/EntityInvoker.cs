@@ -333,6 +333,36 @@ namespace Diagnostics.Scripts
                     {
                         this.CompilationOutput = this.CompilationOutput.Concat(new string[] { "WARNING: Detector is marked internal and SupportTopic is specified. This means the detector will be enabled for Azure Support Center but not for case submission flow, until the isInternal flag is set to false." });
                     }
+
+                    if(this._resourceFilter is ArmResourceFilter armResFilter)
+                    {
+                        // For sharable Gists, validate the provider and resource type configuration is correct
+                        if (this._entityMetaData.Type == EntityType.Gist && armResFilter.Provider == "*" && armResFilter.ResourceTypeName != "*")
+                        {
+                            this.CompilationOutput = this.CompilationOutput.Concat(new string[]
+                            {
+                                "ERROR: Invalid ARM Resource Filter values. Provider cannot be '*' when ResourceTypeName is not '*'",
+                                "Valid Options:",
+                                "- [ArmResourceFilter(provider: \"*\", resourceTypeName: \"*\")]",
+                                "- [ArmResourceFilter(provider: \"Microsoft.YourProviderName\", resourceTypeName: \"*\")]",
+                                "- [ArmResourceFilter(provider: \"Microsoft.YourProviderName\", resourceTypeName: \"Microsoft.YourResourceTypeName\")]"
+                            });
+
+                            throw new ScriptCompilationException(string.Empty);
+                        }
+                        // Sharable detectors are not supported as of now.
+                        else if(this._entityMetaData.Type != EntityType.Gist && (armResFilter.Provider == "*" || armResFilter.ResourceTypeName == "*"))
+                        {
+                            this.CompilationOutput = this.CompilationOutput.Concat(new string[] 
+                            {
+                                "ERROR : Invalid character '*' in ARM Resource Filter. Sharable detectors are not supported as of now.",
+                                "Valid Options:",
+                                "- [ArmResourceFilter(provider: \"Microsoft.YourProviderName\", resourceTypeName: \"Microsoft.YourResourceTypeName\")]"
+                            });
+
+                            throw new ScriptCompilationException(string.Empty);
+                        }
+                    }
                 }
 
                 if (this._systemFilter != null && this._resourceFilter != null)

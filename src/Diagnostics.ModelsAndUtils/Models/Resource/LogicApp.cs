@@ -77,7 +77,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <returns>True, if resource passes the filter. False otherwise</returns>
         public bool IsApplicable(IResourceFilter filter)
         {
-            return filter is LogicAppFilter;
+            return base.IsApplicable<LogicAppFilter>(filter, this.Provider, this.ResourceTypeName);
         }
 
         /// <summary>
@@ -87,11 +87,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <returns>True, if resource passes the filter. False otherwise</returns>
         public bool IsApplicable(DiagEntity diagEntity)
         {
-            if (diagEntity == null || diagEntity.ResourceType == null || diagEntity.ResourceProvider == null)
-            {
-                return false;
-            }
-            return diagEntity.ResourceProvider == Provider && diagEntity.ResourceType == ResourceTypeName;
+            return base.IsApplicable(diagEntity, this.Provider, this.ResourceTypeName);
         }
     }
 }

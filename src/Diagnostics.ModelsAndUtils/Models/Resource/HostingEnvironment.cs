@@ -122,13 +122,14 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public bool IsApplicable(IResourceFilter filter)
         {
+            bool customFilterLogicResult = true;
             if (filter is HostingEnvironmentFilter envFilter)
             {
-                return ((envFilter.PlatformType & this.PlatformType) > 0) &&
+                customFilterLogicResult = ((envFilter.PlatformType & this.PlatformType) > 0) &&
                     ((envFilter.HostingEnvironmentType & this.HostingEnvironmentType) > 0);
             }
 
-            return false;
+            return base.IsApplicable<HostingEnvironmentFilter>(filter, this.Provider, this.ResourceTypeName, customFilterLogicResult);
         }
 
         /// <summary>
@@ -138,15 +139,25 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <returns>True, if resource passes the filter. False otherwise</returns>
         public bool IsApplicable(DiagEntity diagEntity)
         {
-            if (diagEntity == null || diagEntity.PlatForm == null || diagEntity.HostingEnvironmentType == null)
+            if (diagEntity == null)
             {
                 return false;
             }
 
-            PlatformType tableRowPlatformType = (PlatformType)Enum.Parse(typeof(PlatformType), diagEntity.PlatForm);
-            HostingEnvironmentType tableRowHostingEnv = (HostingEnvironmentType)Enum.Parse(typeof(HostingEnvironmentType), diagEntity.HostingEnvironmentType);
-            return ((tableRowPlatformType & this.PlatformType) > 0) &&
-                 ((tableRowHostingEnv & this.HostingEnvironmentType) > 0);
+            if(diagEntity.HostingEnvironmentType != null)
+            {
+                if(diagEntity.PlatForm == null)
+                {
+                    return false;
+                }
+
+                PlatformType tableRowPlatformType = (PlatformType)Enum.Parse(typeof(PlatformType), diagEntity.PlatForm);
+                HostingEnvironmentType tableRowHostingEnv = (HostingEnvironmentType)Enum.Parse(typeof(HostingEnvironmentType), diagEntity.HostingEnvironmentType);
+                return ((tableRowPlatformType & this.PlatformType) > 0) &&
+                     ((tableRowHostingEnv & this.HostingEnvironmentType) > 0);
+            }
+
+            return base.IsApplicable(diagEntity, this.Provider, this.ResourceTypeName);
         }
     }
 }
