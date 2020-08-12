@@ -355,7 +355,7 @@ namespace Diagnostics.Tests.ScriptsTests
         }
 
         [Fact]
-        public async void EntityInvoker_TestValidSharableGists()
+        public async void EntityInvoker_TestValidShareableGists()
         {
             Definition definitonAttribute = new Definition()
             {
@@ -389,7 +389,7 @@ namespace Diagnostics.Tests.ScriptsTests
         }
 
         [Fact]
-        public async void EntityInvoker_TestInvalidSharableGist()
+        public async void EntityInvoker_TestInvalidShareableGist()
         {
             Definition definitonAttribute = new Definition()
             {

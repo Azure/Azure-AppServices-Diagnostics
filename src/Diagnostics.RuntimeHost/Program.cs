@@ -49,7 +49,6 @@ namespace Diagnostics.RuntimeHost
                             keyVaultUri,
                             keyVaultClient,
                             new DefaultKeyVaultSecretManager())
-                         //.AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                         .AddEnvironmentVariables()
                         .AddCommandLine(args)
                         .Build();
