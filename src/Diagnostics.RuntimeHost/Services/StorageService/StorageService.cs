@@ -90,7 +90,6 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionKey);
                 var tableQuery = new TableQuery<DiagEntity>();
                 tableQuery.Where(filterPartitionKey);
-                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by partition key {partitionKey}");
                 TableContinuationToken tableContinuationToken = null;
                 var detectorsResult = new List<DiagEntity>();
                 timeTakenStopWatch.Start();
@@ -143,7 +142,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 TableResult result = await table.ExecuteAsync(insertOrReplaceOperation);
                 timeTakenStopWatch.Stop();
                 DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"InsertOrReplace result : {result.HttpStatusCode}, time taken {timeTakenStopWatch.ElapsedMilliseconds}");
-                DiagEntity insertedCustomer = result.Result as DiagEntity;
+                DiagEntity insertedEntity = result.Result as DiagEntity;
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Inserted entity {insertedEntity.RowKey.ToString()} timestamp: {insertedEntity.Timestamp}");
                 return detectorEntity;
             }
             catch (Exception ex)
