@@ -172,6 +172,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
        
         private async Task StartBlobDownload(bool startup = false)
         {
+            DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Blobcache last modified at {blobCacheLastModifiedTime}");
             var detectorsList = await storageService.GetEntitiesByPartitionkey("Detector");
             var gists = !LoadOnlyPublicDetectors ? await storageService.GetEntitiesByPartitionkey("Gist") : new List<DiagEntity>();
             var entitiesToLoad = new List<DiagEntity>();
