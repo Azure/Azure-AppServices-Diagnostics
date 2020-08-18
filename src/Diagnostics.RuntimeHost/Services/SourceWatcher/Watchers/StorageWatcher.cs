@@ -179,8 +179,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
             if(!startup)
             {
-                entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= blobCacheLastModifiedTime).ToList());
-                entitiesToLoad.AddRange(gists.Where(s => s.Timestamp >= blobCacheLastModifiedTime).ToList());
+                // Refresh cache with detectors published in last 5 minutes.
+                var timeRange = DateTime.UtcNow.AddMinutes(-5);
+                entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= timeRange).ToList());
+                entitiesToLoad.AddRange(gists.Where(s => s.Timestamp >= timeRange).ToList());
             } else
             {
                 entitiesToLoad.AddRange(filteredDetectors.ToList());

@@ -15,6 +15,7 @@ using System.IO;
 using System.Linq;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Models;
+using Microsoft.WindowsAzure.Storage.RetryPolicies;
 
 namespace Diagnostics.RuntimeHost.Services.StorageService
 {
@@ -81,37 +82,51 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
 
         public async Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null)
         {
-            try
+            int retryThreshold = 2;
+            int attempt = 0;
+            do
             {
-                CloudTable table = tableClient.GetTableReference(tableName);
-                await table.CreateIfNotExistsAsync();
-                var timeTakenStopWatch = new Stopwatch();             
-                partitionKey = partitionKey == null ? "Detector" : partitionKey;
-                var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionKey);
-                var tableQuery = new TableQuery<DiagEntity>();
-                tableQuery.Where(filterPartitionKey);
-                TableContinuationToken tableContinuationToken = null;
-                var detectorsResult = new List<DiagEntity>();
-                timeTakenStopWatch.Start();
-                do
+                try
                 {
-                    // Execute the operation.
-                    var detectorList = await table.ExecuteQuerySegmentedAsync(tableQuery, tableContinuationToken);
-                    tableContinuationToken = detectorList.ContinuationToken;
-                    if (detectorList.Results != null)
+                    CloudTable table = tableClient.GetTableReference(tableName);
+                    var timeTakenStopWatch = new Stopwatch();
+                    partitionKey = partitionKey == null ? "Detector" : partitionKey;
+                    var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionKey);
+                    var tableQuery = new TableQuery<DiagEntity>();
+                    tableQuery.Where(filterPartitionKey);
+                    TableContinuationToken tableContinuationToken = null;
+                    var detectorsResult = new List<DiagEntity>();
+                    timeTakenStopWatch.Start();
+                    TableRequestOptions tableRequestOptions = new TableRequestOptions();
+                    tableRequestOptions.LocationMode = LocationMode.PrimaryThenSecondary;
+                    if(attempt == retryThreshold)
                     {
-                        detectorsResult.AddRange(detectorList.Results);
+                        tableRequestOptions.LocationMode = LocationMode.SecondaryOnly;
                     }
-                } while (tableContinuationToken != null);
-                timeTakenStopWatch.Stop();
-                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by Partition key {partitionKey} took {timeTakenStopWatch.ElapsedMilliseconds}, Total rows = {detectorsResult.Count}");
-                return detectorsResult.Where(result => !result.IsDisabled).ToList();
-            }
-            catch (Exception ex)
-            {
-                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
-                return null;
-            } 
+                    do
+                    {
+                        // Execute the operation.
+                        var detectorList = await table.ExecuteQuerySegmentedAsync(tableQuery, tableContinuationToken, tableRequestOptions, null);
+                        tableContinuationToken = detectorList.ContinuationToken;
+                        if (detectorList.Results != null)
+                        {
+                            detectorsResult.AddRange(detectorList.Results);
+                        }
+                    } while (tableContinuationToken != null);
+                    timeTakenStopWatch.Stop();
+                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by Partition key {partitionKey} took {timeTakenStopWatch.ElapsedMilliseconds}, Total rows = {detectorsResult.Count}");
+                    return detectorsResult.Where(result => !result.IsDisabled).ToList();
+                }
+                catch (Exception ex)
+                {
+                    DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
+                    return null;
+                }
+                finally
+                {
+                    attempt++;
+                }
+            } while (attempt <= retryThreshold);
         }
 
         public bool GetStorageFlag()
@@ -125,7 +140,6 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             {
                 // Create a table client for interacting with the table service 
                 CloudTable table = tableClient.GetTableReference(tableName);
-                await table.CreateIfNotExistsAsync();
                 if (detectorEntity == null || detectorEntity.PartitionKey == null || detectorEntity.RowKey == null)
                 {
                     throw new ArgumentNullException(nameof(detectorEntity));
@@ -157,10 +171,10 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         {
             try
             {
-                var timeTakenStopWatch = new Stopwatch();
-                await containerClient.CreateIfNotExistsAsync();       
+                var timeTakenStopWatch = new Stopwatch();    
                 timeTakenStopWatch.Start();
                 var cloudBlob = containerClient.GetBlockBlobReference(blobname);
+
                 using (var uploadStream = new MemoryStream(Convert.FromBase64String(contents)))
                 {
                     await cloudBlob.UploadFromStreamAsync(uploadStream);               
@@ -179,24 +193,42 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
 
         public async Task<byte[]> GetBlobByName(string name)
         {
-            try
+            int retryThreshold = 2;
+            int attempt = 0;
+            do
             {
-                var timeTakenStopWatch = new Stopwatch();
-                await containerClient.CreateIfNotExistsAsync();
-                timeTakenStopWatch.Start();
-                var cloudBlob = containerClient.GetBlockBlobReference(name);
-                using (MemoryStream ms = new MemoryStream())
+                try
                 {
-                    await cloudBlob.DownloadToStreamAsync(ms);
-                    timeTakenStopWatch.Stop();
-                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Downloaded {name} to memory stream, time taken {timeTakenStopWatch.ElapsedMilliseconds}");
-                    return ms.ToArray();
-                }              
-            } catch (Exception ex)
-            {
-                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
-                return null;
-            }
+
+                    BlobRequestOptions options = new BlobRequestOptions();
+                    options.LocationMode = LocationMode.PrimaryThenSecondary;
+                    if (attempt == retryThreshold)
+                    {
+                        options.LocationMode = LocationMode.SecondaryOnly;
+                        DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Retrying against secondary account after {attempt} attempts");
+                    }
+                    var timeTakenStopWatch = new Stopwatch();
+                    timeTakenStopWatch.Start();
+                    var cloudBlob = containerClient.GetBlockBlobReference(name);
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        await cloudBlob.DownloadToStreamAsync(ms, null, options, null);
+                        timeTakenStopWatch.Stop();
+                        DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Downloaded {name} to memory stream, time taken {timeTakenStopWatch.ElapsedMilliseconds}");
+                        return ms.ToArray();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), ex.Message, ex.GetType().ToString(), ex.ToString());
+                    return null;
+                }
+                finally
+                {
+                    attempt++;
+                }
+            } while (attempt <= retryThreshold);
+            
         }
     
         public async Task<int> ListBlobsInContainer()
@@ -222,7 +254,6 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             {
                 // Create a table client for interacting with the table service 
                 CloudTable table = tableClient.GetTableReference(detectorRuntimeConfigTable);
-                await table.CreateIfNotExistsAsync();
                 if(configuration == null || configuration.PartitionKey == null || configuration.RowKey == null )
                 {
                     throw new ArgumentNullException(nameof(configuration));
@@ -253,13 +284,11 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             try
             {
                 CloudTable cloudTable = tableClient.GetTableReference(detectorRuntimeConfigTable);
-                await cloudTable.CreateIfNotExistsAsync();
                 var timeTakenStopWatch = new Stopwatch();
                 var partitionkey = "KustoClusterMapping";
                 var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionkey);
                 var tableQuery = new TableQuery<DetectorRuntimeConfiguration>();
                 tableQuery.Where(filterPartitionKey);
-                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetConfiguration by partition key {partitionkey}");
                 TableContinuationToken tableContinuationToken = null;
                 var diagConfigurationsResult = new List<DetectorRuntimeConfiguration>();
                 timeTakenStopWatch.Start();
