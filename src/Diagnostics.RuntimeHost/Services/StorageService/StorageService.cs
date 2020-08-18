@@ -102,6 +102,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     if(attempt == retryThreshold)
                     {
                         tableRequestOptions.LocationMode = LocationMode.SecondaryOnly;
+                        DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Retrying table against secondary account after {attempt} attempts");
                     }
                     do
                     {
@@ -205,7 +206,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     if (attempt == retryThreshold)
                     {
                         options.LocationMode = LocationMode.SecondaryOnly;
-                        DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Retrying against secondary account after {attempt} attempts");
+                        DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Retrying blob against secondary account after {attempt} attempts");
                     }
                     var timeTakenStopWatch = new Stopwatch();
                     timeTakenStopWatch.Start();
