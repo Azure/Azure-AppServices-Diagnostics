@@ -178,25 +178,25 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         private async Task StartBlobDownload(bool startup = false)
         {
             DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Blobcache last modified at {blobCacheLastModifiedTime}");
-            var detectorsList = await storageService.GetEntitiesByPartitionkey("Detector");
-            var gists = !LoadOnlyPublicDetectors ? await storageService.GetEntitiesByPartitionkey("Gist") : new List<DiagEntity>();
-            var entitiesToLoad = new List<DiagEntity>();
-            var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
-            if(!startup)
-            {
-                // Refresh cache with detectors published in last 5 minutes.
-                var timeRange = DateTime.UtcNow.AddMinutes(-5);
-                entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= timeRange).ToList());
-                entitiesToLoad.AddRange(gists.Where(s => s.Timestamp >= timeRange).ToList());
-            } else
-            {
-                entitiesToLoad.AddRange(filteredDetectors.ToList());
-                entitiesToLoad.AddRange(gists);
-            }
             var stopwatch = new Stopwatch();
             stopwatch.Start();
+            var entitiesToLoad = new List<DiagEntity>();
             try
             {
+                var detectorsList = await storageService.GetEntitiesByPartitionkey("Detector");
+                var gists = !LoadOnlyPublicDetectors ? await storageService.GetEntitiesByPartitionkey("Gist") : new List<DiagEntity>();    
+                var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
+                if(!startup)
+                {
+                    // Refresh cache with detectors published in last 5 minutes.
+                    var timeRange = DateTime.UtcNow.AddMinutes(-5);
+                    entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= timeRange).ToList());
+                    entitiesToLoad.AddRange(gists.Where(s => s.Timestamp >= timeRange).ToList());
+                } else
+                {
+                    entitiesToLoad.AddRange(filteredDetectors.ToList());
+                    entitiesToLoad.AddRange(gists);
+                }         
                 if (entitiesToLoad.Count > 0)
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Starting blob download to update cache, Number of entities: {entitiesToLoad.Count}, startup : {startup.ToString()} at {DateTime.UtcNow}");
@@ -223,26 +223,25 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Blob download complete, Number of entities {entitiesToLoad.Count}, startup : {startup.ToString()} time ellapsed {stopwatch.ElapsedMilliseconds} millisecs");
                 }
-            }
-
-            
+            }         
         }
 
         private async Task StartKustoMappingsRefresh(bool startup = false)
         {
-            var diagConfigRows = await storageService.GetKustoConfiguration();
-            var configsToLoad = new List<DetectorRuntimeConfiguration>();
-            if(!startup)
-            {
-                configsToLoad.AddRange(diagConfigRows.Where(row => row.Timestamp >= kustoMappingsCacheLastModified).ToList());
-            } else
-            {
-                configsToLoad.AddRange(diagConfigRows);
-            }
             var stopwatch = new Stopwatch();
             stopwatch.Start();
+            var configsToLoad = new List<DetectorRuntimeConfiguration>();      
             try
             {
+                var diagConfigRows = await storageService.GetKustoConfiguration();
+                if (!startup)
+                {
+                    configsToLoad.AddRange(diagConfigRows.Where(row => row.Timestamp >= kustoMappingsCacheLastModified).ToList());
+                }
+                else
+                {
+                    configsToLoad.AddRange(diagConfigRows);
+                }
                 if (configsToLoad.Count > 0)
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Starting kusto config download to update cache, Number of configs to load: {configsToLoad.Count}, startup : {startup.ToString()} at {DateTime.UtcNow}");
