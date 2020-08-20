@@ -51,7 +51,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
 
             if (list == null || !list.Any()) return list;
 
-            list = list.Where(item => ((item.SystemFilter == null) && (item.ResourceFilter != null) && (item.ResourceFilter.ResourceType & context.OperationContext.Resource.ResourceType) > 0) && (context.ClientIsInternal || !item.ResourceFilter.InternalOnly));
+            list = list.Where(item => ((item.SystemFilter == null) && (item.ResourceFilter != null) && (context.ClientIsInternal || !item.ResourceFilter.InternalOnly))).ToList();
             List<EntityInvoker> filteredList = new List<EntityInvoker>();
             list.ToList().ForEach(item =>
             {

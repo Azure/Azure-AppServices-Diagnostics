@@ -31,7 +31,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             : base(env, configuration, invokerCache, gistCache, null, "LocalFileSystemWatcher")
         {
             LoadConfigurations();
-            Start();
             _invokerDictionary = new Dictionary<EntityType, ICache<string, EntityInvoker>>
             {
                 { EntityType.Detector, invokerCache},

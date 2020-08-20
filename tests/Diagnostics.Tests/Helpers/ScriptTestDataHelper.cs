@@ -78,14 +78,20 @@ namespace Diagnostics.Tests.Helpers
             {
                 template = await File.ReadAllTextAsync(@"templates/Gist_HostingEnvironment.csx");
             }
+            else if(resourceType == ResourceType.ArmResource)
+            {
+                template = await File.ReadAllTextAsync(@"templates/Gist_EventHub.csx");
+            }
             else
             {
                 template = await File.ReadAllTextAsync(@"templates/Gist_WebApp.csx");
             }
 
-            template = template.Replace("<YOUR_CLASS_NAME>", "GistClass");
-
-            return template.Replace("<YOUR_GIST_ID>", def.Id);
+            return template
+                .Replace("<YOUR_GIST_ID>", def.Id)
+                .Replace("<YOUR_ALIAS>", def.Author)
+                .Replace("Name = \"\"", $"Name = \"{def.Name}\"")
+                .Replace("<YOUR_CLASS_NAME>", "GistClass");
         }
 
         public static async Task<string> GetDetectorScriptWithMultipleSupportTopics(Definition def, bool isInternal, SupportTopic topic1, SupportTopic topic2)

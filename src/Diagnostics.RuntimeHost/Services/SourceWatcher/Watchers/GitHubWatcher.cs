@@ -93,8 +93,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
             };
             
             #endregion Initialize Github Worker
-
-            Start();
         }
 
         /// <summary>

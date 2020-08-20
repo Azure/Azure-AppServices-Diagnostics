@@ -62,16 +62,6 @@ namespace Diagnostics.ModelsAndUtils.Models
             get; set;
         }
 
-        /// <summary>
-        /// Determines whether the Azure Kubernetes Service resource is applicable after filtering.
-        /// </summary>
-        /// <param name="filter">Resource Filter</param>
-        /// <returns>True, if resource passes the filter. False otherwise</returns>
-        public bool IsApplicable(IResourceFilter filter)
-        {
-            return filter is AzureKubernetesServiceFilter;
-        }
-
         public AzureKubernetesService(string subscriptionId, string resourceGroup, string resourceName, string subLocationPlacementId = null) : base()
         {
             this.SubscriptionId = subscriptionId;
@@ -81,17 +71,23 @@ namespace Diagnostics.ModelsAndUtils.Models
         }
 
         /// <summary>
+        /// Determines whether the Azure Kubernetes Service resource is applicable after filtering.
+        /// </summary>
+        /// <param name="filter">Resource Filter</param>
+        /// <returns>True, if resource passes the filter. False otherwise</returns>
+        public bool IsApplicable(IResourceFilter filter)
+        {
+            return base.IsApplicable<AzureKubernetesServiceFilter>(filter, this.Provider, this.ResourceTypeName);
+        }
+
+        /// <summary>
         /// Determines whether the diag entity retrieved from table is applicable after filtering.
         /// </summary>
         /// <param name="diagEntity">Diag Entity from table</param>
         /// <returns>True, if resource passes the filter. False otherwise</returns>
         public bool IsApplicable(DiagEntity diagEntity)
         {
-            if (diagEntity == null || diagEntity.ResourceType == null || diagEntity.ResourceProvider == null)
-            {
-                return false;
-            }
-            return diagEntity.ResourceProvider == this.Provider && diagEntity.ResourceType == this.ResourceTypeName;
+            return base.IsApplicable(diagEntity, this.Provider, this.ResourceTypeName);
         }
     }
 }
