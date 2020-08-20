@@ -1,5 +1,8 @@
-﻿using Diagnostics.RuntimeHost.Services.CacheService;
+﻿using System;
+using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
+using Diagnostics.RuntimeHost.Services.SourceWatcher;
+using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.Extensions.Configuration;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -18,7 +21,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
         private static IServiceCollection AddDiagEntitiesTableCacheServiceInternal(this IServiceCollection services, IConfiguration configuration)
         {
-            if (configuration.IsPublicAzure())
+            if (Enum.Parse<SourceWatcherType>(configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]) == SourceWatcherType.AzureStorage)
             {
                 services.AddSingleton<IDiagEntityTableCacheService, DiagEntityTableCacheService>();
             }
