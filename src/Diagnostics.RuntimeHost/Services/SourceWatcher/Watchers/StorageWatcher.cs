@@ -97,12 +97,13 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             {
                 await gitHubClient.CreateOrUpdateFiles(pkg.GetCommitContents(), pkg.GetCommitMessage());
                 // Insert Kusto Cluster Mapping to Configuration table.
-                if(pkg.GetCommitContents().Any(content => content.FilePath.Contains("kustoClusterMappings", StringComparison.CurrentCultureIgnoreCase)))
+                if (pkg.GetCommitContents().Any(content => content.FilePath.Contains("kustoClusterMappings", StringComparison.CurrentCultureIgnoreCase)))
                 {
                     var kustoMappingPackage = pkg.GetCommitContents().Where(c => c.FilePath.Contains("kustoClusterMappings", StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
                     var githubCommit = await gitHubClient.GetCommitByPath(kustoMappingPackage.FilePath);
                     // store kusto cluster data
-                    var diagconfiguration = new DetectorRuntimeConfiguration{
+                    var diagconfiguration = new DetectorRuntimeConfiguration
+                    {
                         PartitionKey = "KustoClusterMapping",
                         RowKey = pkg.Id.ToLower(),
                         GithubSha = githubCommit != null ? githubCommit.Commit.Tree.Sha : string.Empty,
@@ -131,6 +132,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     diagEntity = DiagEntityHelper.PrepareEntityForLoad(assemblyBytes, pkg.CodeString, diagEntity);
                 }
                 await storageService.LoadDataToTable(diagEntity);
+
+                // Force refresh its own cache
+                var assemblyData = Convert.FromBase64String(pkg.DllBytes);
+                await UpdateInvokerCache(assemblyData, diagEntity.PartitionKey, diagEntity.RowKey);
             } catch (Exception ex)
             {
                 DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageWatcher), ex.Message, ex.GetType().ToString(), ex.ToString());
@@ -179,8 +184,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
             if(!startup)
             {
-                entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= blobCacheLastModifiedTime).ToList());
-                entitiesToLoad.AddRange(gists.Where(s => s.Timestamp >= blobCacheLastModifiedTime).ToList());
+                // Refresh cache with detectors published in last 5 minutes.
+                var timeRange = DateTime.UtcNow.AddMinutes(-5);
+                entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= timeRange).ToList());
+                entitiesToLoad.AddRange(gists.Where(s => s.Timestamp >= timeRange).ToList());
             } else
             {
                 entitiesToLoad.AddRange(filteredDetectors.ToList());
@@ -202,37 +209,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                         DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $" blob {entity.RowKey.ToLower()}.dll is either null or 0 bytes in length");
                         continue;
                     }
-
-                    // initializing Entry Point of Invoker using assembly
-                    Assembly temp = Assembly.Load(assemblyData);
-                    EntityType entityType = EntityType.Signal;
-                    if (entity.PartitionKey.Equals("Gist"))
-                    {
-                        entityType = EntityType.Gist;
-                    }
-                    else if (entity.PartitionKey.Equals("Detector"))
-                    {
-                        entityType = EntityType.Detector;
-                    }
-
-                    var script = string.Empty;
-                    if(entity.PartitionKey.Equals("Gist"))
-                    {
-                        script = await gitHubClient.GetFileContent($"{entity.RowKey.ToLower()}/{entity.RowKey.ToLower()}.csx");
-                    }
-                    EntityMetadata metaData = new EntityMetadata(script, entityType);
-                    var newInvoker = new EntityInvoker(metaData);
-                    newInvoker.InitializeEntryPoint(temp);
-
-                    if (_invokerDictionary.TryGetValue(entityType, out ICache<string, EntityInvoker> cache) && newInvoker.EntryPointDefinitionAttribute != null)
-                    {
-                        DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Updating cache with new invoker with id : {newInvoker.EntryPointDefinitionAttribute.Id} {entity.PartitionKey}");
-                        cache.AddOrUpdate(newInvoker.EntryPointDefinitionAttribute.Id, newInvoker);
-                    }
-                    else
-                    {
-                        DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $"No invoker cache exist for {entityType}");
-                    }
+                    await UpdateInvokerCache(assemblyData, entity.PartitionKey, entity.RowKey);
                 }           
             } 
             catch (Exception ex)
@@ -289,6 +266,40 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Kusto config download complete, Number of configs {configsToLoad.Count}, startup : {startup.ToString()} time ellapsed {stopwatch.ElapsedMilliseconds} millisecs");
                 }
+            }
+        }
+
+        private async Task UpdateInvokerCache(byte[] assemblyData, string partitionkey, string rowkey)
+        {
+            // initializing Entry Point of Invoker using assembly
+            Assembly temp = Assembly.Load(assemblyData);
+            EntityType entityType = EntityType.Signal;
+            if (partitionkey.Equals("Gist"))
+            {
+                entityType = EntityType.Gist;
+            }
+            else if (partitionkey.Equals("Detector"))
+            {
+                entityType = EntityType.Detector;
+            }
+
+            var script = string.Empty;
+            if (partitionkey.Equals("Gist"))
+            {
+                script = await gitHubClient.GetFileContent($"{rowkey.ToLower()}/{rowkey.ToLower()}.csx");
+            }
+            EntityMetadata metaData = new EntityMetadata(script, entityType);
+            var newInvoker = new EntityInvoker(metaData);
+            newInvoker.InitializeEntryPoint(temp);
+
+            if (_invokerDictionary.TryGetValue(entityType, out ICache<string, EntityInvoker> cache) && newInvoker.EntryPointDefinitionAttribute != null)
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Updating cache with new invoker with id : {newInvoker.EntryPointDefinitionAttribute.Id} {partitionkey}");
+                cache.AddOrUpdate(newInvoker.EntryPointDefinitionAttribute.Id, newInvoker);
+            }
+            else
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $"No invoker cache exist for {entityType}");
             }
         }
     }
