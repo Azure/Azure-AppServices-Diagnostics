@@ -215,7 +215,14 @@ namespace Diagnostics.RuntimeHost
 
             services.AddDiagEntitiesStorageService(Configuration);
             services.AddDiagEntitiesTableCacheService(Configuration);
-            services.AddSingleton<ISourceWatcher, StorageWatcher>();
+
+            if(Enum.Parse<SourceWatcherType>(Configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]) == SourceWatcherType.AzureStorage)
+            {
+                services.AddSingleton<ISourceWatcher, StorageWatcher>();
+            } else
+            {
+                services.AddSingleton<ISourceWatcher, NationalCloudStorageWatcher>();
+            }
 
             services.AddLogging(loggingConfig =>
             {
