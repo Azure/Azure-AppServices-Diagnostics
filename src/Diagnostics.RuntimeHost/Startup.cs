@@ -215,6 +215,7 @@ namespace Diagnostics.RuntimeHost
 
             services.AddDiagEntitiesStorageService(Configuration);
             services.AddDiagEntitiesTableCacheService(Configuration);
+            services.AddSingleton<ISourceWatcher, StorageWatcher>();
 
             services.AddLogging(loggingConfig =>
             {
