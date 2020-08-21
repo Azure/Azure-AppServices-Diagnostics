@@ -117,12 +117,12 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 
             if (nonWildCardHostNames.Any())
             {
-                hostNameQuery = $"{hostNameColumn} in~ ({string.Join(",", nonWildCardHostNames.Select(h => $@"""{h}"""))})";
+                hostNameQuery = $"{hostNameColumn} in~ ({string.Join(",", nonWildCardHostNames.Select(h => $@"""{h}"""))}, {string.Join(",", nonWildCardHostNames.Select(h => $@"""{h}:443"""))})";
             }
 
             if (wildCardHostNames.Any())
             {
-                string wildCardQuery = string.Join("or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w.Replace("*.", ".")}"""));
+                string wildCardQuery = $@"{string.Join("or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w.Replace("*.", ".")}"""))} or {string.Join("or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w.Replace("*.", ".")}:443"""))}";
                 hostNameQuery = $"{hostNameQuery} or {wildCardQuery}";
             }
 
