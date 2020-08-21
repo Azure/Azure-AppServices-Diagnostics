@@ -16,6 +16,7 @@ using Diagnostics.ModelsAndUtils.Models.Storage;
 using System.Net;
 using Kusto.Cloud.Platform.Utils;
 using System.Reflection;
+using Diagnostics.Scripts.Models;
 
 namespace SourceWatcherFuncApp
 {
@@ -60,11 +61,11 @@ namespace SourceWatcherFuncApp
 
                 foreach (var githubdir in githubDirectories)
                 {
-                    if (!githubdir.Type.Equals("dir", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (!githubdir.Type.Equals("tree", StringComparison.OrdinalIgnoreCase)) continue;
 
                     try
                     {
-                        var contentList = await githubService.DownloadGithubDirectories(branchdownloadUrl: githubdir.Url);
+                        var contentList = await githubService.DownloadGithubDirectories(branchdownloadUrl: githubService.GetContentUrl(githubdir.Name));
                         var assemblyFile = contentList.Where(githubFile => githubFile.Name.EndsWith("dll")).FirstOrDefault();
                         var scriptFile = contentList.Where(githubfile => githubfile.Name.EndsWith(".csx")).FirstOrDefault();
                         var configFile = contentList.Where(githubFile => githubFile.Name.Equals("package.json", StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
@@ -100,6 +101,21 @@ namespace SourceWatcherFuncApp
                             {
                                 var scriptText = await githubService.GetFileContentStream(scriptFile.Download_url);
                                 await storageService.LoadBlobToContainer(scriptFile.Path, scriptText);
+                            }
+
+                            if (configFileData.EntityType.Equals(EntityType.Gist.ToString(), StringComparison.CurrentCultureIgnoreCase))
+                            {
+                                var commits = await githubService.ListCommitHashes(scriptFile.Path);
+                                string path = null;
+                                foreach (var commit in commits)
+                                {
+                                    path = $"{githubdir.Name}/{commit}/{githubdir.Name}.csx";
+                                    if (!await storageService.CheckDetectorExists(path))
+                                    {
+                                        var scriptTextAtCommitSha = await githubService.GetCommitContent(scriptFile.Path, commit);
+                                        await storageService.LoadBlobToContainer(path, scriptTextAtCommitSha);
+                                    }
+                                }
                             }
                         }
                         else

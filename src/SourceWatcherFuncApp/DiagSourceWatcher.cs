@@ -77,7 +77,7 @@ namespace Diag.SourceWatcher
                             if (existingDetectorEntity == null || !doesBlobExists || existingDetectorEntity.GithubLastModified != configFileData.GithubLastModified)
                             {
                                 var assemblyLastModified = await githubService.GetCommitDate(assemblyFile.Path);
-                                storageService.LoadBlobToContainer(assemblyFile.Path, assemblyData);
+                                await storageService.LoadBlobToContainer(assemblyFile.Path, assemblyData);
                                 await storageService.LoadDataToTable(configFileData, githubdir.Name);
                             }
                         }
