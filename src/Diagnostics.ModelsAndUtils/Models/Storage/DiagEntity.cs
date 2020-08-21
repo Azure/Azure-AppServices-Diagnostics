@@ -36,8 +36,7 @@ namespace Diagnostics.ModelsAndUtils.Models.Storage
         [JsonProperty("type")]
         public string EntityType { get; set; }
         
-        [JsonProperty("metadata")]
-        public string Metadata {get; set;}
+        public string Metadata { get; set; }
 
         /// <summary>
         /// Author of the csx file

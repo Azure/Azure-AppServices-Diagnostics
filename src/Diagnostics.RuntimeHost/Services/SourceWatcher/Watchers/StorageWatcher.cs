@@ -121,6 +121,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 }
                 var gitCommit = await gitHubClient.GetCommitByPath(blobName);
                 var diagEntity = JsonConvert.DeserializeObject<DiagEntity>(pkg.PackageConfig);
+                diagEntity.Metadata = pkg.Metadata;
                 if (gitCommit != null)
                 {
                     diagEntity.GitHubSha = gitCommit.Commit.Tree.Sha;
@@ -135,7 +136,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
 
                 // Force refresh its own cache
                 var assemblyData = Convert.FromBase64String(pkg.DllBytes);
-                await UpdateInvokerCache(assemblyData, diagEntity.PartitionKey, diagEntity.RowKey);
+                await UpdateInvokerCache(assemblyData, diagEntity.PartitionKey, diagEntity.RowKey, diagEntity.Metadata);
             } catch (Exception ex)
             {
                 DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageWatcher), ex.Message, ex.GetType().ToString(), ex.ToString());
@@ -209,7 +210,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                         DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $" blob {entity.RowKey.ToLower()}.dll is either null or 0 bytes in length");
                         continue;
                     }
-                    await UpdateInvokerCache(assemblyData, entity.PartitionKey, entity.RowKey);
+                    await UpdateInvokerCache(assemblyData, entity.PartitionKey, entity.RowKey, entity.Metadata);
                 }           
             } 
             catch (Exception ex)
@@ -268,7 +269,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             }
         }
 
-        private async Task UpdateInvokerCache(byte[] assemblyData, string partitionkey, string rowkey)
+        private async Task UpdateInvokerCache(byte[] assemblyData, string partitionkey, string rowkey, string metadata=null)
         {
             // initializing Entry Point of Invoker using assembly
             Assembly temp = Assembly.Load(assemblyData);
@@ -287,7 +288,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             {
                 script = await gitHubClient.GetFileContent($"{rowkey.ToLower()}/{rowkey.ToLower()}.csx");
             }
-            EntityMetadata metaData = new EntityMetadata(script, entityType);
+            EntityMetadata metaData = new EntityMetadata(script, entityType, metadata);
             var newInvoker = new EntityInvoker(metaData);
             newInvoker.InitializeEntryPoint(temp);
 
