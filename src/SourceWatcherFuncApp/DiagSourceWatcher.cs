@@ -56,6 +56,7 @@ namespace Diag.SourceWatcher
                         var assemblyFile = contentList.Where(githubFile => githubFile.Name.EndsWith("dll")).FirstOrDefault();
                         var scriptFile = contentList.Where(githubfile => githubfile.Name.EndsWith(".csx")).FirstOrDefault();
                         var configFile = contentList.Where(githubFile => githubFile.Name.Equals("package.json", StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
+                        var metadataFile = contentList.Where(githubFile => githubFile.Name.Equals("metadata.json", StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
 
                         if (assemblyFile != null && scriptFile != null && configFile != null)
                         {
@@ -65,6 +66,10 @@ namespace Diag.SourceWatcher
 
                             //log.LogInformation("Reading detector metadata");
                             var configFileData = await githubService.GetFileContentByType<DiagEntity>(configFile.Download_url);
+                            if (metadataFile != null)
+                            {
+                                configFileData.Metadata = await githubService.GetFileContentByType<string>(metadataFile.Download_url);
+                            }
 
                             configFileData = EntityHelper.PrepareEntityForLoad(assemblyData, string.Empty, configFileData);
                             configFileData.GitHubSha = githubdir.Sha;
