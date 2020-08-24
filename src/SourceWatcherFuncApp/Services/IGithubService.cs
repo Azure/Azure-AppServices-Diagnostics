@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.IO;
 using Diagnostics.ModelsAndUtils.Models.Storage;
+using System.Linq;
+using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 
 namespace SourceWatcherFuncApp.Services
 {
@@ -20,6 +23,12 @@ namespace SourceWatcherFuncApp.Services
         Task<T> GetFileContentByType<T>(string url);
 
         Task<DateTime> GetCommitDate(string path);
+
+        Task<string> GetCommitContent(string filePath, string sha);
+
+        Task<IEnumerable<string>> ListCommitHashes(string filePath);
+
+        string GetContentUrl(string path);
     }
 
     public class GithubService: IGithubService
@@ -80,15 +89,31 @@ namespace SourceWatcherFuncApp.Services
 
         public async Task<GithubEntry[]> DownloadGithubDirectories(string branchName = "", string branchdownloadUrl = "")
         {
-            var downloadUrl = !string.IsNullOrWhiteSpace(branchName) ? $"https://api.github.com/repos/{githubUserName}/{repoName}/contents?ref={branchName}" : branchdownloadUrl;
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, downloadUrl);
+            string downloadUrl;
+            GithubEntry[] githubDirectories = null;
 
-            var response = await httpClient.SendAsync(request);
-            var jsonString = await response.Content.ReadAsStringAsync();
-            var githubDirectories = JsonConvert.DeserializeObject<GithubEntry[]>(jsonString);
+            if (string.IsNullOrWhiteSpace(branchdownloadUrl))
+            {
+                string latestSha = await GetLatestSha();
+                downloadUrl = !string.IsNullOrWhiteSpace(branchName) ? $"https://api.github.com/repos/{githubUserName}/{repoName}/git/trees/{latestSha.Trim('"')}" : branchdownloadUrl;
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, downloadUrl);
+
+                var response = await httpClient.SendAsync(request);
+                var jsonString = await response.Content.ReadAsStringAsync();
+                var githubTrees = JObject.Parse(jsonString);
+                githubDirectories = githubTrees["tree"].ToObject<GithubEntry[]>();
+            }
+            else
+            {
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, branchdownloadUrl);
+
+                var response = await httpClient.SendAsync(request);
+                var jsonString = await response.Content.ReadAsStringAsync();
+                githubDirectories = JsonConvert.DeserializeObject<GithubEntry[]>(jsonString);
+            }
 
             return githubDirectories;
-           
+
         }
 
         public async Task<DiagEntity> GetFileContentJson(string url)
@@ -142,6 +167,29 @@ namespace SourceWatcherFuncApp.Services
             var authorDate = mostRecentCommit.Commit.Author.Date;
             return authorDate.DateTime.ToUniversalTime();
         }
-        
+
+        public async Task<string> GetCommitContent(string filePath, string sha)
+        {
+            var commitContent = await octokitClient.Repository.Content.GetAllContentsByRef(githubUserName, repoName, filePath, sha);
+            return commitContent?[0].Content;
+        }
+
+        public async Task<IEnumerable<string>> ListCommitHashes(string filePath)
+        {
+            var commitsForFile = await octokitClient.Repository.Commit.GetAll(githubUserName, repoName, new CommitRequest { Path = filePath, Sha = baseBranch });
+            var shaList = commitsForFile.Select(commit => commit.Sha);
+            return shaList;
+        }
+
+        private async Task<string> GetLatestSha()
+        {
+            var branchInfo = await octokitClient.Repository.Branch.Get(owner: githubUserName, name: repoName, branch: baseBranch);
+            return branchInfo != null && branchInfo.Commit != null ? branchInfo.Commit.Sha : string.Empty;
+        }
+
+        public string GetContentUrl(string path)
+        {
+            return $"https://api.github.com/repos/{githubUserName}/{repoName}/contents/{path}?ref={baseBranch}";
+        }
     }
 }
