@@ -10,6 +10,8 @@ using SourceWatcherFuncApp.Utilities;
 using Diagnostics.ModelsAndUtils.Models.Storage;
 using System.Net;
 using System.Collections.Generic;
+using Kusto.Cloud.Platform.Utils;
+using Diagnostics.RuntimeHost.Utilities;
 
 namespace Diag.SourceWatcher
 {
@@ -38,6 +40,10 @@ namespace Diag.SourceWatcher
 
             ServicePointManager.DefaultConnectionLimit = 150;
             var githubDirectories = await githubService.DownloadGithubDirectories(config["Github:Branch"]);
+            githubDirectories.ForEach(githubDir =>
+            {
+                githubDir.Name = githubDir.Name ?? githubDir.Path;
+            });
             bool updateEntities = false;
             if (bool.TryParse(config["UpdateEntities"], out bool result))
             {
@@ -48,10 +54,14 @@ namespace Diag.SourceWatcher
 
                 foreach (var githubdir in githubDirectories)
                 {
-                    if (!githubdir.Type.Equals("dir", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (!githubdir.Type.Equals("tree", StringComparison.OrdinalIgnoreCase)) continue;
 
                     try
                     {
+                        if(githubdir.Url.Contains("trees"))
+                        {
+                            githubdir.Url = githubService.GetContentUrl(githubdir.Name);
+                        }
                         var contentList = await githubService.DownloadGithubDirectories(branchdownloadUrl: githubdir.Url);
                         var assemblyFile = contentList.Where(githubFile => githubFile.Name.EndsWith("dll")).FirstOrDefault();
                         var scriptFile = contentList.Where(githubfile => githubfile.Name.EndsWith(".csx")).FirstOrDefault();
@@ -70,8 +80,8 @@ namespace Diag.SourceWatcher
                             {
                                 configFileData.Metadata = await githubService.GetFileContentByType<string>(metadataFile.Download_url);
                             }
-
-                            configFileData = EntityHelper.PrepareEntityForLoad(assemblyData, string.Empty, configFileData);
+                            var scriptFileData = await githubService.GetFileContentByType<string>(scriptFile.Download_url);
+                            configFileData = DiagEntityHelper.PrepareEntityForLoad(DiagEntityHelper.GetByteFromStream(assemblyData), scriptFileData, configFileData);
                             configFileData.GitHubSha = githubdir.Sha;
                             configFileData.GithubLastModified = await githubService.GetCommitDate(scriptFile.Path);
 
@@ -79,7 +89,8 @@ namespace Diag.SourceWatcher
                             var existingDetectorEntity = await storageService.GetEntityFromTable(configFileData.PartitionKey, configFileData.RowKey, githubdir.Name);
                             var doesBlobExists = await storageService.CheckDetectorExists($"{githubdir.Name}/{githubdir.Name}.dll");
                             //If there is no entry in table or blob or github last modifed date has been changed, upload to blob
-                            if (existingDetectorEntity == null || !doesBlobExists || existingDetectorEntity.GithubLastModified != configFileData.GithubLastModified)
+                            if (existingDetectorEntity == null || !doesBlobExists || existingDetectorEntity.GithubLastModified != configFileData.GithubLastModified 
+                                || existingDetectorEntity.Metadata == null || existingDetectorEntity.Metadata != configFileData.Metadata)
                             {
                                 var assemblyLastModified = await githubService.GetCommitDate(assemblyFile.Path);
                                 await storageService.LoadBlobToContainer(assemblyFile.Path, assemblyData);
