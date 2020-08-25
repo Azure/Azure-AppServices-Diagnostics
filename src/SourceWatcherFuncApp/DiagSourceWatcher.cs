@@ -60,7 +60,7 @@ namespace Diag.SourceWatcher
                     {
                         if(githubdir.Url.Contains("trees"))
                         {
-                            githubdir.Url = $"https://api.github.com/repos/{config["Github:UserName"]}/{config["Github:RepoName"]}/contents/{githubdir.Name}?ref={config["Github:Branch"]}";
+                            githubdir.Url = githubService.GetContentUrl(githubdir.Name);
                         }
                         var contentList = await githubService.DownloadGithubDirectories(branchdownloadUrl: githubdir.Url);
                         var assemblyFile = contentList.Where(githubFile => githubFile.Name.EndsWith("dll")).FirstOrDefault();
