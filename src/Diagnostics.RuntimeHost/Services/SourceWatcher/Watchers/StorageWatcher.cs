@@ -53,12 +53,12 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         }
           
 
-        public StorageWatcher(IHostingEnvironment env, IConfiguration config, IStorageService service, IInvokerCacheService invokerCache, IGistCacheService gistCache, IKustoMappingsCacheService kustoMappingsCache)
+        public StorageWatcher(IHostingEnvironment env, IConfiguration config, IStorageService service, IInvokerCacheService invokerCache, IGistCacheService gistCache, IKustoMappingsCacheService kustoMappingsCache, IGithubClient githubClient)
         {
             storageService = service;
             hostingEnvironment = env;
             configuration = config;
-            gitHubClient = new GithubClient(env, config);
+            this.gitHubClient = githubClient;
             _invokerDictionary = new Dictionary<EntityType, ICache<string, EntityInvoker>>
             {
                 { EntityType.Detector, invokerCache},
