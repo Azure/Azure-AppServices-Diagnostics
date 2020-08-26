@@ -14,7 +14,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
-using Diagnostics.RuntimeHost.Models;
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 
 namespace Diagnostics.RuntimeHost.Services.StorageService
@@ -84,6 +83,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         {
             int retryThreshold = 2;
             int attempt = 0;
+            var detectorsResult = new List<DiagEntity>();
             do
             {
                 var clientRequestId = Guid.NewGuid().ToString();
@@ -99,7 +99,6 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     var tableQuery = new TableQuery<DiagEntity>();
                     tableQuery.Where(filterPartitionKey);
                     TableContinuationToken tableContinuationToken = null;
-                    var detectorsResult = new List<DiagEntity>();
                     timeTakenStopWatch.Start();
                     TableRequestOptions tableRequestOptions = new TableRequestOptions();
                     tableRequestOptions.LocationMode = LocationMode.PrimaryThenSecondary;
@@ -127,14 +126,14 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 }
                 catch (Exception ex)
                 {
-                    DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), $"ClientRequestId : {clientRequestId} {ex.Message}", ex.GetType().ToString(), ex.ToString());
-                    return null;
+                    DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), $"ClientRequestId : {clientRequestId} {ex.Message}", ex.GetType().ToString(), ex.ToString());               
                 }
                 finally
                 {
                     attempt++;
                 }
             } while (attempt <= retryThreshold);
+            return detectorsResult;
         }
 
         public bool GetStorageFlag()
@@ -243,14 +242,13 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 catch (Exception ex)
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), $"ClientRequestId {clientRequestId} {ex.Message}", ex.GetType().ToString(), ex.ToString());
-                    return null;
                 }
                 finally
                 {
                     attempt++;
                 }
             } while (attempt <= retryThreshold);
-            
+            return null;
         }
     
         public async Task<int> ListBlobsInContainer()
