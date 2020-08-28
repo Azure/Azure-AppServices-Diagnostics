@@ -12,7 +12,6 @@ using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
-using Diagnostics.RuntimeHost.Services.StorageService;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -23,21 +22,10 @@ using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Diagnostics;
-using Diagnostics.RuntimeHost.Security.CertificateAuth;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.IdentityModel.Logging;
-using System.Net;
-using Diagnostics.RuntimeHost.Utilities;
-using Microsoft.AspNetCore.Rewrite;
 using Newtonsoft.Json;
 using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
 
@@ -146,6 +134,14 @@ namespace Diagnostics.RuntimeHost
 
             services.AddSingleton<IDataSourcesConfigurationService, DataSourcesConfigurationService>();
             services.AddSingleton<ICompilerHostClient, CompilerHostClient>();
+            if (Configuration.IsAirGappedCloud())
+            {
+                services.AddSingleton<IGithubClient, AzureStorageSourceCodeClient>();
+            }
+            else
+            {
+                services.AddSingleton<IGithubClient, GithubClient>();
+            }
             services.AddSingleton<ISourceWatcherService, SourceWatcherService>();
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
             services.AddSingleton<IGistCacheService, GistCacheService>();
