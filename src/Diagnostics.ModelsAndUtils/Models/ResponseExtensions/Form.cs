@@ -97,24 +97,30 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public string ToolTip;
 
         /// <summary>
+        /// Tooltip icon
+        /// </summary>
+        public string TooltipIcon;
+
+        /// <summary>
         /// Creates an input with given id and input type
         /// </summary>
         /// <param name="id">unique id for the input</param>
         /// <param name="inputType">Input type for the input</param>
         /// <param name="label">The label of the input</param>
         /// <param name="isRequired">Indicates whether this is a required input</param>
-        public FormInputBase(int id, FormInputTypes inputType, string label, bool isRequired = false): this(id, inputType, label, string.Empty, isRequired)
+        public FormInputBase(int id, FormInputTypes inputType, string label, bool isRequired = false): this(id, inputType, label, string.Empty, string.Empty, isRequired)
         {
             
         }
 
-        public FormInputBase(int id, FormInputTypes inputType, string label, string tooltip, bool isRequired = false)
+        public FormInputBase(int id, FormInputTypes inputType, string label, string tooltip, string tooltipIcon ="", bool isRequired = false)
         {
             InputId = id;
             InputType = inputType;
             Label = label;
             IsRequired = isRequired;
             ToolTip = tooltip;
+            TooltipIcon = tooltipIcon;
         }
     }
 
@@ -140,11 +146,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="id">Unique id for the input</param>
         /// <param name="label">Label for the textbox</param>
         /// <param name="isRequired">Indicates if it is a required input</param>
-        public Textbox(int id, string label, bool isRequired = false) : this(id, label, string.Empty, isRequired)
+        public Textbox(int id, string label, bool isRequired = false) : this(id, label, string.Empty, string.Empty, isRequired)
         {
         }
 
-        public Textbox(int id, string label, string tooltip, bool isRequired = false): base(id, FormInputTypes.TextBox, label, tooltip, isRequired)
+        public Textbox(int id, string label, string tooltip, string tooltipIcon = "", bool isRequired = false): base(id, FormInputTypes.TextBox, label, tooltip, tooltipIcon, isRequired)
         {
 
         }
@@ -196,12 +202,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="id">Unique id for the input</param>
         /// <param name="label">Label for the radio button list</param>
         /// <param name="items">The list of items for this list</param>
-        public RadioButtonList(int id, string label, List<ListItem> items) : this(id, label, items, string.Empty)
+        public RadioButtonList(int id, string label, List<ListItem> items) : this(id, label, items, string.Empty, string.Empty)
         {
             Items = items;
         }
 
-        public RadioButtonList(int id, string label, List<ListItem> items, string tooltip ="") : base(id, FormInputTypes.RadioButton, label, tooltip, false)
+        public RadioButtonList(int id, string label, List<ListItem> items, string tooltip ="", string tooltipIcon = "") : base(id, FormInputTypes.RadioButton, label, tooltip, tooltipIcon, false)
         {
             Items = items;
         }
@@ -236,21 +242,27 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public string Tooltip;
 
         /// <summary>
+        /// Tooltipicon
+        /// </summary>
+        public string TooltipIcon;
+
+        /// <summary>
         /// Creates an instance of a new ListItem class
         /// </summary>
         /// <param name="text">Text for the list item</param>
         /// <param name="value">HTML value for the list item</param>
         /// <param name="isSelected">whether the list item is auto selected or not</param>
-        public ListItem(string text, string value, bool isSelected = false): this(text, value, string.Empty, isSelected)
+        public ListItem(string text, string value, bool isSelected = false): this(text, value, string.Empty, string.Empty, isSelected)
         {
         }
 
-        public ListItem(string text, string value, string tooltip, bool isSelected = false)
+        public ListItem(string text, string value, string tooltip, string tooltipIcon = "", bool isSelected = false)
         {
             Text = text;
             Value = value;
             IsSelected = isSelected;
             Tooltip = tooltip;
+            TooltipIcon = tooltipIcon;
         }
     }
 
