@@ -92,18 +92,24 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public string Label;
 
         /// <summary>
+        /// Tooltip for the label of the input
+        /// </summary>
+        public string ToolTip;
+
+        /// <summary>
         /// Creates an input with given id and input type
         /// </summary>
         /// <param name="id">unique id for the input</param>
         /// <param name="inputType">Input type for the input</param>
         /// <param name="label">The label of the input</param>
         /// <param name="isRequired">Indicates whether this is a required input</param>
-        public FormInputBase(int id, FormInputTypes inputType, string label, bool isRequired = false)
+        public FormInputBase(int id, FormInputTypes inputType, string label, bool isRequired = false, string tooltip = "")
         {
             InputId = id;
             InputType = inputType;
             Label = label;
             IsRequired = isRequired;
+            ToolTip = tooltip;
         }
     }
 
@@ -129,7 +135,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="id">Unique id for the input</param>
         /// <param name="label">Label for the textbox</param>
         /// <param name="isRequired">Indicates if it is a required input</param>
-        public Textbox(int id, string label, bool isRequired = false) : base(id, FormInputTypes.TextBox, label, isRequired)
+        public Textbox(int id, string label, bool isRequired = false, string tooltip = "") : base(id, FormInputTypes.TextBox, label, isRequired, tooltip)
         {
         }
     }
@@ -180,7 +186,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="id">Unique id for the input</param>
         /// <param name="label">Label for the radio button list</param>
         /// <param name="items">The list of items for this list</param>
-        public RadioButtonList(int id, string label, List<ListItem> items) : base(id, FormInputTypes.RadioButton, label, false)
+        public RadioButtonList(int id, string label, List<ListItem> items, string tooltip ="") : base(id, FormInputTypes.RadioButton, label, false, tooltip)
         {
             Items = items;
         }
@@ -210,16 +216,22 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public bool IsSelected;
 
         /// <summary>
+        /// Tooltip for list item.
+        /// </summary>
+        public string Tooltip;
+
+        /// <summary>
         /// Creates an instance of a new ListItem class
         /// </summary>
         /// <param name="text">Text for the list item</param>
         /// <param name="value">HTML value for the list item</param>
         /// <param name="isSelected">whether the list item is auto selected or not</param>
-        public ListItem(string text, string value, bool isSelected = false)
+        public ListItem(string text, string value, bool isSelected = false, string tooltip ="")
         {
             Text = text;
             Value = value;
             IsSelected = isSelected;
+            Tooltip = tooltip;
         }
     }
 
