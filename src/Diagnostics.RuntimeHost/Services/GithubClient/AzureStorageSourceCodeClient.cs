@@ -48,6 +48,13 @@ namespace Diagnostics.RuntimeHost.Services
                 {
                     commit.Content = InternalAPIHelper.Base64Encode(commit.Content);
                 }
+
+                //filter out dll and pdb files since this is handled already by storage watcher
+                if (commit.FilePath.EndsWith(".dll") || commit.FilePath.EndsWith(".pdb"))
+                {
+                    continue;
+                }
+
                 await _storageService.LoadBlobToContainer(commit.FilePath, commit.Content).ConfigureAwait(false);
             }
         }
