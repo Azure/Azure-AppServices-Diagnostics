@@ -75,12 +75,13 @@ namespace SourceWatcherFuncApp
                         {
 
                             log.LogInformation($"Getting content for Assembly file : {assemblyFile.Path}");
-                            var doesBlobExists = await storageService.CheckDetectorExists($"{githubdir.Name}/{githubdir.Name}.dll");
+                            var doesBlobExistsTask = storageService.CheckDetectorExists($"{githubdir.Name}/{githubdir.Name}.dll");
+                            var assemblyDataTask = githubService.GetFileContentStream(assemblyFile.Download_url);
+                            var configFileDataTask = githubService.GetFileContentByType<DiagEntity>(configFile.Download_url);
 
-                            var assemblyData = await githubService.GetFileContentStream(assemblyFile.Download_url);
-
-                            //log.LogInformation("Reading detector metadata");
-                            var configFileData = await githubService.GetFileContentByType<DiagEntity>(configFile.Download_url);
+                            var doesBlobExists = await doesBlobExistsTask;
+                            var assemblyData = await assemblyDataTask;
+                            var configFileData = await configFileDataTask;
 
                             configFileData = EntityHelper.PrepareEntityForLoad(assemblyData, string.Empty, configFileData);
                             configFileData.GitHubSha = githubdir.Sha;
@@ -92,15 +93,13 @@ namespace SourceWatcherFuncApp
                             //If there is no entry in table or blob or github last modifed date has been changed, upload to blob
                             if (existingDetectorEntity == null || !doesBlobExists || existingDetectorEntity.GithubLastModified != configFileData.GithubLastModified)
                             {
-                                var assemblyLastModified = await githubService.GetCommitDate(assemblyFile.Path);
-                                await storageService.LoadBlobToContainer(assemblyFile.Path, assemblyData);
-                                await storageService.LoadDataToTable(configFileData, githubdir.Name);
+                                await Task.WhenAll(storageService.LoadBlobToContainer(assemblyFile.Path, assemblyData), storageService.LoadDataToTable(configFileData, githubdir.Name)).ConfigureAwait(false);
                             }
 
                             if (!await storageService.CheckDetectorExists(scriptFile.Path))
                             {
                                 var scriptText = await githubService.GetFileContentStream(scriptFile.Download_url);
-                                await storageService.LoadBlobToContainer(scriptFile.Path, scriptText);
+                                await storageService.LoadBlobToContainer(scriptFile.Path, scriptText).ConfigureAwait(false);
                             }
 
                             if (configFileData.EntityType.Equals(EntityType.Gist.ToString(), StringComparison.CurrentCultureIgnoreCase))
@@ -113,7 +112,7 @@ namespace SourceWatcherFuncApp
                                     if (!await storageService.CheckDetectorExists(path))
                                     {
                                         var scriptTextAtCommitSha = await githubService.GetCommitContent(scriptFile.Path, commit);
-                                        await storageService.LoadBlobToContainer(path, scriptTextAtCommitSha);
+                                        await storageService.LoadBlobToContainer(path, scriptTextAtCommitSha).ConfigureAwait(false);
                                     }
                                 }
                             }
