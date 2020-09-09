@@ -316,6 +316,34 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         Link
     }
 
+    public class FormDropdown: FormInputBase
+    {
+       public List<DropdownOptions> DropdownOptions { get; set; }
+
+
+       public FormDropdown(int id, string label, List<DropdownOptions> options, string tooltip = "", string tooltipIcon =""): base(id, FormInputTypes.DropDown, label, tooltip, tooltipIcon)
+       {
+            DropdownOptions = options;
+       }
+    }
+
+    public class DropdownOptions
+    {
+        /// <summary>
+        /// Text to render for this option;
+        /// </summary>
+        public string Text { get; set; }
+
+        /// <summary>
+        /// Key associated with this option;
+        /// </summary>
+        public string Key { get; set; }
+
+        /// <summary>
+        /// Whether this item is selected or not
+        /// </summary>
+        public bool IsSelected { get; set; }
+    }
     public static class ResponseFormExtension
     {
         /// <summary>
