@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
@@ -318,16 +319,36 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
     public class FormDropdown: FormInputBase
     {
-       public List<DropdownOptions> DropdownOptions { get; set; }
+        /// <summary>
+        /// Set of options for this dropdown
+        /// </summary>
+       public List<DropdownOption> DropdownOptions { get; set; }
 
+        /// <summary>
+        /// Flag to indicate if multi select is allowed
+        /// </summary>
+       public bool IsMultiSelect { get; set; }
 
-       public FormDropdown(int id, string label, List<DropdownOptions> options, string tooltip = "", string tooltipIcon =""): base(id, FormInputTypes.DropDown, label, tooltip, tooltipIcon)
+        /// <summary>
+        /// Default selected key. If not provided by user, default to first option's key.
+        /// </summary>
+       public string DefaultSelectedKey { get; set; }
+
+       public FormDropdown(int id, string label, List<DropdownOption> options, string defaultKey = "", bool multiSelect = false,  string tooltip = "", string tooltipIcon =""): base(id, FormInputTypes.DropDown, label, tooltip, tooltipIcon)
        {
             DropdownOptions = options;
+            IsMultiSelect = multiSelect;
+            if(string.IsNullOrWhiteSpace(defaultKey))
+            {
+                DefaultSelectedKey = options.FirstOrDefault().Key;
+            } else
+            {
+                DefaultSelectedKey = defaultKey;
+            }
        }
     }
 
-    public class DropdownOptions
+    public class DropdownOption
     {
         /// <summary>
         /// Text to render for this option;
