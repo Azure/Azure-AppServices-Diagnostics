@@ -334,7 +334,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
        public string DefaultSelectedKey { get; set; }
 
-       public FormDropdown(int id, string label, List<DropdownOption> options, string defaultKey = "", bool multiSelect = false,  string tooltip = "", string tooltipIcon =""): base(id, FormInputTypes.DropDown, label, tooltip, tooltipIcon)
+        /// <summary>
+        /// Default selected keys in case of MultiSelect
+        /// </summary>
+       public List<string> DefaultSelectedKeys { get; set; }
+        
+       public FormDropdown(int id, string label, List<DropdownOption> options, string defaultKey = "", bool multiSelect = false, List<string> defaultKeys = null, string tooltip = "", string tooltipIcon =""): base(id, FormInputTypes.DropDown, label, tooltip, tooltipIcon)
        {
             DropdownOptions = options;
             IsMultiSelect = multiSelect;
@@ -344,6 +349,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             } else
             {
                 DefaultSelectedKey = defaultKey;
+            }
+            DefaultSelectedKeys = new List<string>();
+            if(defaultKeys != null)
+            {
+                DefaultSelectedKeys.AddRange(defaultKeys);
             }
        }
     }
