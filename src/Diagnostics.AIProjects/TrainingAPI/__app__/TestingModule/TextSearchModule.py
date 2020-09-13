@@ -22,6 +22,8 @@ class ModelRefreshException(Exception):
 
 packageFileNames = {
     "dictionaryFile": "dictionary.dict",
+    "dictionaryFile1": "dictionary1.dict",
+    "dictionaryFile2": "dictionary2.dict",
     "m1ModelFile": "m1.model",
     "m1IndexFile": "m1.index",
     "m2ModelFile": "m2.model",
@@ -32,7 +34,7 @@ packageFileNames = {
     "modelInfo": "ModelInfo.json"
 }
 
-optionalFiles = ["mappingsFile", "modelInfo"]
+optionalFiles = ["mappingsFile", "modelInfo", "dictionaryFile", "dictionaryFile1", "dictionaryFile2"]
 
 #### Text Search model for Queries ####
 def verifyFile(filename, prelogMessage=""):
@@ -50,7 +52,7 @@ class TextSearchModel:
         for key in packageFiles.keys():
             packageFiles[key] = absPath(os.path.join(modelpackagepath, packageFiles[key]))
         self.packageFiles = packageFiles
-        self.models = {"dictionary": None, "m1Model": None, "m1Index": None, "m2Model": None, "m2Index": None, "detectors": None, "sampleUtterances": None, "mappings": None, "modelInfo": None}
+        self.models = {"dictionary": None, "dictionary1": None, "dictionary2": None, "m1Model": None, "m1Index": None, "m2Model": None, "m2Index": None, "detectors": None, "sampleUtterances": None, "mappings": None, "modelInfo": None}
         try:
             with open(self.packageFiles["modelInfo"], "r") as fp:
                 self.models["modelInfo"] = ModelInfo(json.loads(fp.read()))
@@ -58,7 +60,11 @@ class TextSearchModel:
         except:
             self.models["modelInfo"] = ModelInfo({})
         try:
-            self.models["dictionary"] = corpora.Dictionary.load(self.packageFiles["dictionaryFile"])
+            if self.models["modelInfo"].splitDictionary:
+                self.models["dictionary1"] = corpora.Dictionary.load(self.packageFiles["dictionaryFile1"])
+                self.models["dictionary2"] = corpora.Dictionary.load(self.packageFiles["dictionaryFile2"])
+            else:
+                self.models["dictionary"] = corpora.Dictionary.load(self.packageFiles["dictionaryFile"])
         except:
             raise ModelFileLoadFailed("Failed to load dictionary from file " + self.packageFiles["dictionaryFile"])
         try:
@@ -113,7 +119,8 @@ class TextSearchModel:
     def queryDetectors(self, query=None):
         if query:
             try:
-                vector = self.models["m1Model"][self.models["dictionary"].doc2bow(getAllNGrams(query, self.models["modelInfo"].textNGrams))]
+                doc2bow = self.models["dictionary1"].doc2bow(getAllNGrams(query, self.models["modelInfo"].textNGrams)) if self.models["modelInfo"].splitDictionary else self.models["dictionary"].doc2bow(getAllNGrams(query, self.models["modelInfo"].textNGrams))
+                vector = self.models["m1Model"][doc2bow]
                 if self.models["modelInfo"].detectorContentSplitted:    
                     similar_doc_indices = sorted(enumerate(self.models["m1Index"][vector]), key=lambda item: -item[1])[:10]
                     similar_docs = []
@@ -147,7 +154,8 @@ class TextSearchModel:
             query = query + " ".join(existing_utterances)
             self.loadUtteranceModel()
             try:
-                vector = self.models["m2Model"][self.models["dictionary"].doc2bow(getAllNGrams(query, self.models["modelInfo"].textNGrams))]
+                doc2bow = self.models["dictionary2"].doc2bow(getAllNGrams(query, self.models["modelInfo"].textNGrams)) if self.models["modelInfo"].splitDictionary else self.models["dictionary"].doc2bow(getAllNGrams(query, self.models["modelInfo"].textNGrams))
+                vector = self.models["m2Model"][doc2bow]
                 similar_doc_indices = sorted(enumerate(self.models["m2Index"][vector]), key=lambda item: -item[1])
                 similar_doc_indices = [x for x in similar_doc_indices if self.models["sampleUtterances"][x[0]]["text"].lower() not in existing_utterances][:10]
                 similar_docs = list(map(lambda x: {"sampleUtterance": self.models["sampleUtterances"][x[0]], "score": str(x[1])}, similar_doc_indices))
