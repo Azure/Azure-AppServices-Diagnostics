@@ -113,19 +113,21 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Determines whether the app resource is applicable after filtering.
         /// </summary>
-        /// <param name="filter">App Resource Filter</param>
+        /// <param name="filter">Resource Filter</param>
         /// <returns>True, if app resource passes the filter. False otherwise</returns>
         public bool IsApplicable(IResourceFilter filter)
         {
+            bool customFilterLogicResult = true;
             if (filter is AppFilter appFilter)
             {
-                return ((appFilter.AppType & this.AppType) > 0) &&
+                customFilterLogicResult =
+                    ((appFilter.AppType & this.AppType) > 0) &&
                     ((appFilter.PlatformType & this.PlatformType) > 0) &&
                     ((this.StackType == StackType.None) || (appFilter.StackType & this.StackType) > 0) &&
                     ((appFilter.StampType & this.StampType) > 0);
             }
 
-            return false;
+            return base.IsApplicable<AppFilter>(filter, this.Provider, this.ResourceTypeName, customFilterLogicResult);
         }
 
         /// <summary>
@@ -135,17 +137,29 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <returns>True, if resource passes the filter. False otherwise</returns>
         public bool IsApplicable(DiagEntity diagEntity)
         {
-            if(diagEntity == null || diagEntity.AppType == null || diagEntity.PlatForm == null || diagEntity.StackType == null)
+            if(diagEntity == null)
             {
                 return false;
             }
-            AppType tableRowAppType = (AppType)Enum.Parse(typeof(AppType), diagEntity.AppType);
-            PlatformType tableRowPlatformType = (PlatformType)Enum.Parse(typeof(PlatformType), diagEntity.PlatForm);
-            StackType tableRowStacktype = (StackType)Enum.Parse(typeof(StackType), diagEntity.StackType);
 
-            return ((tableRowAppType & this.AppType) > 0) &&
-                    ((tableRowPlatformType & this.PlatformType) > 0) &&
-                    ((this.StackType == StackType.None) || (tableRowStacktype & this.StackType) > 0);
+            if(diagEntity.AppType != null)
+            {
+                if(diagEntity.PlatForm == null || diagEntity.StackType == null)
+                {
+                    return false;
+                }
+
+                AppType tableRowAppType = (AppType)Enum.Parse(typeof(AppType), diagEntity.AppType);
+                PlatformType tableRowPlatformType = (PlatformType)Enum.Parse(typeof(PlatformType), diagEntity.PlatForm);
+                StackType tableRowStacktype = (StackType)Enum.Parse(typeof(StackType), diagEntity.StackType);
+
+                return ((tableRowAppType & this.AppType) > 0) &&
+                        ((tableRowPlatformType & this.PlatformType) > 0) &&
+                        ((this.StackType == StackType.None) || (tableRowStacktype & this.StackType) > 0);
+
+            }
+
+            return base.IsApplicable(diagEntity, this.Provider, this.ResourceTypeName);
         }
     }
 }

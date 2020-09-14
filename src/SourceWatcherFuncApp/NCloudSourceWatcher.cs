@@ -1,21 +1,26 @@
-using System.Threading.Tasks;
-using System.Threading;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
 using System;
-using System.Linq;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Microsoft.Extensions.Configuration;
 using SourceWatcherFuncApp.Services;
+using System.Collections.Generic;
+using System.Linq;
 using SourceWatcherFuncApp.Utilities;
 using Diagnostics.ModelsAndUtils.Models.Storage;
 using System.Net;
-using System.Collections.Generic;
 using Kusto.Cloud.Platform.Utils;
-using Diagnostics.RuntimeHost.Utilities;
+using System.Reflection;
+using Diagnostics.Scripts.Models;
 
-namespace Diag.SourceWatcher
+namespace SourceWatcherFuncApp
 {
-    public class DiagSourceWatcher
+    public class NCloudSourceWatcher
     {
         private IGithubService githubService;
 
@@ -23,16 +28,17 @@ namespace Diag.SourceWatcher
 
         private IConfigurationRoot config;
 
-        public DiagSourceWatcher(IConfigurationRoot configurationRoot, IGithubService GithubService,
-                                 IStorageService StorageService)
+        public NCloudSourceWatcher(IConfigurationRoot configurationRoot, IGithubService GithubService, IStorageService StorageService)
         {
             githubService = GithubService;
             config = configurationRoot;
             storageService = StorageService;
         }
 
-        [FunctionName("DiagSourceWatcher")]
-        public async Task Run([TimerTrigger("0 0 0 * * *")]TimerInfo timerInfo, ILogger log)
+        [FunctionName("NCloudSourceWatcher")]
+        public async Task<IActionResult> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
+            ILogger log)
         {
             log.LogInformation($"C# Timer trigger function started at: {DateTime.Now}");
 
@@ -44,12 +50,13 @@ namespace Diag.SourceWatcher
             {
                 githubDir.Name = githubDir.Name ?? githubDir.Path;
             });
+
             bool updateEntities = false;
             if (bool.TryParse(config["UpdateEntities"], out bool result))
             {
                 updateEntities = result;
             }
-            if(updateEntities)
+            if (updateEntities)
             {
 
                 foreach (var githubdir in githubDirectories)
@@ -58,43 +65,57 @@ namespace Diag.SourceWatcher
 
                     try
                     {
-                        if(githubdir.Url.Contains("trees"))
-                        {
-                            githubdir.Url = githubService.GetContentUrl(githubdir.Name);
-                        }
-                        var contentList = await githubService.DownloadGithubDirectories(branchdownloadUrl: githubdir.Url);
+                        var contentList = await githubService.DownloadGithubDirectories(branchdownloadUrl: githubService.GetContentUrl(githubdir.Name));
                         var assemblyFile = contentList.Where(githubFile => githubFile.Name.EndsWith("dll")).FirstOrDefault();
                         var scriptFile = contentList.Where(githubfile => githubfile.Name.EndsWith(".csx")).FirstOrDefault();
                         var configFile = contentList.Where(githubFile => githubFile.Name.Equals("package.json", StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
                         var metadataFile = contentList.Where(githubFile => githubFile.Name.Equals("metadata.json", StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
-
+ 
                         if (assemblyFile != null && scriptFile != null && configFile != null)
                         {
 
                             log.LogInformation($"Getting content for Assembly file : {assemblyFile.Path}");
+                            var doesBlobExists = await storageService.CheckDetectorExists($"{githubdir.Name}/{githubdir.Name}.dll");
+
                             var assemblyData = await githubService.GetFileContentStream(assemblyFile.Download_url);
 
                             //log.LogInformation("Reading detector metadata");
                             var configFileData = await githubService.GetFileContentByType<DiagEntity>(configFile.Download_url);
-                            if (metadataFile != null)
-                            {
-                                configFileData.Metadata = await githubService.GetFileContentByType<string>(metadataFile.Download_url);
-                            }
-                            var scriptFileData = await githubService.GetFileContentByType<string>(scriptFile.Download_url);
-                            configFileData = DiagEntityHelper.PrepareEntityForLoad(DiagEntityHelper.GetByteFromStream(assemblyData), scriptFileData, configFileData);
+
+                            configFileData = EntityHelper.PrepareEntityForLoad(assemblyData, string.Empty, configFileData);
                             configFileData.GitHubSha = githubdir.Sha;
                             configFileData.GithubLastModified = await githubService.GetCommitDate(scriptFile.Path);
 
                             //First check if entity exists in blob or table
                             var existingDetectorEntity = await storageService.GetEntityFromTable(configFileData.PartitionKey, configFileData.RowKey, githubdir.Name);
-                            var doesBlobExists = await storageService.CheckDetectorExists($"{githubdir.Name}/{githubdir.Name}.dll");
+
                             //If there is no entry in table or blob or github last modifed date has been changed, upload to blob
-                            if (existingDetectorEntity == null || !doesBlobExists || existingDetectorEntity.GithubLastModified != configFileData.GithubLastModified 
-                                || existingDetectorEntity.Metadata == null || existingDetectorEntity.Metadata != configFileData.Metadata)
+                            if (existingDetectorEntity == null || !doesBlobExists || existingDetectorEntity.GithubLastModified != configFileData.GithubLastModified)
                             {
                                 var assemblyLastModified = await githubService.GetCommitDate(assemblyFile.Path);
                                 await storageService.LoadBlobToContainer(assemblyFile.Path, assemblyData);
                                 await storageService.LoadDataToTable(configFileData, githubdir.Name);
+                            }
+
+                            if (!await storageService.CheckDetectorExists(scriptFile.Path))
+                            {
+                                var scriptText = await githubService.GetFileContentStream(scriptFile.Download_url);
+                                await storageService.LoadBlobToContainer(scriptFile.Path, scriptText);
+                            }
+
+                            if (configFileData.EntityType.Equals(EntityType.Gist.ToString(), StringComparison.CurrentCultureIgnoreCase))
+                            {
+                                var commits = await githubService.ListCommitHashes(scriptFile.Path);
+                                string path = null;
+                                foreach (var commit in commits)
+                                {
+                                    path = $"{githubdir.Name}/{commit}/{githubdir.Name}.csx";
+                                    if (!await storageService.CheckDetectorExists(path))
+                                    {
+                                        var scriptTextAtCommitSha = await githubService.GetCommitContent(scriptFile.Path, commit);
+                                        await storageService.LoadBlobToContainer(path, scriptTextAtCommitSha);
+                                    }
+                                }
                             }
                         }
                         else
@@ -130,6 +151,8 @@ namespace Diag.SourceWatcher
 
             await Task.WhenAll(updatetasks);
             log.LogInformation($"C# Timer trigger function finished at: {DateTime.Now}");
+
+            return new OkObjectResult("");
         }
     }
 }

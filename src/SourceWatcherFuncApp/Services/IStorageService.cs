@@ -17,7 +17,8 @@ namespace SourceWatcherFuncApp.Services
         Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity, string githubdirname);
         Task<DiagEntity> GetEntityFromTable(string partitionKey, string rowKey, string dirname = "");
         Task<bool> CheckDetectorExists(string currentDetector);
-        void LoadBlobToContainer(string name, Stream uploadStream);
+        Task LoadBlobToContainer(string name, Stream uploadStream);
+        Task LoadBlobToContainer(string name, string fileContent);
         Task<List<DiagEntity>> GetAllEntities();
     }
 
@@ -73,7 +74,7 @@ namespace SourceWatcherFuncApp.Services
             }
         }
 
-        public async void LoadBlobToContainer(string name, Stream uploadStream)
+        public async Task LoadBlobToContainer(string name, Stream uploadStream)
         {
             try
             {
@@ -172,5 +173,19 @@ namespace SourceWatcherFuncApp.Services
             }
         }
 
+        public async Task LoadBlobToContainer(string name, string fileContent)
+        {
+            try
+            {
+                storageServiceLogger.LogInformation($"Uploading {name} blob");
+                var cloudBlob = blobContainer.GetBlockBlobReference(name);
+                await cloudBlob.UploadTextAsync(fileContent);
+                storageServiceLogger.LogInformation($"Loaded {name} to blob");
+            }
+            catch (Exception ex)
+            {
+                storageServiceLogger.LogError(ex.ToString());
+            }
+        }
     }
 }

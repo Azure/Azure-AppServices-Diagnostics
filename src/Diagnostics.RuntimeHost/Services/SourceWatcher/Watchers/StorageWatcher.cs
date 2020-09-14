@@ -53,12 +53,12 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         }
           
 
-        public StorageWatcher(IHostingEnvironment env, IConfiguration config, IStorageService service, IInvokerCacheService invokerCache, IGistCacheService gistCache, IKustoMappingsCacheService kustoMappingsCache)
+        public StorageWatcher(IHostingEnvironment env, IConfiguration config, IStorageService service, IInvokerCacheService invokerCache, IGistCacheService gistCache, IKustoMappingsCacheService kustoMappingsCache, IGithubClient githubClient)
         {
             storageService = service;
             hostingEnvironment = env;
             configuration = config;
-            gitHubClient = new GithubClient(env, config);
+            this.gitHubClient = githubClient;
             _invokerDictionary = new Dictionary<EntityType, ICache<string, EntityInvoker>>
             {
                 { EntityType.Detector, invokerCache},
@@ -66,7 +66,6 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 { EntityType.Gist, gistCache}
             };
             kustoMappingsCacheService = kustoMappingsCache;
-            Start();
         }
 
         public virtual async Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -98,12 +97,13 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             {
                 await gitHubClient.CreateOrUpdateFiles(pkg.GetCommitContents(), pkg.GetCommitMessage());
                 // Insert Kusto Cluster Mapping to Configuration table.
-                if(pkg.GetCommitContents().Any(content => content.FilePath.Contains("kustoClusterMappings", StringComparison.CurrentCultureIgnoreCase)))
+                if (pkg.GetCommitContents().Any(content => content.FilePath.Contains("kustoClusterMappings", StringComparison.CurrentCultureIgnoreCase)))
                 {
                     var kustoMappingPackage = pkg.GetCommitContents().Where(c => c.FilePath.Contains("kustoClusterMappings", StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
                     var githubCommit = await gitHubClient.GetCommitByPath(kustoMappingPackage.FilePath);
                     // store kusto cluster data
-                    var diagconfiguration = new DetectorRuntimeConfiguration{
+                    var diagconfiguration = new DetectorRuntimeConfiguration
+                    {
                         PartitionKey = "KustoClusterMapping",
                         RowKey = pkg.Id.ToLower(),
                         GithubSha = githubCommit != null ? githubCommit.Commit.Tree.Sha : string.Empty,
@@ -121,6 +121,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 }
                 var gitCommit = await gitHubClient.GetCommitByPath(blobName);
                 var diagEntity = JsonConvert.DeserializeObject<DiagEntity>(pkg.PackageConfig);
+                diagEntity.Metadata = pkg.Metadata;
                 if (gitCommit != null)
                 {
                     diagEntity.GitHubSha = gitCommit.Commit.Tree.Sha;
@@ -132,6 +133,10 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                     diagEntity = DiagEntityHelper.PrepareEntityForLoad(assemblyBytes, pkg.CodeString, diagEntity);
                 }
                 await storageService.LoadDataToTable(diagEntity);
+
+                // Force refresh its own cache
+                var assemblyData = Convert.FromBase64String(pkg.DllBytes);
+                await UpdateInvokerCache(assemblyData, diagEntity.PartitionKey, diagEntity.RowKey, diagEntity.Metadata);
             } catch (Exception ex)
             {
                 DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageWatcher), ex.Message, ex.GetType().ToString(), ex.ToString());
@@ -173,23 +178,26 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
        
         private async Task StartBlobDownload(bool startup = false)
         {
-            var detectorsList = await storageService.GetEntitiesByPartitionkey("Detector");
-            var gists = !LoadOnlyPublicDetectors ? await storageService.GetEntitiesByPartitionkey("Gist") : new List<DiagEntity>();
-            var entitiesToLoad = new List<DiagEntity>();
-            var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
-            if(!startup)
-            {
-                entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= blobCacheLastModifiedTime).ToList());
-                entitiesToLoad.AddRange(gists.Where(s => s.Timestamp >= blobCacheLastModifiedTime).ToList());
-            } else
-            {
-                entitiesToLoad.AddRange(filteredDetectors.ToList());
-                entitiesToLoad.AddRange(gists);
-            }
+            DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Blobcache last modified at {blobCacheLastModifiedTime}");
             var stopwatch = new Stopwatch();
             stopwatch.Start();
+            var entitiesToLoad = new List<DiagEntity>();
             try
             {
+                var detectorsList = await storageService.GetEntitiesByPartitionkey("Detector");
+                var gists = !LoadOnlyPublicDetectors ? await storageService.GetEntitiesByPartitionkey("Gist") : new List<DiagEntity>();    
+                var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
+                if(!startup)
+                {
+                    // Refresh cache with detectors published in last 5 minutes.
+                    var timeRange = DateTime.UtcNow.AddMinutes(-5);
+                    entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= timeRange).ToList());
+                    entitiesToLoad.AddRange(gists.Where(s => s.Timestamp >= timeRange).ToList());
+                } else
+                {
+                    entitiesToLoad.AddRange(filteredDetectors.ToList());
+                    entitiesToLoad.AddRange(gists);
+                }         
                 if (entitiesToLoad.Count > 0)
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Starting blob download to update cache, Number of entities: {entitiesToLoad.Count}, startup : {startup.ToString()} at {DateTime.UtcNow}");
@@ -202,37 +210,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                         DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $" blob {entity.RowKey.ToLower()}.dll is either null or 0 bytes in length");
                         continue;
                     }
-
-                    // initializing Entry Point of Invoker using assembly
-                    Assembly temp = Assembly.Load(assemblyData);
-                    EntityType entityType = EntityType.Signal;
-                    if (entity.PartitionKey.Equals("Gist"))
-                    {
-                        entityType = EntityType.Gist;
-                    }
-                    else if (entity.PartitionKey.Equals("Detector"))
-                    {
-                        entityType = EntityType.Detector;
-                    }
-
-                    var script = string.Empty;
-                    if(entity.PartitionKey.Equals("Gist"))
-                    {
-                        script = await gitHubClient.GetFileContent($"{entity.RowKey.ToLower()}/{entity.RowKey.ToLower()}.csx");
-                    }
-                    EntityMetadata metaData = new EntityMetadata(script, entityType);
-                    var newInvoker = new EntityInvoker(metaData);
-                    newInvoker.InitializeEntryPoint(temp);
-
-                    if (_invokerDictionary.TryGetValue(entityType, out ICache<string, EntityInvoker> cache) && newInvoker.EntryPointDefinitionAttribute != null)
-                    {
-                        DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Updating cache with new invoker with id : {newInvoker.EntryPointDefinitionAttribute.Id} {entity.PartitionKey}");
-                        cache.AddOrUpdate(newInvoker.EntryPointDefinitionAttribute.Id, newInvoker);
-                    }
-                    else
-                    {
-                        DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $"No invoker cache exist for {entityType}");
-                    }
+                    await UpdateInvokerCache(assemblyData, entity.PartitionKey, entity.RowKey, entity.Metadata);
                 }           
             } 
             catch (Exception ex)
@@ -246,26 +224,25 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Blob download complete, Number of entities {entitiesToLoad.Count}, startup : {startup.ToString()} time ellapsed {stopwatch.ElapsedMilliseconds} millisecs");
                 }
-            }
-
-            
+            }         
         }
 
         private async Task StartKustoMappingsRefresh(bool startup = false)
         {
-            var diagConfigRows = await storageService.GetKustoConfiguration();
-            var configsToLoad = new List<DetectorRuntimeConfiguration>();
-            if(!startup)
-            {
-                configsToLoad.AddRange(diagConfigRows.Where(row => row.Timestamp >= kustoMappingsCacheLastModified).ToList());
-            } else
-            {
-                configsToLoad.AddRange(diagConfigRows);
-            }
             var stopwatch = new Stopwatch();
             stopwatch.Start();
+            var configsToLoad = new List<DetectorRuntimeConfiguration>();      
             try
             {
+                var diagConfigRows = await storageService.GetKustoConfiguration();
+                if (!startup)
+                {
+                    configsToLoad.AddRange(diagConfigRows.Where(row => row.Timestamp >= kustoMappingsCacheLastModified).ToList());
+                }
+                else
+                {
+                    configsToLoad.AddRange(diagConfigRows);
+                }
                 if (configsToLoad.Count > 0)
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Starting kusto config download to update cache, Number of configs to load: {configsToLoad.Count}, startup : {startup.ToString()} at {DateTime.UtcNow}");
@@ -289,6 +266,40 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Kusto config download complete, Number of configs {configsToLoad.Count}, startup : {startup.ToString()} time ellapsed {stopwatch.ElapsedMilliseconds} millisecs");
                 }
+            }
+        }
+
+        private async Task UpdateInvokerCache(byte[] assemblyData, string partitionkey, string rowkey, string metadata=null)
+        {
+            // initializing Entry Point of Invoker using assembly
+            Assembly temp = Assembly.Load(assemblyData);
+            EntityType entityType = EntityType.Signal;
+            if (partitionkey.Equals("Gist"))
+            {
+                entityType = EntityType.Gist;
+            }
+            else if (partitionkey.Equals("Detector"))
+            {
+                entityType = EntityType.Detector;
+            }
+
+            var script = string.Empty;
+            if (partitionkey.Equals("Gist"))
+            {
+                script = await gitHubClient.GetFileContent($"{rowkey.ToLower()}/{rowkey.ToLower()}.csx");
+            }
+            EntityMetadata metaData = new EntityMetadata(script, entityType, metadata);
+            var newInvoker = new EntityInvoker(metaData);
+            newInvoker.InitializeEntryPoint(temp);
+
+            if (_invokerDictionary.TryGetValue(entityType, out ICache<string, EntityInvoker> cache) && newInvoker.EntryPointDefinitionAttribute != null)
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Updating cache with new invoker with id : {newInvoker.EntryPointDefinitionAttribute.Id} {partitionkey}");
+                cache.AddOrUpdate(newInvoker.EntryPointDefinitionAttribute.Id, newInvoker);
+            }
+            else
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageWarning(nameof(StorageWatcher), $"No invoker cache exist for {entityType}");
             }
         }
     }

@@ -54,7 +54,9 @@ namespace Diagnostics.Tests.ScriptsTests
         {
             Definition definitonAttribute = new Definition()
             {
-                Id = "TestId"
+                Id = "TestId",
+                Author = "Test Author",
+                Name = "Test Gist"
             };
 
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata(EntityType.Gist);
@@ -218,7 +220,9 @@ namespace Diagnostics.Tests.ScriptsTests
             // First Create and Save a assembly for test purposes.
             Definition definitonAttribute = new Definition()
             {
-                Id = "TestId"
+                Id = "TestId",
+                Author = "Test Author",
+                Name = "Test Name"
             };
 
             string assemblyPath = $@"{AppContext.BaseDirectory}/{Guid.NewGuid().ToString()}";
@@ -347,6 +351,63 @@ namespace Diagnostics.Tests.ScriptsTests
 
                 Assert.False(invoker.IsCompilationSuccessful);
                 Assert.NotEmpty(invoker.CompilationOutput);
+            }
+        }
+
+        [Fact]
+        public async void EntityInvoker_TestValidShareableGists()
+        {
+            Definition definitonAttribute = new Definition()
+            {
+                Id = "testGistId",
+                Author = "testAuthor",
+                Name = "Test Gist"
+            };
+
+            string assemblyPath = string.Empty;
+            string gistScript = await ScriptTestDataHelper.GetGistScript(definitonAttribute, ResourceType.ArmResource);
+
+            // 1. Testing Gist Compilation that are shared globally
+            EntityMetadata metadata  = new EntityMetadata(gistScript, EntityType.Gist);
+            metadata.ScriptText = gistScript.Replace("Microsoft.EventHub", "*").Replace("namespaces", "*");
+            
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+                Assert.True(invoker.IsCompilationSuccessful);
+            }
+
+            // 2. Testing Gist Compilation that are shared within one RP only
+            metadata.ScriptText = gistScript.Replace("namespaces", "*");
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+                Assert.True(invoker.IsCompilationSuccessful);
+            }
+        }
+
+        [Fact]
+        public async void EntityInvoker_TestInvalidShareableGist()
+        {
+            Definition definitonAttribute = new Definition()
+            {
+                Id = "testGistId",
+                Author = "testAuthor",
+                Name = "Test Gist"
+            };
+
+            string assemblyPath = string.Empty;
+            string gistScript = await ScriptTestDataHelper.GetGistScript(definitonAttribute, ResourceType.ArmResource);
+
+            EntityMetadata metadata = new EntityMetadata(gistScript, EntityType.Gist);
+            metadata.ScriptText = gistScript.Replace("Microsoft.EventHub", "*");
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+                Assert.False(invoker.IsCompilationSuccessful);
             }
         }
     }

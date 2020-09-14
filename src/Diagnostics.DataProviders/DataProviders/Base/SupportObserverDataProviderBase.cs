@@ -106,6 +106,11 @@ namespace Diagnostics.DataProviders
                     testResponses.Add(item.Key, SendObserverRequestAsync(request));
                 }
 
+                var invokeSqlApi = new Uri(new Uri(Configuration.Endpoint), $"/api/service/{stampName}/invokesql");
+                var invokeSqlRequest = new HttpRequestMessage(HttpMethod.Post, invokeSqlApi);
+                invokeSqlRequest.Content = new StringContent($"select SubscriptionName, WebSpaceName, ResourceGroupName, SiteName, RuntimeSiteName FROM admin.view_WebSites where SiteName = '{siteName}'");
+                testResponses.Add("ExecuteSQLQuery Test", SendObserverRequestAsync(invokeSqlRequest));
+
                 bool isHealthy = true;
                 Dictionary<string, object> result = new Dictionary<string, object>();
 

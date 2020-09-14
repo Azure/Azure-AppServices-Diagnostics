@@ -42,24 +42,6 @@ namespace Diagnostics.ModelsAndUtils.Models
         }
 
         /// <summary>
-        /// Determines whether the current arm resource is applicable after filtering.
-        /// </summary>
-        /// <param name="filter">App Resource Filter</param>
-        /// <returns>True, if app resource passes the filter. False otherwise</returns>
-        public bool IsApplicable(IResourceFilter filter)
-        {
-            if (filter is ArmResourceFilter)
-            {
-                ArmResourceFilter armFilter = filter as ArmResourceFilter;
-                return (string.Compare(armFilter.Provider, this.Provider, true) == 0) && (string.Compare(armFilter.ResourceTypeName, this.ResourceTypeName, true) == 0);
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
         /// Subscription Location Placement id
         /// </summary>
         public string SubscriptionLocationPlacementId
@@ -77,17 +59,32 @@ namespace Diagnostics.ModelsAndUtils.Models
         }
 
         /// <summary>
+        /// Determines whether the current arm resource is applicable after filtering.
+        /// </summary>
+        /// <param name="filter">Resource Filter</param>
+        /// <returns>True, if resource passes the filter. False otherwise</returns>
+        public bool IsApplicable(IResourceFilter filter)
+        {
+            bool customFilterLogicResult = true;
+            if (filter is ArmResourceFilter armResFilter)
+            {
+                customFilterLogicResult = !string.IsNullOrWhiteSpace(armResFilter.Provider) &&
+                                        !string.IsNullOrWhiteSpace(armResFilter.ResourceTypeName) &&
+                                        armResFilter.Provider.Equals(this.Provider, StringComparison.OrdinalIgnoreCase) &&
+                                        armResFilter.ResourceTypeName.Equals(this.ResourceTypeName, StringComparison.OrdinalIgnoreCase);
+            }
+
+            return base.IsApplicable<ArmResourceFilter>(filter, this.Provider, this.ResourceTypeName, customFilterLogicResult);
+        }
+
+        /// <summary>
         /// Determines whether the diag entity retrieved from table is applicable after filtering.
         /// </summary>
         /// <param name="diagEntity">Diag Entity from table</param>
         /// <returns>True, if resource passes the filter. False otherwise</returns>
         public bool IsApplicable(DiagEntity diagEntity)
         {
-            if (diagEntity == null || diagEntity.ResourceType == null || diagEntity.ResourceProvider == null)
-            {
-                return false;
-            }
-            return diagEntity.ResourceProvider.Equals(this.Provider, StringComparison.CurrentCultureIgnoreCase) && diagEntity.ResourceType.Equals(this.ResourceTypeName, StringComparison.CurrentCultureIgnoreCase);
+            return base.IsApplicable(diagEntity, this.Provider, this.ResourceTypeName);
         }
     }
 }

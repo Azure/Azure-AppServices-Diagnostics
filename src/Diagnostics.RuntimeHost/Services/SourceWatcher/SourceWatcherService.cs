@@ -17,10 +17,9 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
         public ISourceWatcher KustoMappingWatcher;
 
 
-        public SourceWatcherService(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCacheService, IGistCacheService gistCacheService, IKustoMappingsCacheService kustoMappingsCacheService, IStorageService storageService)
+        public SourceWatcherService(IHostingEnvironment env, IConfiguration configuration, IInvokerCacheService invokerCacheService, IGistCacheService gistCacheService, IKustoMappingsCacheService kustoMappingsCacheService, IStorageService storageService, IGithubClient githubClient)
         {
             var sourceWatcherType = Enum.Parse<SourceWatcherType>(configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]);
-            IGithubClient githubClient = new GithubClient(env, configuration);
             switch (sourceWatcherType)
             {
                 case SourceWatcherType.LocalFileSystem:
@@ -30,11 +29,13 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher
                     _watcher = new GitHubWatcher(env, configuration, invokerCacheService, gistCacheService, kustoMappingsCacheService, githubClient);
                     break;
                 case SourceWatcherType.AzureStorage:
-                    _watcher = new StorageWatcher(env, configuration, storageService, invokerCacheService, gistCacheService, kustoMappingsCacheService);
+                    _watcher = new StorageWatcher(env, configuration, storageService, invokerCacheService, gistCacheService, kustoMappingsCacheService, githubClient);
                     break;
                 default:
                     throw new NotSupportedException("Source Watcher Type not supported");
             }
+
+            _watcher.Start();
         }
     }
 }
