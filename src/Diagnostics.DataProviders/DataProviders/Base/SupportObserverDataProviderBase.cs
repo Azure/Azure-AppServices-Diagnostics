@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders.Exceptions;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -179,9 +180,7 @@ namespace Diagnostics.DataProviders
             var unsupportedApisArr = Configuration.UnsupportedApis.Split(new char[] { ';',',' });
             if (unsupportedApisArr.Any(unsupportedApi => Regex.IsMatch(regexInput, unsupportedApi, RegexOptions.IgnoreCase)))
             {
-                throw new NotSupportedException(@"This API is no longer supported. Please begin using ExecuteSqlQueryAsync API to get specific data from the database. 
-There are gists in applens which provides most if not all of the site object data that you need. Find the gist SitesSqlCommands and use the method GetSiteObjectQuery to get that data.
-For further details why this API is no longer supported. See email sent to our distribution list sent on July 7th, 2020 subject `Observer GetSite to ExecuteSqlQuery migration`");
+                throw new ApiNotSupportedException("GetSite", "Find the gist SitesSqlCommands and use the method GetSiteObjectQuery to get that data.", "See email sent to our distribution list sent on July 7th, 2020 subject `Observer GetSite to ExecuteSqlQuery migration`");
             }
 
             var request = new HttpRequestMessage(HttpMethod.Get, url);

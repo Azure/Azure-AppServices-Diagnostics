@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders.Exceptions;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json.Linq;
 
@@ -53,23 +54,17 @@ namespace Diagnostics.DataProviders
 
 		public Task<dynamic> GetSite(string siteName)
 		{
-			throw new NotSupportedException(@"This API is no longer supported. Please begin using ExecuteSqlQueryAsync API to get specific data from the database. 
-There are gists in applens which provides most if not all of the site object data that you need. Find the gist SitesSqlCommands and use the method GetSiteObjectQuery to get that data.
-For further details why this API is no longer supported. See email sent to our distribution list sent on July 7th, 2020 subject `Observer GetSite to ExecuteSqlQuery migration`");
+			return GetSite(null, null, null);
 		}
 
 		public Task<dynamic> GetSite(string stampName, string siteName)
 		{
-			throw new NotSupportedException(@"This API is no longer supported. Please begin using ExecuteSqlQueryAsync API to get specific data from the database. 
-There are gists in applens which provides most if not all of the site object data that you need. Find the gist SitesSqlCommands and use the method GetSiteObjectQuery to get that data.
-For further details why this API is no longer supported. See email sent to our distribution list sent on July 7th, 2020 subject `Observer GetSite to ExecuteSqlQuery migration`");
+			return GetSite(null, null, null);
 		}
 
 		public Task<dynamic> GetSite(string stampName, string siteName, string slotName)
 		{
-			throw new NotSupportedException(@"This API is no longer supported. Please begin using ExecuteSqlQueryAsync API to get specific data from the database. 
-There are gists in applens which provides most if not all of the site object data that you need. Find the gist SitesSqlCommands and use the method GetSiteObjectQuery to get that data.
-For further details why this API is no longer supported. See email sent to our distribution list sent on July 7th, 2020 subject `Observer GetSite to ExecuteSqlQuery migration`");
+			throw new ApiNotSupportedException("GetSite", "Find the gist SitesSqlCommands and use the method GetSiteObjectQuery to get that data.", "See email sent to our distribution list sent on July 7th, 2020 subject `Observer GetSite to ExecuteSqlQuery migration`");
 		}
 
 		public Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName)
