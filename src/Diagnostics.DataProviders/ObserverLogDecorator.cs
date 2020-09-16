@@ -53,17 +53,23 @@ namespace Diagnostics.DataProviders
 
 		public Task<dynamic> GetSite(string siteName)
 		{
-			return MakeDependencyCall(DataProvider.GetSite(siteName));
+			throw new NotSupportedException(@"This API is no longer supported. Please begin using ExecuteSqlQueryAsync API to get specific data from the database. 
+There are gists in applens which provides most if not all of the site object data that you need. Find the gist SitesSqlCommands and use the method GetSiteObjectQuery to get that data.
+For further details why this API is no longer supported. See email sent to our distribution list sent on July 7th, 2020 subject `Observer GetSite to ExecuteSqlQuery migration`");
 		}
 
 		public Task<dynamic> GetSite(string stampName, string siteName)
 		{
-			return MakeDependencyCall(DataProvider.GetSite(stampName, siteName));
+			throw new NotSupportedException(@"This API is no longer supported. Please begin using ExecuteSqlQueryAsync API to get specific data from the database. 
+There are gists in applens which provides most if not all of the site object data that you need. Find the gist SitesSqlCommands and use the method GetSiteObjectQuery to get that data.
+For further details why this API is no longer supported. See email sent to our distribution list sent on July 7th, 2020 subject `Observer GetSite to ExecuteSqlQuery migration`");
 		}
 
 		public Task<dynamic> GetSite(string stampName, string siteName, string slotName)
 		{
-			return MakeDependencyCall(DataProvider.GetSite(stampName, siteName, slotName));
+			throw new NotSupportedException(@"This API is no longer supported. Please begin using ExecuteSqlQueryAsync API to get specific data from the database. 
+There are gists in applens which provides most if not all of the site object data that you need. Find the gist SitesSqlCommands and use the method GetSiteObjectQuery to get that data.
+For further details why this API is no longer supported. See email sent to our distribution list sent on July 7th, 2020 subject `Observer GetSite to ExecuteSqlQuery migration`");
 		}
 
 		public Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName)

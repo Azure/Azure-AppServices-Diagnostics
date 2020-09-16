@@ -56,5 +56,8 @@ namespace Diagnostics.DataProviders
         {
             get { return "https://microsoft.onmicrosoft.com/SupportObserverResourceApp"; }
         }
+
+        [ConfigurationName("UnsupportedApis")]
+        public string UnsupportedApis { get; set; }
     }
 }
