@@ -18,6 +18,7 @@ using Diagnostics.Scripts.Models;
 using Diagnostics.Scripts;
 using System.Reflection;
 using System.Diagnostics;
+using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
 {
@@ -38,6 +39,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         private IKustoMappingsCacheService kustoMappingsCacheService;
         private DateTime kustoMappingsCacheLastModified;
         private Task kustoConfigDownloadTask;
+        private IDiagEntityTableCacheService diagEntityTableCacheService;
 
         private bool LoadOnlyPublicDetectors
         {
@@ -53,7 +55,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         }
           
 
-        public StorageWatcher(IHostingEnvironment env, IConfiguration config, IStorageService service, IInvokerCacheService invokerCache, IGistCacheService gistCache, IKustoMappingsCacheService kustoMappingsCache, IGithubClient githubClient)
+        public StorageWatcher(IHostingEnvironment env, IConfiguration config, IStorageService service, IInvokerCacheService invokerCache, 
+                              IGistCacheService gistCache, IKustoMappingsCacheService kustoMappingsCache, IGithubClient githubClient, IDiagEntityTableCacheService tableCacheService)
         {
             storageService = service;
             hostingEnvironment = env;
@@ -66,6 +69,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 { EntityType.Gist, gistCache}
             };
             kustoMappingsCacheService = kustoMappingsCache;
+            diagEntityTableCacheService = tableCacheService;
         }
 
         public virtual async Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -184,8 +188,17 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             var entitiesToLoad = new List<DiagEntity>();
             try
             {
-                var detectorsList = await storageService.GetEntitiesByPartitionkey("Detector");
-                var gists = !LoadOnlyPublicDetectors ? await storageService.GetEntitiesByPartitionkey("Gist") : new List<DiagEntity>();    
+               // var detectorsList = await storageService.GetEntitiesByPartitionkey("Detector");
+
+                if(!diagEntityTableCacheService.TryGetValue("Detector", out List<DiagEntity> detectorsList) || detectorsList == null || detectorsList.Count < 1)
+                {
+                    detectorsList = await storageService.GetEntitiesByPartitionkey("Detector");
+                }
+                var gists = new List<DiagEntity>();
+                if (!LoadOnlyPublicDetectors)
+                {
+                    diagEntityTableCacheService.TryGetValue("Gist", out gists);
+                } 
                 var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
                 if(!startup)
                 {

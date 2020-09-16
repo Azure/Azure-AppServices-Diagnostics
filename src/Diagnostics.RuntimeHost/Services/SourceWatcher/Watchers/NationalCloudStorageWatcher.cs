@@ -9,7 +9,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
 {
     public sealed class NationalCloudStorageWatcher : StorageWatcher
     {
-        public NationalCloudStorageWatcher(IHostingEnvironment env, IConfiguration configuration, IStorageService service, IInvokerCacheService invokerCacheService, IGistCacheService gistCacheService, IKustoMappingsCacheService kustoMappingsCacheService, IGithubClient githubClient): base(env, configuration, service, invokerCacheService, gistCacheService, kustoMappingsCacheService, githubClient)
+        public NationalCloudStorageWatcher(IHostingEnvironment env, IConfiguration configuration, IStorageService service, IInvokerCacheService invokerCacheService, IGistCacheService gistCacheService, IKustoMappingsCacheService kustoMappingsCacheService, IGithubClient githubClient, NullableDiagEntityTableCacheService tableCacheService) : base(env, configuration, service, invokerCacheService, gistCacheService, kustoMappingsCacheService, githubClient, tableCacheService)
         {
 
         }
