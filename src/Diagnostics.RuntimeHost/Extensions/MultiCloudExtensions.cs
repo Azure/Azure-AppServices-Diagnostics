@@ -26,5 +26,25 @@ namespace Microsoft.Extensions.Configuration
             return configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureUSSec, StringComparison.CurrentCultureIgnoreCase)
                 || configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureUSNat, StringComparison.CurrentCultureIgnoreCase);
         }
+
+        /// <summary>
+        /// Determines if this cloud is mooncake
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <returns></returns>
+        public static bool IsMoonCakeCloud(this IConfiguration configuration)
+        {
+            return configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureChinaCloud, StringComparison.CurrentCultureIgnoreCase);
+        }
+
+        /// <summary>
+        /// Determines if this cloud is US Gov (Fairfax)
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <returns></returns>
+        public static bool IsUSGovCloud(this IConfiguration configuration)
+        {
+            return configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureUSGovernment, StringComparison.CurrentCultureIgnoreCase);
+        }
     }
 }

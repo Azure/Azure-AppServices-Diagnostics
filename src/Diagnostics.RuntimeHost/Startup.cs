@@ -212,13 +212,7 @@ namespace Diagnostics.RuntimeHost
             services.AddDiagEntitiesStorageService(Configuration);
             services.AddDiagEntitiesTableCacheService(Configuration);
 
-            if(Enum.Parse<SourceWatcherType>(Configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]) == SourceWatcherType.AzureStorage)
-            {
-                services.AddSingleton<ISourceWatcher, StorageWatcher>();
-            } else
-            {
-                services.AddSingleton<ISourceWatcher, NationalCloudStorageWatcher>();
-            }
+            InjectSourceWatcher(services);
 
             services.AddLogging(loggingConfig =>
             {
@@ -250,6 +244,22 @@ namespace Diagnostics.RuntimeHost
             app.UseRewriter(new RewriteOptions().Add(new RewriteDiagnosticResource()));
             app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseMvc();
+        }
+
+        /// <summary>
+        /// Inject appropriate SourceWatcher based on CloudDomain
+        /// </summary>
+        /// <param name="services"></param>
+        private void InjectSourceWatcher(IServiceCollection services)
+        {
+            if (Configuration.IsPublicAzure() || Configuration.IsAirGappedCloud())
+            {
+                services.AddSingleton<ISourceWatcher, StorageWatcher>();
+            }
+            if(Configuration.IsMoonCakeCloud() || Configuration.IsUSGovCloud())
+            {
+                services.AddSingleton<ISourceWatcher, NationalCloudStorageWatcher>();
+            }
         }
     }
 }
