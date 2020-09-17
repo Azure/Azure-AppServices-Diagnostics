@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders;
+using Diagnostics.DataProviders.Exceptions;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using Diagnostics.Scripts;
@@ -116,6 +117,32 @@ namespace Diagnostics.Tests.DataProviderTests
             }
 
             await Assert.ThrowsAsync<ArgumentNullException>(async () => await dataProviders.Observer.GetResource(null));
+        }
+
+        [Fact]
+        public async void TestObserverDeprecatedResponse()
+        {
+            var configFactory = new MockDataProviderConfigurationFactory();
+            var config = configFactory.LoadConfigurations();
+            config.SupportObserverConfiguration.UnsupportedApis = "^api\\/stamps\\/.*\\/sites\\/[^\\/]*.$;^api\\/sites\\/[^\\/]*.$";
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config));
+
+            //the following calls are deprecated
+            await Assert.ThrowsAsync<ApiNotSupportedException>(async () => await dataProviders.Observer.GetSite("my-site"));
+            await Assert.ThrowsAsync<ApiNotSupportedException>(async () => await dataProviders.Observer.GetSite("my-stamp", "my-site"));
+            await Assert.ThrowsAsync<ApiNotSupportedException>(async () => await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/sites/my-site"));
+            await Assert.ThrowsAsync<ApiNotSupportedException>(async () => await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/stamps/my-stamp/sites/my-site"));
+
+            //making sure other APIs are not affected by the regex match
+            try
+            {
+                await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/stamps/my-stamp/sites/my-site/adminsites");
+                await dataProviders.Observer.GetResource("https://wawsobserver.azurewebsites.windows.net/sites/my-site/adminsites");
+            }
+            catch (NotSupportedException)
+            {
+                Assert.True(false, "These calls should not give NotSupportedException");
+            }
         }
 
         internal async void TestObserver()
