@@ -1,26 +1,30 @@
 import requests, json
 from SearchModule import app
+luisConfig = {"enabledProducts": ["14748"]}
 luis_api_endpoints = {
 		"GET_INTENTS": "https://westus.api.cognitive.microsoft.com/luis/prediction/v3.0/apps/{appId}/slots/production/predict?subscription-key={key}&verbose=true&show-all-intents=true&log=true&query={queryString}",
 	}
-def getLuisPredictions(queryString):
-    appId = app.config["LUIS_APP_ID"]
-    key = app.config["LUIS_APP_KEY"]
-    url = luis_api_endpoints["GET_INTENTS"].replace("{appId}", appId).replace("{key}", key).replace("{queryString}", queryString)
-    r = requests.get(url)
-    res = json.loads(r.content)
-    try:
-        predictions = res["prediction"]["intents"]
-    except Exception as e:
-        raise Exception(f"Failed to fetch results from LUIS response: {str(e)}")
-    preds = []
-    for intent in predictions.keys():
-        if predictions[intent]["score"]>0.1:
-            preds.append({
-                "detector": intent,
-                "score": round(float(predictions[intent]["score"]), 3)
-            })
-    return preds[: min([3, len(preds)])]
+def getLuisPredictions(queryString, productId=None):
+    if productId and productId in luisConfig["enabledProducts"]:
+        appId = app.config["LUIS_APP_ID"]
+        key = app.config["LUIS_APP_KEY"]
+        url = luis_api_endpoints["GET_INTENTS"].replace("{appId}", appId).replace("{key}", key).replace("{queryString}", queryString)
+        r = requests.get(url)
+        res = json.loads(r.content)
+        try:
+            predictions = res["prediction"]["intents"]
+        except Exception as e:
+            raise Exception(f"Failed to fetch results from LUIS response: {str(e)}")
+        preds = []
+        for intent in predictions.keys():
+            if predictions[intent]["score"]>0.1:
+                preds.append({
+                    "detector": intent,
+                    "score": round(float(predictions[intent]["score"]), 3)
+                })
+        return preds[: min([3, len(preds)])]
+    else:
+        return []
 
 def mergeLuisResults(result):
     luis_results = result["luis_results"]
