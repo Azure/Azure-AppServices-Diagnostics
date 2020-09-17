@@ -165,7 +165,7 @@ namespace SourceWatcherFuncApp.Services
             var commitsForFile = await octokitClient.Repository.Commit.GetAll(githubUserName, repoName, new CommitRequest { Path = path, Sha = baseBranch });
             var mostRecentCommit = commitsForFile[0];
             var authorDate = mostRecentCommit.Commit.Author.Date;
-            return authorDate.DateTime.ToUniversalTime();
+            return authorDate.UtcDateTime;
         }
 
         public async Task<string> GetCommitContent(string filePath, string sha)
