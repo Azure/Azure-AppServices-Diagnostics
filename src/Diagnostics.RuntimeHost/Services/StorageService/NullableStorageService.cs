@@ -13,7 +13,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             return Task.FromResult(new byte[1]);
         }
 
-        public Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null)
+        public Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null, DateTime? startTime = null)
         {
             return Task.FromResult(new List<DiagEntity>());
         }
