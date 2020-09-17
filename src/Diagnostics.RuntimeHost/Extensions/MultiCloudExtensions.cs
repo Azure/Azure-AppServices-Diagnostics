@@ -34,7 +34,7 @@ namespace Microsoft.Extensions.Configuration
         /// <returns></returns>
         public static bool IsMoonCakeCloud(this IConfiguration configuration)
         {
-            return configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureChinaCloud, StringComparison.CurrentCultureIgnoreCase);
+            return configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureChinaCloud, StringComparison.CurrentCultureIgnoreCase) || configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureChinaCloudCodename, StringComparison.CurrentCultureIgnoreCase);
         }
 
         /// <summary>
