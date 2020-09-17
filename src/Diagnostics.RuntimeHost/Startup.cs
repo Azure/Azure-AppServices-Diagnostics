@@ -256,7 +256,7 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISourceWatcher, StorageWatcher>();
             }
-            if(Configuration.IsMoonCakeCloud() || Configuration.IsUSGovCloud())
+            if(Configuration.IsAzureChinaCloud() || Configuration.IsAzureUSGovernment())
             {
                 services.AddSingleton<ISourceWatcher, NationalCloudStorageWatcher>();
             }

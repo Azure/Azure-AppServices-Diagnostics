@@ -32,7 +32,7 @@ namespace Microsoft.Extensions.Configuration
         /// </summary>
         /// <param name="configuration"></param>
         /// <returns></returns>
-        public static bool IsMoonCakeCloud(this IConfiguration configuration)
+        public static bool IsAzureChinaCloud(this IConfiguration configuration)
         {
             return configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureChinaCloud, StringComparison.CurrentCultureIgnoreCase) || configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureChinaCloudCodename, StringComparison.CurrentCultureIgnoreCase);
         }
@@ -42,9 +42,10 @@ namespace Microsoft.Extensions.Configuration
         /// </summary>
         /// <param name="configuration"></param>
         /// <returns></returns>
-        public static bool IsUSGovCloud(this IConfiguration configuration)
+        public static bool IsAzureUSGovernment(this IConfiguration configuration)
         {
-            return configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureUSGovernment, StringComparison.CurrentCultureIgnoreCase);
+            return configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureUSGovernment, StringComparison.CurrentCultureIgnoreCase)
+                || configuration.GetValue<string>("CloudDomain").Equals(DataProviderConstants.AzureUSGovernmentCodename, StringComparison.CurrentCultureIgnoreCase);
         }
     }
 }
