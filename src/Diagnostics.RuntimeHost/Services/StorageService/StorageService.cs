@@ -115,6 +115,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     }
                     do
                     {
+                        DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Querying against {tableName} with Client Request id {oc.ClientRequestID}");
                         // Execute the operation.
                         var detectorList = await table.ExecuteQuerySegmentedAsync(tableQuery, tableContinuationToken, tableRequestOptions, null);
                         tableContinuationToken = detectorList.ContinuationToken;
@@ -156,7 +157,6 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     throw new ArgumentNullException(nameof(detectorEntity));
                 }
 
-                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Insert or Replace {detectorEntity.RowKey} into {tableName}");
                 var timeTakenStopWatch = new Stopwatch();
                 timeTakenStopWatch.Start();
                     
@@ -169,6 +169,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 OperationContext oc = new OperationContext();
                 oc.ClientRequestID = clientRequestId;
                 // Execute the operation.
+
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Insert or Replace {detectorEntity.RowKey} into {tableName} ClientRequestId {clientRequestId}");
                 TableResult result = await table.ExecuteAsync(insertOrReplaceOperation, tableRequestOptions, oc);
                 timeTakenStopWatch.Stop();
                 DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"InsertOrReplace result : {result.HttpStatusCode}, time taken {timeTakenStopWatch.ElapsedMilliseconds}, ClientRequestId {clientRequestId}");
@@ -195,6 +197,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 blobRequestOptions.MaximumExecutionTime = TimeSpan.FromSeconds(60);
                 OperationContext oc = new OperationContext();
                 oc.ClientRequestID = clientRequestId;
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Loading {blobname} with ClientRequestId {clientRequestId}");
                 using (var uploadStream = new MemoryStream(Convert.FromBase64String(contents)))
                 {
                     await cloudBlob.UploadFromStreamAsync(uploadStream, null, blobRequestOptions, oc);               
@@ -234,6 +237,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     var cloudBlob = containerClient.GetBlockBlobReference(name);
                     OperationContext oc = new OperationContext();
                     oc.ClientRequestID = clientRequestId;
+                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Fetching blob {name} with ClientRequestid {clientRequestId}");
                     using (MemoryStream ms = new MemoryStream())
                     {
                         await cloudBlob.DownloadToStreamAsync(ms, null, options, oc);
@@ -335,6 +339,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     tableRequestOptions.MaximumExecutionTime = TimeSpan.FromSeconds(30);
                     OperationContext oc = new OperationContext();
                     oc.ClientRequestID = clientRequestId;
+                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Querying against table {detectorRuntimeConfigTable} with ClientRequestId {clientRequestId}");
                     var diagConfigurations = await cloudTable.ExecuteQuerySegmentedAsync(tableQuery, tableContinuationToken, tableRequestOptions, oc);
                     tableContinuationToken = diagConfigurations.ContinuationToken;
                     if (diagConfigurations.Results != null)
