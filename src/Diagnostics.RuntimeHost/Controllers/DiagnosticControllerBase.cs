@@ -100,7 +100,15 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: form, detectorId: detectorId);
-            var detectorResponse = await GetDetectorInternal(detectorId, cxt);
+            Tuple<Response, List<DataProviderMetadata>> detectorResponse = null;
+            try
+            {
+                detectorResponse = await GetDetectorInternal(detectorId, cxt);
+            }
+            catch (ApiNotSupportedException ex)
+            {
+                return BadRequest(ex.Message);
+            }
             return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2));
         }
 
