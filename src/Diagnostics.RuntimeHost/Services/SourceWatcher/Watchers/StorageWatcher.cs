@@ -192,25 +192,14 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
 
                 if(!diagEntityTableCacheService.TryGetValue("Detector", out List<DiagEntity> detectorsList) || detectorsList == null || detectorsList.Count < 1)
                 {
-                    detectorsList = await storageService.GetEntitiesByPartitionkey("Detector");
+                    detectorsList = await storageService.GetEntitiesByPartitionkey("Detector", startup ? DateTime.MinValue : DateTime.UtcNow.AddMinutes(-5));
                 }
                 var gists = new List<DiagEntity>();
-                if (!LoadOnlyPublicDetectors)
+                if (!LoadOnlyPublicDetectors && (!diagEntityTableCacheService.TryGetValue("Gist", out gists) || gists == null || gists.Count <1))
                 {
-                    diagEntityTableCacheService.TryGetValue("Gist", out gists);
+                    gists = await storageService.GetEntitiesByPartitionkey("Gist", startup ? DateTime.MinValue : DateTime.UtcNow.AddMinutes(-5));
                 } 
-                var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
-                if(!startup)
-                {
-                    // Refresh cache with detectors published in last 5 minutes.
-                    var timeRange = DateTime.UtcNow.AddMinutes(-5);
-                    entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= timeRange).ToList());
-                    entitiesToLoad.AddRange(gists.Where(s => s.Timestamp >= timeRange).ToList());
-                } else
-                {
-                    entitiesToLoad.AddRange(filteredDetectors.ToList());
-                    entitiesToLoad.AddRange(gists);
-                }         
+                var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList; 
                 if (entitiesToLoad.Count > 0)
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Starting blob download to update cache, Number of entities: {entitiesToLoad.Count}, startup : {startup.ToString()} at {DateTime.UtcNow}");

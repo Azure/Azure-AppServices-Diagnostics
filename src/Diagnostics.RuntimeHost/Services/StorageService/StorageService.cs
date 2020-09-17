@@ -21,7 +21,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
     public interface IStorageService
     {
         bool GetStorageFlag();
-        Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null);
+        Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null, DateTime? startTime = null);
         Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity);
         Task<string> LoadBlobToContainer(string blobname, string contents);
         Task<byte[]> GetBlobByName(string name);
@@ -79,7 +79,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             cloudTable = tableClient.GetTableReference(tableName);
         }
 
-        public async Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null)
+        public async Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null, DateTime? startTime = null)
         {
             int retryThreshold = 2;
             int attempt = 0;
@@ -96,8 +96,11 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                         partitionKey = "Detector";
                     }
                     var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionKey);
+                    DateTime timeFilter = startTime ?? DateTime.MinValue;
+                    string timestampFilter = TableQuery.GenerateFilterConditionForDate("Timestamp", QueryComparisons.GreaterThanOrEqual, new DateTimeOffset(timeFilter));
+                    string finalFilter = timeFilter.Equals(DateTime.MinValue) ? filterPartitionKey : TableQuery.CombineFilters(filterPartitionKey, TableOperators.And, timestampFilter);
                     var tableQuery = new TableQuery<DiagEntity>();
-                    tableQuery.Where(filterPartitionKey);
+                    tableQuery.Where(finalFilter);
                     TableContinuationToken tableContinuationToken = null;
                     timeTakenStopWatch.Start();
                     TableRequestOptions tableRequestOptions = new TableRequestOptions();
