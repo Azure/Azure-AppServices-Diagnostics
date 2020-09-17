@@ -68,6 +68,10 @@ def getProductId(resourceObj):
                         productids.append(resourceConfig[resourceObj["ResourceType"]][app][platform])
                     except KeyError:
                         pass
+    else:
+        productId = resourceConfig.get(resourceObj["ResourceType"], None)
+        if productId:
+            productids.append(productId)
     if productids:
         return list(set(productids))
     else:

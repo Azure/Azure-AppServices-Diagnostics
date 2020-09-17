@@ -18,7 +18,7 @@
         "Linux": "16170"
       },
       "FunctionApp": "16072"
-    }
-  },
-  "internalApiPort":  "2743"
+    },
+    "AzureKubernetesService": "16450"
+  }
 }

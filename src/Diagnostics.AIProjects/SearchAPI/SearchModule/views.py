@@ -119,7 +119,7 @@ def queryDetectorsMethod():
         return (json.dumps({"query_received": original_query, "query": txt_data, "results": [], "exception": str(e)}), 404)
     results = loaded_models[productid].queryDetectors(txt_data)
     try:
-        results["luis_results"] = getLuisPredictions(txt_data)
+        results["luis_results"] = getLuisPredictions(txt_data, productid)
     except Exception as e:
         results["luis_results"] = []
         results["luis_exception"] = f"LUISProviderError: {str(e)}"
@@ -157,7 +157,10 @@ def queryUtterancesMethod():
     requestId = data['requestId']
     
     txt_data = data['detector_description']
-    existing_utterances = [str(x).lower() for x in json.loads(data['detector_utterances'])]
+    try:
+        existing_utterances = [str(x).lower() for x in json.loads(data['detector_utterances'])]
+    except json.decoder.JSONDecodeError:
+        existing_utterances = []
     if not txt_data:
         return ("No text provided for search", 400)
     productid = getProductId(data)

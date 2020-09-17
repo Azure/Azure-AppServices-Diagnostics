@@ -14,6 +14,7 @@ class TrainingConfig:
 		
 		self.textNGrams = trainingConfig.get("textNGrams", 1)
 		self.detectorContentSplitted = trainingConfig.get("detectorContentSplitted", False)
+		self.splitDictionary = trainingConfig.get("splitDictionary", False)
 		self.trainDetectors = trainingConfig.get("trainDetectors", False)
 		self.trainUtterances = trainingConfig.get("trainUtterances", False)
 
