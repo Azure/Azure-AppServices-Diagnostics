@@ -338,6 +338,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// Default selected keys in case of MultiSelect
         /// </summary>
        public List<string> DefaultSelectedKeys { get; set; }
+
+        /// <summary>
+        /// Values selected by the user
+        /// </summary>
+        public List<string> SelectedValues { get; set; }
         
        public FormDropdown(int id, string label, List<DropdownOption> options, string defaultKey = "", bool multiSelect = false, List<string> defaultKeys = null, string tooltip = "", string tooltipIcon =""): base(id, FormInputTypes.DropDown, label, tooltip, tooltipIcon)
        {
