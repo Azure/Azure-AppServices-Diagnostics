@@ -13,12 +13,19 @@ class TfIdfTrainer:
         self.productId = productId
         self.trainingConfig = trainingConfig
     
-    def trainDictionary(self, alltokens, outpath):
+    def trainDictionary(self, alltokens, outfile, trimDict=False):
         dictionary = corpora.Dictionary(alltokens)
-        dictionary.save(os.path.join(outpath, "dictionary.dict"))
+        if trimDict:
+            oldSize = len(dictionary)
+            dictionary.filter_extremes(no_below=2, no_above=0.3, keep_n=min([500, int(len(dictionary)/2)]))
+            logging.info(f"Trimmed dictionary from {oldSize} features to {len(dictionary)} features")
+        dictionary.save(outfile)
     
     def trainModelM1(self, detector_tokens, outpath):
-        dictionary = corpora.Dictionary.load(os.path.join(outpath, "dictionary.dict"))
+        if self.trainingConfig.splitDictionary:
+            dictionary = corpora.Dictionary.load(os.path.join(outpath, "dictionary1.dict"))
+        else:
+            dictionary = corpora.Dictionary.load(os.path.join(outpath, "dictionary.dict"))
         corpus = [dictionary.doc2bow(line) for line in detector_tokens]
         model = TfidfModel(corpus)
         index = similarities.MatrixSimilarity(model[corpus])
@@ -26,7 +33,10 @@ class TfIdfTrainer:
         index.save(os.path.join(outpath, "m1.index"))
     
     def trainModelM2(self, sampleUtterances_tokens, outpath):
-        dictionary = corpora.Dictionary.load(os.path.join(outpath, "dictionary.dict"))
+        if self.trainingConfig.splitDictionary:
+            dictionary = corpora.Dictionary.load(os.path.join(outpath, "dictionary2.dict"))
+        else:
+            dictionary = corpora.Dictionary.load(os.path.join(outpath, "dictionary.dict"))
         corpus = [dictionary.doc2bow(line) for line in sampleUtterances_tokens]
         model = TfidfModel(corpus)
         index = similarities.MatrixSimilarity(model[corpus])
@@ -81,7 +91,11 @@ class TfIdfTrainer:
             raise TrainingException("CaseTitlesProcessor: " + str(e))
         # Train dictionary
         try:
-            self.trainDictionary(detector_tokens + sampleUtterances_tokens, outpath)
+            if self.trainingConfig.splitDictionary:
+                self.trainDictionary(detector_tokens, os.path.join(outpath, "dictionary1.dict"))
+                self.trainDictionary(sampleUtterances_tokens, os.path.join(outpath, "dictionary2.dict"), trimDict=True)
+            else:
+                self.trainDictionary(detector_tokens + sampleUtterances_tokens, os.path.join(outpath, "dictionary.dict"))
             logging.info("DictionaryTrainer: Sucessfully trained dictionary")
         except Exception as e:
             logging.error("[ERROR]DictionaryTrainer: " + str(e))
@@ -109,5 +123,5 @@ class TfIdfTrainer:
         open(os.path.join(outpath, "trainingId.txt"), "w").write(str(self.trainingId))
         open(os.path.join(outpath, "Detectors.json"), "w").write(json.dumps(detectors))
         open(os.path.join(outpath, "SampleUtterances.json"), "w").write(json.dumps(sampleUtterances))
-        modelInfo = {"detectorContentSplitted": self.trainingConfig.detectorContentSplitted, "textNGrams": self.trainingConfig.textNGrams, "modelType": self.trainingConfig.modelType}
+        modelInfo = {"splitDictionary": self.trainingConfig.splitDictionary, "detectorContentSplitted": self.trainingConfig.detectorContentSplitted, "textNGrams": self.trainingConfig.textNGrams, "modelType": self.trainingConfig.modelType}
         open(os.path.join(outpath, "ModelInfo.json"), "w").write(json.dumps(modelInfo))
