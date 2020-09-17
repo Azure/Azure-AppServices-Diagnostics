@@ -141,7 +141,7 @@ class TfIdfSearchModel:
                 vector = self.models["m2Model"][doc2bow]
                 similar_doc_indices = sorted(enumerate(self.models["m2Index"][vector]), key=lambda item: -item[1])
                 similar_doc_indices = [x for x in similar_doc_indices if self.models["sampleUtterances"][x[0]]["text"].lower() not in existing_utterances][:10]
-                similar_docs = list(map(lambda x: {"sampleUtterance": self.models["sampleUtterances"][x[0]]["text"], "score": str(x[1])}, similar_doc_indices))
+                similar_docs = list(map(lambda x: {"sampleUtterance": self.models["sampleUtterances"][x[0]], "score": str(x[1])}, similar_doc_indices))
                 return {"query": query, "results": similar_docs}
             except Exception as e:
                 return {"query": query, "results": None}
