@@ -199,7 +199,9 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 {
                     gists = await storageService.GetEntitiesByPartitionkey("Gist", startup ? DateTime.MinValue : DateTime.UtcNow.AddMinutes(-5));
                 } 
-                var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList; 
+                var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
+                entitiesToLoad.AddRange(filteredDetectors);
+                entitiesToLoad.AddRange(gists);
                 if (entitiesToLoad.Count > 0)
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Starting blob download to update cache, Number of entities: {entitiesToLoad.Count}, startup : {startup.ToString()} at {DateTime.UtcNow}");
