@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models;
@@ -177,6 +178,14 @@ namespace Diagnostics.DataProviders
             throw new NotImplementedException();
         }
 
+        protected override Task<HttpResponseMessage> SendObserverRequestAsync(HttpRequestMessage request, string resourceId = null, HttpClient httpClient = null)
+        {
+            using (HttpClient client = new MockHttpClient())
+            {
+                return client.SendAsync(request, new CancellationToken());
+            }
+        }
+
         private class MockHttpClient : HttpClient
         {
             public MockHttpClient()
@@ -207,7 +216,7 @@ namespace Diagnostics.DataProviders
                     case "stamps/waws-prod-mock1-001/storagevolumes/volume-19":
                         return "{\"name\":\"volume-19\"}";
                     default:
-                        return null;
+                        return string.Empty;
                 }
             }
         }

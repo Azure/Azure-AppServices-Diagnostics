@@ -28,9 +28,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors)]
-        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string clusterName, [FromBody] dynamic postBody)
+        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string clusterName, [FromBody] dynamic postBody, [FromQuery(Name = "text")] string text = null)
         {
-            return await base.ListDetectors(GetResource(subscriptionId, resourceGroupName, clusterName));
+            return await base.ListDetectors(GetResource(subscriptionId, resourceGroupName, clusterName), text);
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]

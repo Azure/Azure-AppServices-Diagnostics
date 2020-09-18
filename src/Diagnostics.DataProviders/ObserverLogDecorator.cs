@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders.Exceptions;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json.Linq;
 
@@ -53,17 +54,17 @@ namespace Diagnostics.DataProviders
 
 		public Task<dynamic> GetSite(string siteName)
 		{
-			return MakeDependencyCall(DataProvider.GetSite(siteName));
+			return GetSite(null, null, null);
 		}
 
 		public Task<dynamic> GetSite(string stampName, string siteName)
 		{
-			return MakeDependencyCall(DataProvider.GetSite(stampName, siteName));
+			return GetSite(null, null, null);
 		}
 
 		public Task<dynamic> GetSite(string stampName, string siteName, string slotName)
 		{
-			return MakeDependencyCall(DataProvider.GetSite(stampName, siteName, slotName));
+			throw new ApiNotSupportedException("GetSite", "Find the gist SitesSqlCommands and use the method GetSiteObjectQuery to get that data.", "See email sent to our distribution list sent on July 7th, 2020 subject `Observer GetSite to ExecuteSqlQuery migration`");
 		}
 
 		public Task<string> GetStampName(string subscriptionId, string resourceGroupName, string siteName)

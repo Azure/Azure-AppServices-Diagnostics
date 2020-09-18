@@ -4,7 +4,7 @@ pool:
 trigger:
   branches:
     include:
-    - master2
+    - main
   paths:
     include:
     - src/Diagnostics.AIProjects/SearchAPI/*
