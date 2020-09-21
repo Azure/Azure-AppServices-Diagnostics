@@ -105,7 +105,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 detectorResponse = await GetDetectorInternal(detectorId, cxt);
             }
-            catch (Exception ex) when (ex.InnerException is ApiNotSupportedException)
+            catch (ApiNotSupportedException ex)
             {
                 return BadRequest(ex.Message);
             }
