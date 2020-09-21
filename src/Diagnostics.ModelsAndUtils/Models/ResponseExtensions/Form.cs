@@ -348,13 +348,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
        {
             DropdownOptions = options;
             IsMultiSelect = multiSelect;
-            if(string.IsNullOrWhiteSpace(defaultKey))
-            {
-                DefaultSelectedKey = options.FirstOrDefault().Key;
-            } else
-            {
-                DefaultSelectedKey = defaultKey;
-            }
+            DefaultSelectedKey = defaultKey;
             DefaultSelectedKeys = new List<string>();
             if(defaultKeys != null)
             {
