@@ -21,10 +21,13 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
 
         int cacheExpirationTimeInSecs = 30;
 
+        private bool startUp = false;
+
         public DiagEntityTableCacheService(IStorageService service)
         {
             cache = new ConcurrentDictionary<string, List<DiagEntity>>();
             storageService = service;
+            startUp = true;
             StartPolling();
         }
 
@@ -39,18 +42,24 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
                 DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(DiagEntityTableCacheService), "Start polling Azure Storage for refreshing cache");
                 try
                 {
-                    var detectorTask = storageService.GetEntitiesByPartitionkey("Detector");
-                    var gistTask = storageService.GetEntitiesByPartitionkey("Gist");
+                    var detectorTask = storageService.GetEntitiesByPartitionkey("Detector", startUp ? DateTime.MinValue : DateTime.UtcNow.AddMinutes(-5));
+                    var gistTask = storageService.GetEntitiesByPartitionkey("Gist", startUp ? DateTime.MinValue : DateTime.UtcNow.AddMinutes(-5));
                     await Task.WhenAll(new Task[] { detectorTask, gistTask });
                     var detectorResult = await detectorTask;
-                    if (detectorResult != null)
+                    if (startUp)
                     {
                         AddOrUpdate("Detector", detectorResult);
+                    } else if (detectorResult.Count > 0)
+                    {
+                        UpdateCacheWithLatestEntities("Detector", detectorResult);
                     }
                     var gistResult = await gistTask;
-                    if (gistResult != null)
+                    if (startUp)
                     {
                         AddOrUpdate("Gist", gistResult);
+                    } else if(gistResult.Count > 0)
+                    {
+                        UpdateCacheWithLatestEntities("Gist", gistResult);
                     }
                 } catch (Exception ex)
                 {
@@ -58,6 +67,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
                 } finally
                 {
                     stopwatch.Stop();
+                    startUp = false;
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(DiagEntityTableCacheService), $"Polling completed, time taken {stopwatch.ElapsedMilliseconds} milliseconds");
                 } 
             } while (true);      
@@ -113,6 +123,19 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
             return storageService.GetStorageFlag();
         }
 
-      
+        private void UpdateCacheWithLatestEntities(string key, List<DiagEntity> latestentities)
+        {
+            TryGetValue(key, out List<DiagEntity> existingEntities);
+            latestentities.ForEach(element =>
+            {
+                int index = existingEntities.FindIndex(s => s.RowKey.Equals(element.RowKey, StringComparison.CurrentCultureIgnoreCase));
+                if (index > -1)
+                {
+                    existingEntities.RemoveAt(index);
+                }
+            });
+            existingEntities.AddRange(latestentities);
+            AddOrUpdate(key, existingEntities);
+        }
     }
 }

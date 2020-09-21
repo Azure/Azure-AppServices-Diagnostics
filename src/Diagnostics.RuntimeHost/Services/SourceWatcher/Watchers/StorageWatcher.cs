@@ -18,6 +18,7 @@ using Diagnostics.Scripts.Models;
 using Diagnostics.Scripts;
 using System.Reflection;
 using System.Diagnostics;
+using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
 {
@@ -38,6 +39,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         private IKustoMappingsCacheService kustoMappingsCacheService;
         private DateTime kustoMappingsCacheLastModified;
         private Task kustoConfigDownloadTask;
+        private IDiagEntityTableCacheService diagEntityTableCacheService;
 
         private bool LoadOnlyPublicDetectors
         {
@@ -53,7 +55,8 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         }
           
 
-        public StorageWatcher(IHostingEnvironment env, IConfiguration config, IStorageService service, IInvokerCacheService invokerCache, IGistCacheService gistCache, IKustoMappingsCacheService kustoMappingsCache, IGithubClient githubClient)
+        public StorageWatcher(IHostingEnvironment env, IConfiguration config, IStorageService service, IInvokerCacheService invokerCache, 
+                              IGistCacheService gistCache, IKustoMappingsCacheService kustoMappingsCache, IGithubClient githubClient, IDiagEntityTableCacheService tableCacheService)
         {
             storageService = service;
             hostingEnvironment = env;
@@ -66,6 +69,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 { EntityType.Gist, gistCache}
             };
             kustoMappingsCacheService = kustoMappingsCache;
+            diagEntityTableCacheService = tableCacheService;
         }
 
         public virtual async Task<HealthCheckResult> CheckHealthAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -184,20 +188,28 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             var entitiesToLoad = new List<DiagEntity>();
             try
             {
-                var detectorsList = await storageService.GetEntitiesByPartitionkey("Detector");
-                var gists = !LoadOnlyPublicDetectors ? await storageService.GetEntitiesByPartitionkey("Gist") : new List<DiagEntity>();    
-                var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
-                if(!startup)
+                var timeRange = DateTime.UtcNow.AddMinutes(-5);
+                if(!diagEntityTableCacheService.TryGetValue("Detector", out List<DiagEntity> detectorsList) || detectorsList == null || detectorsList.Count < 1)
                 {
-                    // Refresh cache with detectors published in last 5 minutes.
-                    var timeRange = DateTime.UtcNow.AddMinutes(-5);
-                    entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= timeRange).ToList());
-                    entitiesToLoad.AddRange(gists.Where(s => s.Timestamp >= timeRange).ToList());
+                    detectorsList = await storageService.GetEntitiesByPartitionkey("Detector", startup ? DateTime.MinValue : timeRange);
+                }
+                var gists = new List<DiagEntity>();
+                if (!LoadOnlyPublicDetectors && (!diagEntityTableCacheService.TryGetValue("Gist", out gists) || gists == null || gists.Count <1))
+                {
+                    gists = await storageService.GetEntitiesByPartitionkey("Gist", startup ? DateTime.MinValue : timeRange);
+                } 
+                var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
+                if(startup)
+                {
+                    entitiesToLoad.AddRange(filteredDetectors);
+                    entitiesToLoad.AddRange(gists);
                 } else
                 {
-                    entitiesToLoad.AddRange(filteredDetectors.ToList());
-                    entitiesToLoad.AddRange(gists);
-                }         
+                    // Load cache with detectors published in last 5 minutes.
+                    entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= timeRange).ToList()); 
+                    entitiesToLoad.AddRange(gists.Where(s => s.Timestamp >= timeRange).ToList());
+                }
+                
                 if (entitiesToLoad.Count > 0)
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Starting blob download to update cache, Number of entities: {entitiesToLoad.Count}, startup : {startup.ToString()} at {DateTime.UtcNow}");
