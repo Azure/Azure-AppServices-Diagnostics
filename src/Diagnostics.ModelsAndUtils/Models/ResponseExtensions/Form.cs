@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
@@ -101,6 +103,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// Tooltip icon
         /// </summary>
         public string TooltipIcon;
+
+        /// <summary>
+        /// Sets the default visibility of the forminput
+        /// </summary>
+        public bool IsVisible { get; set; } = true;
 
         /// <summary>
         /// Creates an input with given id and input type
@@ -343,6 +350,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// Values selected by the user
         /// </summary>
         public List<string> SelectedValues { get; set; }
+
+        /// <summary>
+        /// List of all children belonging to dropdown
+        /// </summary>
+        public List<string> Children { get; set; }
         
        public FormDropdown(int id, string label, List<DropdownOption> options, string defaultKey = "", bool multiSelect = false, List<string> defaultKeys = null, string tooltip = "", string tooltipIcon =""): base(id, FormInputTypes.DropDown, label, tooltip, tooltipIcon)
        {
@@ -353,6 +365,17 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             if(defaultKeys != null)
             {
                 DefaultSelectedKeys.AddRange(defaultKeys);
+            }
+            Children = new List<string>();
+            if(options != null)
+            {
+                options.ForEach(op =>
+                {
+                    if (op.Children != null)
+                    {
+                        Children.AddRange(op.Children);
+                    }
+                });
             }
        }
     }
@@ -373,6 +396,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// Whether this item is selected or not
         /// </summary>
         public bool IsSelected { get; set; }
+
+        /// <summary>
+        /// List of child input ids.
+        /// </summary>
+        public List<string> Children { get; set; }
     }
     public static class ResponseFormExtension
     {
