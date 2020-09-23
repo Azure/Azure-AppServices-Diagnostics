@@ -220,7 +220,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
             }
             catch (Exception e)
             {
-                throw new Exception($"{e.Message}, Please check the given input id");
+                return null;
             }
         }
 

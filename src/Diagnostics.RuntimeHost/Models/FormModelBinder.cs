@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -81,6 +82,12 @@ namespace Diagnostics.RuntimeHost.Models
                             var radioButtonList = new RadioButtonList(Convert.ToInt32(inputIds[i]), "", null);
                             radioButtonList.SelectedValue = inputValues[i];
                             result.AddFormInput(radioButtonList);
+                        } 
+                        else if (inputType == FormInputTypes.DropDown)
+                        {
+                            var formDropdown = new FormDropdown(Convert.ToInt32(inputIds[i]), "", new System.Collections.Generic.List<DropdownOption>(), inputValues[i].Split(",")[0]);
+                            formDropdown.SelectedValues = inputValues[i].Split(",").ToList<string>();
+                            result.AddFormInput(formDropdown);
                         }
                     }
                 }

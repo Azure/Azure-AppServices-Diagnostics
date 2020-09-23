@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
@@ -100,6 +103,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// Tooltip icon
         /// </summary>
         public string TooltipIcon;
+
+        /// <summary>
+        /// Sets the default visibility of the forminput
+        /// </summary>
+        public bool IsVisible { get; set; } = true;
 
         /// <summary>
         /// Creates an input with given id and input type
@@ -316,6 +324,92 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         Link
     }
 
+    public class FormDropdown: FormInputBase
+    {
+        /// <summary>
+        /// Set of options for this dropdown
+        /// </summary>
+       public List<DropdownOption> DropdownOptions { get; set; }
+
+        /// <summary>
+        /// Flag to indicate if multi select is allowed
+        /// </summary>
+       public bool IsMultiSelect { get; set; }
+
+        /// <summary>
+        /// Default selected key. 
+        /// </summary>
+       public string DefaultSelectedKey { get; set; }
+
+        /// <summary>
+        /// Default selected keys in case of MultiSelect
+        /// </summary>
+       public List<string> DefaultSelectedKeys { get; set; }
+
+        /// <summary>
+        /// Values selected by the user
+        /// </summary>
+        public List<string> SelectedValues { get; set; }
+
+        /// <summary>
+        /// List of all children belonging to dropdown
+        /// </summary>
+        public List<string> Children { get; set; }
+        
+       public FormDropdown(int id, string label, List<DropdownOption> options, string defaultKey = "", bool multiSelect = false, List<string> defaultKeys = null, string tooltip = "", string tooltipIcon =""): base(id, FormInputTypes.DropDown, label, tooltip, tooltipIcon)
+       {
+            DropdownOptions = options;
+            IsMultiSelect = multiSelect;
+            DefaultSelectedKey = defaultKey;
+            DefaultSelectedKeys = new List<string>();
+            if(defaultKeys != null)
+            {
+                DefaultSelectedKeys.AddRange(defaultKeys);
+            }
+            Children = new List<string>();
+            if(options != null)
+            {
+                options.ForEach(op =>
+                {
+                    if (op.Children != null)
+                    {
+                        Children.AddRange(op.Children);
+                    }
+                });
+            }
+       }
+    }
+
+    public class DropdownOption
+    {
+        /// <summary>
+        /// Text to render for this option;
+        /// </summary>
+        public string Text { get; set; }
+
+        /// <summary>
+        /// Key associated with this option;
+        /// </summary>
+        public string Key { get; set; }
+
+        /// <summary>
+        /// Whether this item is selected by default.
+        /// </summary>
+        public bool IsSelected { get; set; }
+
+        /// <summary>
+        /// List of child input ids.
+        /// </summary>
+        public List<string> Children { get; set; }
+
+        public DropdownOption(string text, string key, bool isSelected = false, List<string> children = null)
+        {
+            Text = text;
+            Key = key;
+            IsSelected = isSelected;
+            Children = children;
+        }
+    }
     public static class ResponseFormExtension
     {
         /// <summary>
