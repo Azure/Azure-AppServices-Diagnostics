@@ -337,7 +337,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
        public bool IsMultiSelect { get; set; }
 
         /// <summary>
-        /// Default selected key. If not provided by user, default to first option's key.
+        /// Default selected key. 
         /// </summary>
        public string DefaultSelectedKey { get; set; }
 
@@ -393,7 +393,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public string Key { get; set; }
 
         /// <summary>
-        /// Whether this item is selected or not
+        /// Whether this item is selected by default.
         /// </summary>
         public bool IsSelected { get; set; }
 
@@ -401,6 +401,14 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// List of child input ids.
         /// </summary>
         public List<string> Children { get; set; }
+
+        public DropdownOption(string text, string key, bool isSelected = false, List<string> children = null)
+        {
+            Text = text;
+            Key = key;
+            IsSelected = isSelected;
+            Children = children;
+        }
     }
     public static class ResponseFormExtension
     {
