@@ -10,6 +10,9 @@ using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.CSharp.RuntimeBinder;
+using Diagnostics.Logger;
+using Microsoft.Extensions.Primitives;
+using System.Linq;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -163,7 +166,40 @@ namespace Diagnostics.RuntimeHost.Controllers
             var diagnosticSitePostBody = JsonConvert.DeserializeObject<DiagnosticSiteData>(JsonConvert.SerializeObject(postBody));
             if (IsPostBodyMissing(diagnosticSitePostBody))
             {
-                diagnosticSitePostBody = await GetSitePostBody(subscriptionId, resourceGroupName, siteName);
+                try
+                {
+                    diagnosticSitePostBody = await GetSitePostBody(subscriptionId, resourceGroupName, siteName);
+                }
+                catch (Exception e)
+                {
+                    string path = Request.Path.Value;
+
+                    // For some requests which are querying on the sites that no longer exist. For these cases, instead of
+                    // returnning a 500, we log it to kusto and return a 404.
+                    if (e.Message.StartsWith("Could not get admin sites") || e.Message.StartsWith("Admin Sites response did not contain"))
+                    {
+                        string requestId = null;
+                        if (Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values) && values != default(StringValues) && values.Count > 0)
+                        {
+                            requestId = values.FirstOrDefault().Split(new char[] { ',' })[0] ?? string.Empty;
+                        }
+                        // either observer adminsites api returns a 404 or the sites api returns do not match the subscriptionId and/or resourceGroupName
+                        Logger.DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(
+                            requestId,
+                            $"{nameof(SitesController)}.{nameof(GetInsights)}",
+                            subscriptionId,
+                            resourceGroupName,
+                            siteName,
+                            "SiteNotFoundForGetInsightsRequestFromASC",
+                            $"Observer adminsites API could not find the site subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/sites/{siteName}/");
+
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw e;
+                    }
+                }
             }
 
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage, true))
