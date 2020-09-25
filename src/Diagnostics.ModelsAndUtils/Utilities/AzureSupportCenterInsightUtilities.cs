@@ -152,7 +152,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
                 RecommendedAction = new RecommendedAction()
                 {
                     Id = Guid.NewGuid(),
-                    Text = new Text("Check in Resource Explorer to see if site exists, or check the resource deletion records in kusto to see if it was deleted in last 30 days.")
+                    Text = new Text("Check in Resource Explorer if the site exists or check the resource deletion records in Kusto see if it was already deleted.")
                 },
                 ConfidenceLevel = InsightConfidenceLevel.High,
                 Scope = InsightScope.ResourceLevel,
