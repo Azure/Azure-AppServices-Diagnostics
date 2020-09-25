@@ -13,6 +13,7 @@ using Microsoft.CSharp.RuntimeBinder;
 using Diagnostics.Logger;
 using Microsoft.Extensions.Primitives;
 using System.Linq;
+using Diagnostics.ModelsAndUtils.Utilities;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -193,7 +194,14 @@ namespace Diagnostics.RuntimeHost.Controllers
                             "SiteNotFoundForGetInsightsRequestFromASC",
                             $"Observer adminsites API could not find the site subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/sites/{siteName}/");
 
-                        return NotFound();
+                        var response = new AzureSupportCenterInsightEnvelope()
+                        {
+                            CorrelationId = Guid.NewGuid(),
+                            ErrorMessage = null,
+                            TotalInsightsFound = 1,
+                            Insights = new[] { AzureSupportCenterInsightUtilites.CreateSiteNotFoundInsight(subscriptionId, resourceGroupName, siteName) }
+                        };
+                        return Ok(response);
                     }
                     else
                     {

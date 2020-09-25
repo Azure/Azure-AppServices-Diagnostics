@@ -12,6 +12,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
     {
         private static readonly string DefaultDescription = "This insight was raised as part of the {0} detector.";
         public static readonly string DefaultInsightGuid = "9a666d9e-23b4-4502-95b7-1a00a0419ce4";
+        public static readonly string SiteNotFoundInsightGuid = "0a35e298-7676-40aa-aa74-00cdc8dc8576";
 
         private static readonly Text DefaultRecommendedAction = new Text("Go to applens to see more information about this insight.");
 
@@ -116,6 +117,52 @@ namespace Diagnostics.ModelsAndUtils.Utilities
                             Type = 2,
                             Text = "Applens Link",
                             Uri = $"https://applens.azurewebsites.net/{applensPath}"
+                        }
+                }
+            };
+
+            return supportCenterInsight;
+        }
+
+        /// <summary>
+        /// Use this when the site is not found from observer
+        /// </summary>
+        public static AzureSupportCenterInsight CreateSiteNotFoundInsight(string subscriptionId, string resourceGroupName, string siteName)
+        {
+            string kustoWebLink = $"https://dataexplorer.azure.com/clusters/wawswus.kusto.windows.net/databases/wawsprod?" +
+                $"query=All%28%27AntaresAdminSubscriptionAuditEvents%27%29%0D%0A++++%7C+where+PreciseTimeStamp+%3E%3D+ago" +
+                $"%2830d%29%0D%0A++++%7C+where+SubscriptionId+%3D%7E+%27{subscriptionId}%27+and+ResourceGroupName+%3D%7E+" +
+                $"%27{resourceGroupName}%27+and+SiteName+%3D%7E+%27{siteName}%27%0D%0A++++%7C+where+OperationType+%3D%7E%" +
+                $"27Delete%27+and+EntityType+%3D%7E%27WebSite%27+and+OperationStatus+%3D%7E+%27Success%27%0D%0A++++%7C+wh" +
+                $"ere+ResourceGroupName+%21%3D+%27%27+and++ResourceGroupName+%21%3D+%27None%27+%0D%0A++++%7C+order+by+Pre" +
+                $"ciseTimeStamp+asc%0D%0A++++%7C+project+PreciseTimeStamp%2C+SubscriptionId+%2C+ResourceGroupName+%2C+Sit" +
+                $"eName+%2C+StampName%2C+EventStampName%2C+Address%0D%0A++++%7C+summarize+Timestamps+%3D+make_set%28bin%2" +
+                $"8PreciseTimeStamp%2C+1d%29%29+by+SubscriptionId+%2C+ResourceGroupName+%2C+SiteName+%2C+StampName%2C+Eve" +
+                $"ntStampName%2C+Address%0D%0A++++%7C+project-reorder+Timestamps";
+
+            var supportCenterInsight = new AzureSupportCenterInsight()
+            {
+                Id = Guid.Parse(SiteNotFoundInsightGuid),
+                Title = $"{siteName} could not be found in resource group {resourceGroupName} in subscription {subscriptionId}",
+                ImportanceLevel = ImportanceLevel.Critical,
+                InsightFriendlyName = "Site not found",
+                IssueCategory = "SITE NOT FOUND",
+                IssueSubCategory = "sitenotfound",
+                Description = new Text($"Failed to find **{siteName}** in subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName} in GeoMaster databases", true),
+                RecommendedAction = new RecommendedAction()
+                {
+                    Id = Guid.NewGuid(),
+                    Text = new Text("Check in Resource Explorer to see if site exists, or check the resource deletion records in kusto to see if it was deleted in last 30 days.")
+                },
+                ConfidenceLevel = InsightConfidenceLevel.High,
+                Scope = InsightScope.ResourceLevel,
+                Links = new List<Link>()
+                {
+                    new Link()
+                        {
+                            Type = 2,
+                            Text = "Kusto Query",
+                            Uri = kustoWebLink
                         }
                 }
             };

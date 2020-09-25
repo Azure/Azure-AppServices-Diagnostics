@@ -234,7 +234,21 @@ namespace Diagnostics.DataProviders
             if (string.IsNullOrWhiteSpace(resourceGroupName))
                 throw new ArgumentNullException(nameof(resourceGroupName));
 
-            var siteObjects = await GetAdminSitesAsync(siteName);
+            JArray siteObjects = null;
+            try
+            {
+                siteObjects = await GetAdminSitesAsync(siteName);
+                
+            }
+            catch (HttpRequestException e)
+            {
+                if (!e.Message.Contains("404"))
+                {
+                    // swallow 404 exception here
+                    throw;
+                }
+            }
+
             if (siteObjects == null || !siteObjects.Any())
                 throw new Exception($"Could not get admin sites for site {siteName}");
 
