@@ -43,11 +43,19 @@ class TfIdfTrainer:
         model.save(os.path.join(outpath, "m2.model"))
         index.save(os.path.join(outpath, "m2.index"))
     
+    def prepareSyntheticTestCases(self, detectors):
+        syntheticTestCases = []
+        for x in detectors:
+            allparts = [x["name"] if x["name"] and len(x["name"])>2 else None, x["description"] if x["description"] and len(x["description"])>2 else None] + [y["text"] for y in x["utterances"]]
+            syntheticTestCases += [{"query": p, "expectedResults": [x["id"]]} for p in allparts if p]
+        return syntheticTestCases
+    
     def trainModel(self):
         logging.info("Starting training for {0}".format(self.trainingId))
         logging.info("Training config {0}".format(json.dumps(self.trainingConfig.__dict__)))
         datapath = "rawdata_{0}".format(self.productId)
         outpath = "{0}".format(self.productId)
+        syntheticTestCases = None
         try:
             os.mkdir(outpath)
         except FileExistsError:
@@ -61,10 +69,13 @@ class TfIdfTrainer:
             logging.info("DataFetcher: Sucessfully fetched detectors for training")
             detectors_ = [detector for detector in detectors_ if self.productId in getProductId(detector["resourceFilter"] if "resourceFilter" in detector else {})]
             logging.info(f"DataFetcher: Successfully filtered fetched {len(detectors_)} detectors based on productid {self.productId}.")
-            if detectors_ and len(detectors_)>0:
-                open(os.path.join(datapath, "Detectors.json"), "w").write(json.dumps(detectors_))
+            # A sanity check if the detectors list is not messed up
+            if not detectors_ or len(detectors_)<30:
+                raise TrainingException(f"TooFewDetectors: Only {len(detectors_)} were found for training. The required threshold is at least 30 detectors. Please check the response from runtime host API.")
+            open(os.path.join(datapath, "Detectors.json"), "w").write(json.dumps(detectors_))
             detectorsdata = open(os.path.join(datapath, "Detectors.json"), "r").read()
             detectors = json.loads(detectorsdata)
+            syntheticTestCases = self.prepareSyntheticTestCases(detectors)
             if self.trainingConfig.detectorContentSplitted:
                 detector_mappings = []
                 detector_tokens = []
@@ -125,3 +136,4 @@ class TfIdfTrainer:
         open(os.path.join(outpath, "SampleUtterances.json"), "w").write(json.dumps(sampleUtterances))
         modelInfo = {"splitDictionary": self.trainingConfig.splitDictionary, "detectorContentSplitted": self.trainingConfig.detectorContentSplitted, "textNGrams": self.trainingConfig.textNGrams, "modelType": self.trainingConfig.modelType}
         open(os.path.join(outpath, "ModelInfo.json"), "w").write(json.dumps(modelInfo))
+        return syntheticTestCases

@@ -17,7 +17,8 @@ class ModelTrainPublish:
         elif self.trainingConfig.modelType == "WmdSearchModel":
             self.trainer = WmdTrainer(self.trainingId, self.productId, self.trainingConfig)
     
-    def testModelForSearch(self):
+    def testModelForSearch(self, syntheticTestCases):
+        logging.info(f"Starting testing. Received {len(syntheticTestCases)} synthetic test cases to run.")
         model = None
         try:
             model = loadModel(self.productId)
@@ -30,13 +31,17 @@ class ModelTrainPublish:
                 content = json.loads(testFile.read())
                 testCases = [TestCase(t["query"], t["expectedResults"]) for t in content]
                 if not testCases:
-                    logging.warning("No test cases for product {0} .. skipping testing".format(self.productId))
-                    return True
+                    logging.warning("No test cases for product {0} .. will run against only synthetic test cases".format(self.productId))
+                    pass
         except Exception as e:
-            logging.warning("Exception while reading test cases from file {0} .. skipping testing".format(str(e)))
-            return True
+            logging.warning("Exception while reading test cases from file {0} .. will run against only synthetic test cases".format(str(e)))
+            pass
+        testCases += [TestCase(t["query"], t["expectedResults"]) for t in syntheticTestCases]
         if model and testCases:
             return model.runTestCases(testCases)
+        else:
+            logging.warning("No test cases to run against. Aborting publish.")
+            return False
     
     async def publishModels(self):
         ts = int(str(time.time()).split(".")[0])
@@ -50,10 +55,10 @@ class ModelTrainPublish:
             raise PublishingException(str(e))
     
     async def trainPublish(self):
-        self.trainer.trainModel()
-        tested = True
+        syntheticTestCases = self.trainer.trainModel()
+        tested = False
         if not self.trainingConfig.modelType == "WmdSearchModel":
-            tested = self.testModelForSearch()
+            tested = self.testModelForSearch(syntheticTestCases)
         if tested:
             await self.publishModels()
         else:

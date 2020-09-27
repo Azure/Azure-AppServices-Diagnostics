@@ -25,6 +25,7 @@ class StorageAccountHelper:
 			logging.info("Downloaded file {0} to path {1}".format(blobname, writepath))
 		except AzureMissingResourceHttpError as e:
 			logging.error("File {0} not found on blob".format(blobname), exc_info=True)
+			raise e
 	
 	async def uploadFile(self, srcfilepath, destfilepath):
 		self.blob_service.create_blob_from_path(appSettings.STORAGE_ACCOUNT_CONTAINER_NAME, destfilepath, srcfilepath)

@@ -5,6 +5,8 @@ from __app__.AppSettings.AppSettings import appSettings
 from __app__.TrainingModule.HandleRequest import triggerTrainingMethod
 from __app__.TrainingModule.StorageAccountHelper import StorageAccountHelper
 from __app__.TrainingModule.TrainingConfig import TrainingConfig
+from __app__.TrainingModule.Exceptions import *
+from azure.common import AzureMissingResourceHttpError
 
 async def main(req: func.HttpRequest) -> func.HttpResponse:
     logging.info('Python HTTP trigger function processed a request.')
@@ -23,7 +25,13 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
                 if not Path(os.path.join(appSettings.WORD2VEC_PATH, appSettings.WORD2VEC_MODEL_NAME)).exists():
                     await sah.downloadFile("word2vec/w2vModel.bin", appSettings.WORD2VEC_PATH)
             await sah.downloadFile("resourceConfig/config.json")
-            await sah.downloadFile("{0}/testCases.json".format(productId), "TestingModule")
+            try:
+                await sah.downloadFile("{0}/testCases.json".format(productId), "TestingModule")
+            except AzureMissingResourceHttpError as e:
+                logging.warning(f"Test case file not found for productId {productId}. This is unsafe and absence of test cases might cause bad models to go in production.")
+                if trainingConfig.blockOnMissingTestCases:
+                    ex = TestCasesMissingException(f"Test cases file for productId {productId} not found. Will abort training because 'blockOnMissingTestCases' is set to True.")
+                    raise ex
             await sah.downloadFile("{0}/rawdata/SampleUtterances.json".format(productId), "rawdata_{0}".format(productId))
             try:
                 res, stat = await triggerTrainingMethod(req_data)
