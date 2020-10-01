@@ -1,6 +1,6 @@
 import os, asyncio
 from __app__.TrainingModule import logHandler
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob.aio import BlobServiceClient
 from azure.common import AzureMissingResourceHttpError
 from __app__.AppSettings.AppSettings import appSettings
 
@@ -25,8 +25,9 @@ class StorageAccountHelper:
 		try:
 			blobClient = self.blob_service.get_blob_client(container=appSettings.STORAGE_ACCOUNT_CONTAINER_NAME, blob=blobname)
 			with open(os.path.join(writepath, fileName), "wb") as blobFile:
-				blob_data = blobClient.download_blob()
-				blob_data.readinto(blobFile)
+				stream = await blobClient.download_blob()
+				data = await stream.readall()
+				blobFile.write(data)
 			#self.blob_service.get_blob_to_path(appSettings.STORAGE_ACCOUNT_CONTAINER_NAME, blobname, os.path.join(writepath, fileName))
 			logHandler.info("Downloaded file {0} to path {1}".format(blobname, writepath))
 		except AzureMissingResourceHttpError as e:
@@ -36,5 +37,5 @@ class StorageAccountHelper:
 	async def uploadFile(self, srcfilepath, destfilepath):
 		blobClient = self.blob_service.get_blob_client(container=appSettings.STORAGE_ACCOUNT_CONTAINER_NAME, blob=destfilepath)
 		with open(srcfilepath, "rb") as data:
-			blobClient.upload_blob(data)
+			await blobClient.upload_blob(data)
 		#self.blob_service.create_blob_from_path(appSettings.STORAGE_ACCOUNT_CONTAINER_NAME, destfilepath, srcfilepath)
