@@ -1,4 +1,5 @@
-import os, asyncio, logging
+import os, asyncio
+from __app__.TrainingModule import logHandler
 from azure.storage.blob import BlockBlobService
 from azure.common import AzureMissingResourceHttpError
 from __app__.AppSettings.AppSettings import appSettings
@@ -22,9 +23,9 @@ class StorageAccountHelper:
 			pass
 		try:
 			self.blob_service.get_blob_to_path(appSettings.STORAGE_ACCOUNT_CONTAINER_NAME, blobname, os.path.join(writepath, fileName))
-			logging.info("Downloaded file {0} to path {1}".format(blobname, writepath))
+			logHandler.info("Downloaded file {0} to path {1}".format(blobname, writepath))
 		except AzureMissingResourceHttpError as e:
-			logging.error("File {0} not found on blob".format(blobname), exc_info=True)
+			logHandler.error("File {0} not found on blob".format(blobname), exc_info=True)
 			raise e
 	
 	async def uploadFile(self, srcfilepath, destfilepath):

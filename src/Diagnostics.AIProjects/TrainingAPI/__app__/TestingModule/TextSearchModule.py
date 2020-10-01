@@ -1,5 +1,5 @@
 import os, gc
-import logging
+from __app__.TrainingModule import logHandler
 import json
 from __app__.TestingModule.ModelInfo import ModelInfo
 from __app__.TrainingModule.TokenizerModule import *
@@ -8,7 +8,7 @@ from gensim.models import TfidfModel
 from gensim import corpora, similarities
 
 SITE_ROOT = os.getcwd()
-logging.info("SITE_ROOT: {0}".format(SITE_ROOT))
+logHandler.info("SITE_ROOT: {0}".format(SITE_ROOT))
 
 def absPath(path):
     return os.path.join(SITE_ROOT, path)
@@ -41,10 +41,10 @@ def verifyFile(filename, prelogMessage=""):
     try:
         with open(absPath(filename), "rb") as fp:
             fp.close()
-        logging.info("TextSearchModule: {0}Verified File {1}".format(prelogMessage, absPath(filename)))
+        logHandler.info("TextSearchModule: {0}Verified File {1}".format(prelogMessage, absPath(filename)))
         return True
     except FileNotFoundError:
-        logging.error("TextSearchModule: {0}Failed to Verify File {1}".format(prelogMessage, absPath(filename)))
+        logHandler.error("TextSearchModule: {0}Failed to Verify File {1}".format(prelogMessage, absPath(filename)))
         return False
 
 class TextSearchModel:
@@ -172,19 +172,19 @@ class TextSearchModel:
             testCase.run(self, passThreshold)
             if testCase.isPassed:
                 numpassed += 1
-        logging.info("Total test cases: {0}".format(len(testCases)))
-        logging.info("Passed test cases: {0}".format(numpassed))
-        logging.info("Failed test case details:\n{0}".format("\n".join(["{0}\t\t{1}".format(testCase.query, ",".join(testCase.failDetails)) for testCase in testCases if not testCase.isPassed])))
+        logHandler.info("Total test cases: {0}".format(len(testCases)))
+        logHandler.info("Passed test cases: {0}".format(numpassed))
+        logHandler.info("Failed test case details:\n{0}".format("\n".join(["{0}\t\t{1}".format(testCase.query, ",".join(testCase.failDetails)) for testCase in testCases if not testCase.isPassed])))
         if numpassed/len(testCases)>publishThreshold:
             return True
         return False
 
 def loadModel(productid):
     modelpackagepath = os.path.normpath(productid)
-    logging.info("TextSearchModule: Loading model for product {0}: Loading from folder {1}".format(productid, modelpackagepath))
+    logHandler.info("TextSearchModule: Loading model for product {0}: Loading from folder {1}".format(productid, modelpackagepath))
     if not os.path.isdir(absPath(modelpackagepath)):
-        logging.info("TextSearchModule: Loading model for product {0}: Could not find model folder.".format(productid))
+        logHandler.info("TextSearchModule: Loading model for product {0}: Could not find model folder.".format(productid))
     if not all([verifyFile(os.path.join(modelpackagepath, packageFileNames[x])) for x in packageFileNames.keys() if x not in optionalFiles]):
-        logging.error("modelLoadTask: TextSearchModule: Loading model for product {0}: {1}".format(productid, "One or more of model file(s) are missing"))
+        logHandler.error("modelLoadTask: TextSearchModule: Loading model for product {0}: {1}".format(productid, "One or more of model file(s) are missing"))
         raise FileNotFoundError("One or more of model file(s) are missing")
     return TextSearchModel(modelpackagepath, dict(packageFileNames))

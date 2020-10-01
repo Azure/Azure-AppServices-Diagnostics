@@ -1,5 +1,5 @@
 import os, json, shutil
-import logging
+from __app__.TrainingModule import logHandler
 from gensim.models import TfidfModel
 from gensim import corpora, similarities
 from __app__.TrainingModule.TokenizerModule import getAllNGrams
@@ -18,7 +18,7 @@ class TfIdfTrainer:
         if trimDict:
             oldSize = len(dictionary)
             dictionary.filter_extremes(no_below=2, no_above=0.3, keep_n=min([500, int(len(dictionary)/2)]))
-            logging.info(f"Trimmed dictionary from {oldSize} features to {len(dictionary)} features")
+            logHandler.info(f"Trimmed dictionary from {oldSize} features to {len(dictionary)} features")
         dictionary.save(outfile)
     
     def trainModelM1(self, detector_tokens, outpath):
@@ -51,8 +51,8 @@ class TfIdfTrainer:
         return syntheticTestCases
     
     def trainModel(self):
-        logging.info("Starting training for {0}".format(self.trainingId))
-        logging.info("Training config {0}".format(json.dumps(self.trainingConfig.__dict__)))
+        logHandler.info("Starting training for {0}".format(self.trainingId))
+        logHandler.info("Training config {0}".format(json.dumps(self.trainingConfig.__dict__)))
         datapath = "rawdata_{0}".format(self.productId)
         outpath = "{0}".format(self.productId)
         syntheticTestCases = None
@@ -63,12 +63,12 @@ class TfIdfTrainer:
                 cleanFolder(outpath)
             except:
                 pass
-        logging.info("Created folder for processed models")
+        logHandler.info("Created folder for processed models")
         try:
             detectors_ = getAllDetectors()
-            logging.info("DataFetcher: Sucessfully fetched detectors for training")
+            logHandler.info("DataFetcher: Sucessfully fetched detectors for training")
             detectors_ = [detector for detector in detectors_ if self.productId in getProductId(detector["resourceFilter"] if "resourceFilter" in detector else {})]
-            logging.info(f"DataFetcher: Successfully filtered fetched {len(detectors_)} detectors based on productid {self.productId}.")
+            logHandler.info(f"DataFetcher: Successfully filtered fetched {len(detectors_)} detectors based on productid {self.productId}.")
             # A sanity check if the detectors list is not messed up
             if not detectors_ or len(detectors_)<30:
                 raise TrainingException(f"TooFewDetectors: Only {len(detectors_)} were found for training. The required threshold is at least 30 detectors. Please check the response from runtime host API.")
@@ -87,18 +87,18 @@ class TfIdfTrainer:
                 open(os.path.join(outpath, "Mappings.json"), "w").write(json.dumps(detector_mappings))
             else:
                 detector_tokens = [getAllNGrams(x["name"] + " " + x["description"] + " " + " ".join([y["text"] for y in x["utterances"]]), self.trainingConfig.textNGrams) for x in detectors]
-            logging.info("DetectorProcessor: Sucessfully processed detectors data into tokens")
+            logHandler.info("DetectorProcessor: Sucessfully processed detectors data into tokens")
         except Exception as e:
-            logging.error("[ERROR]DetectorProcessor: " + str(e))
+            logHandler.error("[ERROR]DetectorProcessor: " + str(e))
             raise TrainingException("DetectorProcessor: " + str(e))
         try:
             #Stackoverflow and Case Incidents data load
             sampleUtterancesContent = json.loads(open(os.path.join(datapath, "SampleUtterances.json"), "r").read())
             sampleUtterances = (sampleUtterancesContent["incidenttitles"] if self.trainingConfig.includeCaseTitles else []) + (sampleUtterancesContent["stackoverflowtitles"] if self.trainingConfig.includeStackoverflow else [])
             sampleUtterances_tokens = [getAllNGrams(sampleUtterances[i]["text"], self.trainingConfig.textNGrams) for i in range(len(sampleUtterances))]
-            logging.info("CaseTitlesProcessor: Sucessfully processed sample utterances into tokens")
+            logHandler.info("CaseTitlesProcessor: Sucessfully processed sample utterances into tokens")
         except Exception as e:
-            logging.error("[ERROR]CaseTitlesProcessor: " + str(e))
+            logHandler.error("[ERROR]CaseTitlesProcessor: " + str(e))
             raise TrainingException("CaseTitlesProcessor: " + str(e))
         # Train dictionary
         try:
@@ -107,28 +107,28 @@ class TfIdfTrainer:
                 self.trainDictionary(sampleUtterances_tokens, os.path.join(outpath, "dictionary2.dict"), trimDict=True)
             else:
                 self.trainDictionary(detector_tokens + sampleUtterances_tokens, os.path.join(outpath, "dictionary.dict"))
-            logging.info("DictionaryTrainer: Sucessfully trained dictionary")
+            logHandler.info("DictionaryTrainer: Sucessfully trained dictionary")
         except Exception as e:
-            logging.error("[ERROR]DictionaryTrainer: " + str(e))
+            logHandler.error("[ERROR]DictionaryTrainer: " + str(e))
             raise TrainingException("DictionaryTrainer: " + str(e))
         # Train model to search detectors
         if self.trainingConfig.trainDetectors:
             try:
                 self.trainModelM1(detector_tokens, outpath)
-                logging.info("ModelM1Trainer: Sucessfully trained model m1")
+                logHandler.info("ModelM1Trainer: Sucessfully trained model m1")
             except Exception as e:
-                logging.error("[ERROR]ModelM1Trainer: " + str(e))
+                logHandler.error("[ERROR]ModelM1Trainer: " + str(e))
                 raise TrainingException("ModelM1Trainer: " + str(e))
         else:
             pass
-            logging.info("ModelM1Trainer: Training is disabled")
+            logHandler.info("ModelM1Trainer: Training is disabled")
         # Train model to recommend search terms
         if self.trainingConfig.trainUtterances:
             try:
                 self.trainModelM2(sampleUtterances_tokens, outpath)
-                logging.info("ModelM2Trainer: Sucessfully trained model m2")
+                logHandler.info("ModelM2Trainer: Sucessfully trained model m2")
             except Exception as e:
-                logging.error("[ERROR]ModelM2Trainer: " + str(e))
+                logHandler.error("[ERROR]ModelM2Trainer: " + str(e))
                 raise TrainingException("ModelM2Trainer: " + str(e))
         # Save data files and configuration files
         open(os.path.join(outpath, "trainingId.txt"), "w").write(str(self.trainingId))

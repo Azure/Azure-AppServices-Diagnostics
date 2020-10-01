@@ -1,4 +1,4 @@
-import logging
+from __app__.TrainingModule import logHandler
 class TestCase:
     def __init__(self, query, expectedResults):
         self.query = query
@@ -21,5 +21,5 @@ class TestCase:
                 self.failDetails.append(result)
         if numpassed/len(self.expectedResults)>=threshold:
             self.isPassed = True
-            logging.info(f"Test case passed!")
+            logHandler.info(f"Test case passed!")
         return

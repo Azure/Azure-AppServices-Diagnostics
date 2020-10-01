@@ -1,5 +1,6 @@
 import os, json, time
-import logging, asyncio
+import asyncio
+from __app__.TrainingModule import logHandler
 from __app__.TrainingModule.StorageAccountHelper import StorageAccountHelper
 from __app__.TestingModule.TextSearchModule import loadModel
 from __app__.TestingModule.TestSchema import TestCase
@@ -18,12 +19,12 @@ class ModelTrainPublish:
             self.trainer = WmdTrainer(self.trainingId, self.productId, self.trainingConfig)
     
     def testModelForSearch(self, syntheticTestCases):
-        logging.info(f"Starting testing. Received {len(syntheticTestCases)} synthetic test cases to run.")
+        logHandler.info(f"Starting testing. Received {len(syntheticTestCases)} synthetic test cases to run.")
         model = None
         try:
             model = loadModel(self.productId)
         except Exception as e:
-            logging.error("Failed to load the model for {0} with exception {1}".format(self.productId, str(e)), exc_info=True)
+            logHandler.error("Failed to load the model for {0} with exception {1}".format(self.productId, str(e)), exc_info=True)
             return False
         testCases = []
         try:
@@ -31,16 +32,16 @@ class ModelTrainPublish:
                 content = json.loads(testFile.read())
                 testCases = [TestCase(t["query"], t["expectedResults"]) for t in content]
                 if not testCases:
-                    logging.warning("No test cases for product {0} .. will run against only synthetic test cases".format(self.productId))
+                    logHandler.warning("No test cases for product {0} .. will run against only synthetic test cases".format(self.productId))
                     pass
         except Exception as e:
-            logging.warning("Exception while reading test cases from file {0} .. will run against only synthetic test cases".format(str(e)))
+            logHandler.warning("Exception while reading test cases from file {0} .. will run against only synthetic test cases".format(str(e)))
             pass
         testCases += [TestCase(t["query"], t["expectedResults"]) for t in syntheticTestCases]
         if model and testCases:
             return model.runTestCases(testCases)
         else:
-            logging.warning("No test cases to run against. Aborting publish.")
+            logHandler.warning("No test cases to run against. Aborting publish.")
             return False
     
     async def publishModels(self):
@@ -48,10 +49,10 @@ class ModelTrainPublish:
         try:
             sah = StorageAccountHelper()
             for fileName in os.listdir(self.productId):
-                logging.info("Uploading {0} to {1}".format(os.path.join(self.productId, fileName), os.path.join(self.productId, "models", str(ts), fileName)))
+                logHandler.info("Uploading {0} to {1}".format(os.path.join(self.productId, fileName), os.path.join(self.productId, "models", str(ts), fileName)))
                 await sah.uploadFile(os.path.join(self.productId, fileName), os.path.join(self.productId, "models", str(ts), fileName))
         except Exception as e:
-            logging.error("Publishing Exception: {0}".format(str(e)))
+            logHandler.error("Publishing Exception: {0}".format(str(e)))
             raise PublishingException(str(e))
     
     async def trainPublish(self):
