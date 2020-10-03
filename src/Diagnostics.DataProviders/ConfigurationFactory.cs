@@ -141,7 +141,8 @@ namespace Diagnostics.DataProviders
             {
                 var instance = Activator.CreateInstance(configProperty.PropertyType) as IDataProviderConfiguration;
                 LoadConfigurationValues(instance);
-                instance.PostInitialize();
+                instance.Validate();
+                instance.PostInitialize();            
                 configProperty.SetValue(dataSourcesConfiguration, instance, null);
             }
 

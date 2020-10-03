@@ -3,6 +3,8 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
+using System.ComponentModel.DataAnnotations;
+
 namespace Diagnostics.DataProviders
 {
     [DataSourceConfiguration("SupportObserver")]
@@ -16,18 +18,21 @@ namespace Diagnostics.DataProviders
         /// Observer endpoint.
         /// </summary>
         [ConfigurationName("Endpoint")]
+        [Required]
         public string Endpoint { get; set; }
 
         /// <summary>
         /// Gets or sets client Id.
         /// </summary>
         [ConfigurationName("ClientId")]
+        [Required]
         public string ClientId { get; set; }
 
         /// <summary>
         /// Gets or sets app key.
         /// </summary>
         [ConfigurationName("AppKey")]
+        [Required]
         public string AppKey { get; set; }
 
         [ConfigurationName("IsMockConfigured", DefaultValue = false)]
@@ -46,6 +51,7 @@ namespace Diagnostics.DataProviders
 
 
         [ConfigurationName("AADResource")]
+        [Required]
         public string AADResource { get; set; }
 
         /// <summary>
