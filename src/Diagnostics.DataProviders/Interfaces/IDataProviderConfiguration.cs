@@ -9,5 +9,7 @@ namespace Diagnostics.DataProviders
         Dictionary<string, string> HealthCheckInputs { get; }
 
         void PostInitialize();
+
+        void Validate();
     }
 }

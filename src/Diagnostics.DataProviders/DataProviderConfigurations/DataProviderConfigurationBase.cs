@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using Kusto.Cloud.Platform.Utils;
 
@@ -49,5 +51,20 @@ namespace Diagnostics.DataProviders
         }
 
         public virtual void PostInitialize() { }
+
+        public virtual void Validate()
+        {
+            // If the given Data Provider is enabled for Cloud environment, perform validations
+            if(Enabled)
+            {
+                var validationResults = new List<ValidationResult>();
+                var context = new ValidationContext(this);
+                var valid = Validator.TryValidateObject(this, context, validationResults);
+                if (valid) return;
+
+                var msg = string.Join("\n", validationResults.Select(r => r.ErrorMessage));
+                throw new Exception($"Invalid configuration detected : {msg}");
+            }     
+        }
     }
 }
