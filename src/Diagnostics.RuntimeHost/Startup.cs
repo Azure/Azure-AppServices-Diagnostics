@@ -53,6 +53,7 @@ namespace Diagnostics.RuntimeHost
 
         public void ConfigureServices(IServiceCollection services)
         {
+            ValidateSecuritySettings();
             IdentityModelEventSource.ShowPII = Configuration.GetValue("ShowIdentityModelErrors", false);
             var openIdConfigEndpoint = $"{Configuration["SecuritySettings:AADAuthority"]}/.well-known/openid-configuration";
             var configManager = new ConfigurationManager<OpenIdConnectConfiguration>(openIdConfigEndpoint, new OpenIdConnectConfigurationRetriever());
@@ -212,13 +213,7 @@ namespace Diagnostics.RuntimeHost
             services.AddDiagEntitiesStorageService(Configuration);
             services.AddDiagEntitiesTableCacheService(Configuration);
 
-            if(Enum.Parse<SourceWatcherType>(Configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]) == SourceWatcherType.AzureStorage)
-            {
-                services.AddSingleton<ISourceWatcher, StorageWatcher>();
-            } else
-            {
-                services.AddSingleton<ISourceWatcher, NationalCloudStorageWatcher>();
-            }
+            InjectSourceWatcher(services);
 
             services.AddLogging(loggingConfig =>
             {
@@ -250,6 +245,34 @@ namespace Diagnostics.RuntimeHost
             app.UseRewriter(new RewriteOptions().Add(new RewriteDiagnosticResource()));
             app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseMvc();
+        }
+
+        /// <summary>
+        /// Inject appropriate SourceWatcher based on CloudDomain
+        /// </summary>
+        /// <param name="services"></param>
+        private void InjectSourceWatcher(IServiceCollection services)
+        {
+            if (Configuration.IsPublicAzure() || Configuration.IsAirGappedCloud())
+            {
+                services.AddSingleton<ISourceWatcher, StorageWatcher>();
+            }
+            if(Configuration.IsAzureChinaCloud() || Configuration.IsAzureUSGovernment())
+            {
+                services.AddSingleton<ISourceWatcher, NationalCloudStorageWatcher>();
+            }
+        }
+
+        private void ValidateSecuritySettings()
+        {
+            var securitySettings = Configuration.GetSection("SecuritySettings").GetChildren();
+            foreach( var setting in securitySettings)
+            {
+                if (setting.Value == null)
+                {
+                    throw new Exception($"Configuration {setting.Key} cannot be null");
+                }
+            }
         }
     }
 }

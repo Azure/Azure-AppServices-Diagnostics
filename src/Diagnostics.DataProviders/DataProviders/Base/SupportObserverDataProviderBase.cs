@@ -5,8 +5,10 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders.Exceptions;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -174,6 +176,13 @@ namespace Diagnostics.DataProviders
             if (!cleanUrl.StartsWith("api"))
                 url = $"api/{cleanUrl}";
 
+            var regexInput = url + ".";
+            var unsupportedApisArr = Configuration.UnsupportedApis.Split(new char[] { ';',',' });
+            if (unsupportedApisArr.Any(unsupportedApi => Regex.IsMatch(regexInput, unsupportedApi, RegexOptions.IgnoreCase)))
+            {
+                throw new ApiNotSupportedException("GetSite", "Find the gist SitesSqlCommands and use the method GetSiteObjectQuery to get that data.", "See email sent to our distribution list sent on July 7th, 2020 subject `Observer GetSite to ExecuteSqlQuery migration`");
+            }
+
             var request = new HttpRequestMessage(HttpMethod.Get, url);
             var response = await SendObserverRequestAsync(request, resourceId);
             var result = await response.Content.ReadAsStringAsync();
@@ -202,7 +211,7 @@ namespace Diagnostics.DataProviders
             return result;
         }
 
-        protected async Task<HttpResponseMessage> SendObserverRequestAsync(HttpRequestMessage request, string resourceId = null, HttpClient httpClient = null)
+        protected virtual async Task<HttpResponseMessage> SendObserverRequestAsync(HttpRequestMessage request, string resourceId = null, HttpClient httpClient = null)
         {
             if (httpClient == null)
             {

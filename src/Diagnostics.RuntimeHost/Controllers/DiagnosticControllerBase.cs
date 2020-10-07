@@ -371,7 +371,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             await _sourceWatcherService.Watcher.CreateOrUpdatePackage(pkg);
             // If Azure Storage is not enabled, we still want to keep data updated.
-            if(!tableCacheService.IsStorageAsSourceEnabled())
+            if(_sourceWatcherService.Watcher.GetType() == typeof(GitHubWatcher))
             {
                 await storageWatcher.CreateOrUpdatePackage(pkg);
             }
@@ -1067,7 +1067,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         throw new Exception($"There must at least one button for form id {formId}.");
                     }
 
-                    if (formInputs.Where(input => input.InputType != FormInputTypes.Button).Count() > 5)
+                    if (formInputs.Where(input => input.InputType != FormInputTypes.Button && input.IsVisible).Count() > 5)
                     {
                         throw new Exception("Total number of inputs for a form cannot exceed 5.");
                     }

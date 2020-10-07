@@ -117,16 +117,34 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 
             if (nonWildCardHostNames.Any())
             {
-                hostNameQuery = $"{hostNameColumn} in~ ({string.Join(",", nonWildCardHostNames.Select(h => $@"""{h}"""))}, {string.Join(",", nonWildCardHostNames.Select(h => $@"""{h}:80"""))}, {string.Join(",", nonWildCardHostNames.Select(h => $@"""{h}:443"""))})";
+                nonWildCardHostNames = AddPortNumberToHostNames(nonWildCardHostNames);
+                hostNameQuery = $"{hostNameColumn} in~ ({string.Join(",", nonWildCardHostNames.Select(h => $@"""{h}"""))})";
             }
 
             if (wildCardHostNames.Any())
             {
-                string wildCardQuery = $@"{string.Join("or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w.Replace("*.", ".")}"""))} or {string.Join("or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w.Replace("*.", ".")}:80"""))} or {string.Join("or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w.Replace("*.", ".")}:443"""))}";
+                wildCardHostNames = AddPortNumberToHostNames(wildCardHostNames);
+                string wildCardQuery = string.Join(" or", wildCardHostNames.Select(w => $@" {hostNameColumn} endswith ""{w.Replace("*.", ".")}"""));
                 hostNameQuery = $"{hostNameQuery} or {wildCardQuery}";
             }
 
             return hostNameQuery;
+        }
+
+        private static IEnumerable<string> AddPortNumberToHostNames(IEnumerable<string> hostnames)
+        {
+            var hostNamesWithPort = new List<string>();
+            foreach (var host in hostnames)
+            {
+                hostNamesWithPort.Add(host);
+                if (!host.Contains(":"))
+                {
+                    hostNamesWithPort.Add(host + ":80");
+                    hostNamesWithPort.Add(host + ":443");
+                }
+            }
+
+            return hostNamesWithPort;
         }
 
         /// <summary>
@@ -202,7 +220,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
             }
             catch (Exception e)
             {
-                throw new Exception($"{e.Message}, Please check the given input id");
+                return null;
             }
         }
 
