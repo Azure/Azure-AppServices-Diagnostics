@@ -1,7 +1,7 @@
 import os, asyncio
 from __app__.TrainingModule import logHandler
 from azure.storage.blob.aio import BlobServiceClient
-from azure.common import AzureMissingResourceHttpError
+#from azure.common import AzureMissingResourceHttpError
 from __app__.AppSettings.AppSettings import appSettings
 
 class StorageAccountHelper:
@@ -30,7 +30,7 @@ class StorageAccountHelper:
 				blobFile.write(data)
 			#self.blob_service.get_blob_to_path(appSettings.STORAGE_ACCOUNT_CONTAINER_NAME, blobname, os.path.join(writepath, fileName))
 			logHandler.info("Downloaded file {0} to path {1}".format(blobname, writepath))
-		except AzureMissingResourceHttpError as e:
+		except Exception as e:
 			logHandler.error("File {0} not found on blob".format(blobname), exc_info=True)
 			raise e
 	

@@ -1,5 +1,5 @@
 import importlib, sys
-importlib.reload(sys.modules['azure'])
+#importlib.reload(sys.modules['azure'])
 import asyncio, json, os
 from __app__.TrainingModule import logHandler
 import logging
