@@ -10,7 +10,7 @@ from __app__.TrainingModule.HandleRequest import triggerTrainingMethod
 from __app__.TrainingModule.StorageAccountHelper import StorageAccountHelper
 from __app__.TrainingModule.TrainingConfig import TrainingConfig
 from __app__.TrainingModule.Exceptions import *
-from azure.common import AzureMissingResourceHttpError
+#from azure.common import AzureMissingResourceHttpError
 
 async def main(req: func.HttpRequest) -> func.HttpResponse:
     logHandler.info('Python HTTP trigger function processed a request.')
@@ -38,7 +38,7 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
                 await sah.downloadFile("resourceConfig/config.json")
                 try:
                     await sah.downloadFile("{0}/testCases.json".format(productId), "TestingModule")
-                except AzureMissingResourceHttpError as e:
+                except Exception as e:
                     logHandler.warning(f"Test case file not found for productId {productId}. This is unsafe and absence of test cases might cause bad models to go in production.")
                     if trainingConfig.blockOnMissingTestCases:
                         ex = TestCasesMissingException(f"Test cases file for productId {productId} not found. Will abort training because 'blockOnMissingTestCases' is set to True.")
