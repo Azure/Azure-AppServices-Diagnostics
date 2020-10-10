@@ -34,16 +34,16 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
                 sah = StorageAccountHelper()
                 if trainingConfig.modelType == "WmdSearchModel":
                     if not Path(os.path.join(appSettings.WORD2VEC_PATH, appSettings.WORD2VEC_MODEL_NAME)).exists():
-                        await sah.downloadFile("word2vec/w2vModel.bin", appSettings.WORD2VEC_PATH)
-                await sah.downloadFile("resourceConfig/config.json")
+                        sah.downloadFile("word2vec/w2vModel.bin", appSettings.WORD2VEC_PATH)
+                sah.downloadFile("resourceConfig/config.json")
                 try:
-                    await sah.downloadFile("{0}/testCases.json".format(productId), "TestingModule")
+                    sah.downloadFile("{0}/testCases.json".format(productId), "TestingModule")
                 except Exception as e:
                     logHandler.warning(f"Test case file not found for productId {productId}. This is unsafe and absence of test cases might cause bad models to go in production.")
                     if trainingConfig.blockOnMissingTestCases:
                         ex = TestCasesMissingException(f"Test cases file for productId {productId} not found. Will abort training because 'blockOnMissingTestCases' is set to True.")
                         raise ex
-                await sah.downloadFile("{0}/rawdata/SampleUtterances.json".format(productId), "rawdata_{0}".format(productId))
+                sah.downloadFile("{0}/rawdata/SampleUtterances.json".format(productId), "rawdata_{0}".format(productId))
                 try:
                     res, stat = await triggerTrainingMethod(req_data)
                     logHandler.removeHandler(fh)
