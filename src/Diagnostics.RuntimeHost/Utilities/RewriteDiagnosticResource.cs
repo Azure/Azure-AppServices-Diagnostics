@@ -4,14 +4,9 @@ using Diagnostics.Logger;
 using System.Linq;
 using System.Net;
 using Microsoft.AspNetCore.Http;
-using Diagnostics.RuntimeHost.Utilities;
 using System.Text;
 using System.IO;
 using Microsoft.Extensions.Primitives;
-using System.Collections;
-using System.Collections.Generic;
-using System.Security.Policy;
-using System.Web;
 using Microsoft.AspNetCore.Rewrite.Internal;
 
 namespace Diagnostics.RuntimeHost.Utilities
@@ -24,7 +19,7 @@ namespace Diagnostics.RuntimeHost.Utilities
         {
             var request = context.HttpContext.Request;
             // Partner teams using Diagnose and Solve, make the request to api/invoke from their RP.
-            if (!request.Path.Value.Equals(UriElements.PassThroughAPIRoute, StringComparison.OrdinalIgnoreCase))
+            if (!request.Path.Value.Equals(UriElements.PassThroughAPIRoute, StringComparison.OrdinalIgnoreCase) && !request.Path.Value.Equals("/", StringComparison.OrdinalIgnoreCase))
             {
                 context.Result = RuleResult.ContinueRules;
                 return;
@@ -73,7 +68,7 @@ namespace Diagnostics.RuntimeHost.Utilities
                 }
 
                 request.Method = apiVerbs.First().ToLower();
-                var rewriteRule = new RewriteRule(UriElements.PassThroughAPIRoute.Substring(1), apiPaths.First().ToLower(), true);
+                var rewriteRule = new RewriteRule(UriElements.PassThroughAPIRoute.Substring(1)+ "|^$", apiPaths.First().ToLower(), true);
                 rewriteRule.ApplyRule(context);
             }
         }
