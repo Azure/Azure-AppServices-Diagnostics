@@ -6,7 +6,7 @@ Run powershell as administrator and run the below command
 ```Set-ExecutionPolicy RemoteSigned
 ```
 
-Then run the Scripts/InstallPython.ps1 script in the same powershell session. This should do it generally.
+Then run the Scripts/InstallPython.ps1 script in the same powershell session. This should do it usually.
 
 ---
 ### If it does not (manual install)
