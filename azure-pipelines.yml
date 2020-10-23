@@ -14,29 +14,29 @@ variables:
 
 jobs:
   
-- job: 'IntegrationTests'
-  pool:
-    name: IntegrationTestPool  # name of the pool to run this job in
+#- job: 'IntegrationTests'
+ # pool:
+  #  name: IntegrationTestPool  # name of the pool to run this job in
 
-  steps:
-  - task: DotNetCoreCLI@2
-    inputs:
-      command: 'build'
-      projects: '$(solution)'
-      configuration: '$(buildConfiguration)'
+  #steps:
+  #- task: DotNetCoreCLI@2
+   # inputs:
+    #  command: 'build'
+     # projects: '$(solution)'
+     # configuration: '$(buildConfiguration)'
 
-  - task: Bash@3
-    inputs:
-      targetType: 'inline'
-      script: 'az login --identity'
-      noProfile: false
-      noRc: false
+  #- task: Bash@3
+   # inputs:
+    #  targetType: 'inline'
+     # script: 'az login --identity'
+     # noProfile: false
+     # noRc: false
 
-  - task: DotNetCoreCLI@2
-    inputs:
-      command: 'test'
-      projects: '**/Diagnostics.Tests.Integration.*.csproj'
-      arguments: '--configuration $(buildConfiguration)'
+#  - task: DotNetCoreCLI@2
+ #   inputs:
+  #    command: 'test'
+   #   projects: '**/Diagnostics.Tests.Integration.*.csproj'
+    #  arguments: '--configuration $(buildConfiguration)'
 
 
 - job: 'UnitTestAndPublish'
