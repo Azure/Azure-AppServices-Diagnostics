@@ -1,0 +1,10 @@
+{
+    "azureFunctions.deploySubpath": ".",
+    "azureFunctions.scmDoBuildDuringDeployment": true,
+    "azureFunctions.pythonVenv": ".venv",
+    "azureFunctions.projectLanguage": "Python",
+    "azureFunctions.projectRuntime": "~2",
+    "debug.internalConsoleOptions": "neverOpen",
+    "azureFunctions.preDeployTask": "func: pack --build-native-deps",
+    "python.pythonPath": ".venv\\Scripts\\python.exe"
+}
