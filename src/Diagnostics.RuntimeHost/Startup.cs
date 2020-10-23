@@ -73,12 +73,8 @@ namespace Diagnostics.RuntimeHost
                     }).AddJwtBearer("AzureAd", options => {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ValidateAudience = true,
                         ValidAudience = Configuration["SecuritySettings:ClientId"],
-                        ValidateIssuer = true,
                         ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
-                        ValidateLifetime = true,
-                        RequireSignedTokens = true,
                         IssuerSigningKeys = signingKeys
                     };
 
