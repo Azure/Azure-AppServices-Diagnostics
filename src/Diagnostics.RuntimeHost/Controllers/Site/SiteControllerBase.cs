@@ -79,6 +79,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             else if (kindProperty.Contains("function")) return AppType.FunctionApp;
             else if (kindProperty.Contains("mobile")) return AppType.MobileApp;
             else if (kindProperty.Contains("gateway")) return AppType.GatewayApp;
+            else if (kindProperty.Contains("workflowapp")) return AppType.WorkflowApp;
             else return AppType.WebApp;
         }
     }

@@ -77,6 +77,7 @@
         ApiApp = 4,
         MobileApp = 8,
         GatewayApp = 16,
+        WorkflowApp = 32,
         All = 255
     }
 
