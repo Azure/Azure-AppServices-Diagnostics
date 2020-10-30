@@ -12,6 +12,7 @@ class AppSettings:
                 config = appsettings
         except Exception as e:
             logHandler.info("Unable to read app settings from file, will read from environment variables")
+        self.MODEL_DATA_PATH = config.get("MODEL_DATA_PATH", "/tmp")
         self.STORAGE_ACCOUNT_NAME = config.get("STORAGE_ACCOUNT_NAME", None)
         self.STORAGE_ACCOUNT_KEY = config.get("STORAGE_ACCOUNT_KEY", None)
         self.STORAGE_ACCOUNT_CONTAINER_NAME = config.get("STORAGE_ACCOUNT_CONTAINER_NAME", "searchservice")

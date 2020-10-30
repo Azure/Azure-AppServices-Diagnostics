@@ -6,8 +6,7 @@
             "type": "python",
             "request": "attach",
             "port": 9091,
-            "preLaunchTask": "func: host start",
-            "justMyCode": false
+            "preLaunchTask": "func: host start"
         }
     ]
 }

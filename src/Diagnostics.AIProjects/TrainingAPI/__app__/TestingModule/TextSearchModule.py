@@ -3,6 +3,7 @@ from __app__.TrainingModule import logHandler
 import json
 from __app__.TestingModule.ModelInfo import ModelInfo
 from __app__.TrainingModule.TokenizerModule import *
+from __app__.AppSettings.AppSettings import appSettings
 
 from gensim.models import TfidfModel
 from gensim import corpora, similarities
@@ -180,7 +181,7 @@ class TextSearchModel:
         return False
 
 def loadModel(productid):
-    modelpackagepath = os.path.normpath(productid)
+    modelpackagepath = os.path.join(appSettings.MODEL_DATA_PATH, os.path.normpath(productid))
     logHandler.info("TextSearchModule: Loading model for product {0}: Loading from folder {1}".format(productid, modelpackagepath))
     if not os.path.isdir(absPath(modelpackagepath)):
         logHandler.info("TextSearchModule: Loading model for product {0}: Could not find model folder.".format(productid))

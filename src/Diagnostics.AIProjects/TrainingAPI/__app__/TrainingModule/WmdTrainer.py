@@ -36,8 +36,8 @@ class WmdTrainer:
     def trainModel(self):
         logHandler.info("Starting training for {0}".format(self.trainingId))
         logHandler.info("Training config {0}".format(json.dumps(self.trainingConfig.__dict__)))
-        datapath = "rawdata_{0}".format(self.productId)
-        outpath = "{0}".format(self.productId)
+        datapath = os.path.join(appSettings.MODEL_DATA_PATH, "rawdata_{0}".format(self.productId))
+        outpath = os.path.join(appSettings.MODEL_DATA_PATH, "{0}".format(self.productId))
         syntheticTestCases = None
         try:
             os.mkdir(outpath)

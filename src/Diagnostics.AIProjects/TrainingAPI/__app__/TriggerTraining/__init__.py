@@ -37,7 +37,7 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
                         sah.downloadFile("word2vec/w2vModel.bin", appSettings.WORD2VEC_PATH)
                 sah.downloadFile("resourceConfig/config.json")
                 try:
-                    sah.downloadFile("{0}/testCases.json".format(productId), "TestingModule")
+                    sah.downloadFile("{0}/testCases.json".format(productId))
                 except Exception as e:
                     logHandler.warning(f"Test case file not found for productId {productId}. This is unsafe and absence of test cases might cause bad models to go in production.")
                     if trainingConfig.blockOnMissingTestCases:
@@ -46,12 +46,15 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
                 sah.downloadFile("{0}/rawdata/SampleUtterances.json".format(productId), "rawdata_{0}".format(productId))
                 try:
                     res, stat = await triggerTrainingMethod(req_data)
-                    logHandler.removeHandler(fh)
+                    if appSettings.debug:
+                        logHandler.removeHandler(fh)
                     return func.HttpResponse(f"{res}", status_code=stat)
                 except Exception as e:
-                    logHandler.removeHandler(fh)
+                    if appSettings.debug:
+                        logHandler.removeHandler(fh)
                     return func.HttpResponse(f"{e}", status_code=500)
             except Exception as ex:
-                logHandler.removeHandler(fh)
+                if appSettings.debug:
+                    logHandler.removeHandler(fh)
                 raise ex
     return func.HttpResponse("Please provide training configuration in the request body", status_code=400)

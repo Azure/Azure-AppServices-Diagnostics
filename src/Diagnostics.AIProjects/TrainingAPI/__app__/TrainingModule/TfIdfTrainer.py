@@ -6,6 +6,7 @@ from __app__.TrainingModule.TokenizerModule import getAllNGrams
 from __app__.TrainingModule.DetectorsFetchHelper import getAllDetectors
 from __app__.TrainingModule.ResourceFilterHelper import getProductId
 from __app__.TrainingModule.Exceptions import *
+from __app__.AppSettings.AppSettings import appSettings
 
 class TfIdfTrainer:
     def __init__(self, trainingId, productId, trainingConfig):
@@ -53,8 +54,8 @@ class TfIdfTrainer:
     def trainModel(self):
         logHandler.info("Starting training for {0}".format(self.trainingId))
         logHandler.info("Training config {0}".format(json.dumps(self.trainingConfig.__dict__)))
-        datapath = "rawdata_{0}".format(self.productId)
-        outpath = "{0}".format(self.productId)
+        datapath = os.path.join(appSettings.MODEL_DATA_PATH, "rawdata_{0}".format(self.productId))
+        outpath = os.path.join(appSettings.MODEL_DATA_PATH, "{0}".format(self.productId))
         syntheticTestCases = None
         try:
             os.mkdir(outpath)

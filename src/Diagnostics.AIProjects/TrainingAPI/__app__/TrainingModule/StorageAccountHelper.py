@@ -14,10 +14,10 @@ class StorageAccountHelper:
 			raise Exception('Failed to read storage account name and key values from configurations')
 
 	def downloadFile(self, blobname, destpath=None):
-		writepath = os.path.join(os.getcwd(), os.path.normpath('/'.join(blobname.split("/")[:-1])))
+		writepath = os.path.join(appSettings.MODEL_DATA_PATH, os.path.normpath('/'.join(blobname.split("/")[:-1])))
 		fileName = blobname.split("/")[-1]
 		if destpath:
-			writepath = os.path.join(os.getcwd(), os.path.normpath(destpath))
+			writepath = os.path.join(appSettings.MODEL_DATA_PATH, os.path.normpath(destpath))
 		try:
 			os.makedirs(writepath)
 		except:

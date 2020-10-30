@@ -7,6 +7,7 @@ from __app__.TestingModule.TestSchema import TestCase
 from __app__.TrainingModule.TfIdfTrainer import TfIdfTrainer
 from __app__.TrainingModule.WmdTrainer import WmdTrainer
 from __app__.TrainingModule.Exceptions import *
+from __app__.AppSettings.AppSettings import appSettings
 
 class ModelTrainPublish:
     def __init__(self, trainingId, productId, trainingConfig):
@@ -28,7 +29,7 @@ class ModelTrainPublish:
             return False
         testCases = []
         try:
-            with open("TestingModule/testCases.json", "r") as testFile:
+            with open(os.path.join(appSettings.MODEL_DATA_PATH, "{0}/testCases.json".format(self.productId)), "r") as testFile:
                 content = json.loads(testFile.read())
                 testCases = [TestCase(t["query"], t["expectedResults"]) for t in content]
                 if not testCases:
@@ -45,12 +46,13 @@ class ModelTrainPublish:
             return False
     
     async def publishModels(self):
+        datapath = appSettings.MODEL_DATA_PATH
         ts = int(str(time.time()).split(".")[0])
         try:
             sah = StorageAccountHelper()
-            for fileName in os.listdir(self.productId):
-                logHandler.info("Uploading {0} to {1}".format(os.path.join(self.productId, fileName), os.path.join(self.productId, "models", str(ts), fileName)))
-                await sah.uploadFile(os.path.join(self.productId, fileName), os.path.join(self.productId, "models", str(ts), fileName))
+            for fileName in os.listdir(os.path.join(datapath, self.productId)):
+                logHandler.info("Uploading {0} to {1}".format(os.path.join(datapath, self.productId, fileName), os.path.join(self.productId, "models", str(ts), fileName)))
+                await sah.uploadFile(os.path.join(datapath, self.productId, fileName), os.path.join(self.productId, "models", str(ts), fileName))
         except Exception as e:
             logHandler.error("Publishing Exception: {0}".format(str(e)))
             raise PublishingException(str(e))

@@ -2,8 +2,8 @@
 .vscode
 local.settings.json
 test
+**/appsettings.json
 .venv
-resourceConfig
 **/__pycache__
 **/14748**
 **/16072**
@@ -12,4 +12,3 @@ resourceConfig
 **/15791**
 **/15551**
 **/rawdata**
-**.json
