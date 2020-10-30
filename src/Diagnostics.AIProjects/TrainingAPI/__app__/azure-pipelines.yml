@@ -43,6 +43,11 @@ stages:
               pip install -r requirements.txt
             workingDirectory: $(workingDirectory)
             displayName: "Install application dependencies"
+          
+          - task: DeleteFiles@1
+            inputs:
+              SourceFolder: 
+              Contents: 'AppSettings/appsettings.json' 
 
           - task: ArchiveFiles@2
             displayName: "Archive files"
