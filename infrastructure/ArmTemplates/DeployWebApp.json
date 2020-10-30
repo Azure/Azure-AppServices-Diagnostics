@@ -219,8 +219,6 @@
         "sourcePlatform": "Unknown",
         "targetPlatform": "Unknown",
         "serverFarmId": "[concat('/subscriptions/', parameters('subscriptionId'),'/resourcegroups/', parameters('resourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]",
-        "WEBSITE_LOCAL_CACHE_OPTION": "Always",
-        "WEBSITE_LOCAL_CACHE_SIZEINMB": "300",
         "WEBSITE_SWAP_WARMUP_PING_PATH": "[parameters('pingPath')]",
         "WEBSITE_ENABLE_SYNC_UPDATE_SITE": "true",
         "clientAffinityEnabled": false,
@@ -258,10 +256,6 @@
             {
               "Name": "WEBSITE_ADD_SITENAME_BINDINGS_IN_APPHOST_CONFIG",
               "Value": 1
-            },
-            {
-              "Name": "WEBSITE_LOCAL_CACHE_OPTION",
-              "Value": "Always"
             }
           ],
           "autoHealEnabled": true,
@@ -359,10 +353,6 @@
                 {
                   "Name": "WEBSITE_ADD_SITENAME_BINDINGS_IN_APPHOST_CONFIG",
                   "Value": 1
-                },
-                {
-                  "Name": "WEBSITE_LOCAL_CACHE_OPTION",
-                  "Value": "Always"
                 }
               ]
             }

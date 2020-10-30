@@ -43,7 +43,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Workers
                 var kustoMappingsStringContent = await FileHelper.GetFileContentAsync(subDir.FullName, $"{_kustoClusterFileName}.json");
                 var kustoMappings = (List<Dictionary<string, string>>)JsonConvert.DeserializeObject(kustoMappingsStringContent, typeof(List<Dictionary<string, string>>));
 
-                if (!_cacheService.ContainsKey(subDir.Name) || (_cacheService.TryGetValue(subDir.Name, out List<Dictionary<string, string>> value) && !value.Equals(kustoMappings)))
+                if (!_cacheService.ContainsKey(subDir.Name) || (_cacheService.TryGetValue(subDir.Name, out List<Dictionary<string, string>> value) && value != null && !value.Equals(kustoMappings)))
                 {
                     _cacheService.AddOrUpdate(subDir.Name, kustoMappings);
                 }

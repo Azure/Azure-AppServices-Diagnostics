@@ -188,18 +188,28 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             var entitiesToLoad = new List<DiagEntity>();
             try
             {
-               // var detectorsList = await storageService.GetEntitiesByPartitionkey("Detector");
-
+                var timeRange = DateTime.UtcNow.AddMinutes(-5);
                 if(!diagEntityTableCacheService.TryGetValue("Detector", out List<DiagEntity> detectorsList) || detectorsList == null || detectorsList.Count < 1)
                 {
-                    detectorsList = await storageService.GetEntitiesByPartitionkey("Detector", startup ? DateTime.MinValue : DateTime.UtcNow.AddMinutes(-5));
+                    detectorsList = await storageService.GetEntitiesByPartitionkey("Detector", startup ? DateTime.MinValue : timeRange);
                 }
                 var gists = new List<DiagEntity>();
                 if (!LoadOnlyPublicDetectors && (!diagEntityTableCacheService.TryGetValue("Gist", out gists) || gists == null || gists.Count <1))
                 {
-                    gists = await storageService.GetEntitiesByPartitionkey("Gist", startup ? DateTime.MinValue : DateTime.UtcNow.AddMinutes(-5));
+                    gists = await storageService.GetEntitiesByPartitionkey("Gist", startup ? DateTime.MinValue : timeRange);
                 } 
-                var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList; 
+                var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
+                if(startup)
+                {
+                    entitiesToLoad.AddRange(filteredDetectors);
+                    entitiesToLoad.AddRange(gists);
+                } else
+                {
+                    // Load cache with detectors published in last 5 minutes.
+                    entitiesToLoad.AddRange(filteredDetectors.Where(s => s.Timestamp >= timeRange).ToList()); 
+                    entitiesToLoad.AddRange(gists.Where(s => s.Timestamp >= timeRange).ToList());
+                }
+                
                 if (entitiesToLoad.Count > 0)
                 {
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageWatcher), $"Starting blob download to update cache, Number of entities: {entitiesToLoad.Count}, startup : {startup.ToString()} at {DateTime.UtcNow}");

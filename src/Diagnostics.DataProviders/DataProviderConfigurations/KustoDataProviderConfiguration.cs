@@ -3,6 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Diagnostics.DataProviders.Interfaces;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace Diagnostics.DataProviders
 {
@@ -13,18 +15,21 @@ namespace Diagnostics.DataProviders
         /// Client Id
         /// </summary>
         [ConfigurationName("ClientId")]
+        [Required]
         public string ClientId { get; set; }
 
         /// <summary>
         /// App Key
         /// </summary>
         [ConfigurationName("AppKey")]
+        [Required]
         public string AppKey { get; set; }
 
         /// <summary>
         /// DB Name
         /// </summary>
         [ConfigurationName("DBName")]
+        [Required]
         public string DBName { get; set; }
 
         /// <summary>
@@ -49,12 +54,14 @@ namespace Diagnostics.DataProviders
         /// Tenant to authenticate with
         /// </summary>
         [ConfigurationName("AADAuthority")]
+        [Required]
         public string AADAuthority { get; set; }
 
         /// <summary>
         /// Resource to issue token
         /// </summary>
         [ConfigurationName("AADKustoResource")]
+        [Required]
         public string AADKustoResource { get; set; }
 
         /// <summary>
@@ -103,6 +110,7 @@ namespace Diagnostics.DataProviders
         public IKustoMap KustoMap { get; set; }
 
         [ConfigurationName("UseKustoMapForPublic")]
+        [Required]
         public bool UseKustoMapForPublic { get; set; }
 
         /// <summary>

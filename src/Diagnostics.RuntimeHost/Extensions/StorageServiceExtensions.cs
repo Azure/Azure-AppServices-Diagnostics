@@ -20,11 +20,12 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection AddDiagEntitiesStorageService(this IServiceCollection services, IConfiguration configuration)
         {
-            if (Enum.Parse<SourceWatcherType>(configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]) == SourceWatcherType.AzureStorage)
+
+            if (configuration.IsPublicAzure() || configuration.IsAirGappedCloud())
             {
                 services.AddSingleton<IStorageService, StorageService>();
             }
-            else
+            if (configuration.IsAzureChinaCloud() || configuration.IsAzureUSGovernment())
             {
                 services.AddSingleton<IStorageService, NullableStorageService>();
             }
