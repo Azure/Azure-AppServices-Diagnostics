@@ -23,11 +23,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public int MaxResults { get; set; }
         public bool UseStack { get; set; }
         public List<string> PreferredSites { get; set; }
-        public WebSearchConfiguration(int maxResults = 5, bool useStack=true, List<string> preferredSites = null)
+        public List<string> ExcludeSites { get; set; }
+        public WebSearchConfiguration(int maxResults = 5, bool useStack=true, List<string> preferredSites = null, List<string> excludeSites = null)
         {
             MaxResults = maxResults;
             UseStack = useStack;
             PreferredSites = preferredSites!=null? preferredSites: new List<string>();
+            ExcludeSites = excludeSites != null ? excludeSites : new List<string>();
         }
     }
     public static class ResponseSearchComponentExtension
