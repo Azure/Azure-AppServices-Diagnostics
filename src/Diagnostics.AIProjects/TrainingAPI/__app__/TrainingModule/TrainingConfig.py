@@ -19,3 +19,4 @@ class TrainingConfig:
 		self.trainUtterances = trainingConfig.get("trainUtterances", False)
 
 		self.modelType = trainingConfig.get("modelType", "TfIdfSearchModel")
+		self.blockOnMissingTestCases = trainingConfig.get("blockOnMissingTestCases", False)
