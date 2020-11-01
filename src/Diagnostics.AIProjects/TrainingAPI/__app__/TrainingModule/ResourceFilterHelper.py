@@ -1,4 +1,5 @@
-import json
+import json, os
+from __app__.AppSettings.AppSettings import appSettings
 
 resourceConfig = {}
 def findProductIdRecursive(configDict, productid):
@@ -12,11 +13,11 @@ def findProductIdRecursive(configDict, productid):
         return False
 
 def findProductId(productid):
-    resourceConfig = json.loads(open("resourceConfig/config.json", "r").read())["resourceConfig"]
+    resourceConfig = json.loads(open(os.path.join(appSettings.MODEL_DATA_PATH, "resourceConfig/config.json"), "r").read())["resourceConfig"]
     return findProductIdRecursive(resourceConfig, productid)
 
 def getProductId(resourceObj):
-    resourceConfig = json.loads(open("resourceConfig/config.json", "r").read())["resourceConfig"]
+    resourceConfig = json.loads(open(os.path.join(appSettings.MODEL_DATA_PATH, "resourceConfig/config.json"), "r").read())["resourceConfig"]
     productids = []
     if "ResourceType" in resourceObj and (resourceObj["ResourceType"] == "App"):
         apptypes = resourceObj["AppType"].split(",")

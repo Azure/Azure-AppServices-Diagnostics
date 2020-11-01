@@ -142,3 +142,4 @@ serverless-python.zip
 rawdata_**
 **/testCases.json
 resourceConfig
+!.vscode/**
