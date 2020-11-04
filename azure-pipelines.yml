@@ -38,39 +38,3 @@ jobs:
    #   projects: '**/Diagnostics.Tests.Integration.*.csproj'
     #  arguments: '--configuration $(buildConfiguration)'
 
-
-- job: 'UnitTestAndPublish'
-  pool:
-    vmImage: 'windows-latest'
-  
-  steps:
-  - task: UseDotNet@2
-    displayName: 'Use .NET Core sdk step'
-    inputs:
-      packageType: sdk
-      version: 2.2.x
-      installationPath: $(Agent.ToolsDirectory)/dotnet
-
-  - task: DotNetCoreCLI@2
-    inputs:
-      command: 'build'
-      projects: '$(solution)'
-      configuration: '$(buildConfiguration)'
-
-  - task: DotNetCoreCLI@2
-    inputs:
-      command: 'test'
-      projects: '**/Diagnostics.Tests.csproj'
-      arguments: '--configuration $(buildConfiguration)'
-
-  - task: DotNetCoreCLI@2
-    inputs:
-      command: publish
-      publishWebProjects: True
-      arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-      zipAfterPublish: True
-
-  - task: PublishBuildArtifacts@1
-    inputs:
-      pathtoPublish: '$(Build.ArtifactStagingDirectory)'
-      artifactName: backend-drop1
