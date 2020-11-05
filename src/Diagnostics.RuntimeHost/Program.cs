@@ -42,16 +42,21 @@ namespace Diagnostics.RuntimeHost
             return WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((context, config) =>
                 {
-                    var (keyVaultUri, keyVaultClient) = GetKeyVaultSettings(context, config);
-
-                    config
-                        .AddAzureKeyVault(
-                            keyVaultUri,
-                            keyVaultClient,
-                            new DefaultKeyVaultSecretManager())
-                        .AddEnvironmentVariables()
-                        .AddCommandLine(args)
-                        .Build();
+                    if(context.HostingEnvironment.IsProduction() || context.HostingEnvironment.IsStaging())
+                    {
+                        config.AddEnvironmentVariables().AddCommandLine(args).Build();
+                    } else
+                    {
+                     var (keyVaultUri, keyVaultClient) = GetKeyVaultSettings(context, config);
+                        config
+                            .AddAzureKeyVault(
+                                keyVaultUri,
+                                keyVaultClient,
+                                new DefaultKeyVaultSecretManager())
+                            .AddEnvironmentVariables()
+                            .AddCommandLine(args)
+                            .Build();
+                    }              
                 })
                 .UseStartup<Startup>();
         }
