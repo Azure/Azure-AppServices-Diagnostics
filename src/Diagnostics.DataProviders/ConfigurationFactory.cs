@@ -32,15 +32,19 @@ namespace Diagnostics.DataProviders
 
             var builtConfig = builder.Build();
 
-            var tokenProvider = new AzureServiceTokenProvider(azureAdInstance: builtConfig["Secrets:AzureAdInstance"]);
-            var keyVaultClient = new KeyVaultClient(
-                new KeyVaultClient.AuthenticationCallback(
-                    tokenProvider.KeyVaultTokenCallback
-                )
-            );
+            // For production and staging, skip outbound call to keyvault for AppSettings
+            if (env.IsDevelopment())
+            {
+                var tokenProvider = new AzureServiceTokenProvider(azureAdInstance: builtConfig["Secrets:AzureAdInstance"]);
+                var keyVaultClient = new KeyVaultClient(
+                    new KeyVaultClient.AuthenticationCallback(
+                        tokenProvider.KeyVaultTokenCallback
+                    )
+                );
 
-            string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(env.EnvironmentName);
-            builder.AddAzureKeyVault(builtConfig[keyVaultConfig], keyVaultClient, new DefaultKeyVaultSecretManager());
+                string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(env.EnvironmentName);
+                builder.AddAzureKeyVault(builtConfig[keyVaultConfig], keyVaultClient, new DefaultKeyVaultSecretManager());
+            }
             builder.AddEnvironmentVariables();
 
             _configuration = builder.Build();
