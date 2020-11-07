@@ -42,10 +42,11 @@ namespace Diagnostics.RuntimeHost
             return WebHost.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((context, config) =>
                 {
+                    var builtConfig = config.Build();
                     // For production and staging, skip outbound call to keyvault for AppSettings
-                    if(context.HostingEnvironment.IsDevelopment())
+                    if(builtConfig.GetValue<bool>("Secrets:KeyVaultEnabled", true) || context.HostingEnvironment.IsDevelopment())
                     {
-                        var (keyVaultUri, keyVaultClient) = GetKeyVaultSettings(context, config);
+                        var (keyVaultUri, keyVaultClient) = GetKeyVaultSettings(context, builtConfig);
                         config
                             .AddAzureKeyVault(
                                 keyVaultUri,
@@ -59,9 +60,8 @@ namespace Diagnostics.RuntimeHost
                 .UseStartup<Startup>();
         }
 
-        private static Tuple<string, KeyVaultClient> GetKeyVaultSettings(WebHostBuilderContext context, IConfigurationBuilder config)
+        private static Tuple<string, KeyVaultClient> GetKeyVaultSettings(WebHostBuilderContext context, IConfigurationRoot builtConfig)
         {
-            var builtConfig = config.Build();
             var azureServiceTokenProvider = new AzureServiceTokenProvider(azureAdInstance: builtConfig["Secrets:AzureAdInstance"]);
             var keyVaultClient = new KeyVaultClient(
                 new KeyVaultClient.AuthenticationCallback(
