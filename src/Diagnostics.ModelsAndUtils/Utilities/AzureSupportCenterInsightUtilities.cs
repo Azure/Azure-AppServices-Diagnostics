@@ -160,7 +160,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
                 {
                     new Link()
                         {
-                            Type = 2,
+                            Type = 0,
                             Text = "Kusto Query",
                             Uri = kustoWebLink
                         }

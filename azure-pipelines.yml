@@ -37,12 +37,12 @@ jobs:
   #    command: 'test'
    #   projects: '**/Diagnostics.Tests.Integration.*.csproj'
     #  arguments: '--configuration $(buildConfiguration)'
-
-
+    
+    
 - job: 'UnitTestAndPublish'
   pool:
     vmImage: 'windows-latest'
-  
+
   steps:
   - task: UseDotNet@2
     displayName: 'Use .NET Core sdk step'

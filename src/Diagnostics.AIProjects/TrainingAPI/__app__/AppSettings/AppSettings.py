@@ -1,4 +1,5 @@
-import json, logging
+import json
+from __app__.TrainingModule import logHandler
 from os import environ
 class AppSettings:
     def __init__(self):
@@ -10,7 +11,8 @@ class AppSettings:
             if self.debug:
                 config = appsettings
         except Exception as e:
-            logging.info("Unable to read app settings from file, will read from environment variables")
+            logHandler.info("Unable to read app settings from file, will read from environment variables")
+        self.MODEL_DATA_PATH = config.get("MODEL_DATA_PATH", "/tmp")
         self.STORAGE_ACCOUNT_NAME = config.get("STORAGE_ACCOUNT_NAME", None)
         self.STORAGE_ACCOUNT_KEY = config.get("STORAGE_ACCOUNT_KEY", None)
         self.STORAGE_ACCOUNT_CONTAINER_NAME = config.get("STORAGE_ACCOUNT_CONTAINER_NAME", "searchservice")

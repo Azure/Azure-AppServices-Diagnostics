@@ -71,6 +71,8 @@ namespace Diagnostics.ModelsAndUtils.Models
 
     public class Link
     {
+        // 0 - Uri, 1 - Resource, 2 - AppLens
+        // See https://msazure.visualstudio.com/DefaultCollection/One/_git/EngSys-Supportability-AzureSupportCenter?path=%2Fsrc%2FAzSupCenter%2FDTO%2FModels%2FDiagnosticService%2FLinkModel.cs&_a=contents&version=GBdev
         public int Type { get; set; }
 
         public string Text { get; set; }
