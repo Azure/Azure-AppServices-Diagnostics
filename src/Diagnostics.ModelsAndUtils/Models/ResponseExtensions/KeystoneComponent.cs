@@ -6,28 +6,27 @@ using System.Text;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
-    public class KeystoneInsightBase
-    {
-        public string LoggingName;
-        public string Title;
-        public string Summary;
-        public string Details;
-        public DateTime StartTime;
-        public DateTime EndTime;
-    }
-
     public static class ResponseKeystoneComponentExtension
     {
-        public static void AddKeystoneComponent(this Response response, object keystoneInsight)
+        public static DiagnosticData AddKeystoneComponent(this Response response, object keystoneInsight)
         {
             try
             {
-                KeystoneInsightBase insight = (KeystoneInsightBase)keystoneInsight;
-                if (!(insight.LoggingName != null && insight.Title != null && insight.Summary != null))
+                var loggingName = keystoneInsight.GetType().GetProperty("LoggingName");
+                var title = keystoneInsight.GetType().GetProperty("Title");
+                var summary = keystoneInsight.GetType().GetProperty("Summary");
+                if (!(loggingName.GetValue(keystoneInsight) != null && title.GetValue(keystoneInsight) != null && summary.GetValue(keystoneInsight) != null))
                 {
                     throw new Exception("Required attributes LoggingName, Title, and Summary cannot be null for KeystoneInsight");
                 }
-                response.KeystoneInsight = insight;
+                var diagData = new DiagnosticData()
+                {
+                    RenderingProperties = new Rendering(RenderingType.KeystoneComponent) {
+                        Description = JsonConvert.SerializeObject(keystoneInsight)
+                    }
+                };
+                response.Dataset.Add(diagData);
+                return diagData;
             }
             catch (Exception ex)
             {

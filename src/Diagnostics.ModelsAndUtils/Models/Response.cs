@@ -42,8 +42,6 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         public bool IsInternalCall { get; set; }
 
-        public KeystoneInsightBase KeystoneInsight { get; set; }
-
         /// <summary>
         /// Creates an instance of Response
         /// </summary>
@@ -54,7 +52,6 @@ namespace Diagnostics.ModelsAndUtils.Models
             Dataset = new List<DiagnosticData>();
             Insights = new List<Insight>();
             AscInsights = new List<AzureSupportCenterInsight>();
-            KeystoneInsight = null;
         }
     }
 
@@ -97,8 +94,6 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public QueryUtterancesResults SuggestedUtterances { get; set; }
 
-        public KeystoneInsightBase KeystoneInsight { get; set; }
-
         public static DiagnosticApiResponse FromCsxResponse(Response response, List<DataProviderMetadata> dataProvidersMetadata = null, QueryUtterancesResults suggestedUtterances = null)
         {
             return new DiagnosticApiResponse()
@@ -106,7 +101,6 @@ namespace Diagnostics.ModelsAndUtils.Models
                 Metadata = response.Metadata,
                 Status = response.Status,
                 SuggestedUtterances = suggestedUtterances,
-                KeystoneInsight = response.KeystoneInsight,
                 DataProvidersMetadata = dataProvidersMetadata,
                 Dataset = response.Dataset.Select(dataSet =>
                     new DiagnosticDataApiResponse()
