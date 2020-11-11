@@ -15,7 +15,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 var loggingName = keystoneInsight.GetType().GetProperty("LoggingName");
                 var title = keystoneInsight.GetType().GetProperty("Title");
                 var summary = keystoneInsight.GetType().GetProperty("Summary");
-                if (!(loggingName.GetValue(keystoneInsight) != null && title.GetValue(keystoneInsight) != null && summary.GetValue(keystoneInsight) != null))
+                if (!(loggingName != null && loggingName.GetValue(keystoneInsight) != null && title != null && title.GetValue(keystoneInsight) != null && summary != null && summary.GetValue(keystoneInsight) != null))
                 {
                     throw new Exception("Required attributes LoggingName, Title, and Summary cannot be null for KeystoneInsight");
                 }
