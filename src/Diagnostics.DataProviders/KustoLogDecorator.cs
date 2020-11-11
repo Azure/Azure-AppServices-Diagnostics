@@ -24,8 +24,8 @@ namespace Diagnostics.DataProviders
 
 		public Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId, string operationName)
 		{
-			return ExecuteClusterQuery(query, cluster, databaseName, requestId, operationName);
-		}
+            return MakeDependencyCall(DataProvider.ExecuteClusterQuery(query, cluster, databaseName, requestId, operationName));
+        }
 
 		public Task<KustoQuery> GetKustoQuery(string query, string stampName)
 		{
