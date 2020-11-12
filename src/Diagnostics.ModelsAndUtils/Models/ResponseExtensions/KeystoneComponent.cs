@@ -30,9 +30,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         {
             try
             {
-                if (!(keystoneInsight.Title != null && keystoneInsight.Summary != null))
+                if (string.IsNullOrWhiteSpace(keystoneInsight.Title) || string.IsNullOrWhiteSpace(keystoneInsight.Summary))
                 {
-                    throw new Exception("Required attributes Title, and Summary cannot be null for KeystoneInsight.");
+                    throw new Exception("Required attributes Title, and Summary cannot be null or empty for KeystoneInsight.");
+                }
+                if (DateTime.Compare(keystoneInsight.ExpiryDate, DateTime.UtcNow) <= 0)
+                {
+                    throw new Exception("Invalid ExpiryDate, ExpiryDate should be greater than current UTC datetime.");
                 }
                 var table = new DataTable();
                 table.Columns.Add("Content", typeof(string));
