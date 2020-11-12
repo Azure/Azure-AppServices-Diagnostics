@@ -8,16 +8,18 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
     public class KeystoneInsight
     {
+        public InsightStatus Status;
         public string Title;
-        public string Summary;
+        public string Description;
         public Solution Solution;
         public DateTime StartDate;
         public DateTime ExpiryDate;
 
-        public KeystoneInsight(string title, string summary, Solution solution=null, DateTime? startDate= null, DateTime? expiryDate = null)
+        public KeystoneInsight(InsightStatus status, string title, string description, Solution solution=null, DateTime? startDate= null, DateTime? expiryDate = null)
         {
+            Status = status;
             Title = title;
-            Summary = summary;
+            Description = description;
             Solution = solution;
             StartDate = startDate ?? DateTime.UtcNow;
             ExpiryDate = expiryDate ?? DateTime.MaxValue;
@@ -30,9 +32,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(keystoneInsight.Title) || string.IsNullOrWhiteSpace(keystoneInsight.Summary))
+                if (keystoneInsight.Status == null || string.IsNullOrWhiteSpace(keystoneInsight.Title) || string.IsNullOrWhiteSpace(keystoneInsight.Description))
                 {
-                    throw new Exception("Required attributes Title, and Summary cannot be null or empty for KeystoneInsight.");
+                    throw new Exception("Required attributes Status, Title, and Description cannot be null or empty for KeystoneInsight.");
                 }
                 if (DateTime.Compare(keystoneInsight.ExpiryDate, DateTime.UtcNow) <= 0)
                 {
