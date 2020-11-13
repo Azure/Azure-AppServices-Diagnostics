@@ -263,7 +263,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         ///<summary>
         /// Data Rendered as AppInsights enablement in detector
         ///</summary>
-        AppInsightEnablement
+        AppInsightEnablement,
+
+        ///<summary>
+        /// Keystone component
+        ///</summary>
+        KeystoneComponent
 
     }
 
