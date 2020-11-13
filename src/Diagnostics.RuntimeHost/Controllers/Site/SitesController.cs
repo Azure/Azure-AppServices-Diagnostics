@@ -212,7 +212,14 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage, true))
             {
-                return BadRequest(errorMessage);
+               var response = new AzureSupportCenterInsightEnvelope()
+               {
+                   CorrelationId = Guid.NewGuid(),
+                   ErrorMessage = null,
+                   TotalInsightsFound = 1,
+                   Insights = new[] { AzureSupportCenterInsightUtilites.CreateErrorMessageInsight(errorMessage, "Select an appropriate time range and re-run.") }
+               };
+               return Ok(response);
             }
 
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, diagnosticSitePostBody, startTimeUtc, endTimeUtc);
