@@ -63,7 +63,7 @@ foreach ($secret in $allsecrets) {
     $hash[$appsettingName] = $secretValueText;
     $stickySlotSettings += $appsettingName
 }
-
+$hash["Secrets:KeyVaultEnabled"] = "false"
 Write-Host "Applying keyvault secrets to app settings for Webapp:" $WebappName ", Resource Group:" $WebappResourceGroup", Slot:" $WebappSlot
 Set-AzWebAppSlot -ResourceGroupName $WebappResourceGroup -Name $WebappName -AppSettings $hash -Slot $WebappSlot
 
@@ -73,4 +73,4 @@ $stickSlotConfigObject = @{"appSettingNames" = $stickySlotSettings;}
 
 Write-Host "Applying sticky slot app settings for Webapp:" $WebappName ", Resource Group:" $WebappResourceGroup", Slot:" $WebappSlot
 
-$result = Set-AzureRmResource -PropertyObject $stickSlotConfigObject -ResourceGroupName $WebappResourceGroup -ResourceType Microsoft.Web/sites/config -ResourceName $WebappName/slotConfigNames -ApiVersion 2015-08-01 -Force
+$result = Set-AzResource -Properties $stickSlotConfigObject -ResourceGroupName $WebappResourceGroup  -ResourceType Microsoft.Web/sites/config -ResourceName $WebappName/slotConfigNames -ApiVersion 2018-02-01 -Force
