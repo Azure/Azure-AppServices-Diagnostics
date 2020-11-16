@@ -65,6 +65,7 @@ foreach ($secret in $allsecrets) {
         $stickySlotSettings += $appsettingName
     } catch {
         Write-Host "Error occured while processing secret "$secretName
+        Write-Host "Error Message: " $_.Exception.Message
         Write-Host "Skipping to next secret"
     }
   
