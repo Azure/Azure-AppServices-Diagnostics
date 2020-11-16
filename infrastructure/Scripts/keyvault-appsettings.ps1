@@ -49,19 +49,25 @@ foreach ($secret in $allsecrets) {
     $secretName = $secret.Name;
     #Get plain text value of current version of secret
     Write-Host "Fetching plain text value of current version of secret" $secretName
-    $secretdetails = Get-AzKeyVaultSecret -VaultName $VaultName -Name $secretName
-    $secretValueText = '';
-    $ssPtr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secretdetails.SecretValue)
     try {
-        $secretValueText = [System.Runtime.InteropServices.Marshal]::PtrToStringBSTR($ssPtr)
-    } finally {
-        [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ssPtr)
+        $secretdetails = Get-AzKeyVaultSecret -VaultName $VaultName -Name $secretName
+        $secretValueText = '';
+        $ssPtr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secretdetails.SecretValue)
+        try {
+            $secretValueText = [System.Runtime.InteropServices.Marshal]::PtrToStringBSTR($ssPtr)
+        } finally {
+            [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ssPtr)
+        }
+    
+        #set as app setting
+        $appsettingName = $secretName.replace("--",":");
+        $hash[$appsettingName] = $secretValueText;
+        $stickySlotSettings += $appsettingName
+    } catch {
+        Write-Host "Error occured while processing secret "$secretName
+        Write-Host "Skipping to next secret"
     }
-
-    #set as app setting
-    $appsettingName = $secretName.replace("--",":");
-    $hash[$appsettingName] = $secretValueText;
-    $stickySlotSettings += $appsettingName
+  
 }
 $hash["Secrets:KeyVaultEnabled"] = "false"
 Write-Host "Applying keyvault secrets to app settings for Webapp:" $WebappName ", Resource Group:" $WebappResourceGroup", Slot:" $WebappSlot
