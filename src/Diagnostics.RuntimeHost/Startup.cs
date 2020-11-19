@@ -28,6 +28,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Logging;
 using Newtonsoft.Json;
 using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
+using Diagnostics.Logger;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -88,7 +89,23 @@ namespace Diagnostics.RuntimeHost
                             if (incomingAppId == null || !allowedAppIds.Exists(p => p.Equals(incomingAppId.Value, StringComparison.OrdinalIgnoreCase)))
                             {
                                 context.Fail("Unauthorized Request");
+                                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"AAD Authentication failed because incoming app id was not allowed");
                             }
+                            return Task.CompletedTask;
+                        },
+                        OnAuthenticationFailed = context =>
+                        {
+                            DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"AAD Authentication failure reason: {context.Exception.ToString()}");
+                            return Task.CompletedTask;
+                        },
+                        OnMessageReceived = context =>
+                        {
+                           
+                            context.Request.Headers.TryGetValue("Authorization", out var BearerToken);
+                            if (BearerToken.Count == 0)
+                            {
+                                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("No bearer token was sent");
+                            } 
                             return Task.CompletedTask;
                         }
                     };
