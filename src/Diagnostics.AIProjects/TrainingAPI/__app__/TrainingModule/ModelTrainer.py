@@ -60,8 +60,7 @@ class ModelTrainPublish:
     async def trainPublish(self):
         hasTrained, syntheticTestCases = self.trainer.trainModel()
         if not hasTrained:
-            logHandler.info("Training was not needed.")
-            return
+            return "Training was not needed"
         tested = False
         if not self.trainingConfig.modelType == "WmdSearchModel":
             tested = self.testModelForSearch(syntheticTestCases)
