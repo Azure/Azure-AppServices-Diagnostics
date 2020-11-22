@@ -49,7 +49,7 @@ class ModelTrainPublish:
         datapath = appSettings.MODEL_DATA_PATH
         ts = int(str(time.time()).split(".")[0])
         try:
-            sah = StorageAccountHelper()
+            sah = StorageAccountHelper.getInstance()
             for fileName in os.listdir(os.path.join(datapath, self.productId)):
                 logHandler.info("Uploading {0} to {1}".format(os.path.join(datapath, self.productId, fileName), os.path.join(self.productId, "models", str(ts), fileName)))
                 await sah.uploadFile(os.path.join(datapath, self.productId, fileName), os.path.join(self.productId, "models", str(ts), fileName))
@@ -58,7 +58,10 @@ class ModelTrainPublish:
             raise PublishingException(str(e))
     
     async def trainPublish(self):
-        syntheticTestCases = self.trainer.trainModel()
+        hasTrained, syntheticTestCases = self.trainer.trainModel()
+        if not hasTrained:
+            logHandler.info("Training was not needed.")
+            return
         tested = False
         if not self.trainingConfig.modelType == "WmdSearchModel":
             tested = self.testModelForSearch(syntheticTestCases)
