@@ -19,6 +19,8 @@
       },
       "FunctionApp": "16072"
     },
-    "AzureKubernetesService": "16450"
+    "AzureKubernetesService": "16450",
+    "LogicApp": "15791",
+    "ApiManagementService": "15551"
   }
 }

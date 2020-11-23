@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Win32;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
@@ -31,16 +29,24 @@ namespace Diagnostics.DataProviders
                 .AddEnvironmentVariables();
 
             var builtConfig = builder.Build();
+            var keyvaultEnabled = false;
+            if( bool.TryParse(builtConfig["Secrets:KeyVaultEnabled"], out bool result))
+            {
+                keyvaultEnabled = result;
+            }
+            // For production and staging, skip outbound call to keyvault for AppSettings
+            if ( keyvaultEnabled || env.IsDevelopment())
+            {
+                var tokenProvider = new AzureServiceTokenProvider(azureAdInstance: builtConfig["Secrets:AzureAdInstance"]);
+                var keyVaultClient = new KeyVaultClient(
+                    new KeyVaultClient.AuthenticationCallback(
+                        tokenProvider.KeyVaultTokenCallback
+                    )
+                );
 
-            var tokenProvider = new AzureServiceTokenProvider(azureAdInstance: builtConfig["Secrets:AzureAdInstance"]);
-            var keyVaultClient = new KeyVaultClient(
-                new KeyVaultClient.AuthenticationCallback(
-                    tokenProvider.KeyVaultTokenCallback
-                )
-            );
-
-            string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(env.EnvironmentName);
-            builder.AddAzureKeyVault(builtConfig[keyVaultConfig], keyVaultClient, new DefaultKeyVaultSecretManager());
+                string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(env.EnvironmentName);
+                builder.AddAzureKeyVault(builtConfig[keyVaultConfig], keyVaultClient, new DefaultKeyVaultSecretManager());
+            }
             builder.AddEnvironmentVariables();
 
             _configuration = builder.Build();

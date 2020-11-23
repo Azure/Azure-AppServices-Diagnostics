@@ -28,9 +28,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors)]
-        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string logicAppName, [FromBody] dynamic postBody)
+        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string logicAppName, [FromBody] dynamic postBody, [FromQuery(Name = "text")] string text = null)
         {
-            return await base.ListDetectors(GetResource(subscriptionId, resourceGroupName, logicAppName));
+            return await base.ListDetectors(GetResource(subscriptionId, resourceGroupName, logicAppName), text);
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]

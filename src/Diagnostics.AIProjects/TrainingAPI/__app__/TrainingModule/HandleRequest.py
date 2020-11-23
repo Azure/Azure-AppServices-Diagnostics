@@ -1,6 +1,7 @@
 import os, gc, shutil, uuid
 from datetime import datetime, timezone
-import json, logging, asyncio
+import json, asyncio
+from __app__.TrainingModule import logHandler
 from functools import wraps
 from __app__.TrainingModule.ResourceFilterHelper import findProductId
 from __app__.TrainingModule.ModelTrainer import ModelTrainPublish
@@ -27,10 +28,12 @@ async def triggerTrainingMethod(data):
         trainingId = str(uuid.uuid4())
         try:
             trainingHandler = ModelTrainPublish(trainingId, productId, trainingConfig)
-            await trainingHandler.trainPublish()
-            return ("Model Trained successfully for productId {0} - trainingId {1}".format(productId, trainingId), 200)
+            msg = await trainingHandler.trainPublish()
+            if not msg:
+                msg = "Model Trained successfully"
+            return (f"{msg} for productId {productId} - trainingId {trainingId}", 200)
         except Exception as e:
-            logging.error("Exception: {0}".format(str(e)))
+            logHandler.error("Exception: {0}".format(str(e)))
             return (str(e), 500)
     else:
         return ("Training flags are all set to false. Training not required", 400)
