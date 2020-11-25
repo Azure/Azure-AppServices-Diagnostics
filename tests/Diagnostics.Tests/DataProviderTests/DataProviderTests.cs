@@ -172,6 +172,33 @@ namespace Diagnostics.Tests.DataProviderTests
         }
 
         /// <summary>
+        /// Mdm data provider test for custom time grain aggregation
+        /// </summary>
+        [Fact]
+        public async void TestMdmGetTimeSeriesValuesCustomTimeGrainAsync()
+        {
+            var metadata = ScriptTestDataHelper.GetRandomMetadata();
+            metadata.ScriptText = @"
+                public async static Task<IEnumerable<DataTable>> Run(DataProviders dataProviders) {
+                    var dimensions = new Dictionary<string, string> { { ""StampName"", ""kudu1"" } };
+                    return await dataProviders.Mdm(MdmDataSource.Antares).GetTimeSeriesAsync(DateTime.UtcNow.AddMinutes(-10), DateTime.UtcNow, Sampling.Average | Sampling.Max | Sampling.Count, ""Microsoft/Web/WebApps"", ""CpuTime"", 5, dimensions);
+                }";
+
+            var configFactory = new MockDataProviderConfigurationFactory();
+            var config = configFactory.LoadConfigurations();
+
+            var dataProviders = new DataProviders.DataProviders(new DataProviderContext(config, Guid.NewGuid().ToString()));
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+                var result = await invoker.Invoke(new object[] { dataProviders }) as IEnumerable<DataTable>;
+
+                Assert.NotNull(result);
+            }
+        }
+
+        /// <summary>
         /// Kusto data provider test
         /// </summary>
         [Fact]
