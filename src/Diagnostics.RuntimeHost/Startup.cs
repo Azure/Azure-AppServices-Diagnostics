@@ -63,7 +63,7 @@ namespace Diagnostics.RuntimeHost
             var signingKeys = config.SigningKeys;
             // Adding both custom cert auth handler and Azure AAD JWT token handler to support multiple forms of auth.
             if (Environment.IsProduction() || Environment.IsStaging() )
-            {
+            {         
                 services.AddAuthentication().AddCertificateAuth(CertificateAuthDefaults.AuthenticationScheme,
                     options =>
                     {
@@ -74,7 +74,7 @@ namespace Diagnostics.RuntimeHost
                     }).AddJwtBearer("AzureAd", options => {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ValidAudience = Configuration["SecuritySettings:ClientId"],
+                        ValidAudiences =  new[] { Configuration["SecuritySettings:ClientId"], $"spn:{Configuration["SecuritySettings:ClientId"]}" },
                         ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
                         IssuerSigningKeys = signingKeys
                     };
