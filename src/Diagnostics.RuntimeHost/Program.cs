@@ -54,7 +54,7 @@ namespace Diagnostics.RuntimeHost
                                 keyVaultClient,
                                 new DefaultKeyVaultSecretManager());
                     }
-                    if(IsDecryptionRequired(context.HostingEnvironment)) {
+                    if(IsDecryptionRequired(context.HostingEnvironment, builtConfig.GetValue<string>("CloudDomain"))) {
                         config.AddEncryptedProvider(Environment.GetEnvironmentVariable("APPSETTINGS_ENCRYPTIONKEY"), Environment.GetEnvironmentVariable("APPSETTINGS_INITVECTOR"), "appsettings.Encrypted.json");
                     }
                         config.AddEnvironmentVariables()
@@ -75,11 +75,10 @@ namespace Diagnostics.RuntimeHost
             return new Tuple<string, KeyVaultClient>(builtConfig[keyVaultConfig], keyVaultClient);
         }
 
-        // Do decryption if its production or staging and required Key and IV is present
-        private static bool IsDecryptionRequired(IHostingEnvironment environment)
+        // Do decryption if its production or staging and cloud env
+        private static bool IsDecryptionRequired(IHostingEnvironment environment, string cloudDomain)
         {
-            return (environment.IsProduction() || environment.IsStaging()) && (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPSETTINGS_ENCRYPTIONKEY")))
-                && (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPSETTINGS_INITVECTOR")));
+            return (environment.IsProduction() || environment.IsStaging()) && cloudDomain.Equals(DataProviderConstants.AzureCloud, StringComparison.CurrentCultureIgnoreCase);
         }
     }
 }
