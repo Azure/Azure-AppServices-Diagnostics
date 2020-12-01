@@ -5,6 +5,8 @@ from gensim import corpora, similarities
 from __app__.TrainingModule.TokenizerModule import getAllNGrams
 from __app__.TrainingModule.DetectorsFetchHelper import getAllDetectors
 from __app__.TrainingModule.ResourceFilterHelper import getProductId
+from __app__.TrainingModule.StorageAccountHelper import StorageAccountHelper
+from __app__.TrainingModule.Utilities import compareDetectorSets
 from __app__.TrainingModule.Exceptions import *
 from __app__.AppSettings.AppSettings import appSettings
 
@@ -70,6 +72,12 @@ class TfIdfTrainer:
             logHandler.info("DataFetcher: Sucessfully fetched detectors for training")
             detectors_ = [detector for detector in detectors_ if self.productId in getProductId(detector["resourceFilter"] if "resourceFilter" in detector else {})]
             logHandler.info(f"DataFetcher: Successfully filtered fetched {len(detectors_)} detectors based on productid {self.productId}.")
+            ## Check if training is needed at all
+            sah = StorageAccountHelper.getInstance()
+            old_detectors_ = sah.getLastModelDetectorsForProduct(self.productId)
+            if compareDetectorSets(old_detectors_, detectors_):
+                logHandler.info(f"CompareDetectors: Nothing has changed with detectors since last training. Skipping training for {self.productId}.")
+                return False, syntheticTestCases
             # A sanity check if the detectors list is not messed up
             if not detectors_ or len(detectors_)<30:
                 raise TrainingException(f"TooFewDetectors: Only {len(detectors_)} were found for training. The required threshold is at least 30 detectors. Please check the response from runtime host API.")
@@ -137,4 +145,4 @@ class TfIdfTrainer:
         open(os.path.join(outpath, "SampleUtterances.json"), "w").write(json.dumps(sampleUtterances))
         modelInfo = {"splitDictionary": self.trainingConfig.splitDictionary, "detectorContentSplitted": self.trainingConfig.detectorContentSplitted, "textNGrams": self.trainingConfig.textNGrams, "modelType": self.trainingConfig.modelType}
         open(os.path.join(outpath, "ModelInfo.json"), "w").write(json.dumps(modelInfo))
-        return syntheticTestCases
+        return True, syntheticTestCases
