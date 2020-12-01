@@ -151,6 +151,23 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
+        /// Gets the time series with specified time granularity.
+        /// </summary>
+        /// <param name="startTimeUtc">The start time UTC.</param>
+        /// <param name="endTimeUtc">The end time UTC.</param>
+        /// <param name="sampling">The sampling type.</param>
+        /// <param name="metricNamespace">The metric namespace.</param>
+        /// <param name="metricName">The metric name.</param>
+        /// <param name="seriesResolutionInMinutes">The resolution window used to reduce the resolution of the returned series.</param>
+        /// <param name="dimension">The dimension.</param>
+        /// <returns>The time series for the given definition.</returns>
+        public async Task<IEnumerable<DataTable>> GetTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, Sampling sampling, string metricNamespace, string metricName, int seriesResolutionInMinutes, IDictionary<string, string> dimension)
+        {
+            var definition = Tuple.Create<string, string, IEnumerable<KeyValuePair<string, string>>>(metricNamespace, metricName, dimension);
+            return await GetMultipleTimeSeriesAsync(startTimeUtc, endTimeUtc, sampling, seriesResolutionInMinutes, new List<Tuple<string, string, IEnumerable<KeyValuePair<string, string>>>> { definition });
+        }
+
+        /// <summary>
         /// Gets a list of the time series.
         /// </summary>
         /// <param name="startTimeUtc">The start time UTC.</param>
