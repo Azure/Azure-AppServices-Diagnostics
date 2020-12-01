@@ -16,7 +16,7 @@ param(
     [string]$initvector,
 
     [Parameter(Mandatory = $true)]
-    [ValidateNotNullOrEmpty]
+    [ValidateNotNullOrEmpty()]
     [string]$filePath
 )
 $json = @{}
