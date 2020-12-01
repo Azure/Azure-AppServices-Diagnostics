@@ -55,7 +55,10 @@ namespace Microsoft.Extensions.DependencyInjection
                     foreach (KeyValuePair<string, string> item in result)
                     {
                         var plainText = DecryptSetting(item.Value);
-                        config.Add(item.Key, plainText);
+                        if (!string.IsNullOrEmpty(plainText))
+                        {
+                            config.Add(item.Key, plainText);
+                        }
                     }
 
                 }
@@ -69,18 +72,24 @@ namespace Microsoft.Extensions.DependencyInjection
 
         private string DecryptSetting(string secretSetting)
         {
-            byte[] iv = Convert.FromBase64String(InitializationVector);
-            byte[] buffer = Convert.FromBase64String(secretSetting);
-            string plainText = null; 
-            using (Aes aes = Aes.Create())
+            string plainText = null;
+            try
             {
-                aes.Key = Convert.FromBase64String(EncryptionKey);
-                aes.IV = iv;
-                aes.Padding = PaddingMode.PKCS7;
-                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
-                var unencryptedBytes = decryptor.TransformFinalBlock(buffer, 16, buffer.Length - 16);
-                plainText = Encoding.UTF8.GetString(unencryptedBytes);
-            }
+                byte[] iv = Convert.FromBase64String(InitializationVector);
+                byte[] buffer = Convert.FromBase64String(secretSetting);
+                using (Aes aes = Aes.Create())
+                {
+                    aes.Key = Convert.FromBase64String(EncryptionKey);
+                    aes.IV = iv;
+                    aes.Padding = PaddingMode.PKCS7;
+                    ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+                    var unencryptedBytes = decryptor.TransformFinalBlock(buffer, 16, buffer.Length - 16);
+                    plainText = Encoding.UTF8.GetString(unencryptedBytes);
+                }
+            } catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Exception while decrypting setting: {ex.ToString()}");
+            }         
             return plainText;
         }
 
