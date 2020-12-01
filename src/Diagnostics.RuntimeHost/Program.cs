@@ -45,7 +45,7 @@ namespace Diagnostics.RuntimeHost
                 {
                     var builtConfig = config.Build();
                     // For production and staging, skip outbound call to keyvault for AppSettings
-                    if(builtConfig.GetValue<bool>("Secrets:KeyVaultEnabled", true) || context.HostingEnvironment.IsDevelopment())
+                    if (builtConfig.GetValue<bool>("Secrets:KeyVaultEnabled", true) || context.HostingEnvironment.IsDevelopment())
                     {
                         var (keyVaultUri, keyVaultClient) = GetKeyVaultSettings(context, builtConfig);
                         config
@@ -54,10 +54,11 @@ namespace Diagnostics.RuntimeHost
                                 keyVaultClient,
                                 new DefaultKeyVaultSecretManager());
                     }
-                    if(IsDecryptionRequired(context.HostingEnvironment, builtConfig.GetValue<string>("CloudDomain"))) {
+                    if (IsDecryptionRequired(context.HostingEnvironment, builtConfig.GetValue<string>("CloudDomain")))
+                    {
                         config.AddEncryptedProvider(Environment.GetEnvironmentVariable("APPSETTINGS_ENCRYPTIONKEY"), Environment.GetEnvironmentVariable("APPSETTINGS_INITVECTOR"), "appsettings.Encrypted.json");
                     }
-                        config.AddEnvironmentVariables()
+                    config.AddEnvironmentVariables()
                         .AddCommandLine(args)
                         .Build();
                 })
