@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
-    public static class EncyptedConfigProviderExtensions
+    public static class EncryptedConfigProviderExtensions
     {
         public static IConfigurationBuilder AddEncryptedProvider(this IConfigurationBuilder builder, string encryptionKey, string initializationVector, string file)
         {
