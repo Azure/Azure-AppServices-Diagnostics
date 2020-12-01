@@ -10,6 +10,7 @@ using System;
 using Microsoft.CodeAnalysis;
 using Diagnostics.DataProviders.Utility;
 using Diagnostics.Logger;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -53,6 +54,9 @@ namespace Diagnostics.RuntimeHost
                                 keyVaultClient,
                                 new DefaultKeyVaultSecretManager());
                     }
+                    if(IsDecryptionRequired(context.HostingEnvironment)) {
+                        config.AddEncryptedProvider(Environment.GetEnvironmentVariable("APPSETTINGS_ENCRYPTIONKEY"), Environment.GetEnvironmentVariable("APPSETTINGS_INITVECTOR"), "appsettings.Encrypted.json");
+                    }
                         config.AddEnvironmentVariables()
                         .AddCommandLine(args)
                         .Build();
@@ -69,6 +73,13 @@ namespace Diagnostics.RuntimeHost
 
             string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(context.HostingEnvironment.EnvironmentName);
             return new Tuple<string, KeyVaultClient>(builtConfig[keyVaultConfig], keyVaultClient);
+        }
+
+        // Do decryption if its production or staging and required Key and IV is present
+        private static bool IsDecryptionRequired(IHostingEnvironment environment)
+        {
+            return (environment.IsProduction() || environment.IsStaging()) && (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPSETTINGS_ENCRYPTIONKEY")))
+                && (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("APPSETTINGS_INITVECTOR")));
         }
     }
 }
