@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Diagnostics.Logger;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -44,18 +45,25 @@ namespace Microsoft.Extensions.DependencyInjection
         private IDictionary<string, string> DecryptSettings()
         {
             var config = new Dictionary<string, string>();
-            using (StreamReader reader = new StreamReader(EncryptedFile))
+            try
             {
-                string json = reader.ReadToEnd();
-                var result = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-               
-                foreach(KeyValuePair<string, string> item in result)
+                using (StreamReader reader = new StreamReader(EncryptedFile))
                 {
-                    var plainText = DecryptSetting(item.Value);
-                    config.Add(item.Key, plainText);
+                    string json = reader.ReadToEnd();
+                    var result = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+
+                    foreach (KeyValuePair<string, string> item in result)
+                    {
+                        var plainText = DecryptSetting(item.Value);
+                        config.Add(item.Key, plainText);
+                    }
+
                 }
-                
+            } catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Exception in {nameof(EncryptedConfigProvider)} : {ex.ToString()}");
             }
+            
             return config;
         }
 
