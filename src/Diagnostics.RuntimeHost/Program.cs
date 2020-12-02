@@ -47,6 +47,7 @@ namespace Diagnostics.RuntimeHost
                     // For production and staging, skip outbound call to keyvault for AppSettings
                     if (builtConfig.GetValue<bool>("Secrets:KeyVaultEnabled", true) || context.HostingEnvironment.IsDevelopment())
                     {
+                        DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("Fetching app settings from keyvault");
                         var (keyVaultUri, keyVaultClient) = GetKeyVaultSettings(context, builtConfig);
                         config
                             .AddAzureKeyVault(
@@ -56,6 +57,7 @@ namespace Diagnostics.RuntimeHost
                     }
                     if (IsDecryptionRequired(context.HostingEnvironment, builtConfig.GetValue<string>("CloudDomain")))
                     {
+                        DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("Decrypting app settings");
                         config.AddEncryptedProvider(Environment.GetEnvironmentVariable("APPSETTINGS_ENCRYPTIONKEY"), Environment.GetEnvironmentVariable("APPSETTINGS_INITVECTOR"), "appsettings.Encrypted.json");
                     }
                     config.AddEnvironmentVariables()
