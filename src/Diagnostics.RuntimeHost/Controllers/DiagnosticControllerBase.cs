@@ -545,7 +545,9 @@ namespace Diagnostics.RuntimeHost.Controllers
                 case DiagnosticStampType.ASEV2:
                     hostingEnv.HostingEnvironmentType = HostingEnvironmentType.V2;
                     break;
-
+                case DiagnosticStampType.ASEV3:
+                    hostingEnv.HostingEnvironmentType = HostingEnvironmentType.V3;
+                    break;
                 default:
                     hostingEnv.HostingEnvironmentType = HostingEnvironmentType.None;
                     break;
@@ -553,7 +555,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             string stampName = !string.IsNullOrWhiteSpace(hostingEnv.InternalName) ? hostingEnv.InternalName : hostingEnv.Name;
 
-            if (platformType==null && (stampPostBody.Kind == DiagnosticStampType.ASEV1 || stampPostBody.Kind == DiagnosticStampType.ASEV2))
+            if (platformType==null && (stampPostBody.Kind == DiagnosticStampType.ASEV1 || stampPostBody.Kind == DiagnosticStampType.ASEV2 || stampPostBody.Kind == DiagnosticStampType.ASEV3))
             {
                 var result = await this._stampService.GetTenantIdForStamp(stampName, hostingEnv.HostingEnvironmentType == HostingEnvironmentType.None, startTime, endTime, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
                 hostingEnv.PlatformType = result.Item2;
