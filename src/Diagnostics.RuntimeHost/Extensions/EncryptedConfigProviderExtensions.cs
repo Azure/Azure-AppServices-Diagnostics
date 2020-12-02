@@ -65,6 +65,7 @@ namespace Microsoft.Extensions.DependencyInjection
             } catch (Exception ex)
             {
                 DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Exception in {nameof(EncryptedConfigProvider)} : {ex.ToString()}");
+                throw;
             }
             
             return config;
@@ -89,6 +90,7 @@ namespace Microsoft.Extensions.DependencyInjection
             } catch (Exception ex)
             {
                 DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Exception while decrypting setting: {ex.ToString()}");
+                throw;
             }         
             return plainText;
         }
