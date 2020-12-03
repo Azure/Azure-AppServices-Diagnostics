@@ -10,6 +10,7 @@ using System;
 using Microsoft.CodeAnalysis;
 using Diagnostics.DataProviders.Utility;
 using Diagnostics.Logger;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -44,8 +45,9 @@ namespace Diagnostics.RuntimeHost
                 {
                     var builtConfig = config.Build();
                     // For production and staging, skip outbound call to keyvault for AppSettings
-                    if(builtConfig.GetValue<bool>("Secrets:KeyVaultEnabled", true) || context.HostingEnvironment.IsDevelopment())
+                    if (builtConfig.GetValue<bool>("Secrets:KeyVaultEnabled", true) || context.HostingEnvironment.IsDevelopment())
                     {
+                        DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("Fetching app settings from keyvault");
                         var (keyVaultUri, keyVaultClient) = GetKeyVaultSettings(context, builtConfig);
                         config
                             .AddAzureKeyVault(
@@ -53,7 +55,13 @@ namespace Diagnostics.RuntimeHost
                                 keyVaultClient,
                                 new DefaultKeyVaultSecretManager());
                     }
-                        config.AddEnvironmentVariables()
+                    var host = Environment.GetEnvironmentVariable("DIAG_HOST") != null ? Environment.GetEnvironmentVariable("DIAG_HOST") : "";
+                    if (host.Contains("euap", StringComparison.OrdinalIgnoreCase) && IsDecryptionRequired(context.HostingEnvironment, builtConfig.GetValue<string>("CloudDomain")))                      
+                    {
+                        DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("Decrypting app settings");
+                        config.AddEncryptedProvider(Environment.GetEnvironmentVariable("APPSETTINGS_ENCRYPTIONKEY"), Environment.GetEnvironmentVariable("APPSETTINGS_INITVECTOR"), "appsettings.Encrypted.json");
+                    }
+                    config.AddEnvironmentVariables()
                         .AddCommandLine(args)
                         .Build();
                 })
@@ -69,6 +77,12 @@ namespace Diagnostics.RuntimeHost
 
             string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(context.HostingEnvironment.EnvironmentName);
             return new Tuple<string, KeyVaultClient>(builtConfig[keyVaultConfig], keyVaultClient);
+        }
+
+        // Do decryption if its production or staging and cloud env
+        private static bool IsDecryptionRequired(IHostingEnvironment environment, string cloudDomain)
+        {
+            return (environment.IsProduction() || environment.IsStaging()) && cloudDomain.Equals(DataProviderConstants.AzureCloud, StringComparison.CurrentCultureIgnoreCase);
         }
     }
 }
