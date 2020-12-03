@@ -55,7 +55,8 @@ namespace Diagnostics.RuntimeHost
                                 keyVaultClient,
                                 new DefaultKeyVaultSecretManager());
                     }
-                    if (IsDecryptionRequired(context.HostingEnvironment, builtConfig.GetValue<string>("CloudDomain")))
+                    var host = Environment.GetEnvironmentVariable("DIAG_HOST") != null ? Environment.GetEnvironmentVariable("DIAG_HOST") : "";
+                    if (host.Contains("euap", StringComparison.OrdinalIgnoreCase) && IsDecryptionRequired(context.HostingEnvironment, builtConfig.GetValue<string>("CloudDomain")))                      
                     {
                         DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("Decrypting app settings");
                         config.AddEncryptedProvider(Environment.GetEnvironmentVariable("APPSETTINGS_ENCRYPTIONKEY"), Environment.GetEnvironmentVariable("APPSETTINGS_INITVECTOR"), "appsettings.Encrypted.json");
