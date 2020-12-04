@@ -819,14 +819,14 @@ namespace Diagnostics.RuntimeHost.Controllers
                 var allDetectors = await this.tableCacheService.GetEntityListByType(context, "Detector");
                 var detectorMetadata = allDetectors.Where(entity => entity.RowKey.ToLower().Equals(detectorId, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
 
-                // This means detector is definitely not present
-                if (invoker == null && detectorMetadata == null)
+                // If detector metadata is null and invoker is null, detector is not present
+                if (detectorMetadata == null && invoker == null)
                 {
                     return null;
                 }
 
-                // If detector is still downloading, then await first completion
-                if (invoker == null && detectorMetadata != null)
+                // If detector metadata is present but invoker is not, then wait detector DLL download to complete
+                if (detectorMetadata != null && invoker == null)
                 {
                     await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
                     // Refetch from invoker cache
