@@ -7,7 +7,7 @@ private static string GetQuery(OperationContext<ArmResource> cxt)
     $@"
 		let startTime = datetime({cxt.StartTime});
 		let endTime = datetime({cxt.EndTime});
-		cluster('ClusterName').database('DBName').YOUR_TABLE_NAME
+		YOUR_TABLE_NAME
 		|where TIMESTAMP >= startTime and TIMESTAMP <= endTime
 		YOUR_QUERY
 	";
@@ -20,7 +20,7 @@ public async static Task<Response> Run(DataProviders dp, OperationContext<ArmRes
 {
     res.Dataset.Add(new DiagnosticData()
     {
-        Table = await dp.Kusto.ExecuteClusterQuery(GetQuery(cxt), null, "GetQuery"),
+        Table = await dp.Kusto.ExecuteClusterQuery(GetQuery(cxt), "KUSTO_CLUSTER_NAME", "KUSTO_DB_NAME", null, "GetQuery"),
         RenderingProperties = new Rendering(RenderingType.Table){
             Title = "Sample Table", 
             Description = "Some description here"
