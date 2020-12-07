@@ -15,7 +15,11 @@ public async static Task<Response> Run(DataProviders dp, OperationContext<ApiMan
 {
     res.Dataset.Add(new DiagnosticData()
     {
-        Table = await dp.Kusto.ExecuteClusterQuery(GetQuery(cxt))
+        Table = await dp.Kusto.ExecuteClusterQuery(GetQuery(cxt), "YOUR_KUSTO_CLUSTER", "YOUR_KUSTO_DB_NAME", null, "GetQuery"),
+        RenderingProperties = new Rendering(RenderingType.Table){
+            Title = "Sample Table", 
+            Description = "Some description here"
+        }
     });
 
     return res;
