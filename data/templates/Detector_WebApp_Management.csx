@@ -4,7 +4,7 @@ private static string OPERATION_NAME = "<YOUR_OPERATION_NAME>";  // eg:- Update,
 [Definition(Id = "<YOUR_DETECTOR_ID>", Name = "<YOUR_DETECTOR_NAME>", Author = "<YOUR_ALIAS>", Description = "Checks for all management operation of a given type and finds out how many of them succeeded, failed and prints out details of the failed operations")]
 public async static Task<Response> Run(DataProviders dp, OperationContext<App> cxt, Response res)
 {
-    var tblOperations = await dp.Kusto.ExecuteQuery(GetManagementOperations(cxt, OPERATION_NAME), cxt.Resource.Stamp.Name);
+    var tblOperations = await dp.Kusto.ExecuteQuery(GetManagementOperations(cxt, OPERATION_NAME), cxt.Resource.Stamp.Name, null, "GetManagementOperations");
     
     res.AddDataSummary(GetOperationSummary(tblOperations));
 
@@ -104,7 +104,7 @@ private static async Task ShowFailedOperationDetails(OperationContext<App> cxt, 
     var failedOperations = GetFailedOperationList(tblOperations, "Status <> 'Success'");
     if (failedOperations.Count > 0)
     {
-        var operationDetails  = await dp.Kusto.ExecuteQuery(GetFailedOperationDetailsQuery(cxt, failedOperations), cxt.Resource.Stamp.Name);
+        var operationDetails  = await dp.Kusto.ExecuteQuery(GetFailedOperationDetailsQuery(cxt, failedOperations), cxt.Resource.Stamp.Name, null, "GetFailedOperationDetailsQuery");
         foreach (var failedActivityId in failedOperations)
        {
             DataView failedOperationDetailsView = operationDetails.DefaultView;

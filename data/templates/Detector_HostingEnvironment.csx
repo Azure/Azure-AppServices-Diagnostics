@@ -12,7 +12,12 @@ public async static Task<Response> Run(DataProviders dp, OperationContext<Hostin
 {
     res.Dataset.Add(new DiagnosticData()
     {
-        Table = await dp.Kusto.ExecuteQuery(GetQuery(cxt), cxt.Resource.InternalName)
+        Table = await dp.Kusto.ExecuteQuery(GetQuery(cxt), cxt.Resource.InternalName),
+        RenderingProperties = new Rendering(RenderingType.Table)
+		{
+            Title = "Sample Table", 
+            Description = "Some description here"
+        }
     });
 
     return res;
