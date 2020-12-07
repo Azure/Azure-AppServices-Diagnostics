@@ -8,7 +8,7 @@ private static string GetQuery(OperationContext<ArmResource> cxt)
 		let startTime = datetime({cxt.StartTime});
 		let endTime = datetime({cxt.EndTime});
 		YOUR_TABLE_NAME
-		| where Timestamp == startTime and Timestamp == endTime
+		| where Timestamp >= startTime and Timestamp <= endTime
 		YOUR_QUERY
 	";
 }
