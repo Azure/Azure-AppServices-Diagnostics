@@ -65,10 +65,8 @@ namespace Diagnostics.DataProviders
                     string targetCluster = element.Groups["cluster"].Value.Trim(new char[] { '\'', '\"' });
                     string targetDatabase = element.Groups["database"].Value.Trim(new char[] { '\'', '\"' });                    
 
-                    if (!string.IsNullOrWhiteSpace(targetCluster) && !string.IsNullOrWhiteSpace(targetDatabase)
-                        && targetCluster.Equals("Aks", StringComparison.OrdinalIgnoreCase) && targetDatabase.Equals("AKSprod", StringComparison.OrdinalIgnoreCase))
+                    if (!string.IsNullOrWhiteSpace(targetCluster) && !string.IsNullOrWhiteSpace(targetDatabase))
                     {
-                        //Apply this only for Aks at the moment.
                         return await ExecuteClusterQuery(query, targetCluster, targetCluster, requestId, operationName);
                     }
                 }
