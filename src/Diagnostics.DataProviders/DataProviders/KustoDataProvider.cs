@@ -67,7 +67,7 @@ namespace Diagnostics.DataProviders
 
                     if (!string.IsNullOrWhiteSpace(targetCluster) && !string.IsNullOrWhiteSpace(targetDatabase))
                     {
-                        return await ExecuteClusterQuery(query, targetCluster, targetCluster, requestId, operationName);
+                        return await ExecuteClusterQuery(query, targetCluster, targetDatabase, requestId, operationName);
                     }
                 }
             }
