@@ -57,20 +57,24 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null)
         {
-            var matches = Regex.Matches(query, @"cluster\((?<cluster>([^\)]+))\).database\((?<database>([^\)]+))\)\.");
-            if (matches.Any())
+            if(!query.Contains("geneva_metrics_request"))
             {
-                foreach (Match element in matches)
+                //Allow partner KQL queries to proxy through us
+                var matches = Regex.Matches(query, @"cluster\((?<cluster>([^\)]+))\).database\((?<database>([^\)]+))\)\.");
+                if (matches.Any())
                 {
-                    string targetCluster = element.Groups["cluster"].Value.Trim(new char[] { '\'', '\"' });
-                    string targetDatabase = element.Groups["database"].Value.Trim(new char[] { '\'', '\"' });                    
-
-                    if (!string.IsNullOrWhiteSpace(targetCluster) && !string.IsNullOrWhiteSpace(targetDatabase))
+                    foreach (Match element in matches)
                     {
-                        return await ExecuteClusterQuery(query, targetCluster, targetDatabase, requestId, operationName);
+                        string targetCluster = element.Groups["cluster"].Value.Trim(new char[] { '\'', '\"' });
+                        string targetDatabase = element.Groups["database"].Value.Trim(new char[] { '\'', '\"' });
+
+                        if (!string.IsNullOrWhiteSpace(targetCluster) && !string.IsNullOrWhiteSpace(targetDatabase))
+                        {
+                            return await ExecuteClusterQuery(query, targetCluster, targetDatabase, requestId, operationName);
+                        }
                     }
                 }
-            }
+            }            
 
             return await ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, operationName);
         }
