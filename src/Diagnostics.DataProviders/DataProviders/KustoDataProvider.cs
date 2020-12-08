@@ -57,6 +57,21 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null)
         {
+            var matches = Regex.Matches(query, @"cluster\((?<cluster>([^\)]+))\).database\((?<database>([^\)]+))\)\.");
+            if (matches.Any())
+            {
+                foreach (Match element in matches)
+                {
+                    string targetCluster = element.Groups["cluster"].Value.Trim(new char[] { '\'', '\"' });
+                    string targetDatabase = element.Groups["database"].Value.Trim(new char[] { '\'', '\"' });                    
+
+                    if (!string.IsNullOrWhiteSpace(targetCluster) && !string.IsNullOrWhiteSpace(targetDatabase))
+                    {
+                        return await ExecuteClusterQuery(query, targetCluster, targetDatabase, requestId, operationName);
+                    }
+                }
+            }
+
             return await ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, operationName);
         }
 
