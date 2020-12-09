@@ -19,8 +19,8 @@ namespace Diagnostics.DataProviders
 
 		public Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null)
 		{
-			return ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, operationName);
-		}
+            return MakeDependencyCall(DataProvider.ExecuteClusterQuery(query, requestId, operationName));
+        }
 
 		public Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId, string operationName)
 		{
