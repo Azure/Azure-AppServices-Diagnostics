@@ -27,7 +27,7 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// Gets the http client.
         /// </summary>
-        public HttpClient HttpClient { get; private set; }
+        public static HttpClient HttpClient { get; private set; }
 
         /// <summary>
         /// Gets the endpoint.
