@@ -44,7 +44,7 @@ namespace Diagnostics.DataProviders
 
         private string requestId;
 
-        private readonly Lazy<HttpClient> client = new Lazy<HttpClient>(() =>
+        private static readonly Lazy<HttpClient> client = new Lazy<HttpClient>(() =>
         {
             var client = new HttpClient();
             client.DefaultRequestHeaders.Accept.Clear();
