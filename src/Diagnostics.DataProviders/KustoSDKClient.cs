@@ -70,8 +70,10 @@ namespace Diagnostics.DataProviders
                 };
 
                 var queryProvider = Kusto.Data.Net.Client.KustoClientFactory.CreateCslQueryProvider(connectionStringBuilder);
-                QueryProviderMapping.TryAdd(key, queryProvider);
-                queryProvider.Dispose();
+                if(!QueryProviderMapping.TryAdd(key, queryProvider))
+                {
+                    queryProvider.Dispose();
+                }
             }
 
             return QueryProviderMapping[key];
