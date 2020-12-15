@@ -25,7 +25,7 @@ namespace Diagnostics.RuntimeHost.Services
         private IHostingEnvironment _env;
         private IConfiguration _configuration;
         private string _compilerHostUrl;
-        private HttpClient _httpClient;
+        private static HttpClient _httpClient;
         private string _eventSource;
 
         public CompilerHostClient(IHostingEnvironment env, IConfiguration configuration)

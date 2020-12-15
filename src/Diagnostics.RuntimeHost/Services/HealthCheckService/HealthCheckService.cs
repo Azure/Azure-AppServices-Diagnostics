@@ -22,7 +22,7 @@ namespace Diagnostics.RuntimeHost.Services
     public class HealthCheckService : IHealthCheckService
     {
         private string OutboundConnectivityCheckUrl;
-        private HttpClient _httpClient;
+        private static HttpClient _httpClient;
         private readonly ISourceWatcher _sourceWatcher;
         IConfiguration _configuration;
         IDataSourcesConfigurationService _dataSourcesConfigurationService;

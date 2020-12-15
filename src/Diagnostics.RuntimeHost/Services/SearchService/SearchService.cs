@@ -30,7 +30,7 @@ namespace Diagnostics.RuntimeHost.Services
         private string FreeModelUrl;
         private string TriggerTrainingUrl;
         private string TriggerModelRefreshUrl;
-        private HttpClient _httpClient;
+        private static HttpClient _httpClient;
         SearchServiceProviderConfiguration configuration;
 
         public SearchService(IDataSourcesConfigurationService dataSourcesConfigService)
