@@ -54,7 +54,7 @@ namespace Diagnostics.RuntimeHost.Services
         private string _repoName;
         private string _branch;
         private string _accessToken;
-        private HttpClient _httpClient;
+        private static HttpClient _httpClient;
         private Octokit.GitHubClient _octokitClient;
 
         public string UserName => _userName;
