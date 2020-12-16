@@ -70,6 +70,7 @@ namespace Diagnostics.DataProviders
 
                         if (!string.IsNullOrWhiteSpace(targetCluster) && !string.IsNullOrWhiteSpace(targetDatabase))
                         {
+                            targetCluster = targetCluster.Replace(".kusto.windows.net", string.Empty, StringComparison.OrdinalIgnoreCase);
                             return await ExecuteClusterQuery(query, targetCluster, targetDatabase, requestId, operationName);
                         }
                     }
