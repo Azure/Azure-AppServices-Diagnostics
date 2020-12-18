@@ -64,7 +64,7 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         public string AnalysisType { get; set; } = string.Empty;
 
         [JsonIgnore]
-        protected Guid instanceGUID;
+        private Guid instanceGUID;
 
         [JsonIgnore]
         public override object TypeId { get { return (object)instanceGUID; } }
