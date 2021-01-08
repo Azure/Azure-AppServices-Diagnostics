@@ -232,18 +232,6 @@ namespace Diagnostics.DataProviders
                 
                 string activityId = Guid.NewGuid().ToString();
                 await RunHeartBeatPrimary(activityId);
-
-                //if (string.IsNullOrWhiteSpace(FailoverCluster))
-                //{
-                //    await RunHeartBeatPrimary(activityId);
-                //}
-                //else
-                //{
-                //    var primaryTask = RunHeartBeatPrimary(activityId);
-                //    var failoverTask = RunHeartBeatFailover(activityId);
-                //    await Task.WhenAll(new Task[] { primaryTask, failoverTask });
-                //}
-
                 await Task.Delay(TimeSpan.FromSeconds(_configuration.HeartBeatDelayInSeconds), cancellationToken);
             }
         }
