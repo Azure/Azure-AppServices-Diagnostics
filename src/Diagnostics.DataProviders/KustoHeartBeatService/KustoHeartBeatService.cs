@@ -159,7 +159,7 @@ namespace Diagnostics.DataProviders
             Exception exceptionForLog = null;
             try
             {
-                var primaryHeartBeat = await _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, PrimaryCluster, _configuration.HeartBeatTimeOutInSeconds, activityId);
+                var primaryHeartBeat = await _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, PrimaryCluster, _configuration.HeartBeatTimeOutInSeconds, activityId, "PrimaryHealthPing");
 
                 if (primaryHeartBeat.Rows.Count >= 1)
                 {
@@ -210,7 +210,7 @@ namespace Diagnostics.DataProviders
             Exception exceptionForLog = null;
             try
             {
-                var failoverHeartBeat = await _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, FailoverCluster, _configuration.HeartBeatTimeOutInSeconds, activityId);
+                var failoverHeartBeat = await _kustoDataProvider.ExecuteQueryForHeartbeat(_configuration.HeartBeatQuery, FailoverCluster, _configuration.HeartBeatTimeOutInSeconds, activityId, "FailoverHealthPing");
 
                 if (failoverHeartBeat.Rows.Count >= 1)
                 {
