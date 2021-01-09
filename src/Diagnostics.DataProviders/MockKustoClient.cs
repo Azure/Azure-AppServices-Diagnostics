@@ -8,7 +8,8 @@ namespace Diagnostics.DataProviders
 {
     internal class MockKustoClient : IKustoClient
     {
-        internal static bool ShouldHeartbeatSucceed = false;
+        internal static bool ShouldPrimaryHeartbeatSucceed = false;
+        internal static bool ShouldFailoverHeartbeatSucceed = false;
         internal static int HeartBeatRuns = 0;
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, int timeoutSeconds, string requestId = null, string operationName = null)
@@ -28,6 +29,22 @@ namespace Diagnostics.DataProviders
                 throw new ArgumentNullException("database");
             }
 
+            switch (query)
+            {
+                case "TestA":
+                    return await GetTestA();
+                case "Heartbeat":
+                    ++HeartBeatRuns;
+                    if ((ShouldPrimaryHeartbeatSucceed && operationName.Equals("PrimaryHealthPing", StringComparison.OrdinalIgnoreCase)) || 
+                        (ShouldFailoverHeartbeatSucceed && operationName.Equals("FailoverHealthPing", StringComparison.OrdinalIgnoreCase)))
+                    //if (ShouldPrimaryHeartbeatSucceed || ShouldFailoverHeartbeatSucceed)
+                    {
+                        return await GetFakeTenantIdResults();
+                    }
+
+                    break;
+            }
+
             if (!string.IsNullOrWhiteSpace(operationName))
             {
                 switch (operationName.ToLower())
@@ -40,18 +57,6 @@ namespace Diagnostics.DataProviders
                     default:
                         return await GetTestA();
                 }
-            }
-
-            switch (query)
-            {
-                case "TestA":
-                    return await GetTestA();
-                case "Heartbeat":
-                    ++HeartBeatRuns;
-                    if (ShouldHeartbeatSucceed) {
-                        return await GetFakeTenantIdResults();
-                    }
-                    break;
             }
 
             return new DataTable();
