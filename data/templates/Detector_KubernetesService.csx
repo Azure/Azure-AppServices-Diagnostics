@@ -15,7 +15,7 @@ public async static Task<Response> Run(DataProviders dp, OperationContext<AzureK
 {
     res.Dataset.Add(new DiagnosticData()
     {
-        Table = await dp.Kusto.ExecuteClusterQuery(GetQuery(cxt)),
+        Table = await dp.Kusto.ExecuteClusterQuery(GetQuery(cxt), null, "GetQuery"),
         RenderingProperties = new Rendering(RenderingType.Table){
             Title = "Sample Table", 
             Description = "Some description here"

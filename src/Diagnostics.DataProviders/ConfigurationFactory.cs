@@ -1,15 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Win32;
-using Microsoft.Azure.KeyVault;
-using Microsoft.Azure.Services.AppAuthentication;
-using Microsoft.Extensions.Configuration.AzureKeyVault;
-using Diagnostics.DataProviders.Utility;
 
 namespace Diagnostics.DataProviders
 {
@@ -22,28 +15,9 @@ namespace Diagnostics.DataProviders
     {
         private IConfigurationRoot _configuration;
 
-        public AppSettingsDataProviderConfigurationFactory(IHostingEnvironment env)
+        public AppSettingsDataProviderConfigurationFactory(IConfiguration configuration)
         {
-            var builder = new ConfigurationBuilder()
-                .SetBasePath(AppContext.BaseDirectory)
-                .AddJsonFile($"appsettings.json", optional: true, reloadOnChange: true)
-                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: true)
-                .AddEnvironmentVariables();
-
-            var builtConfig = builder.Build();
-
-            var tokenProvider = new AzureServiceTokenProvider(azureAdInstance: builtConfig["Secrets:AzureAdInstance"]);
-            var keyVaultClient = new KeyVaultClient(
-                new KeyVaultClient.AuthenticationCallback(
-                    tokenProvider.KeyVaultTokenCallback
-                )
-            );
-
-            string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(env.EnvironmentName);
-            builder.AddAzureKeyVault(builtConfig[keyVaultConfig], keyVaultClient, new DefaultKeyVaultSecretManager());
-            builder.AddEnvironmentVariables();
-
-            _configuration = builder.Build();
+            _configuration = (IConfigurationRoot)configuration;
         }
 
         protected override string GetValue(string prefix, string name)

@@ -414,7 +414,14 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage, true))
             {
-                return BadRequest(errorMessage);
+                var invalidDateTimeResponse = new AzureSupportCenterInsightEnvelope()
+                {
+                    CorrelationId = Guid.NewGuid(),
+                    ErrorMessage = null,
+                    TotalInsightsFound = 1,
+                    Insights = new[] { AzureSupportCenterInsightUtilites.CreateErrorMessageInsight(errorMessage, "Select an appropriate time range and re-run.") }
+                };
+                return Ok(invalidDateTimeResponse);
             }
 
             supportTopicId = ParseCorrectSupportTopicId(supportTopicId);
@@ -538,7 +545,9 @@ namespace Diagnostics.RuntimeHost.Controllers
                 case DiagnosticStampType.ASEV2:
                     hostingEnv.HostingEnvironmentType = HostingEnvironmentType.V2;
                     break;
-
+                case DiagnosticStampType.ASEV3:
+                    hostingEnv.HostingEnvironmentType = HostingEnvironmentType.V3;
+                    break;
                 default:
                     hostingEnv.HostingEnvironmentType = HostingEnvironmentType.None;
                     break;
@@ -546,7 +555,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             string stampName = !string.IsNullOrWhiteSpace(hostingEnv.InternalName) ? hostingEnv.InternalName : hostingEnv.Name;
 
-            if (platformType==null && (stampPostBody.Kind == DiagnosticStampType.ASEV1 || stampPostBody.Kind == DiagnosticStampType.ASEV2))
+            if (platformType==null && hostingEnv.HostingEnvironmentType != HostingEnvironmentType.None)
             {
                 var result = await this._stampService.GetTenantIdForStamp(stampName, hostingEnv.HostingEnvironmentType == HostingEnvironmentType.None, startTime, endTime, (DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
                 hostingEnv.PlatformType = result.Item2;
@@ -810,14 +819,14 @@ namespace Diagnostics.RuntimeHost.Controllers
                 var allDetectors = await this.tableCacheService.GetEntityListByType(context, "Detector");
                 var detectorMetadata = allDetectors.Where(entity => entity.RowKey.ToLower().Equals(detectorId, StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault();
 
-                // This means detector is definitely not present
-                if (invoker == null && detectorMetadata == null)
+                // If detector metadata is null and invoker is null, detector is not present
+                if (detectorMetadata == null && invoker == null)
                 {
                     return null;
                 }
 
-                // If detector is still downloading, then await first completion
-                if (invoker == null && detectorMetadata != null)
+                // If detector metadata is present but invoker is not, then wait detector DLL download to complete
+                if (detectorMetadata != null && invoker == null)
                 {
                     await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
                     // Refetch from invoker cache

@@ -1,6 +1,6 @@
 ﻿using Diagnostics.DataProviders;
-using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.RuntimeHost.Services
 {
@@ -15,20 +15,20 @@ namespace Diagnostics.RuntimeHost.Services
 
         public DataSourcesConfiguration Config => _config;
 
-        public DataSourcesConfigurationService(IHostingEnvironment env)
+        public DataSourcesConfigurationService(IHostingEnvironment env, IConfiguration configuration)
         {
-            IConfigurationFactory factory = GetDataProviderConfigurationFactory(env);
+            IConfigurationFactory factory = GetDataProviderConfigurationFactory(env, configuration);
             _config = factory.LoadConfigurations();
         }
 
-        public static IConfigurationFactory GetDataProviderConfigurationFactory(IHostingEnvironment env)
+        public static IConfigurationFactory GetDataProviderConfigurationFactory(IHostingEnvironment env, IConfiguration configuration)
         {
             switch (env.EnvironmentName.ToLower())
             {
                 case "mock":
                     return new MockDataProviderConfigurationFactory();
                 default:
-                    return new AppSettingsDataProviderConfigurationFactory(env);
+                    return new AppSettingsDataProviderConfigurationFactory(configuration);
             }
         }
     }
