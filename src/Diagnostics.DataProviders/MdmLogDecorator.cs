@@ -45,7 +45,12 @@ namespace Diagnostics.DataProviders
 			return MakeDependencyCall(DataProvider.GetTimeSeriesAsync(startTimeUtc, endTimeUtc, sampling, metricNamespace, metricName, dimension));
 		}
 
-		public Task<IEnumerable<DataTable>> GetMultipleTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, Sampling sampling, int seriesResolutionInMinutes, IEnumerable<Tuple<string, string, IEnumerable<KeyValuePair<string, string>>>> definitions)
+        public Task<IEnumerable<DataTable>> GetTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, Sampling sampling, string metricNamespace, string metricName, int seriesResolutionInMinutes, IDictionary<string, string> dimension)
+        {
+            return MakeDependencyCall(DataProvider.GetTimeSeriesAsync(startTimeUtc, endTimeUtc, sampling, metricNamespace, metricName, seriesResolutionInMinutes, dimension));
+        }
+
+        public Task<IEnumerable<DataTable>> GetMultipleTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, Sampling sampling, int seriesResolutionInMinutes, IEnumerable<Tuple<string, string, IEnumerable<KeyValuePair<string, string>>>> definitions)
 		{
 			return MakeDependencyCall(DataProvider.GetMultipleTimeSeriesAsync(startTimeUtc, endTimeUtc, sampling, seriesResolutionInMinutes, definitions));
 		}

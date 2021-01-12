@@ -31,7 +31,7 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
         if "trainingConfig" in req_data:
             try:
                 trainingConfig = TrainingConfig(json.loads(req_data["trainingConfig"]))
-                sah = StorageAccountHelper()
+                sah = StorageAccountHelper.getInstance()
                 if trainingConfig.modelType == "WmdSearchModel":
                     if not Path(os.path.join(appSettings.WORD2VEC_PATH, appSettings.WORD2VEC_MODEL_NAME)).exists():
                         sah.downloadFile("word2vec/w2vModel.bin", appSettings.WORD2VEC_PATH)

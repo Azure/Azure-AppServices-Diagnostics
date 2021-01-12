@@ -16,6 +16,11 @@ namespace Diagnostics.ModelsAndUtils.Attributes
     /// </summary>
     public class Definition : Attribute, IEquatable<Definition>
     {
+        public Definition()
+        {
+            this.instanceGUID = Guid.NewGuid();
+        }
+
         /// <summary>
         /// Id of the detector(unique).
         /// </summary>
@@ -57,6 +62,12 @@ namespace Diagnostics.ModelsAndUtils.Attributes
 
         [JsonIgnore]
         public string AnalysisType { get; set; } = string.Empty;
+
+        [JsonIgnore]
+        private Guid instanceGUID;
+
+        [JsonIgnore]
+        public override object TypeId { get { return (object)instanceGUID; } }
 
         /// <summary>
         /// Gets Analysis Types for which this detector should apply to.

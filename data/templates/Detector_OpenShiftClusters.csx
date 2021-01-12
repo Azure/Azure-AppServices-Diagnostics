@@ -8,13 +8,13 @@ private static string GetQuery(OperationContext<ArmResource> cxt)
 		let startTime = datetime({cxt.StartTime});
 		let endTime = datetime({cxt.EndTime});
 		YOUR_TABLE_NAME
-		| where TIMESTAMP >= startTime and TIMESTAMP <= endTime
+		| where Timestamp >= startTime and Timestamp <= endTime
 		YOUR_QUERY
 	";
 }
 
 
-[ArmResourceFilter(provider: "Microsoft.SignalRService", resourceTypeName: "SignalR")]
+[ArmResourceFilter(provider: "Microsoft.RedHatOpenShift", resourceTypeName: "openShiftClusters")]
 [Definition(Id = "YOUR_DETECTOR_ID", Name = "", Author = "YOUR_ALIAS", Description = "")]
 public async static Task<Response> Run(DataProviders dp, OperationContext<ArmResource> cxt, Response res)
 {
@@ -29,4 +29,4 @@ public async static Task<Response> Run(DataProviders dp, OperationContext<ArmRes
     });
 
     return res;
-} 
+}

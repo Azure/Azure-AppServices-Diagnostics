@@ -22,7 +22,7 @@ namespace Diagnostics.RuntimeHost.Services
     public class HealthCheckService : IHealthCheckService
     {
         private string OutboundConnectivityCheckUrl;
-        private HttpClient _httpClient;
+        private static HttpClient _httpClient;
         private readonly ISourceWatcher _sourceWatcher;
         IConfiguration _configuration;
         IDataSourcesConfigurationService _dataSourcesConfigurationService;
@@ -158,11 +158,13 @@ namespace Diagnostics.RuntimeHost.Services
 
         private void InitializeHttpClient()
         {
-            _httpClient = new HttpClient
+            var handler = new HttpClientHandler
             {
-                MaxResponseContentBufferSize = Int32.MaxValue,
-                Timeout = TimeSpan.FromSeconds(3)
+                MaxConnectionsPerServer = 10 // Set only max of 10 concurrent connections to google endpoint.
             };
+            _httpClient = new HttpClient(handler);
+            _httpClient.MaxResponseContentBufferSize = Int32.MaxValue;
+            _httpClient.Timeout = TimeSpan.FromSeconds(3);
         }
     }
 }

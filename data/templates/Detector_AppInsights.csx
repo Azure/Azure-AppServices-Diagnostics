@@ -14,7 +14,7 @@ private static string GetQuery(OperationContext<ArmResource> cxt)
 }
 
 
-[ArmResourceFilter(provider: "Microsoft.SignalRService", resourceTypeName: "SignalR")]
+[ArmResourceFilter(provider: "microsoft.insights", resourceTypeName: "components")]
 [Definition(Id = "YOUR_DETECTOR_ID", Name = "", Author = "YOUR_ALIAS", Description = "")]
 public async static Task<Response> Run(DataProviders dp, OperationContext<ArmResource> cxt, Response res)
 {
@@ -29,4 +29,4 @@ public async static Task<Response> Run(DataProviders dp, OperationContext<ArmRes
     });
 
     return res;
-} 
+}
