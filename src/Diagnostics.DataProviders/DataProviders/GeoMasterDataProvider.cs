@@ -23,7 +23,7 @@ namespace Diagnostics.DataProviders
         private GeoMasterDataProviderConfiguration _configuration;
         private string _geoMasterHostName;
 
-        private string[] AllowedlistAppSettingsStartingWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType", "APPINSIGHTS_", "SnapshotDebugger_", "InstrumentationEngine_", "XDT_MicrosoftApplicationInsights_", "ApplicationInsightsAgent_" };
+        private string[] AllowedlistAppSettingsStartingWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType", "APPINSIGHTS_", "SnapshotDebugger_", "InstrumentationEngine_", "XDT_MicrosoftApplicationInsights_", "ApplicationInsightsAgent_", "PYTHON_", "PYTHONPATH" };
 
         private string[] SensitiveAppSettingsEndingWith = new string[] { "CONNECTIONSTRING", "_SECRET", "_KEY", "_ID", "_CONTENTSHARE", "TOKEN_STORE", "TOKEN", "_SASURI" };
 
@@ -31,7 +31,13 @@ namespace Diagnostics.DataProviders
 
         private string[] AppSettingsExistenceCheckList = new string[] { "APPINSIGHTS_INSTRUMENTATIONKEY" };
 
-		public string GeoMasterName { get; }
+        private readonly char[] ValueTerminators = new char[] { '<', '"' };
+
+        private string[] CredentialTokens = new string[] { "Token=", "DefaultEndpointsProtocol=http", "AccountKey=", "Data Source=", "Server=", "Password=", "pwd=", "&amp;sig=", "&sig=", "COMPOSE|", "KUBE|" };
+
+        private const string SecretReplacement = "!!!SECRET-TRAP!!!";
+
+        public string GeoMasterName { get; }
 
         public string RequestId { get; set; }
 
@@ -65,6 +71,29 @@ namespace Diagnostics.DataProviders
             if (Regex.Match(content, @"https*:\/\/[\w.]*[\w]+.core.windows.net?.*sig=.*", RegexOptions.IgnoreCase).Success)
             {
                 content = "https://*.core.windows.net/*";
+            }
+            else
+            {
+                string maskedString = content;
+                foreach (var token in CredentialTokens)
+                {
+                    int startIndex = 0;
+                    while (true)
+                    {
+                        // search for the next token instance
+                        startIndex = maskedString.IndexOf(token, startIndex, StringComparison.OrdinalIgnoreCase);
+                        if (startIndex == -1)
+                        {
+                            break;
+                        }
+
+                        // Find the end of the secret. It most likely ends with either a double quota " or tag opening <
+                        int credentialEnd = maskedString.IndexOfAny(ValueTerminators, startIndex);
+
+                        maskedString = maskedString.Substring(0, startIndex) + SecretReplacement + (credentialEnd != -1 ? maskedString.Substring(credentialEnd) : "");
+                    }
+                }
+                content = maskedString;
             }
 
             return content;

@@ -57,6 +57,7 @@ namespace Diagnostics.RuntimeHost.Models
     {
         Stamp,
         ASEV1,
-        ASEV2
+        ASEV2,
+        ASEV3
     }
 }

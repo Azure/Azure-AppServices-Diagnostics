@@ -236,28 +236,31 @@ namespace Diagnostics.Tests.DataProviderTests
             config.KustoConfiguration.EnableHeartBeatQuery = true;
             var kustoHeartBeatService = new KustoHeartBeatService(config.KustoConfiguration);
 
-            MockKustoClient.ShouldHeartbeatSucceed = true;
+            MockKustoClient.ShouldPrimaryHeartbeatSucceed = true;
+            MockKustoClient.ShouldFailoverHeartbeatSucceed = false;
             int startingHeartBeatRuns = MockKustoClient.HeartBeatRuns;
             do
             {
-                await Task.Delay(100);
+                await Task.Delay(1000);
             } while (startingHeartBeatRuns == MockKustoClient.HeartBeatRuns);
             Assert.Equal(config.KustoConfiguration.KustoClusterNameGroupings, await kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
 
 
-            MockKustoClient.ShouldHeartbeatSucceed = false;
+            MockKustoClient.ShouldPrimaryHeartbeatSucceed = false;
+            MockKustoClient.ShouldFailoverHeartbeatSucceed = true;
             startingHeartBeatRuns = MockKustoClient.HeartBeatRuns;
             do
             {
-                await Task.Delay(100);
+                await Task.Delay(1000);
             } while (startingHeartBeatRuns == MockKustoClient.HeartBeatRuns);
             Assert.Equal(config.KustoConfiguration.KustoClusterFailoverGroupings, await kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
 
-            MockKustoClient.ShouldHeartbeatSucceed = true;
+            MockKustoClient.ShouldPrimaryHeartbeatSucceed = true;
+            MockKustoClient.ShouldFailoverHeartbeatSucceed = false;
             startingHeartBeatRuns = MockKustoClient.HeartBeatRuns;
             do
             {
-                await Task.Delay(100);
+                await Task.Delay(1000);
             } while (startingHeartBeatRuns == MockKustoClient.HeartBeatRuns);
             Assert.Equal(config.KustoConfiguration.KustoClusterNameGroupings, await kustoHeartBeatService.GetClusterNameFromStamp("waws-prod-mockstamp"));
 
