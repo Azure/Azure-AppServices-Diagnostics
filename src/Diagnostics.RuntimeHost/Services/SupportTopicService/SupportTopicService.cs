@@ -41,7 +41,7 @@ namespace Diagnostics.RuntimeHost.Services
         }
 
         private string GetSupportTopicKustoQuery() {
-            string query = $@"cluster('azsupport').database('AzureSupportability').ActiveSupportTopicTree
+            string query = $@"ActiveSupportTopicTree
                             | where Timestamp > ago(3d)
                             | extend SupportTopicId = iff(SupportTopicL3Id != '' and SupportTopicL3Id != ' ', SupportTopicL3Id, SupportTopicL2Id) 
                             | where SupportTopicId != ''
@@ -56,7 +56,7 @@ namespace Diagnostics.RuntimeHost.Services
             var dp = new DataProviders.DataProviders(dataProviderContext);
             DataTable supportTopicMappingTable = new DataTable();
             Guid requestIdGuid = Guid.NewGuid();
-            supportTopicMappingTable = await dp.Kusto.ExecuteClusterQuery(GetSupportTopicKustoQuery(), requestIdGuid.ToString(), operationName: "PopulateSupportTopicCache");
+            supportTopicMappingTable = await dp.Kusto.ExecuteClusterQuery(GetSupportTopicKustoQuery(), "azsupportfollower.westus2", "AzureSupportability", requestIdGuid.ToString(), operationName: "PopulateSupportTopicCache");
             foreach(DataRow row in supportTopicMappingTable.Rows)
             {
                 _supportTopicCache[getSupportTopicCacheKey(row["SupportTopicPath"].ToString())] = new SupportTopicModel(row);
