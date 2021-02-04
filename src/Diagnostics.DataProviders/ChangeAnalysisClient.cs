@@ -363,7 +363,7 @@ namespace Diagnostics.DataProviders
                 requestMessage.Content = new StringContent(JsonConvert.SerializeObject(postBody), Encoding.UTF8, "application/json");
             }
 
-            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.ChangeAnalyisRequestTimeoutInSeconds));
             HttpResponseMessage responseMessage = await httpClient.SendAsync(requestMessage, cancellationTokenSource.Token);
             string content = await responseMessage.Content.ReadAsStringAsync();
             if (!responseMessage.IsSuccessStatusCode)
