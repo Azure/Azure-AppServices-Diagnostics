@@ -53,13 +53,13 @@ namespace Diagnostics.RuntimeHost.Services
             this.cache = cache;
         }
 
-        private Task<HttpResponseMessage> Get(HttpRequestMessage request)
+        private async Task<HttpResponseMessage> Get(HttpRequestMessage request)
         {
             //Sleep for a while so that we do not create outbound connections too aggressively causing SNAT port exhaustion.
-            System.Threading.Thread.Sleep(TimeSpan.FromSeconds(1));
+            await Task.Delay(TimeSpan.FromSeconds(1));
             using (CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(3)))
             {
-                return _httpClient.SendAsync(request, cts.Token);
+                return await _httpClient.SendAsync(request, cts.Token);
             }
         }
 
