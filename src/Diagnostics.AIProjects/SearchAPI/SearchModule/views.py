@@ -100,8 +100,11 @@ def queryDetectorsMethod():
     try:
         txt_data = translator.translate(urllib.parse.unquote(data['text'])).text
     except Exception as e:
-        loggerInstance.logHandledException(requestId, Exception(f"Failed to translate the query -> {str(e)}. Querystring: {data['text']}"))
-        txt_data = urllib.parse.unquote(data['text'])
+        if 'text' in data:
+            loggerInstance.logHandledException(requestId, Exception(f"Failed to translate the query -> {str(e)}. Querystring: {data['text']}"))
+            txt_data = urllib.parse.unquote(data['text'])
+        else:
+            return ("Parameter with name 'text' was not provided in the request", 400)
     original_query = txt_data
     if (len(original_query)>250):
         return ("Query length exceeded the maximum limit of 250", 400)
