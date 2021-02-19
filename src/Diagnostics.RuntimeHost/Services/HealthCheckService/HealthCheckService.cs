@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Linq;
 using Diagnostics.DataProviders.DataProviderConfigurations;
 using Microsoft.Extensions.Caching.Memory;
+using System.Threading;
 
 namespace Diagnostics.RuntimeHost.Services
 {
@@ -52,9 +53,14 @@ namespace Diagnostics.RuntimeHost.Services
             this.cache = cache;
         }
 
-        private Task<HttpResponseMessage> Get(HttpRequestMessage request)
+        private async Task<HttpResponseMessage> Get(HttpRequestMessage request)
         {
-            return _httpClient.SendAsync(request);
+            //Sleep for a while so that we do not create outbound connections too aggressively causing SNAT port exhaustion.
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            using (CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(3)))
+            {
+                return await _httpClient.SendAsync(request, cts.Token);
+            }
         }
 
         public async Task<bool> HealthCheckPing()
@@ -158,13 +164,8 @@ namespace Diagnostics.RuntimeHost.Services
 
         private void InitializeHttpClient()
         {
-            var handler = new HttpClientHandler
-            {
-                MaxConnectionsPerServer = 10 // Set only max of 10 concurrent connections to google endpoint.
-            };
-            _httpClient = new HttpClient(handler);
+            _httpClient = new HttpClient();
             _httpClient.MaxResponseContentBufferSize = Int32.MaxValue;
-            _httpClient.Timeout = TimeSpan.FromSeconds(3);
         }
     }
 }

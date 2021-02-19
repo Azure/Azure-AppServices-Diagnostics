@@ -26,7 +26,15 @@ namespace Diagnostics.DataProviders
 
         protected static readonly Lazy<HttpClient> lazyClient = new Lazy<HttpClient>(() =>
         {
-            var client = new HttpClient();
+
+            // TODO:: Remove this code once the WawsObserver certificate has been renewed.
+            // --------------------------------------------------------------------------
+            var handler = new HttpClientHandler()
+            {
+                ServerCertificateCustomValidationCallback = delegate { return true; },
+            };
+            // --------------------------------------------------------------------------
+            var client = new HttpClient(handler);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             return client;
         });
