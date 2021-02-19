@@ -100,7 +100,7 @@ def queryDetectorsMethod():
     try:
         txt_data = translator.translate(urllib.parse.unquote(data['text'])).text
     except Exception as e:
-        loggerInstance.logHandledException(requestId, Exception(f"Failed to translate the query -> {str(e)}"))
+        loggerInstance.logHandledException(requestId, Exception(f"Failed to translate the query -> {str(e)}. Querystring: {data['text']}"))
         txt_data = urllib.parse.unquote(data['text'])
     original_query = txt_data
     if (len(original_query)>250):
@@ -116,7 +116,7 @@ def queryDetectorsMethod():
         loadModel(productid)
     except Exception as e:
         loggerInstance.logHandledException(requestId, e)
-        return (json.dumps({"query_received": original_query, "query": txt_data, "results": [], "exception": str(e)}), 404)
+        return (json.dumps({"query_received": original_query, "query": txt_data, "data": data, "results": [], "exception": str(e)}), 404)
     results = loaded_models[productid].queryDetectors(txt_data)
     try:
         results["luis_results"] = getLuisPredictions(txt_data, productid)
@@ -124,7 +124,10 @@ def queryDetectorsMethod():
         results["luis_results"] = []
         results["luis_exception"] = f"LUISProviderError: {str(e)}"
     results = mergeLuisResults(results)
-    res = json.dumps(results)
+    logObject = results
+    logObject["productId"] = productid
+    logObject["modelId"] = loaded_models[productid].trainingId
+    res = json.dumps(logObject)
     return (res, 200)
 
 @app.route('/queryMultiple', methods=["POST"])
@@ -165,7 +168,7 @@ def queryUtterancesMethod():
         return ("No text provided for search", 400)
     productid = getProductId(data)
     if not productid:
-        return ('Resource type product data not available', 404)
+        return (f'Resource type product data not available. Request data: {json.dumps(data)}', 404)
     results = {"query": txt_data, "results": []}
     for product in productid:
         try:

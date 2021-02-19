@@ -4,6 +4,7 @@ from cryptography.x509 import load_pem_x509_certificate
 from cryptography.hazmat.backends import default_backend
 from functools import wraps
 from SearchModule import app
+from SearchModule.Logger import loggerInstance
 
 # Get jwk openid-configuration to find where the jwk keys are located
 res = requests.get('https://login.microsoftonline.com/common/.well-known/openid-configuration')
@@ -20,15 +21,21 @@ def authProvider():
             if ("ENVIRONMENT" in app.config and app.config["ENVIRONMENT"]=="DEV"):
                 return f(*args, **kwargs)
             authHeader = request.headers.get('Authorization')
+            res = None
             if authHeader:
                 try:
                     token = authHeader.split("Bearer ")[1]
-                    return f(*args, **kwargs) if validateToken(token) else ("Unauthorized Access", 401)
+                    res = f(*args, **kwargs) if validateToken(token) else ("Unauthorized Access", 401)
                 except Exception as e:
                     if type(e).__name__ == "ExpiredSignatureError":
-                        return ("Token has expired", 401)
-                    return (str(e), 401)
-            return ("Request is missing Authorization header", 401)
+                        res = ("Token has expired", 401)
+                    else:
+                        res = (str(e), 401)
+            else:
+                res = ("Request is missing Authorization header", 401)
+            if res and (res[1] == 401):
+                loggerInstance.logInsights(f"{res[0]}, AuthHeader: {authHeader}, {res[1]}")
+            return res
         return authChecker
     return authOuter
 

@@ -61,8 +61,8 @@ class WmdTrainer:
                 logHandler.info(f"CompareDetectors: Nothing has changed with detectors since last training. Skipping training for {self.productId}.")
                 return False, syntheticTestCases
             # A sanity check if the detectors list is not messed up
-            if not detectors_ or len(detectors_)<30:
-                raise TrainingException(f"TooFewDetectors: Only {len(detectors_)} were found for training. The required threshold is at least 30 detectors. Please check the response from runtime host API.")
+            if not detectors_ or len(detectors_)<5:
+                raise TrainingException(f"TooFewDetectors: Only {len(detectors_)} were found for training. The required threshold is at least 5 detectors. Please check the response from runtime host API.")
             open(os.path.join(datapath, "Detectors.json"), "w").write(json.dumps(detectors_))
             detectorsdata = open(os.path.join(datapath, "Detectors.json"), "r").read()
             detectors = json.loads(detectorsdata)
