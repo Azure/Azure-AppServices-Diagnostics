@@ -83,7 +83,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                     throw new Exception("Required attributes Status and Title cannot be null or empty for Notification.");
                 }
 
-                if (DateTime.Compare(notification.StartDate, notification.ExpiryDate) <= 0)
+                if (DateTime.Compare(notification.ExpiryDate, notification.StartDate) <= 0)
                 {
                     throw new Exception("Invalid StartDate and ExpiryDate, ExpiryDate should be greater than StartDate.");
                 }
