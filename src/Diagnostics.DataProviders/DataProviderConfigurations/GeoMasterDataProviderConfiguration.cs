@@ -30,5 +30,11 @@
         /// </summary>
         [ConfigurationName("GeoCertSubjectName")]
         public string GeoCertSubjectName { get; set; }
+
+        [ConfigurationName("Retry:MaxRetryCount")]
+        public int MaxCountRetry { get; set; }
+
+        [ConfigurationName("Retry:RetryDelayInSeconds")]
+        public int RetryDelayInSeconds { get; set; }
     }
 }
