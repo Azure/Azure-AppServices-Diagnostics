@@ -623,97 +623,63 @@ namespace Diagnostics.DataProviders
             var query = SitePathUtility.CsmAnnotateQueryString(queryString, apiVersion);
             var uri = new Uri(_geoMasterClient.BaseUri, path + query);
             HttpResponseMessage response = null;
-            R value = default;
-            int attempt = 0;
-            var exceptions = new List<Exception>();
-            string source = "GeoMasterDataProvider";
-            Exception attemptException = null;
-            do
+
+            try
             {
-                try
+                using (var request = new HttpRequestMessage(method, uri))
                 {
-                    using (var request = new HttpRequestMessage(method, uri))
+                    try
                     {
-                        try
+                        if (method == HttpMethod.Post || method == HttpMethod.Put)
                         {
-                            DiagnosticsETWProvider.Instance.LogRetryAttemptMessage(
-                                RequestId,
-                                source,
-                                $"Starting Attempt: {attempt}"
-                            );
-
-                            if (method == HttpMethod.Post || method == HttpMethod.Put)
-                            {
-                                request.Content = new StringContent(content, Encoding.UTF8, "application/json");
-                            }
-
-                            var token = _geoMasterClient.AuthenticationToken;
-                            if (!string.IsNullOrWhiteSpace(token))
-                            {
-                                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                            }
-                            DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, $"{nameof(GeoMasterDataProvider.PerformHttpRequest)}", $"Making HTTP call to GeoMaster URI: {uri.AbsoluteUri} Method: {method.Method} ");
-                            response = await _geoMasterClient.Client.SendAsync(request, cancellationToken).ConfigureAwait(false);
-                            if (!response.IsSuccessStatusCode && response.Content != null)
-                            {
-                                string responseMessage = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                                DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, $"{nameof(GeoMasterDataProvider.PerformHttpRequest)}", $"HTTP call to GeoMaster failed with response: {responseMessage}");
-                            }
-                            response.EnsureSuccessStatusCode();
-                            attemptException = null;
+                            request.Content = new StringContent(content, Encoding.UTF8, "application/json");
                         }
-                        catch (Exception ex)
+
+                        var token = _geoMasterClient.AuthenticationToken;
+                        if (!string.IsNullOrWhiteSpace(token))
                         {
-                            attemptException = ex;
-                            if (ex is TaskCanceledException && cancellationToken != default(CancellationToken))
-                            {
-                                ex = new DataSourceCancelledException();
-                            }
-                            exceptions.Add(ex);
+                            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
                         }
+                        DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, $"{nameof(GeoMasterDataProvider.PerformHttpRequest)}", $"Making HTTP call to GeoMaster URI: {uri.AbsoluteUri} Method: {method.Method} ");
+                        response = await _geoMasterClient.Client.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                        if(!response.IsSuccessStatusCode && response.Content != null)
+                        {
+                            string responseMessage = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, $"{nameof(GeoMasterDataProvider.PerformHttpRequest)}", $"HTTP call to GeoMaster failed with response: {responseMessage}");
+                        }
+                        response.EnsureSuccessStatusCode();
                     }
-
-                    if(attemptException is null)
+                    catch (TaskCanceledException)
                     {
-                        if (typeof(R) == typeof(string))
+                        if (cancellationToken != default(CancellationToken))
                         {
-                            value = (await response.Content.ReadAsStringAsync().ConfigureAwait(false)).CastTo<R>();
+                            throw new DataSourceCancelledException();
                         }
-                        else
-                        {
-                            string responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            value = JsonConvert.DeserializeObject<R>(responseContent);
-                        }
+                        //if any task cancelled without provided cancellation token - we want capture exception in datasourcemanager
+                        throw;
                     }
                 }
-                finally
+
+                R value;
+
+                if (typeof(R) == typeof(string))
                 {
-                    if (response != null)
-                    {
-                        response.Dispose();
-                    }
-
-                    if (attemptException is null)
-                    {
-                        attempt = _configuration.MaxCountRetry;
-                    }
-
-                    attempt++;
-
+                    value = (await response.Content.ReadAsStringAsync().ConfigureAwait(false)).CastTo<R>();
                 }
-
-
-                if (attempt <= _configuration.MaxCountRetry) await Task.Delay(_configuration.RetryDelayInSeconds * 1000);
-
-            } while (attempt <= _configuration.MaxCountRetry);
-
-            if (response != null && response.IsSuccessStatusCode && response.Content != null)
-            {
+                else
+                {
+                    string responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    value = JsonConvert.DeserializeObject<R>(responseContent);
+                }
                 return value;
             }
-
-            throw new AggregateException($"{source} failed all attempts. Look at inner exceptions", exceptions);
-
+            finally
+            {
+                if (response != null)
+                {
+                    response.Dispose();
+                }
+            }
         }
 
         public DataProviderMetadata GetMetadata()
@@ -774,7 +740,7 @@ namespace Diagnostics.DataProviders
                     }
                     finally
                     {
-                        result = new HealthCheckResult(geomasterException == null ? HealthStatus.Healthy : HealthStatus.Unhealthy, "Geomaster", "Run a test against geomaster by simply getting app settings", geomasterException, _configuration.HealthCheckInputs.ToDictionary((k) => k.Key, v => (object)v.Value));
+                        result = new HealthCheckResult(geomasterException == null ? HealthStatus.Healthy : HealthStatus.Unhealthy, "Geomaster", "Run a test against geomaster by simply getting app settings", geomasterException, _configuration.HealthCheckInputs.ToDictionary((k) => k.Key, v => (object) v.Value));
                     }
                 }
                 else
