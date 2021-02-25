@@ -14,7 +14,8 @@ using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using static Diagnostics.Logger.HeaderConstants;
-using Diagnostics.Logger; 
+using Diagnostics.Logger;
+using Diagnostics.DataProviders.Utility;
 
 namespace Diagnostics.DataProviders
 {
@@ -67,6 +68,13 @@ namespace Diagnostics.DataProviders
         public IHeaderDictionary receivedHeaders { get; private set; }
 
         /// <summary>
+        /// Tuple to store 
+        /// </summary>
+        private Tuple<string, object, HttpMethod> sendRequestTuple;
+
+        private ChangeAnalysisDataProviderConfiguration config;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="ChangeAnalysisClient"/> class.
         /// </summary>
         public ChangeAnalysisClient(ChangeAnalysisDataProviderConfiguration configuration, string requestTrackingId, string clientObjectId,  IHeaderDictionary incomingRequestHeaders, string clientPrincipalName = "")
@@ -77,6 +85,7 @@ namespace Diagnostics.DataProviders
             apiVersion = configuration.Apiversion;
             requestId = requestTrackingId;
             receivedHeaders = incomingRequestHeaders;
+            config = configuration;
         }
 
         /// <inheritdoc/>
@@ -90,7 +99,7 @@ namespace Diagnostics.DataProviders
                     changeRequest.ResourceId,
                     changeRequest.ChangeSetId
                 };
-                string jsonString = await PrepareAndSendRequest(requestUri, postBody, HttpMethod.Post);
+                string jsonString = await PrepareAndSendRequestWithRetry(requestUri, postBody, HttpMethod.Post);
                 List<ResourceChangesResponseModel> resourceChangesResponse = JsonConvert.DeserializeObject<List<ResourceChangesResponseModel>>(jsonString);
                 return resourceChangesResponse;
             }
@@ -122,7 +131,7 @@ namespace Diagnostics.DataProviders
                     StartTime = changeSetsRequest.StartTime.ToString(),
                     EndTime = changeSetsRequest.EndTime.ToString()
                 };
-                string jsonString = await PrepareAndSendRequest(requestUri, postBody, HttpMethod.Post);
+                string jsonString = await PrepareAndSendRequestWithRetry(requestUri, postBody, HttpMethod.Post);
                 List<ChangeSetResponseModel> changeSetsResponse = JsonConvert.DeserializeObject<List<ChangeSetResponseModel>>(jsonString);
                 return changeSetsResponse;
             }
@@ -150,7 +159,7 @@ namespace Diagnostics.DataProviders
                     hostNames = hostnames,
                     subscriptionId = subscription
                 };
-                string jsonString = await PrepareAndSendRequest(requestUri, requestBody, HttpMethod.Post);
+                string jsonString = await PrepareAndSendRequestWithRetry(requestUri, requestBody, HttpMethod.Post);
                 if (!string.IsNullOrWhiteSpace(jsonString))
                 {
                     ResourceIdResponseModel resourceIdResponse = JsonConvert.DeserializeObject<ResourceIdResponseModel>(jsonString);
@@ -182,7 +191,7 @@ namespace Diagnostics.DataProviders
             try
             {
                 string requestUri = changeAnalysisEndPoint + $"lastscan/{armResourceUri}?api-version={apiVersion}";
-                string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: HttpMethod.Get);
+                string jsonString = await PrepareAndSendRequestWithRetry(requestUri, httpMethod: HttpMethod.Get);
                 return JsonConvert.DeserializeObject<LastScanResponseModel>(jsonString);
             }
             catch (HttpRequestException httpException)
@@ -212,7 +221,7 @@ namespace Diagnostics.DataProviders
             string requestUri = changeAnalysisEndPoint + $"Subscription/{subscriptionId}/onboardingstate?api-version={apiVersion}";
             try
             {
-                string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: HttpMethod.Get);
+                string jsonString = await PrepareAndSendRequestWithRetry(requestUri, httpMethod: HttpMethod.Get);
                 var result = JsonConvert.DeserializeObject<SubscriptionOnboardingStatus>(jsonString);
                 result.IsRegistered = true;
                 return result;
@@ -250,7 +259,7 @@ namespace Diagnostics.DataProviders
             {
                 string requestUri = changeAnalysisEndPoint + $"{scanAction}/{resourceId}?api-version={apiVersion}";
                 HttpMethod httpMethod = scanAction.Equals("checkscan") ? HttpMethod.Get : HttpMethod.Post;
-                string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: httpMethod);
+                string jsonString = await PrepareAndSendRequestWithRetry(requestUri, httpMethod: httpMethod);
                 return JsonConvert.DeserializeObject<ChangeScanModel>(jsonString);
             }
             catch (HttpRequestException httpexception)
@@ -376,6 +385,17 @@ namespace Diagnostics.DataProviders
             }
 
             return content;
+        }
+
+        private Task<string> PrepareAndSendRequest()
+        {
+            return PrepareAndSendRequest(sendRequestTuple.Item1,sendRequestTuple.Item2,sendRequestTuple.Item3);
+        }
+
+        public Task<string> PrepareAndSendRequestWithRetry(string requestUri, object postBody = null, HttpMethod httpMethod = null)
+        {
+            sendRequestTuple = new Tuple<string, object, HttpMethod>(requestUri, postBody, httpMethod);
+            return RetryHelper.RetryAsync<string>(PrepareAndSendRequest, "ChangeAnalysisClient", requestId, config.MaxRetryCount, config.RetryDelayInSeconds * 1000);
         }
     }
 }
