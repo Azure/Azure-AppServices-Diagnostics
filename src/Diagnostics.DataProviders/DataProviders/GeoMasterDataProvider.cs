@@ -12,6 +12,7 @@ using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using Diagnostics.Logger;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Diagnostics.DataProviders.Utility;
 
 namespace Diagnostics.DataProviders
 {
@@ -36,6 +37,8 @@ namespace Diagnostics.DataProviders
         private string[] CredentialTokens = new string[] { "Token=", "DefaultEndpointsProtocol=http", "AccountKey=", "Data Source=", "Server=", "Password=", "pwd=", "&amp;sig=", "&sig=", "COMPOSE|", "KUBE|" };
 
         private const string SecretReplacement = "!!!SECRET-TRAP!!!";
+
+        private Tuple<HttpMethod, string, string, string, string, CancellationToken> HttpRequestTuple = null;
 
         public string GeoMasterName { get; }
 
@@ -608,22 +611,35 @@ namespace Diagnostics.DataProviders
 
         private Task<R> HttpGet<R>(string path, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return PerformHttpRequest<R>(HttpMethod.Get, path, queryString, null, apiVersion, cancellationToken);
+            //return PerformHttpRequest<R>(HttpMethod.Get, path, queryString, null, apiVersion, cancellationToken);
+            return PerformHttpRequestWithRetry<R>(HttpMethod.Get, path, queryString, null, apiVersion, cancellationToken);
         }
 
         private Task<R> HttpPost<R, T>(string path, T content = default(T), string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
         {
             var body = JsonConvert.SerializeObject(content);
-            return PerformHttpRequest<R>(HttpMethod.Post, path, queryString, body, apiVersion, cancellationToken);
+            //return PerformHttpRequest<R>(HttpMethod.Post, path, queryString, body, apiVersion, cancellationToken);
+            return PerformHttpRequestWithRetry<R>(HttpMethod.Post, path, queryString, body, apiVersion, cancellationToken);
         }
 
+        private Task<R> PerformHttpRequestWithRetry<R>(HttpMethod method, string path, string queryString, string content, string apiVersion, CancellationToken cancellationToken)
+        {
+            //Save params  into tuple temporarly to so to call PerformHttpRequest method without passing params for using RetryHelper
+            HttpRequestTuple = new Tuple<HttpMethod, string, string, string, string, CancellationToken>(method, path, queryString, content, apiVersion, cancellationToken);
+            return RetryHelper.RetryAsync<R>(PerformHttpRequest<R>, "GeoMasterDataProvider", RequestId, _configuration.MaxRetryCount, _configuration.RetryDelayInSeconds * 1000);
+        }
+
+        private Task<R> PerformHttpRequest<R>()
+        {
+            var task = PerformHttpRequest<R>(HttpRequestTuple.Item1, HttpRequestTuple.Item2, HttpRequestTuple.Item3, HttpRequestTuple.Item4, HttpRequestTuple.Item5, HttpRequestTuple.Item6);
+            return task;
+        }
 
         private async Task<R> PerformHttpRequest<R>(HttpMethod method, string path, string queryString, string content, string apiVersion, CancellationToken cancellationToken)
         {
             var query = SitePathUtility.CsmAnnotateQueryString(queryString, apiVersion);
             var uri = new Uri(_geoMasterClient.BaseUri, path + query);
             HttpResponseMessage response = null;
-
             try
             {
                 using (var request = new HttpRequestMessage(method, uri))
@@ -642,7 +658,7 @@ namespace Diagnostics.DataProviders
                         }
                         DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, $"{nameof(GeoMasterDataProvider.PerformHttpRequest)}", $"Making HTTP call to GeoMaster URI: {uri.AbsoluteUri} Method: {method.Method} ");
                         response = await _geoMasterClient.Client.SendAsync(request, cancellationToken).ConfigureAwait(false);
-                        if(!response.IsSuccessStatusCode && response.Content != null)
+                        if (!response.IsSuccessStatusCode && response.Content != null)
                         {
                             string responseMessage = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                             DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, $"{nameof(GeoMasterDataProvider.PerformHttpRequest)}", $"HTTP call to GeoMaster failed with response: {responseMessage}");
@@ -740,7 +756,7 @@ namespace Diagnostics.DataProviders
                     }
                     finally
                     {
-                        result = new HealthCheckResult(geomasterException == null ? HealthStatus.Healthy : HealthStatus.Unhealthy, "Geomaster", "Run a test against geomaster by simply getting app settings", geomasterException, _configuration.HealthCheckInputs.ToDictionary((k) => k.Key, v => (object) v.Value));
+                        result = new HealthCheckResult(geomasterException == null ? HealthStatus.Healthy : HealthStatus.Unhealthy, "Geomaster", "Run a test against geomaster by simply getting app settings", geomasterException, _configuration.HealthCheckInputs.ToDictionary((k) => k.Key, v => (object)v.Value));
                     }
                 }
                 else

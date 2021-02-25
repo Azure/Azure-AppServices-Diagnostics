@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Diagnostics.Logger;
 
-namespace Diagnostics.RuntimeHost.Utilities
+namespace Diagnostics.DataProviders.Utility
 {
-    internal class RetryHelper
+    public static class RetryHelper
     {
-        internal static async Task<TResult> RetryAsync<TResult>(Func<Task<TResult>> taskProvider, string source = "", string requestId = "", int maxRetries = 3, int retryDelayInMs = 500)
+        public static async Task<TResult> RetryAsync<TResult>(Func<Task<TResult>> taskProvider, string source = "", string requestId = "", int maxRetries = 3, int retryDelayInMs = 500)
         {
             int retryCount = 0;
             DateTime taskInvocationStartTime = DateTime.UtcNow;

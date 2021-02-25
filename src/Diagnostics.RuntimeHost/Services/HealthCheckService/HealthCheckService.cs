@@ -11,6 +11,7 @@ using System.Linq;
 using Diagnostics.DataProviders.DataProviderConfigurations;
 using Microsoft.Extensions.Caching.Memory;
 using System.Threading;
+using Diagnostics.DataProviders.Utility;
 
 namespace Diagnostics.RuntimeHost.Services
 {

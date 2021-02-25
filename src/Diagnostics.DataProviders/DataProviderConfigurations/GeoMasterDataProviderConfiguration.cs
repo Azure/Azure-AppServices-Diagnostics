@@ -6,7 +6,7 @@
         public GeoMasterDataProviderConfiguration()
         {
         }
-       
+
         /// <summary>
         /// GeomasterEndpoint
         /// </summary>
@@ -30,5 +30,15 @@
         /// </summary>
         [ConfigurationName("GeoCertSubjectName")]
         public string GeoCertSubjectName { get; set; }
+        /// <summary>
+        /// Max Retry Count
+        /// </summary>
+        [ConfigurationName("Retry:MaxRetryCount")]
+        public int MaxRetryCount { get; set; }
+        /// <summary>
+        /// Delay in Seconds between two retries
+        /// </summary>
+        [ConfigurationName("Retry:RetryDelayInSeconds")]
+        public int RetryDelayInSeconds { get; set; }
     }
 }
