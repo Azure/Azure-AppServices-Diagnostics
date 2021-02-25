@@ -68,10 +68,13 @@ namespace Diagnostics.DataProviders
         public IHeaderDictionary receivedHeaders { get; private set; }
 
         /// <summary>
-        /// Tuple to store 
+        /// Tuple to store PrepareAndSendReques method parameters for using retry
         /// </summary>
         private Tuple<string, object, HttpMethod> sendRequestTuple;
 
+        /// <summary>
+        /// Change Analysis Configration
+        /// </summary>
         private ChangeAnalysisDataProviderConfiguration config;
 
         /// <summary>
