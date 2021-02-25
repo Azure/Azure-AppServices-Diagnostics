@@ -268,8 +268,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         ///<summary>
         /// Keystone component
         ///</summary>
-        KeystoneComponent
+        KeystoneComponent,
 
+        ///<summary>
+        /// Notification component
+        ///</summary>
+        Notification
     }
 
     /// <summary>
