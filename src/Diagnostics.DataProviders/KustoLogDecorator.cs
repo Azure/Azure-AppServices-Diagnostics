@@ -17,14 +17,19 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(DataProvider.ExecuteQuery(query, stampName, _requestId, operationName));
         }
 
+        public Task<DataTable> ExecuteQueryOnAllAntaresClusters(string query, string requestId = null, string operationName = null)
+        {
+            return MakeDependencyCall(DataProvider.ExecuteQueryOnAllAntaresClusters(query, _requestId, operationName));
+        }
+
         public Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null)
         {
-            return MakeDependencyCall(DataProvider.ExecuteClusterQuery(query, requestId, operationName));
+            return MakeDependencyCall(DataProvider.ExecuteClusterQuery(query, _requestId, operationName));
         }
 
         public Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId, string operationName)
         {
-            return MakeDependencyCall(DataProvider.ExecuteClusterQuery(query, cluster, databaseName, requestId, operationName));
+            return MakeDependencyCall(DataProvider.ExecuteClusterQuery(query, cluster, databaseName, _requestId, operationName));
         }
 
         public Task<KustoQuery> GetKustoQuery(string query, string stampName)

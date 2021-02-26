@@ -55,6 +55,14 @@ namespace Diagnostics.DataProviders
             };
         }
 
+        private bool isPublicCloud
+        {
+            get {
+                var publicClouds = new string[] { DataProviderConstants.AzureCloud, DataProviderConstants.AzureCloudAlternativeName };
+                return publicClouds.Any(s => _configuration.CloudDomain.Equals(s, StringComparison.CurrentCultureIgnoreCase));
+            }
+        }
+
         public async Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null)
         {
             if(!query.Contains("geneva_metrics_request"))
@@ -91,6 +99,47 @@ namespace Diagnostics.DataProviders
             var cluster = await GetClusterNameFromStamp(stampName);
             await AddQueryInformationToMetadata(query, cluster, operationName);
             return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName);
+        }
+
+        public async Task<DataTable> ExecuteQueryOnAllAntaresClusters(string query, string requestId = null, string operationName = null)
+        {
+            if (string.IsNullOrWhiteSpace(operationName))
+            {
+                throw new ArgumentNullException(nameof(operationName), "OperationName cannot be empty. Please supply a name to identify the query.");
+            }
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                throw new ArgumentNullException(nameof(query), "Query cannot be empty. Please supply a query to execute.");
+            }
+            else
+            {
+                List<Task<DataTable>> queryTask = new List<Task<DataTable>>();
+
+                if(isPublicCloud)
+                {
+                    queryTask.Add(ExecuteQuery(query, "waws-prod-bay-153", null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|WestUS"));
+                    queryTask.Add(ExecuteQuery(query, "waws-prod-blu-189", null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|EastUS"));
+                    queryTask.Add(ExecuteQuery(query, "waws-prod-dm1-187", null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|CentralUS"));
+                    queryTask.Add(ExecuteQuery(query, "waws-prod-am2-329", null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|WestEurope"));
+                    queryTask.Add(ExecuteQuery(query, "waws-prod-db3-169", null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|NorthEurope"));
+                    queryTask.Add(ExecuteQuery(query, "waws-prod-hk1-029", null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|EastAsia"));
+                }
+                else
+                {
+                    queryTask.Add(ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|{_configuration.CloudDomain}"));
+                }
+
+                var queryResult = await Task.WhenAll(queryTask.ToArray());
+                DataTable mergedTable = new DataTable();
+                foreach (DataTable dt in queryResult)
+                {
+                    if (dt.Rows.Count > 0)
+                    {
+                        mergedTable.Merge(dt, false, MissingSchemaAction.Add);
+                    }
+                }
+                return mergedTable;                
+            }
         }
 
         public Task<KustoQuery> GetKustoClusterQuery(string query)
