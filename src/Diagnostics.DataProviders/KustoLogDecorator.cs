@@ -17,9 +17,9 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(DataProvider.ExecuteQuery(query, stampName, _requestId, operationName));
         }
 
-        public Task<DataTable> ExecuteQueryOnAllAntaresClusters(string query, string requestId = null, string operationName = null)
+        public Task<DataTable> ExecuteQueryOnAllAppAppServiceClusters(string query, string requestId = null, string operationName = null)
         {
-            return MakeDependencyCall(DataProvider.ExecuteQueryOnAllAntaresClusters(query, _requestId, operationName));
+            return MakeDependencyCall(DataProvider.ExecuteQueryOnAllAppAppServiceClusters(query, _requestId, operationName));
         }
 
         public Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null)

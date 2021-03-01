@@ -55,7 +55,7 @@ namespace Diagnostics.DataProviders
             };
         }
 
-        private bool isPublicCloud
+        private bool IsPublicCloud
         {
             get {
                 var publicClouds = new string[] { DataProviderConstants.AzureCloud, DataProviderConstants.AzureCloudAlternativeName };
@@ -101,7 +101,7 @@ namespace Diagnostics.DataProviders
             return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName);
         }
 
-        public async Task<DataTable> ExecuteQueryOnAllAntaresClusters(string query, string requestId = null, string operationName = null)
+        public async Task<DataTable> ExecuteQueryOnAllAppAppServiceClusters(string query, string requestId = null, string operationName = null)
         {
             if (string.IsNullOrWhiteSpace(operationName))
             {
@@ -115,7 +115,7 @@ namespace Diagnostics.DataProviders
             {
                 List<Task<DataTable>> queryTask = new List<Task<DataTable>>();
 
-                if(isPublicCloud)
+                if(IsPublicCloud)
                 {
                     queryTask.Add(ExecuteQuery(query, "waws-prod-bay-153", null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|WestUS"));
                     queryTask.Add(ExecuteQuery(query, "waws-prod-blu-189", null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|EastUS"));
@@ -135,10 +135,14 @@ namespace Diagnostics.DataProviders
                 {
                     if (dt.Rows.Count > 0)
                     {
+                        if(dt.Rows.Count > 3000)
+                        {
+                            throw new Exception($"Query {operationName} returned more than 3000 rows. Please modify the query to fetch fewer rows while running across all app service clusters.");
+                        }
                         mergedTable.Merge(dt, false, MissingSchemaAction.Add);
                     }
                 }
-                return mergedTable;                
+                return mergedTable;
             }
         }
 
