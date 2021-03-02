@@ -380,7 +380,7 @@ namespace Diagnostics.Scripts
                            {
                                 "ERROR : Use of All('TableName') kusto function is not supported.",
                                 "Valid Options:",
-                                "- Use dp.Kusto.ExecuteQueryOnAllAppAppServiceClusters(string query, string requestId = null, string operationName = null) instead."
+                                "- Use dp.Kusto.ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName) instead."
                            });
                     throw new ScriptCompilationException("Use of All('TableName') in kusto query is not allowed. Use dp.Kusto.ExecuteQueryOnAllAppAppServiceClusters instead.");
                 }

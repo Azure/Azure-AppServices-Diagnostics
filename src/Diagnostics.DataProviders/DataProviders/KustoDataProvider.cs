@@ -101,7 +101,7 @@ namespace Diagnostics.DataProviders
             return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName);
         }
 
-        public async Task<DataTable> ExecuteQueryOnAllAppAppServiceClusters(string query, string requestId = null, string operationName = null)
+        public async Task<DataTable> ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName)
         {
             if (string.IsNullOrWhiteSpace(operationName))
             {
@@ -111,39 +111,38 @@ namespace Diagnostics.DataProviders
             {
                 throw new ArgumentNullException(nameof(query), "Query cannot be empty. Please supply a query to execute.");
             }
+
+            List<Task<DataTable>> queryTask = new List<Task<DataTable>>();
+
+            if(IsPublicCloud)
+            {
+                queryTask.Add(ExecuteQuery(query, "waws-prod-bay-153", null, operationName));
+                queryTask.Add(ExecuteQuery(query, "waws-prod-blu-189", null, operationName));
+                queryTask.Add(ExecuteQuery(query, "waws-prod-dm1-187", null, operationName));
+                queryTask.Add(ExecuteQuery(query, "waws-prod-am2-329", null, operationName));
+                queryTask.Add(ExecuteQuery(query, "waws-prod-db3-169", null, operationName));
+                queryTask.Add(ExecuteQuery(query, "waws-prod-hk1-029", null, operationName));
+            }
             else
             {
-                List<Task<DataTable>> queryTask = new List<Task<DataTable>>();
-
-                if(IsPublicCloud)
-                {
-                    queryTask.Add(ExecuteQuery(query, "waws-prod-bay-153", null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|WestUS"));
-                    queryTask.Add(ExecuteQuery(query, "waws-prod-blu-189", null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|EastUS"));
-                    queryTask.Add(ExecuteQuery(query, "waws-prod-dm1-187", null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|CentralUS"));
-                    queryTask.Add(ExecuteQuery(query, "waws-prod-am2-329", null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|WestEurope"));
-                    queryTask.Add(ExecuteQuery(query, "waws-prod-db3-169", null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|NorthEurope"));
-                    queryTask.Add(ExecuteQuery(query, "waws-prod-hk1-029", null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|EastAsia"));
-                }
-                else
-                {
-                    queryTask.Add(ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, null, $"ExecuteQueryOnAllAntaresClusters|{operationName}|{_configuration.CloudDomain}"));
-                }
-
-                var queryResult = await Task.WhenAll(queryTask.ToArray());
-                DataTable mergedTable = new DataTable();
-                foreach (DataTable dt in queryResult)
-                {
-                    if (dt.Rows.Count > 0)
-                    {
-                        if(dt.Rows.Count > 3000)
-                        {
-                            throw new Exception($"Query {operationName} returned more than 3000 rows. Please modify the query to fetch fewer rows while running across all app service clusters.");
-                        }
-                        mergedTable.Merge(dt, false, MissingSchemaAction.Add);
-                    }
-                }
-                return mergedTable;
+                queryTask.Add(ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, null, operationName));
             }
+
+            var queryResult = await Task.WhenAll(queryTask.ToArray());
+            DataTable mergedTable = new DataTable();
+            foreach (DataTable dt in queryResult)
+            {
+                if (dt.Rows.Count > 0)
+                {
+                    if(dt.Rows.Count > 3000)
+                    {
+                        throw new Exception($"Query {operationName} returned more than 3000 rows. Please modify the query to fetch fewer rows while running across all app service clusters.");
+                    }
+                    mergedTable.Merge(dt, false, MissingSchemaAction.Add);
+                }
+            }
+            return mergedTable;
+
         }
 
         public Task<KustoQuery> GetKustoClusterQuery(string query)
