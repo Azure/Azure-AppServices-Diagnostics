@@ -53,12 +53,15 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public bool AllowColumnSearch { get; set; }
 
+        public IEnumerable<TableFilter> TableFilters { get; set; }
+
         public TableRendering() : base(RenderingType.Table)
         {
             DisplayColumnNames = null;
             GroupByColumnName = null;
             DescriptionColumnName = null;
             AllowColumnSearch = false;
+            TableFilters = null;
         }
     }
 
@@ -282,4 +285,22 @@ namespace Diagnostics.ModelsAndUtils.Models
         StackedAreaGraph,
         StackedBarGraph
     }
+
+    public enum FileterSelectionOption
+    {
+        Single = 0,
+        Multiple
+    }
+
+    public class TableFilter
+    {
+        public FileterSelectionOption SelectionOption { get; set; }
+        public string ColumnName { get; set; }
+
+        public TableFilter(string colunmName, FileterSelectionOption selectionOption)
+        {
+            SelectionOption = selectionOption;
+            ColumnName = colunmName;
+        }
+    } 
 }
