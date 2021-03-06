@@ -52,8 +52,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         public dynamic TableOptions { get; set; }
 
         public bool AllowColumnSearch { get; set; }
-
-        public IEnumerable<TableFilter> TableFilters { get; set; }
+        public IEnumerable<TableColumnOption> ColumnOptions { get; set; }
 
         public TableRendering() : base(RenderingType.Table)
         {
@@ -61,7 +60,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             GroupByColumnName = null;
             DescriptionColumnName = null;
             AllowColumnSearch = false;
-            TableFilters = null;
+            ColumnOptions = null;
         }
     }
 
@@ -288,7 +287,8 @@ namespace Diagnostics.ModelsAndUtils.Models
 
     public enum FileterSelectionOption
     {
-        Single = 0,
+        None = 0,
+        Single,
         Multiple
     }
 
@@ -302,5 +302,18 @@ namespace Diagnostics.ModelsAndUtils.Models
             SelectionOption = selectionOption;
             ColumnName = colunmName;
         }
-    } 
+    }
+    
+    public class TableColumnOption
+    {
+        public string Name { get; set; }
+
+        public int MinWidth { get; set; }
+
+        public int MaxWidth { get; set; }
+
+        public FileterSelectionOption SelectionOption { get; set; } = FileterSelectionOption.None;
+
+        public bool Visible { get; set; } = true;
+    }
 }
