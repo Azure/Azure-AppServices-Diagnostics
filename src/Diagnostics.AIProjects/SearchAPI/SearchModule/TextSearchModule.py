@@ -85,7 +85,7 @@ def refreshModel(productId):
         #shutil.rmtree(absPath(path))
         loggerInstance.logInsights(f"{prelogMessage}Verified the new model by loading it. Triggering the switch.")
         loadModel(productId, model=TextSearchModel(os.path.join("SearchModule", productId)))
-        loggerInstance.logInsights(f"{prelogMessage}Successfully refreshed model.")
+        loggerInstance.logInsights(f"{prelogMessage}Successfully refreshed model. Training Id: {loaded_models[productId].trainingId}")
         return "Model Refreshed Successfully"
     except Exception as e:
         #shutil.rmtree(absPath(path))

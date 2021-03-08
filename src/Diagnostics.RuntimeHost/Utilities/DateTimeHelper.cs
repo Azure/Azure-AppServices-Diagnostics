@@ -143,7 +143,14 @@ namespace Diagnostics.RuntimeHost.Utilities
 
             if (endTimeUtc > currentUtcTime.AddMinutes(kustoDelayInMinutes))
             {
-                if (forceAdjustStartAndEndTimes)
+                /* Creteria for adjusting the time here:
+                 *  1. forceAdjustStartAndEndTimes Flag set to True, or
+                 *  2. If Endtime is more than "currentTime - kustoDelay" and is very close the current time.
+                 *          - We got a sev2 incident for this issue where we returned a bunch of BAD Requests to the clients.
+                 *          - This can happen if client machine time is little bit off from the server machine time.
+                 *          - We will only adjust if that offset is no more than 15 mins. If Client machine time is way off than server time, we will throw BAD REQUEST
+                */
+                if (forceAdjustStartAndEndTimes || (currentUtcTime - endTimeUtc).TotalMinutes < 15)
                 {
                     if(endTimeUtc - startTimeUtc < TimeSpan.FromHours(24))
                     {
