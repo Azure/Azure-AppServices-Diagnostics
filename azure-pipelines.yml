@@ -51,22 +51,9 @@ jobs:
       version: 2.2.x
       installationPath: $(Agent.ToolsDirectory)/dotnet
 
-  - task: DotNetCoreCLI@2
+  - task: NuGetAuthenticate@0
     inputs:
-      command: 'restore'
-      projects: '$(solution)'
-      configuration: '$(buildConfiguration)'
-      feedsToUse: 'config'
-      nugetConfigPath: './nuget.config'
-      externalFeedCredentials: 'AzureGenevaMonitoring'
-
-
-  - task: DotNetCoreCLI@2
-    inputs:
-      command: 'build'
-      projects: '$(solution)'
-      configuration: '$(buildConfiguration)'
-
+      nuGetServiceConnections: 'AzureGenevaMonitoring'
   - task: DotNetCoreCLI@2
     inputs:
       command: 'test'
