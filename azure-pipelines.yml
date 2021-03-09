@@ -44,9 +44,6 @@ jobs:
     vmImage: 'windows-latest'
 
   steps:
-  - task: NuGetAuthenticate@0
-    inputs:
-      nuGetServiceConnections: 'AzureGenevaMonitoring'
   - task: UseDotNet@2
     displayName: 'Use .NET Core sdk step'
     inputs:
