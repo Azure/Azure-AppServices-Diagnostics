@@ -56,8 +56,8 @@ jobs:
       command: 'restore'
       projects: '$(solution)'
       configuration: '$(buildConfiguration)'
-      feedsToUse: config
-      nugetConfigPath: NuGet.config
+      feedsToUse: 'config'
+      nugetConfigPath: '**/Diagnostics.DataProviders/NuGet.config'
       externalFeedCredentials: 'AzureGenevaMonitoring'
 
 
