@@ -57,7 +57,7 @@ jobs:
       projects: '$(solution)'
       configuration: '$(buildConfiguration)'
       feedsToUse: 'config'
-      nugetConfigPath: '**/Diagnostics.DataProviders/NuGet.config'
+      nugetConfigPath: '**/NuGet.config'
       externalFeedCredentials: 'AzureGenevaMonitoring'
 
 
