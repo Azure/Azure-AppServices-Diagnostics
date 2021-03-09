@@ -369,6 +369,21 @@ namespace Diagnostics.Scripts
                 {
                     throw new ScriptCompilationException("Detector is marked with both SystemFilter and ResourceFilter. System Invoker should not include any ResourceFilter attribute.");
                 }
+
+                if((this._entityMetaData.ScriptText.Contains("All('") || this._entityMetaData.ScriptText.Contains("All(\"")) && 
+                    (this._resourceFilter.ResourceType == ResourceType.App 
+                    || this._resourceFilter.ResourceType == ResourceType.HostingEnvironment 
+                    || this._resourceFilter.ResourceType == ResourceType.AppServiceCertificate
+                    || this._resourceFilter.ResourceType == ResourceType.AppServiceDomain))
+                {
+                    this.CompilationOutput = this.CompilationOutput.Concat(new string[]
+                           {
+                                "ERROR : Use of All('TableName') kusto function is not supported.",
+                                "Valid Options:",
+                                "- Use dp.Kusto.ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName) instead."
+                           });
+                    throw new ScriptCompilationException("Use of All('TableName') in kusto query is not allowed. Use dp.Kusto.ExecuteQueryOnAllAppAppServiceClusters instead.");
+                }
             }
         }
 
