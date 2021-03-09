@@ -44,15 +44,22 @@ jobs:
     vmImage: 'windows-latest'
 
   steps:
-  - task: NuGetAuthenticate@0
-    inputs:
-      nuGetServiceConnections: 'AzureGenevaMonitoring'
   - task: UseDotNet@2
     displayName: 'Use .NET Core sdk step'
     inputs:
       packageType: sdk
       version: 2.2.x
       installationPath: $(Agent.ToolsDirectory)/dotnet
+
+  - task: DotNetCoreCLI@2
+    inputs:
+      command: 'restore'
+      projects: '$(solution)'
+      configuration: '$(buildConfiguration)'
+      feedsToUse: config
+      nugetConfigPath: NuGet.config
+      externalFeedCredentials: 'AzureGenevaMonitoring'
+
 
   - task: DotNetCoreCLI@2
     inputs:
