@@ -81,8 +81,7 @@ namespace Diagnostics.RuntimeHost.Middleware
         private void BeginRequestHandle(HttpContext httpContext)
         {
             var logger = new ApiMetricsLogger(httpContext);
-            var cTokenSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(60 * 30 * 1000));
-            //var cTokenSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(HostConstants.TimeoutInMilliSeconds));
+            var cTokenSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(HostConstants.TimeoutInMilliSeconds));
 
             httpContext.RequestAborted = cTokenSource.Token;
             httpContext.Request.Headers.TryGetValue(RequestIdHeaderName, out StringValues values);
