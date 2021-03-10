@@ -17,6 +17,7 @@ namespace Diagnostics.DataProviders
         public IAppInsightsDataProvider AppInsights;
         public IChangeAnalysisDataProvider ChangeAnalysis;
         public IAscDataProvider Asc;
+        public IK8SELogAnalyticsDataProvider K8SELogAnalytics;
         public Func<MdmDataSource, IMdmDataProvider> Mdm;
         public Func<GenericMdmDataProviderConfiguration, IMdmDataProvider> MdmGeneric;
 
@@ -39,6 +40,8 @@ namespace Diagnostics.DataProviders
             ChangeAnalysis = GetOrAddDataProvider(new ChangeAnalysisLogDecorator(context, new ChangeAnalysisDataProvider(_cache, context.Configuration.ChangeAnalysisDataProviderConfiguration, context.RequestId, context.clientObjectId, context.clientPrincipalName, Kusto, context.receivedHeaders)));
 
             Asc = GetOrAddDataProvider(new AscLogDecorator(context, new AscDataProvider(_cache, context.Configuration.AscDataProviderConfiguration, context.RequestId, context)));
+
+            K8SELogAnalytics = GetOrAddDataProvider(new K8SELogAnalyticsLogDecorator(context, new K8SELogAnalyticsDataProvider(_cache, context.Configuration.LogAnalyticsConfiguration)));
 
             Mdm = (MdmDataSource ds) =>
             {
