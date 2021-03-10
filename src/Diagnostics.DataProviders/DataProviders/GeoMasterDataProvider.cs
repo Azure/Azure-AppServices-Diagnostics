@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using Diagnostics.Logger;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Diagnostics.DataProviders.Utility;
+using System.Collections.Concurrent;
 
 namespace Diagnostics.DataProviders
 {
@@ -38,7 +39,7 @@ namespace Diagnostics.DataProviders
 
         private const string SecretReplacement = "!!!SECRET-TRAP!!!";
 
-        private Tuple<HttpMethod, string, string, string, string, CancellationToken> HttpRequestTuple = null;
+        private ConcurrentDictionary<string, Tuple<HttpMethod, string, string, string, string, CancellationToken>> HttpRequesstDict = new ConcurrentDictionary<string, Tuple<HttpMethod, string, string, string, string, CancellationToken>>();
 
         public string GeoMasterName { get; }
 
@@ -624,15 +625,19 @@ namespace Diagnostics.DataProviders
 
         private Task<R> PerformHttpRequestWithRetry<R>(HttpMethod method, string path, string queryString, string content, string apiVersion, CancellationToken cancellationToken)
         {
-            //Save params  into tuple temporarly to so to call PerformHttpRequest method without passing params for using RetryHelper
-            HttpRequestTuple = new Tuple<HttpMethod, string, string, string, string, CancellationToken>(method, path, queryString, content, apiVersion, cancellationToken);
-            return RetryHelper.RetryAsync<R>(PerformHttpRequest<R>, "GeoMasterDataProvider", RequestId, _configuration.MaxRetryCount, _configuration.RetryDelayInSeconds * 1000);
+            //Save params  into dict temporarly to so to call PerformHttpRequest method without passing params for using RetryHelper
+            var id = Guid.NewGuid().ToString();
+            HttpRequesstDict.TryAdd(id, new Tuple<HttpMethod, string, string, string, string, CancellationToken>(method, path, queryString, content, apiVersion, cancellationToken));
+            var task = RetryHelper.RetryAsync<R>(PerformHttpRequest<R>, "GeoMasterDataProvider", RequestId, _configuration.MaxRetryCount, _configuration.RetryDelayInSeconds * 1000, id);
+            return task;
         }
 
-        private Task<R> PerformHttpRequest<R>()
+        private Task<R> PerformHttpRequest<R>(string id)
         {
-            var task = PerformHttpRequest<R>(HttpRequestTuple.Item1, HttpRequestTuple.Item2, HttpRequestTuple.Item3, HttpRequestTuple.Item4, HttpRequestTuple.Item5, HttpRequestTuple.Item6);
-            return task;
+            Tuple<HttpMethod, string, string, string, string, CancellationToken> tuple = default;
+            HttpRequesstDict.TryGetValue(id, out tuple);
+
+            return PerformHttpRequest<R>(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4, tuple.Item5, tuple.Item6);
         }
 
         private async Task<R> PerformHttpRequest<R>(HttpMethod method, string path, string queryString, string content, string apiVersion, CancellationToken cancellationToken)

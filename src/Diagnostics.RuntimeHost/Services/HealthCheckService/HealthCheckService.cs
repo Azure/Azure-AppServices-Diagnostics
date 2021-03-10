@@ -64,7 +64,8 @@ namespace Diagnostics.RuntimeHost.Services
             }
         }
 
-        public async Task<bool> HealthCheckPing()
+        //Func which pass into RetryHelper need string as an argument
+        public async Task<bool> HealthCheckPing(string s = "")
         {
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, OutboundConnectivityCheckUrl);
             var response = await Get(request);
@@ -79,7 +80,7 @@ namespace Diagnostics.RuntimeHost.Services
                 if (cache.TryGetValue(OUTBOUND_CONNECTIVITY_CACHE_KEY, out bool outboundConnectivityCheck))
                 {
                     if (outboundConnectivityCheck)
-                    return;
+                        return;
                 }
                 // Else conduct a check and store it in cache
                 bool checkSuccess = await RetryHelper.RetryAsync(HealthCheckPing, "Healthping", "", 3, 100);

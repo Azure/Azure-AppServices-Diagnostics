@@ -7,7 +7,7 @@ namespace Diagnostics.DataProviders.Utility
 {
     public static class RetryHelper
     {
-        public static async Task<TResult> RetryAsync<TResult>(Func<Task<TResult>> taskProvider, string source = "", string requestId = "", int maxRetries = 3, int retryDelayInMs = 500)
+        public static async Task<TResult> RetryAsync<TResult>(Func<string, Task<TResult>> taskProvider, string source = "", string requestId = "", int maxRetries = 3, int retryDelayInMs = 500, string funcId = "")
         {
             int retryCount = 0;
             DateTime taskInvocationStartTime = DateTime.UtcNow;
@@ -28,8 +28,7 @@ namespace Diagnostics.DataProviders.Utility
 
                     taskInvocationStartTime = DateTime.UtcNow;
                     attemptException = null;
-
-                    taskProviderTask = taskProvider();
+                    taskProviderTask = taskProvider(funcId);
                     taskProviderResult = await taskProviderTask;
 
                     break;

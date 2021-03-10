@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using static Diagnostics.Logger.HeaderConstants;
 using Diagnostics.Logger;
 using Diagnostics.DataProviders.Utility;
+using System.Collections.Concurrent;
 
 namespace Diagnostics.DataProviders
 {
@@ -68,9 +69,9 @@ namespace Diagnostics.DataProviders
         public IHeaderDictionary receivedHeaders { get; private set; }
 
         /// <summary>
-        /// Tuple to store PrepareAndSendReques method parameters for using retry
+        /// Dict to store PrepareAndSendReques method parameters for using retry
         /// </summary>
-        private Tuple<string, object, HttpMethod> sendRequestTuple;
+        private ConcurrentDictionary<string, Tuple<string, object, HttpMethod>> sendRequestDict = new ConcurrentDictionary<string, Tuple<string, object, HttpMethod>>();
 
         /// <summary>
         /// Change Analysis Configration
@@ -80,7 +81,7 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// Initializes a new instance of the <see cref="ChangeAnalysisClient"/> class.
         /// </summary>
-        public ChangeAnalysisClient(ChangeAnalysisDataProviderConfiguration configuration, string requestTrackingId, string clientObjectId,  IHeaderDictionary incomingRequestHeaders, string clientPrincipalName = "")
+        public ChangeAnalysisClient(ChangeAnalysisDataProviderConfiguration configuration, string requestTrackingId, string clientObjectId, IHeaderDictionary incomingRequestHeaders, string clientPrincipalName = "")
         {
             clientObjectIdHeader = clientObjectId;
             clientPrincipalNameHeader = clientPrincipalName;
@@ -331,41 +332,41 @@ namespace Diagnostics.DataProviders
             }
 
             string clientIssuer = string.Empty;
-            if(receivedHeaders.ContainsKey(ClientIssuerHeader))
+            if (receivedHeaders.ContainsKey(ClientIssuerHeader))
             {
                 clientIssuer = receivedHeaders[ClientIssuerHeader];
             }
-            if(!string.IsNullOrWhiteSpace(clientIssuer))
+            if (!string.IsNullOrWhiteSpace(clientIssuer))
             {
                 requestMessage.Headers.Add(ClientIssuerHeader, clientIssuer);
             }
 
             string clientPuid = string.Empty;
-            if(receivedHeaders.ContainsKey(ClientPuidHeader))
+            if (receivedHeaders.ContainsKey(ClientPuidHeader))
             {
                 clientPuid = receivedHeaders[ClientPuidHeader];
             }
-            if(!string.IsNullOrWhiteSpace(clientPuid))
+            if (!string.IsNullOrWhiteSpace(clientPuid))
             {
                 requestMessage.Headers.Add(ClientPuidHeader, clientPuid);
             }
 
             string clientAltSecId = string.Empty;
-            if(receivedHeaders.ContainsKey(ClientAltSecIdHeader))
+            if (receivedHeaders.ContainsKey(ClientAltSecIdHeader))
             {
                 clientAltSecId = receivedHeaders[ClientAltSecIdHeader];
             }
-            if(!string.IsNullOrWhiteSpace(clientAltSecId))
+            if (!string.IsNullOrWhiteSpace(clientAltSecId))
             {
                 requestMessage.Headers.Add(ClientAltSecIdHeader, clientAltSecId);
             }
 
             string clientIdentityProvider = string.Empty;
-            if(receivedHeaders.ContainsKey(ClientIdentityProviderHeader))
+            if (receivedHeaders.ContainsKey(ClientIdentityProviderHeader))
             {
                 clientIdentityProvider = receivedHeaders[ClientIdentityProviderHeader];
             }
-            if(!string.IsNullOrWhiteSpace(clientIdentityProvider))
+            if (!string.IsNullOrWhiteSpace(clientIdentityProvider))
             {
                 requestMessage.Headers.Add(ClientIdentityProviderHeader, clientIdentityProvider);
             }
@@ -390,15 +391,18 @@ namespace Diagnostics.DataProviders
             return content;
         }
 
-        private Task<string> PrepareAndSendRequest()
+        private Task<string> PrepareAndSendRequest(string id)
         {
-            return PrepareAndSendRequest(sendRequestTuple.Item1,sendRequestTuple.Item2,sendRequestTuple.Item3);
+            Tuple<string, object, HttpMethod> sendRequestTuple = default;
+            sendRequestDict.TryGetValue(id, out sendRequestTuple);
+            return PrepareAndSendRequest(sendRequestTuple.Item1, sendRequestTuple.Item2, sendRequestTuple.Item3);
         }
 
         public Task<string> PrepareAndSendRequestWithRetry(string requestUri, object postBody = null, HttpMethod httpMethod = null)
         {
-            sendRequestTuple = new Tuple<string, object, HttpMethod>(requestUri, postBody, httpMethod);
-            return RetryHelper.RetryAsync<string>(PrepareAndSendRequest, "ChangeAnalysisClient", requestId, config.MaxRetryCount, config.RetryDelayInSeconds * 1000);
+            string id = Guid.NewGuid().ToString();
+            sendRequestDict.TryAdd(id, new Tuple<string, object, HttpMethod>(requestUri, postBody, httpMethod));
+            return RetryHelper.RetryAsync<string>(PrepareAndSendRequest, "ChangeAnalysisClient", requestId, config.MaxRetryCount, config.RetryDelayInSeconds * 1000, id);
         }
     }
 }
