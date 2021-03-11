@@ -275,7 +275,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         ///<summary>
         /// Notification component
         ///</summary>
-        Notification
+        Notification,
+
+        ///<summary>
+        /// Data rendered as tabs
+        ///</summary>
+        Tab,
     }
 
     /// <summary>
