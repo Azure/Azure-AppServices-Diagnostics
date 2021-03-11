@@ -27,7 +27,7 @@ namespace Diagnostics.DataProviders
             int cursor = 0;
             foreach (var i in results.Tables[0].Columns)
             {
-                dataTable.Columns.Add($"column{cursor++}");
+                dataTable.Columns.Add(results.Tables[0].Columns[cursor++].Name);
             }
 
             int iCursor = 0;
@@ -39,7 +39,7 @@ namespace Diagnostics.DataProviders
                 jCursor = 0;
                 foreach (var j in results.Tables[0].Columns)
                 {
-                    row[$"column{jCursor}"] = results.Tables[0].Rows[iCursor][jCursor++];
+                    row[results.Tables[0].Columns[jCursor].Name] = results.Tables[0].Rows[iCursor][jCursor++];
                 }
                 iCursor++;
 
