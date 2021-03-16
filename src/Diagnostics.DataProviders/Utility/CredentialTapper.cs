@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Diagnostics.RuntimeHost.Utilities
+namespace Diagnostics.DataProviders
 {
     /// <summary>
     /// Traps potential creds and obfuscate them.

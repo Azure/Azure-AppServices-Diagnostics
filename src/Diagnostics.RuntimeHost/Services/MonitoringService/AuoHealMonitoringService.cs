@@ -1,4 +1,5 @@
-﻿using Diagnostics.Logger;
+﻿using Diagnostics.DataProviders;
+using Diagnostics.Logger;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
