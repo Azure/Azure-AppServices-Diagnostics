@@ -34,7 +34,6 @@ namespace Diagnostics.RuntimeHost.Services
             isEnabled = configuration.GetValue("AutoHealMonitoringSettings:IsEnabled", true);
             iterationDelayInSeconds = configuration.GetValue("AutoHealMonitoringSettings:IterationDelayInSeconds", 30 * 60);
             appHostConfigFilePath = Environment.GetEnvironmentVariable("APP_POOL_CONFIG");
-            DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("In AuoHealMonitoringService constructor");
 
             if (!environment.IsDevelopment() && isEnabled)
             {
@@ -49,7 +48,6 @@ namespace Diagnostics.RuntimeHost.Services
             {
                 try
                 {
-                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("Starting Auto Heal settings logger");
                     string appHostConfig = await File.ReadAllTextAsync(appHostConfigFilePath);
                     XDocument xDoc = XDocument.Parse(appHostConfig);
                     var configuration = xDoc.Element("configuration");
@@ -57,12 +55,10 @@ namespace Diagnostics.RuntimeHost.Services
 
                     bool isAutoHealEnabled = IsAutoHealEnabled(monitoringSection);
                     string autohealSettings = monitoringSection == default(XElement) ? "None" : CredentialTrapper.Obfuscate(monitoringSection.ToString());
-                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"AutoHealSettings Enabled : {isAutoHealEnabled}");
                     DiagnosticsETWProvider.Instance.LogMonitoringEventMessage("AutoHealSettings", $"Enabled : {isAutoHealEnabled}, Settings : {autohealSettings}");
                 }
                 catch (Exception ex)
                 {
-                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"AutoHealSettings Exception : {ex.ToString()}");
                     DiagnosticsETWProvider.Instance.LogMonitoringEventException("AutoHealSettings", "Unable to fetch auto-heal settings", ex.GetType().ToString(), ex.ToString());
                 }
                 finally
