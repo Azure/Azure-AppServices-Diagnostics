@@ -34,6 +34,10 @@ namespace Diagnostics.RuntimeHost.Services
             isEnabled = configuration.GetValue("AutoHealMonitoringSettings:IsEnabled", true);
             iterationDelayInSeconds = configuration.GetValue("AutoHealMonitoringSettings:IterationDelayInSeconds", 30 * 60);
             appHostConfigFilePath = Environment.GetEnvironmentVariable("APP_POOL_CONFIG");
+            if (string.IsNullOrWhiteSpace(appHostConfigFilePath))
+            {
+                appHostConfigFilePath = Path.Combine(Environment.GetEnvironmentVariable("SystemDrive"), @"Local\Config\applicationhost.config");
+            }
 
             if (!environment.IsDevelopment() && isEnabled)
             {
