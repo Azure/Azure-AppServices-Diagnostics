@@ -16,7 +16,7 @@ namespace Diagnostics.DataProviders
 
         public AscDataProviderConfiguration AscDataProviderConfiguration { get; set; }
 
-        public K8SELogAnalyticsDataProviderConfiguration LogAnalyticsConfiguration { get; set; }
+        public K8SELogAnalyticsDataProviderConfiguration K8SELogAnalyticsConfiguration { get; set; }
 
         public AntaresMdmDataProviderConfiguration AntaresMdmConfiguration { get; set; }
 

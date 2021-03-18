@@ -6,6 +6,7 @@ using Microsoft.Rest.Azure.Authentication;
 using System;
 using System.Data;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders.TokenService;
 
 namespace Diagnostics.DataProviders
 {
@@ -13,10 +14,59 @@ namespace Diagnostics.DataProviders
     {
         private K8SELogAnalyticsDataProviderConfiguration _configuration;
 
+        private K8SETokenService _tokenService;
+
+        /*private string workspaceId;
+        private string clientId;
+        private string clientSecret;
+
+        private string domain;
+        private string authEndpoint;
+        private string tokenAudience;
+
+        private ActiveDirectoryServiceSettings adSettings;
+        private Microsoft.Rest.ServiceClientCredentials creds;*/
+
         public K8SELogAnalyticsClient(K8SELogAnalyticsDataProviderConfiguration configuration)
         {
             _configuration = configuration;
+            K8SETokenService.Instance.Initialize(_configuration);
+
+            /*workspaceId = _configuration.WorkspaceId;
+            clientId = _configuration.ClientId;
+            clientSecret = _configuration.ClientSecret;
+
+            domain = _configuration.Domain;
+            authEndpoint = _configuration.AuthEndpoint;
+            tokenAudience = _configuration.TokenAudience;*/
+
         }
+
+        public async Task<DataTable> ExecuteQueryAsync(string query)
+        {
+            /*creds = await ApplicationTokenProvider.LoginSilentAsync(domain, clientId, clientSecret, adSettings);
+
+            adSettings = new ActiveDirectoryServiceSettings
+            {
+                AuthenticationEndpoint = new Uri(authEndpoint),
+                TokenAudience = new Uri(tokenAudience),
+                ValidateAuthority = true
+            };*/
+            /*var client = new OperationalInsightsDataClient(_tokenService.GetCreds());
+            client.WorkspaceId = _tokenService.GetWorkspaceId();*/
+
+            var queryResults = await K8SETokenService.Instance.GetClient().QueryAsync(query);
+
+            var dataTable = ResultAsDataTable(queryResults);
+
+            return dataTable;
+        }
+
+        //assign creds asynchronously
+        /*private async Task GetCredsAsync()
+        {
+            creds = await ApplicationTokenProvider.LoginSilentAsync(domain, clientId, clientSecret, adSettings);
+        }*/
 
         //convert results to DataTable
         private DataTable ResultAsDataTable(Microsoft.Azure.OperationalInsights.Models.QueryResults results)
@@ -48,37 +98,6 @@ namespace Diagnostics.DataProviders
             }
 
             return dataTable;
-        }
-
-        public Task<DataTable> ExecuteQueryAsync(string query)
-        {
-            var workspaceId = "ac5995da-1be5-43b8-942f-64823ec16600";
-            var clientId = "12a0e393-3c1c-4aa2-ac43-2a2ad31da45a";
-            var clientSecret = "~j~9K1U2-cppnOVD..~.5y.FlyB6QJ7yv7";
-
-            var domain = "microsoft.onmicrosoft.com";
-            var authEndpoint = "https://login.microsoftonline.com";
-            var tokenAudience = "https://api.loganalytics.io/";
-
-            var adSettings = new ActiveDirectoryServiceSettings
-            {
-                AuthenticationEndpoint = new Uri(authEndpoint),
-                TokenAudience = new Uri(tokenAudience),
-                ValidateAuthority = true
-            };
-
-            var creds = ApplicationTokenProvider.LoginSilentAsync(domain, clientId, clientSecret, adSettings).GetAwaiter().GetResult();
-
-            var client = new OperationalInsightsDataClient(creds);
-            client.WorkspaceId = workspaceId;
-
-            var queryResults = client.Query(query);
-
-            var dataTable = ResultAsDataTable(queryResults);
-
-            Task<DataTable> task = Task.FromResult<DataTable>(dataTable);
-
-            return task;
         }
     }
 }
