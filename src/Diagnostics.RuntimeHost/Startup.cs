@@ -185,7 +185,6 @@ namespace Diagnostics.RuntimeHost
             var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;
             var kustoConfiguration = dataSourcesConfigService.Config.KustoConfiguration;
             var searchApiConfiguration = dataSourcesConfigService.Config.SearchServiceProviderConfiguration;
-            var k8SELogAnalyticsConfiguration = dataSourcesConfigService.Config.K8SELogAnalyticsConfiguration;
 
             services.AddSingleton<IKustoHeartBeatService>(new KustoHeartBeatService(kustoConfiguration));
     
@@ -218,11 +217,6 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<ISearchService, SearchService>();
                 SearchServiceTokenService.Instance.Initialize(dataSourcesConfigService.Config.SearchServiceProviderConfiguration);
-            }
-
-            if (Configuration.GetValue("K8SELogAnalytics:Enabled", true))
-            {
-                K8SELogAnalyticsTokenService.Instance.Initialize(dataSourcesConfigService.Config.K8SELogAnalyticsConfiguration);
             }
             else
             {
