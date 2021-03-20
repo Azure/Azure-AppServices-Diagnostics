@@ -7,6 +7,7 @@ using System;
 using System.Data;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders.TokenService;
+using System.Diagnostics;
 
 namespace Diagnostics.DataProviders
 {
@@ -22,10 +23,30 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteQueryAsync(string query)
         {
-            var queryResults = await K8SELogAnalyticsTokenService.Instance.GetClient().QueryAsync(query);
+            var timeTakenStopWatch = new Stopwatch();
+            Microsoft.Azure.OperationalInsights.Models.QueryResults queryResults;
 
+
+            try
+            {
+                timeTakenStopWatch.Start();
+                queryResults = await K8SELogAnalyticsTokenService.Instance.GetClient().QueryAsync(query);
+            }
+            catch (Exception ex)
+            {
+                timeTakenStopWatch.Stop();
+                throw;
+            }
+            finally
+            {
+                timeTakenStopWatch.Stop();
+            }
+
+            if (queryResults == null)
+            {
+                queryResults = new Microsoft.Azure.OperationalInsights.Models.QueryResults();
+            }
             var dataTable = ResultAsDataTable(queryResults);
-
             return dataTable;
         }
 
