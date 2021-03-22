@@ -9,7 +9,7 @@ private static string GetQuery(OperationContext<AzureCosmosDB> cxt)
         | <YOUR_QUERY>";
 }
 
-[AzureCosmosDBFilter]
+[ArmResourceFilter(provider: "Microsoft.DocumentDB", resourceTypeName: "databaseAccounts")]
 [Definition(Id = "<YOUR_DETECTOR_ID>", Name = "", Author = "<YOUR_ALIAS>", Description = "")]
 public async static Task<Response> Run(DataProviders dp, OperationContext<AzureCosmosDB> cxt, Response res)
 {
