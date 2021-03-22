@@ -4,7 +4,7 @@ private static string GetQuery(OperationContext<AzureCosmosDB> cxt)
     $@"
         let startTime = datetime({cxt.StartTime});
         let endTime = datetime({cxt.EndTime});
-        cluster('Aks').database('AKSprod').<YOUR_TABLE_NAME>
+        cluster('CdbSupport').database('Support').<YOUR_TABLE_NAME>
         | where Timestamp >= startTime and Timestamp <= endTime
         | <YOUR_QUERY>";
 }
