@@ -81,7 +81,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                     section.IsExpanded.ToString()
                 }); ;
             }
-            
+
             var diagData = new DiagnosticData()
             {
                 Table = table,
@@ -134,7 +134,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </example>
         public static DiagnosticData AddSection(this Response response, Response data, string title = "", bool isExpand = true)
         {
-            return AddSection(response, new Section(data,title,isExpand));
+            return AddSection(response, new Section(data, title, isExpand));
         }
     }
 }
