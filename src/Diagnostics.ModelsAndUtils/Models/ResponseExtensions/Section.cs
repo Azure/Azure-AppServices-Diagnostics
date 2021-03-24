@@ -26,10 +26,10 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// create an instance of Section class
         /// </summary>
-        /// <param name="data"> </param>
         /// <param name="title">Section Title</param>
+        /// <param name="data">Inner Response under this section</param>
         /// <param name="isExpanded">Default expand state of section</param>
-        public Section(Response data, string title = "", bool isExpanded = true)
+        public Section(string title, Response data, bool isExpanded = true)
         {
             Title = title;
             Data = data;
