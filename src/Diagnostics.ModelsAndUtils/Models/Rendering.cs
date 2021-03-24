@@ -281,6 +281,11 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// Data rendered as tabs
         ///</summary>
         Tab,
+
+        /// <summary>
+        /// Data Rendered as section
+        /// </summary>
+        Section
     }
 
     /// <summary>
