@@ -17,17 +17,15 @@ namespace Diagnostics.DataProviders
 
     public class KustoHeartBeatService : IKustoHeartBeatService
     {
-        private KustoDataProviderConfiguration _configuration;
-        private ConcurrentDictionary<string, KustoHeartBeat> _heartbeats;
-        private KustoDataProvider _kustoDataProvider;
-        private CancellationTokenSource _cancellationToken;
-        private bool runHeartBeatQuery;
+        private readonly KustoDataProviderConfiguration _configuration;
+        private readonly ConcurrentDictionary<string, KustoHeartBeat> _heartbeats;
+        private readonly KustoDataProvider _kustoDataProvider;
+        private readonly CancellationTokenSource _cancellationToken;
+        private readonly bool runHeartBeatQuery;
 
         private void Initialize()
         {
-            _heartbeats = new ConcurrentDictionary<string, KustoHeartBeat>();
-            _kustoDataProvider = new KustoDataProvider(new OperationDataCache(), _configuration, Guid.NewGuid().ToString(), this);
-            _cancellationToken = new CancellationTokenSource();
+            DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("KustoHeartBeatService.Initialize()");
 
             foreach (var primaryCluster in _configuration.RegionSpecificClusterNameCollection.Values)
             {
@@ -44,16 +42,19 @@ namespace Diagnostics.DataProviders
             }
         }
 
-
         public void Dispose()
         {
-            DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Disposing KustoHeartBeatService");
+            DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("Disposing KustoHeartBeatService");
             _cancellationToken.Cancel();
         }
 
         public KustoHeartBeatService(KustoDataProviderConfiguration configuration)
         {
             _configuration = configuration;
+            _heartbeats = new ConcurrentDictionary<string, KustoHeartBeat>();
+            _kustoDataProvider = new KustoDataProvider(new OperationDataCache(), _configuration, Guid.NewGuid().ToString(), this);
+            _cancellationToken = new CancellationTokenSource();
+
             runHeartBeatQuery = _configuration.EnableHeartBeatQuery;
             Initialize();
         }
@@ -75,6 +76,8 @@ namespace Diagnostics.DataProviders
             {
                 if(_configuration.CloudDomain == DataProviderConstants.AzureCloud)
                 {
+                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"{appserviceRegion} wasn't found in region mappings. Populating mappings from kusto.");
+
                     try
                     {
                          DataTable regionMappings = await _kustoDataProvider.ExecuteClusterQuery($"cluster('wawseusfollower').database('wawsprod').WawsAn_regionsincluster | where pdate >= ago(5d) | summarize by Region, ClusterName = replace('follower', '', ClusterName)", "RegionMappingInit");
@@ -82,8 +85,10 @@ namespace Diagnostics.DataProviders
                         {
                             foreach (DataRow dr in regionMappings.Rows)
                             {
-                                _configuration.RegionSpecificClusterNameCollection.TryAdd(((string)dr["Region"]).ToLower(), $"{((string)dr["ClusterName"])}follower");
-                                _configuration.FailoverClusterNameCollection.TryAdd(((string)dr["Region"]).ToLower(), (string)dr["ClusterName"]);
+                                var regionName = ((string)dr["Region"]).ToLower();
+                                var clusterName = (string)dr["ClusterName"];
+                                _configuration.RegionSpecificClusterNameCollection.TryAdd(regionName, clusterName + "follower");
+                                _configuration.FailoverClusterNameCollection.TryAdd(regionName, clusterName);
                             }
                         }
                     }
