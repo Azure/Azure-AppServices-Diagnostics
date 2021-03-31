@@ -110,10 +110,13 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public string SelectedInstance { get; set; }
 
+        public bool ShowMetrics { get; set; }
+
         public TimeSeriesPerInstanceRendering() : base(RenderingType.TimeSeriesPerInstance)
         {
             DefaultValue = 0;
             GraphType = TimeSeriesType.LineGraph;
+            ShowMetrics = false;
         }
     }
 
