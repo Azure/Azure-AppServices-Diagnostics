@@ -68,10 +68,6 @@ namespace Diagnostics.DataProviders
         /// </summary>
         public IHeaderDictionary receivedHeaders { get; private set; }
 
-        /// <summary>
-        /// Dict to store PrepareAndSendReques method parameters for using retry
-        /// </summary>
-        private ConcurrentDictionary<string, Tuple<string, object, HttpMethod>> sendRequestDict = new ConcurrentDictionary<string, Tuple<string, object, HttpMethod>>();
 
         /// <summary>
         /// Change Analysis Configration
@@ -391,18 +387,31 @@ namespace Diagnostics.DataProviders
             return content;
         }
 
-        private Task<string> PrepareAndSendRequest(string id)
+        private Task<string> PrepareAndSendRequest(object obj)
         {
-            Tuple<string, object, HttpMethod> sendRequestTuple = default;
-            sendRequestDict.TryGetValue(id, out sendRequestTuple);
-            return PrepareAndSendRequest(sendRequestTuple.Item1, sendRequestTuple.Item2, sendRequestTuple.Item3);
+            var param = (ChangeAnalysisRetryParam)obj;
+            return PrepareAndSendRequest(param.RequestUri, param.PostBody, param.HttpMethod);
         }
 
         public Task<string> PrepareAndSendRequestWithRetry(string requestUri, object postBody = null, HttpMethod httpMethod = null)
         {
-            string id = Guid.NewGuid().ToString();
-            sendRequestDict.TryAdd(id, new Tuple<string, object, HttpMethod>(requestUri, postBody, httpMethod));
-            return RetryHelper.RetryAsync<string>(PrepareAndSendRequest, "ChangeAnalysisClient", requestId, config.MaxRetryCount, config.RetryDelayInSeconds * 1000, id);
+
+            var param = new ChangeAnalysisRetryParam()
+            {
+                RequestUri = requestUri,
+                PostBody = postBody,
+                HttpMethod = httpMethod
+            };
+            return RetryHelper.RetryAsync<string>(PrepareAndSendRequest, param, "ChangeAnalysisClient", requestId, config.MaxRetryCount, config.RetryDelayInSeconds * 1000);
+        }
+
+
+        class ChangeAnalysisRetryParam
+        {
+            public string RequestUri { get; set; }
+            public object PostBody { get; set; }
+
+            public HttpMethod HttpMethod { get; set; }
         }
     }
 }

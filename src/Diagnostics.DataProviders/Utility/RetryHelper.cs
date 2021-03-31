@@ -7,7 +7,18 @@ namespace Diagnostics.DataProviders.Utility
 {
     public static class RetryHelper
     {
-        public static async Task<TResult> RetryAsync<TResult>(Func<string, Task<TResult>> taskProvider, string source = "", string requestId = "", int maxRetries = 3, int retryDelayInMs = 500, string funcId = "")
+        public static async Task<TResult> RetryAsync<TResult>(Func<object, Task<TResult>> taskProvider, object funcParam, string source = "", string requestId = "", int maxRetries = 3, int retryDelayInMs = 500)
+        {
+            return await RetryAsyncBasic<TResult>(taskProvider, source, requestId, maxRetries, retryDelayInMs,funcParam);
+        }
+
+        public static async Task<TResult> RetryAsync<TResult>(Func<Task<TResult>> taskProvider, string source = "", string requestId = "", int maxRetries = 3, int retryDelayInMs = 500)
+        {
+            return await RetryAsyncBasic<TResult>(taskProvider, source, requestId, maxRetries, retryDelayInMs);
+        }
+
+
+        private static async Task<TResult> RetryAsyncBasic<TResult>(dynamic taskProvider, string source = "", string requestId = "", int maxRetries = 3, int retryDelayInMs = 500, object funcParam = null)
         {
             int retryCount = 0;
             DateTime taskInvocationStartTime = DateTime.UtcNow;
@@ -28,7 +39,14 @@ namespace Diagnostics.DataProviders.Utility
 
                     taskInvocationStartTime = DateTime.UtcNow;
                     attemptException = null;
-                    taskProviderTask = taskProvider(funcId);
+                    
+                    if(funcParam == null)
+                    {
+                        taskProviderTask = taskProvider();
+                    }else
+                    {
+                        taskProviderTask = taskProvider(funcParam);
+                    }
                     taskProviderResult = await taskProviderTask;
 
                     break;

@@ -64,8 +64,7 @@ namespace Diagnostics.RuntimeHost.Services
             }
         }
 
-        //Func which pass into RetryHelper need string as an argument
-        public async Task<bool> HealthCheckPing(string s = "")
+        public async Task<bool> HealthCheckPing()
         {
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, OutboundConnectivityCheckUrl);
             var response = await Get(request);

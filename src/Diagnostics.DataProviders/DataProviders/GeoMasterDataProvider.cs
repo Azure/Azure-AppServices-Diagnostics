@@ -39,8 +39,6 @@ namespace Diagnostics.DataProviders
 
         private const string SecretReplacement = "!!!SECRET-TRAP!!!";
 
-        private ConcurrentDictionary<string, Tuple<HttpMethod, string, string, string, string, CancellationToken>> HttpRequesstDict = new ConcurrentDictionary<string, Tuple<HttpMethod, string, string, string, string, CancellationToken>>();
-
         public string GeoMasterName { get; }
 
         public string RequestId { get; set; }
@@ -625,19 +623,24 @@ namespace Diagnostics.DataProviders
 
         private Task<R> PerformHttpRequestWithRetry<R>(HttpMethod method, string path, string queryString, string content, string apiVersion, CancellationToken cancellationToken)
         {
-            //Save params  into dict temporarly to so to call PerformHttpRequest method without passing params for using RetryHelper
-            var id = Guid.NewGuid().ToString();
-            HttpRequesstDict.TryAdd(id, new Tuple<HttpMethod, string, string, string, string, CancellationToken>(method, path, queryString, content, apiVersion, cancellationToken));
-            var task = RetryHelper.RetryAsync<R>(PerformHttpRequest<R>, "GeoMasterDataProvider", RequestId, _configuration.MaxRetryCount, _configuration.RetryDelayInSeconds * 1000, id);
+            var param = new GeoMasterRetryParam()
+            {
+                HttpMethod = method,
+                Path = path,
+                QueryString = queryString,
+                Content = content,
+                ApiVersion = apiVersion,
+                CancellationToken = cancellationToken
+            };
+            
+            var task = RetryHelper.RetryAsync<R>(PerformHttpRequest<R>,param, "GeoMasterDataProvider", RequestId, _configuration.MaxRetryCount, _configuration.RetryDelayInSeconds * 1000);
             return task;
         }
 
-        private Task<R> PerformHttpRequest<R>(string id)
+        private Task<R> PerformHttpRequest<R>(object obj)
         {
-            Tuple<HttpMethod, string, string, string, string, CancellationToken> tuple = default;
-            HttpRequesstDict.TryGetValue(id, out tuple);
-
-            return PerformHttpRequest<R>(tuple.Item1, tuple.Item2, tuple.Item3, tuple.Item4, tuple.Item5, tuple.Item6);
+            var param = (GeoMasterRetryParam)obj;
+            return PerformHttpRequest<R>(param.HttpMethod,param.Path,param.QueryString,param.Content,param.ApiVersion,param.CancellationToken);
         }
 
         private async Task<R> PerformHttpRequest<R>(HttpMethod method, string path, string queryString, string content, string apiVersion, CancellationToken cancellationToken)
@@ -772,6 +775,15 @@ namespace Diagnostics.DataProviders
             }
 
             return result ?? await base.CheckHealthAsync(cancellationToken);
+        }
+
+        class GeoMasterRetryParam {
+            public HttpMethod HttpMethod { get; set; }
+            public string Path { get; set; }
+            public string QueryString { get; set; }
+            public string Content { get; set; }
+            public string ApiVersion { get; set; }
+            public CancellationToken CancellationToken { get; set; }
         }
     }
 }
