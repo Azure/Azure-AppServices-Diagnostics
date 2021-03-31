@@ -41,7 +41,7 @@ namespace Diagnostics.DataProviders
 
             Asc = GetOrAddDataProvider(new AscLogDecorator(context, new AscDataProvider(_cache, context.Configuration.AscDataProviderConfiguration, context.RequestId, context)));
 
-            K8SELogAnalytics = GetOrAddDataProvider(new K8SELogAnalyticsLogDecorator(context, new K8SELogAnalyticsDataProvider(_cache, context.Configuration.K8SELogAnalyticsConfiguration)));
+            K8SELogAnalytics = GetOrAddDataProvider(new K8SELogAnalyticsLogDecorator(context, new K8SELogAnalyticsDataProvider(_cache, context.Configuration.K8SELogAnalyticsConfiguration, context.RequestId)));
 
             Mdm = (MdmDataSource ds) =>
             {

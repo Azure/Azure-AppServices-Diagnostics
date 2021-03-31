@@ -8,50 +8,76 @@ using System.Data;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders.TokenService;
 using System.Diagnostics;
+using Microsoft.Azure.OperationalInsights.Models;
+using Diagnostics.Logger;
 
 namespace Diagnostics.DataProviders
 {
     class K8SELogAnalyticsClient : IK8SELogAnalyticsClient
     {
-        private K8SELogAnalyticsDataProviderConfiguration _configuration;
+        private Microsoft.Rest.ServiceClientCredentials creds;
+        private string workspaceId;
+        private static OperationalInsightsDataClient client;
+        private string _requestId;
 
-        public K8SELogAnalyticsClient(K8SELogAnalyticsDataProviderConfiguration configuration)
+        public K8SELogAnalyticsClient(string RequestId)
         {
-            _configuration = configuration;
-            K8SELogAnalyticsTokenService.Instance.Initialize(_configuration);
+            creds = K8SELogAnalyticsTokenService.Instance.getCreds();
+            workspaceId = K8SELogAnalyticsTokenService.Instance.getWorkspaceId();
+            client = new OperationalInsightsDataClient(creds);
+            client.WorkspaceId = workspaceId;
+            _requestId = RequestId;
         }
 
         public async Task<DataTable> ExecuteQueryAsync(string query)
         {
             var timeTakenStopWatch = new Stopwatch();
-            Microsoft.Azure.OperationalInsights.Models.QueryResults queryResults;
-
+            QueryResults queryResults;
+            Exception dataProviderException = null;
+            //check query
 
             try
             {
                 timeTakenStopWatch.Start();
-                queryResults = await K8SELogAnalyticsTokenService.Instance.GetClient().QueryAsync(query);
+                queryResults = await client.QueryAsync(query);
             }
             catch (Exception ex)
             {
-                timeTakenStopWatch.Stop();
+                dataProviderException = ex;
                 throw;
             }
             finally
             {
                 timeTakenStopWatch.Stop();
+                var StopTime = DateTime.Now;
+                var StartTime = StopTime.AddMilliseconds(-timeTakenStopWatch.ElapsedMilliseconds);
+
+                if (dataProviderException != null)
+                {
+                    DiagnosticsETWProvider.Instance.LogDataProviderException(_requestId, 
+                        "K8SELogAnalyticsDataProvider", StartTime.ToString("HH:mm:ss.fff"),
+                        StopTime.ToString("HH:mm:ss.fff"), timeTakenStopWatch.ElapsedMilliseconds,
+                        dataProviderException.GetType().ToString(), dataProviderException.ToString());
+                }
+                else
+                {
+                    DiagnosticsETWProvider.Instance.LogDataProviderOperationSummary(_requestId,
+                        "K8SELogAnalyticsDataProvider", StartTime.ToString("HH:mm:ss.fff"),
+                        StopTime.ToString("HH:mm:ss.fff"), timeTakenStopWatch.ElapsedMilliseconds);
+                }
+
             }
 
             if (queryResults == null)
             {
-                queryResults = new Microsoft.Azure.OperationalInsights.Models.QueryResults();
+                queryResults = new QueryResults();
             }
             var dataTable = ResultAsDataTable(queryResults);
             return dataTable;
         }
 
         //convert results to DataTable
-        private DataTable ResultAsDataTable(Microsoft.Azure.OperationalInsights.Models.QueryResults results)
+        private DataTable ResultAsDataTable(QueryResults results)
         {
             DataTable dataTable = new DataTable("results");
             dataTable.Clear();

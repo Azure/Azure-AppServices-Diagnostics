@@ -6,10 +6,11 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Rest;
 
 namespace Diagnostics.DataProviders.TokenService
 {
-    class K8SELogAnalyticsTokenService : LogAnalyticsTokenServiceBase
+    public class K8SELogAnalyticsTokenService : LogAnalyticsTokenServiceBase
     {
         private static readonly Lazy<K8SELogAnalyticsTokenService> instance = new Lazy<K8SELogAnalyticsTokenService>(() => new K8SELogAnalyticsTokenService());
         public static K8SELogAnalyticsTokenService Instance => instance.Value;
@@ -23,17 +24,12 @@ namespace Diagnostics.DataProviders.TokenService
         protected override string tokenAudience { get; set; }
 
         protected override ActiveDirectoryServiceSettings adSettings { get; set; }
-        protected override Microsoft.Rest.ServiceClientCredentials creds { get; set; }
+        protected override ServiceClientCredentials creds { get; set; }
 
         protected override OperationalInsightsDataClient client { get; set; }
 
 
         protected override string TokenServiceName { get; set; }
-
-        public OperationalInsightsDataClient GetClient()
-        {
-            return client;
-        }
 
         public void Initialize(K8SELogAnalyticsDataProviderConfiguration k8SELogAnalyticsDataProviderConfiguration)
         {

@@ -11,16 +11,10 @@ namespace Diagnostics.DataProviders
 {
     public class K8SELogAnalyticsDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IK8SELogAnalyticsDataProvider
     {
-        private K8SELogAnalyticsDataProviderConfiguration _configuration;
         private IK8SELogAnalyticsClient _K8SELogAnalyticsClient;
-        public K8SELogAnalyticsDataProvider(OperationDataCache cache, K8SELogAnalyticsDataProviderConfiguration configuration) : base(cache, configuration)
+        public K8SELogAnalyticsDataProvider(OperationDataCache cache, K8SELogAnalyticsDataProviderConfiguration configuration, string RequestId) : base(cache, configuration)
         {
-            _configuration = configuration;
-            _K8SELogAnalyticsClient = new K8SELogAnalyticsClient(_configuration);
-            //Metadata = new DataProviderMetadata
-            //{
-            //    ProviderName = "AppInsights"
-            //};
+            _K8SELogAnalyticsClient = new K8SELogAnalyticsClient(RequestId);
         }
 
         public Task<DataTable> ExecuteQueryAsync(string query)

@@ -26,19 +26,14 @@ namespace Diagnostics.DataProviders.TokenService
 
         protected abstract string TokenServiceName { get; set; }
 
-        private async Task Authenticate()
+        public Microsoft.Rest.ServiceClientCredentials getCreds()
         {
-            adSettings = new ActiveDirectoryServiceSettings
-            {
-                AuthenticationEndpoint = new Uri(authEndpoint),
-                TokenAudience = new Uri(tokenAudience),
-                ValidateAuthority = true
-            };
+            return creds;
+        }
 
-            creds = await ApplicationTokenProvider.LoginSilentAsync(domain, clientId, clientSecret, adSettings);
-
-            client = new OperationalInsightsDataClient(creds);
-            client.WorkspaceId = workspaceId;
+        public string getWorkspaceId()
+        {
+            return workspaceId;
         }
 
         public async Task StartTokenRefresh()
@@ -52,7 +47,7 @@ namespace Diagnostics.DataProviders.TokenService
 
                 try
                 {
-                    Authenticate();
+               await Authenticate();
                     message = "Token Acquisition Status : Success";
                 }
                 catch (Exception ex)
@@ -77,6 +72,19 @@ namespace Diagnostics.DataProviders.TokenService
 
                 await Task.Delay(DataProviderConstants.TokenRefreshIntervalInMs);
             }
+
+        }
+
+        private async Task Authenticate()
+        {
+            adSettings = new ActiveDirectoryServiceSettings
+            {
+                AuthenticationEndpoint = new Uri(authEndpoint),
+                TokenAudience = new Uri(tokenAudience),
+                ValidateAuthority = true
+            };
+
+            creds = await ApplicationTokenProvider.LoginSilentAsync(domain, clientId, clientSecret, adSettings);
         }
     }
 }
