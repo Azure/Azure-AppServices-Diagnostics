@@ -132,7 +132,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// }
         /// </code>
         /// </example>
-        public static DiagnosticData AddSection(this Response response, Response data, string title = "", bool isExpand = true)
+        public static DiagnosticData AddSection(this Response response, string title, Response data, bool isExpand = true)
         {
             return AddSection(response, new Section(title, data, isExpand));
         }
