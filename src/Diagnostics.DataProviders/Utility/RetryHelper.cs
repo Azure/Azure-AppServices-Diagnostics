@@ -3,11 +3,22 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Diagnostics.Logger;
 
-namespace Diagnostics.RuntimeHost.Utilities
+namespace Diagnostics.DataProviders.Utility
 {
-    internal class RetryHelper
+    public static class RetryHelper
     {
-        internal static async Task<TResult> RetryAsync<TResult>(Func<Task<TResult>> taskProvider, string source = "", string requestId = "", int maxRetries = 3, int retryDelayInMs = 500)
+        public static async Task<TResult> RetryAsync<TResult>(Func<object, Task<TResult>> taskProvider, object funcParam, string source = "", string requestId = "", int maxRetries = 3, int retryDelayInMs = 500)
+        {
+            return await RetryAsyncBasic<TResult>(taskProvider, source, requestId, maxRetries, retryDelayInMs, funcParam);
+        }
+
+        public static async Task<TResult> RetryAsync<TResult>(Func<Task<TResult>> taskProvider, string source = "", string requestId = "", int maxRetries = 3, int retryDelayInMs = 500)
+        {
+            return await RetryAsyncBasic<TResult>(taskProvider, source, requestId, maxRetries, retryDelayInMs);
+        }
+
+
+        private static async Task<TResult> RetryAsyncBasic<TResult>(dynamic taskProvider, string source = "", string requestId = "", int maxRetries = 3, int retryDelayInMs = 500, object funcParam = null)
         {
             int retryCount = 0;
             DateTime taskInvocationStartTime = DateTime.UtcNow;
@@ -29,7 +40,14 @@ namespace Diagnostics.RuntimeHost.Utilities
                     taskInvocationStartTime = DateTime.UtcNow;
                     attemptException = null;
 
-                    taskProviderTask = taskProvider();
+                    if (funcParam == null)
+                    {
+                        taskProviderTask = taskProvider();
+                    }
+                    else
+                    {
+                        taskProviderTask = taskProvider(funcParam);
+                    }
                     taskProviderResult = await taskProviderTask;
 
                     break;
