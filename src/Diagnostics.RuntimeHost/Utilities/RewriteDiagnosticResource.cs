@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 using System.Text;
 using System.IO;
 using Microsoft.Extensions.Primitives;
-using Microsoft.AspNetCore.Rewrite.Internal;
+using Microsoft.AspNetCore.Rewrite;
 
 namespace Diagnostics.RuntimeHost.Utilities
 {
@@ -33,10 +33,7 @@ namespace Diagnostics.RuntimeHost.Utilities
                     response.StatusCode = this.StatusCode;
                     response.ContentType = "text/plain";
                     byte[] errorMessage = Encoding.ASCII.GetBytes($"Missing {HeaderConstants.ApiPathHeader} header");
-                    using (MemoryStream memoryStream = new MemoryStream(errorMessage))
-                    {
-                        memoryStream.WriteTo(response.Body);
-                    }                  
+                    response.Body.WriteAsync(errorMessage, 0, errorMessage.Length);               
                     context.Result = RuleResult.EndResponse; // Send response and do not continue the request.
                     return;
                 }
@@ -47,10 +44,7 @@ namespace Diagnostics.RuntimeHost.Utilities
                     response.StatusCode = this.StatusCode;
                     response.ContentType = "text/plain";
                     byte[] errorMessage = Encoding.ASCII.GetBytes($"Missing {HeaderConstants.ApiVerbHeader} header");
-                    using (MemoryStream memoryStream = new MemoryStream(errorMessage))
-                    {
-                        memoryStream.WriteTo(response.Body);
-                    }
+                    response.Body.WriteAsync(errorMessage, 0, errorMessage.Length);
                     context.Result = RuleResult.EndResponse; // Send response and do not continue the request.
                     return;
                 }
@@ -67,9 +61,8 @@ namespace Diagnostics.RuntimeHost.Utilities
                     request.Headers.Append(contentTypeHeader, new StringValues(contentTypeHeaderValue));
                 }
 
-                request.Method = apiVerbs.First().ToLower();
-                var rewriteRule = new RewriteRule(UriElements.PassThroughAPIRoute.Substring(1)+ "|^$", apiPaths.First().ToLower(), true);
-                rewriteRule.ApplyRule(context);
+                request.Method = apiVerbs.First().ToLower();         
+         
             }
         }
     }

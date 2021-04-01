@@ -15,13 +15,13 @@ namespace Diagnostics.RuntimeHost.Services
 
         public DataSourcesConfiguration Config => _config;
 
-        public DataSourcesConfigurationService(IHostingEnvironment env, IConfiguration configuration)
+        public DataSourcesConfigurationService(IWebHostEnvironment env, IConfiguration configuration)
         {
             IConfigurationFactory factory = GetDataProviderConfigurationFactory(env, configuration);
             _config = factory.LoadConfigurations();
         }
 
-        public static IConfigurationFactory GetDataProviderConfigurationFactory(IHostingEnvironment env, IConfiguration configuration)
+        public static IConfigurationFactory GetDataProviderConfigurationFactory(IWebHostEnvironment env, IConfiguration configuration)
         {
             switch (env.EnvironmentName.ToLower())
             {

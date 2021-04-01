@@ -29,12 +29,13 @@ using Microsoft.IdentityModel.Logging;
 using Newtonsoft.Json;
 using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
 using Diagnostics.Logger;
+using Microsoft.Extensions.Hosting;
 
 namespace Diagnostics.RuntimeHost
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration, IHostingEnvironment environment)
+        public Startup(IConfiguration configuration, IWebHostEnvironment environment)
         {
             Configuration = configuration;
             Environment = environment;
@@ -49,7 +50,7 @@ namespace Diagnostics.RuntimeHost
         }
 
         public IConfiguration Configuration { get; }
-        public IHostingEnvironment Environment { get; }
+        public IWebHostEnvironment Environment { get; }
 
 
         public void ConfigureServices(IServiceCollection services)
@@ -124,25 +125,25 @@ namespace Diagnostics.RuntimeHost
                 MdmCertLoader.Instance.Initialize(Configuration);
             }
 
+            services.AddMemoryCache();
             // Enable App Insights telemetry
             services.AddApplicationInsightsTelemetry();
             services.AddAppServiceApplicationLogging();
             if(Environment.IsDevelopment())
             {
-                services.AddMvc(options =>
+                services.AddControllers(options =>
                 {
-                    options.Filters.Add(new AllowAnonymousFilter());
-
+                    options.Filters.Add<AllowAnonymousFilter>();
                 }).AddJsonOptions(options =>
                 {
-                    options.SerializerSettings.Formatting = Formatting.Indented;
+                    options.JsonSerializerOptions.WriteIndented = true;
                 });
             }
             else
             {
-                services.AddMvc().AddJsonOptions(options =>
+                services.AddControllers().AddJsonOptions(options =>
                 {
-                    options.SerializerSettings.Formatting = Formatting.Indented;
+                    options.JsonSerializerOptions.WriteIndented = true;
                 });
             }
 
@@ -248,19 +249,28 @@ namespace Diagnostics.RuntimeHost
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
-            if (!env.IsDevelopment())
-            {
-                app.UseAuthentication();
-            }
+            app.UseHttpsRedirection();
+            app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseRewriter(new RewriteOptions().Add(new RewriteDiagnosticResource()));
             app.UseMiddleware<DiagnosticsRequestMiddleware>();
-            app.UseMvc();
+            app.UseEndpoints(endpoints =>
+            {
+                if (env.IsDevelopment())
+                {
+                    endpoints.MapControllers().WithMetadata(new AllowAnonymousAttribute());
+                } else
+                {
+                    endpoints.MapControllers();
+                }               
+            });
         }
 
         /// <summary>

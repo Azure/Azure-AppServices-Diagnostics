@@ -4,13 +4,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
-using Microsoft.Extensions.Logging;
 using Diagnostics.DataProviders;
 using System;
-using Microsoft.CodeAnalysis;
 using Diagnostics.DataProviders.Utility;
 using Diagnostics.Logger;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
 
 namespace Diagnostics.RuntimeHost
 {
@@ -79,7 +79,7 @@ namespace Diagnostics.RuntimeHost
         }
 
         // Do decryption if its production or staging and cloud env
-        private static bool IsDecryptionRequired(IHostingEnvironment environment, string cloudDomain)
+        private static bool IsDecryptionRequired(IWebHostEnvironment environment, string cloudDomain)
         {
             return (environment.IsProduction() || environment.IsStaging()) && cloudDomain.Equals(DataProviderConstants.AzureCloud, StringComparison.CurrentCultureIgnoreCase);
         }
