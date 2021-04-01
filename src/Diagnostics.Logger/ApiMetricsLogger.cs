@@ -63,12 +63,21 @@ namespace Diagnostics.Logger
                         value = string.IsNullOrWhiteSpace(header.Value.FirstOrDefault()) ? string.Empty : "****"
                     });
                 }
+                if (header.Key.Equals("User-Agent", StringComparison.OrdinalIgnoreCase))
+                {
+                    headersContent.Add(new
+                    {
+                        name = $"{header.Key}",
+                        value = string.IsNullOrWhiteSpace(header.Value.FirstOrDefault()) ? string.Empty : header.Value.ToString()
+                    });
+                }
             }
 
             string contentString = JsonConvert.SerializeObject(new
             {
                 requestHeaders = headersContent
             });
+
             DiagnosticsETWProvider.Instance.LogRuntimeHostAPISummary(
                 requestId ?? string.Empty,
                 subscriptionId ?? string.Empty,

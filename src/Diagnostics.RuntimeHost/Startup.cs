@@ -180,6 +180,9 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
             services.AddSingleton<IHealthCheckService, HealthCheckService>();
 
+            var autoHealMonitoringServiceInstance = new AuoHealMonitoringService(Configuration, Environment);
+            services.AddSingleton<IAutoHealMonitoringService>(autoHealMonitoringServiceInstance);
+
             var servicesProvider = services.BuildServiceProvider();
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();
             var observerConfiguration = dataSourcesConfigService.Config.SupportObserverConfiguration;

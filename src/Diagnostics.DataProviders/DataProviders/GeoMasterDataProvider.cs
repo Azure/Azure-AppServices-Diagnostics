@@ -33,12 +33,6 @@ namespace Diagnostics.DataProviders
 
         private string[] AppSettingsExistenceCheckList = new string[] { "APPINSIGHTS_INSTRUMENTATIONKEY" };
 
-        private readonly char[] ValueTerminators = new char[] { '<', '"' };
-
-        private string[] CredentialTokens = new string[] { "Token=", "DefaultEndpointsProtocol=http", "AccountKey=", "Data Source=", "Server=", "Password=", "pwd=", "&amp;sig=", "&sig=", "COMPOSE|", "KUBE|" };
-
-        private const string SecretReplacement = "!!!SECRET-TRAP!!!";
-
         public string GeoMasterName { get; }
 
         public string RequestId { get; set; }
@@ -65,40 +59,6 @@ namespace Diagnostics.DataProviders
                 geoMasterClient = new ArmClient(_configuration);
             }
             return geoMasterClient;
-        }
-
-        public string RemovePIIFromSettings(string content)
-        {
-            // Mask SAS Uri
-            if (Regex.Match(content, @"https*:\/\/[\w.]*[\w]+.core.windows.net?.*sig=.*", RegexOptions.IgnoreCase).Success)
-            {
-                content = "https://*.core.windows.net/*";
-            }
-            else
-            {
-                string maskedString = content;
-                foreach (var token in CredentialTokens)
-                {
-                    int startIndex = 0;
-                    while (true)
-                    {
-                        // search for the next token instance
-                        startIndex = maskedString.IndexOf(token, startIndex, StringComparison.OrdinalIgnoreCase);
-                        if (startIndex == -1)
-                        {
-                            break;
-                        }
-
-                        // Find the end of the secret. It most likely ends with either a double quota " or tag opening <
-                        int credentialEnd = maskedString.IndexOfAny(ValueTerminators, startIndex);
-
-                        maskedString = maskedString.Substring(0, startIndex) + SecretReplacement + (credentialEnd != -1 ? maskedString.Substring(credentialEnd) : "");
-                    }
-                }
-                content = maskedString;
-            }
-
-            return content;
         }
 
         /// <summary>
@@ -140,7 +100,7 @@ namespace Diagnostics.DataProviders
                 if (AllowedlistAppSettingsStartingWith.Any(x => item.Key.StartsWith(x)) && !SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x))
                    || RegexMatchingPatterns.Any(x => (Regex.Match(item.Key, x).Success)))
                 {
-                    string value = RemovePIIFromSettings(item.Value);
+                    string value = CredentialTrapper.Obfuscate(item.Value);
                     appSettings.Add(item.Key, value);
                 }
                 else
