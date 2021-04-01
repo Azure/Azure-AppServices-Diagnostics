@@ -34,7 +34,7 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         private Task blobDowloadTask;
 
         private Dictionary<EntityType, ICache<string, EntityInvoker>> _invokerDictionary;
-        private int _pollingIntervalInSeconds = 30;
+        private int _pollingIntervalInSeconds = 60;
         private DateTime blobCacheLastModifiedTime;
         private IKustoMappingsCacheService kustoMappingsCacheService;
         private DateTime kustoMappingsCacheLastModified;

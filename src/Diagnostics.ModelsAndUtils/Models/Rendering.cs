@@ -52,6 +52,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         public dynamic TableOptions { get; set; }
 
         public bool AllowColumnSearch { get; set; }
+        public IEnumerable<TableColumnOption> ColumnOptions { get; set; }
 
         public TableRendering() : base(RenderingType.Table)
         {
@@ -59,6 +60,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             GroupByColumnName = null;
             DescriptionColumnName = null;
             AllowColumnSearch = false;
+            ColumnOptions = null;
         }
     }
 
@@ -263,8 +265,27 @@ namespace Diagnostics.ModelsAndUtils.Models
         ///<summary>
         /// Data Rendered as AppInsights enablement in detector
         ///</summary>
-        AppInsightEnablement
+        AppInsightEnablement,
 
+        ///<summary>
+        /// Keystone component
+        ///</summary>
+        KeystoneComponent,
+
+        ///<summary>
+        /// Notification component
+        ///</summary>
+        Notification,
+
+        ///<summary>
+        /// Data rendered as tabs
+        ///</summary>
+        Tab,
+
+        /// <summary>
+        /// Data Rendered as section
+        /// </summary>
+        Section
     }
 
     /// <summary>
@@ -276,5 +297,48 @@ namespace Diagnostics.ModelsAndUtils.Models
         BarGraph,
         StackedAreaGraph,
         StackedBarGraph
+    }
+
+    public enum FileterSelectionOption
+    {
+        /// <summary>
+        /// No Selection Filter
+        /// </summary>
+        None = 0,
+        /// <summary>
+        /// Single selection with radio button
+        /// </summary>
+        Single,
+        /// <summary>
+        /// Multiple selection with checkbox
+        /// </summary>
+        Multiple
+    }    
+    public class TableColumnOption
+    {
+        /// <summary>
+        /// Column name
+        /// </summary>
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Column Min Width
+        /// </summary>
+        public int MinWidth { get; set; }
+
+        /// <summary>
+        /// Column Max Width
+        /// </summary>
+        public int MaxWidth { get; set; }
+
+        /// <summary>
+        /// Filter Selelction(Single, Multiple)
+        /// </summary>
+        public FileterSelectionOption SelectionOption { get; set; } = FileterSelectionOption.None;
+
+        /// <summary>
+        /// Hide or show column
+        /// </summary>
+        public bool Visible { get; set; } = true;
     }
 }

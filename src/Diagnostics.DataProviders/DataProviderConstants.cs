@@ -59,6 +59,12 @@ namespace Diagnostics.DataProviders
             };
 
         #endregion Time Grain Constants
+
+        #region Change Analysis Constants
+
+        public static int ChangeAnalyisRequestTimeoutInSeconds = 30;
+
+        #endregion
     }
 
     public class KustoOperations

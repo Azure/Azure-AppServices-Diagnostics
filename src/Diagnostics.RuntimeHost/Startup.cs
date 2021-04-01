@@ -28,6 +28,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Logging;
 using Newtonsoft.Json;
 using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
+using Diagnostics.Logger;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -62,7 +63,7 @@ namespace Diagnostics.RuntimeHost
             var signingKeys = config.SigningKeys;
             // Adding both custom cert auth handler and Azure AAD JWT token handler to support multiple forms of auth.
             if (Environment.IsProduction() || Environment.IsStaging() )
-            {
+            {         
                 services.AddAuthentication().AddCertificateAuth(CertificateAuthDefaults.AuthenticationScheme,
                     options =>
                     {
@@ -73,7 +74,7 @@ namespace Diagnostics.RuntimeHost
                     }).AddJwtBearer("AzureAd", options => {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ValidAudience = Configuration["SecuritySettings:ClientId"],
+                        ValidAudiences =  new[] { Configuration["SecuritySettings:ClientId"], $"spn:{Configuration["SecuritySettings:ClientId"]}" },
                         ValidIssuers = new[] { issuer, $"{issuer}/v2.0" },
                         IssuerSigningKeys = signingKeys
                     };
@@ -88,7 +89,23 @@ namespace Diagnostics.RuntimeHost
                             if (incomingAppId == null || !allowedAppIds.Exists(p => p.Equals(incomingAppId.Value, StringComparison.OrdinalIgnoreCase)))
                             {
                                 context.Fail("Unauthorized Request");
+                                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"AAD Authentication failed because incoming app id was not allowed");
                             }
+                            return Task.CompletedTask;
+                        },
+                        OnAuthenticationFailed = context =>
+                        {
+                            DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"AAD Authentication failure reason: {context.Exception.ToString()}");
+                            return Task.CompletedTask;
+                        },
+                        OnMessageReceived = context =>
+                        {
+                           
+                            context.Request.Headers.TryGetValue("Authorization", out var BearerToken);
+                            if (BearerToken.Count == 0)
+                            {
+                                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("No bearer token was sent");
+                            } 
                             return Task.CompletedTask;
                         }
                     };
@@ -162,6 +179,9 @@ namespace Diagnostics.RuntimeHost
             });
             services.AddSingleton<IAssemblyCacheService, AssemblyCacheService>();
             services.AddSingleton<IHealthCheckService, HealthCheckService>();
+
+            var autoHealMonitoringServiceInstance = new AuoHealMonitoringService(Configuration, Environment);
+            services.AddSingleton<IAutoHealMonitoringService>(autoHealMonitoringServiceInstance);
 
             var servicesProvider = services.BuildServiceProvider();
             var dataSourcesConfigService = servicesProvider.GetService<IDataSourcesConfigurationService>();

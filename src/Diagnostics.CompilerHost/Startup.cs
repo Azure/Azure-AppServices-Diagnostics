@@ -45,7 +45,8 @@ namespace Diagnostics.CompilerHost
 
             var builtConfig = builder.Build();
 
-            if (builtConfig.GetValue<bool>("Secrets:KeyVaultEnabled", true))
+            // For production and staging, skip outbound call to keyvault for AppSettings
+            if (builtConfig.GetValue<bool>("Secrets:KeyVaultEnabled", true) || hostingEnvironment.IsDevelopment())
             {
                 string keyVaultConfig = Helpers.GetKeyvaultforEnvironment(hostingEnvironment.EnvironmentName);
                 var tokenProvider = new AzureServiceTokenProvider(azureAdInstance: builtConfig["Secrets:AzureAdInstance"]);

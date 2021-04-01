@@ -19,7 +19,7 @@ using System.Linq;
 
 namespace Diagnostics.DataProviders
 {
-    class KustoSDKClient : IKustoClient
+    public class KustoSDKClient : IKustoClient
     {
         private readonly KustoDataProviderConfiguration _config;
         private string _requestId;
@@ -70,7 +70,7 @@ namespace Diagnostics.DataProviders
                 };
 
                 var queryProvider = Kusto.Data.Net.Client.KustoClientFactory.CreateCslQueryProvider(connectionStringBuilder);
-                if (!QueryProviderMapping.TryAdd(key, queryProvider))
+                if(!QueryProviderMapping.TryAdd(key, queryProvider))
                 {
                     queryProvider.Dispose();
                 }

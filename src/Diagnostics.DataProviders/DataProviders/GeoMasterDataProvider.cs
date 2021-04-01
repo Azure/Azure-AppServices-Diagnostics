@@ -23,7 +23,7 @@ namespace Diagnostics.DataProviders
         private GeoMasterDataProviderConfiguration _configuration;
         private string _geoMasterHostName;
 
-        private string[] AllowedlistAppSettingsStartingWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType", "APPINSIGHTS_", "SnapshotDebugger_", "InstrumentationEngine_", "XDT_MicrosoftApplicationInsights_", "ApplicationInsightsAgent_" };
+        private string[] AllowedlistAppSettingsStartingWith = new string[] { "WEBSITE_", "WEBSITES_", "FUNCTION_", "FUNCTIONS_", "AzureWebJobsSecretStorageType", "APPINSIGHTS_", "SnapshotDebugger_", "InstrumentationEngine_", "XDT_MicrosoftApplicationInsights_", "ApplicationInsightsAgent_", "PYTHON_", "PYTHONPATH" };
 
         private string[] SensitiveAppSettingsEndingWith = new string[] { "CONNECTIONSTRING", "_SECRET", "_KEY", "_ID", "_CONTENTSHARE", "TOKEN_STORE", "TOKEN", "_SASURI" };
 
@@ -31,7 +31,7 @@ namespace Diagnostics.DataProviders
 
         private string[] AppSettingsExistenceCheckList = new string[] { "APPINSIGHTS_INSTRUMENTATIONKEY" };
 
-		public string GeoMasterName { get; }
+        public string GeoMasterName { get; }
 
         public string RequestId { get; set; }
 
@@ -57,17 +57,6 @@ namespace Diagnostics.DataProviders
                 geoMasterClient = new ArmClient(_configuration);
             }
             return geoMasterClient;
-        }
-
-        public string RemovePIIFromSettings(string content)
-        {
-            // Mask SAS Uri
-            if (Regex.Match(content, @"https*:\/\/[\w.]*[\w]+.core.windows.net?.*sig=.*", RegexOptions.IgnoreCase).Success)
-            {
-                content = "https://*.core.windows.net/*";
-            }
-
-            return content;
         }
 
         /// <summary>
@@ -109,7 +98,7 @@ namespace Diagnostics.DataProviders
                 if (AllowedlistAppSettingsStartingWith.Any(x => item.Key.StartsWith(x)) && !SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x))
                    || RegexMatchingPatterns.Any(x => (Regex.Match(item.Key, x).Success)))
                 {
-                    string value = RemovePIIFromSettings(item.Value);
+                    string value = CredentialTrapper.Obfuscate(item.Value);
                     appSettings.Add(item.Key, value);
                 }
                 else

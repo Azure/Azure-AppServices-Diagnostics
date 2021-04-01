@@ -32,7 +32,7 @@ namespace Diagnostics.DataProviders
         /// </summary>
         private const string BaseURL = "https://api.applicationinsights.io/v1/apps/{0}/query";
 
-        private readonly Lazy<HttpClient> _client = new Lazy<HttpClient>(() =>
+        private static readonly Lazy<HttpClient> _client = new Lazy<HttpClient>(() =>
         {
             var client = new HttpClient();
             client.DefaultRequestHeaders.Accept.Clear();

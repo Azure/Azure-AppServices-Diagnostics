@@ -19,7 +19,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
 
         private IStorageService storageService;
 
-        int cacheExpirationTimeInSecs = 30;
+        int cacheExpirationTimeInSecs = 60;
 
         private bool startUp = false;
 

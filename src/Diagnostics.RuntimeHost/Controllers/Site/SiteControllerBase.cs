@@ -75,7 +75,8 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             string kindProperty = kind.ToLower();
 
-            if (kindProperty.Contains("api")) return AppType.ApiApp;
+            if (kindProperty.Contains("workflowapp")) return AppType.WorkflowApp;
+            else if (kindProperty.Contains("api")) return AppType.ApiApp;
             else if (kindProperty.Contains("function")) return AppType.FunctionApp;
             else if (kindProperty.Contains("mobile")) return AppType.MobileApp;
             else if (kindProperty.Contains("gateway")) return AppType.GatewayApp;

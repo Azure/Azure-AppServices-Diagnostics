@@ -124,6 +124,28 @@ namespace Diagnostics.ModelsAndUtils.Utilities
             return supportCenterInsight;
         }
 
+        public static AzureSupportCenterInsight CreateErrorMessageInsight(string errMsg, string recommendedAction)
+        {
+            var supportCenterInsight = new AzureSupportCenterInsight()
+            {
+                Id = Guid.NewGuid(),
+                Title = "Error occurred while generating insight.",
+                ImportanceLevel = ImportanceLevel.Info,
+                InsightFriendlyName = "Error message insight.",
+                IssueCategory = "ERROR MESSAGE INSIGHT",
+                IssueSubCategory = "errormessageinsight",                
+                Description = new Text($"**Error:** {errMsg}", true),
+                RecommendedAction = new RecommendedAction()
+                {
+                    Id = Guid.NewGuid(),
+                    Text = new Text(recommendedAction, true)
+                },
+                ConfidenceLevel = InsightConfidenceLevel.High,
+                Scope = InsightScope.ResourceLevel
+            };        
+            return supportCenterInsight;
+         }
+
         /// <summary>
         /// Use this when the site is not found from observer
         /// </summary>
