@@ -9,7 +9,7 @@ namespace Diagnostics.DataProviders.Utility
     {
         public static async Task<TResult> RetryAsync<TResult>(Func<object, Task<TResult>> taskProvider, object funcParam, string source = "", string requestId = "", int maxRetries = 3, int retryDelayInMs = 500)
         {
-            return await RetryAsyncBasic<TResult>(taskProvider, source, requestId, maxRetries, retryDelayInMs,funcParam);
+            return await RetryAsyncBasic<TResult>(taskProvider, source, requestId, maxRetries, retryDelayInMs, funcParam);
         }
 
         public static async Task<TResult> RetryAsync<TResult>(Func<Task<TResult>> taskProvider, string source = "", string requestId = "", int maxRetries = 3, int retryDelayInMs = 500)
@@ -39,11 +39,12 @@ namespace Diagnostics.DataProviders.Utility
 
                     taskInvocationStartTime = DateTime.UtcNow;
                     attemptException = null;
-                    
-                    if(funcParam == null)
+
+                    if (funcParam == null)
                     {
                         taskProviderTask = taskProvider();
-                    }else
+                    }
+                    else
                     {
                         taskProviderTask = taskProvider(funcParam);
                     }

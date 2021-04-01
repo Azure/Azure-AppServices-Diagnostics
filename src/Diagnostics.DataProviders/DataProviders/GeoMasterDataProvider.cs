@@ -632,15 +632,15 @@ namespace Diagnostics.DataProviders
                 ApiVersion = apiVersion,
                 CancellationToken = cancellationToken
             };
-            
-            var task = RetryHelper.RetryAsync<R>(PerformHttpRequest<R>,param, "GeoMasterDataProvider", RequestId, _configuration.MaxRetryCount, _configuration.RetryDelayInSeconds * 1000);
+
+            var task = RetryHelper.RetryAsync<R>(PerformHttpRequest<R>, param, "GeoMasterDataProvider", RequestId, _configuration.MaxRetryCount, _configuration.RetryDelayInSeconds * 1000);
             return task;
         }
 
         private Task<R> PerformHttpRequest<R>(object obj)
         {
             var param = (GeoMasterRetryParam)obj;
-            return PerformHttpRequest<R>(param.HttpMethod,param.Path,param.QueryString,param.Content,param.ApiVersion,param.CancellationToken);
+            return PerformHttpRequest<R>(param.HttpMethod, param.Path, param.QueryString, param.Content, param.ApiVersion, param.CancellationToken);
         }
 
         private async Task<R> PerformHttpRequest<R>(HttpMethod method, string path, string queryString, string content, string apiVersion, CancellationToken cancellationToken)
@@ -777,7 +777,8 @@ namespace Diagnostics.DataProviders
             return result ?? await base.CheckHealthAsync(cancellationToken);
         }
 
-        class GeoMasterRetryParam {
+        private class GeoMasterRetryParam
+        {
             public HttpMethod HttpMethod { get; set; }
             public string Path { get; set; }
             public string QueryString { get; set; }

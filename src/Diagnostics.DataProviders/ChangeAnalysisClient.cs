@@ -406,7 +406,7 @@ namespace Diagnostics.DataProviders
         }
 
 
-        class ChangeAnalysisRetryParam
+        private class ChangeAnalysisRetryParam
         {
             public string RequestUri { get; set; }
             public object PostBody { get; set; }
