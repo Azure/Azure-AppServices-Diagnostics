@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace Diagnostics.DataProviders
 {
-    public class K8SELogAnalyticsDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IK8SELogAnalyticsDataProvider
+    public class K8SELogAnalyticsDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, ILogAnalyticsDataProvider
     {
-        private IK8SELogAnalyticsClient _K8SELogAnalyticsClient;
+        private ILogAnalyticsClient _K8SELogAnalyticsClient;
         public K8SELogAnalyticsDataProvider(OperationDataCache cache, K8SELogAnalyticsDataProviderConfiguration configuration, string RequestId) : base(cache, configuration)
         {
             _K8SELogAnalyticsClient = new K8SELogAnalyticsClient(RequestId);

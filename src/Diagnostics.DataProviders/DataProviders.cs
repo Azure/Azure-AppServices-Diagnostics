@@ -17,7 +17,7 @@ namespace Diagnostics.DataProviders
         public IAppInsightsDataProvider AppInsights;
         public IChangeAnalysisDataProvider ChangeAnalysis;
         public IAscDataProvider Asc;
-        public IK8SELogAnalyticsDataProvider K8SELogAnalytics;
+        public ILogAnalyticsDataProvider K8SELogAnalytics;
         public Func<MdmDataSource, IMdmDataProvider> Mdm;
         public Func<GenericMdmDataProviderConfiguration, IMdmDataProvider> MdmGeneric;
 

@@ -5,11 +5,11 @@ using Diagnostics.ModelsAndUtils.Models;
 
 namespace Diagnostics.DataProviders
 {
-    internal class K8SELogAnalyticsLogDecorator : LogDecoratorBase, IK8SELogAnalyticsDataProvider
+    internal class K8SELogAnalyticsLogDecorator : LogDecoratorBase, ILogAnalyticsDataProvider
     {
-        public IK8SELogAnalyticsDataProvider DataProvider;
+        public ILogAnalyticsDataProvider DataProvider;
 
-        public K8SELogAnalyticsLogDecorator(DataProviderContext context, IK8SELogAnalyticsDataProvider dataProvider) : base(context, dataProvider.GetMetadata())
+        public K8SELogAnalyticsLogDecorator(DataProviderContext context, ILogAnalyticsDataProvider dataProvider) : base(context, dataProvider.GetMetadata())
         {
             DataProvider = dataProvider;
         }

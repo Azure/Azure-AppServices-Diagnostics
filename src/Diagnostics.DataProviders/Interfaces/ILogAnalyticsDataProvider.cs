@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Diagnostics.DataProviders
 {
-    public interface IK8SELogAnalyticsDataProvider : IMetadataProvider
+    public interface ILogAnalyticsDataProvider : IMetadataProvider
     {
         Task<DataTable> ExecuteQueryAsync(string query);
     }

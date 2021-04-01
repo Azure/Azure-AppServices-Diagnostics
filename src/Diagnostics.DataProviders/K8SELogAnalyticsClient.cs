@@ -13,7 +13,7 @@ using Diagnostics.Logger;
 
 namespace Diagnostics.DataProviders
 {
-    class K8SELogAnalyticsClient : IK8SELogAnalyticsClient
+    class K8SELogAnalyticsClient : ILogAnalyticsClient
     {
         private Microsoft.Rest.ServiceClientCredentials creds;
         private string workspaceId;
