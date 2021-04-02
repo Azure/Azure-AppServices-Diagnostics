@@ -61,8 +61,9 @@ namespace Diagnostics.RuntimeHost.Utilities
                     request.Headers.Append(contentTypeHeader, new StringValues(contentTypeHeaderValue));
                 }
 
-                request.Method = apiVerbs.First().ToLower();         
-         
+                request.Method = apiVerbs.First().ToUpper();
+                request.Path = apiPaths.First().ToLower();
+                context.Result = RuleResult.SkipRemainingRules;
             }
         }
     }
