@@ -20,15 +20,15 @@ namespace Diagnostics.DataProviders
         public bool Enabled { get; set; }
 
         /// <summary>
-        /// Max Retry Count, default set to 2 retries
+        /// Max Retry Count
         /// </summary>
         [ConfigurationName("Retry:MaxRetryCount")]
-        public int MaxRetryCount { get; set; } = 2;
+        public int MaxRetryCount { get; set; }
         /// <summary>
-        /// Delay in Seconds between two retries. default set to 3s between retries
+        /// Delay in Seconds between two retries
         /// </summary>
         [ConfigurationName("Retry:RetryDelayInSeconds")]
-        public int RetryDelayInSeconds { get; set; } = 3;
+        public int RetryDelayInSeconds { get; set; }
 
         /// <summary>
         /// A semi-colon delimitted lists of key value pairs. eg., key1=value1;key2=value2;key3=value3

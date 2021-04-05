@@ -27,6 +27,16 @@ namespace Diagnostics.DataProviders.Utility
             TResult taskProviderResult = default(TResult);
             Task<TResult> taskProviderTask = null;
 
+            if(funcParam == null)
+            {
+                var taskFunc = (Func<Task<TResult>>)taskProvider;
+                taskProviderTask = taskFunc();
+            }else
+            {
+                var taskFunc = (Func<object,Task<TResult>>)taskProvider;
+                taskProviderTask = taskFunc(funcParam);
+            }
+
             do
             {
                 try
@@ -39,15 +49,6 @@ namespace Diagnostics.DataProviders.Utility
 
                     taskInvocationStartTime = DateTime.UtcNow;
                     attemptException = null;
-
-                    if (funcParam == null)
-                    {
-                        taskProviderTask = taskProvider();
-                    }
-                    else
-                    {
-                        taskProviderTask = taskProvider(funcParam);
-                    }
                     taskProviderResult = await taskProviderTask;
 
                     break;
