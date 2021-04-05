@@ -11,7 +11,6 @@ using System.Linq;
 using Diagnostics.DataProviders.DataProviderConfigurations;
 using Microsoft.Extensions.Caching.Memory;
 using System.Threading;
-using Diagnostics.DataProviders.Utility;
 
 namespace Diagnostics.RuntimeHost.Services
 {
@@ -79,7 +78,7 @@ namespace Diagnostics.RuntimeHost.Services
                 if (cache.TryGetValue(OUTBOUND_CONNECTIVITY_CACHE_KEY, out bool outboundConnectivityCheck))
                 {
                     if (outboundConnectivityCheck)
-                        return;
+                    return;
                 }
                 // Else conduct a check and store it in cache
                 bool checkSuccess = await RetryHelper.RetryAsync(HealthCheckPing, "Healthping", "", 3, 100);

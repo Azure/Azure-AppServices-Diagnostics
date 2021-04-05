@@ -6,7 +6,7 @@
         public GeoMasterDataProviderConfiguration()
         {
         }
-
+       
         /// <summary>
         /// GeomasterEndpoint
         /// </summary>
