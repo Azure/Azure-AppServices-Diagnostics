@@ -150,11 +150,11 @@ namespace Diagnostics.CompilerHost
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseAuthorization();
+            app.UseCompilerRequestMiddleware();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
-            app.UseCompilerRequestMiddleware();
         }
 
         private void CustomStartup()

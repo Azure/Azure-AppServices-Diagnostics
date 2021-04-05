@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Http;
 using System.Text;
 using System.IO;
 using Microsoft.Extensions.Primitives;
-using Microsoft.AspNetCore.Rewrite;
 
 namespace Diagnostics.RuntimeHost.Utilities
 {
@@ -62,8 +61,9 @@ namespace Diagnostics.RuntimeHost.Utilities
                 }
 
                 request.Method = apiVerbs.First().ToUpper();
-                request.Path = apiPaths.First().ToLower();
-                context.Result = RuleResult.SkipRemainingRules;
+                var rewriteOptions = new RewriteOptions().AddRewrite(UriElements.PassThroughAPIRoute.Substring(1) + "|^$", apiPaths.First(), true);
+                var rule = rewriteOptions.Rules.FirstOrDefault();
+                rule.ApplyRule(context);
             }
         }
     }

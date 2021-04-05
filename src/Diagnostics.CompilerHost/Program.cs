@@ -55,6 +55,6 @@ namespace Diagnostics.CompilerHost
                 .UseConfiguration(config)
                 .UseStartup<Startup>();
 
-        }
+        }    
     }
 }
