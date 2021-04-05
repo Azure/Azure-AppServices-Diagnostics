@@ -155,18 +155,6 @@ namespace Diagnostics.DataProviders
         }
 
         /// <summary>
-        /// Max Retry Count
-        /// </summary>
-        [ConfigurationName("Retry:MaxRetryCount")]
-        public int MaxRetryCount { get; set; }
-
-        /// <summary>
-        /// Delay in Seconds between two retries
-        /// </summary>
-        [ConfigurationName("Retry:RetryDelayInSeconds")]
-        public int RetryDelayInSeconds { get; set; }
-
-        /// <summary>
         /// Flag indicating whether to use Backup cluster (if available) for last retry
         /// </summary>
         [ConfigurationName("Retry:UseBackupClusterForLastAttempt")]
