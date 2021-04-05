@@ -12,6 +12,8 @@ using Newtonsoft.Json;
 using System.Text.RegularExpressions;
 using Diagnostics.Logger;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Diagnostics.DataProviders.Utility;
+using System.Collections.Concurrent;
 
 namespace Diagnostics.DataProviders
 {
@@ -568,22 +570,44 @@ namespace Diagnostics.DataProviders
 
         private Task<R> HttpGet<R>(string path, string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
         {
-            return PerformHttpRequest<R>(HttpMethod.Get, path, queryString, null, apiVersion, cancellationToken);
+            //return PerformHttpRequest<R>(HttpMethod.Get, path, queryString, null, apiVersion, cancellationToken);
+            return PerformHttpRequestWithRetry<R>(HttpMethod.Get, path, queryString, null, apiVersion, cancellationToken);
         }
 
         private Task<R> HttpPost<R, T>(string path, T content = default(T), string queryString = "", string apiVersion = GeoMasterConstants.August2016Version, CancellationToken cancellationToken = default(CancellationToken))
         {
             var body = JsonConvert.SerializeObject(content);
-            return PerformHttpRequest<R>(HttpMethod.Post, path, queryString, body, apiVersion, cancellationToken);
+            //return PerformHttpRequest<R>(HttpMethod.Post, path, queryString, body, apiVersion, cancellationToken);
+            return PerformHttpRequestWithRetry<R>(HttpMethod.Post, path, queryString, body, apiVersion, cancellationToken);
         }
 
+        private Task<R> PerformHttpRequestWithRetry<R>(HttpMethod method, string path, string queryString, string content, string apiVersion, CancellationToken cancellationToken)
+        {
+            var param = new GeoMasterRetryParam()
+            {
+                HttpMethod = method,
+                Path = path,
+                QueryString = queryString,
+                Content = content,
+                ApiVersion = apiVersion,
+                CancellationToken = cancellationToken
+            };
+
+            var task = RetryHelper.RetryAsync<R>(PerformHttpRequest<R>, param, "GeoMasterDataProvider", RequestId, _configuration.MaxRetryCount, _configuration.RetryDelayInSeconds * 1000);
+            return task;
+        }
+
+        private Task<R> PerformHttpRequest<R>(object obj)
+        {
+            var param = (GeoMasterRetryParam)obj;
+            return PerformHttpRequest<R>(param.HttpMethod, param.Path, param.QueryString, param.Content, param.ApiVersion, param.CancellationToken);
+        }
 
         private async Task<R> PerformHttpRequest<R>(HttpMethod method, string path, string queryString, string content, string apiVersion, CancellationToken cancellationToken)
         {
             var query = SitePathUtility.CsmAnnotateQueryString(queryString, apiVersion);
             var uri = new Uri(_geoMasterClient.BaseUri, path + query);
             HttpResponseMessage response = null;
-
             try
             {
                 using (var request = new HttpRequestMessage(method, uri))
@@ -602,7 +626,7 @@ namespace Diagnostics.DataProviders
                         }
                         DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, $"{nameof(GeoMasterDataProvider.PerformHttpRequest)}", $"Making HTTP call to GeoMaster URI: {uri.AbsoluteUri} Method: {method.Method} ");
                         response = await _geoMasterClient.Client.SendAsync(request, cancellationToken).ConfigureAwait(false);
-                        if(!response.IsSuccessStatusCode && response.Content != null)
+                        if (!response.IsSuccessStatusCode && response.Content != null)
                         {
                             string responseMessage = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                             DiagnosticsETWProvider.Instance.LogDataProviderMessage(RequestId, $"{nameof(GeoMasterDataProvider.PerformHttpRequest)}", $"HTTP call to GeoMaster failed with response: {responseMessage}");
@@ -700,7 +724,7 @@ namespace Diagnostics.DataProviders
                     }
                     finally
                     {
-                        result = new HealthCheckResult(geomasterException == null ? HealthStatus.Healthy : HealthStatus.Unhealthy, "Geomaster", "Run a test against geomaster by simply getting app settings", geomasterException, _configuration.HealthCheckInputs.ToDictionary((k) => k.Key, v => (object) v.Value));
+                        result = new HealthCheckResult(geomasterException == null ? HealthStatus.Healthy : HealthStatus.Unhealthy, "Geomaster", "Run a test against geomaster by simply getting app settings", geomasterException, _configuration.HealthCheckInputs.ToDictionary((k) => k.Key, v => (object)v.Value));
                     }
                 }
                 else
@@ -711,6 +735,16 @@ namespace Diagnostics.DataProviders
             }
 
             return result ?? await base.CheckHealthAsync(cancellationToken);
+        }
+
+        private class GeoMasterRetryParam
+        {
+            public HttpMethod HttpMethod { get; set; }
+            public string Path { get; set; }
+            public string QueryString { get; set; }
+            public string Content { get; set; }
+            public string ApiVersion { get; set; }
+            public CancellationToken CancellationToken { get; set; }
         }
     }
 }

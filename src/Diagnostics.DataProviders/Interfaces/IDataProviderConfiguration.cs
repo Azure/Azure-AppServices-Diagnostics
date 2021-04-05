@@ -8,6 +8,9 @@ namespace Diagnostics.DataProviders
 
         Dictionary<string, string> HealthCheckInputs { get; }
 
+        int MaxRetryCount { get; set; }
+
+        int RetryDelayInSeconds { get; set; }
         void PostInitialize();
 
         void Validate();
