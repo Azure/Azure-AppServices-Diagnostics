@@ -8,6 +8,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Diagnostics.DataProviders
 {
@@ -59,6 +60,7 @@ namespace Diagnostics.DataProviders
                 queryResults = new QueryResults();
             }
             var dataTable = ResultAsDataTable(queryResults);
+            //DataTable dataTable = Enumerable.Cast<DataTable>((Enumerable) queryResults.Tables[0]);
             return dataTable;
         }
 
@@ -68,28 +70,9 @@ namespace Diagnostics.DataProviders
             DataTable dataTable = new DataTable("results");
             dataTable.Clear();
 
-            int cursor = 0;
-            foreach (var i in results.Tables[0].Columns)
-            {
-                dataTable.Columns.Add(results.Tables[0].Columns[cursor++].Name);
-            }
-
-            int iCursor = 0;
-            int jCursor;
-            foreach (var i in results.Tables[0].Rows)
-            {
-                DataRow row = dataTable.NewRow();
-
-                jCursor = 0;
-                foreach (var j in results.Tables[0].Columns)
-                {
-                    row[results.Tables[0].Columns[jCursor].Name] = results.Tables[0].Rows[iCursor][jCursor++];
-                }
-                iCursor++;
-
-                dataTable.Rows.Add(row);
-
-            }
+            dataTable.Columns.AddRange(results.Tables[0].Columns.Select(s => new DataColumn(s.Name)).ToArray());
+            var rows = results.Tables[0].Rows.Select(s => dataTable.NewRow().ItemArray = s.ToArray());
+            foreach (var i in rows) { dataTable.Rows.Add(i); }
 
             return dataTable;
         }
