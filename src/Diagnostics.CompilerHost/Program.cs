@@ -3,9 +3,9 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
-using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Diagnostics.Logger;
 using System;
 
@@ -24,7 +24,7 @@ namespace Diagnostics.CompilerHost
         {
             try
             {
-                CreateWebHostBuilder(args).Build().Run();
+                CreateHostBuilder(args).Build().Run();
             }
             catch (Exception ex)
             {
@@ -38,23 +38,24 @@ namespace Diagnostics.CompilerHost
                 throw;
             }
         }
-
+   
         /// <summary>
-        /// Build web host.
+        /// Builds Generic Host in 3.x
         /// </summary>
-        /// <param name="args">The arguments.</param>
-        /// <returns>The web host.</returns>
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
+        /// <param name="args">The arguments</param>
+        /// <returns>Hostbuilder</returns>
+        public static IHostBuilder CreateHostBuilder(string[] args)
         {
             var config = new ConfigurationBuilder()
                 .AddCommandLine(args)
                 .Build();
 
-            return
-            WebHost.CreateDefaultBuilder(args)
-                .UseConfiguration(config)
-                .UseStartup<Startup>();
+            return Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(webbuilder =>
+            {
+                webbuilder.UseConfiguration(config);
+                webbuilder.UseStartup<Startup>();
+            });
+        }
 
-        }    
     }
 }
