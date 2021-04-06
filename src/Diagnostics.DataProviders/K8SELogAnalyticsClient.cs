@@ -20,13 +20,13 @@ namespace Diagnostics.DataProviders
         public override OperationalInsightsDataClient client { get; set; }
         public override string _requestId { get; set; }
 
-        public K8SELogAnalyticsClient(string RequestId)
+        public K8SELogAnalyticsClient(string requestId)
         {
             creds = K8SELogAnalyticsTokenService.Instance.getCreds();
             workspaceId = K8SELogAnalyticsTokenService.Instance.getWorkspaceId();
             client = new OperationalInsightsDataClient(creds);
             client.WorkspaceId = workspaceId;
-            _requestId = RequestId;
+            _requestId = requestId;
         }
     }
 }
