@@ -39,7 +39,6 @@ namespace Diagnostics.RuntimeHost
         {
             Configuration = configuration;
             Environment = environment;
-
             if (!Environment.IsProduction())
             {
                 AppDomain.CurrentDomain.FirstChanceException += (sender, eventArgs) =>
@@ -51,7 +50,6 @@ namespace Diagnostics.RuntimeHost
 
         public IConfiguration Configuration { get; }
         public IWebHostEnvironment Environment { get; }
-
 
         public void ConfigureServices(IServiceCollection services)
         {
@@ -259,10 +257,11 @@ namespace Diagnostics.RuntimeHost
                 app.UseDeveloperExceptionPage();
             }
             app.UseHttpsRedirection();
+            // URL Rewrite middleware should be before app.UseRouting() for it to work.
+            app.UseRewriter(new RewriteOptions().Add(new RewriteDiagnosticResource()));        
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.UseRewriter(new RewriteOptions().Add(new RewriteDiagnosticResource()));
             app.UseMiddleware<DiagnosticsRequestMiddleware>();
             app.UseEndpoints(endpoints =>
             {

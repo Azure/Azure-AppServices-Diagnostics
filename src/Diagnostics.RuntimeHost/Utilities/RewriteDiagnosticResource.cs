@@ -5,7 +5,6 @@ using System.Linq;
 using System.Net;
 using Microsoft.AspNetCore.Http;
 using System.Text;
-using System.IO;
 using Microsoft.Extensions.Primitives;
 
 namespace Diagnostics.RuntimeHost.Utilities
@@ -60,10 +59,9 @@ namespace Diagnostics.RuntimeHost.Utilities
                     request.Headers.Append(contentTypeHeader, new StringValues(contentTypeHeaderValue));
                 }
 
-                request.Method = apiVerbs.First().ToUpper();
-                var rewriteOptions = new RewriteOptions().AddRewrite(UriElements.PassThroughAPIRoute.Substring(1) + "|^$", apiPaths.First(), true);
-                var rule = rewriteOptions.Rules.FirstOrDefault();
-                rule.ApplyRule(context);
+                request.Method = apiVerbs.First().ToLower();
+                request.Path = apiPaths.First().ToLower();
+                context.Result = RuleResult.SkipRemainingRules;         
             }
         }
     }
