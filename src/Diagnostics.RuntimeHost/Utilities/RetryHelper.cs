@@ -65,7 +65,7 @@ namespace Diagnostics.RuntimeHost.Utilities
                 if (retryCount < maxRetries) await Task.Delay(retryDelayInMs);
             } while (retryCount < maxRetries);
 
-            if (taskProviderTask.IsCompleted && !taskProviderTask.IsFaulted && !taskProviderTask.IsCanceled)
+            if (taskProviderTask != null && taskProviderTask.IsCompleted && !taskProviderTask.IsFaulted && !taskProviderTask.IsCanceled)
             {
                 return taskProviderResult;
             }
