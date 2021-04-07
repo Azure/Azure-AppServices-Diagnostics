@@ -118,7 +118,7 @@ namespace Diagnostics.CompilerHost
                 });
             // Enable app insights telemetry
             services.AddApplicationInsightsTelemetry();
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson();
             CustomStartup();
 
             services.AddLogging(loggingConfig =>
@@ -149,6 +149,7 @@ namespace Diagnostics.CompilerHost
             }
             app.UseHttpsRedirection();
             app.UseRouting();
+            app.UseAuthentication();
             app.UseAuthorization();
             app.UseCompilerRequestMiddleware();
             app.UseEndpoints(endpoints =>
