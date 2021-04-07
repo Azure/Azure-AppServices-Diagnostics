@@ -16,6 +16,7 @@ namespace Diagnostics.DataProviders
     {
         public abstract OperationalInsightsDataClient client { get; set; }
         public abstract string _requestId { get; set; }
+        public abstract string dataProviderName { get; set; }
 
         public async Task<DataTable> ExecuteQueryAsync(string query)
         {
@@ -42,14 +43,14 @@ namespace Diagnostics.DataProviders
                 if (dataProviderException != null)
                 {
                     DiagnosticsETWProvider.Instance.LogDataProviderException(_requestId,
-                        "K8SELogAnalyticsDataProvider", StartTime.ToString("HH:mm:ss.fff"),
+                        dataProviderName, StartTime.ToString("HH:mm:ss.fff"),
                         StopTime.ToString("HH:mm:ss.fff"), timeTakenStopWatch.ElapsedMilliseconds,
                         dataProviderException.GetType().ToString(), dataProviderException.ToString());
                 }
                 else
                 {
                     DiagnosticsETWProvider.Instance.LogDataProviderOperationSummary(_requestId,
-                        "K8SELogAnalyticsDataProvider", StartTime.ToString("HH:mm:ss.fff"),
+                        dataProviderName, StartTime.ToString("HH:mm:ss.fff"),
                         StopTime.ToString("HH:mm:ss.fff"), timeTakenStopWatch.ElapsedMilliseconds);
                 }
 
@@ -60,7 +61,6 @@ namespace Diagnostics.DataProviders
                 queryResults = new QueryResults();
             }
             var dataTable = ResultAsDataTable(queryResults);
-            //DataTable dataTable = Enumerable.Cast<DataTable>((Enumerable) queryResults.Tables[0]);
             return dataTable;
         }
 

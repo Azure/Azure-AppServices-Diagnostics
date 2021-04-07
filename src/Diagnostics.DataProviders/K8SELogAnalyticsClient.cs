@@ -19,6 +19,7 @@ namespace Diagnostics.DataProviders
         private string workspaceId;
         public override OperationalInsightsDataClient client { get; set; }
         public override string _requestId { get; set; }
+        public override string dataProviderName { get; set; }
 
         public K8SELogAnalyticsClient(string requestId)
         {
@@ -27,6 +28,7 @@ namespace Diagnostics.DataProviders
             client = new OperationalInsightsDataClient(creds);
             client.WorkspaceId = workspaceId;
             _requestId = requestId;
+            dataProviderName = "K8SELogAnalyticsDataProvider";
         }
     }
 }
