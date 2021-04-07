@@ -8,6 +8,6 @@ namespace Diagnostics.DataProviders.Interfaces
 {
     interface ILogAnalyticsClient
     {
-        public Task<DataTable> ExecuteQueryAsync(string query);
+        Task<DataTable> ExecuteQueryAsync(string query);
     }
 }
