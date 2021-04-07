@@ -775,5 +775,50 @@ namespace Diagnostics.Logger
         }
 
         #endregion AzureStorage Events (ID Range : 5500 - 5599)
+
+        #region Generic Monitoring Events (ID : 5600 - 5609)
+
+        /// <summary>
+        /// Log Monitoring Event Message
+        /// </summary>
+        /// <param name="Source">Monitoring Source</param>
+        /// <param name="Message">Event Message</param>
+        /// <param name="DiagEnvironment">Diag Environment</param>
+        /// <param name="DiagWebsiteHostName">Diag Hostname</param>
+        [Event(5600, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogMonitoringEventMessage)]
+        public void LogMonitoringEventMessage(string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
+        {
+            WriteDiagnosticsEvent(5600, Source, Message, EnvironmentName, WebsiteHostName);
+        }
+
+        /// <summary>
+        /// Log Monitoring Event Warning
+        /// </summary>
+        /// <param name="Source">Monitoring Source</param>
+        /// <param name="Message">Event Message</param>
+        /// <param name="DiagEnvironment">Diag Environment</param>
+        /// <param name="DiagWebsiteHostName">Diag Hostname</param>
+        [Event(5601, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogMonitoringEventWarning)]
+        public void LogMonitoringEventWarning(string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
+        {
+            WriteDiagnosticsEvent(5601, Source, Message, EnvironmentName, WebsiteHostName);
+        }
+
+        /// <summary>
+        /// Log Monitoring Event Exception
+        /// </summary>
+        /// <param name="Source">Monitoring Source</param>
+        /// <param name="Message">Event Message</param>
+        /// <param name="ExceptionType">Exception Type</param>
+        /// <param name="ExceptionDetails">Exception Details</param>
+        /// <param name="DiagEnvironment">Diag Environment</param>
+        /// <param name="DiagWebsiteHostName">Diag hostname</param>
+        [Event(5602, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogMonitoringEventException)]
+        public void LogMonitoringEventException(string Source, string Message, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
+        {
+            WriteDiagnosticsEvent(5602, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
+        }
+
+        #endregion
     }
 }
