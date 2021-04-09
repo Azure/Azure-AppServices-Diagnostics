@@ -47,7 +47,7 @@ namespace Diagnostics.DataProviders.TokenService
 
                 try
                 {
-               await Authenticate();
+                    await Authenticate();
                     message = "Token Acquisition Status : Success";
                 }
                 catch (Exception ex)
@@ -75,7 +75,7 @@ namespace Diagnostics.DataProviders.TokenService
 
         }
 
-        private async Task Authenticate()
+        public async Task Authenticate()
         {
             adSettings = new ActiveDirectoryServiceSettings
             {

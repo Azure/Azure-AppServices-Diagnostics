@@ -16,7 +16,7 @@ namespace Diagnostics.DataProviders
 
         public K8SELogAnalyticsDataProvider(OperationDataCache cache, K8SELogAnalyticsDataProviderConfiguration configuration, string RequestId) : base(cache, configuration)
         {
-            _K8SELogAnalyticsClient = new K8SELogAnalyticsClient(RequestId);
+            _K8SELogAnalyticsClient = LogAnalyticsClientFactory.GetLogAnalyticsClient(configuration, RequestId);
         }
 
         public override Task<DataTable> ExecuteQueryAsync(string query)
