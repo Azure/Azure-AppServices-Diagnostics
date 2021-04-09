@@ -74,8 +74,8 @@ namespace Diagnostics.DataProviders.TokenService
             }
 
         }
-
-        public async Task Authenticate()
+      
+        private async Task Authenticate()
         {
             adSettings = new ActiveDirectoryServiceSettings
             {

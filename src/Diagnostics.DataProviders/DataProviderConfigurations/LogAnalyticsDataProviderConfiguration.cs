@@ -14,7 +14,6 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
         [Required]
         public string Provider { get; set; }
 
-
         /// <summary>
         /// Token Audience
         /// </summary>
