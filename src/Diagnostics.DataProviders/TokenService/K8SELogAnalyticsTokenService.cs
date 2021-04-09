@@ -45,6 +45,5 @@ namespace Diagnostics.DataProviders.TokenService
 
             StartTokenRefresh();
         }
-        
     }
 }
