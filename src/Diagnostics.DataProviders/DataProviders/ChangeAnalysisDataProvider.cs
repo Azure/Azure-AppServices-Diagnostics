@@ -213,7 +213,7 @@ namespace Diagnostics.DataProviders
         /// <returns>JSON string</returns>
         public async Task<string> InvokeChangeAnalysisRequest(string requestUri, object postBody = null, HttpMethod method = null)
         {
-            return await changeAnalysisClient.PrepareAndSendRequestWithRetry(requestUri, postBody, method);
+            return await changeAnalysisClient.PrepareAndSendRequest(requestUri, postBody, method);
         }
     }
 }

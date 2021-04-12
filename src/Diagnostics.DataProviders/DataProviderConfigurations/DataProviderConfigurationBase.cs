@@ -20,17 +20,6 @@ namespace Diagnostics.DataProviders
         public bool Enabled { get; set; }
 
         /// <summary>
-        /// Max Retry Count, default set to 2 retries
-        /// </summary>
-        [ConfigurationName("Retry:MaxRetryCount")]
-        public int MaxRetryCount { get; set; } = 2;
-        /// <summary>
-        /// Delay in Seconds between two retries. default set to 3s between retries
-        /// </summary>
-        [ConfigurationName("Retry:RetryDelayInSeconds")]
-        public int RetryDelayInSeconds { get; set; } = 3;
-
-        /// <summary>
         /// A semi-colon delimitted lists of key value pairs. eg., key1=value1;key2=value2;key3=value3
         /// </summary>
         [ConfigurationName("HealthCheckInputs")]

@@ -14,9 +14,7 @@ using Diagnostics.ModelsAndUtils.Models.ChangeAnalysis;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using static Diagnostics.Logger.HeaderConstants;
-using Diagnostics.Logger;
-using Diagnostics.DataProviders.Utility;
-using System.Collections.Concurrent;
+using Diagnostics.Logger; 
 
 namespace Diagnostics.DataProviders
 {
@@ -68,16 +66,10 @@ namespace Diagnostics.DataProviders
         /// </summary>
         public IHeaderDictionary receivedHeaders { get; private set; }
 
-
-        /// <summary>
-        /// Change Analysis Configration
-        /// </summary>
-        private ChangeAnalysisDataProviderConfiguration config;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ChangeAnalysisClient"/> class.
         /// </summary>
-        public ChangeAnalysisClient(ChangeAnalysisDataProviderConfiguration configuration, string requestTrackingId, string clientObjectId, IHeaderDictionary incomingRequestHeaders, string clientPrincipalName = "")
+        public ChangeAnalysisClient(ChangeAnalysisDataProviderConfiguration configuration, string requestTrackingId, string clientObjectId,  IHeaderDictionary incomingRequestHeaders, string clientPrincipalName = "")
         {
             clientObjectIdHeader = clientObjectId;
             clientPrincipalNameHeader = clientPrincipalName;
@@ -85,7 +77,6 @@ namespace Diagnostics.DataProviders
             apiVersion = configuration.Apiversion;
             requestId = requestTrackingId;
             receivedHeaders = incomingRequestHeaders;
-            config = configuration;
         }
 
         /// <inheritdoc/>
@@ -99,7 +90,7 @@ namespace Diagnostics.DataProviders
                     changeRequest.ResourceId,
                     changeRequest.ChangeSetId
                 };
-                string jsonString = await PrepareAndSendRequestWithRetry(requestUri, postBody, HttpMethod.Post);
+                string jsonString = await PrepareAndSendRequest(requestUri, postBody, HttpMethod.Post);
                 List<ResourceChangesResponseModel> resourceChangesResponse = JsonConvert.DeserializeObject<List<ResourceChangesResponseModel>>(jsonString);
                 return resourceChangesResponse;
             }
@@ -131,7 +122,7 @@ namespace Diagnostics.DataProviders
                     StartTime = changeSetsRequest.StartTime.ToString(),
                     EndTime = changeSetsRequest.EndTime.ToString()
                 };
-                string jsonString = await PrepareAndSendRequestWithRetry(requestUri, postBody, HttpMethod.Post);
+                string jsonString = await PrepareAndSendRequest(requestUri, postBody, HttpMethod.Post);
                 List<ChangeSetResponseModel> changeSetsResponse = JsonConvert.DeserializeObject<List<ChangeSetResponseModel>>(jsonString);
                 return changeSetsResponse;
             }
@@ -159,7 +150,7 @@ namespace Diagnostics.DataProviders
                     hostNames = hostnames,
                     subscriptionId = subscription
                 };
-                string jsonString = await PrepareAndSendRequestWithRetry(requestUri, requestBody, HttpMethod.Post);
+                string jsonString = await PrepareAndSendRequest(requestUri, requestBody, HttpMethod.Post);
                 if (!string.IsNullOrWhiteSpace(jsonString))
                 {
                     ResourceIdResponseModel resourceIdResponse = JsonConvert.DeserializeObject<ResourceIdResponseModel>(jsonString);
@@ -191,7 +182,7 @@ namespace Diagnostics.DataProviders
             try
             {
                 string requestUri = changeAnalysisEndPoint + $"lastscan/{armResourceUri}?api-version={apiVersion}";
-                string jsonString = await PrepareAndSendRequestWithRetry(requestUri, httpMethod: HttpMethod.Get);
+                string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: HttpMethod.Get);
                 return JsonConvert.DeserializeObject<LastScanResponseModel>(jsonString);
             }
             catch (HttpRequestException httpException)
@@ -221,7 +212,7 @@ namespace Diagnostics.DataProviders
             string requestUri = changeAnalysisEndPoint + $"Subscription/{subscriptionId}/onboardingstate?api-version={apiVersion}";
             try
             {
-                string jsonString = await PrepareAndSendRequestWithRetry(requestUri, httpMethod: HttpMethod.Get);
+                string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: HttpMethod.Get);
                 var result = JsonConvert.DeserializeObject<SubscriptionOnboardingStatus>(jsonString);
                 result.IsRegistered = true;
                 return result;
@@ -259,7 +250,7 @@ namespace Diagnostics.DataProviders
             {
                 string requestUri = changeAnalysisEndPoint + $"{scanAction}/{resourceId}?api-version={apiVersion}";
                 HttpMethod httpMethod = scanAction.Equals("checkscan") ? HttpMethod.Get : HttpMethod.Post;
-                string jsonString = await PrepareAndSendRequestWithRetry(requestUri, httpMethod: httpMethod);
+                string jsonString = await PrepareAndSendRequest(requestUri, httpMethod: httpMethod);
                 return JsonConvert.DeserializeObject<ChangeScanModel>(jsonString);
             }
             catch (HttpRequestException httpexception)
@@ -328,41 +319,41 @@ namespace Diagnostics.DataProviders
             }
 
             string clientIssuer = string.Empty;
-            if (receivedHeaders.ContainsKey(ClientIssuerHeader))
+            if(receivedHeaders.ContainsKey(ClientIssuerHeader))
             {
                 clientIssuer = receivedHeaders[ClientIssuerHeader];
             }
-            if (!string.IsNullOrWhiteSpace(clientIssuer))
+            if(!string.IsNullOrWhiteSpace(clientIssuer))
             {
                 requestMessage.Headers.Add(ClientIssuerHeader, clientIssuer);
             }
 
             string clientPuid = string.Empty;
-            if (receivedHeaders.ContainsKey(ClientPuidHeader))
+            if(receivedHeaders.ContainsKey(ClientPuidHeader))
             {
                 clientPuid = receivedHeaders[ClientPuidHeader];
             }
-            if (!string.IsNullOrWhiteSpace(clientPuid))
+            if(!string.IsNullOrWhiteSpace(clientPuid))
             {
                 requestMessage.Headers.Add(ClientPuidHeader, clientPuid);
             }
 
             string clientAltSecId = string.Empty;
-            if (receivedHeaders.ContainsKey(ClientAltSecIdHeader))
+            if(receivedHeaders.ContainsKey(ClientAltSecIdHeader))
             {
                 clientAltSecId = receivedHeaders[ClientAltSecIdHeader];
             }
-            if (!string.IsNullOrWhiteSpace(clientAltSecId))
+            if(!string.IsNullOrWhiteSpace(clientAltSecId))
             {
                 requestMessage.Headers.Add(ClientAltSecIdHeader, clientAltSecId);
             }
 
             string clientIdentityProvider = string.Empty;
-            if (receivedHeaders.ContainsKey(ClientIdentityProviderHeader))
+            if(receivedHeaders.ContainsKey(ClientIdentityProviderHeader))
             {
                 clientIdentityProvider = receivedHeaders[ClientIdentityProviderHeader];
             }
-            if (!string.IsNullOrWhiteSpace(clientIdentityProvider))
+            if(!string.IsNullOrWhiteSpace(clientIdentityProvider))
             {
                 requestMessage.Headers.Add(ClientIdentityProviderHeader, clientIdentityProvider);
             }
@@ -385,33 +376,6 @@ namespace Diagnostics.DataProviders
             }
 
             return content;
-        }
-
-        private Task<string> PrepareAndSendRequest(object obj)
-        {
-            var param = (ChangeAnalysisRetryParam)obj;
-            return PrepareAndSendRequest(param.RequestUri, param.PostBody, param.HttpMethod);
-        }
-
-        public Task<string> PrepareAndSendRequestWithRetry(string requestUri, object postBody = null, HttpMethod httpMethod = null)
-        {
-
-            var param = new ChangeAnalysisRetryParam()
-            {
-                RequestUri = requestUri,
-                PostBody = postBody,
-                HttpMethod = httpMethod
-            };
-            return RetryHelper.RetryAsync<string>(PrepareAndSendRequest, param, "ChangeAnalysisClient", requestId, config.MaxRetryCount, config.RetryDelayInSeconds * 1000);
-        }
-
-
-        private class ChangeAnalysisRetryParam
-        {
-            public string RequestUri { get; set; }
-            public object PostBody { get; set; }
-
-            public HttpMethod HttpMethod { get; set; }
         }
     }
 }
