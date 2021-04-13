@@ -54,13 +54,27 @@ jobs:
   - task: NuGetAuthenticate@0
     inputs:
       nuGetServiceConnections: 'AzureGenevaMonitoring'
+
   - task: DotNetCoreCLI@2
+    displayName: 'Restore Packages'
+    inputs:
+      command: 'restore'
+      projects: '**/Diagnostics.Tests.csproj'
+      feedsToUse: 'select'
+      vstsFeed: 'b2430cf7-78c0-440a-aa4a-a25665c5778e'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Run Tests'
     inputs:
       command: 'test'
       projects: '**/Diagnostics.Tests.csproj'
       arguments: '--configuration $(buildConfiguration)'
+      feedsToUse: select
+      vstsFeed: 'AzureGenevaMonitoring'
+      externalFeedCredentials: 'AzureGenevaMonitoring'
 
   - task: DotNetCoreCLI@2
+    displayName: "Publish"
     inputs:
       command: publish
       publishWebProjects: True
