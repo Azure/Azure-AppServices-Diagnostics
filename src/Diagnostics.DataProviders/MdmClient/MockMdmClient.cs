@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Diagnostics.DataProviders.Interfaces;
+using MetricsClient = Microsoft.Cloud.Metrics.Client;
+using Serialization = Microsoft.Online.Metrics.Serialization.Configuration;
 
 namespace Diagnostics.DataProviders
 {
@@ -99,6 +101,53 @@ namespace Diagnostics.DataProviders
         {
             IEnumerable<TimeSeries<MetricIdentifier, double?>> series = new TimeSeries<MetricIdentifier, double?>[] { };
             return Task.FromResult(series);
+        }
+
+        public Task<MetricsClient.TimeSeries<Serialization.MetricIdentifier, double?>> GetTimeSeriesAsync(
+            DateTime startTimeUtc,
+            DateTime endTimeUtc,
+            MetricsClient.Metrics.SamplingType samplingType,
+            int seriesResolutionInMinutes,
+            MetricsClient.TimeSeriesDefinition<Serialization.MetricIdentifier> definition)
+        {
+            var series = new MetricsClient.TimeSeries<Serialization.MetricIdentifier, double?>(startTimeUtc, endTimeUtc, seriesResolutionInMinutes, definition, null, MetricsClient.TimeSeriesErrorCode.BadRequest);
+            return Task.FromResult(series);
+        }
+
+        public Task<MetricsClient.TimeSeries<Serialization.MetricIdentifier, double?>> GetTimeSeriesAsync(DateTime startTimeUtc,
+            DateTime endTimeUtc,
+            MetricsClient.Metrics.SamplingType[] samplingTypes,
+            MetricsClient.TimeSeriesDefinition<Serialization.MetricIdentifier> definition,
+            int seriesResolutionInMinutes = 1,
+            MetricsClient.Query.AggregationType aggregationType = MetricsClient.Query.AggregationType.Automatic)
+        {
+            var series = new MetricsClient.TimeSeries<Serialization.MetricIdentifier, double?>(startTimeUtc, endTimeUtc, seriesResolutionInMinutes, definition, null, MetricsClient.TimeSeriesErrorCode.BadRequest);
+            return Task.FromResult(series);
+        }
+
+        public Task<MetricsClient.TimeSeries<Serialization.MetricIdentifier, double?>> GetTimeSeriesAsync(DateTime startTimeUtc,
+            DateTime endTimeUtc,
+            MetricsClient.Metrics.SamplingType samplingType,
+            MetricsClient.TimeSeriesDefinition<Serialization.MetricIdentifier> definition)
+        {
+            var series = new MetricsClient.TimeSeries<Serialization.MetricIdentifier, double?>(startTimeUtc, endTimeUtc, 1, definition, null, MetricsClient.TimeSeriesErrorCode.BadRequest);
+            return Task.FromResult(series);
+        }
+
+        public Task<MetricsClient.Query.IQueryResultListV3> GetTimeSeriesAsync(Serialization.MetricIdentifier metricId,
+            IReadOnlyList<MetricsClient.Metrics.DimensionFilter> dimensionFilters,
+            DateTime startTimeUtc,
+            DateTime endTimeUtc,
+            IReadOnlyList<MetricsClient.Metrics.SamplingType> samplingTypes,
+            MetricsClient.Query.SelectionClauseV3 selectionClause = null,
+            MetricsClient.Query.AggregationType aggregationType = MetricsClient.Query.AggregationType.Automatic,
+            long seriesResolutionInMinutes = 1,
+            Guid? traceId = null,
+            IReadOnlyList<string> outputDimensionNames = null,
+            bool lastValueMode = false)
+        {
+            MetricsClient.Query.IQueryResultListV3 queryResults = null;
+            return Task.FromResult(queryResults);
         }
     }
 }

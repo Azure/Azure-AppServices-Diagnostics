@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MetricsClient = Microsoft.Cloud.Metrics.Client;
+using Serialization = Microsoft.Online.Metrics.Serialization;
 
 namespace Diagnostics.DataProviders.Interfaces
 {
@@ -55,5 +57,36 @@ namespace Diagnostics.DataProviders.Interfaces
         /// <param name="aggregationType">The aggregation function used to reduce the resolution of the returned series.</param>
         /// <returns>The time series of for the given definitions.</returns>
         Task<IEnumerable<TimeSeries<MetricIdentifier, double?>>> GetMultipleTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, SamplingType[] samplingTypes, IEnumerable<TimeSeriesDefinition<MetricIdentifier>> definitions, int seriesResolutionInMinutes = 1, AggregationType aggregationType = AggregationType.Automatic);
+
+        Task<MetricsClient.TimeSeries<Serialization.Configuration.MetricIdentifier, double?>> GetTimeSeriesAsync(DateTime startTimeUtc,
+            DateTime endTimeUtc,
+            MetricsClient.Metrics.SamplingType samplingType,
+            int seriesResolutionInMinutes,
+            MetricsClient.TimeSeriesDefinition<Serialization.Configuration.MetricIdentifier> definition);
+
+
+        Task<MetricsClient.TimeSeries<Serialization.Configuration.MetricIdentifier, double?>> GetTimeSeriesAsync(DateTime startTimeUtc,
+            DateTime endTimeUtc,
+            MetricsClient.Metrics.SamplingType[] samplingTypes,
+            MetricsClient.TimeSeriesDefinition<Serialization.Configuration.MetricIdentifier> definition,
+            int seriesResolutionInMinutes = 1,
+            MetricsClient.Query.AggregationType aggregationType = MetricsClient.Query.AggregationType.Automatic);
+
+        Task<MetricsClient.TimeSeries<Serialization.Configuration.MetricIdentifier, double?>> GetTimeSeriesAsync(DateTime startTimeUtc,
+            DateTime endTimeUtc,
+            MetricsClient.Metrics.SamplingType samplingType,
+            MetricsClient.TimeSeriesDefinition<Serialization.Configuration.MetricIdentifier> definition);
+
+        Task<MetricsClient.Query.IQueryResultListV3> GetTimeSeriesAsync(Serialization.Configuration.MetricIdentifier metricId,
+            IReadOnlyList<MetricsClient.Metrics.DimensionFilter> dimensionFilters,
+            DateTime startTimeUtc,
+            DateTime endTimeUtc,
+            IReadOnlyList<MetricsClient.Metrics.SamplingType> samplingTypes,
+            MetricsClient.Query.SelectionClauseV3 selectionClause = null,
+            MetricsClient.Query.AggregationType aggregationType = MetricsClient.Query.AggregationType.Automatic,
+            long seriesResolutionInMinutes = 1,
+            Guid? traceId = null,
+            IReadOnlyList<string> outputDimensionNames = null,
+            bool lastValueMode = false);
     }
 }
