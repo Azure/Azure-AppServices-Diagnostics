@@ -61,8 +61,9 @@ jobs:
         command: restore
         projects: '**/Diagnostics.Tests.csproj'
         feedsToUse: select
-        vstsFeed: 'de9af483-3d68-4e7c-88a3-a79624abdade'
+        vstsFeed: 'AzureGenevaMonitoring'
         externalFeedCredentials: 'AzureGenevaMonitoring'
+
   - task: DotNetCoreCLI@2
     displayName: 'Run Tests'
     inputs:
@@ -70,7 +71,7 @@ jobs:
       projects: '**/Diagnostics.Tests.csproj'
       arguments: '--configuration $(buildConfiguration)'
       feedsToUse: select
-      vstsFeed: 'de9af483-3d68-4e7c-88a3-a79624abdade'
+      vstsFeed: 'AzureGenevaMonitoring'
       externalFeedCredentials: 'AzureGenevaMonitoring'
 
   - task: DotNetCoreCLI@2
