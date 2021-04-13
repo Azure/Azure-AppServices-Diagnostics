@@ -59,6 +59,8 @@ jobs:
       command: 'test'
       projects: '**/Diagnostics.Tests.csproj'
       arguments: '--configuration $(buildConfiguration)'
+      feedsToUse: select
+      vstsFeed: 'AzureGenevaMonitoring'
       externalFeedCredentials: 'AzureGenevaMonitoring'
 
   - task: DotNetCoreCLI@2
