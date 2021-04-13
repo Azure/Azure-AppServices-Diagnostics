@@ -60,7 +60,7 @@ jobs:
       projects: '**/Diagnostics.Tests.csproj'
       arguments: '--configuration $(buildConfiguration)'
       feedsToUse: select
-      vstsFeed: 'AzureGenevaMonitoring'
+      vstsFeed: 'de9af483-3d68-4e7c-88a3-a79624abdade'
       externalFeedCredentials: 'AzureGenevaMonitoring'
 
   - task: DotNetCoreCLI@2
