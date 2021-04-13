@@ -58,11 +58,11 @@ jobs:
   - task: DotNetCoreCLI@2
     displayName: 'Restore Packages'
     inputs:
-        command: restore
-        projects: '**/Diagnostics.Tests.csproj'
-        feedsToUse: select
-        vstsFeed: 'AzureGenevaMonitoring'
-        externalFeedCredentials: 'AzureGenevaMonitoring'
+      command: 'restore'
+      projects: '**/Diagnostics.Tests.csproj'
+      feedsToUse: 'config'
+      nugetConfigPath: 'nuget.config'
+      externalFeedCredentials: 'AzureGenevaMonitoring'
 
   - task: DotNetCoreCLI@2
     displayName: 'Run Tests'
