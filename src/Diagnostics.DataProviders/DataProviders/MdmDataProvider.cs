@@ -10,6 +10,8 @@ using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
+using MetricsClient = Microsoft.Cloud.Metrics.Client;
+using Serialization = Microsoft.Online.Metrics.Serialization;
 
 namespace Diagnostics.DataProviders
 {
@@ -242,6 +244,26 @@ namespace Diagnostics.DataProviders
             }
 
             return result;
+        }
+
+        public async Task<MetricsClient.TimeSeries<Serialization.Configuration.MetricIdentifier, double?>> GetTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, MetricsClient.Metrics.SamplingType samplingType, int seriesResolutionInMinutes, MetricsClient.TimeSeriesDefinition<Serialization.Configuration.MetricIdentifier> definition)
+        {
+            return await _mdmClient.GetTimeSeriesAsync(startTimeUtc, endTimeUtc, samplingType, seriesResolutionInMinutes, definition).ConfigureAwait(false);
+        }
+
+        public async Task<MetricsClient.TimeSeries<Serialization.Configuration.MetricIdentifier, double?>> GetTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, MetricsClient.Metrics.SamplingType[] samplingTypes, MetricsClient.TimeSeriesDefinition<Serialization.Configuration.MetricIdentifier> definition, int seriesResolutionInMinutes = 1, MetricsClient.Query.AggregationType aggregationType = MetricsClient.Query.AggregationType.Automatic)
+        {
+            return await _mdmClient.GetTimeSeriesAsync(startTimeUtc, endTimeUtc, samplingTypes, definition, seriesResolutionInMinutes, aggregationType).ConfigureAwait(false);
+        }
+
+        public async Task<MetricsClient.TimeSeries<Serialization.Configuration.MetricIdentifier, double?>> GetTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, MetricsClient.Metrics.SamplingType samplingType, MetricsClient.TimeSeriesDefinition<Serialization.Configuration.MetricIdentifier> definition)
+        {
+            return await _mdmClient.GetTimeSeriesAsync(startTimeUtc, endTimeUtc, samplingType, definition).ConfigureAwait(false);
+        }
+
+        public async Task<MetricsClient.Query.IQueryResultListV3> GetTimeSeriesAsync(Serialization.Configuration.MetricIdentifier metricId, IReadOnlyList<MetricsClient.Metrics.DimensionFilter> dimensionFilters, DateTime startTimeUtc, DateTime endTimeUtc, IReadOnlyList<MetricsClient.Metrics.SamplingType> samplingTypes, MetricsClient.Query.SelectionClauseV3 selectionClause = null, MetricsClient.Query.AggregationType aggregationType = MetricsClient.Query.AggregationType.Automatic, long seriesResolutionInMinutes = 1, Guid? traceId = null, IReadOnlyList<string> outputDimensionNames = null, bool lastValueMode = false)
+        {
+            return await _mdmClient.GetTimeSeriesAsync(metricId, dimensionFilters, startTimeUtc, endTimeUtc, samplingTypes, selectionClause, aggregationType, seriesResolutionInMinutes, traceId, outputDimensionNames, lastValueMode).ConfigureAwait(false);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2007:Consider calling ConfigureAwait on the awaited task", Justification = "<Pending>")]
