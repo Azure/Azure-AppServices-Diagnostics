@@ -51,19 +51,27 @@ jobs:
       version: 2.2.x
       installationPath: $(Agent.ToolsDirectory)/dotnet
 
-  - task: DotNetCoreCLI@2
+  - task: NuGetAuthenticate@0
     inputs:
-      command: 'build'
-      projects: '$(solution)'
-      configuration: '$(buildConfiguration)'
+      nuGetServiceConnections: 'AzureGenevaMonitoring'
 
   - task: DotNetCoreCLI@2
+    displayName: 'Restore Packages'
+    inputs:
+      command: 'restore'
+      projects: '**/Diagnostics.Tests.csproj'
+      feedsToUse: 'select'
+      vstsFeed: 'b2430cf7-78c0-440a-aa4a-a25665c5778e'
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Run Tests'
     inputs:
       command: 'test'
       projects: '**/Diagnostics.Tests.csproj'
       arguments: '--configuration $(buildConfiguration)'
 
   - task: DotNetCoreCLI@2
+    displayName: "Publish"
     inputs:
       command: publish
       publishWebProjects: True
