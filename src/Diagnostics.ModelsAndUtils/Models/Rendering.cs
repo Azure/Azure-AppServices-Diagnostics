@@ -78,10 +78,13 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public IEnumerable<string> SeriesColumns { get; set; }
 
+        public bool ShowMetrics { get; set; }
+
         public TimeSeriesRendering()
         {
             DefaultValue = 0;
             GraphType = TimeSeriesType.LineGraph;
+            ShowMetrics = false;
         }
     }
 
@@ -107,10 +110,13 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public string SelectedInstance { get; set; }
 
+        public bool ShowMetrics { get; set; }
+
         public TimeSeriesPerInstanceRendering() : base(RenderingType.TimeSeriesPerInstance)
         {
             DefaultValue = 0;
             GraphType = TimeSeriesType.LineGraph;
+            ShowMetrics = false;
         }
     }
 
@@ -313,7 +319,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// Multiple selection with checkbox
         /// </summary>
         Multiple
-    }    
+    }
     public class TableColumnOption
     {
         /// <summary>
