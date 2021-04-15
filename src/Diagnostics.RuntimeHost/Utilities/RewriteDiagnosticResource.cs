@@ -60,8 +60,9 @@ namespace Diagnostics.RuntimeHost.Utilities
                 }
 
                 request.Method = apiVerbs.First().ToLower();
-                request.Path = apiPaths.First().ToLower();
-                context.Result = RuleResult.SkipRemainingRules;         
+                var rewriteOptions = new RewriteOptions().AddRewrite(UriElements.PassThroughAPIRoute.Substring(1) + "|^$", apiPaths.First().ToLower(), true);
+                var rewriteRule = rewriteOptions.Rules.FirstOrDefault();
+                rewriteRule.ApplyRule(context);         
             }
         }
     }
