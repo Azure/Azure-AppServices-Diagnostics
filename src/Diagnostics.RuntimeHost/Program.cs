@@ -4,13 +4,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
-using Microsoft.Extensions.Logging;
 using Diagnostics.DataProviders;
 using System;
-using Microsoft.CodeAnalysis;
 using Diagnostics.DataProviders.Utility;
 using Diagnostics.Logger;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -20,7 +19,7 @@ namespace Diagnostics.RuntimeHost
         {
             try
             {
-                CreateWebHostBuilder(args).Build().Run();
+                CreateHostBuilder(args).Build().Run();
             }
             catch (Exception ex)
             {
@@ -38,10 +37,17 @@ namespace Diagnostics.RuntimeHost
             }
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
+        /// <summary>
+        /// Builds Generic Host in 3.x
+        /// </summary>
+        /// <param name="args">The arguments</param>
+        /// <returns>Hostbuilder</returns>
+        public static IHostBuilder CreateHostBuilder(string[] args)
         {
-            return WebHost.CreateDefaultBuilder(args)
-                .ConfigureAppConfiguration((context, config) =>
+
+            return Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(webbuilder =>
+            {
+                webbuilder.ConfigureAppConfiguration((context, config) =>
                 {
                     var builtConfig = config.Build();
                     // For production and staging, skip outbound call to keyvault for AppSettings
@@ -54,8 +60,8 @@ namespace Diagnostics.RuntimeHost
                                 keyVaultUri,
                                 keyVaultClient,
                                 new DefaultKeyVaultSecretManager());
-                    }                
-                    if (IsDecryptionRequired(context.HostingEnvironment, builtConfig.GetValue<string>("CloudDomain")))                      
+                    }
+                    if (IsDecryptionRequired(context.HostingEnvironment, builtConfig.GetValue<string>("CloudDomain")))
                     {
                         DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("Decrypting app settings");
                         config.AddEncryptedProvider(Environment.GetEnvironmentVariable("APPSETTINGS_ENCRYPTIONKEY"), Environment.GetEnvironmentVariable("APPSETTINGS_INITVECTOR"), "appsettings.Encrypted.json");
@@ -63,8 +69,9 @@ namespace Diagnostics.RuntimeHost
                     config.AddEnvironmentVariables()
                         .AddCommandLine(args)
                         .Build();
-                })
-                .UseStartup<Startup>();
+                  });
+                webbuilder.UseStartup<Startup>();
+            });       
         }
 
         private static Tuple<string, KeyVaultClient> GetKeyVaultSettings(WebHostBuilderContext context, IConfigurationRoot builtConfig)
@@ -79,7 +86,7 @@ namespace Diagnostics.RuntimeHost
         }
 
         // Do decryption if its production or staging and cloud env
-        private static bool IsDecryptionRequired(IHostingEnvironment environment, string cloudDomain)
+        private static bool IsDecryptionRequired(IHostEnvironment environment, string cloudDomain)
         {
             return (environment.IsProduction() || environment.IsStaging()) && cloudDomain.Equals(DataProviderConstants.AzureCloud, StringComparison.CurrentCultureIgnoreCase);
         }

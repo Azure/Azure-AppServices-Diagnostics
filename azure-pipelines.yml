@@ -48,7 +48,7 @@ jobs:
     displayName: 'Use .NET Core sdk step'
     inputs:
       packageType: sdk
-      version: 2.2.x
+      version: 3.1.x
       installationPath: $(Agent.ToolsDirectory)/dotnet
 
   - task: NuGetAuthenticate@0
