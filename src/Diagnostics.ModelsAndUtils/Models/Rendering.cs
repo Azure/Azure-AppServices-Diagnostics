@@ -10,15 +10,18 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string Title { get; set; }
 
         public string Description { get; set; }
+        public bool IsVisible { get; set; }
 
         public Rendering()
         {
             Type = RenderingType.TimeSeries;
+            IsVisible = true;
         }
 
         public Rendering(RenderingType type)
         {
             Type = type;
+            IsVisible = true;
         }
     }
 
