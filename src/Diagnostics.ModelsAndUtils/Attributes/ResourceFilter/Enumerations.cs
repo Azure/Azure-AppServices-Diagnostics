@@ -64,7 +64,12 @@
         /// <summary>
         /// Represents HyperV platform
         /// </summary>
-        HyperV = 4
+        HyperV = 4,
+
+        /// <summary>
+        /// Represents Kubernetes platform
+        /// </summary>
+        Kubernetes = 8
     }
 
     /// <summary>

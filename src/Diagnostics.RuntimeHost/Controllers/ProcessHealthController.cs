@@ -31,11 +31,12 @@ namespace Diagnostics.RuntimeHost.Controllers
             List<Task> allChecks = new List<Task>();
             allChecks.Add(Task.Run(_sourceWatcherService.Watcher.WaitForFirstCompletion));
             allChecks.Add(Task.Run(_healthCheckService.RunHealthCheck));
-
+            var netCoreVer = Environment.Version; 
+            var runtimeVer = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
             try
             {
                 await Task.WhenAll(allChecks);
-                return Ok("Server is up and running.");
+                return Ok($"Server is up and running. .NET Core Version : {netCoreVer}, Runtime Version : {runtimeVer} ");
             }
             catch (Exception ex)
             {

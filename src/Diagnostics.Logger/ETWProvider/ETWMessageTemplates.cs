@@ -84,6 +84,15 @@ namespace Diagnostics.Logger
         public const string LogAzureStorageException = "StorageService: {0}, Exception: {3}";
 
         #endregion
+
+        #region Generic Monitoring Event Message Template
+
+        public const string LogMonitoringEventMessage = "Monitoring Event: {0}, Message: {1}";
+        public const string LogMonitoringEventWarning = "Monitoring Event: {0}, Message: {1}";
+        public const string LogMonitoringEventException = "Monitoring Event: {0}, Exception: {3}";
+
+        #endregion
+
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
