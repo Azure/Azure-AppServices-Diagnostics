@@ -115,5 +115,23 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         {
             return Id == other.Id;
         }
+        /// <summary>
+        /// Cannot set with attribute in detector code, only get from ResourceFilter
+        /// </summary>
+        public bool InternalOnly
+        {
+            get
+            {
+                return this._InternalOnly;
+            }
+        }
+
+        private bool _InternalOnly { get; set; }
+
+        public Definition SetInternalOnly(bool internalOnly)
+        {
+            this._InternalOnly = internalOnly;
+            return this;
+        }
     }
 }
