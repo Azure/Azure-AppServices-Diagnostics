@@ -65,6 +65,8 @@ namespace Diagnostics.RuntimeHost.Controllers
         private PlatformType GetPlatformType(DiagnosticSiteData postBody)
         {
             return postBody.IsXenon ?? false ? PlatformType.HyperV :
+                !string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Kind.ToLower().Contains("kubernetes") ? PlatformType.Kubernetes :
+                !string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Stamp.Kind.ToString().Contains("4") ? PlatformType.Kubernetes :
                 !string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Kind.ToLower().Contains("linux") ? PlatformType.Linux :
                 PlatformType.Windows;
         }
