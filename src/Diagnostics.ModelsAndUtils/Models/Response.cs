@@ -80,6 +80,18 @@ namespace Diagnostics.ModelsAndUtils.Models
             Table = new DataTable();
             RenderingProperties = new Rendering();
         }
+
+        public bool IsVisible
+        {
+            get { return RenderingProperties.IsVisible; }
+            set { RenderingProperties.IsVisible = value; }
+        }
+
+        public DiagnosticData Invisible()
+        {
+            IsVisible = false;
+            return this;
+        }
     }
 
     public class DiagnosticApiResponse

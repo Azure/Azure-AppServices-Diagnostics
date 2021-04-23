@@ -73,7 +73,7 @@ namespace Diagnostics.DataProviders
         private MetricReader CreateMetricReader()
         {
             var certificate = MdmCertLoader.Instance.Cert;
-            var connectionInfo = new ConnectionInfo(certificate, MdmEnvironment.Production);
+            var connectionInfo = new ConnectionInfo(Endpoint, certificate);
             return new MetricReader(connectionInfo);
         }
 
