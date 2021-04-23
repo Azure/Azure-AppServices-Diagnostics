@@ -49,6 +49,9 @@ namespace Diagnostics.RuntimeHost.Controllers
                 case HostingEnvironmentType.V2:
                     app.StampType = StampType.ASEV2;
                     break;
+                case HostingEnvironmentType.K8SE:
+                    app.StampType = StampType.K8SE;
+                    break;
                 default:
                     app.StampType = StampType.Public;
                     break;
