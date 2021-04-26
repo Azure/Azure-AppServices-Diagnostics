@@ -1,4 +1,4 @@
-private static string GetQuery(OperationContext<AzureCosmosDB> cxt)
+private static string GetQuery(OperationContext<ArmResource> cxt)
 {
     return
     $@"
