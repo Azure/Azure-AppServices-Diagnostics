@@ -1,4 +1,4 @@
-private static string GetQuery(OperationContext<AzureCosmosDB> cxt)
+private static string GetQuery(OperationContext<ArmResource> cxt)
 {
     return
     $@"
@@ -11,7 +11,7 @@ private static string GetQuery(OperationContext<AzureCosmosDB> cxt)
 
 [ArmResourceFilter(provider: "Microsoft.DocumentDB", resourceTypeName: "databaseAccounts")]
 [Definition(Id = "<YOUR_DETECTOR_ID>", Name = "", Author = "<YOUR_ALIAS>", Description = "")]
-public async static Task<Response> Run(DataProviders dp, OperationContext<AzureCosmosDB> cxt, Response res)
+public async static Task<Response> Run(DataProviders dp, OperationContext<ArmResource> cxt, Response res)
 {
     res.Dataset.Add(new DiagnosticData()
     {
