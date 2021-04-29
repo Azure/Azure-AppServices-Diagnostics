@@ -3,12 +3,13 @@ using Diagnostics.Logger;
 using Microsoft.Azure.OperationalInsights;
 using Microsoft.Azure.OperationalInsights.Models;
 using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.Data;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
+using Diagnostics.ModelsAndUtils.ScriptUtilities;
 
 namespace Diagnostics.DataProviders
 {
@@ -70,11 +71,37 @@ namespace Diagnostics.DataProviders
             DataTable dataTable = new DataTable("results");
             dataTable.Clear();
 
-            dataTable.Columns.AddRange(results.Tables[0].Columns.Select(s => new DataColumn(s.Name)).ToArray());
+            dataTable.Columns.AddRange(results.Tables[0].Columns.Select(s => new DataColumn(s.Name, StringTypeConverter.StringToType(s.Type))).ToArray());
             var rows = results.Tables[0].Rows.Select(s => dataTable.NewRow().ItemArray = s.ToArray());
-            foreach (var i in rows) { dataTable.Rows.Add(i); }
+            foreach (var i in rows) 
+            {
+                dataTable.Rows.Add(MakeRow(i, dataTable).ToArray());
+            }
 
             return dataTable;
+        }
+
+        ArrayList MakeRow(object[] i, DataTable dataTable)
+        {
+            ArrayList variableTypeRow = new ArrayList();
+
+            for (var j = 0; j < i.Length; j++)
+            {
+                //var test = Type.GetType(dataTable.Columns[j].DataType.FullName);
+                if (string.IsNullOrEmpty((string)i[j]))
+                {
+                    variableTypeRow.Add(i[j]);
+                }
+                else if (Type.GetType(dataTable.Columns[j].DataType.FullName) == typeof(DateTime))
+                {
+                    variableTypeRow.Add(DateTime.Parse((string)i[j]).ToUniversalTime());
+                }
+                else
+                {
+                    variableTypeRow.Add(Convert.ChangeType(i[j], Type.GetType(dataTable.Columns[j].DataType.FullName)));
+                }
+            }
+            return variableTypeRow;
         }
     }
 }

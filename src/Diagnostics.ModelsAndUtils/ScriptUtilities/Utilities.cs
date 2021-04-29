@@ -250,4 +250,28 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
             return s;
         }
     }
+
+    public static class StringTypeConverter
+    {
+        public static Type StringToType(string TypeString)
+        {
+            switch (TypeString)
+            {
+                case "string":
+                    return Type.GetType("System.String");
+                case "datetime":
+                    return Type.GetType("System.DateTime");
+                case "int":
+                    return Type.GetType("System.Int32");
+                case "bool":
+                    return Type.GetType("System.Boolean");
+                case "real":
+                    return Type.GetType("System.Double");
+                case "long":
+                    return Type.GetType("System.Int64");
+                default:
+                    return Type.GetType("System.String");
+            }
+        }   
+    }
 }
