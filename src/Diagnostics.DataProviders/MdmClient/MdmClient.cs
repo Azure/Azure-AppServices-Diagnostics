@@ -14,6 +14,11 @@ using Diagnostics.DataProviders.Interfaces;
 using Diagnostics.DataProviders.Utility;
 using Diagnostics.Logger;
 using Newtonsoft.Json;
+using MetricsClient = Microsoft.Cloud.Metrics.Client;
+using Serialization = Microsoft.Online.Metrics.Serialization.Configuration;
+using Microsoft.Cloud.Metrics.Client.Metrics;
+using Microsoft.Cloud.Metrics.Client.Query;
+using Microsoft.Cloud.Metrics.Client;
 
 namespace Diagnostics.DataProviders
 {
@@ -28,6 +33,8 @@ namespace Diagnostics.DataProviders
         /// Gets the http client.
         /// </summary>
         public static HttpClient HttpClient { get; private set; }
+
+        public static MetricReader MetricReader { get; private set; }
 
         /// <summary>
         /// Gets the endpoint.
@@ -47,6 +54,7 @@ namespace Diagnostics.DataProviders
                 Endpoint = new Uri(configuration.Endpoint);
                 HttpClient = CreateHttpClient();
                 RequestId = requestId;
+                MetricReader = CreateMetricReader();
             }
             catch (Exception ex)
             {
@@ -60,6 +68,13 @@ namespace Diagnostics.DataProviders
                     ex.GetType().ToString(),
                     ex.ToString());
             }
+        }
+
+        private MetricReader CreateMetricReader()
+        {
+            var certificate = MdmCertLoader.Instance.Cert;
+            var connectionInfo = new ConnectionInfo(Endpoint, certificate);
+            return new MetricReader(connectionInfo);
         }
 
         /// <summary>
@@ -265,6 +280,69 @@ namespace Diagnostics.DataProviders
             }
         }
 
+        public async Task<MetricsClient.TimeSeries<Serialization.MetricIdentifier, double?>> GetTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, MetricsClient.Metrics.SamplingType[] samplingTypes, MetricsClient.TimeSeriesDefinition<Serialization.MetricIdentifier> definition, int seriesResolutionInMinutes = 1, MetricsClient.Query.AggregationType aggregationType = MetricsClient.Query.AggregationType.Automatic)
+        {
+            var response = await MetricReader.GetTimeSeriesAsync(startTimeUtc,
+                endTimeUtc,
+                samplingTypes,
+                definition,
+                seriesResolutionInMinutes,
+                aggregationType).ConfigureAwait(false);
+
+            return response;
+        }
+
+        public async Task<MetricsClient.TimeSeries<Serialization.MetricIdentifier, double?>> GetTimeSeriesAsync(DateTime startTimeUtc, DateTime endTimeUtc, MetricsClient.Metrics.SamplingType samplingType, MetricsClient.TimeSeriesDefinition<Serialization.MetricIdentifier> definition)
+        {
+            var response = await MetricReader.GetTimeSeriesAsync(startTimeUtc,
+                endTimeUtc,
+                samplingType,
+                definition).ConfigureAwait(false);
+
+            return response;
+
+        }
+        public async Task<MetricsClient.TimeSeries<Serialization.MetricIdentifier, double?>> GetTimeSeriesAsync(DateTime startTimeUtc,
+            DateTime endTimeUtc,
+            MetricsClient.Metrics.SamplingType samplingType,
+            int seriesResolutionInMinutes,
+            MetricsClient.TimeSeriesDefinition<Serialization.MetricIdentifier> definition)
+        {
+            var response = await MetricReader.GetTimeSeriesAsync(startTimeUtc,
+                endTimeUtc,
+                samplingType,
+                seriesResolutionInMinutes,
+                definition).ConfigureAwait(false); ;
+
+            return response;
+        }
+
+        public async Task<IQueryResultListV3> GetTimeSeriesAsync(Serialization.MetricIdentifier metricId,
+            IReadOnlyList<DimensionFilter> dimensionFilters,
+            DateTime startTimeUtc,
+            DateTime endTimeUtc,
+            IReadOnlyList<MetricsClient.Metrics.SamplingType> samplingTypes,
+            SelectionClauseV3 selectionClause = null,
+            MetricsClient.Query.AggregationType aggregationType = MetricsClient.Query.AggregationType.Automatic,
+            long seriesResolutionInMinutes = 1,
+            Guid? traceId = null,
+            IReadOnlyList<string> outputDimensionNames = null,
+            bool lastValueMode = false)
+        {
+            var response = await MetricReader.GetTimeSeriesAsync(metricId,
+                dimensionFilters,
+                startTimeUtc,
+                endTimeUtc,
+                samplingTypes,
+                selectionClause,
+                aggregationType,
+                seriesResolutionInMinutes,
+                traceId,
+                outputDimensionNames,
+                lastValueMode).ConfigureAwait(false); ;
+
+            return response;
+        }
         private static void NormalizeTimeRange(ref DateTime startTimeUtc, ref DateTime endTimeUtc)
         {
             startTimeUtc = new DateTime(startTimeUtc.Ticks / TimeSpan.TicksPerMinute * TimeSpan.TicksPerMinute);

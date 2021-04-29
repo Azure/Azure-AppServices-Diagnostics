@@ -17,11 +17,11 @@ using Microsoft.IdentityModel.Tokens;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
-using System.IO;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 
 namespace Diagnostics.CompilerHost
 {
@@ -35,7 +35,7 @@ namespace Diagnostics.CompilerHost
         /// </summary>
         /// <param name="configuration">The configuration.</param>
         /// <param name="hostingEnvironment">The hostingEnvironment.</param>
-        public Startup(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
+        public Startup(IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
         {
             var builder = new ConfigurationBuilder()
               .SetBasePath(AppContext.BaseDirectory)
@@ -67,7 +67,7 @@ namespace Diagnostics.CompilerHost
         /// <summary>
         /// Gets the hosting environment.
         /// </summary>
-        public IHostingEnvironment Environment { get; }
+        public IWebHostEnvironment Environment { get; }
 
         /// <summary>
         /// Gets the configuration.
@@ -118,7 +118,7 @@ namespace Diagnostics.CompilerHost
                 });
             // Enable app insights telemetry
             services.AddApplicationInsightsTelemetry();
-            services.AddMvc();
+            services.AddControllers().AddNewtonsoftJson();
             CustomStartup();
 
             services.AddLogging(loggingConfig =>
@@ -127,7 +127,6 @@ namespace Diagnostics.CompilerHost
                 loggingConfig.AddConfiguration(Configuration.GetSection("Logging"));
                 loggingConfig.AddDebug();
                 loggingConfig.AddEventSourceLogger();
-                loggingConfig.AddAzureWebAppDiagnostics();
 
                 if (Environment.IsDevelopment())
                 {
@@ -142,15 +141,21 @@ namespace Diagnostics.CompilerHost
         /// <param name="app">The application.</param>
         /// <param name="env">The hosting environment.</param>
         /// <remarks>This method gets called by the runtime. Use this method to configure the HTTP request pipeline.</remarks>
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app.UseAuthentication();
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
+            app.UseHttpsRedirection();
+            app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseCompilerRequestMiddleware();
-            app.UseMvc();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
 
         private void CustomStartup()

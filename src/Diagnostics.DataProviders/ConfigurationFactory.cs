@@ -95,6 +95,28 @@ namespace Diagnostics.DataProviders
                         return string.Empty;
                 }
             }
+            else if (prefix == "K8SELogAnalytics")
+            {
+                switch (name)
+                {
+                    case "Provider":
+                        return "Mock";
+                    case "WorkspaceId":
+                        return "MockWorkspaceId";
+                    case "ClientId":
+                        return "MockClientId";
+                    case "ClientSecret":
+                        return "MockClientSecret";
+                    case "Domain":
+                        return "MockDomain";
+                    case "AuthEndpoint":
+                        return "https://login.microsoftonline.com";
+                    case "TokenAudience":
+                        return "https://api.loganalytics.io/";
+                    default:
+                        return string.Empty;
+                }
+            }
 
             return string.Empty;
         }

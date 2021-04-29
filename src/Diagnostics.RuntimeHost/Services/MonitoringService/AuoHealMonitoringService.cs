@@ -3,6 +3,7 @@ using Diagnostics.Logger;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.IO;
 using System.Linq;
@@ -29,7 +30,7 @@ namespace Diagnostics.RuntimeHost.Services
         /// </summary>
         /// <param name="configuration">Configuration object</param>
         /// <param name="environment">Environment object</param>
-        public AuoHealMonitoringService(IConfiguration configuration, IHostingEnvironment environment)
+        public AuoHealMonitoringService(IConfiguration configuration, IWebHostEnvironment environment)
         {
             isEnabled = configuration.GetValue("AutoHealMonitoringSettings:IsEnabled", true);
             iterationDelayInSeconds = configuration.GetValue("AutoHealMonitoringSettings:IterationDelayInSeconds", 30 * 60);

@@ -9,7 +9,7 @@ private static string GetQuery(OperationContext<ArmResource> cxt)
         | <YOUR_QUERY>";
 }
 
-[ArmResourceFilter(provider: "Microsoft.DocumentDB", resourceTypeName: "databaseAccounts")]
+[ArmResourceFilter(provider: "Microsoft.Kubernetes", resourceTypeName: "connectedClusters")]
 [Definition(Id = "<YOUR_DETECTOR_ID>", Name = "", Author = "<YOUR_ALIAS>", Description = "")]
 public async static Task<Response> Run(DataProviders dp, OperationContext<ArmResource> cxt, Response res)
 {
