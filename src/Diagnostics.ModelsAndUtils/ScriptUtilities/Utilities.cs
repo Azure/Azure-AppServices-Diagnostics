@@ -251,11 +251,11 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
         }
     }
 
-    public static class StringTypeConverter
+    public static class TypeConverter
     {
-        public static Type StringToType(string TypeString)
+        public static Type StringToType(string typeString)
         {
-            switch (TypeString)
+            switch (typeString.ToLower())
             {
                 case "string":
                     return Type.GetType("System.String");

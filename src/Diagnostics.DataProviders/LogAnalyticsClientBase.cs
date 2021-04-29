@@ -71,7 +71,7 @@ namespace Diagnostics.DataProviders
             DataTable dataTable = new DataTable("results");
             dataTable.Clear();
 
-            dataTable.Columns.AddRange(results.Tables[0].Columns.Select(s => new DataColumn(s.Name, StringTypeConverter.StringToType(s.Type))).ToArray());
+            dataTable.Columns.AddRange(results.Tables[0].Columns.Select(s => new DataColumn(s.Name, TypeConverter.StringToType(s.Type))).ToArray());
             var rows = results.Tables[0].Rows.Select(s => dataTable.NewRow().ItemArray = s.ToArray());
             foreach (var i in rows) 
             {
@@ -81,23 +81,23 @@ namespace Diagnostics.DataProviders
             return dataTable;
         }
 
-        ArrayList MakeRow(object[] i, DataTable dataTable)
+        ArrayList MakeRow(object[] stringRow, DataTable dataTable)
         {
             ArrayList variableTypeRow = new ArrayList();
 
-            for (var j = 0; j < i.Length; j++)
+            for (var j = 0; j < stringRow.Length; j++)
             {
-                if (string.IsNullOrEmpty((string)i[j]))
+                if (string.IsNullOrWhiteSpace((string)stringRow[j]))
                 {
-                    variableTypeRow.Add(i[j]);
+                    variableTypeRow.Add(stringRow[j]);
                 }
                 else if (Type.GetType(dataTable.Columns[j].DataType.FullName) == typeof(DateTime))
                 {
-                    variableTypeRow.Add(DateTime.Parse((string)i[j]).ToUniversalTime());
+                    variableTypeRow.Add(DateTime.Parse((string)stringRow[j]));
                 }
                 else
                 {
-                    variableTypeRow.Add(Convert.ChangeType(i[j], Type.GetType(dataTable.Columns[j].DataType.FullName)));
+                    variableTypeRow.Add(Convert.ChangeType(stringRow[j], Type.GetType(dataTable.Columns[j].DataType.FullName)));
                 }
             }
             return variableTypeRow;
