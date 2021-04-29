@@ -87,7 +87,6 @@ namespace Diagnostics.DataProviders
 
             for (var j = 0; j < i.Length; j++)
             {
-                //var test = Type.GetType(dataTable.Columns[j].DataType.FullName);
                 if (string.IsNullOrEmpty((string)i[j]))
                 {
                     variableTypeRow.Add(i[j]);
