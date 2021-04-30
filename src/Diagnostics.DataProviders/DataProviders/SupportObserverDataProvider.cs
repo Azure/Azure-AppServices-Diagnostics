@@ -328,7 +328,14 @@ namespace Diagnostics.DataProviders
 
             try
             {
-                response.EnsureSuccessStatusCode();
+                if ((int)response.StatusCode >= 400 && (int)response.StatusCode <= 499)
+                {
+                    result = string.Empty;
+                }
+                else
+                {
+                    response.EnsureSuccessStatusCode();
+                }
             }
             catch (HttpRequestException)
             {
@@ -350,6 +357,11 @@ namespace Diagnostics.DataProviders
             DataTable datatable;
             try
             {
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    datatable = new DataTable();
+                }
+
                 datatable = (DataTable)JsonConvert.DeserializeObject(json, typeof(DataTable));
             }
             catch (JsonReaderException ex)
