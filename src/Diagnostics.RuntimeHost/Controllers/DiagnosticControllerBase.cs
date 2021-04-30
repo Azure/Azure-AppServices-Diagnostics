@@ -20,6 +20,7 @@ using Diagnostics.RuntimeHost.Models.Exceptions;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
+using Diagnostics.RuntimeHost.Services.DiagnosticsTranslator;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
 using Diagnostics.RuntimeHost.Services.StorageService;
@@ -50,10 +51,12 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected ISupportTopicService _supportTopicService;
         protected IKustoMappingsCacheService _kustoMappingCacheService;
         protected IRuntimeLoggerProvider _loggerProvider;
+        protected ITranslationCacheService _translationCacheService;
 
         private InternalAPIHelper _internalApiHelper;
         private IDiagEntityTableCacheService tableCacheService;
         private ISourceWatcher storageWatcher;
+        private IDiagnosticTranslatorService _diagnosticTranslator;
 
         public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext)
         {
@@ -67,8 +70,10 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
             this._supportTopicService = (ISupportTopicService)services.GetService(typeof(ISupportTopicService));
             this._kustoMappingCacheService = (IKustoMappingsCacheService)services.GetService(typeof(IKustoMappingsCacheService));
+            this._translationCacheService = (ITranslationCacheService)services.GetService(typeof(ITranslationCacheService));
             this._loggerProvider = (IRuntimeLoggerProvider)services.GetService(typeof(IRuntimeLoggerProvider));
             tableCacheService = (IDiagEntityTableCacheService)services.GetService(typeof(IDiagEntityTableCacheService));
+            this._diagnosticTranslator = (IDiagnosticTranslatorService)services.GetService(typeof(IDiagnosticTranslatorService));
             var sourcewatchertype = _sourceWatcherService.Watcher.GetType();
             if (sourcewatchertype != typeof(StorageWatcher))
             {
@@ -92,7 +97,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(await this.ListDetectorsInternal(cxt, queryText));
         }
 
-        protected async Task<IActionResult> GetDetector(TResource resource, string detectorId, string startTime, string endTime, string timeGrain, Form form = null)
+        protected async Task<IActionResult> GetDetector(TResource resource, string detectorId, string startTime, string endTime, string timeGrain, Form form = null, string enableLocale = "")
         {
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
             {
@@ -101,7 +106,17 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: form, detectorId: detectorId);
             var detectorResponse = await GetDetectorInternal(detectorId, cxt);
-            return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2));
+
+            
+            string locale = enableLocale.ToLower();
+            if (!String.IsNullOrWhiteSpace(locale) && !locale.StartsWith("en") && detectorResponse != null)
+            {
+                this._diagnosticTranslator.GetResponseTranslations(detectorResponse.Item1, locale);
+
+            }
+
+            var diagnosticResponse = DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2);
+            return detectorResponse == null ? (IActionResult)NotFound() : Ok(diagnosticResponse);
         }
 
         protected async Task<IActionResult> ListGists(TResource resource)

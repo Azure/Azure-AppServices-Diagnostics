@@ -30,6 +30,7 @@ using Newtonsoft.Json;
 using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
 using Diagnostics.Logger;
 using Microsoft.Extensions.Hosting;
+using Diagnostics.RuntimeHost.Services.DiagnosticsTranslator;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -162,9 +163,11 @@ namespace Diagnostics.RuntimeHost
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
             services.AddSingleton<IGistCacheService, GistCacheService>();
             services.AddSingleton<IKustoMappingsCacheService, KustoMappingsCacheService>();
+            services.AddSingleton<ITranslationCacheService, TranslationCacheService>();
             services.AddSingleton<ISiteService, SiteService>();
             services.AddSingleton<ISupportTopicService, SupportTopicService>();
             services.AddScoped(typeof(IRuntimeContext<>), typeof(RuntimeContext<>));
+            services.AddSingleton<IDiagnosticTranslatorService, DiagnosticTranslatorService>();
             services.AddSingleton<IStampService>((serviceProvider) =>
             {
                 var cloudDomain = serviceProvider.GetService<IDataSourcesConfigurationService>().Config.KustoConfiguration.CloudDomain;

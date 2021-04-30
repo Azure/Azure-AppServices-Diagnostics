@@ -36,7 +36,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public IEnumerable<Solution> Solutions;
 
         /// <summary>
-        /// Creates an instance of Insight class.
+        /// Creates an instance of Insight class.f
         /// </summary>
         /// <param name="status">Enum reprensenting insight level.</param>
         /// <param name="message">Insight Message.</param>
