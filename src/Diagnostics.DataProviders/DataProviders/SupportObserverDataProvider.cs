@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders.Exceptions;
 using Diagnostics.ModelsAndUtils.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -328,7 +329,7 @@ namespace Diagnostics.DataProviders
 
             try
             {
-                if ((int)response.StatusCode >= 400 && (int)response.StatusCode <= 499)
+                if ((int)response.StatusCode == 404)
                 {
                     result = string.Empty;
                 }
@@ -337,10 +338,21 @@ namespace Diagnostics.DataProviders
                     response.EnsureSuccessStatusCode();
                 }
             }
-            catch (HttpRequestException)
+            catch (HttpRequestException ex)
             {
                 loggingResponse = result;
-                throw;
+                string message = null; 
+
+                if ((int)response.StatusCode == 400)
+                {
+                    message = $"Client Error: {result}";
+                }
+                else
+                {
+                    message = $"Observer Server Error: {result}";
+                }
+
+                throw new ObserverException(route, $"{(int)response.StatusCode} {response.StatusCode}", message, ex);
             }
             finally
             {
