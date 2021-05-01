@@ -72,7 +72,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="postBody">Request json body.</param>
         /// <returns>Task for listing detectors.</returns>
         [HttpPost(UriElements.Detectors)]
-        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody, [FromQuery(Name = "text")] string text = null)
+        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody, [FromQuery(Name = "text")] string text = null, [FromQuery] string l = "")
         {
             if (IsPostBodyMissing(postBody))
             {
@@ -81,7 +81,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
-            return await base.ListDetectors(app, text);
+            return await base.ListDetectors(app, text, language: l);
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
-            return await base.GetDetector(app, detectorId, startTime, endTime, timeGrain, form: form, enableLocale: l);
+            return await base.GetDetector(app, detectorId, startTime, endTime, timeGrain, form: form, language: l);
         }
 
         /// <summary>

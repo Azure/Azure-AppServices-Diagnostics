@@ -85,7 +85,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         #region API Response Methods
 
-        protected async Task<IActionResult> ListDetectors(TResource resource, string queryText = null)
+        protected async Task<IActionResult> ListDetectors(TResource resource, string queryText = null, string language = "")
         {
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
@@ -94,10 +94,19 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 return BadRequest("Search query term should be at least two characters");
             }
-            return Ok(await this.ListDetectorsInternal(cxt, queryText));
+
+            IEnumerable<DiagnosticApiResponse> listDetectorsResponse = await this.ListDetectorsInternal(cxt, queryText);
+
+            language = language.ToLower();
+            if (IsTranslationApplicable(language))
+            {
+                listDetectorsResponse = await _diagnosticTranslator.GetMetadataTranslations(listDetectorsResponse, language);
+            }
+
+            return Ok(listDetectorsResponse);
         }
 
-        protected async Task<IActionResult> GetDetector(TResource resource, string detectorId, string startTime, string endTime, string timeGrain, Form form = null, string enableLocale = "")
+        protected async Task<IActionResult> GetDetector(TResource resource, string detectorId, string startTime, string endTime, string timeGrain, Form form = null, string language = "")
         {
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
             {
@@ -107,15 +116,14 @@ namespace Diagnostics.RuntimeHost.Controllers
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: form, detectorId: detectorId);
             var detectorResponse = await GetDetectorInternal(detectorId, cxt);
 
-            
-            string locale = enableLocale.ToLower();
-            if (!String.IsNullOrWhiteSpace(locale) && !locale.StartsWith("en") && detectorResponse != null)
+            language = language.ToLower();
+            Response responseObject = detectorResponse != null ? detectorResponse.Item1: null;
+            if (IsTranslationApplicable(language) && detectorResponse != null)
             {
-                this._diagnosticTranslator.GetResponseTranslations(detectorResponse.Item1, locale);
-
+                responseObject = await this._diagnosticTranslator.GetResponseTranslations(detectorResponse.Item1, language);
             }
 
-            var diagnosticResponse = DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2);
+            var diagnosticResponse = DiagnosticApiResponse.FromCsxResponse(responseObject, detectorResponse.Item2);
             return detectorResponse == null ? (IActionResult)NotFound() : Ok(diagnosticResponse);
         }
 
@@ -515,6 +523,11 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         #endregion API Response Methods
 
+        protected bool IsTranslationApplicable(string language)
+        {
+            return !String.IsNullOrWhiteSpace(language) && string.Compare(language, "en", StringComparison.Ordinal) != 0 && !language.StartsWith("en.", StringComparison.CurrentCulture);
+        }
+
         protected TResource GetResource(string subscriptionId, string resourceGroup, string name)
         {
             var subLocationPlacementId = string.Empty;
@@ -700,7 +713,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
             var invoker = this._invokerCache.GetEntityInvoker<TResource>(gistId, context);
 
-            if (invoker == null)
+
             {
                 return null;
             }
@@ -738,7 +751,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     return new List<DiagnosticApiResponse>();
                 }
             }
-
+            
             if (tableCacheService.IsStorageAsSourceEnabled())
             {
                 var allDetectorsFromStorage = await tableCacheService.GetEntityListByType<TResource>(context);

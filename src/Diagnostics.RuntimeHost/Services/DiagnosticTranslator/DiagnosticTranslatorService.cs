@@ -13,6 +13,8 @@ using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using Diagnostics.ModelsAndUtils.Models;
 using System.Data;
+using Microsoft.CodeAnalysis;
+using Diagnostics.ModelsAndUtils.Attributes;
 
 namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
 {
@@ -20,6 +22,7 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
     {
         Task<List<string>> GetTranslations(List<string> textToTranslate, string locale);
         Task<Response> GetResponseTranslations(Response response, string language);
+        Task<IEnumerable<DiagnosticApiResponse>> GetMetadataTranslations(IEnumerable<DiagnosticApiResponse> listDetectorsResponse, string language);
     }
 
 
@@ -69,49 +72,81 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
             InitializeHttpClient();
         }
 
+        private async Task<List<Definition>> GetMetadataTranslations(List<Definition> metadataList, string language)
+        {
+            if (metadataList == null || metadataList.Count == 0)
+            {
+                return metadataList;
+            }
+            List<Definition> responseMetaDataList = metadataList;
+            List<string> textsToTraslate = new List<string>();
+            metadataList.ForEach((metadata) =>
+            {
+                textsToTraslate.AddRange(new List<string> { metadata.Name, metadata.Description });
+            });
+            
+            List<string> translatedText = await GetTranslations(textsToTraslate, language);
+            
+            if (translatedText != null && translatedText.Count > 1 && translatedText.Count == metadataList.Count*2)
+            {
+                for (int i = 0; i*2 +1 < translatedText.Count; i++)
+                {
+                    responseMetaDataList[i].Name = translatedText[i * 2];
+                    responseMetaDataList[i].Description = translatedText[i * 2 + 1];
+                }
+            }
+            return responseMetaDataList;
+        }
 
         public async Task<Response> GetResponseTranslations(Response diagnosticResponse, string language)
         {
-            Console.WriteLine(diagnosticResponse);
+            if (diagnosticResponse == null)
+            {
+                return diagnosticResponse;
+            }
+
+            List<Definition> metadataTranslations = await GetMetadataTranslations(new List<Definition> { diagnosticResponse.Metadata }, language);
+            diagnosticResponse.Metadata = metadataTranslations != null && metadataTranslations.Count > 1 ? metadataTranslations[0]: diagnosticResponse.Metadata;
+
             for (int j = 0; j < diagnosticResponse.Dataset.Count; j++)
             {
                 RenderingType renderingType = diagnosticResponse.Dataset[j].RenderingProperties.Type;
                 switch (renderingType)
                 {
                     case RenderingType.Insights:
-                        diagnosticResponse.Dataset[j] = await translateInsights(diagnosticResponse.Dataset[j], language);
+                        diagnosticResponse.Dataset[j] = await GetInsightsTranslation(diagnosticResponse.Dataset[j], language);
+                        Console.WriteLine("Modifying dataset, {0}", JsonConvert.SerializeObject(diagnosticResponse.Dataset[j]));
                         break;
                     default:
                         break;
                 }
-
-                //if (diagnosticResponse.Dataset[j].RenderingProperties.Type == RenderingType.Insights)
-                //{
-                //    //table.Rows.Add(new string[]
-                //    //{
-                //    //    insight.Status.ToString(),
-                //    //    insight.Message,
-                //    //    entry.Key,
-                //    //    entry.Value,
-                //    //    insight.IsExpanded.ToString(),
-                //    //    JsonConvert.SerializeObject(insight.Solutions)
-                //    //});
-
-
-
-                //}
-                //else if (diagnosticResponse.Dataset[j].RenderingProperties.Type == RenderingType.Notification)
-                //{
-
-                //    string textToTranslate = diagnosticResponse.Dataset[j].Table.Rows[0, 1];
-                //    List<string> translatedTexts = await GetTranslations(new string[] { textToTranslate }, language);
-                //    diagnosticResponse.Dataset[j].Table.Rows[0, 1] = translatedTexts[0];
-
-                //}
             }
 
             return diagnosticResponse;
         }
+
+        public async Task<IEnumerable<DiagnosticApiResponse>> GetMetadataTranslations(IEnumerable<DiagnosticApiResponse> listDetectorsResponse, string language)
+        {
+            IEnumerable<DiagnosticApiResponse> translatedResponse = listDetectorsResponse;
+      
+            List<Definition> allDetectorsDefinitions = listDetectorsResponse.Select(detectorResponse => detectorResponse.Metadata).ToList<Definition>();
+            List<Definition> metadataTranslations = await GetMetadataTranslations(allDetectorsDefinitions, language);
+
+            if (metadataTranslations != null && metadataTranslations.Count == translatedResponse.Count())
+            {
+                for (int i = 0; i < metadataTranslations.Count; i++)
+                {
+                    translatedResponse.ElementAt(i).Metadata = metadataTranslations[i];
+                }
+            }
+
+            return translatedResponse;
+        }
+
+        //public async Task<DiagnosticData> getDetectorListTranslations(DiagnosticData dataset, string language)
+        //{
+
+        //}
 
         //
         //new DataColumn("Status", typeof(string)),
@@ -121,7 +156,7 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
         //        new DataColumn("Expanded", typeof(string)),
         //        new DataColumn(nameof(Insight.Solutions), typeof(string))
 
-        public async Task<DiagnosticData> translateInsights(DiagnosticData dataset, string language)
+        public async Task<DiagnosticData> GetInsightsTranslation(DiagnosticData dataset, string language)
         {
             List<string> textsToTraslate = new List<string>();
             List<string> textsTraslated = new List<string>();
@@ -134,11 +169,11 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
                     int statusColumnIndex = 0;
                     int expandedColumnIndex = 4;
 
-                    foreach (DataColumn column in dataset.Table.Columns)
+                    foreach (DataRow row in dataset.Table.Rows)
                     {
-                        foreach (DataRow row in dataset.Table.Rows)
+                        foreach (DataColumn column in dataset.Table.Columns)
                         {
-                            string originalText = row[column].ToString();
+                            string originalText = row[column].ToString().Equals( "null", StringComparison.OrdinalIgnoreCase) ? "" : row[column].ToString();               
                             textsToTraslate.Add(originalText);
                         }
                     }
@@ -165,17 +200,8 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
                     }
 
                     Console.WriteLine("get the table");
-                    Console.WriteLine(dataset.Table);
+                    Console.WriteLine(JsonConvert.SerializeObject(dataset.Table));
 
-                    //foreach (DataColumn column in dataset.Table.Columns)
-                    //{
-                    //    foreach (DataRow row in dataset.Table.Rows)
-                    //    {
-                    //        string originalText = row[column].ToString();
-                    //        textsToTraslate.Add(originalText);
-                    //    }
-                    //}
-                    // dataset.Table.Rows[i, 1] = translatedText[0];
                     return dataset;
                 }
             }
@@ -238,7 +264,7 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
                 }
 
              //   string translationText = jObjectResponse[0]["translations"][0]["text"].ToString();
-                    Console.WriteLine(translatedTexts);
+                    Console.WriteLine(JsonConvert.SerializeObject(translatedTexts));
                 return translatedTexts;
             }
 
