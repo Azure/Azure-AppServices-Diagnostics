@@ -81,7 +81,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
-            return await base.ListDetectors(app, text, language: l);
+            return await base.ListDetectors(app, text, language: l.ToLower());
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
-            return await base.GetDetector(app, detectorId, startTime, endTime, timeGrain, form: form, language: l);
+            return await base.GetDetector(app, detectorId, startTime, endTime, timeGrain, form: form, language: l.ToLower());
         }
 
         /// <summary>

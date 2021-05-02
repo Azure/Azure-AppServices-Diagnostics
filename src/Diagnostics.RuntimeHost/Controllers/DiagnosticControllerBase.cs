@@ -96,14 +96,24 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             IEnumerable<DiagnosticApiResponse> listDetectorsResponse = await this.ListDetectorsInternal(cxt, queryText);
+            IEnumerable<DiagnosticApiResponse> listDetectorsTranslatedResponse = listDetectorsResponse;
 
-            language = language.ToLower();
-            if (IsTranslationApplicable(language))
+            try
             {
-                listDetectorsResponse = await _diagnosticTranslator.GetMetadataTranslations(listDetectorsResponse, language);
+                if (IsTranslationApplicable(language))
+                {
+                    listDetectorsTranslatedResponse = await _diagnosticTranslator.GetMetadataTranslations(listDetectorsResponse, language);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log translation exceptions and return orgininal untranslated response
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.OperationContext.RequestId, "ListDetectorsTranslations", cxt.OperationContext.Resource.SubscriptionId,
+                    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, ex.GetType().ToString(), ex.ToString());
+                listDetectorsTranslatedResponse = listDetectorsResponse;
             }
 
-            return Ok(listDetectorsResponse);
+            return Ok(listDetectorsTranslatedResponse);
         }
 
         protected async Task<IActionResult> GetDetector(TResource resource, string detectorId, string startTime, string endTime, string timeGrain, Form form = null, string language = "")
@@ -115,12 +125,23 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: form, detectorId: detectorId);
             var detectorResponse = await GetDetectorInternal(detectorId, cxt);
+            Response responseObject = detectorResponse != null ? detectorResponse.Item1 : null;
 
-            language = language.ToLower();
-            Response responseObject = detectorResponse != null ? detectorResponse.Item1: null;
-            if (IsTranslationApplicable(language) && detectorResponse != null)
+            try
             {
-                responseObject = await this._diagnosticTranslator.GetResponseTranslations(detectorResponse.Item1, language);
+                
+                if (IsTranslationApplicable(language) && detectorResponse != null)
+                {
+                    responseObject = await this._diagnosticTranslator.GetResponseTranslations(detectorResponse.Item1, language);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                // Log translation exceptions and return orgininal untranslated resp
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.OperationContext.RequestId, "GetDetectorTranslations", cxt.OperationContext.Resource.SubscriptionId,
+    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, ex.GetType().ToString(), ex.ToString());
+                responseObject = detectorResponse.Item1;
             }
 
             var diagnosticResponse = DiagnosticApiResponse.FromCsxResponse(responseObject, detectorResponse.Item2);

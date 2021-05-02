@@ -15,6 +15,7 @@ using Diagnostics.ModelsAndUtils.Models;
 using System.Data;
 using Microsoft.CodeAnalysis;
 using Diagnostics.ModelsAndUtils.Attributes;
+using Microsoft.AspNetCore.Server.IIS.Core;
 
 namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
 {
@@ -35,7 +36,8 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
         private readonly bool isEnabled;
 
         private static string _translatorSubscriptionKey;
-        private static readonly string translatorEndpoint = "https://api.cognitive.microsofttranslator.com/";
+        private static readonly string translatorBaseURL = "https://api.cognitive.microsofttranslator.com/";
+        private const string BaseURL = "https://api.applicationinsights.io/v1/apps/{0}/query";
 
         private ITranslationCacheService _translationCacheService;
         //private IDictionary<string, ITranslationCacheService> TranslationCache { get; }
@@ -44,13 +46,10 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
         int cacheExpirationTimeInSecs = 60;
         private static readonly HttpClient _httpClient = new HttpClient();
 
-        //public HttpClient Client => _client;
-        //public Uri BaseUri => _client.BaseAddress;
-
         private void InitializeHttpClient()
         {
             _httpClient.Timeout = TimeSpan.FromSeconds(30);
-            _httpClient.BaseAddress = new Uri(translatorEndpoint);
+            _httpClient.BaseAddress = new Uri(translatorBaseURL);
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _translatorSubscriptionKey);
@@ -157,54 +156,48 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
         {
             List<string> textsToTraslate = new List<string>();
             List<string> textsTraslated = new List<string>();
-            try
+
+            if (dataset.Table != null && dataset.Table.Rows != null)
             {
-                if (dataset.Table != null && dataset.Table.Rows != null)
+                int rowCount = dataset.Table.Rows.Count;
+                int columnCount = dataset.Table.Columns.Count;
+                int statusColumnIndex = 0;
+                int expandedColumnIndex = 4;
+
+                foreach (DataRow row in dataset.Table.Rows)
                 {
-                    int rowCount = dataset.Table.Rows.Count;
-                    int columnCount = dataset.Table.Columns.Count;
-                    int statusColumnIndex = 0;
-                    int expandedColumnIndex = 4;
-
-                    foreach (DataRow row in dataset.Table.Rows)
+                    foreach (DataColumn column in dataset.Table.Columns)
                     {
-                        foreach (DataColumn column in dataset.Table.Columns)
-                        {
-                            string originalText = row[column].ToString().Equals( "null", StringComparison.OrdinalIgnoreCase) ? "" : row[column].ToString();               
-                            textsToTraslate.Add(originalText);
-                        }
+                        string originalText = row[column].ToString().Equals( "null", StringComparison.OrdinalIgnoreCase) ? "" : row[column].ToString();               
+                        textsToTraslate.Add(originalText);
                     }
+                }
 
-                    List<string> translatedText = await GetTranslations(textsToTraslate, language);
+                List<string> translatedText = await GetTranslations(textsToTraslate, language);
 
-                    if (translatedText.Count != rowCount * columnCount)
-                    {
-                        //Make sure we get the same count of translated value mapping 
-                        Console.WriteLine("dateset number not matching {0} vs {1}", translatedText.Count, rowCount * columnCount);
-                        return dataset;
-                    }
-
-                    // For "Status" and "Expanded" column, we don't need translated value 
-                    for (int i = 0; i < translatedText.Count; i++)
-                    {
-                        int rowIndex = i / columnCount;
-                        int columnIndex = i % columnCount;
-
-                        if (columnIndex != statusColumnIndex && columnIndex != expandedColumnIndex)
-                        {
-                            dataset.Table.Rows[rowIndex][columnIndex] = translatedText[i];
-                        }                 
-                    }
-
-                    Console.WriteLine("get the table");
-                    Console.WriteLine(JsonConvert.SerializeObject(dataset.Table));
-
+                if (translatedText.Count != rowCount * columnCount)
+                {
+                    //Make sure we get the same count of translated value mapping 
+                    Console.WriteLine("dateset number not matching {0} vs {1}", translatedText.Count, rowCount * columnCount);
                     return dataset;
                 }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
+
+                // For "Status" and "Expanded" column, we don't need translated value 
+                for (int i = 0; i < translatedText.Count; i++)
+                {
+                    int rowIndex = i / columnCount;
+                    int columnIndex = i % columnCount;
+
+                    if (columnIndex != statusColumnIndex && columnIndex != expandedColumnIndex)
+                    {
+                        dataset.Table.Rows[rowIndex][columnIndex] = translatedText[i];
+                    }                 
+                }
+
+                Console.WriteLine("get the table");
+                Console.WriteLine(JsonConvert.SerializeObject(dataset.Table));
+
+                return dataset;
             }
             return dataset;
         }
@@ -233,45 +226,56 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
         /// <returns>Attribute value</returns>
         public async Task<List<string>> GetTranslations(List<string> textsToTranslate, string languageToTranslate)
         {
-            // Input and output languages are defined as parameters.
-            string route = $"/translate?api-version=3.0&from=en&to={languageToTranslate}";
+            if (textsToTranslate == null)
+            {
+                return null;
+            }
+
+            string route = string.Format("/translate?api-version=3.0&from=en&to={0}", languageToTranslate);
             List<Object> texts = new List<Object>();
             foreach (string text in textsToTranslate)
             {
                 texts.Add(new { Text = text });
             }
 
-            object[] body = texts.ToArray();
+            object[] body = textsToTranslate.Select((text) => new { Text = text }).ToArray();
+          //  object[] body = texts.ToArray();
             var requestBody = JsonConvert.SerializeObject(body);
 
-            using (var request = new HttpRequestMessage())
+            try
             {
-                // Build the request.
-                request.Method = HttpMethod.Post;
-                request.RequestUri = new Uri(translatorEndpoint + route);
-                request.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
-                //request.Headers.Add("Ocp-Apim-Subscription-Key", translatorSubscriptionKey);
-                // request.Headers.Add("Ocp-Apim-Subscription-Region", location);
-
-                // Send the request and get response.
-                HttpResponseMessage response = await _httpClient.SendAsync(request).ConfigureAwait(false);
-                // Read response as a string.
-
-                string result = await response.Content.ReadAsStringAsync();
-                JArray jObjectResponse = JArray.Parse(result);
-                //var translationObject = JObject.Parse(result);
-
-                List<string> translatedTexts = new List<string>();
-                foreach(var responseObject in jObjectResponse)
+                using (var request = new HttpRequestMessage())
                 {
-                    if (responseObject["translations"] != null && responseObject["translations"].Count() > 0)
-                    {
-                        translatedTexts.Add(responseObject["translations"][0]["text"].ToString());
-                    }
-                }
+                    // Build the request.
+                    request.Method = HttpMethod.Post;
+                    request.RequestUri = new Uri(translatorBaseURL + route);
+                    request.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
+                    //request.Headers.Add("Ocp-Apim-Subscription-Key", translatorSubscriptionKey);
+                    // request.Headers.Add("Ocp-Apim-Subscription-Region", location);
 
-                Console.WriteLine(JsonConvert.SerializeObject(translatedTexts));
-                return translatedTexts;
+                    // Send the request and get response.
+                    HttpResponseMessage response = await _httpClient.SendAsync(request).ConfigureAwait(false);
+                    // Read response as a string.
+
+                    string result = await response.Content.ReadAsStringAsync();
+                    JArray jObjectResponse = JArray.Parse(result);
+
+                    List<string> translatedTexts = new List<string>();
+                    foreach (var responseObject in jObjectResponse)
+                    {
+                        if (responseObject["translations"] != null && responseObject["translations"].Count() > 0)
+                        {
+                            translatedTexts.Add(responseObject["translations"][0]["text"].ToString());
+                        }
+                    }
+
+                    Console.WriteLine(JsonConvert.SerializeObject(translatedTexts));
+                    return translatedTexts;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
     }
