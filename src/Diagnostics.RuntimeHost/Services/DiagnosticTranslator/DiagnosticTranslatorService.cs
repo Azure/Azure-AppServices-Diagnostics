@@ -85,7 +85,7 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
                 textsToTraslate.AddRange(new List<string> { metadata.Name, metadata.Description });
             });
             
-            List<string> translatedText = await GetTranslations(textsToTraslate, language);
+            List<string> translatedText = await GetGroupTranslations(textsToTraslate, language);
             
             if (translatedText != null && translatedText.Count > 1 && translatedText.Count == metadataList.Count*2)
             {
@@ -134,10 +134,7 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
 
             if (metadataTranslations != null && metadataTranslations.Count == translatedResponse.Count())
             {
-                for (int i = 0; i < metadataTranslations.Count; i++)
-                {
-                    translatedResponse.ElementAt(i).Metadata = metadataTranslations[i];
-                }
+                translatedResponse = translatedResponse.Select((response, i) => { response.Metadata = metadataTranslations[i]; return response; });
             }
 
             return translatedResponse;
@@ -212,6 +209,21 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
             return dataset;
         }
 
+        public async Task<List<string>> GetGroupTranslations(List<string> textsToTranslate, string languageToTranslate)
+        {
+            int translationGroupCount = textsToTranslate.Count / 100;
+            int lastGroupSize = textsToTranslate.Count % 100;
+            List<List<string>> translationGroupList = new List<List<string>>();
+            for (int i = 0; i <= translationGroupCount; i++)
+            {
+                int groupSize = i == translationGroupCount ? lastGroupSize : 100;
+                translationGroupList.Add(textsToTranslate.GetRange(i * 100, groupSize));
+            }
+
+            var translatedTextsGroup = await Task.WhenAll(translationGroupList.Select(textBatch => GetTranslations(textBatch, languageToTranslate)));
+            return translatedTextsGroup.Where(group => group != null).SelectMany(group => group).ToList();
+        }
+
         /// <summary>
         /// Translator string texts to a specific language
         /// If the Attribute doesn't exists, returns Null
@@ -219,23 +231,18 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
         /// <param name="element">XElement</param>
         /// <param name="attributeName">Name of the attribute</param>
         /// <returns>Attribute value</returns>
-        public async Task<List<string>> GetTranslations(List<string> textsToTranslate, string languageToTranslator)
+        public async Task<List<string>> GetTranslations(List<string> textsToTranslate, string languageToTranslate)
         {
             // Input and output languages are defined as parameters.
-            string route = $"/translate?api-version=3.0&from=en&to={languageToTranslator}";
-            
+            string route = $"/translate?api-version=3.0&from=en&to={languageToTranslate}";
             List<Object> texts = new List<Object>();
             foreach (string text in textsToTranslate)
             {
                 texts.Add(new { Text = text });
             }
+
             object[] body = texts.ToArray();
-            Console.Write("texts Array and body array");
-            Console.Write(texts);
-            Console.Write(body);
-
             var requestBody = JsonConvert.SerializeObject(body);
-
 
             using (var request = new HttpRequestMessage())
             {
@@ -263,13 +270,9 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
                     }
                 }
 
-             //   string translationText = jObjectResponse[0]["translations"][0]["text"].ToString();
-                    Console.WriteLine(JsonConvert.SerializeObject(translatedTexts));
+                Console.WriteLine(JsonConvert.SerializeObject(translatedTexts));
                 return translatedTexts;
             }
-
         }
-
-
     }
 }
