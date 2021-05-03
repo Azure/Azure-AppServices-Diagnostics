@@ -205,7 +205,10 @@ namespace Diagnostics.RuntimeHost
             var observerServicePoint = ServicePointManager.FindServicePoint(new Uri(dataSourcesConfigService.Config.SupportObserverConfiguration.Endpoint));
             observerServicePoint.ConnectionLeaseTimeout = 60 * 1000;
 
-            K8SELogAnalyticsTokenService.Instance.Initialize(dataSourcesConfigService.Config.K8SELogAnalyticsConfiguration);
+            if (Configuration.GetValue("K8SELogAnalytics:Enabled", true))
+            {
+                K8SELogAnalyticsTokenService.Instance.Initialize(dataSourcesConfigService.Config.K8SELogAnalyticsConfiguration);
+            }
 
             if (Configuration.GetValue("ChangeAnalysis:Enabled", true))
             {
