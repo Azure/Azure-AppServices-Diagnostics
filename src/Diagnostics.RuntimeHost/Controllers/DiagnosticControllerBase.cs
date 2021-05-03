@@ -100,14 +100,14 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             try
             {
-                if (IsTranslationApplicable(language))
+                if (IsLocalizationApplicable(language))
                 {
-                    listDetectorsTranslatedResponse = await _diagnosticTranslator.GetMetadataTranslations(listDetectorsResponse, language);
+                    listDetectorsTranslatedResponse = await _diagnosticTranslator.GetMetadataTranslations(listDetectorsResponse, language).ConfigureAwait(false);
                 }
             }
             catch (Exception ex)
             {
-                // Log translation exceptions and return orgininal untranslated response
+                // Log translation exceptions and return original untranslated response
                 DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.OperationContext.RequestId, "ListDetectorsTranslations", cxt.OperationContext.Resource.SubscriptionId,
                     cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, ex.GetType().ToString(), ex.ToString());
                 listDetectorsTranslatedResponse = listDetectorsResponse;
@@ -130,7 +130,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             try
             {
                 
-                if (IsTranslationApplicable(language) && detectorResponse != null)
+                if (IsLocalizationApplicable(language) && detectorResponse != null)
                 {
                     responseObject = await this._diagnosticTranslator.GetResponseTranslations(detectorResponse.Item1, language);
                 }
@@ -138,7 +138,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             catch (Exception ex)
             {
-                // Log translation exceptions and return orgininal untranslated resp
+                // Log translation exceptions and return original untranslated resp
                 DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.OperationContext.RequestId, "GetDetectorTranslations", cxt.OperationContext.Resource.SubscriptionId,
     cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, ex.GetType().ToString(), ex.ToString());
                 responseObject = detectorResponse.Item1;
@@ -544,7 +544,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         #endregion API Response Methods
 
-        protected bool IsTranslationApplicable(string language)
+        protected bool IsLocalizationApplicable(string language)
         {
             return !String.IsNullOrWhiteSpace(language) && string.Compare(language, "en", StringComparison.Ordinal) != 0 && !language.StartsWith("en.", StringComparison.CurrentCulture);
         }
@@ -734,7 +734,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             await _sourceWatcherService.Watcher.WaitForFirstCompletion();
             var invoker = this._invokerCache.GetEntityInvoker<TResource>(gistId, context);
 
-
+            if (invoker == null)
             {
                 return null;
             }
