@@ -7,5 +7,5 @@ using Diagnostics.RuntimeHost.Models;
 
 namespace Diagnostics.RuntimeHost.Services.CacheService
 {
-    public interface ITranslationCacheService : ICache<string, string> { }
+    public interface ITranslationCacheService : ICache<Tuple<string, string>, List<string>> { }
 }

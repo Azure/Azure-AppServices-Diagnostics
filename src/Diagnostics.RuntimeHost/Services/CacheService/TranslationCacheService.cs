@@ -11,34 +11,34 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
 {
     public class TranslationCacheService : ITranslationCacheService
     {
-        private ConcurrentDictionary<string, string> _cache;
+        private ConcurrentDictionary<Tuple<string, string>, List<string>> _cache;
 
         public TranslationCacheService()
         {
-            _cache = new ConcurrentDictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+            _cache = new ConcurrentDictionary<Tuple<string, string>, List<string>>();
         }
 
-        public void AddOrUpdate(string key, string value)
+        public void AddOrUpdate(Tuple<string, string> key, List<string> value)
         {
             _cache.AddOrUpdate(key, value, (existingKey, existingValue) => value);
         }
 
-        public bool ContainsKey(string key)
+        public bool ContainsKey(Tuple<string, string> key)
         {
             return _cache.ContainsKey(key);
         }
 
-        public IEnumerable<string> GetAll()
+        public IEnumerable<List<string>> GetAll()
         {
             return _cache.Values;
         }
 
-        public bool TryGetValue(string key, out string value)
+        public bool TryGetValue(Tuple<string, string> key, out List<string> value)
         {
             return _cache.TryGetValue(key, out value);
         }
 
-        public bool TryRemoveValue(string key, out string value)
+        public bool TryRemoveValue(Tuple<string, string> key, out List<string> value)
         {
             return _cache.TryRemove(key, out value);
         }
