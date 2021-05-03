@@ -83,8 +83,11 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
                     case RenderingType.DataSummary:
                         diagnosticResponse.Dataset[j] = await GetDataSummaryTranslation(diagnosticResponse.Dataset[j], language);
                         break;
+                    case RenderingType.DropDown:
+                        diagnosticResponse.Dataset[j] = await GetDropdownTranslation(diagnosticResponse.Dataset[j], language);
+                        break;
                     default:
-                        diagnosticResponse.Dataset[j] = await GetRenderingTranslation(diagnosticResponse.Dataset[j], language);
+                        diagnosticResponse.Dataset[j] = await GetBaseRenderingTranslation(diagnosticResponse.Dataset[j], language);
                         break;
                 }
             }
@@ -155,7 +158,7 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
         /// <param name="language">Language to translate to.</param>
         /// <param name="allowedColumnIndexList">Column indexes in dataset table which is of string type and needs to be localized.</param>
         /// <returns>Localized dataset object</returns>
-        private async Task<DiagnosticData> GetRenderingTranslation(DiagnosticData dataset, string language, List<int> allowedColumnIndexList = null)
+        private async Task<DiagnosticData> GetBaseRenderingTranslation(DiagnosticData dataset, string language, List<int> allowedColumnIndexList = null)
         {
             List<string> renderingPropertiesToTranslate = new List<string>();
             List<string> textsToTraslate = new List<string>();
@@ -224,7 +227,7 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
         public async Task<DiagnosticData> GetDataSummaryTranslation(DiagnosticData dataset, string language)
         {
             int nameColumnIndex = 0;
-            return await GetRenderingTranslation(dataset, language, new List<int> { nameColumnIndex });
+            return await GetBaseRenderingTranslation(dataset, language, new List<int> { nameColumnIndex });
         }
 
         public async Task<DiagnosticData> GetInsightsTranslation(DiagnosticData dataset, string language)
@@ -234,7 +237,15 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
             int insightValueColumnIndex = 3;
             int insightSolutionColumnIndex = 5;
 
-            return await GetRenderingTranslation(dataset, language, new List<int> { messageColumnIndex, insightNameColumnIndex, insightValueColumnIndex, insightSolutionColumnIndex });
+            return await GetBaseRenderingTranslation(dataset, language, new List<int> { messageColumnIndex, insightNameColumnIndex, insightValueColumnIndex, insightSolutionColumnIndex });
+        }
+
+        public async Task<DiagnosticData> GetDropdownTranslation(DiagnosticData dataset, string language)
+        {
+            int dropdownLabelColumn = 0;
+            int dropdownKeyColumn = 1;
+
+            return await GetBaseRenderingTranslation(dataset, language, new List<int> { dropdownLabelColumn, dropdownKeyColumn });
         }
 
         // Cognitive translation API has a limit of 100 elements for string arrays to be sent in request body. 
