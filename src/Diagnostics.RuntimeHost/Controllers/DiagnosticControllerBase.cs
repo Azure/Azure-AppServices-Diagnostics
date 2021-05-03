@@ -51,7 +51,6 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected ISupportTopicService _supportTopicService;
         protected IKustoMappingsCacheService _kustoMappingCacheService;
         protected IRuntimeLoggerProvider _loggerProvider;
-        protected ITranslationCacheService _translationCacheService;
 
         private InternalAPIHelper _internalApiHelper;
         private IDiagEntityTableCacheService tableCacheService;
@@ -70,7 +69,6 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._searchService = (ISearchService)services.GetService(typeof(ISearchService));
             this._supportTopicService = (ISupportTopicService)services.GetService(typeof(ISupportTopicService));
             this._kustoMappingCacheService = (IKustoMappingsCacheService)services.GetService(typeof(IKustoMappingsCacheService));
-            this._translationCacheService = (ITranslationCacheService)services.GetService(typeof(ITranslationCacheService));
             this._loggerProvider = (IRuntimeLoggerProvider)services.GetService(typeof(IRuntimeLoggerProvider));
             tableCacheService = (IDiagEntityTableCacheService)services.GetService(typeof(IDiagEntityTableCacheService));
             this._diagnosticTranslator = (IDiagnosticTranslatorService)services.GetService(typeof(IDiagnosticTranslatorService));
@@ -100,10 +98,12 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             try
             {
-                if (IsLocalizationApplicable(language))
+                if (string.IsNullOrEmpty(language) && this.Request.Headers.ContainsKey(HeaderConstants.LocalizationHeader))
                 {
-                    listDetectorsTranslatedResponse = await _diagnosticTranslator.GetMetadataTranslations(listDetectorsResponse, language).ConfigureAwait(false);
+                    language = this.Request.Headers[HeaderConstants.LocalizationHeader];
                 }
+
+                listDetectorsTranslatedResponse = await _diagnosticTranslator.GetMetadataTranslations(listDetectorsResponse, language);               
             }
             catch (Exception ex)
             {
@@ -129,12 +129,12 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             try
             {
-                
-                if (IsLocalizationApplicable(language) && detectorResponse != null)
+                if (string.IsNullOrEmpty(language) && this.Request.Headers.ContainsKey(HeaderConstants.LocalizationHeader))
                 {
-                    responseObject = await this._diagnosticTranslator.GetResponseTranslations(detectorResponse.Item1, language);
+                    language = this.Request.Headers[HeaderConstants.LocalizationHeader];
                 }
 
+                responseObject = await this._diagnosticTranslator.GetResponseTranslations(detectorResponse.Item1, language);
             }
             catch (Exception ex)
             {
@@ -544,10 +544,6 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         #endregion API Response Methods
 
-        protected bool IsLocalizationApplicable(string language)
-        {
-            return !String.IsNullOrWhiteSpace(language) && string.Compare(language, "en", StringComparison.Ordinal) != 0 && !language.StartsWith("en.", StringComparison.CurrentCulture);
-        }
 
         protected TResource GetResource(string subscriptionId, string resourceGroup, string name)
         {

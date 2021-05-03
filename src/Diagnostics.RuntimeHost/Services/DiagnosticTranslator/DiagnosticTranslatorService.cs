@@ -25,16 +25,19 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
     public class DiagnosticTranslatorService : IDiagnosticTranslatorService
     {
         private IConfiguration _config;
-
+        private static string _enableLocalization;
         private static string _translatorSubscriptionKey;
-        private static readonly string translatorBaseURL = "https://api.cognitive.microsofttranslator.com/";
+        private static string _translatorBaseURL;
+        private static string _translatorApiURL;
+        private static string _apiVersion;
+
         private ITranslationCacheService _translationCacheService;
         private static readonly HttpClient _httpClient = new HttpClient();
 
         private void InitializeHttpClient()
         {
-            _httpClient.Timeout = TimeSpan.FromSeconds(30);
-            _httpClient.BaseAddress = new Uri(translatorBaseURL);
+            _httpClient.Timeout = TimeSpan.FromSeconds(10);
+            _httpClient.BaseAddress = new Uri(_translatorBaseURL);
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             _httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", _translatorSubscriptionKey);
@@ -47,46 +50,25 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
         /// <param name="translationCacheService">Translation cache service</param>
         public DiagnosticTranslatorService(IConfiguration configuration, ITranslationCacheService translationCacheService)
         {
-            _config = configuration ;
+            _config = configuration;
+            _enableLocalization = _config[$"DiagnosticTranslator:EnableLocalization"];
             _translatorSubscriptionKey = _config[$"DiagnosticTranslator:TranslatorSubscriptionKey"];
+            _translatorBaseURL = _config[$"DiagnosticTranslator:BaseUri"];
+            _translatorApiURL = _config[$"DiagnosticTranslator:TranslatorApiUri"];
+            _apiVersion = _config[$"DiagnosticTranslator:ApiVersion"];
+
             this._translationCacheService = translationCacheService;
             InitializeHttpClient();
         }
 
-        private async Task<List<Definition>> GetMetadataTranslations(List<Definition> metadataList, string language)
-        {
-            if (metadataList == null || metadataList.Count == 0)
-            {
-                return metadataList;
-            }
-            List<Definition> responseMetaDataList = metadataList;
-            List<string> textsToTraslate = new List<string>();
-            metadataList.ForEach((metadata) =>
-            {
-                textsToTraslate.AddRange(new List<string> { metadata.Name != null ? metadata.Name: "", metadata.Description != null? metadata.Description: ""});
-            });
-            
-            List<string> translatedText = await GetGroupTranslations(textsToTraslate, language);
-            
-            if (translatedText != null && translatedText.Count > 1 && translatedText.Count == metadataList.Count*2)
-            {
-                for (int i = 0; i*2 +1 < translatedText.Count; i++)
-                {
-                    responseMetaDataList[i].Name = translatedText[i * 2];
-                    responseMetaDataList[i].Description = translatedText[i * 2 + 1];
-                }
-            }
-            return responseMetaDataList;
-        }
-
         public async Task<Response> GetResponseTranslations(Response diagnosticResponse, string language)
         {
-            if (diagnosticResponse == null)
+            if (diagnosticResponse == null || !IsLocalizationApplicable(language))
             {
                 return diagnosticResponse;
             }
 
-            List<Definition> metadataTranslations = await GetMetadataTranslations(new List<Definition> { diagnosticResponse.Metadata }, language).ConfigureAwait(false);
+            List<Definition> metadataTranslations = await GetDetectorsDefinitionsTranslations(new List<Definition> { diagnosticResponse.Metadata }, language);
             diagnosticResponse.Metadata = metadataTranslations != null && metadataTranslations.Count > 0 ? metadataTranslations[0]: diagnosticResponse.Metadata;
 
             for (int j = 0; j < diagnosticResponse.Dataset.Count; j++)
@@ -96,13 +78,13 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
                 switch (renderingType)
                 {
                     case RenderingType.Insights:
-                        diagnosticResponse.Dataset[j] = await GetInsightsTranslation(diagnosticResponse.Dataset[j], language).ConfigureAwait(false);
+                        diagnosticResponse.Dataset[j] = await GetInsightsTranslation(diagnosticResponse.Dataset[j], language);
                         break;
                     case RenderingType.DataSummary:
-                        diagnosticResponse.Dataset[j] = await GetDataSummaryTranslation(diagnosticResponse.Dataset[j], language).ConfigureAwait(false);
+                        diagnosticResponse.Dataset[j] = await GetDataSummaryTranslation(diagnosticResponse.Dataset[j], language);
                         break;
                     default:
-                        diagnosticResponse.Dataset[j] = await GetRenderingTranslation(diagnosticResponse.Dataset[j], language).ConfigureAwait(false);
+                        diagnosticResponse.Dataset[j] = await GetRenderingTranslation(diagnosticResponse.Dataset[j], language);
                         break;
                 }
             }
@@ -112,10 +94,15 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
 
         public async Task<IEnumerable<DiagnosticApiResponse>> GetMetadataTranslations(IEnumerable<DiagnosticApiResponse> listDetectorsResponse, string language)
         {
+            if (listDetectorsResponse == null || !IsLocalizationApplicable(language))
+            {
+                return listDetectorsResponse;
+            }
+
             IEnumerable<DiagnosticApiResponse> translatedResponse = listDetectorsResponse;
       
             List<Definition> allDetectorsDefinitions = listDetectorsResponse.Select(detectorResponse => detectorResponse.Metadata).ToList<Definition>();
-            List<Definition> metadataTranslations = await GetMetadataTranslations(allDetectorsDefinitions, language).ConfigureAwait(false);
+            List<Definition> metadataTranslations = await GetDetectorsDefinitionsTranslations(allDetectorsDefinitions, language);
 
             if (metadataTranslations != null && metadataTranslations.Count == translatedResponse.Count())
             {
@@ -126,6 +113,40 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
         }
 
         #region Localization Helper Methods
+
+        // Scenarios to enable localization:
+        // 1. EnableLocalization is not set or set to be true in appsettings/keyvault
+        // 2. Language to translate to is not empty or English
+        private static bool IsLocalizationApplicable(string language)
+        {
+            return (string.IsNullOrWhiteSpace(_enableLocalization) || string.Compare(_enableLocalization, "true", StringComparison.OrdinalIgnoreCase) == 0) && !String.IsNullOrWhiteSpace(language) && string.Compare(language, "en", StringComparison.OrdinalIgnoreCase) != 0 && !language.StartsWith("en.", StringComparison.CurrentCulture);
+        }
+
+        private async Task<List<Definition>> GetDetectorsDefinitionsTranslations(List<Definition> metadataList, string language)
+        {
+            if (metadataList == null || metadataList.Count == 0)
+            {
+                return metadataList;
+            }
+            List<Definition> responseMetaDataList = metadataList;
+            List<string> textsToTraslate = new List<string>();
+            metadataList.ForEach((metadata) =>
+            {
+                textsToTraslate.AddRange(new List<string> { metadata.Name != null ? metadata.Name : "", metadata.Description != null ? metadata.Description : "" });
+            });
+
+            List<string> translatedText = await GetGroupTranslations(textsToTraslate, language);
+
+            if (translatedText != null && translatedText.Count > 1 && translatedText.Count == metadataList.Count * 2)
+            {
+                for (int i = 0; i * 2 + 1 < translatedText.Count; i++)
+                {
+                    responseMetaDataList[i].Name = translatedText[i * 2];
+                    responseMetaDataList[i].Description = translatedText[i * 2 + 1];
+                }
+            }
+            return responseMetaDataList;
+        }
 
         /// <summary>
         /// Get localization result for each rendering type.
@@ -247,7 +268,7 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
                 return value;
             }
 
-            string route = string.Format("/translate?api-version=3.0&from=en&to={0}", languageToTranslate);
+            string route = string.Format(_translatorApiURL, _apiVersion, languageToTranslate);
             object[] body = textsToTranslate.Select((text) => { return new { Text = text }; }).ToArray();
             var requestBody = JsonConvert.SerializeObject(body);
 
@@ -256,11 +277,11 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
                 using (var request = new HttpRequestMessage())
                 {
                     request.Method = HttpMethod.Post;
-                    request.RequestUri = new Uri(translatorBaseURL + route);
+                    request.RequestUri = new Uri(_translatorBaseURL + route);
                     request.Content = new StringContent(requestBody, Encoding.UTF8, "application/json");
 
-                    HttpResponseMessage response = await _httpClient.SendAsync(request).ConfigureAwait(false);
-                    string result = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    HttpResponseMessage response = await _httpClient.SendAsync(request);
+                    string result = await response.Content.ReadAsStringAsync();
                     JArray jObjectResponse = JArray.Parse(result);
 
                     List<string> translatedTexts = new List<string>();
