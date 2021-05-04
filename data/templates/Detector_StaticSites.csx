@@ -1,16 +1,21 @@
+using System;
+using System.Threading;
+
 private static string GetQuery(OperationContext<ArmResource> cxt)
 {
     return
     $@"
-        let startTime = datetime({cxt.StartTime});
-        let endTime = datetime({cxt.EndTime});
-        cluster('CdbSupport').database('Support').<YOUR_TABLE_NAME>
-        | where Timestamp >= startTime and Timestamp <= endTime
-        | <YOUR_QUERY>";
+		let startTime = datetime({cxt.StartTime});
+		let endTime = datetime({cxt.EndTime});
+		YOUR_TABLE_NAME
+		| where TIMESTAMP >= startTime and TIMESTAMP <= endTime
+		YOUR_QUERY
+	";
 }
 
-[ArmResourceFilter(provider: "Microsoft.DocumentDB", resourceTypeName: "databaseAccounts")]
-[Definition(Id = "<YOUR_DETECTOR_ID>", Name = "", Author = "<YOUR_ALIAS>", Description = "")]
+
+[ArmResourceFilter(provider: "Microsoft.Web", resourceTypeName: "staticSites")]
+[Definition(Id = "YOUR_DETECTOR_ID", Name = "", Author = "YOUR_ALIAS", Description = "")]
 public async static Task<Response> Run(DataProviders dp, OperationContext<ArmResource> cxt, Response res)
 {
     res.Dataset.Add(new DiagnosticData()

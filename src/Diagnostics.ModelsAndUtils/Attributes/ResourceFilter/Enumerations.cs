@@ -64,7 +64,12 @@
         /// <summary>
         /// Represents HyperV platform
         /// </summary>
-        HyperV = 4
+        HyperV = 4,
+
+        /// <summary>
+        /// Represents Kubernetes platform
+        /// </summary>
+        Kubernetes = 8
     }
 
     /// <summary>
@@ -90,6 +95,7 @@
         V1 = 1,
         V2 = 2,
         V3 = 3,
+        K8SE = 4,
         All = 255
     }
 
@@ -122,6 +128,7 @@
         Public = 1,
         ASEV1 = 2,
         ASEV2 = 4,
+        K8SE = 8,
         All = 255
     }
 }

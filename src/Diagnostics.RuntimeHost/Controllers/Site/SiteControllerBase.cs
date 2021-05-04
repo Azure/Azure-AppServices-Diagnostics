@@ -49,6 +49,9 @@ namespace Diagnostics.RuntimeHost.Controllers
                 case HostingEnvironmentType.V2:
                     app.StampType = StampType.ASEV2;
                     break;
+                case HostingEnvironmentType.K8SE:
+                    app.StampType = StampType.K8SE;
+                    break;
                 default:
                     app.StampType = StampType.Public;
                     break;
@@ -65,6 +68,8 @@ namespace Diagnostics.RuntimeHost.Controllers
         private PlatformType GetPlatformType(DiagnosticSiteData postBody)
         {
             return postBody.IsXenon ?? false ? PlatformType.HyperV :
+                !string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Kind.ToLower().Contains("kubernetes") ? PlatformType.Kubernetes :
+                !string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Stamp.Kind.ToString().Contains("4") ? PlatformType.Kubernetes :
                 !string.IsNullOrWhiteSpace(postBody.Kind) && postBody.Kind.ToLower().Contains("linux") ? PlatformType.Linux :
                 PlatformType.Windows;
         }
