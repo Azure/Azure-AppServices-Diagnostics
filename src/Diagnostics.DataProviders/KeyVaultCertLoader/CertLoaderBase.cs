@@ -30,16 +30,16 @@ namespace Diagnostics.DataProviders.KeyVaultCertLoader
                                                             SubjectName,
                                                             true);
 
-                // Get the first cert with the thumbprint
+                // Get the first cert with the thumbprint/subject name
                 if (certCollection.Count > 0)
                 {
                     Cert = certCollection[0];
-                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Successfully loaded Cert with thumbprint {Thumbprint}");
+                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Successfully loaded Cert with thumbprint {Cert.Thumbprint} Subjectname: {Cert.SubjectName.Name}");
                 }
             }
             catch (Exception ex)
             {
-                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Error: {ex.Message} occurred while trying to load cert {Thumbprint}, Stack Trace: {ex.StackTrace} ");
+                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Error: {ex.Message} occurred while trying to load cert with given thumbprint {Thumbprint} Subjectname: {SubjectName}, Stack Trace: {ex.StackTrace} ");
                 throw;
             }
             finally
