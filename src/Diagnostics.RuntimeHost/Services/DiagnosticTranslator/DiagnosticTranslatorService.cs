@@ -51,7 +51,7 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
         public DiagnosticTranslatorService(IConfiguration configuration, ITranslationCacheService translationCacheService)
         {
             _config = configuration;
-            _enableLocalization = _config[$"DiagnosticTranslator:EnableLocalization"];
+            _enableLocalization = _config[$"DiagnosticTranslator:Enabled"];
             _translatorSubscriptionKey = _config[$"DiagnosticTranslator:TranslatorSubscriptionKey"];
             _translatorBaseURL = _config[$"DiagnosticTranslator:BaseUri"];
             _translatorApiURL = _config[$"DiagnosticTranslator:TranslatorApiUri"];
