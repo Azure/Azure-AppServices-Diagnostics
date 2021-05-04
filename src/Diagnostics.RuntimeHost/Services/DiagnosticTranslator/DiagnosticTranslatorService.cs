@@ -122,7 +122,7 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
         // 2. Language to translate to is not empty or English
         private static bool IsLocalizationApplicable(string language)
         {
-            return (string.IsNullOrWhiteSpace(_enableLocalization) || string.Compare(_enableLocalization, "true", StringComparison.OrdinalIgnoreCase) == 0) && !String.IsNullOrWhiteSpace(language) && string.Compare(language, "en", StringComparison.OrdinalIgnoreCase) != 0 && !language.StartsWith("en.", StringComparison.CurrentCulture);
+            return !string.IsNullOrWhiteSpace(_enableLocalization) && string.Compare(_enableLocalization, "true", StringComparison.OrdinalIgnoreCase) == 0 && !String.IsNullOrWhiteSpace(language) && string.Compare(language, "en", StringComparison.OrdinalIgnoreCase) != 0 && !language.StartsWith("en.", StringComparison.CurrentCulture);
         }
 
         private async Task<List<Definition>> GetDetectorsDefinitionsTranslations(List<Definition> metadataList, string language)
