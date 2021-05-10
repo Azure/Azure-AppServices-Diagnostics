@@ -9,6 +9,9 @@ using System.Web;
 using Diagnostics.DataProviders;
 using Diagnostics.DataProviders.DataProviderConfigurations;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using System.Linq;
 
 namespace Diagnostics.RuntimeHost.Services
 {
@@ -34,10 +37,13 @@ namespace Diagnostics.RuntimeHost.Services
     public class SupportTopicService : ISupportTopicService
     {
         private Dictionary<string, SupportTopicModel> _supportTopicCache;
-        
-        public SupportTopicService()
+        private IConfiguration _configuration;
+
+
+        public SupportTopicService(IConfiguration configuration)
         {
             _supportTopicCache = new Dictionary<string, SupportTopicModel>();
+            _configuration = configuration;
         }
 
         private string GetSupportTopicKustoQuery() {
@@ -52,16 +58,57 @@ namespace Diagnostics.RuntimeHost.Services
             return query;
         }
 
-        private async Task PopulateSupportTopicCache(DataProviderContext dataProviderContext) {
-            var dp = new DataProviders.DataProviders(dataProviderContext);
-            DataTable supportTopicMappingTable = new DataTable();
-            Guid requestIdGuid = Guid.NewGuid();
-            supportTopicMappingTable = await dp.Kusto.ExecuteClusterQuery(GetSupportTopicKustoQuery(), "azsupportfollower.westus2", "AzureSupportability", requestIdGuid.ToString(), operationName: "PopulateSupportTopicCache");
-            foreach(DataRow row in supportTopicMappingTable.Rows)
+        private async Task<DataTable> GetSupportTopicList(DataProviderContext dataProviderContext)
+        {
+            if (!_configuration.IsPublicAzure())
+            {
+                if (_configuration.GetSection("SupportTopicMap").GetChildren().Count() == 0)
+                {
+                    throw new Exception("Support topic map is empty.");
+                }
+
+                DataTable supportTopicTable = new DataTable();
+                supportTopicTable.Columns.Add("SupportTopicId", typeof(string));
+                supportTopicTable.Columns.Add("ProductId", typeof(string));
+                supportTopicTable.Columns.Add("SupportTopicPath", typeof(string));
+                
+                var supportTopicList = _configuration.GetSection("SupportTopicMap").GetChildren();
+                if(supportTopicList?.Any() == true)
+                {
+                    foreach(var supportTopicEntry in supportTopicList)
+                    {
+                        string supportTopicId = supportTopicEntry.GetSection("SupportTopicId").Value;
+                        string productId = supportTopicEntry.GetSection("ProductId").Value;
+                        string supportTopicPath = supportTopicEntry.GetSection("supportTopicPath").Value;
+                        if(!string.IsNullOrWhiteSpace(supportTopicId) && !string.IsNullOrWhiteSpace(productId) && !string.IsNullOrWhiteSpace(supportTopicPath) )
+                        {
+                            supportTopicTable.Rows.Add(supportTopicId, productId, supportTopicPath);
+                        }
+                    }
+                }
+
+                return supportTopicTable;
+            }
+            else
+            {
+                Guid requestIdGuid = Guid.NewGuid();
+                var dp = new DataProviders.DataProviders(dataProviderContext);
+                return await dp.Kusto.ExecuteClusterQuery(GetSupportTopicKustoQuery(), "azsupportfollower.westus2", "AzureSupportability", requestIdGuid.ToString(), operationName: "PopulateSupportTopicCache");
+            }
+        }
+
+        
+
+        private async Task PopulateSupportTopicCache(DataProviderContext dataProviderContext) 
+        {            
+            DataTable supportTopicMappingTable = new DataTable();            
+            supportTopicMappingTable = await GetSupportTopicList(dataProviderContext);
+
+            foreach (DataRow row in supportTopicMappingTable.Rows)
             {
                 _supportTopicCache[getSupportTopicCacheKey(row["SupportTopicPath"].ToString())] = new SupportTopicModel(row);
             }
-        }
+        }       
 
         private string getSupportTopicCacheKey(string supportTopicString)
         {
