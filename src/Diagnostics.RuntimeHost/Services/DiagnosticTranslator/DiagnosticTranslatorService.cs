@@ -256,6 +256,12 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
             List<List<string>> translationGroupList = new List<List<string>>();
             for (int i = 0; i <= translationGroupCount; i++)
             {
+                // Don't send empty request body to coginitve API (Bad request)
+                if (i == translationGroupCount && lastGroupSize == 0)
+                {
+                    break;
+                }
+
                 int groupSize = i == translationGroupCount ? lastGroupSize : 100;
                 translationGroupList.Add(textsToTranslate.GetRange(i * 100, groupSize));
             }
