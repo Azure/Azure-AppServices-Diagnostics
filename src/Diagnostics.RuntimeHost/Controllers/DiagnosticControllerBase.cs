@@ -125,7 +125,13 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: form, detectorId: detectorId);
             var detectorResponse = await GetDetectorInternal(detectorId, cxt);
-            Response responseObject = detectorResponse != null ? detectorResponse.Item1 : null;
+
+            if (detectorResponse == null)
+            {
+                return (IActionResult)NotFound();
+            }
+
+            Response responseObject = detectorResponse.Item1;
 
             try
             {
@@ -145,7 +151,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             var diagnosticResponse = DiagnosticApiResponse.FromCsxResponse(responseObject, detectorResponse.Item2);
-            return detectorResponse == null ? (IActionResult)NotFound() : Ok(diagnosticResponse);
+            return Ok(diagnosticResponse);
         }
 
         protected async Task<IActionResult> ListGists(TResource resource)
