@@ -72,7 +72,7 @@ namespace Diagnostics.RuntimeHost.Services
                 supportTopicTable.Columns.Add("SupportTopicPath", typeof(string));
                 
                 var supportTopicList = _configuration.GetSection("SupportTopicMap").GetChildren();
-                if(supportTopicList?.Any() == true)
+                if(supportTopicList.Any() == true)
                 {
                     foreach(var supportTopicEntry in supportTopicList)
                     {
