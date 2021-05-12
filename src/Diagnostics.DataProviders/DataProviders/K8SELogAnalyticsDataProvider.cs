@@ -36,7 +36,8 @@ namespace Diagnostics.DataProviders
             bool queryExists = false;
 
             queryExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&
-                                                        x.Value.GetType() == typeof(LogAnalyticsQuery));
+                                                        x.Value.GetType() == typeof(LogAnalyticsQuery) &&
+                                                        x.Value.CastTo<LogAnalyticsQuery>().Text.Equals(query, StringComparison.OrdinalIgnoreCase));
             if (!queryExists)
             {
                 Metadata.PropertyBag.Add(new KeyValuePair<string, object>("Query", logAnalyticsQuery));
