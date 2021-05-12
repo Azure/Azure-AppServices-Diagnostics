@@ -76,9 +76,6 @@ namespace Diagnostics.RuntimeHost
                         .AddCommandLine(args)
                         .Build();
                 });
-                
-                
-
                 webbuilder.UseStartup<Startup>();
             });       
         }
