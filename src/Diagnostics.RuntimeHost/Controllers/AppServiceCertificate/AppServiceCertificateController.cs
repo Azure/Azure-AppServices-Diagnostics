@@ -28,15 +28,15 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors)]
-        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string certificateName, [FromBody] dynamic postBody)
+        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string certificateName, [FromBody] dynamic postBody, [FromQuery(Name = "text")] string text = null, [FromQuery] string l = "")
         {
-            return await base.ListDetectors(GetResource(subscriptionId, resourceGroupName, certificateName));
+            return await base.ListDetectors(GetResource(subscriptionId, resourceGroupName, certificateName), text, language: l.ToLower());
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
-        public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string certificateName, string detectorId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null)
+        public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string certificateName, string detectorId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null, [FromQuery] string l = "")
         {
-            return await base.GetDetector(GetResource(subscriptionId, resourceGroupName, certificateName), detectorId, startTime, endTime, timeGrain, form: form);
+            return await base.GetDetector(GetResource(subscriptionId, resourceGroupName, certificateName), detectorId, startTime, endTime, timeGrain, form: form, language: l.ToLower());
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]

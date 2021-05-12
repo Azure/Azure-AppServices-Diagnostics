@@ -56,6 +56,11 @@ namespace Diagnostics.Logger
         public static readonly string LocationHeader = "x-ms-location";
 
         /// <summary>
+        /// Localization language header.
+        /// </summary>
+        public static readonly string LocalizationHeader = "x-ms-localization-language";
+
+        /// <summary>
         /// Etag header name.
         /// </summary>
         public static readonly string EtagHeaderName = "ETag";

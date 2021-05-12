@@ -64,6 +64,7 @@ namespace Diagnostics.DataProviders
         }
 
         [ConfigurationName("UnsupportedApis")]
+        [Required]
         public string UnsupportedApis { get; set; }
     }
 }
