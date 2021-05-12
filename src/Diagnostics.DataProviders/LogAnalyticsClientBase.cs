@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
+using static Diagnostics.DataProviders.LogAnalyticsDataProvider;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 
 namespace Diagnostics.DataProviders
@@ -63,6 +64,16 @@ namespace Diagnostics.DataProviders
             }
             var dataTable = ResultAsDataTable(queryResults);
             return dataTable;
+        }
+
+        public LogAnalyticsQuery GetLogAnalyticsQuery(string query)
+        {
+            var logAnalyticsQuery = new LogAnalyticsQuery
+            {
+                Text = query
+            };
+
+            return logAnalyticsQuery;
         }
 
         //convert results to DataTable
