@@ -101,6 +101,20 @@ namespace Diagnostics.DataProviders
                     string value = CredentialTrapper.Obfuscate(item.Value);
                     appSettings.Add(item.Key, value);
                 }
+                else if(string.Compare(item.Key, "AzureWebJobsStorage", StringComparison.CurrentCulture) == 0)
+                {
+                    var storageAccountMatch = Regex.Match(item.Value.ToString(), @".*AccountName=(?<StorageAccount>.+?);.*");
+                    if (storageAccountMatch.Success)
+                    {
+                        string value = storageAccountMatch.Groups["StorageAccount"].Value;
+                        value = string.Concat("****AccountName=", value, "*****");
+                        appSettings.Add(item.Key, value);
+                    }
+                    else
+                    {
+                        appSettings.Add(item.Key, "******");
+                    }
+                }
                 else
                 {
                     appSettings.Add(item.Key, "******");

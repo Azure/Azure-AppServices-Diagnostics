@@ -17,7 +17,26 @@ namespace Diagnostics.DataProviders
     {
         private Microsoft.Rest.ServiceClientCredentials creds;
         private string workspaceId;
-        public override OperationalInsightsDataClient client { get; set; }
+        private OperationalInsightsDataClient _client;
+        public override OperationalInsightsDataClient client
+        {
+            get
+            {
+                if (_client == null)
+                {
+                    _client = new OperationalInsightsDataClient(creds);
+                    _client.WorkspaceId = workspaceId;
+                }
+
+                return _client;
+            }
+
+            set
+            {
+                //no op
+            }
+        }
+
         public override string _requestId { get; set; }
         public override string dataProviderName { get; set; }
 
@@ -25,8 +44,6 @@ namespace Diagnostics.DataProviders
         {
             creds = K8SELogAnalyticsTokenService.Instance.getCreds();
             workspaceId = K8SELogAnalyticsTokenService.Instance.getWorkspaceId();
-            client = new OperationalInsightsDataClient(creds);
-            client.WorkspaceId = workspaceId;
             _requestId = requestId;
             dataProviderName = "K8SELogAnalyticsDataProvider";
         }
