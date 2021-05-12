@@ -74,7 +74,7 @@ namespace Diagnostics.RuntimeHost
 
                     config.AddEnvironmentVariables()
                         .AddCommandLine(args)
-                        .Build();                    
+                        .Build();
                 });
                 
                 

@@ -39,7 +39,6 @@ namespace Diagnostics.RuntimeHost.Services
         private Dictionary<string, SupportTopicModel> _supportTopicCache;
         private IConfiguration _configuration;
 
-
         public SupportTopicService(IConfiguration configuration)
         {
             _supportTopicCache = new Dictionary<string, SupportTopicModel>();
