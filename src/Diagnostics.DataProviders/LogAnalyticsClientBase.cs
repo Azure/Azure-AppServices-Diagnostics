@@ -65,7 +65,7 @@ namespace Diagnostics.DataProviders
             return dataTable;
         }
 
-        public async Task<LogAnalyticsQuery> GetLogAnalyticsQueryAsync(string query)
+        public LogAnalyticsQuery GetLogAnalyticsQuery(string query)
         {
             var logAnalyticsQuery = new LogAnalyticsQuery
             {

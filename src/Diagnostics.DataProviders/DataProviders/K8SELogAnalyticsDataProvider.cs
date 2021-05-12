@@ -25,14 +25,14 @@ namespace Diagnostics.DataProviders
             };
         }
 
-        public override async Task<DataTable> ExecuteQueryAsync(string query)
+        public override Task<DataTable> ExecuteQueryAsync(string query)
         {
-            await AddQueryInformationToMetadata(query);
-            return await _K8SELogAnalyticsClient.ExecuteQueryAsync(query);
+            AddQueryInformationToMetadata(query);
+            return  _K8SELogAnalyticsClient.ExecuteQueryAsync(query);
         }
-        private async Task AddQueryInformationToMetadata(string query)
+        private void AddQueryInformationToMetadata(string query)
         {
-            var logAnalyticsQuery = await _K8SELogAnalyticsClient.GetLogAnalyticsQueryAsync(query);
+            var logAnalyticsQuery = _K8SELogAnalyticsClient.GetLogAnalyticsQuery(query);
             bool queryExists = false;
 
             queryExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&

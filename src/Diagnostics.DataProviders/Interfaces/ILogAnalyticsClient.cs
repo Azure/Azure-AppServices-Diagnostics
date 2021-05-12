@@ -11,6 +11,6 @@ namespace Diagnostics.DataProviders.Interfaces
     {
         Task<DataTable> ExecuteQueryAsync(string query);
 
-        Task<LogAnalyticsQuery> GetLogAnalyticsQueryAsync(string query);
+        LogAnalyticsQuery GetLogAnalyticsQuery(string query);
     }
 }
