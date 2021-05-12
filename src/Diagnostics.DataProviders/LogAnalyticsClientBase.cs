@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
+using static Diagnostics.DataProviders.LogAnalyticsDataProvider;
 
 namespace Diagnostics.DataProviders
 {
@@ -62,6 +63,16 @@ namespace Diagnostics.DataProviders
             }
             var dataTable = ResultAsDataTable(queryResults);
             return dataTable;
+        }
+
+        public async Task<LogAnalyticsQuery> GetLogAnalyticsQueryAsync(string query)
+        {
+            var logAnalyticsQuery = new LogAnalyticsQuery
+            {
+                Text = query
+            };
+
+            return logAnalyticsQuery;
         }
 
         //convert results to DataTable
