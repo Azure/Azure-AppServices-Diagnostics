@@ -400,6 +400,192 @@ namespace Diagnostics.RuntimeHost.Controllers
             return ex;
         }
 
+        protected async Task<IActionResult> GetDiagnosticReport(TResource resource, DiagnosticReportQuery queryBody, DateTime startTime, DateTime endTime, TimeSpan timeGrain, string correlationId=null)
+        {
+            if (correlationId==null)
+            {
+                correlationId = Guid.NewGuid().ToString();
+            }
+            DiagnosticReportEnvelope response = new DiagnosticReportEnvelope()
+            {
+                CorrelationId = correlationId
+            };
+
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTime, endTime);
+            var allDetectors = await ListDetectorsInternal(cxt);
+            // Get detectors to run based on the parameters specified in the request
+            var detectorsToRun = await GetDetectorsToRun(cxt, queryBody, allDetectors);
+
+            // If any of the detectors in the list are analysis, get its children as well
+            var allChildrenOfAnalyses = new List<DiagnosticApiResponse>();
+            var detectorInsights = new List<DiagnosticReportInsight>();
+            foreach (var detector in detectorsToRun)
+            {
+                if (detector.Metadata.Type == DetectorType.Analysis)
+                {
+                    var children = InsightsAPIHelpers.GetChildrenOfAnalysis(detector.Metadata.Id, allDetectors);
+                    foreach (var child in children)
+                    {
+                        if (!detectorsToRun.Contains(child) && !allChildrenOfAnalyses.Contains(child))
+                        {
+                            allChildrenOfAnalyses.Add(child);
+                        }
+                    }
+                }
+            }
+
+            var filteredDetectorsToRun = detectorsToRun.Union(allChildrenOfAnalyses).ToList();
+            DiagnosticsETWProvider.Instance.LogRuntimeHostInsightCorrelation(cxt.OperationContext.RequestId, "DiagnosticReportAPI.DetectorsRun", cxt.OperationContext.Resource.SubscriptionId,
+                    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, correlationId, $"Running detectors: {JsonConvert.SerializeObject(filteredDetectorsToRun.Select(x => x.Metadata.Id).ToList())}");
+
+            if (filteredDetectorsToRun.Count>0)
+            {
+                foreach (var detector in filteredDetectorsToRun)
+                {
+                    var insights = await GetDiagnosticInsightsFromDetector(cxt, detector, filteredDetectorsToRun, true);
+                    foreach (var insight in insights)
+                    {
+                        if (insight.Status == InsightStatus.Critical || insight.Status == InsightStatus.Warning)
+                        {
+                            if (!detectorInsights.Contains(insight))
+                            {
+                                detectorInsights.Add(insight);
+                            }
+                        }
+                    }
+                }
+                response.TotalInsightsFound = detectorInsights.Count;
+                response.ErrorMessage = detectorInsights.Count > 0 ? null : "No issues were detected by the diagnostics system.";
+                response.Insights = detectorInsights;
+            }
+            else
+            {
+                response.ErrorMessage = "No diagnostics were found to fit the requirements of the request.";
+            }
+            var info = new
+            {
+                TotalInsights = response.TotalInsightsFound,
+                CorrelationId = response.CorrelationId,
+                ErrorMessage = response.ErrorMessage,
+                CriticalInsights = response.Insights != null? response.Insights.Where(x => x.Status == InsightStatus.Critical).Count(): 0,
+                WarningInsights = response.Insights != null ? response.Insights.Where(x => x.Status == InsightStatus.Warning).Count(): 0
+            };
+            DiagnosticsETWProvider.Instance.LogRuntimeHostInsightCorrelation(cxt.OperationContext.RequestId, "DiagnosticReportAPI.Insights", cxt.OperationContext.Resource.SubscriptionId,
+                    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, correlationId, $"Running detectors: {JsonConvert.SerializeObject(info)}");
+            return Ok(response);
+        }
+
+        protected async Task<IEnumerable<DiagnosticApiResponse>> GetDetectorsToRun(RuntimeContext<TResource> cxt, DiagnosticReportQuery queryBody, IEnumerable<DiagnosticApiResponse> allDetectors)
+        {
+            if (queryBody.Detectors != null && queryBody.Detectors.Count>0)
+            {
+                var matchingDetectors = allDetectors.Where(detector => queryBody.Detectors.Any(x => x == detector.Metadata.Id));
+                return matchingDetectors;
+            }
+            else if (queryBody.SupportTopicId != null && queryBody.SupportTopicId.Length>0)
+            {
+                var matchingDetectors = allDetectors.Where(detector => detector.Metadata.SupportTopicList.Any(x => x.Id == queryBody.SupportTopicId));
+                return matchingDetectors;
+            }
+            else if (queryBody.Text != null && queryBody.Text.Length > 1)
+            {
+                allDetectors = await ListDetectorsInternal(cxt, queryBody.Text);
+                return allDetectors;
+            }
+            else
+            {
+                return new List<DiagnosticApiResponse>();
+            }
+        }
+
+   
+
+        private async Task<IEnumerable<DiagnosticReportInsight>> GetDiagnosticInsightsFromDetector(RuntimeContext<TResource> context, DiagnosticApiResponse detector, List<DiagnosticApiResponse> detectorsRunning, bool runChildren=false)
+        {
+            Response response = null;
+            List<DiagnosticReportInsight> resultInsights = new List<DiagnosticReportInsight>();
+            var allDetectors = await ListDetectorsInternal(context);
+            try
+            {
+                var fullResponse = await GetDetectorInternal(detector.Metadata.Id, context);
+                if (fullResponse != null)
+                {
+                    response = fullResponse.Item1;
+                    //Handling parent child scenario here.
+                    if (runChildren) {
+                        var childDetectorsIds = response.Dataset.Where(x => x.RenderingProperties.Type == RenderingType.Detector).Select(x => x.RenderingProperties).Cast<DetectorCollectionRendering>().SelectMany(props => props.DetectorIds).Distinct();
+                        var childDetectors = allDetectors.Where(detector => childDetectorsIds.Contains(detector.Metadata.Id));
+                        foreach (var childDetector in childDetectors)
+                        {
+                            if (!detectorsRunning.Contains(childDetector))
+                            {
+                                var childInsights = await GetDiagnosticInsightsFromDetector(context, childDetector, detectorsRunning);
+                                resultInsights = resultInsights.Union(childInsights).ToList();
+                            }
+                        }
+                    }
+
+                    var insights = response.Dataset
+                        .Where(set => set.RenderingProperties.Type == RenderingType.Insights || set.RenderingProperties.Type == RenderingType.DynamicInsight);
+
+                    if (insights.Any())
+                    {
+                        var diagnosticInsights = insights.Select(set =>
+                        {
+                            if (set.RenderingProperties.Type == RenderingType.DynamicInsight)
+                            {
+                                var renderingProperties = ((DynamicInsightRendering)set.RenderingProperties);
+                                return new DiagnosticReportInsight()
+                                {
+                                    Status = renderingProperties.Status,
+                                    Title = renderingProperties.Title,
+                                    Description = renderingProperties.Description,
+                                    DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.ClientIsInternal, context.OperationContext.Resource.ResourceUri),
+                                    Table = set.Table
+                                };
+                            }
+                            else
+                            {
+                                DiagnosticReportInsight resultInsight = null;
+                                foreach (DataRow row in set.Table.Rows)
+                                {
+                                    var insightStatus = (InsightStatus)Enum.Parse(typeof(InsightStatus), row["Status"].ToString());
+                                    var insightMessage = row["Message"].ToString();
+                                    var desc = row["Data.Value"];
+                                    string insightDescription = "";
+                                    if (desc != null)
+                                    {
+                                        insightDescription = desc.ToString();
+                                    }
+                                    if (insightStatus == InsightStatus.Critical || insightStatus == InsightStatus.Warning)
+                                    {
+                                        resultInsight = new DiagnosticReportInsight()
+                                        {
+                                            Status = insightStatus,
+                                            Title = insightMessage,
+                                            Description = insightDescription,
+                                            DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.ClientIsInternal, context.OperationContext.Resource.ResourceUri)
+                                        };
+                                        break;
+                                    }
+                                }
+                                return resultInsight;
+                            }
+                        }).Where(x => x!=null);
+                        if (diagnosticInsights.Any()) return diagnosticInsights;
+                    }
+
+                }
+                return resultInsights;
+            }
+            catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(context.OperationContext.RequestId, "GetDiagnosticInsightsFromDetector", context.OperationContext.Resource.SubscriptionId,
+                    context.OperationContext.Resource.ResourceGroup, context.OperationContext.Resource.Name, ex.GetType().ToString(), ex.ToString());
+                return resultInsights;
+            }
+        }
+
         protected async Task<IActionResult> GetInsights(TResource resource, string pesId, string supportTopicId, string startTime, string endTime, string timeGrain, string supportTopicPath = null, string postBody = null)
         {
             if (supportTopicPath != null)
