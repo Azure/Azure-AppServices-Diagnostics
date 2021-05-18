@@ -452,16 +452,22 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         protected async Task<IActionResult> GetDiagnosticReport(TResource resource, DiagnosticReportQuery queryBody, DateTime startTime, DateTime endTime, TimeSpan timeGrain, string correlationId = null)
         {
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTime, endTime);
             if (correlationId == null)
             {
-                correlationId = Guid.NewGuid().ToString();
+                if (cxt.OperationContext.RequestId != null)
+                {
+                    correlationId = cxt.OperationContext.RequestId;
+                }
+                else
+                {
+                    correlationId = Guid.NewGuid().ToString();
+                }
             }
             DiagnosticReportEnvelope response = new DiagnosticReportEnvelope()
             {
                 CorrelationId = correlationId
             };
-
-            RuntimeContext<TResource> cxt = PrepareContext(resource, startTime, endTime);
             var allDetectors = await ListDetectorsInternal(cxt);
             // Get detectors to run based on the parameters specified in the request
             var detectorsToRun = await GetDetectorsToRun(cxt, queryBody, allDetectors);
@@ -596,7 +602,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                                     DetectorId = detector.Metadata.Id,
                                     Title = renderingProperties.Title,
                                     Description = renderingProperties.Description,
-                                    DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri),
+                                    DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime),
                                     Table = set.Table
                                 };
                             }
@@ -621,7 +627,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                                             DetectorId = detector.Metadata.Id,
                                             Title = insightMessage,
                                             Description = insightDescription,
-                                            DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri)
+                                            DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime)
                                         };
                                         break;
                                     }

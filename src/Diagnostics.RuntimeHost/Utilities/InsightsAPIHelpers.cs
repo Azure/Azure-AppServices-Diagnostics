@@ -45,12 +45,12 @@ namespace Diagnostics.RuntimeHost.Utilities
             return allDetectors.Where(detector => detector.Metadata.AnalysisTypes != null && detector.Metadata.AnalysisTypes.Contains(analysisId));
         }
 
-        public static Link GetDetectorLink(DiagnosticApiResponse detector, string resourceUri)
+        public static Link GetDetectorLink(DiagnosticApiResponse detector, string resourceUri, string startTime, string endTime)
         {
             var baseUrl = resourceUri;
             return new Link()
             {
-                Uri = $"{baseUrl}/{(detector.Metadata.Type == DetectorType.Analysis ? "analysis" : "detectors")}/{detector.Metadata.Id}",
+                Uri = $"{baseUrl}/{(detector.Metadata.Type == DetectorType.Analysis ? "analysis" : "detectors")}/{detector.Metadata.Id}?startTime={startTime}&endTime={endTime}",
                 Text = $"{detector.Metadata.Name}"
             };
         }
