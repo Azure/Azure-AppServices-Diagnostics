@@ -490,10 +490,10 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             if (filteredDetectorsToRun.Count > 0)
             {
-                foreach (var detector in filteredDetectorsToRun)
+                var insightGroups = await Task.WhenAll(filteredDetectorsToRun.Select(detector => GetDiagnosticInsightsFromDetector(cxt, detector, filteredDetectorsToRun, true)));
+                foreach (var insightList in insightGroups)
                 {
-                    var insights = await GetDiagnosticInsightsFromDetector(cxt, detector, filteredDetectorsToRun, true);
-                    foreach (var insight in insights)
+                    foreach (var insight in insightList)
                     {
                         if (insight.Status == InsightStatus.Critical || insight.Status == InsightStatus.Warning)
                         {
