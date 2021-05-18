@@ -493,6 +493,10 @@ namespace Diagnostics.RuntimeHost.Controllers
                 var insightGroups = await Task.WhenAll(filteredDetectorsToRun.Select(detector => GetDiagnosticInsightsFromDetector(cxt, detector, filteredDetectorsToRun, true)));
                 foreach (var insightList in insightGroups)
                 {
+                    if (insightList.Count() > 0 && detectorInsights.Where(x => x.DetectorId == insightList.First().DetectorId).Count() > 0)
+                    {
+                        continue;
+                    }
                     foreach (var insight in insightList)
                     {
                         if (insight.Status == InsightStatus.Critical || insight.Status == InsightStatus.Warning)
@@ -589,6 +593,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                                 return new DiagnosticReportInsight()
                                 {
                                     Status = renderingProperties.Status,
+                                    DetectorId = detector.Metadata.Id,
                                     Title = renderingProperties.Title,
                                     Description = renderingProperties.Description,
                                     DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri),
@@ -613,6 +618,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                                         resultInsight = new DiagnosticReportInsight()
                                         {
                                             Status = insightStatus,
+                                            DetectorId = detector.Metadata.Id,
                                             Title = insightMessage,
                                             Description = insightDescription,
                                             DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri)

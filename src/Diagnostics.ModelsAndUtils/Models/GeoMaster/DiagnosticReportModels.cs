@@ -19,6 +19,7 @@ namespace Diagnostics.ModelsAndUtils.Models
     public class DiagnosticReportInsight
     {
         public InsightStatus Status { get; set; }
+        public string DetectorId { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
 
