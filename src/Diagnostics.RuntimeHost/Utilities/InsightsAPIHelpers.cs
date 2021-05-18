@@ -45,17 +45,9 @@ namespace Diagnostics.RuntimeHost.Utilities
             return allDetectors.Where(detector => detector.Metadata.AnalysisTypes != null && detector.Metadata.AnalysisTypes.Contains(analysisId));
         }
 
-        public static Link GetDetectorLink(DiagnosticApiResponse detector, bool clientIsInternal, string resourceUri)
+        public static Link GetDetectorLink(DiagnosticApiResponse detector, string resourceUri)
         {
-            var baseUrl = "";
-            if (clientIsInternal)
-            {
-                baseUrl = $"https://applens.azurewebsites.net/{resourceUri}";
-            }
-            else
-            {
-                baseUrl = resourceUri;
-            }
+            var baseUrl = resourceUri;
             return new Link()
             {
                 Uri = $"{baseUrl}/{(detector.Metadata.Type == DetectorType.Analysis ? "analysis" : "detectors")}/{detector.Metadata.Id}",
