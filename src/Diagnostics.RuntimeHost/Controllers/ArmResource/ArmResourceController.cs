@@ -32,15 +32,15 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors)]
-        public Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string provider, string resourceTypeName, string resourceName, [FromBody] dynamic postBody)
+        public Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string provider, string resourceTypeName, string resourceName, [FromBody] dynamic postBody, [FromQuery(Name = "text")] string text = null, [FromQuery] string l = "")
         {
-            return base.ListDetectors(new ArmResource(subscriptionId, resourceGroupName, provider, resourceTypeName, resourceName, GetLocation()));
+            return base.ListDetectors(new ArmResource(subscriptionId, resourceGroupName, provider, resourceTypeName, resourceName, GetLocation()), text, language: l.ToLower());
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
-        public Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string provider, string resourceTypeName, string resourceName, string detectorId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null)
+        public Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string provider, string resourceTypeName, string resourceName, string detectorId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null, [FromQuery] string l = "")
         {
-            return base.GetDetector(new ArmResource(subscriptionId, resourceGroupName, provider, resourceTypeName, resourceName, GetLocation()), detectorId, startTime, endTime, timeGrain, form: form);
+            return base.GetDetector(new ArmResource(subscriptionId, resourceGroupName, provider, resourceTypeName, resourceName, GetLocation()), detectorId, startTime, endTime, timeGrain, form: form, language: l.ToLower());
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]

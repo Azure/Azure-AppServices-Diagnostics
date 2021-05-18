@@ -72,7 +72,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="postBody">Request json body.</param>
         /// <returns>Task for listing detectors.</returns>
         [HttpPost(UriElements.Detectors)]
-        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody, [FromQuery(Name = "text")] string text = null)
+        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticSiteData postBody, [FromQuery(Name = "text")] string text = null, [FromQuery] string l = "")
         {
             if (IsPostBodyMissing(postBody))
             {
@@ -81,7 +81,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
-            return await base.ListDetectors(app, text);
+            return await base.ListDetectors(app, text, language: l.ToLower());
         }
 
         /// <summary>
@@ -119,7 +119,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="timeGrain">Time grain.</param>
         /// <returns>Task for getting detector.</returns>
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
-        public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string siteName, string detectorId, [FromBody] DiagnosticSiteData postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null)
+        public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string siteName, string detectorId, [FromBody] DiagnosticSiteData postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null, [FromQuery] string l = "")
         {
             if (IsPostBodyMissing(postBody))
             {
@@ -132,7 +132,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
-            return await base.GetDetector(app, detectorId, startTime, endTime, timeGrain, form: form);
+            return await base.GetDetector(app, detectorId, startTime, endTime, timeGrain, form: form, language: l.ToLower());
         }
 
         /// <summary>

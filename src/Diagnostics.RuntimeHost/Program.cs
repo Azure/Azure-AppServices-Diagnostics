@@ -10,6 +10,7 @@ using Diagnostics.DataProviders.Utility;
 using Diagnostics.Logger;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -47,6 +48,10 @@ namespace Diagnostics.RuntimeHost
 
             return Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(webbuilder =>
             {
+                webbuilder.UseKestrel(options =>
+                {
+                    options.Limits.MinRequestBodyDataRate = new MinDataRate(bytesPerSecond: 100, gracePeriod: TimeSpan.FromSeconds(10));
+                });
                 webbuilder.ConfigureAppConfiguration((context, config) =>
                 {
                     var builtConfig = config.Build();
@@ -66,10 +71,16 @@ namespace Diagnostics.RuntimeHost
                         DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("Decrypting app settings");
                         config.AddEncryptedProvider(Environment.GetEnvironmentVariable("APPSETTINGS_ENCRYPTIONKEY"), Environment.GetEnvironmentVariable("APPSETTINGS_INITVECTOR"), "appsettings.Encrypted.json");
                     }
+
+                    if (!builtConfig.IsPublicAzure())
+                    {
+                        config.AddJsonFile("supportTopicMap.json", true, false);
+                    }
+
                     config.AddEnvironmentVariables()
                         .AddCommandLine(args)
                         .Build();
-                  });
+                });
                 webbuilder.UseStartup<Startup>();
             });       
         }
