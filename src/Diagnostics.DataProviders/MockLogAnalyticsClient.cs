@@ -6,6 +6,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Diagnostics.DataProviders.LogAnalyticsDataProvider;
 
 namespace Diagnostics.DataProviders
 {
@@ -16,6 +17,16 @@ namespace Diagnostics.DataProviders
             var queryResults = new QueryResults();
             var dataTable = ResultAsDataTable(queryResults);
             return dataTable;
+        }
+
+        public LogAnalyticsQuery GetLogAnalyticsQuery(string query)
+        {
+            var logAnalyticsQuery = new LogAnalyticsQuery
+            {
+                Text = query
+            };
+
+            return logAnalyticsQuery;
         }
 
         private DataTable ResultAsDataTable(QueryResults results)

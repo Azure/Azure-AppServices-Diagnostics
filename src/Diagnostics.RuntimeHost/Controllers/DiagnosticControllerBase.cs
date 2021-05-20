@@ -20,6 +20,7 @@ using Diagnostics.RuntimeHost.Models.Exceptions;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
+using Diagnostics.RuntimeHost.Services.DiagnosticsTranslator;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
 using Diagnostics.RuntimeHost.Services.StorageService;
@@ -54,6 +55,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         private InternalAPIHelper _internalApiHelper;
         private IDiagEntityTableCacheService tableCacheService;
         private ISourceWatcher storageWatcher;
+        private IDiagnosticTranslatorService _diagnosticTranslator;
 
         public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext)
         {
@@ -69,6 +71,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._kustoMappingCacheService = (IKustoMappingsCacheService)services.GetService(typeof(IKustoMappingsCacheService));
             this._loggerProvider = (IRuntimeLoggerProvider)services.GetService(typeof(IRuntimeLoggerProvider));
             tableCacheService = (IDiagEntityTableCacheService)services.GetService(typeof(IDiagEntityTableCacheService));
+            this._diagnosticTranslator = (IDiagnosticTranslatorService)services.GetService(typeof(IDiagnosticTranslatorService));
             var sourcewatchertype = _sourceWatcherService.Watcher.GetType();
             if (sourcewatchertype != typeof(StorageWatcher))
             {
@@ -80,7 +83,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         #region API Response Methods
 
-        protected async Task<IActionResult> ListDetectors(TResource resource, string queryText = null)
+        protected async Task<IActionResult> ListDetectors(TResource resource, string queryText = null, string language = "")
         {
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
@@ -89,10 +92,31 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 return BadRequest("Search query term should be at least two characters");
             }
-            return Ok(await this.ListDetectorsInternal(cxt, queryText));
+
+            IEnumerable<DiagnosticApiResponse> listDetectorsResponse = await this.ListDetectorsInternal(cxt, queryText);
+            IEnumerable<DiagnosticApiResponse> listDetectorsTranslatedResponse = listDetectorsResponse;
+
+            try
+            {
+                if (string.IsNullOrEmpty(language) && this.Request.Headers.ContainsKey(HeaderConstants.LocalizationHeader))
+                {
+                    language = this.Request.Headers[HeaderConstants.LocalizationHeader];
+                }
+
+                listDetectorsTranslatedResponse = await _diagnosticTranslator.GetMetadataTranslations(listDetectorsResponse, language);               
+            }
+            catch (Exception ex)
+            {
+                // Log translation exceptions and return original untranslated response
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.OperationContext.RequestId, "ListDetectorsTranslations", cxt.OperationContext.Resource.SubscriptionId,
+                    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, ex.GetType().ToString(), ex.ToString());
+                listDetectorsTranslatedResponse = listDetectorsResponse;
+            }
+
+            return Ok(listDetectorsTranslatedResponse);
         }
 
-        protected async Task<IActionResult> GetDetector(TResource resource, string detectorId, string startTime, string endTime, string timeGrain, Form form = null)
+        protected async Task<IActionResult> GetDetector(TResource resource, string detectorId, string startTime, string endTime, string timeGrain, Form form = null, string language = "")
         {
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
             {
@@ -101,7 +125,33 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: form, detectorId: detectorId);
             var detectorResponse = await GetDetectorInternal(detectorId, cxt);
-            return detectorResponse == null ? (IActionResult)NotFound() : Ok(DiagnosticApiResponse.FromCsxResponse(detectorResponse.Item1, detectorResponse.Item2));
+
+            if (detectorResponse == null)
+            {
+                return (IActionResult)NotFound();
+            }
+
+            Response responseObject = detectorResponse.Item1;
+
+            try
+            {
+                if (string.IsNullOrEmpty(language) && this.Request.Headers.ContainsKey(HeaderConstants.LocalizationHeader))
+                {
+                    language = this.Request.Headers[HeaderConstants.LocalizationHeader];
+                }
+
+                responseObject = await this._diagnosticTranslator.GetResponseTranslations(detectorResponse.Item1, language);
+            }
+            catch (Exception ex)
+            {
+                // Log translation exceptions and return original untranslated resp
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.OperationContext.RequestId, "GetDetectorTranslations", cxt.OperationContext.Resource.SubscriptionId,
+    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, ex.GetType().ToString(), ex.ToString());
+                responseObject = detectorResponse.Item1;
+            }
+
+            var diagnosticResponse = DiagnosticApiResponse.FromCsxResponse(responseObject, detectorResponse.Item2);
+            return Ok(diagnosticResponse);
         }
 
         protected async Task<IActionResult> ListGists(TResource resource)
@@ -400,6 +450,205 @@ namespace Diagnostics.RuntimeHost.Controllers
             return ex;
         }
 
+        protected async Task<IActionResult> GetDiagnosticReport(TResource resource, DiagnosticReportQuery queryBody, DateTime startTime, DateTime endTime, TimeSpan timeGrain, string correlationId = null)
+        {
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTime, endTime);
+            if (correlationId == null)
+            {
+                if (cxt.OperationContext.RequestId != null)
+                {
+                    correlationId = cxt.OperationContext.RequestId;
+                }
+                else
+                {
+                    correlationId = Guid.NewGuid().ToString();
+                }
+            }
+            DiagnosticReportEnvelope response = new DiagnosticReportEnvelope()
+            {
+                CorrelationId = correlationId
+            };
+            var allDetectors = await ListDetectorsInternal(cxt);
+            // Get detectors to run based on the parameters specified in the request
+            var detectorsToRun = await GetDetectorsToRun(cxt, queryBody, allDetectors);
+
+            // If any of the detectors in the list are analysis, get its children as well
+            var allChildrenOfAnalyses = new List<DiagnosticApiResponse>();
+            var detectorInsights = new List<DiagnosticReportInsight>();
+            foreach (var detector in detectorsToRun)
+            {
+                if (detector.Metadata.Type == DetectorType.Analysis)
+                {
+                    var children = InsightsAPIHelpers.GetChildrenOfAnalysis(detector.Metadata.Id, allDetectors);
+                    foreach (var child in children)
+                    {
+                        if (!detectorsToRun.Contains(child) && !allChildrenOfAnalyses.Contains(child))
+                        {
+                            allChildrenOfAnalyses.Add(child);
+                        }
+                    }
+                }
+            }
+
+            var filteredDetectorsToRun = detectorsToRun.Union(allChildrenOfAnalyses).ToList();
+            DiagnosticsETWProvider.Instance.LogRuntimeHostInsightCorrelation(cxt.OperationContext.RequestId, "DiagnosticReportAPI.DetectorsRun", cxt.OperationContext.Resource.SubscriptionId,
+                    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, correlationId, $"Running detectors: {JsonConvert.SerializeObject(filteredDetectorsToRun.Select(x => x.Metadata.Id).ToList())}");
+
+            if (filteredDetectorsToRun.Count > 0)
+            {
+                var insightGroups = await Task.WhenAll(filteredDetectorsToRun.Select(detector => GetDiagnosticInsightsFromDetector(cxt, detector, filteredDetectorsToRun, true)));
+                foreach (var insightList in insightGroups)
+                {
+                    if (insightList.Count() > 0 && detectorInsights.Where(x => x.DetectorId == insightList.First().DetectorId).Count() > 0)
+                    {
+                        continue;
+                    }
+                    foreach (var insight in insightList)
+                    {
+                        if (insight.Status == InsightStatus.Critical || insight.Status == InsightStatus.Warning)
+                        {
+                            if (!detectorInsights.Contains(insight))
+                            {
+                                detectorInsights.Add(insight);
+                            }
+                        }
+                    }
+                }
+                response.TotalInsightsFound = detectorInsights.Count;
+                response.ErrorMessage = detectorInsights.Count > 0 ? null : "No issues were detected by the diagnostics system.";
+                response.Insights = detectorInsights;
+            }
+            else
+            {
+                response.ErrorMessage = "No diagnostics were found to fit the requirements of the request.";
+            }
+            var info = new
+            {
+                TotalInsights = response.TotalInsightsFound,
+                CorrelationId = response.CorrelationId,
+                ErrorMessage = response.ErrorMessage,
+                CriticalInsights = response.Insights != null ? response.Insights.Where(x => x.Status == InsightStatus.Critical).Count() : 0,
+                WarningInsights = response.Insights != null ? response.Insights.Where(x => x.Status == InsightStatus.Warning).Count() : 0
+            };
+            DiagnosticsETWProvider.Instance.LogRuntimeHostInsightCorrelation(cxt.OperationContext.RequestId, "DiagnosticReportAPI.Insights", cxt.OperationContext.Resource.SubscriptionId,
+                    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, correlationId, $"Running detectors: {JsonConvert.SerializeObject(info)}");
+            return Ok(response);
+        }
+
+        protected async Task<IEnumerable<DiagnosticApiResponse>> GetDetectorsToRun(RuntimeContext<TResource> cxt, DiagnosticReportQuery queryBody, IEnumerable<DiagnosticApiResponse> allDetectors)
+        {
+            if (queryBody.Detectors != null && queryBody.Detectors.Count > 0)
+            {
+                var matchingDetectors = allDetectors.Where(detector => queryBody.Detectors.Any(x => x == detector.Metadata.Id));
+                return matchingDetectors;
+            }
+            else if (queryBody.SupportTopicId != null && queryBody.SupportTopicId.Length > 0)
+            {
+                var matchingDetectors = allDetectors.Where(detector => detector.Metadata.SupportTopicList.Any(x => x.Id == queryBody.SupportTopicId));
+                return matchingDetectors;
+            }
+            else if (queryBody.Text != null && queryBody.Text.Length > 1)
+            {
+                allDetectors = await ListDetectorsInternal(cxt, queryBody.Text);
+                return allDetectors;
+            }
+            else
+            {
+                return new List<DiagnosticApiResponse>();
+            }
+        }
+
+
+
+        private async Task<IEnumerable<DiagnosticReportInsight>> GetDiagnosticInsightsFromDetector(RuntimeContext<TResource> context, DiagnosticApiResponse detector, List<DiagnosticApiResponse> detectorsRunning, bool runChildren = false)
+        {
+            Response response = null;
+            List<DiagnosticReportInsight> resultInsights = new List<DiagnosticReportInsight>();
+            var allDetectors = await ListDetectorsInternal(context);
+            try
+            {
+                var fullResponse = await GetDetectorInternal(detector.Metadata.Id, context);
+                if (fullResponse != null)
+                {
+                    response = fullResponse.Item1;
+                    //Handling parent child scenario here.
+                    if (runChildren)
+                    {
+                        var childDetectorsIds = response.Dataset.Where(x => x.RenderingProperties.Type == RenderingType.Detector).Select(x => x.RenderingProperties).Cast<DetectorCollectionRendering>().SelectMany(props => props.DetectorIds).Distinct();
+                        var childDetectors = allDetectors.Where(detector => childDetectorsIds.Contains(detector.Metadata.Id));
+                        foreach (var childDetector in childDetectors)
+                        {
+                            if (!detectorsRunning.Contains(childDetector))
+                            {
+                                var childInsights = await GetDiagnosticInsightsFromDetector(context, childDetector, detectorsRunning);
+                                resultInsights = resultInsights.Union(childInsights).ToList();
+                            }
+                        }
+                    }
+
+                    var insights = response.Dataset
+                        .Where(set => set.RenderingProperties.Type == RenderingType.Insights || set.RenderingProperties.Type == RenderingType.DynamicInsight);
+
+                    if (insights.Any())
+                    {
+                        var diagnosticInsights = insights.Select(set =>
+                        {
+                            if (set.RenderingProperties.Type == RenderingType.DynamicInsight)
+                            {
+                                var renderingProperties = ((DynamicInsightRendering)set.RenderingProperties);
+                                return new DiagnosticReportInsight()
+                                {
+                                    Status = renderingProperties.Status,
+                                    DetectorId = detector.Metadata.Id,
+                                    Title = renderingProperties.Title,
+                                    Description = renderingProperties.Description,
+                                    DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime),
+                                    Table = set.Table
+                                };
+                            }
+                            else
+                            {
+                                DiagnosticReportInsight resultInsight = null;
+                                foreach (DataRow row in set.Table.Rows)
+                                {
+                                    var insightStatus = (InsightStatus)Enum.Parse(typeof(InsightStatus), row["Status"].ToString());
+                                    var insightMessage = row["Message"].ToString();
+                                    var desc = row["Data.Value"];
+                                    string insightDescription = "";
+                                    if (desc != null)
+                                    {
+                                        insightDescription = desc.ToString();
+                                    }
+                                    if (insightStatus == InsightStatus.Critical || insightStatus == InsightStatus.Warning)
+                                    {
+                                        resultInsight = new DiagnosticReportInsight()
+                                        {
+                                            Status = insightStatus,
+                                            DetectorId = detector.Metadata.Id,
+                                            Title = insightMessage,
+                                            Description = insightDescription,
+                                            DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime)
+                                        };
+                                        break;
+                                    }
+                                }
+                                return resultInsight;
+                            }
+                        }).Where(x => x != null);
+                        if (diagnosticInsights.Any()) return diagnosticInsights;
+                    }
+
+                }
+                return resultInsights;
+            }
+            catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(context.OperationContext.RequestId, "GetDiagnosticInsightsFromDetector", context.OperationContext.Resource.SubscriptionId,
+                    context.OperationContext.Resource.ResourceGroup, context.OperationContext.Resource.Name, ex.GetType().ToString(), ex.ToString());
+                return resultInsights;
+            }
+        }
+
         protected async Task<IActionResult> GetInsights(TResource resource, string pesId, string supportTopicId, string startTime, string endTime, string timeGrain, string supportTopicPath = null, string postBody = null)
         {
             if (supportTopicPath != null)
@@ -499,6 +748,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         #endregion API Response Methods
+
 
         protected TResource GetResource(string subscriptionId, string resourceGroup, string name)
         {
@@ -723,7 +973,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     return new List<DiagnosticApiResponse>();
                 }
             }
-
+            
             if (tableCacheService.IsStorageAsSourceEnabled())
             {
                 var allDetectorsFromStorage = await tableCacheService.GetEntityListByType<TResource>(context);

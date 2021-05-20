@@ -45,6 +45,7 @@
         public const string Configurations = "configurations";
         public const string KustoClusterMappings = Configurations + "/kustoClusterMappings";
         public const string UniqueResourceId = "/{id}";
+        public const string DiagnosticReport = "diagnostics";
 
         // Constants for internal api interactions
         public const string Internal = "/internal";

@@ -60,4 +60,17 @@ namespace Diagnostics.RuntimeHost.Models
         ASEV2,
         ASEV3
     }
+
+    public class DiagnosticReportQuery
+    {
+        public string Text { get; set; }
+        public List<string> Detectors { get; set; }
+        public string SupportTopicId { get; set; }
+    }
+
+    public class BodyValidationResult
+    {
+        public bool Status { get; set; }
+        public string Message { get; set; }
+    }
 }
