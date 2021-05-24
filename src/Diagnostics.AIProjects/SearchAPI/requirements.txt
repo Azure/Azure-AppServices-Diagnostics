@@ -1,5 +1,5 @@
 Flask==1.1.1
-flask_cors==3.0.7
+flask_cors==3.0.9
 nltk==3.4
 gensim==3.7.2
 requests==2.18.4
