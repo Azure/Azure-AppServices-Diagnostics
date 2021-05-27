@@ -72,7 +72,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
                         {
                             Type = 2,
                             Text = "Applens Link",
-                            Uri = $"https://applens.azurewebsites.net/{applensPath}"
+                            Uri = $"https://applens-preview.azurewebsites.net/{applensPath}"
                         }
                 }
             };
@@ -116,7 +116,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
                         {
                             Type = 2,
                             Text = "Applens Link",
-                            Uri = $"https://applens.azurewebsites.net/{applensPath}"
+                            Uri = $"https://applens-preview.azurewebsites.net/{applensPath}"
                         }
                 }
             };
