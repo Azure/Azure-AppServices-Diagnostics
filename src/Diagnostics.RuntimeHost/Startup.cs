@@ -128,6 +128,7 @@ namespace Diagnostics.RuntimeHost
             // Enable App Insights telemetry
             services.AddApplicationInsightsTelemetry();
             services.AddAppServiceApplicationLogging();
+
             if(Environment.IsDevelopment())
             {
                 services.AddControllers(options =>
@@ -252,6 +253,11 @@ namespace Diagnostics.RuntimeHost
                 {
                     loggingConfig.AddDebug();
                     loggingConfig.AddConsole();
+                }
+
+                if (Configuration.IsAirGappedCloud())
+                {
+                    loggingConfig.AddEventLog();
                 }
             });
         }
