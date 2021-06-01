@@ -41,8 +41,8 @@ if($trafficmanagerDetails) {
     else {
         Disable-AzTrafficManagerEndpoint -Name $Endpoint -Type $EndpointType -ProfileName $TrafficManager -ResourceGroupName $TrafficManagerResourceGroup -Force
     }
-    Write-Host "Updated frontdoor settings for " $TrafficManager
+    Write-Host "Updated trafficmanager settings for " $TrafficManager
 
 } else {
-    Write-Host "Could not retrieve frontdoor details for: " $TrafficManager
+    Write-Host "Could not retrieve trafficmanager details for: " $TrafficManager
 }
