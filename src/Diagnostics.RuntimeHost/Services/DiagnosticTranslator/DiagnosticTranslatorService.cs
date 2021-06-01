@@ -234,9 +234,8 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
         {
             int messageColumnIndex = 1;
             int insightNameColumnIndex = 2;
-            int insightValueColumnIndex = 3;
 
-            return await GetBaseRenderingTranslation(dataset, language, new List<int> { messageColumnIndex, insightNameColumnIndex, insightValueColumnIndex });
+            return await GetBaseRenderingTranslation(dataset, language, new List<int> { messageColumnIndex, insightNameColumnIndex });
         }
 
         public async Task<DiagnosticData> GetDropdownTranslation(DiagnosticData dataset, string language)
