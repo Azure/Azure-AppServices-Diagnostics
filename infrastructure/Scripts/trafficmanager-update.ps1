@@ -45,4 +45,5 @@ if($trafficmanagerDetails) {
 
 } else {
     Write-Host "Could not retrieve trafficmanager details for: " $TrafficManager
+    exit 1
 }
