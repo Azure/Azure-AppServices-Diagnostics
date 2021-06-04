@@ -32,7 +32,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
             var category = detector.Name;
             var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/{context.Resource.Provider}/{context.Resource.ResourceTypeName}/{context.Resource.Name}/detectors/{detector.Id}?startTime={context.StartTime}&endTime={context.EndTime}";
 
-            string customerReadyContentText = customerReadyContent?.Value;
+            string customerReadyContentText = customerReadyContent?.Value ?? "Please submit a feedback for the detector author via AppLens to populate customer ready content.";
             if (customerReadyContent != null && customerReadyContent.IsMarkdown)
             {
                 // Turn the customer ready content into HTML since that is what is supported by ASC as of now
@@ -52,14 +52,13 @@ namespace Diagnostics.ModelsAndUtils.Utilities
                 InsightFriendlyName = category,
                 IssueCategory = category,
                 IssueSubCategory = category,
-                Description = description,
+                Description = description?? new Text("Please submit a feedback for the detector author via AppLens to supply a description for this insight.", false),
                 RecommendedAction = new RecommendedAction()
                 {
                     Id = Guid.NewGuid(),
-                    Text = recommendedAction
+                    Text = recommendedAction?? new Text("Please submit a feedback for the detector author via AppLens to populate recommended action.", false)
                 },
-                CustomerReadyContent = customerReadyContent == null ? null :
-                    new CustomerReadyContent()
+                CustomerReadyContent = new CustomerReadyContent()
                     {
                         ArticleId = Guid.NewGuid(),
                         ArticleContent = customerReadyContentText
