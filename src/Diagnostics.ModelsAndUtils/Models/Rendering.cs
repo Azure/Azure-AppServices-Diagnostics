@@ -294,7 +294,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data Rendered as section
         /// </summary>
-        Section
+        Section,
+
+        /// <summary>
+        /// StepViews component of Network Troubleshooter
+        /// </summary>
+        StepViews
     }
 
     /// <summary>
