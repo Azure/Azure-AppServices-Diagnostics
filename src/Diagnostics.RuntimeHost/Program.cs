@@ -71,10 +71,16 @@ namespace Diagnostics.RuntimeHost
                         DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("Decrypting app settings");
                         config.AddEncryptedProvider(Environment.GetEnvironmentVariable("APPSETTINGS_ENCRYPTIONKEY"), Environment.GetEnvironmentVariable("APPSETTINGS_INITVECTOR"), "appsettings.Encrypted.json");
                     }
+
+                    if (!builtConfig.IsPublicAzure())
+                    {
+                        config.AddJsonFile("supportTopicMap.json", true, false);
+                    }
+
                     config.AddEnvironmentVariables()
                         .AddCommandLine(args)
                         .Build();
-                  });
+                });
                 webbuilder.UseStartup<Startup>();
             });       
         }

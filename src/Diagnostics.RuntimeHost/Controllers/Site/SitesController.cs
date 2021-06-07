@@ -85,6 +85,31 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         /// <summary>
+        /// Get Diagnostic Report.
+        /// </summary>
+        /// <param name="subscriptionId">Subscription id.</param>
+        /// <param name="resourceGroupName">Resource group name.</param>
+        /// <param name="siteName">Site name.</param>
+        /// <param name="postBody">Request json body.</param>
+        /// <returns>Task for showing diagnostic report.</returns>
+        [HttpPost(UriElements.DiagnosticReport)]
+        public async Task<IActionResult> DiagnosticReport(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticReportQuery queryBody, string startTime = null, string endTime = null, string timeGrain = null)
+        {
+            var validateBody = InsightsAPIHelpers.ValidateQueryBody(queryBody);
+            if (!validateBody.Status)
+            {
+                return BadRequest($"Invalid post body. {validateBody.Message}");
+            }
+            var postBody = await GetSitePostBody(subscriptionId, resourceGroupName, siteName);
+            if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
+            {
+                return BadRequest(errorMessage);
+            }
+            App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
+            return await base.GetDiagnosticReport(app, queryBody, startTimeUtc, endTimeUtc, timeGrainTimeSpan);
+        }
+
+        /// <summary>
         /// Get detector.
         /// </summary>
         /// <param name="subscriptionId">Subscription id.</param>

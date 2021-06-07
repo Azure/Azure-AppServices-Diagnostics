@@ -10,18 +10,21 @@ namespace Diagnostics.ModelsAndUtils.Utilities
 {
     public static class AzureSupportCenterInsightUtilites
     {
-        private static readonly string DefaultDescription = "This insight was raised as part of the {0} detector.";
+        private static readonly string DefaultDescription = "This insight was raised as part of the {0} detector. Submit feedback for the author via AppLens to provide a detailed description for this insight.";
         public static readonly string DefaultInsightGuid = "9a666d9e-23b4-4502-95b7-1a00a0419ce4";
         public static readonly string SiteNotFoundInsightGuid = "0a35e298-7676-40aa-aa74-00cdc8dc8576";
 
-        private static readonly Text DefaultRecommendedAction = new Text("Go to applens to see more information about this insight.");
+        private static readonly Text DefaultRecommendedActionText = new Text("Go to AppLens to see more information about this insight.");
+        private const string DefaultCustomerReadyContentStr = "Submit feedback for the author via AppLens to populate customer ready content for this insight.";
+        private static readonly Text DefaultCustomerReadyContentText = new Text(DefaultCustomerReadyContentStr);
+        
 
         public static AzureSupportCenterInsight CreateInsight<TResource>(Insight insight, OperationContext<TResource> context, Definition detector)
             where TResource : IResource
         {
             var description = GetTextObjectFromData("description", insight.Body) ?? new Text(string.Format(DefaultDescription, detector.Name));
-            var recommendedAction = GetTextObjectFromData("recommended action", insight.Body) ?? DefaultRecommendedAction;
-            var customerReadyContent = GetTextObjectFromData("customer ready content", insight.Body);
+            var recommendedAction = GetTextObjectFromData("recommended action", insight.Body) ?? DefaultRecommendedActionText;
+            var customerReadyContent = GetTextObjectFromData("customer ready content", insight.Body) ?? DefaultCustomerReadyContentText;
 
             return CreateInsight<TResource>(insight.Message, insight.Status, description, recommendedAction, customerReadyContent, detector, context);
         }
@@ -32,7 +35,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
             var category = detector.Name;
             var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/{context.Resource.Provider}/{context.Resource.ResourceTypeName}/{context.Resource.Name}/detectors/{detector.Id}?startTime={context.StartTime}&endTime={context.EndTime}";
 
-            string customerReadyContentText = customerReadyContent?.Value;
+            string customerReadyContentText = customerReadyContent?.Value ?? DefaultCustomerReadyContentStr;
             if (customerReadyContent != null && customerReadyContent.IsMarkdown)
             {
                 // Turn the customer ready content into HTML since that is what is supported by ASC as of now
@@ -52,14 +55,13 @@ namespace Diagnostics.ModelsAndUtils.Utilities
                 InsightFriendlyName = category,
                 IssueCategory = category,
                 IssueSubCategory = category,
-                Description = description,
+                Description = description?? new Text(string.Format(DefaultDescription, detector.Name)),
                 RecommendedAction = new RecommendedAction()
                 {
                     Id = Guid.NewGuid(),
-                    Text = recommendedAction
+                    Text = recommendedAction?? DefaultRecommendedActionText
                 },
-                CustomerReadyContent = customerReadyContent == null ? null :
-                    new CustomerReadyContent()
+                CustomerReadyContent = new CustomerReadyContent()
                     {
                         ArticleId = Guid.NewGuid(),
                         ArticleContent = customerReadyContentText
@@ -72,7 +74,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
                         {
                             Type = 2,
                             Text = "Applens Link",
-                            Uri = $"https://applens.azurewebsites.net/{applensPath}"
+                            Uri = $"https://applens-preview.azurewebsites.net/{applensPath}"
                         }
                 }
             };
@@ -116,7 +118,7 @@ namespace Diagnostics.ModelsAndUtils.Utilities
                         {
                             Type = 2,
                             Text = "Applens Link",
-                            Uri = $"https://applens.azurewebsites.net/{applensPath}"
+                            Uri = $"https://applens-preview.azurewebsites.net/{applensPath}"
                         }
                 }
             };
