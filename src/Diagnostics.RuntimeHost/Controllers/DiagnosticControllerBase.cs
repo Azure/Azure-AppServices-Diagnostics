@@ -621,12 +621,27 @@ namespace Diagnostics.RuntimeHost.Controllers
                                     }
                                     if (insightStatus == InsightStatus.Critical || insightStatus == InsightStatus.Warning)
                                     {
+                                        List<Solution> allSolutions = new List<Solution>();
+                                        var solutions = row["Solutions"];
+                                        if (solutions != null)
+                                        {
+                                            var solutionsStr = solutions.ToString();
+                                            allSolutions = JsonConvert.DeserializeObject<List<Solution>>(solutionsStr);
+                                            if (allSolutions != null && !context.ClientIsInternal)
+                                            {
+                                                foreach(var sol in allSolutions)
+                                                {
+                                                    sol.InternalMarkdown = "";
+                                                }
+                                            }
+                                        }
                                         resultInsight = new DiagnosticReportInsight()
                                         {
                                             Status = insightStatus,
                                             DetectorId = detector.Metadata.Id,
                                             Title = insightMessage,
                                             Description = insightDescription,
+                                            Solutions = allSolutions,
                                             DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime)
                                         };
                                         break;
