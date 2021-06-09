@@ -370,6 +370,10 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         Avg,
         /// <summary>
+        /// Min value for chart
+        /// </summary>
+        Min,
+        /// <summary>
         /// Max value for chart
         /// </summary>
         Max,
