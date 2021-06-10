@@ -86,6 +86,9 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
                     case RenderingType.DropDown:
                         diagnosticResponse.Dataset[j] = await GetDropdownTranslation(diagnosticResponse.Dataset[j], language);
                         break;
+                    case RenderingType.Markdown:
+                        diagnosticResponse.Dataset[j] = await GetMarkdownTranslation(diagnosticResponse.Dataset[j], language);
+                        break;
                     default:
                         diagnosticResponse.Dataset[j] = await GetBaseRenderingTranslation(diagnosticResponse.Dataset[j], language);
                         break;
@@ -156,9 +159,24 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
         /// </summary>
         /// <param name="dataset">Dataset object to be localized.</param>
         /// <param name="language">Language to translate to.</param>
-        /// <param name="allowedColumnIndexList">Column indexes in dataset table which is of string type and needs to be localized.</param>
+        /// <param name="columnIndexListForPlainTranslation">Column indexes in dataset table which is of string type and needs to be localized.</param>
+        /// <param name="columnIndexListForHtmlTranslation">Column indexes in dataset table which is of html type and needs to be localized.</param>
         /// <returns>Localized dataset object</returns>
-        private async Task<DiagnosticData> GetBaseRenderingTranslation(DiagnosticData dataset, string language, List<int> allowedColumnIndexList = null)
+        private async Task<DiagnosticData> GetBaseRenderingTranslation(DiagnosticData dataset, string language, List<int> columnIndexListForPlainTranslation = null, List<int> columnIndexListForHtmlTranslation = null)
+        {
+            var plainTranslatedDataset = await GetDatasetTranslation(dataset, language, columnIndexListForPlainTranslation);
+            return await GetDatasetTranslation(plainTranslatedDataset, language, columnIndexListForHtmlTranslation, true);
+        }
+
+        /// <summary>
+        /// Get localization result for the parsed data column list with the specified translation type.
+        /// </summary>
+        /// <param name="dataset">Dataset object to be localized.</param>
+        /// <param name="language">Language to translate to.</param>
+        /// <param name="allowedColumnIndexList">Column indexes in dataset table which is of string type and needs to be localized.</param>
+        /// <param name="isHtmlTextType">If this text type to be translated is html.</param>
+        /// <returns>Localized dataset object</returns>
+        private async Task<DiagnosticData> GetDatasetTranslation(DiagnosticData dataset, string language, List<int> allowedColumnIndexList = null, bool isHtmlTextType = false)
         {
             List<string> renderingPropertiesToTranslate = new List<string>();
             List<string> textsToTraslate = new List<string>();
@@ -204,7 +222,7 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
                     }
                 }
 
-                List<string> translatedText = await GetGroupTranslations(textsToTraslate, language).ConfigureAwait(false);
+                List<string> translatedText = await GetGroupTranslations(textsToTraslate, language, isHtmlTextType).ConfigureAwait(false);
                 if (translatedText.Count != rowCount * allowedColumnCount)
                 {
                     //If something goes wrong and we don't get the same count of translated string result, return the original dataset
@@ -236,7 +254,7 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
             int insightNameColumnIndex = 2;
             int insightValueColumnIndex = 3;
 
-            return await GetBaseRenderingTranslation(dataset, language, new List<int> { messageColumnIndex, insightNameColumnIndex, insightValueColumnIndex });
+            return await GetBaseRenderingTranslation(dataset, language, new List<int> { messageColumnIndex, insightNameColumnIndex}, new List<int> { insightValueColumnIndex });
         }
 
         public async Task<DiagnosticData> GetDropdownTranslation(DiagnosticData dataset, string language)
@@ -247,8 +265,15 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
             return await GetBaseRenderingTranslation(dataset, language, new List<int> { dropdownLabelColumn, dropdownKeyColumn });
         }
 
+        public async Task<DiagnosticData> GetMarkdownTranslation(DiagnosticData dataset, string language)
+        {
+            int markdownStringColumn = 0;
+
+            return await GetBaseRenderingTranslation(dataset, language, null, new List<int> { markdownStringColumn });
+        }
+
         // Cognitive translation API has a limit of 100 elements for string arrays to be sent in request body. 
-        private async Task<List<string>> GetGroupTranslations(List<string> textsToTranslate, string languageToTranslate)
+        private async Task<List<string>> GetGroupTranslations(List<string> textsToTranslate, string languageToTranslate, bool isHtmlTextType = false)
         {
             int translationGroupCount = textsToTranslate.Count / 100;
             int lastGroupSize = textsToTranslate.Count % 100;
@@ -265,12 +290,12 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
                 translationGroupList.Add(textsToTranslate.GetRange(i * 100, groupSize));
             }
 
-            var translatedTextsGroup = await Task.WhenAll(translationGroupList.Select(textBatch => GetTranslations(textBatch, languageToTranslate)));
+            var translatedTextsGroup = await Task.WhenAll(translationGroupList.Select(textBatch => GetTranslations(textBatch, languageToTranslate, isHtmlTextType)));
             return translatedTextsGroup.Where(group => group != null).SelectMany(group => group).ToList();
         }
 
         // Translation method to make the http request with string arrays to be translated
-        public async Task<List<string>> GetTranslations(List<string> textsToTranslate, string languageToTranslate)
+        public async Task<List<string>> GetTranslations(List<string> textsToTranslate, string languageToTranslate, bool isHtmlTextType = false)
         {
             if (textsToTranslate == null)
             {
@@ -285,6 +310,12 @@ namespace Diagnostics.RuntimeHost.Services.DiagnosticsTranslator
             }
 
             string route = string.Format(_translatorApiURL, _apiVersion, languageToTranslate);
+
+            if (isHtmlTextType)
+            {
+                route += "&textType=html";
+            }
+
             object[] body = textsToTranslate.Select((text) => { return new { Text = text }; }).ToArray();
             var requestBody = JsonConvert.SerializeObject(body);
 

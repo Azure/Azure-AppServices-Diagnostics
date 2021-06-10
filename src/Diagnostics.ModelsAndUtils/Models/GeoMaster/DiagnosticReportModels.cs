@@ -25,6 +25,8 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public Link DetailsLink { get; set; }
 
+        public List<Solution> Solutions { get; set; }
+
         public DataTable Table { get; set; }
 
         public IEnumerable<KeyValuePair<string, string>> AdditionalDetails { get; set; }

@@ -81,13 +81,13 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public IEnumerable<string> SeriesColumns { get; set; }
 
-        public bool ShowMetrics { get; set; }
+        public MetricType MetricType { get; set; }
 
         public TimeSeriesRendering()
         {
             DefaultValue = 0;
             GraphType = TimeSeriesType.LineGraph;
-            ShowMetrics = false;
+            MetricType = MetricType.Avg;
         }
     }
 
@@ -113,13 +113,13 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public string SelectedInstance { get; set; }
 
-        public bool ShowMetrics { get; set; }
+        public MetricType MetricType { get; set; }
 
         public TimeSeriesPerInstanceRendering() : base(RenderingType.TimeSeriesPerInstance)
         {
             DefaultValue = 0;
             GraphType = TimeSeriesType.LineGraph;
-            ShowMetrics = false;
+            MetricType = MetricType.Avg;
         }
     }
 
@@ -294,7 +294,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// Data Rendered as section
         /// </summary>
-        Section
+        Section,
+
+        /// <summary>
+        /// StepViews component of Network Troubleshooter
+        /// </summary>
+        StepViews
     }
 
     /// <summary>
@@ -349,5 +354,32 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// Hide or show column
         /// </summary>
         public bool Visible { get; set; } = true;
+    }
+
+    /// <summary>
+    /// Default metric value show below graph
+    /// </summary>
+    public enum MetricType
+    {
+        /// <summary>
+        /// Not show metric
+        /// </summary>
+        None,
+        /// <summary>
+        /// Average value for chart
+        /// </summary>
+        Avg,
+        /// <summary>
+        /// Min value for chart
+        /// </summary>
+        Min,
+        /// <summary>
+        /// Max value for chart
+        /// </summary>
+        Max,
+        /// <summary>
+        /// Sum value for chart
+        /// </summary>
+        Sum
     }
 }
