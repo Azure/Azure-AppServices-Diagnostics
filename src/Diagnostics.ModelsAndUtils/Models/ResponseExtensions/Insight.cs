@@ -31,6 +31,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public bool IsExpanded;
 
         /// <summary>
+        /// Whether insight's background is painted
+        /// </summary>
+        public bool IsBackgroundPainted;
+
+        /// <summary>
         /// Optional solutions to common problems to which the Insight may refer
         /// </summary>
         public IEnumerable<Solution> Solutions;
@@ -72,6 +77,21 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             this(status, message, body)
         {
             this.IsExpanded = isExpanded;
+        }
+
+        /// <summary>
+        /// Creates an instance of Insight class.
+        /// </summary>
+        /// <param name="status">Enum reprensenting insight level.</param>
+        /// <param name="message">Insight Message.</param>
+        /// <param name="body">Insights Body.</param>
+        /// <param name="isExpanded">True if it's expanded by default.</param>
+        /// <param name="isBackgroundPainted">True if the insight's background is painted.</param>
+        public Insight(InsightStatus status, string message, Dictionary<string, string> body, bool isExpanded, bool isBackgroundPainted) :
+            this(status, message, body)
+        {
+            this.IsExpanded = isExpanded;
+            this.IsBackgroundPainted = isBackgroundPainted;
         }
 
         /// <summary>
@@ -234,5 +254,28 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         {
             AddInsight(response, new Insight(status, message, body));
         }
+
+        /// <summary>
+        /// Adds a single insight to response
+        /// </summary>
+        /// <param name="response">Response object.</param>
+        /// <param name="status">Enum reprensenting insight level.</param>
+        /// <param name="message">Insight Message.</param>
+        /// <param name="body">Insights Body.</param>
+        /// <param name="isExpanded">True if it's expanded by default.</param>
+        /// <param name="isBackgroundPainted">True if the insight's background is painted.</param>
+        /// <example>
+        /// <code>
+        /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
+        /// {
+        ///     res.AddInsight(InsightStatus.Critical, "insight1 title");
+        /// }
+        /// </code>
+        /// </example>
+        public static void AddInsight(this Response response, InsightStatus status, string message, Dictionary<string, string> body = null, bool isExpanded = false, bool isBackgroundPainted = false)
+        {
+            AddInsight(response, new Insight(status, message, body, isExpanded, isBackgroundPainted));
+        }
+
     }
 }

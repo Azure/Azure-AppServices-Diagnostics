@@ -328,6 +328,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         Multiple
     }
+
     public class TableColumnOption
     {
         /// <summary>
@@ -346,9 +347,14 @@ namespace Diagnostics.ModelsAndUtils.Models
         public int MaxWidth { get; set; }
 
         /// <summary>
-        /// Filter Selelction(Single, Multiple)
+        /// Filter Selection(Single, Multiple)
         /// </summary>
         public FileterSelectionOption SelectionOption { get; set; } = FileterSelectionOption.None;
+
+        /// <summary>
+        /// Default filter selection. Use '|' characters for multiple options (e.g. "option1 | option2")
+        /// </summary>
+        public string DefaultSelection { get; set; }
 
         /// <summary>
         /// Hide or show column
