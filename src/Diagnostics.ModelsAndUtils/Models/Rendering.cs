@@ -55,6 +55,9 @@ namespace Diagnostics.ModelsAndUtils.Models
         public dynamic TableOptions { get; set; }
 
         public bool AllowColumnSearch { get; set; }
+
+        public string SearchPlaceholder { get; set; }
+
         public IEnumerable<TableColumnOption> ColumnOptions { get; set; }
 
         public TableRendering() : base(RenderingType.Table)
@@ -64,6 +67,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             DescriptionColumnName = null;
             AllowColumnSearch = false;
             ColumnOptions = null;
+            SearchPlaceholder = null;
         }
     }
 
@@ -352,9 +356,9 @@ namespace Diagnostics.ModelsAndUtils.Models
         public FileterSelectionOption SelectionOption { get; set; } = FileterSelectionOption.None;
 
         /// <summary>
-        /// Default filter selection. Use '|' characters for multiple options (e.g. "option1 | option2")
+        /// Default filter selection.
         /// </summary>
-        public string DefaultSelection { get; set; }
+        public IEnumerable<string> DefaultSelection { get; set; }
 
         /// <summary>
         /// Hide or show column

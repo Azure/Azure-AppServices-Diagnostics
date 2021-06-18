@@ -272,7 +272,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// }
         /// </code>
         /// </example>
-        public static void AddInsight(this Response response, InsightStatus status, string message, Dictionary<string, string> body = null, bool isExpanded = false, bool isBackgroundPainted = false)
+        public static void AddInsight(this Response response, InsightStatus status, string message, Dictionary<string, string> body, bool isExpanded, bool isBackgroundPainted)
         {
             AddInsight(response, new Insight(status, message, body, isExpanded, isBackgroundPainted));
         }
