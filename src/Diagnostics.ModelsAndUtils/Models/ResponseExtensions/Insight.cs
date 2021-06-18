@@ -41,6 +41,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public IEnumerable<Solution> Solutions;
 
         /// <summary>
+        /// Options for the solution button UI look.
+        /// </summary>
+        public SolutionButtonOption SolutionButtonOption { get; set; }
+
+        /// <summary>
         /// Creates an instance of Insight class.
         /// </summary>
         /// <param name="status">Enum reprensenting insight level.</param>
