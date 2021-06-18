@@ -81,6 +81,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public SolutionTypeTag TypeTag { get; set; }
 
         /// <summary>
+        /// Options for the solution button UI look.
+        /// </summary>
+        public SolutionButtonOption ButtonOption { get; set; }
+
+        /// <summary>
         /// This is set automatically.
         /// Reads <see cref="OperationContext"/> to determine if an internal view should be rendered.
         /// </summary>
