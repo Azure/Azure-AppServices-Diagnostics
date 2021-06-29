@@ -117,4 +117,34 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             return Using(context.Resource.ResourceUri, actionOptions);
         }
     }
+
+    public class SolutionButtonOption
+    {
+        public string Label { get; set; }
+
+        [JsonConverter(typeof(StringEnumConverter))]
+        public SolutionButtonType Type { get; set; } = SolutionButtonType.Button;
+
+        [JsonConverter(typeof(StringEnumConverter))]
+        public SolutionButtonPosition Position { get; set; } = SolutionButtonPosition.Bottom;
+
+        public SolutionButtonOption(string label, SolutionButtonType type = SolutionButtonType.Button, SolutionButtonPosition position = SolutionButtonPosition.Bottom)
+        {
+            this.Label = label;
+            this.Type = type;
+            this.Position = position;
+        }
+    }
+
+    public enum SolutionButtonType
+    {
+        Button,
+        Link,
+    }
+
+    public enum SolutionButtonPosition
+    {
+        Bottom = 0,
+        NextToTitle = 1,
+    }
 }
