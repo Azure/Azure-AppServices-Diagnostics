@@ -47,5 +47,10 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         {
             return Task.FromResult(new List<DetectorRuntimeConfiguration>());
         }
+
+        Task<List<PartnerConfig>> IStorageService.GetPartnerConfigsAsync()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

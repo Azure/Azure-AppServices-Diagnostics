@@ -29,6 +29,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         Task<int> ListBlobsInContainer();
         Task<DetectorRuntimeConfiguration> LoadConfiguration(DetectorRuntimeConfiguration configuration);
         Task<List<DetectorRuntimeConfiguration>> GetKustoConfiguration();
+
+        Task<List<PartnerConfig>> GetPartnerConfigsAsync();
     }
     public class StorageService : IStorageService
     {
@@ -351,6 +353,47 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetConfiguration by Partition key {partitionkey} took {timeTakenStopWatch.ElapsedMilliseconds}, Total rows = {diagConfigurationsResult.Count} ClientRequestId {clientRequestId}");
                 return diagConfigurationsResult.Where(row => !row.IsDisabled).ToList();
             } catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), $"ClientRequestId {clientRequestId} {ex.Message}", ex.GetType().ToString(), ex.ToString());
+                return null;
+            }
+        }
+    
+        public async Task<List<PartnerConfig>> GetPartnerConfigsAsync()
+        {
+            var clientRequestId = Guid.NewGuid().ToString();
+            try
+            {
+                CloudTable cloudTable = tableClient.GetTableReference("partnerconfigdev");
+                var timeTakenStopWatch = new Stopwatch();
+                var partitionkey = "PartnerSourceControlConfig";
+                var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionkey);
+                var tableQuery = new TableQuery<PartnerConfig>();
+                tableQuery.Where(filterPartitionKey);
+                TableContinuationToken tableContinuationToken = null;
+                var partnerConfigsResult = new List<PartnerConfig>();
+                timeTakenStopWatch.Start();
+                do
+                {
+                    // Execute the operation.
+                    TableRequestOptions tableRequestOptions = new TableRequestOptions();
+                    tableRequestOptions.LocationMode = LocationMode.PrimaryThenSecondary;
+                    tableRequestOptions.MaximumExecutionTime = TimeSpan.FromSeconds(30);
+                    OperationContext oc = new OperationContext();
+                    oc.ClientRequestID = clientRequestId;
+                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Querying against table partnerconfigdev with ClientRequestId {clientRequestId}");
+                    var partnerConfigs = await cloudTable.ExecuteQuerySegmentedAsync(tableQuery, tableContinuationToken, tableRequestOptions, oc);
+                    tableContinuationToken = partnerConfigs.ContinuationToken;
+                    if (partnerConfigs.Results != null)
+                    {
+                        partnerConfigsResult.AddRange(partnerConfigs.Results);
+                    }
+                } while (tableContinuationToken != null);
+                timeTakenStopWatch.Stop();
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetConfiguration by Partition key {partitionkey} took {timeTakenStopWatch.ElapsedMilliseconds}, Total rows = {partnerConfigsResult.Count} ClientRequestId {clientRequestId}");
+                return partnerConfigsResult.ToList();
+            }
+            catch (Exception ex)
             {
                 DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), $"ClientRequestId {clientRequestId} {ex.Message}", ex.GetType().ToString(), ex.ToString());
                 return null;
