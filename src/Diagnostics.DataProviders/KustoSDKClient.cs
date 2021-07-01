@@ -164,7 +164,6 @@ namespace Diagnostics.DataProviders
                     attemptException = null;
                     executeQueryTask = ExecuteQueryAsync(query, cluster, database, DataProviderConstants.DefaultTimeoutInSeconds, requestId, operationName);
                     dtResult = await executeQueryTask;
-                    throw new Exception("Could not connect to net.tcp");
                 }
                 catch (Exception ex)
                 {
