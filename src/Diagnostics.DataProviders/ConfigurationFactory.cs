@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.DataProviders
@@ -174,17 +175,75 @@ namespace Diagnostics.DataProviders
                         continue;
                     }
 
-                    var value = GetValue(prefix, attribute.Name);
-
-                    if (!string.IsNullOrWhiteSpace(value))
+                    dynamic value;
+                    string valueType;
+                  
+                    if (property.Name == "OverridableExceptions")
                     {
-                        SetValue(dataProviderConfiguration, property, value, attribute.DefaultValue);
+                        List<ITuple> overridableExceptionsList = new List<ITuple>();
+                        for (int i = 0; i < int.Parse(GetValue(prefix, "Retry:OverridableExceptionsToRetryAgainstLeaderCluster:AmountOfOverridableExceptions")); i++)
+                        {
+                            overridableExceptionsList.Add((
+                                GetValue(prefix, $"Retry:OverridableExceptionsToRetryAgainstLeaderCluster:Cases:{i.ToString()}:ExceptionString"),
+                                double.Parse(GetValue(prefix, $"Retry:OverridableExceptionsToRetryAgainstLeaderCluster:Cases:{i.ToString()}:MaxFailureResponseTimeInSeconds"))));
+                        }
+
+                        valueType = "List<ITuple>";
+                        value = overridableExceptionsList;
+                    }
+                    else
+                    {
+                        valueType = "string";
+                        value = GetValue(prefix, attribute.Name);
+                    }
+                    
+                    if (valueType == "string")
+                    {
+                        if (!string.IsNullOrWhiteSpace(value))
+                        {
+                            SetValue(dataProviderConfiguration, property, value.ToString(), attribute.DefaultValue);
+                        }
+                    }
+                    else if(valueType == "List<ITuple>")
+                    {
+                        if (value != null)
+                        {
+                            SetValue(dataProviderConfiguration, property, value, attribute.DefaultValue);
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception("InvalidType");
                     }
                 }
             }
         }
 
         protected abstract string GetValue(string prefix, string name);
+
+        protected void SetValue(object target, PropertyInfo property, object objectValue, object defaultValue)
+        {
+            object value = null;
+            if (property.PropertyType == typeof(string))
+            {
+                value = Environment.ExpandEnvironmentVariables(objectValue.ToString());
+            }
+            else if (property.PropertyType == typeof(List<ITuple>))
+            {
+                value = objectValue;
+            }
+            else
+            {
+                throw new InvalidOperationException(
+                    string.Format(
+                        "Property {0} with type {1} is not supported.",
+                        property.Name,
+                        property.PropertyType));
+            }
+
+            property.SetValue(target, value, null);
+        }
+
 
         protected void SetValue(object target, PropertyInfo property, string stringValue, object defaultValue)
         {
@@ -229,6 +288,18 @@ namespace Diagnostics.DataProviders
                     value = doubleValue;
                 }
             }
+            /*else if (property.PropertyType == typeof(List<(string, double)>))
+            {
+                List<(string, double)> listValue;
+                if (!List<(string, double)>.TryParse(stringValue, out listValue) && defaultValue != null)
+                {
+                    value = (double)defaultValue;
+                }
+                else
+                {
+                    value = listValue;
+                }
+            }*/
             else
             {
                 throw new InvalidOperationException(

@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using Diagnostics.DataProviders.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Diagnostics.DataProviders
 {
@@ -29,6 +30,7 @@ namespace Diagnostics.DataProviders
         private string _aadAuthority;
         private static ConcurrentDictionary<Tuple<string, string>, ICslQueryProvider> QueryProviderMapping;
         private static List<string> exceptionsToRetryFor = new List<string>();
+        
 
         /// <summary>
         /// Failover cluster mapping
@@ -138,12 +140,14 @@ namespace Diagnostics.DataProviders
             DataTable dtResult = default;
             Exception attemptException = default;
             var exceptions = new List<Exception>();
+            bool isConditionMetForRetryAgainstLeaderCluster = false;
 
             do
             {
                 try
                 {
-                    if(attempt == _config.MaxRetryCount && _config.MaxRetryCount != 0 && _config.UseBackupClusterForLastRetryAttempt)
+                    //figure out how to use the new config settings here
+                    if(attempt == _config.MaxRetryCount && _config.MaxRetryCount != 0 && _config.UseBackupClusterForLastRetryAttempt || isConditionMetForRetryAgainstLeaderCluster)
                     {
                         // Last Retry Attempt
                         // Switch to backup cluster since useBackupClusterForLastAttempt is set to true.
@@ -160,6 +164,7 @@ namespace Diagnostics.DataProviders
                     attemptException = null;
                     executeQueryTask = ExecuteQueryAsync(query, cluster, database, DataProviderConstants.DefaultTimeoutInSeconds, requestId, operationName);
                     dtResult = await executeQueryTask;
+                    throw new Exception("Could not connect to net.tcp");
                 }
                 catch (Exception ex)
                 {
@@ -184,9 +189,12 @@ namespace Diagnostics.DataProviders
                             exceptionType,
                             exceptionDetails
                             );
-
+                    if (attemptException is not null && totalResponseTime.TotalSeconds <= (double) _config.OverridableExceptions.Single(x => x[0].ToString().ToLower() == attemptException.Message.ToLower())[1] && IsSpecialRetryException(attemptException))
+                    {
+                        isConditionMetForRetryAgainstLeaderCluster = true;
+                    }
                     // Logic to check if retry needs to continue
-                    if(totalResponseTime.TotalSeconds > _config.MaxFailureResponseTimeInSecondsForRetry || !IsExceptionRetryable(attemptException))
+                    else if(totalResponseTime.TotalSeconds > _config.MaxFailureResponseTimeInSecondsForRetry || !IsExceptionRetryable(attemptException))
                     {
                         DiagnosticsETWProvider.Instance.LogRetryAttemptMessage(
                         requestId ?? string.Empty,
@@ -200,7 +208,8 @@ namespace Diagnostics.DataProviders
                     attempt++;
                 }
 
-                if (attempt <= _config.MaxRetryCount) await Task.Delay(_config.RetryDelayInSeconds * 1000);
+                if (attempt > 1 && isConditionMetForRetryAgainstLeaderCluster) break;
+                else if (attempt <= _config.MaxRetryCount && !isConditionMetForRetryAgainstLeaderCluster) await Task.Delay(_config.RetryDelayInSeconds * 1000);
 
             } while (attempt <= _config.MaxRetryCount);
 
@@ -332,6 +341,16 @@ namespace Diagnostics.DataProviders
             }
 
             return exceptionsToRetryFor.Exists(item => ex.ToString().ToLower().Contains(item.ToLower()));
+        }
+
+        private bool IsSpecialRetryException(Exception ex)
+        {
+            if (ex is null)
+            {
+                return false;
+            }
+            
+            return _config.OverridableExceptions.Exists(item => ex.ToString().ToLower().Contains(item[0].ToString().ToLower()));
         }
     }
 }

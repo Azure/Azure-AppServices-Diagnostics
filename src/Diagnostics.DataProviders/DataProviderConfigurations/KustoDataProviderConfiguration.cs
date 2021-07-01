@@ -5,6 +5,8 @@ using System.Text.RegularExpressions;
 using Diagnostics.DataProviders.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using Newtonsoft.Json.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Diagnostics.DataProviders
 {
@@ -183,7 +185,13 @@ namespace Diagnostics.DataProviders
         /// </summary>
         [ConfigurationName("Retry:ExceptionsToRetryFor")]
         public string ExceptionsToRetryFor { get; set; }
-        
+
+        [ConfigurationName("Retry:OverridableExceptionsToRetryAgainstLeaderCluster:AmountOfOverridableExceptions")]
+        public int AmountOfOverridableExceptions { get; set; }
+
+        [ConfigurationName("Retry:OverridableExceptionsToRetryAgainstLeaderCluster:Cases")]
+        public List<ITuple> OverridableExceptions { get; set; }
+
         public override void PostInitialize()
         {
             RegionSpecificClusterNameCollection = new ConcurrentDictionary<string, string>();
@@ -222,6 +230,8 @@ namespace Diagnostics.DataProviders
                     FailoverClusterNameCollection.TryAdd(clusterNameGroupingParts[iterator], clusterFailoverGroupingParts[iterator]);
                 }
             }
+
+            //foreach ()
         }
     }
 }
