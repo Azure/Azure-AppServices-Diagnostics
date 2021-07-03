@@ -31,7 +31,6 @@ namespace Diagnostics.DataProviders
         private static ConcurrentDictionary<Tuple<string, string>, ICslQueryProvider> QueryProviderMapping;
         private static List<string> exceptionsToRetryFor = new List<string>();
         
-
         /// <summary>
         /// Failover cluster mapping
         /// </summary>
@@ -188,7 +187,7 @@ namespace Diagnostics.DataProviders
                             exceptionType,
                             exceptionDetails
                             );
-                    if (attemptException is not null && totalResponseTime.TotalSeconds <= (double) _config.OverridableExceptions.Single(x => x[0].ToString().ToLower() == attemptException.Message.ToLower())[1] && IsSpecialRetryException(attemptException))
+                    if (attemptException is not null && totalResponseTime.TotalSeconds <= (double) _config.OverridableExceptions.Single(x => x[0].ToString().ToLower() == attemptException.Message.ToLower())[1] && MeetsConditionForRetryAgainstLeaderCluster(attemptException))
                     {
                         isConditionMetForRetryAgainstLeaderCluster = true;
                     }
@@ -342,7 +341,7 @@ namespace Diagnostics.DataProviders
             return exceptionsToRetryFor.Exists(item => ex.ToString().ToLower().Contains(item.ToLower()));
         }
 
-        private bool IsSpecialRetryException(Exception ex)
+        private bool MeetsConditionForRetryAgainstLeaderCluster(Exception ex)
         {
             if (ex is null)
             {
