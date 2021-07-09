@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using Kusto.Cloud.Platform.Utils;
-using Microsoft.Extensions.Primitives;
 
 namespace Diagnostics.DataProviders
 {
@@ -50,8 +49,6 @@ namespace Diagnostics.DataProviders
                 return _healthCheckInputs;
             }
         }
-
-        public string this[string key] { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public virtual void PostInitialize() { }
 
