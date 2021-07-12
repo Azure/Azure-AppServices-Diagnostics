@@ -186,10 +186,8 @@ namespace Diagnostics.DataProviders
         [ConfigurationName("Retry:ExceptionsToRetryFor")]
         public string ExceptionsToRetryFor { get; set; }
 
-        //[ConfigurationName("Retry:OverridableExceptionsToRetryAgainstLeaderCluster")]
         public List<ITuple> OverridableExceptionsToRetryAgainstLeaderCluster { get; set; }
 
-        //[ConfigurationName("")]
         public static IConfiguration _config;
         public static void setConfig(IConfiguration config)
         {
@@ -248,7 +246,6 @@ namespace Diagnostics.DataProviders
                     OverridableExceptionsToRetryAgainstLeaderCluster.Add((ExceptionString, MaxFailureResponseTimeInSeconds));
                 }
             }
-            
         }
     }
 }

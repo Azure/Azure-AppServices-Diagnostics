@@ -241,35 +241,5 @@ namespace Diagnostics.DataProviders
 
             property.SetValue(target, value, null);
         }
-        /*protected void SetValue(object target, PropertyInfo property, object objectValue, object defaultValue)
-        {
-            object value = null;
-            if (objectValue.GetType() == property.PropertyType)
-            {
-                if (property.PropertyType == typeof(IConfiguration))
-                {
-                    value = objectValue;
-                }
-                else
-                {
-                    throw new InvalidOperationException(
-                        string.Format(
-                            "Property {0} with type {1} is not supported.",
-                            property.Name,
-                            property.PropertyType));
-                }
-
-                property.SetValue(target, value, null);
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    string.Format(
-                        "Type of property {0} ({1}) does not match type of value being assigned ({2}).",
-                        property.Name,
-                        property.PropertyType,
-                        objectValue.GetType()));
-            }
-        }*/
     }
 }
