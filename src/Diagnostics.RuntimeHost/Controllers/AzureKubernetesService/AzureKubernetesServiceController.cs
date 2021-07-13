@@ -39,6 +39,21 @@ namespace Diagnostics.RuntimeHost.Controllers
             return await base.GetDetector(GetResource(subscriptionId, resourceGroupName, clusterName), detectorId, startTime, endTime, timeGrain, form: form, language: l.ToLower());
         }
 
+        [HttpPost(UriElements.DiagnosticReport)]
+        public async Task<IActionResult> DiagnosticReport(string subscriptionId, string resourceGroupName, string clusterName, [FromBody] DiagnosticReportQuery queryBody, string startTime = null, string endTime = null, string timeGrain = null)
+        {
+            var validateBody = InsightsAPIHelpers.ValidateQueryBody(queryBody);
+            if (!validateBody.Status)
+            {
+                return BadRequest($"Invalid post body. {validateBody.Message}");
+            }
+            if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
+            {
+                return BadRequest(errorMessage);
+            }
+            return await base.GetDiagnosticReport(GetResource(subscriptionId, resourceGroupName, clusterName), queryBody, startTimeUtc, endTimeUtc, timeGrainTimeSpan);
+        }
+
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]
         public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string clusterName, [FromBody]CompilationPostBody<dynamic> jsonBody, string detectorId, string dataSource = null, string timeRange = null)
         {

@@ -27,6 +27,11 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// CategoryOverview means is the overpage for each category in external UI
         /// </summary>
-        CategoryOverview
+        CategoryOverview,
+
+        /// <summary>
+        /// DiagnosticTool means this is a non-detector diagnostic tool implemented in diag portal
+        /// </summary>
+        DiagnosticTool,
     }
 }
