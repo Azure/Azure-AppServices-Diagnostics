@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using System.Data;
 using System.Threading.Tasks;
@@ -16,7 +16,6 @@ using Newtonsoft.Json;
 using Diagnostics.DataProviders.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace Diagnostics.DataProviders
 {
@@ -30,7 +29,7 @@ namespace Diagnostics.DataProviders
         private string _aadAuthority;
         private static ConcurrentDictionary<Tuple<string, string>, ICslQueryProvider> QueryProviderMapping;
         private static List<string> exceptionsToRetryFor = new List<string>();
-        
+
         /// <summary>
         /// Failover cluster mapping
         /// </summary>
