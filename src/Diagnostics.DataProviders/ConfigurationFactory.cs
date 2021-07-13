@@ -18,7 +18,6 @@ namespace Diagnostics.DataProviders
         public AppSettingsDataProviderConfigurationFactory(IConfiguration configuration)
         {
             _configuration = (IConfigurationRoot)configuration;
-            KustoDataProviderConfiguration.setConfig(_configuration);
         }
 
         protected override string GetValue(string prefix, string name)
@@ -26,6 +25,11 @@ namespace Diagnostics.DataProviders
             var section = _configuration.GetSection(prefix);
             var appSettingStringValue = section[name];
             return appSettingStringValue;
+        }
+
+        protected override IConfiguration GetConfiguration()
+        {
+            return _configuration;
         }
 
         private string GetAppSettingName(string prefix, string name)
@@ -121,6 +125,10 @@ namespace Diagnostics.DataProviders
 
             return string.Empty;
         }
+        protected override IConfiguration GetConfiguration()
+        {
+            return null;
+        }
     }
 
     public abstract class DataProviderConfigurationFactory : IConfigurationFactory
@@ -148,6 +156,10 @@ namespace Diagnostics.DataProviders
 
         private void LoadConfigurationValues(object dataProviderConfiguration)
         {
+            if (dataProviderConfiguration is not null && dataProviderConfiguration is KustoDataProviderConfiguration)
+            {
+                (dataProviderConfiguration as KustoDataProviderConfiguration).config = GetConfiguration();
+            }
             string prefix = null;
             DataSourceConfigurationAttribute configurationAttribute = dataProviderConfiguration.GetType()
                 .GetCustomAttribute(typeof(DataSourceConfigurationAttribute)) as DataSourceConfigurationAttribute;
@@ -186,6 +198,8 @@ namespace Diagnostics.DataProviders
         }
 
         protected abstract string GetValue(string prefix, string name);
+
+        protected abstract IConfiguration GetConfiguration();
 
         protected void SetValue(object target, PropertyInfo property, string stringValue, object defaultValue)
         {

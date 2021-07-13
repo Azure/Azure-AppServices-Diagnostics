@@ -188,11 +188,8 @@ namespace Diagnostics.DataProviders
 
         public List<ITuple> OverridableExceptionsToRetryAgainstLeaderCluster { get; set; }
 
-        public static IConfiguration _config;
-        public static void setConfig(IConfiguration config)
-        {
-            _config = config;
-        }
+        public IConfiguration config { private get; set; }
+        
 
         public override void PostInitialize()
         {
@@ -234,13 +231,13 @@ namespace Diagnostics.DataProviders
                 }
             }
 
-            int numOfOverridableExceptions = _config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList().Count();
+            int numOfOverridableExceptions = config is not null? config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList().Count() : 0;
             double MaxFailureResponseTimeInSeconds;
             string ExceptionString;
             for (int i = 0; i < numOfOverridableExceptions; i++)
             {
-                ExceptionString = _config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList()[i].GetSection("ExceptionString").Value;
-                if (double.TryParse(_config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList()[i].GetSection("MaxFailureResponseTimeInSeconds").Value, out MaxFailureResponseTimeInSeconds)
+                ExceptionString = config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList()[i].GetSection("ExceptionString").Value;
+                if (double.TryParse(config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList()[i].GetSection("MaxFailureResponseTimeInSeconds").Value, out MaxFailureResponseTimeInSeconds)
                     && !string.IsNullOrWhiteSpace(ExceptionString))
                 {
                     OverridableExceptionsToRetryAgainstLeaderCluster.Add((ExceptionString, MaxFailureResponseTimeInSeconds));
