@@ -28,6 +28,11 @@ namespace Diagnostics.DataProviders
             return appSettingStringValue;
         }
 
+        protected override IConfiguration GetConfiguration()
+        {
+            return _configuration;
+        }
+
         private string GetAppSettingName(string prefix, string name)
         {
             return string.Format("{0}_{1}", prefix, name);
@@ -121,6 +126,10 @@ namespace Diagnostics.DataProviders
 
             return string.Empty;
         }
+        protected override IConfiguration GetConfiguration()
+        {
+            return null;
+        }
     }
 
     public abstract class DataProviderConfigurationFactory : IConfigurationFactory
@@ -148,6 +157,10 @@ namespace Diagnostics.DataProviders
 
         private void LoadConfigurationValues(object dataProviderConfiguration)
         {
+            if (dataProviderConfiguration is not null && dataProviderConfiguration is KustoDataProviderConfiguration)
+            {
+                (dataProviderConfiguration as KustoDataProviderConfiguration).config = GetConfiguration();
+            }
             string prefix = null;
             DataSourceConfigurationAttribute configurationAttribute = dataProviderConfiguration.GetType()
                 .GetCustomAttribute(typeof(DataSourceConfigurationAttribute)) as DataSourceConfigurationAttribute;
@@ -221,29 +234,7 @@ namespace Diagnostics.DataProviders
 
         protected abstract string GetValue(string prefix, string name);
 
-        protected void SetValue(object target, PropertyInfo property, object objectValue, object defaultValue)
-        {
-            object value = null;
-            if (property.PropertyType == typeof(string))
-            {
-                value = Environment.ExpandEnvironmentVariables(objectValue.ToString());
-            }
-            else if (property.PropertyType == typeof(List<ITuple>))
-            {
-                value = objectValue;
-            }
-            else
-            {
-                throw new InvalidOperationException(
-                    string.Format(
-                        "Property {0} with type {1} is not supported.",
-                        property.Name,
-                        property.PropertyType));
-            }
-
-            property.SetValue(target, value, null);
-        }
-
+        protected abstract IConfiguration GetConfiguration();
 
         protected void SetValue(object target, PropertyInfo property, string stringValue, object defaultValue)
         {

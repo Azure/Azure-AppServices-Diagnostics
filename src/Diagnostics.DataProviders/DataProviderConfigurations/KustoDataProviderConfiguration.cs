@@ -5,8 +5,8 @@ using System.Text.RegularExpressions;
 using Diagnostics.DataProviders.Interfaces;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using Newtonsoft.Json.Linq;
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.DataProviders
 {
@@ -186,16 +186,16 @@ namespace Diagnostics.DataProviders
         [ConfigurationName("Retry:ExceptionsToRetryFor")]
         public string ExceptionsToRetryFor { get; set; }
 
-        [ConfigurationName("Retry:OverridableExceptionsToRetryAgainstLeaderCluster:AmountOfOverridableExceptions")]
-        public int AmountOfOverridableExceptions { get; set; }
+        public List<ITuple> OverridableExceptionsToRetryAgainstLeaderCluster { get; set; }
 
-        [ConfigurationName("Retry:OverridableExceptionsToRetryAgainstLeaderCluster:Cases")]
-        public List<ITuple> OverridableExceptions { get; set; }
+        public IConfiguration config { private get; set; }
+        
 
         public override void PostInitialize()
         {
             RegionSpecificClusterNameCollection = new ConcurrentDictionary<string, string>();
             FailoverClusterNameCollection = new ConcurrentDictionary<string, string>();
+            OverridableExceptionsToRetryAgainstLeaderCluster = new List<ITuple>();
 
             if (string.IsNullOrWhiteSpace(KustoRegionGroupings) && string.IsNullOrWhiteSpace(KustoClusterNameGroupings))
             {
@@ -231,7 +231,18 @@ namespace Diagnostics.DataProviders
                 }
             }
 
-            //foreach ()
+            int numOfOverridableExceptions = config is not null? config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList().Count() : 0;
+            double MaxFailureResponseTimeInSeconds;
+            string ExceptionString;
+            for (int i = 0; i < numOfOverridableExceptions; i++)
+            {
+                ExceptionString = config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList()[i].GetSection("ExceptionString").Value;
+                if (double.TryParse(config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList()[i].GetSection("MaxFailureResponseTimeInSeconds").Value, out MaxFailureResponseTimeInSeconds)
+                    && !string.IsNullOrWhiteSpace(ExceptionString))
+                {
+                    OverridableExceptionsToRetryAgainstLeaderCluster.Add((ExceptionString, MaxFailureResponseTimeInSeconds));
+                }
+            }
         }
     }
 }

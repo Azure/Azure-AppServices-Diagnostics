@@ -132,7 +132,7 @@ namespace Diagnostics.DataProviders
         {
             int attempt = 0;
             string source = string.IsNullOrWhiteSpace(operationName) ? "KustoSDKClient_ExecuteQueryAsync" : operationName;
-            
+
             DateTime invocationStartTime = default;
             DateTime invocationEndTime = default;
             Task<DataTable> executeQueryTask = default;
@@ -146,7 +146,7 @@ namespace Diagnostics.DataProviders
                 try
                 {
                     //figure out how to use the new config settings here
-                    if(attempt == _config.MaxRetryCount && _config.MaxRetryCount != 0 && _config.UseBackupClusterForLastRetryAttempt || isConditionMetForRetryAgainstLeaderCluster)
+                    if (attempt == _config.MaxRetryCount && _config.MaxRetryCount != 0 && _config.UseBackupClusterForLastRetryAttempt || isConditionMetForRetryAgainstLeaderCluster)
                     {
                         // Last Retry Attempt
                         // Switch to backup cluster since useBackupClusterForLastAttempt is set to true.
@@ -187,12 +187,12 @@ namespace Diagnostics.DataProviders
                             exceptionType,
                             exceptionDetails
                             );
-                    if (attemptException is not null && totalResponseTime.TotalSeconds <= (double) _config.OverridableExceptions.Single(x => x[0].ToString().ToLower() == attemptException.Message.ToLower())[1] && MeetsConditionForRetryAgainstLeaderCluster(attemptException))
+                    if (attemptException is not null && totalResponseTime.TotalSeconds <= (double)_config.OverridableExceptionsToRetryAgainstLeaderCluster.Single(x => x[0].ToString().ToLower() == attemptException.Message.ToLower())[1] && IsOverridableExceptionsToRetryAgainstLeaderCluster(attemptException))
                     {
                         isConditionMetForRetryAgainstLeaderCluster = true;
                     }
                     // Logic to check if retry needs to continue
-                    else if(totalResponseTime.TotalSeconds > _config.MaxFailureResponseTimeInSecondsForRetry || !IsExceptionRetryable(attemptException))
+                    else if (totalResponseTime.TotalSeconds > _config.MaxFailureResponseTimeInSecondsForRetry || !IsExceptionRetryable(attemptException))
                     {
                         DiagnosticsETWProvider.Instance.LogRetryAttemptMessage(
                         requestId ?? string.Empty,
@@ -211,7 +211,7 @@ namespace Diagnostics.DataProviders
 
             } while (attempt <= _config.MaxRetryCount);
 
-            if(executeQueryTask.IsCompletedSuccessfully && dtResult!= default)
+            if (executeQueryTask.IsCompletedSuccessfully && dtResult != default)
             {
                 return dtResult;
             }
@@ -341,14 +341,14 @@ namespace Diagnostics.DataProviders
             return exceptionsToRetryFor.Exists(item => ex.ToString().ToLower().Contains(item.ToLower()));
         }
 
-        private bool MeetsConditionForRetryAgainstLeaderCluster(Exception ex)
+        private bool IsOverridableExceptionsToRetryAgainstLeaderCluster(Exception ex)
         {
             if (ex is null)
             {
                 return false;
             }
-            
-            return _config.OverridableExceptions.Exists(item => ex.ToString().ToLower().Contains(item[0].ToString().ToLower()));
+
+            return _config.OverridableExceptionsToRetryAgainstLeaderCluster.Exists(item => ex.ToString().ToLower().Contains(item[0].ToString().ToLower()));
         }
     }
 }
