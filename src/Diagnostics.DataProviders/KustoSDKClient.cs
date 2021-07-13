@@ -187,7 +187,7 @@ namespace Diagnostics.DataProviders
                             exceptionType,
                             exceptionDetails
                             );
-                    if (attemptException is not null && totalResponseTime.TotalSeconds <= (double)_config.OverridableExceptionsToRetryAgainstLeaderCluster.Single(x => x[0].ToString().ToLower() == attemptException.Message.ToLower())[1] && IsOverridableExceptionsToRetryAgainstLeaderCluster(attemptException))
+                    if (attemptException != null && totalResponseTime.TotalSeconds <= (double)_config.OverridableExceptionsToRetryAgainstLeaderCluster.Single(x => x[0].ToString().ToLower() == attemptException.Message.ToLower())[1] && IsOverridableExceptionsToRetryAgainstLeaderCluster(attemptException))
                     {
                         isConditionMetForRetryAgainstLeaderCluster = true;
                     }

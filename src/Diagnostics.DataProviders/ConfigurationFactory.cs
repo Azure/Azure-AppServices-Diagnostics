@@ -157,7 +157,7 @@ namespace Diagnostics.DataProviders
 
         private void LoadConfigurationValues(object dataProviderConfiguration)
         {
-            if (dataProviderConfiguration is not null && dataProviderConfiguration is KustoDataProviderConfiguration)
+            if (dataProviderConfiguration != null && dataProviderConfiguration is KustoDataProviderConfiguration)
             {
                 (dataProviderConfiguration as KustoDataProviderConfiguration).config = GetConfiguration();
             }

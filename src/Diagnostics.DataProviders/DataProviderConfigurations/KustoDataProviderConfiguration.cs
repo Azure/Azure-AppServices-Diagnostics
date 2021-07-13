@@ -231,7 +231,7 @@ namespace Diagnostics.DataProviders
                 }
             }
 
-            int numOfOverridableExceptions = config is not null? config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList().Count() : 0;
+            int numOfOverridableExceptions = config != null? config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList().Count() : 0;
             double MaxFailureResponseTimeInSeconds;
             string ExceptionString;
             for (int i = 0; i < numOfOverridableExceptions; i++)
