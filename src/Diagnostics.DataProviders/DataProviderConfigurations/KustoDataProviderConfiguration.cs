@@ -231,16 +231,19 @@ namespace Diagnostics.DataProviders
                 }
             }
 
-            int numOfOverridableExceptions = config != null? config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList().Count() : 0;
-            double MaxFailureResponseTimeInSeconds;
-            string ExceptionString;
-            for (int i = 0; i < numOfOverridableExceptions; i++)
+            if (config != null)
             {
-                ExceptionString = config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList()[i].GetSection("ExceptionString").Value;
-                if (double.TryParse(config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList()[i].GetSection("MaxFailureResponseTimeInSeconds").Value, out MaxFailureResponseTimeInSeconds)
-                    && !string.IsNullOrWhiteSpace(ExceptionString))
+                string ExceptionString;
+                double MaxFailureResponseTimeInSeconds;
+
+                foreach (var overridableException in config.GetSection("Kusto").GetSection("Retry").GetSection("OverridableExceptionsToRetryAgainstLeaderCluster").GetChildren().ToList())
                 {
-                    OverridableExceptionsToRetryAgainstLeaderCluster.Add((ExceptionString, MaxFailureResponseTimeInSeconds));
+                    ExceptionString = overridableException.GetSection("ExceptionString").Value;
+                    if (double.TryParse(overridableException.GetSection("MaxFailureResponseTimeInSeconds").Value, out MaxFailureResponseTimeInSeconds) 
+                        && !string.IsNullOrWhiteSpace(ExceptionString))
+                    {
+                        OverridableExceptionsToRetryAgainstLeaderCluster.Add((ExceptionString, MaxFailureResponseTimeInSeconds));
+                    }
                 }
             }
         }
