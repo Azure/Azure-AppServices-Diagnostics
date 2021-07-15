@@ -1283,6 +1283,20 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return false;
             }
 
+            if(!string.IsNullOrEmpty(invoker.EntryPointDefinitionAttribute.Id) && invoker.EntryPointDefinitionAttribute.Id.Contains("."))
+            {
+                // . is not allowed in detector id, reject this request
+                queryRes.CompilationOutput.CompilationSucceeded = false;
+                queryRes.CompilationOutput.AssemblyBytes = string.Empty;
+                queryRes.CompilationOutput.PdbBytes = string.Empty;
+                var detectorType = invoker.EntityMetadata.Type > EntityType.Signal ? invoker.EntityMetadata.Type : EntityType.Detector;
+                queryRes.CompilationOutput.CompilationTraces = queryRes.CompilationOutput.CompilationTraces.Concat(new List<string>()
+                    {
+                        $"Error : {invoker.EntryPointDefinitionAttribute.Id} has '.' character in the detector id. Please remove the '.' character and retry"
+                    });
+                return false;
+            }
+
             foreach (var topicId in invoker.EntryPointDefinitionAttribute.SupportTopicList)
             {
                 var existingDetector = allDetectors.FirstOrDefault(p =>
