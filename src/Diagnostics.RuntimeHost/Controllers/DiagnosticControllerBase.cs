@@ -1283,7 +1283,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return false;
             }
 
-            if(!string.IsNullOrEmpty(publishingDetectorId) && publishingDetectorId.Contains("."))
+            if(!string.IsNullOrEmpty(invoker.EntryPointDefinitionAttribute.Id) && invoker.EntryPointDefinitionAttribute.Id.Contains("."))
             {
                 // . is not allowed in detector id, reject this request
                 queryRes.CompilationOutput.CompilationSucceeded = false;
@@ -1292,7 +1292,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 var detectorType = invoker.EntityMetadata.Type > EntityType.Signal ? invoker.EntityMetadata.Type : EntityType.Detector;
                 queryRes.CompilationOutput.CompilationTraces = queryRes.CompilationOutput.CompilationTraces.Concat(new List<string>()
                     {
-                        $"Error : {publishingDetectorId} has '.' character in the detector id. Please remove the '.' character and retry"
+                        $"Error : {invoker.EntryPointDefinitionAttribute.Id} has '.' character in the detector id. Please remove the '.' character and retry"
                     });
                 return false;
             }
