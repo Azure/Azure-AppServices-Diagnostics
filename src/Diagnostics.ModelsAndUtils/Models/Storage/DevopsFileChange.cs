@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Diagnostics.ModelsAndUtils.Models.Storage
+﻿namespace Diagnostics.ModelsAndUtils.Models.Storage
 {
     public class DevopsFileChange
     {
@@ -20,5 +16,15 @@ namespace Diagnostics.ModelsAndUtils.Models.Storage
         /// Path of the detector csx file
         /// </summary>
         public string Path { get; set; }
+
+        /// <summary>
+        /// Content of package.json file
+        /// </summary>
+        public string PackageConfig { get; set; }
+
+        /// <summary>
+        /// Content of metadata.json file
+        /// </summary>
+        public string Metadata { get; set; }
     }
 }

@@ -8,12 +8,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models.Storage;
 using System.IO;
+using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace Diagnostics.RuntimeHost.Services
 {
     public interface IDevopsService
     {
        Task<List<DevopsFileChange>> GetFilesInCommit(string commitId);
+
+        Task<List<DevopsFileChange>> GetFilesBetweenCommits(string fromCommitId, string toCommitId);
     }
     public class DevopsService : IDevopsService
     {
@@ -43,27 +47,65 @@ namespace Diagnostics.RuntimeHost.Services
             {
                 if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Add || change.ChangeType == VersionControlChangeType.Edit))
                 {
-                    string content = string.Empty;
+                    // hack right now, ideally get from config
+                    var detectorId = String.Join(";", Regex.Matches(change.Item.Path, @"\/(.+?)\/")
+                                        .Cast<Match>()
+                                        .Select(m => m.Groups[1].Value));
+
                     var gitversion = new GitVersionDescriptor{
                         Version = commitId,
                         VersionType = GitVersionType.Commit,
                         VersionOptions = GitVersionOptions.None
-                    };
-                    var streamResult = await gitHttpClient.GetItemContentAsync(repositoryAsync.Id, change.Item.Path, null, VersionControlRecursionType.None, null,
-                        null, null, gitversion);
-                    using (var reader = new StreamReader(streamResult))
-                    {
-                        content = reader.ReadToEnd();
-                    }
+                    };               
+                    var detectorScriptContent = await GetFileContent(repositoryAsync.Id, change.Item.Path, gitversion);
+                    var packageContent = await GetFileContent(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
+                    var metadataContent = await GetFileContent(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);
                     stringList.Add(new DevopsFileChange
                     {
                         CommitId = commitId,
-                        Content = content,
-                        Path = change.Item.Path
+                        Content = detectorScriptContent,
+                        Path = change.Item.Path,
+                        PackageConfig = packageContent,
+                        Metadata = metadataContent
                     }); 
                 }
             }
             return stringList;
+        }
+
+        private async Task<string> GetFileContent(Guid repoId, string ItemPath, GitVersionDescriptor gitVersionDescriptor)
+        {
+            string content = string.Empty;
+            var streamResult = await gitHttpClient.GetItemContentAsync(repoId, ItemPath, null, VersionControlRecursionType.None, null,
+                       null, null, gitVersionDescriptor);
+            using (var reader = new StreamReader(streamResult))
+            {
+                content = reader.ReadToEnd();
+            }
+            return content;
+        }
+
+        public async Task<List<DevopsFileChange>> GetFilesBetweenCommits(string fromCommitId, string toCommitId)
+        {
+            var result = new List<DevopsFileChange>();
+            if(string.IsNullOrWhiteSpace(fromCommitId) || string.IsNullOrWhiteSpace(toCommitId))
+            {
+                throw new ArgumentNullException($"{nameof(fromCommitId)} or {nameof(toCommitId)} cannot be empty");
+            }
+
+            GitRepository repositoryAsync = await gitHttpClient.GetRepositoryAsync(partnerconfig.Project, partnerconfig.Repository, (object)null, new CancellationToken());
+            GitCommit fromCommitDetails = await gitHttpClient.GetCommitAsync(fromCommitId, repositoryAsync.Id);
+            GitCommit toCommitDetails = await gitHttpClient.GetCommitAsync(toCommitId, repositoryAsync.Id);
+            List<GitCommitRef> commitsToProcess = await gitHttpClient.GetCommitsAsync(repositoryAsync.Id, new GitQueryCommitsCriteria
+            {
+                FromDate = fromCommitDetails.Committer.Date.ToString(),
+                ToDate = toCommitDetails.Committer.Date.ToString()
+            });
+            foreach (var commit in commitsToProcess)
+            {
+                result.AddRange(await GetFilesInCommit(commit.CommitId));
+            }
+            return result;
         }
     }
 }

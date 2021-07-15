@@ -14,6 +14,8 @@ using Diagnostics.ModelsAndUtils.Models.Storage;
 using System.Collections.Generic;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Scripts;
+using Newtonsoft.Json;
+using Diagnostics.RuntimeHost.Utilities;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -29,7 +31,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         private IInvokerCacheService detectorCache;
 
         public DeploymentController(IServiceProvider services, IConfiguration configuration, IInvokerCacheService invokerCache)
-        { 
+        {
             this.devopsService = new DevopsService(configuration);
             this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));
             this.storageService = (IStorageService)services.GetService(typeof(IStorageService));
@@ -37,13 +39,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost("commit")]
-        public async Task<IActionResult> Commit(string commitId)
+        public async Task<IActionResult> Commit([FromBody] DeploymentParameters deploymentParameters)
         {
-            if(string.IsNullOrWhiteSpace(commitId))
-            {
-                return BadRequest("Commit id cannot be null or empty");
-            }
-
+            var commitId = deploymentParameters.CommitId;
             // 1. Get Partner config from storage
 
             List<PartnerConfig> partnerConfig = await storageService.GetPartnerConfigsAsync();
@@ -54,7 +52,9 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             // 3. Get files to compile 
 
-            var filesToCompile = await this.devopsService.GetFilesInCommit(commitId);
+            var filesToCompile = string.IsNullOrWhiteSpace(commitId) ? 
+                await this.devopsService.GetFilesBetweenCommits(deploymentParameters.FromCommitId, deploymentParameters.ToCommitId)
+              : await this.devopsService.GetFilesInCommit(commitId);
 
             QueryResponse<DiagnosticApiResponse> queryRes = new QueryResponse<DiagnosticApiResponse>
             {
@@ -82,15 +82,25 @@ namespace Diagnostics.RuntimeHost.Controllers
                         throw new Exception("Could not save changes");
                     }
 
-                    // 6. update invoker cache
+                    // 6. Save entity to table
+
+                    var diagEntity = JsonConvert.DeserializeObject<DiagEntity>(file.PackageConfig);
+                    diagEntity.Metadata = file.Metadata;
+                    diagEntity.GitHubSha = file.CommitId;
                     byte[] asmData = Convert.FromBase64String(queryRes.CompilationOutput.AssemblyBytes);
                     byte[] pdbData = Convert.FromBase64String(queryRes.CompilationOutput.PdbBytes);
+
+                    diagEntity = DiagEntityHelper.PrepareEntityForLoad(asmData, file.Content, diagEntity);
+                    await storageService.LoadDataToTable(diagEntity);
+
                     Assembly tempAsm = Assembly.Load(asmData, pdbData);
                     EntityType entityType = EntityType.Detector;
 
                     EntityMetadata metaData = new EntityMetadata(file.Content, entityType, null);
                     var newInvoker = new EntityInvoker(metaData);
                     newInvoker.InitializeEntryPoint(tempAsm);
+
+                    // 7. update invoker cache
                     detectorCache.AddOrUpdate(detectorId, newInvoker);
 
                 } else

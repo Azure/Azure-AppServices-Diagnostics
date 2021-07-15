@@ -4,14 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Security.Policy;
 using System.Threading.Tasks;
 using System.Web;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Win32;
 using Octokit;
 using static Diagnostics.Logger.HeaderConstants;
 
