@@ -55,6 +55,9 @@ namespace Diagnostics.ModelsAndUtils.Models
         public dynamic TableOptions { get; set; }
 
         public bool AllowColumnSearch { get; set; }
+
+        public string SearchPlaceholder { get; set; }
+
         public IEnumerable<TableColumnOption> ColumnOptions { get; set; }
 
         public TableRendering() : base(RenderingType.Table)
@@ -64,6 +67,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             DescriptionColumnName = null;
             AllowColumnSearch = false;
             ColumnOptions = null;
+            SearchPlaceholder = null;
         }
     }
 
@@ -328,6 +332,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// </summary>
         Multiple
     }
+
     public class TableColumnOption
     {
         /// <summary>
@@ -346,9 +351,14 @@ namespace Diagnostics.ModelsAndUtils.Models
         public int MaxWidth { get; set; }
 
         /// <summary>
-        /// Filter Selelction(Single, Multiple)
+        /// Filter Selection(Single, Multiple)
         /// </summary>
         public FileterSelectionOption SelectionOption { get; set; } = FileterSelectionOption.None;
+
+        /// <summary>
+        /// Default filter selection.
+        /// </summary>
+        public IEnumerable<string> DefaultSelection { get; set; }
 
         /// <summary>
         /// Hide or show column
