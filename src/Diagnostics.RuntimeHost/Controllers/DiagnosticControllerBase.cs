@@ -1026,7 +1026,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         AnalysisTypes = p.AnalysisTypes,
                         Type = p.DetectorType != null ? Enum.Parse<DetectorType>(p.DetectorType) : DetectorType.Detector,  
                         Score = p.Score
-                    }.SetInternalOnly(p.IsInternal), context.ClientIsInternal)
+                    }, context.ClientIsInternal)
                 });
             }
 
@@ -1053,7 +1053,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 var logMessage = new { InsightName = "SearchResultsPublic", InsightData = allDetectors.Select(p => new { Id = p.EntryPointDefinitionAttribute.Id, Score = p.EntryPointDefinitionAttribute.Score }) };
                 DiagnosticsETWProvider.Instance.LogInternalAPIInsights(context.OperationContext.RequestId, JsonConvert.SerializeObject(logMessage));
             }   
-            return allDetectors.Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute.SetInternalOnly(p.ResourceFilter.InternalOnly), context.ClientIsInternal) });
+            return allDetectors.Select(p => new DiagnosticApiResponse { Metadata = RemovePIIFromDefinition(p.EntryPointDefinitionAttribute, context.ClientIsInternal) });
         }
 
         private async Task<Tuple<Response, List<DataProviderMetadata>>> GetDetectorInternal(string detectorId, RuntimeContext<TResource> context)
