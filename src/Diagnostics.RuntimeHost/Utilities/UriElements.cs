@@ -33,6 +33,7 @@
         public const string Query = "diagnostics/query";
         public const string Publish = "diagnostics/publish";
         public const string Detectors = "detectors";
+        public const string DetectorsWithExtendDefinition = "detectorsWithExtendDefinition";
         public const string DetectorResource = "/{detectorId}";
         public const string Gists = "gists";
         public const string GistResource = "/{gistId}";
@@ -48,7 +49,7 @@
         public const string DiagnosticReport = "diagnostics";
 
         // Constants for internal api interactions
-        public const string Internal = "/internal";
+        public const string Internal = "internal";
 
         public const string Logger = "logger";
         public const string PublishModel = "publishmodel";

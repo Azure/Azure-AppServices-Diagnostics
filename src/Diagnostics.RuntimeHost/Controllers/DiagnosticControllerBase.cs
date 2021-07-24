@@ -13,6 +13,7 @@ using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
+using Diagnostics.ModelsAndUtils.Models.Storage;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
 using Diagnostics.ModelsAndUtils.Utilities;
 using Diagnostics.RuntimeHost.Models;
@@ -114,6 +115,34 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             return Ok(listDetectorsTranslatedResponse);
+        }
+
+        protected async Task<IActionResult> ListDetectorsWithExtendMetaData(TResource resource)
+        {
+            DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
+            var cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
+            IEnumerable<DetectorMetadata> detectors = new List<DetectorMetadata>();
+            if (this.tableCacheService.IsStorageAsSourceEnabled())
+            {
+                var diagEntities = await this.tableCacheService.GetEntityListByType(cxt, "Detector");
+                detectors = diagEntities.Select(p =>
+                {
+                    var resourceFilter = new Dictionary<string, string>();
+                    resourceFilter.Add("internalOnly", p.IsInternal.ToString());
+                    var metaData = new DetectorMetadata()
+                    {
+                        Id = p.RowKey,
+                        Name = p.DetectorName,
+                        ResourceFilter = resourceFilter,
+                        Metadata = p.Metadata,
+                        Author = p.Author,
+                        Description = p.Description
+                    };
+                    return metaData;
+                });
+            }
+            
+            return Ok(detectors);
         }
 
         protected async Task<IActionResult> GetDetector(TResource resource, string detectorId, string startTime, string endTime, string timeGrain, Form form = null, string language = "")
