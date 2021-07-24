@@ -33,7 +33,6 @@
         public const string Query = "diagnostics/query";
         public const string Publish = "diagnostics/publish";
         public const string Detectors = "detectors";
-        public const string DetectorsWithExtendDefinition = "detectorsWithExtendDefinition";
         public const string DetectorResource = "/{detectorId}";
         public const string Gists = "gists";
         public const string GistResource = "/{gistId}";
