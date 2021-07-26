@@ -19,11 +19,13 @@ namespace Diagnostics.DataProviders
         const string AppInsightsTagName = "hidden-related:diagnostics/applicationInsightsSettings";
         private readonly IAppInsightsClient _appInsightsClient;
         private AppInsightsDataProviderConfiguration _configuration;
+        private bool _isInternalClient;
 
-        public AppInsightsDataProvider(OperationDataCache cache, AppInsightsDataProviderConfiguration configuration) : base(cache, configuration)
+        public AppInsightsDataProvider(OperationDataCache cache, AppInsightsDataProviderConfiguration configuration, bool isInternalClient) : base(cache, configuration)
         {
             _configuration = configuration;
-            _appInsightsClient = new AppInsightsClient(_configuration);
+            _isInternalClient = isInternalClient;
+            _appInsightsClient = new AppInsightsClient(_configuration, _isInternalClient);
             Metadata = new DataProviderMetadata
             {
                 ProviderName = "AppInsights"
