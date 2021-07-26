@@ -52,7 +52,6 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected ISupportTopicService _supportTopicService;
         protected IKustoMappingsCacheService _kustoMappingCacheService;
         protected IRuntimeLoggerProvider _loggerProvider;
-
         private InternalAPIHelper _internalApiHelper;
         private IDiagEntityTableCacheService tableCacheService;
         private ISourceWatcher storageWatcher;
@@ -117,47 +116,36 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(listDetectorsTranslatedResponse);
         }
 
+        /// <summary>
+        /// Get Detector Meta Data with InternalOnly flag from Stoarge
+        /// </summary>
+        /// <param name="resource"></param>
+        /// <returns></returns>
         protected async Task<IActionResult> ListDetectorsWithExtendMetaData(TResource resource)
         {
-            const string internalOnly = "internalOnly";
             DateTimeHelper.PrepareStartEndTimeWithTimeGrain(string.Empty, string.Empty, string.Empty, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage);
             var cxt = PrepareContext(resource, startTimeUtc, endTimeUtc);
-            IEnumerable<DetectorMetadata> detectors = new List<DetectorMetadata>();
+            IEnumerable<ExtendedDefinition> detectors = new List<ExtendedDefinition>();
             if (this.tableCacheService.IsStorageAsSourceEnabled())
             {
                 var diagEntities = await this.tableCacheService.GetEntityListByType(cxt, "Detector");
                 detectors = diagEntities.Select(p =>
                 {
-                    var resourceFilter = new Dictionary<string, string>();
-                    resourceFilter.Add(internalOnly, p.IsInternal.ToString());
-                    return new DetectorMetadata()
+                    return new ExtendedDefinition()
                     {
                         Id = p.RowKey,
                         Name = p.DetectorName,
-                        ResourceFilter = resourceFilter,
                         Author = p.Author,
-                        Description = p.Description
+                        Category = p.Category,
+                        SupportTopicList = p.SupportTopicList,
+                        AnalysisTypes = p.AnalysisTypes,
+                        Type = p.DetectorType != null ? Enum.Parse<DetectorType>(p.DetectorType) : DetectorType.Detector,
+                        Score = p.Score,
+                        InternalOnly = p.IsInternal
+
                     };
                 });
-                return Ok(detectors);
             }
-
-            await this._sourceWatcherService.Watcher.WaitForFirstCompletion();
-            var allDetectors = _invokerCache.GetEntityInvokerList<TResource>(cxt).ToList();
-            detectors = allDetectors.Select(p =>
-            {
-                var resourceFilter = new Dictionary<string, string>();
-                resourceFilter.Add(internalOnly, p.ResourceFilter.InternalOnly.ToString());
-                return new DetectorMetadata()
-                {
-                    Id = p.EntryPointDefinitionAttribute.Id,
-                    Name = p.EntryPointDefinitionAttribute.Name,
-                    ResourceFilter = resourceFilter,
-                    Author = p.EntryPointDefinitionAttribute.Author,
-                    Description = p.EntryPointDefinitionAttribute.Description
-                };
-            });
-
 
             return Ok(detectors);
         }
