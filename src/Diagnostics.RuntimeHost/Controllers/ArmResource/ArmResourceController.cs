@@ -37,6 +37,12 @@ namespace Diagnostics.RuntimeHost.Controllers
             return base.ListDetectors(new ArmResource(subscriptionId, resourceGroupName, provider, resourceTypeName, resourceName, GetLocation()), text, language: l.ToLower());
         }
 
+        [HttpPost(UriElements.Internal + "/" + UriElements.Detectors)]
+        public Task<IActionResult> ListDetectorsWithMetaData(string subscriptionId, string resourceGroupName, string provider, string resourceTypeName, string resourceName)
+        {
+            return base.ListDetectorsWithExtendMetaData(new ArmResource(subscriptionId, resourceGroupName, provider, resourceTypeName, resourceName, GetLocation()));
+        }
+
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
         public Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string provider, string resourceTypeName, string resourceName, string detectorId, [FromBody] dynamic postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null, [FromQuery] string l = "")
         {
