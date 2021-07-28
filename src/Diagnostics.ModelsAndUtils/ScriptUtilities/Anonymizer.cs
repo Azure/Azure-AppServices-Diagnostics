@@ -11,7 +11,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 
         public static string AnonymizeMessage(string message)
         {
-            if (string.IsNullOrEmpty(message))
+            if (string.IsNullOrWhiteSpace(message))
             {
                 return message;
             }
