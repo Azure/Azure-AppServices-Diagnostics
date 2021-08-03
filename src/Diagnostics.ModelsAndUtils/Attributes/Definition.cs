@@ -116,4 +116,10 @@ namespace Diagnostics.ModelsAndUtils.Attributes
             return Id == other.Id;
         }
     }
+
+    public class ExtendedDefinition : Definition
+    {
+        public ExtendedDefinition() : base() { }
+        public bool InternalOnly { get; set; }
+    }
 }

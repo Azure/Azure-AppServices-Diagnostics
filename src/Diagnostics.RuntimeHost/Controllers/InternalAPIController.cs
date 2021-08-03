@@ -19,7 +19,7 @@ namespace Diagnostics.RuntimeHost.Controllers
     // Internal API to be used to communicate with internal processes on the diag role e.g. python processes for Search API
     [Authorize]
     [Produces("application/json")]
-    [Route(UriElements.Internal)]
+    [Route("/" + UriElements.Internal)]
     public class InternalAPIController : Controller
     {
         protected ISourceWatcherService _sourceWatcherService;
