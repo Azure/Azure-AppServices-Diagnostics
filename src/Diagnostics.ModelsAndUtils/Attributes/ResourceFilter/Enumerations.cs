@@ -43,7 +43,12 @@
         /// <summary>
         /// Generic ARM Resource
         /// </summary>
-        ArmResource = 128
+        ArmResource = 128,
+
+        /// <summary>
+        /// Worker App Resource
+        /// </summary>
+        WorkerApp = 256
     }
 
     /// <summary>
