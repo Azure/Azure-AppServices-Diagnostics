@@ -98,7 +98,7 @@ namespace Diagnostics.DataProviders
                 if (AllowedlistAppSettingsStartingWith.Any(x => item.Key.StartsWith(x)) && !SensitiveAppSettingsEndingWith.Any(x => item.Key.EndsWith(x))
                    || RegexMatchingPatterns.Any(x => (Regex.Match(item.Key, x).Success)))
                 {
-                    string value = CredentialTrapper.Obfuscate(item.Value);
+                    string value = CredentialTrapper.Obfuscate(item.Value.ToString());
                     appSettings.Add(item.Key, value);
                 }
                 else if(string.Compare(item.Key, "AzureWebJobsStorage", StringComparison.CurrentCulture) == 0)
