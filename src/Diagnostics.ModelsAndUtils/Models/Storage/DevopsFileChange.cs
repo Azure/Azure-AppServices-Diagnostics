@@ -26,5 +26,10 @@
         /// Content of metadata.json file
         /// </summary>
         public string Metadata { get; set; }
+
+        /// <summary>
+        /// Checks if the detector should be marked as disabled.
+        /// </summary>
+        public bool MarkAsDisabled { get; set; }
     }
 }

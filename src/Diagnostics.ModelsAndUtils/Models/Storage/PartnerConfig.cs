@@ -2,24 +2,13 @@
 
 namespace Diagnostics.ModelsAndUtils.Models.Storage
 {
-    public class PartnerConfig : TableEntity
+    public class PartnerConfig 
     {
-        public PartnerConfig()
-        {
-
-        }
-
-        public PartnerConfig(string entityType, string ConfigType)
-        {
-            PartitionKey = entityType;
-            RowKey = ConfigType;
-        }
-
         public string DevOpsUrl { get; set; }
 
-        public string RepoPath { get; set; }
+        public string FolderPath { get; set; }
 
-        public string Resource { get; set; } 
+        public string ResourceProvider { get; set; } 
 
         public string Project { get; set; }
 

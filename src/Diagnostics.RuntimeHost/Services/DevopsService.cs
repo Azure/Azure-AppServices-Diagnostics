@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models.Storage;
+using Diagnostics.Logger;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace Diagnostics.RuntimeHost.Services
     {
        Task<List<DevopsFileChange>> GetFilesInCommit(string commitId);
 
-        Task<List<DevopsFileChange>> GetFilesBetweenCommits(string fromCommitId, string toCommitId);
+        Task<List<DevopsFileChange>> GetFilesBetweenCommits(DeploymentParameters parameters);
     }
     public class DevopsService : IDevopsService
     {
@@ -43,33 +44,64 @@ namespace Diagnostics.RuntimeHost.Services
             GitRepository repositoryAsync = await gitHttpClient.GetRepositoryAsync(partnerconfig.Project, partnerconfig.Repository, (object)null, new CancellationToken());
             GitCommitChanges changesAsync = await gitHttpClient.GetChangesAsync(commitId, repositoryAsync.Id);
             List<DevopsFileChange> stringList = new List<DevopsFileChange>();
-            foreach (GitChange change in changesAsync.Changes)
+            try
             {
-                if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Add || change.ChangeType == VersionControlChangeType.Edit))
+                foreach (GitChange change in changesAsync.Changes)
                 {
-                    // hack right now, ideally get from config
-                    var detectorId = String.Join(";", Regex.Matches(change.Item.Path, @"\/(.+?)\/")
-                                        .Cast<Match>()
-                                        .Select(m => m.Groups[1].Value));
-
-                    var gitversion = new GitVersionDescriptor{
+                    var gitversion = new GitVersionDescriptor
+                    {
                         Version = commitId,
                         VersionType = GitVersionType.Commit,
                         VersionOptions = GitVersionOptions.None
-                    };               
-                    var detectorScriptContent = await GetFileContent(repositoryAsync.Id, change.Item.Path, gitversion);
-                    var packageContent = await GetFileContent(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
-                    var metadataContent = await GetFileContent(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);
-                    stringList.Add(new DevopsFileChange
+                    };
+                    if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Add || change.ChangeType == VersionControlChangeType.Edit))
                     {
-                        CommitId = commitId,
-                        Content = detectorScriptContent,
-                        Path = change.Item.Path,
-                        PackageConfig = packageContent,
-                        Metadata = metadataContent
-                    }); 
+                        // hack right now, ideally get from config
+                        var detectorId = String.Join(";", Regex.Matches(change.Item.Path, @"\/(.+?)\/")
+                                            .Cast<Match>()
+                                            .Select(m => m.Groups[1].Value));
+
+                      
+                        var detectorScriptContent = await GetFileContent(repositoryAsync.Id, change.Item.Path, gitversion);
+                        var packageContent = await GetFileContent(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
+                        var metadataContent = await GetFileContent(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);
+                        stringList.Add(new DevopsFileChange
+                        {
+                            CommitId = commitId,
+                            Content = detectorScriptContent,
+                            Path = change.Item.Path,
+                            PackageConfig = packageContent,
+                            Metadata = metadataContent
+                        });
+                    } else if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Delete))
+                    {
+                        var detectorId = String.Join(";", Regex.Matches(change.Item.Path, @"\/(.+?)\/")
+                                           .Cast<Match>()
+                                           .Select(m => m.Groups[1].Value));
+                        GitCommit gitCommitDetails = await gitHttpClient.GetCommitAsync(commitId, repositoryAsync.Id);
+                        var packageContent = await GetFileContent(repositoryAsync.Id, $"/{detectorId}/package.json", new GitVersionDescriptor
+                        {
+                            Version = gitCommitDetails.Parents.FirstOrDefault(),
+                            VersionType = GitVersionType.Commit,
+                            VersionOptions = GitVersionOptions.None
+                        });
+                        // Mark this detector as disabled. 
+                        stringList.Add(new DevopsFileChange
+                        {
+                            CommitId = commitId,
+                            Content= "",
+                            PackageConfig = packageContent,
+                            Path = change.Item.Path,
+                            Metadata = "",
+                            MarkAsDisabled = true
+                        });
+                    }
                 }
+            } catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Failed to get files in commit {ex.ToString()}");
             }
+  
             return stringList;
         }
 
@@ -85,25 +117,63 @@ namespace Diagnostics.RuntimeHost.Services
             return content;
         }
 
-        public async Task<List<DevopsFileChange>> GetFilesBetweenCommits(string fromCommitId, string toCommitId)
+        public async Task<List<DevopsFileChange>> GetFilesBetweenCommits(DeploymentParameters parameters)
         {
             var result = new List<DevopsFileChange>();
-            if(string.IsNullOrWhiteSpace(fromCommitId) || string.IsNullOrWhiteSpace(toCommitId))
+            
+            // Caller has not provided any of the parameters, throw validation error.
+            if (string.IsNullOrWhiteSpace(parameters.StartDate) && string.IsNullOrWhiteSpace(parameters.EndDate)
+               && string.IsNullOrWhiteSpace(parameters.FromCommitId) && string.IsNullOrWhiteSpace(parameters.ToCommitId))
             {
-                throw new ArgumentNullException($"{nameof(fromCommitId)} or {nameof(toCommitId)} cannot be empty");
+                throw new ArgumentNullException("The given deployment parameters are invalid. Please provide both StartDate & EndDate or FromCommit & ToCommit");
             }
-
+            // If both start date & End date are not given, throw validation error
+            if((string.IsNullOrWhiteSpace(parameters.StartDate) && !string.IsNullOrWhiteSpace(parameters.EndDate))
+                || (string.IsNullOrWhiteSpace(parameters.EndDate) && !string.IsNullOrWhiteSpace(parameters.StartDate)))
+            {
+                throw new ArgumentException("The given deployment parameters are invalid. Please provide both StartDate & EndDate");
+            }
+            // If both FromCommit & ToCommit are not given, throw validation error.
+            if ((string.IsNullOrWhiteSpace(parameters.FromCommitId) && !string.IsNullOrWhiteSpace(parameters.ToCommitId))
+                || (string.IsNullOrWhiteSpace(parameters.ToCommitId) && !string.IsNullOrWhiteSpace(parameters.FromCommitId)))
+            {
+                throw new ArgumentException("The given deployment parameters are invalid. Please provide both FromCommitId & ToCommitId");
+            }
+            string gitFromdate;
+            string gitToDate;
             GitRepository repositoryAsync = await gitHttpClient.GetRepositoryAsync(partnerconfig.Project, partnerconfig.Repository, (object)null, new CancellationToken());
-            GitCommit fromCommitDetails = await gitHttpClient.GetCommitAsync(fromCommitId, repositoryAsync.Id);
-            GitCommit toCommitDetails = await gitHttpClient.GetCommitAsync(toCommitId, repositoryAsync.Id);
+            if (!string.IsNullOrWhiteSpace(parameters.FromCommitId) && !string.IsNullOrWhiteSpace(parameters.ToCommitId))
+            {
+                GitCommit fromCommitDetails = await gitHttpClient.GetCommitAsync(parameters.FromCommitId, repositoryAsync.Id);
+                GitCommit toCommitDetails = await gitHttpClient.GetCommitAsync(parameters.ToCommitId, repositoryAsync.Id);
+                gitFromdate = fromCommitDetails.Committer.Date.ToString();
+                gitToDate = toCommitDetails.Committer.Date.ToString();
+            } else
+            {
+                gitFromdate = parameters.StartDate;
+                gitToDate = parameters.EndDate;
+            }
+            
+            GitVersionDescriptor gitVersionDescriptor = new GitVersionDescriptor
+            {
+                VersionType = GitVersionType.Branch,
+                Version = "master",
+                VersionOptions = GitVersionOptions.None
+            };
             List<GitCommitRef> commitsToProcess = await gitHttpClient.GetCommitsAsync(repositoryAsync.Id, new GitQueryCommitsCriteria
             {
-                FromDate = fromCommitDetails.Committer.Date.ToString(),
-                ToDate = toCommitDetails.Committer.Date.ToString()
+                FromDate = gitFromdate,
+                ToDate = gitToDate,
+                ItemVersion = gitVersionDescriptor
             });
             foreach (var commit in commitsToProcess)
             {
-                result.AddRange(await GetFilesInCommit(commit.CommitId));
+                //var filesinCommit = await GetFilesInCommit(commit.CommitId);
+                //if(!result.Contains(filesinCommit.FirstOrDefault()))
+                //{
+                    result.AddRange(await GetFilesInCommit(commit.CommitId));
+                //}
+               
             }
             return result;
         }
