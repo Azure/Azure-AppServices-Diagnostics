@@ -303,7 +303,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// StepViews component of Network Troubleshooter
         /// </summary>
-        StepViews
+        StepViews,
+
+        /// <summary>
+        /// Data Rendered as AppInsights enablement in detector
+        /// </summary>
+        Report
     }
 
     /// <summary>
