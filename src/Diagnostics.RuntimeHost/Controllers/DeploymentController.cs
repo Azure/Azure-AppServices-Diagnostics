@@ -7,7 +7,6 @@ using Diagnostics.ModelsAndUtils.Models;
 using System.Reflection;
 using Diagnostics.RuntimeHost.Services.StorageService;
 using System.Threading.Tasks;
-using System.Text.RegularExpressions;
 using System.Linq;
 using Diagnostics.ModelsAndUtils.Models.Storage;
 using System.Collections.Generic;
@@ -15,10 +14,11 @@ using Diagnostics.Scripts.Models;
 using Diagnostics.Scripts;
 using Newtonsoft.Json;
 using Diagnostics.RuntimeHost.Utilities;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
-    //  [Authorize]
+    [Authorize]
     [Produces("application/json")]
     [Route("deploy")]
     public class DeploymentController : Controller
@@ -40,7 +40,12 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpPost("commit")]
         public async Task<IActionResult> Commit([FromBody] DeploymentParameters deploymentParameters)
         {
-
+            // If all required parameters are empty, reject the request.
+            if(string.IsNullOrWhiteSpace(deploymentParameters.CommitId) && string.IsNullOrWhiteSpace(deploymentParameters.FromCommitId)
+                && string.IsNullOrWhiteSpace(deploymentParameters.ToCommitId) && string.IsNullOrWhiteSpace(deploymentParameters.StartDate)
+                && string.IsNullOrWhiteSpace(deploymentParameters.EndDate)) {
+                return BadRequest("The given deployment parameters are invalid");
+            }
             DeploymentResponse response = new DeploymentResponse();
             response.DeploymentGuid = Guid.NewGuid().ToString();
             response.DeployedDetectors = new List<string>();
@@ -67,17 +72,17 @@ namespace Diagnostics.RuntimeHost.Controllers
             // 4. Compile files
             foreach( var file in filesToCompile)
             {
-                // hack right now, ideally get from config
-                var detectorId = String.Join(";", Regex.Matches(file.Path, @"\/(.+?)\/")
-                                    .Cast<Match>()
-                                    .Select(m => m.Groups[1].Value));
+                // For each of the files to compile:
+                // 1. Create the diag entity object.
+                var diagEntity = JsonConvert.DeserializeObject<DiagEntity>(file.PackageConfig);
+                diagEntity.GithubLastModified = DateTime.UtcNow;
+                diagEntity.PartitionKey = diagEntity.EntityType;
+                diagEntity.RowKey = diagEntity.DetectorId;
+                var detectorId = diagEntity.DetectorId;
 
+                // 2. If file was deleted in git, mark as disabled in storage account.
                 if (file.MarkAsDisabled)
-                {
-                    var diagEntity = JsonConvert.DeserializeObject<DiagEntity>(file.PackageConfig);
-                    diagEntity.GithubLastModified = DateTime.UtcNow;
-                    diagEntity.PartitionKey = "Detector";
-                    diagEntity.RowKey = diagEntity.DetectorId;
+                {                 
                     diagEntity.IsDisabled = true;
                     await storageService.LoadDataToTable(diagEntity);
                     if (response.DeletedDetectors == null)
@@ -87,17 +92,16 @@ namespace Diagnostics.RuntimeHost.Controllers
                     response.DeletedDetectors.Add(diagEntity.RowKey);
                     continue;
                 }
-                queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(file.Content, entityType: "Detector", null);
-               
 
+                // 3. Otherwise, compile the detector to generate dll.
+                queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(file.Content, diagEntity.EntityType, null);  
+                
+                // 4. If compilation success, save dll to storage container.
                 if (queryRes.CompilationOutput.CompilationSucceeded)
-                {
-                                      
+                {                                     
                     var blobName = $"{detectorId.ToLower()}/{detectorId.ToLower()}.dll";
-
                     // 5. Save blob to storage account
-                    var etag = await storageService.LoadBlobToContainer(blobName, queryRes.CompilationOutput.AssemblyBytes);
-                    
+                    var etag = await storageService.LoadBlobToContainer(blobName, queryRes.CompilationOutput.AssemblyBytes);                
                     if (string.IsNullOrWhiteSpace(etag))
                     {
                         throw new Exception("Could not save changes");
@@ -105,32 +109,25 @@ namespace Diagnostics.RuntimeHost.Controllers
                     response.DeployedDetectors.Add(detectorId);
 
                     // 6. Save entity to table
-                    var diagEntity = JsonConvert.DeserializeObject<DiagEntity>(file.PackageConfig);
                     diagEntity.Metadata = file.Metadata;
                     diagEntity.GitHubSha = file.CommitId;
                     byte[] asmData = Convert.FromBase64String(queryRes.CompilationOutput.AssemblyBytes);
                     byte[] pdbData = Convert.FromBase64String(queryRes.CompilationOutput.PdbBytes);
-
                     diagEntity = DiagEntityHelper.PrepareEntityForLoad(asmData, file.Content, diagEntity);
-                    diagEntity.GithubLastModified = DateTime.UtcNow; // filler right now.
                     await storageService.LoadDataToTable(diagEntity);
 
+                    // 7. update invoker cache
                     Assembly tempAsm = Assembly.Load(asmData, pdbData);
                     EntityType entityType = EntityType.Detector;
-
                     EntityMetadata metaData = new EntityMetadata(file.Content, entityType, null);
                     var newInvoker = new EntityInvoker(metaData);
-                    newInvoker.InitializeEntryPoint(tempAsm);
-
-                    // 7. update invoker cache
+                    newInvoker.InitializeEntryPoint(tempAsm);                   
                     detectorCache.AddOrUpdate(detectorId, newInvoker);
-
                 } else
                 {
                     // If compilation fails, add failure reason to the response
                     response.FailedDetectors.Add(detectorId, queryRes.CompilationOutput.CompilationTraces.FirstOrDefault());
                 }
-
             }
             return Ok(response);
         }

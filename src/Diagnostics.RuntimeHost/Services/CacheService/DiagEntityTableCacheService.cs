@@ -134,7 +134,7 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
                     existingEntities.RemoveAt(index);
                 }
             });
-            existingEntities.AddRange(latestentities);
+            existingEntities.AddRange(latestentities.Where(s => !s.IsDisabled));
             AddOrUpdate(key, existingEntities);
         }
     }

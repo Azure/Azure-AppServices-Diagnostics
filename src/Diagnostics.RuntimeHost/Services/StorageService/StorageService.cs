@@ -135,7 +135,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     } while (tableContinuationToken != null);
                     timeTakenStopWatch.Stop();
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by Partition key {partitionKey} took {timeTakenStopWatch.ElapsedMilliseconds}, Total rows = {detectorsResult.Count}, ClientRequestId = {clientRequestId} ");
-                    return detectorsResult.Where(result => !result.IsDisabled).ToList();
+                     return startTime == DateTime.MinValue ? detectorsResult.Where(result => !result.IsDisabled).ToList() :
+                        detectorsResult.ToList();
                 }
                 catch (Exception ex)
                 {

@@ -8,6 +8,11 @@
         public string CommitId { get; set; }
 
         /// <summary>
+        /// Detector/gist id.
+        /// </summary>
+        public string Id { get; set; }
+
+        /// <summary>
         /// Content of .csx file
         /// </summary>
         public string Content { get; set; }

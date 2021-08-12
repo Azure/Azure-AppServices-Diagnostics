@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
-using Microsoft.VisualStudio.Services.Common;
-using Microsoft.VisualStudio.Services.WebApi;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -14,12 +12,19 @@ using System.Linq;
 
 namespace Diagnostics.RuntimeHost.Services
 {
+    /// <summary>
+    /// Interface to Devops Service.
+    /// </summary>
     public interface IDevopsService
     {
        Task<List<DevopsFileChange>> GetFilesInCommit(string commitId);
 
         Task<List<DevopsFileChange>> GetFilesBetweenCommits(DeploymentParameters parameters);
     }
+    
+    /// <summary>
+    /// Devops Service methods using Azure Devops SDK
+    /// </summary>
     public class DevopsService : IDevopsService
     {
         private IConfiguration globalConfig;
@@ -37,6 +42,10 @@ namespace Diagnostics.RuntimeHost.Services
             gitHttpClient = DevopsClientFactory.GetDevopsClient(partnerconfig, globalConfig);
         }
 
+        /// <summary>
+        /// Gets file change in the given commit.
+        /// </summary>
+        /// <param name="commitId">Commit id to process.</param>
         public async Task<List<DevopsFileChange>> GetFilesInCommit(string commitId)
         {
             if (string.IsNullOrWhiteSpace(commitId))
@@ -78,7 +87,9 @@ namespace Diagnostics.RuntimeHost.Services
                         var detectorId = String.Join(";", Regex.Matches(change.Item.Path, @"\/(.+?)\/")
                                            .Cast<Match>()
                                            .Select(m => m.Groups[1].Value));
+                        
                         GitCommit gitCommitDetails = await gitHttpClient.GetCommitAsync(commitId, repositoryAsync.Id);
+                        // Get the package.json from the parent commit since at this commit, the file doesn't exist.
                         var packageContent = await GetFileContent(repositoryAsync.Id, $"/{detectorId}/package.json", new GitVersionDescriptor
                         {
                             Version = gitCommitDetails.Parents.FirstOrDefault(),
@@ -105,6 +116,12 @@ namespace Diagnostics.RuntimeHost.Services
             return stringList;
         }
 
+        /// <summary>
+        /// Gets the file content as string for the given path and repo.
+        /// </summary>
+        /// <param name="repoId">Repo guid</param>
+        /// <param name="ItemPath">Path of the item</param>
+        /// <param name="gitVersionDescriptor">Git version descriptior</param>
         private async Task<string> GetFileContent(Guid repoId, string ItemPath, GitVersionDescriptor gitVersionDescriptor)
         {
             string content = string.Empty;
@@ -117,6 +134,10 @@ namespace Diagnostics.RuntimeHost.Services
             return content;
         }
 
+        /// <summary>
+        /// Gets file changes to deploy between commits based on date range or commit range.
+        /// </summary>
+        /// <param name="parameters">The given deployment parameters</param>
         public async Task<List<DevopsFileChange>> GetFilesBetweenCommits(DeploymentParameters parameters)
         {
             var result = new List<DevopsFileChange>();
@@ -125,7 +146,7 @@ namespace Diagnostics.RuntimeHost.Services
             if (string.IsNullOrWhiteSpace(parameters.StartDate) && string.IsNullOrWhiteSpace(parameters.EndDate)
                && string.IsNullOrWhiteSpace(parameters.FromCommitId) && string.IsNullOrWhiteSpace(parameters.ToCommitId))
             {
-                throw new ArgumentNullException("The given deployment parameters are invalid. Please provide both StartDate & EndDate or FromCommit & ToCommit");
+                throw new ArgumentException("The given deployment parameters are invalid. Please provide both StartDate & EndDate or FromCommit & ToCommit");
             }
             // If both start date & End date are not given, throw validation error
             if((string.IsNullOrWhiteSpace(parameters.StartDate) && !string.IsNullOrWhiteSpace(parameters.EndDate))
@@ -153,11 +174,11 @@ namespace Diagnostics.RuntimeHost.Services
                 gitFromdate = parameters.StartDate;
                 gitToDate = parameters.EndDate;
             }
-            
+            var defaultBranch = repositoryAsync.DefaultBranch.Replace("refs/heads/", "");
             GitVersionDescriptor gitVersionDescriptor = new GitVersionDescriptor
             {
                 VersionType = GitVersionType.Branch,
-                Version = "master",
+                Version = defaultBranch,
                 VersionOptions = GitVersionOptions.None
             };
             List<GitCommitRef> commitsToProcess = await gitHttpClient.GetCommitsAsync(repositoryAsync.Id, new GitQueryCommitsCriteria
@@ -168,11 +189,12 @@ namespace Diagnostics.RuntimeHost.Services
             });
             foreach (var commit in commitsToProcess)
             {
-                //var filesinCommit = await GetFilesInCommit(commit.CommitId);
-                //if(!result.Contains(filesinCommit.FirstOrDefault()))
-                //{
-                    result.AddRange(await GetFilesInCommit(commit.CommitId));
-                //}
+                var filesinCommit = await GetFilesInCommit(commit.CommitId);
+                // Process only the latest file update. 
+                if (!result.Select(s => s.Path).Contains(filesinCommit.FirstOrDefault().Path))
+                {
+                    result.AddRange(filesinCommit);
+                }
                
             }
             return result;
