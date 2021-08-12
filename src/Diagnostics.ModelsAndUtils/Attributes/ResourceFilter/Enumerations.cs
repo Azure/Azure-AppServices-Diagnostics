@@ -43,7 +43,12 @@
         /// <summary>
         /// Generic ARM Resource
         /// </summary>
-        ArmResource = 128
+        ArmResource = 128,
+
+        /// <summary>
+        /// Worker App Resource
+        /// </summary>
+        WorkerApp = 256
     }
 
     /// <summary>
@@ -94,8 +99,8 @@
         None = 0,
         V1 = 1,
         V2 = 2,
-        V3 = 3,
-        K8SE = 4,
+        V3 = 4,
+        K8SE = 8,
         All = 255
     }
 

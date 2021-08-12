@@ -35,7 +35,7 @@ namespace Diagnostics.DataProviders
 
             GeoMaster = GetOrAddDataProvider(new GeoMasterLogDecorator(context, new GeoMasterDataProvider(_cache, context)));
 
-            AppInsights = GetOrAddDataProvider(new AppInsightsLogDecorator(context, new AppInsightsDataProvider(_cache, context.Configuration.AppInsightsConfiguration)));
+            AppInsights = GetOrAddDataProvider(new AppInsightsLogDecorator(context, new AppInsightsDataProvider(_cache, context.Configuration.AppInsightsConfiguration, context.IsInternalClient)));
 
             ChangeAnalysis = GetOrAddDataProvider(new ChangeAnalysisLogDecorator(context, new ChangeAnalysisDataProvider(_cache, context.Configuration.ChangeAnalysisDataProviderConfiguration, context.RequestId, context.clientObjectId, context.clientPrincipalName, Kusto, context.receivedHeaders)));
 

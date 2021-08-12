@@ -10,6 +10,7 @@
 
         public const string WebResourceRoot = ResourceProvidersRoot + ResourceProviders.Web;
         public const string SitesResource = WebResourceRoot + "/sites/{siteName}";
+        public const string WorkerAppResource = WebResourceRoot + "/workerApps/{siteName}";
         public const string HostingEnvironmentResource = WebResourceRoot + "/hostingEnvironments/{hostingEnvironmentName}";
 
         #endregion Microsoft.Web Urls
@@ -48,7 +49,7 @@
         public const string DiagnosticReport = "diagnostics";
 
         // Constants for internal api interactions
-        public const string Internal = "/internal";
+        public const string Internal = "internal";
 
         public const string Logger = "logger";
         public const string PublishModel = "publishmodel";
