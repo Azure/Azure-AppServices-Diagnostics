@@ -11,7 +11,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 		ResiliencyResource[] resiliencyResourceList;
 
 		/// <summary>
-		/// Constructor
+		/// Creates an instance of ResiliencyReportData
 		/// </summary>
 		public ResiliencyReportData(string customerName, ResiliencyResource[] resiliencyResourceList)
 		{
@@ -88,8 +88,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 			else
             {
 				throw new ArgumentNullException(nameof(featuresDictionary), $"{nameof(featuresDictionary)} cannot be null");
-            }
-			
+            }			
 		}
 
 		/// <summary>
@@ -121,12 +120,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 			return Math.Round(_overallScore, 2);
 		}
 
-        ResiliencyFeature[] IResiliencyResource.GetResiliencyFeaturesList()
+        public ResiliencyFeature[] GetResiliencyFeaturesList()
         {
             return this.resiliencyFeaturesList;
         }
 
-        void IResiliencyResource.SetResiliencyFeaturesList(ResiliencyFeature[] value)
+        public void SetResiliencyFeaturesList(ResiliencyFeature[] value)
         {
             this.resiliencyFeaturesList = value;
         }
