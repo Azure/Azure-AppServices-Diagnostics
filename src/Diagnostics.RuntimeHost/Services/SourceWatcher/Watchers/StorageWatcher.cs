@@ -19,6 +19,10 @@ using Diagnostics.Scripts;
 using System.Reflection;
 using System.Diagnostics;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.Metadata;
+using Diagnostics.Scripts.CompilationService.Utilities;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
 {
@@ -40,6 +44,21 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         private DateTime kustoMappingsCacheLastModified;
         private Task kustoConfigDownloadTask;
         private IDiagEntityTableCacheService diagEntityTableCacheService;
+
+        /// <summary>
+        /// Using a flag incase anything goes wrong.
+        /// </summary>
+        private bool DecompileGist
+        {
+            get
+            {
+                if (bool.TryParse(configuration["DecompileGist"], out bool retval))
+                {
+                    return retval;
+                }
+                return false;
+            }
+        }
 
         private bool LoadOnlyPublicDetectors
         {
@@ -298,7 +317,20 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             var script = string.Empty;
             if (partitionkey.Equals("Gist"))
             {
-                script = await gitHubClient.GetFileContent($"{rowkey.ToLower()}/{rowkey.ToLower()}.csx");
+                if(DecompileGist)
+                {
+                    using (Stream stream = new MemoryStream(assemblyData))
+                    using (var peFile = new PEFile(temp.FullName, stream))
+                    {
+                        var resolver = new UniversalAssemblyResolver(temp.FullName, false, peFile.Reader.DetectTargetFrameworkId());
+                        var decompiler = new CSharpDecompiler(peFile, resolver, new DecompilerSettings());
+                        var decompiledString = decompiler.DecompileWholeModuleAsString();
+                        script = GistParser.GetGistClassAsString(decompiledString);
+                    }
+                } else
+                {
+                    script = await gitHubClient.GetFileContent($"{rowkey.ToLower()}/{rowkey.ToLower()}.csx");
+                }  
             }
             EntityMetadata metaData = new EntityMetadata(script, entityType, metadata);
             var newInvoker = new EntityInvoker(metaData);
