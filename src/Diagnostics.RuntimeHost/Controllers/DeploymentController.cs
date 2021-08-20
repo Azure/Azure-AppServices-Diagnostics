@@ -15,6 +15,8 @@ using Diagnostics.Scripts;
 using Newtonsoft.Json;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Authorization;
+using Diagnostics.Scripts.CompilationService.Utilities;
+using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -28,13 +30,16 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected ICompilerHostClient _compilerHostClient;
         protected IStorageService storageService;
         private IInvokerCacheService detectorCache;
+        protected IGistScriptCache gistCache;
 
         public DeploymentController(IServiceProvider services, IConfiguration configuration, IInvokerCacheService invokerCache)
         {
+            this.storageService = (IStorageService)services.GetService(typeof(IStorageService));
             this.devopsService = new DevopsService(configuration);
             this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));
-            this.storageService = (IStorageService)services.GetService(typeof(IStorageService));
+            
             this.detectorCache = invokerCache;
+            gistCache = (IGistScriptCache)services.GetService(typeof(IGistScriptCache));
         }
 
         [HttpPost("commit")]
@@ -53,11 +58,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             var commitId = deploymentParameters.CommitId;
 
-            // 1. Get Partner config from storage
-            List<PartnerConfig> partnerConfig = await storageService.GetPartnerConfigsAsync();
-
-            // 2. Initialize Devops client
-            devopsService.InitializeClient(partnerConfig.FirstOrDefault());
+           
 
             // 3. Get files to compile 
             var filesToCompile = string.IsNullOrWhiteSpace(commitId) ? 
@@ -68,6 +69,10 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 InvocationOutput = new DiagnosticApiResponse()
             };
+
+            IDictionary<string, string> references = new Dictionary<string, string>();
+
+           
 
             // 4. Compile files
             foreach( var file in filesToCompile)
@@ -93,8 +98,24 @@ namespace Diagnostics.RuntimeHost.Controllers
                     continue;
                 }
 
+                List<string> gistReferences = DetectorParser.GetLoadDirectiveNames(file.Content);
+                
+                foreach(string gist in gistReferences)
+                {
+                    if(!gistCache.ContainsKey(gist))
+                    {
+                        var gistContent = await devopsService.GetFileFromBranch($"{gist}/{gist}.csx");
+                        gistCache.AddOrUpdate(gist, gistContent);
+                        references.Add(gist, gistContent);
+                    } else
+                    {
+                        gistCache.TryGetValue(gist, out string gistContent);
+                        references.Add(gist, gistContent);
+                    }                                     
+                }
+
                 // 3. Otherwise, compile the detector to generate dll.
-                queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(file.Content, diagEntity.EntityType, null);  
+                queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(file.Content, diagEntity.EntityType, references);  
                 
                 // 4. If compilation success, save dll to storage container.
                 if (queryRes.CompilationOutput.CompilationSucceeded)

@@ -48,11 +48,11 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         /// <summary>
         /// Using a flag incase anything goes wrong.
         /// </summary>
-        private bool DecompileGist
+        private bool LoadGistFromRepo
         {
             get
             {
-                if (bool.TryParse(configuration["DecompileGist"], out bool retval))
+                if (bool.TryParse(configuration["LoadGistFromRepo"], out bool retval))
                 {
                     return retval;
                 }
@@ -315,22 +315,9 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             }
 
             var script = string.Empty;
-            if (partitionkey.Equals("Gist"))
-            {
-                if(DecompileGist)
-                {
-                    using (Stream stream = new MemoryStream(assemblyData))
-                    using (var peFile = new PEFile(temp.FullName, stream))
-                    {
-                        var resolver = new UniversalAssemblyResolver(temp.FullName, false, peFile.Reader.DetectTargetFrameworkId());
-                        var decompiler = new CSharpDecompiler(peFile, resolver, new DecompilerSettings());
-                        var decompiledString = decompiler.DecompileWholeModuleAsString();
-                        script = GistParser.GetGistClassAsString(decompiledString);
-                    }
-                } else
-                {
-                    script = await gitHubClient.GetFileContent($"{rowkey.ToLower()}/{rowkey.ToLower()}.csx");
-                }  
+            if (partitionkey.Equals("Gist") && !LoadGistFromRepo)
+            {           
+               script = await gitHubClient.GetFileContent($"{rowkey.ToLower()}/{rowkey.ToLower()}.csx"); 
             }
             EntityMetadata metaData = new EntityMetadata(script, entityType, metadata);
             var newInvoker = new EntityInvoker(metaData);

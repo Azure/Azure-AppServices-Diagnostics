@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models.Storage;
+using Diagnostics.RuntimeHost.Services.StorageService;
 using Diagnostics.Logger;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -20,6 +21,8 @@ namespace Diagnostics.RuntimeHost.Services
        Task<List<DevopsFileChange>> GetFilesInCommit(string commitId);
 
         Task<List<DevopsFileChange>> GetFilesBetweenCommits(DeploymentParameters parameters);
+
+        Task<string> GetFileFromBranch(string filePath, string branch = "");
     }
     
     /// <summary>
@@ -30,15 +33,25 @@ namespace Diagnostics.RuntimeHost.Services
         private IConfiguration globalConfig;
         private static GitHttpClient gitHttpClient;
         protected PartnerConfig partnerconfig;
+        protected IStorageService storage;
 
         public DevopsService(IConfiguration configuration)
         {
             globalConfig = configuration;
+            InitializeClient();     
         }
 
-        public void InitializeClient(PartnerConfig config)
+        public async void InitializeClient()
         {
-            partnerconfig = config;
+            
+            partnerconfig = new PartnerConfig
+            {
+                DevOpsUrl = "https://dev.azure.com/darreldonald",
+                Project = "darreldonald-test-repo",
+                FolderPath = "/",
+                Repository = "darreldonald-test-repo",
+                ResourceProvider = "Microsoft.Web/sites"
+            };
             gitHttpClient = DevopsClientFactory.GetDevopsClient(partnerconfig, globalConfig);
         }
 
@@ -132,6 +145,27 @@ namespace Diagnostics.RuntimeHost.Services
                 content = reader.ReadToEnd();
             }
             return content;
+        }
+
+        public async Task<string> GetFileFromBranch(string filePath, string branch = "")
+        {
+            if (string.IsNullOrWhiteSpace(filePath)) throw new ArgumentNullException($"{nameof(filePath)} cannot be empty");
+
+            GitRepository repositoryAsync = await gitHttpClient.GetRepositoryAsync(partnerconfig.Project, partnerconfig.Repository, (object)null, new CancellationToken());
+
+
+            if (string.IsNullOrWhiteSpace(branch))
+            {
+                branch = repositoryAsync.DefaultBranch.Replace("refs/heads/", "");
+            }
+
+            return await GetFileContent(repositoryAsync.Id, filePath, new GitVersionDescriptor
+            {
+                VersionType = GitVersionType.Branch,
+                Version = branch,
+                VersionOptions = GitVersionOptions.None
+            });
+
         }
 
         /// <summary>

@@ -9,6 +9,7 @@ using System.Web;
 using Diagnostics.DataProviders;
 using Diagnostics.DataProviders.Exceptions;
 using Diagnostics.DataProviders.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
@@ -29,6 +30,7 @@ using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Scripts.Utilities;
+using Diagnostics.Scripts.CompilationService.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -52,12 +54,16 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected ISupportTopicService _supportTopicService;
         protected IKustoMappingsCacheService _kustoMappingCacheService;
         protected IRuntimeLoggerProvider _loggerProvider;
+        protected IGistScriptCache gistScriptCache;
+        protected IDevopsService devopsService;
         private InternalAPIHelper _internalApiHelper;
         private IDiagEntityTableCacheService tableCacheService;
         private ISourceWatcher storageWatcher;
         private IDiagnosticTranslatorService _diagnosticTranslator;
+        private bool loadGistFromRepo;
 
-        public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext)
+
+        public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext, IConfiguration config)
         {
             this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));
             this._sourceWatcherService = (ISourceWatcherService)services.GetService(typeof(ISourceWatcherService));
@@ -79,6 +85,15 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
+            gistScriptCache = (IGistScriptCache)services.GetService(typeof(IGistScriptCache));
+            if(bool.TryParse(config["LoadGistFromRepo"], out bool retVal))
+            {
+                loadGistFromRepo = retVal;
+            } else
+            {
+                loadGistFromRepo = false;
+            }
+            devopsService = new DevopsService(config);
         }
 
         #region API Response Methods
@@ -273,14 +288,38 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
 
-            foreach (var p in _gistCache.GetAllReferences(runtimeContext))
+            if(loadGistFromRepo)
             {
-                if (!jsonBody.References.ContainsKey(p.Key))
+                List<string> gistReferences = DetectorParser.GetLoadDirectiveNames(jsonBody.Script);
+                foreach (string gist in gistReferences)
                 {
-                    // Add latest version to references
-                    jsonBody.References.Add(p);
+                    if(!jsonBody.References.ContainsKey(gist))
+                    {
+                        string gistContent = string.Empty;
+                        if (!gistScriptCache.ContainsKey(gist))
+                        {
+                            gistContent = await devopsService.GetFileFromBranch($"{gist}/{gist}.csx");
+                            gistScriptCache.AddOrUpdate(gist, gistContent);                   
+                        }
+                        else
+                        {
+                            gistScriptCache.TryGetValue(gist, out gistContent);                            
+                        }
+                        jsonBody.References.Add(gist, gistContent);
+                    }                   
+                }
+            } else
+            {
+                foreach (var p in _gistCache.GetAllReferences(runtimeContext))
+                {
+                    if (!jsonBody.References.ContainsKey(p.Key))
+                    {
+                        // Add latest version to references
+                        jsonBody.References.Add(p);
+                    }
                 }
             }
+           
 
             if (!Enum.TryParse(jsonBody.EntityType, true, out EntityType entityType))
             {

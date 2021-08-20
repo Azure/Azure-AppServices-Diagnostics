@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -16,8 +17,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.LogicAppResource)]
     public sealed class LogicAppController : DiagnosticControllerBase<LogicApp>
     {
-        public LogicAppController(IServiceProvider services, IRuntimeContext<LogicApp> runtimeContext)
-            : base(services, runtimeContext)
+        public LogicAppController(IServiceProvider services, IRuntimeContext<LogicApp> runtimeContext, IConfiguration config)
+            : base(services, runtimeContext, config)
         {
         }
 

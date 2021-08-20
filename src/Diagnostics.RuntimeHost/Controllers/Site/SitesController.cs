@@ -14,6 +14,7 @@ using Diagnostics.Logger;
 using Microsoft.Extensions.Primitives;
 using System.Linq;
 using Diagnostics.ModelsAndUtils.Utilities;
+using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -25,8 +26,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.SitesResource)]
     public sealed class SitesController : SiteControllerBase
     {
-        public SitesController(IServiceProvider services, IRuntimeContext<App> runtimeContext)
-            : base(services, runtimeContext)
+        public SitesController(IServiceProvider services, IRuntimeContext<App> runtimeContext, IConfiguration config)
+            : base(services, runtimeContext, config)
         {
         }
 

@@ -240,7 +240,7 @@ namespace Diagnostics.RuntimeHost
             services.AddDiagEntitiesTableCacheService(Configuration);
 
             InjectSourceWatcher(services);
-
+            services.AddSingleton<IGistScriptCache, GistScriptCache>();
             services.AddLogging(loggingConfig =>
             {
                 loggingConfig.ClearProviders();

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -16,8 +17,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.ApiManagementServiceResource)]
     public sealed class ApiManagementController : DiagnosticControllerBase<ApiManagementService>
     {
-        public ApiManagementController(IServiceProvider services, IRuntimeContext<ApiManagementService> runtimeContext)
-            : base(services, runtimeContext)
+        public ApiManagementController(IServiceProvider services, IRuntimeContext<ApiManagementService> runtimeContext, IConfiguration config)
+            : base(services, runtimeContext, config)
         {
         }
 

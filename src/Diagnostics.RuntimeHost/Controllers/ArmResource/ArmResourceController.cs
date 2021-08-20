@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -20,8 +21,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.ArmResource)]
     public class ArmResourceController : DiagnosticControllerBase<ArmResource>
     {
-        public ArmResourceController(IServiceProvider services, IRuntimeContext<ArmResource> runtimeContext)
-            : base(services, runtimeContext)
+        public ArmResourceController(IServiceProvider services, IRuntimeContext<ArmResource> runtimeContext, IConfiguration config)
+            : base(services, runtimeContext, config)
         {
         }
 

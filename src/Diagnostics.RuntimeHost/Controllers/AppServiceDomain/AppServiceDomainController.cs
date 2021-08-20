@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -16,8 +17,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.AppServiceDomainResource)]
     public sealed class AppServiceDomainController : DiagnosticControllerBase<AppServiceDomain>
     {
-        public AppServiceDomainController(IServiceProvider services, IRuntimeContext<AppServiceDomain> runtimeContext)
-            : base(services, runtimeContext)
+        public AppServiceDomainController(IServiceProvider services, IRuntimeContext<AppServiceDomain> runtimeContext, IConfiguration config)
+            : base(services, runtimeContext, config)
         {
         }
 
