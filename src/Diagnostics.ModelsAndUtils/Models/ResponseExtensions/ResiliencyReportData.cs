@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -8,6 +9,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
 	public class ResiliencyReportData : IResiliencyReportData
 	{
+		[JsonConverter(typeof(ResiliencyResource))]
 		ResiliencyResource[] resiliencyResourceList;
 
 		/// <summary>
@@ -30,10 +32,10 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 		/// </summary>
 		public string CustomerName { get; set; }
 
-		/// <summary>
-		/// Array containing a list of all the resources to be included in the report along with their 
-		/// </summary>
-		
+        /// <summary>
+        /// Array containing a list of all the resources to be included in the report along with their 
+        /// </summary>
+
 
         public ResiliencyResource[] GetResiliencyResourceList()
         {
@@ -42,16 +44,18 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
         public void SetResiliencyResourceList(ResiliencyResource[] value)
         {
-			if (value == null)
+            if (value == null)
             {
-				throw new ArgumentNullException(nameof(value), $"{nameof(value)} cannot be null");
+                throw new ArgumentNullException(nameof(value), $"{nameof(value)} cannot be null");
             }
-			else
-			{
-				this.resiliencyResourceList = value;
-			}
-           
+            else
+            {
+                this.resiliencyResourceList = value;
+            }
+
         }
+
+
     }
 
 	/// <summary>
@@ -198,16 +202,24 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 				return null;
             }
 			var table = new DataTable();
-			table.Columns.Add(new DataColumn("ResiliencyReportJSON", typeof(string)));
-			string json = JsonConvert.SerializeObject(resiliencyReportData);
-			table.Rows.Add(new object[] { json });
+			table.Columns.Add(new DataColumn("ResiliencyReport", typeof(string)));
+			table.Columns.Add(new DataColumn("ResiliencyResourceList", typeof(string)));
+			table.Columns.Add(new DataColumn("ResiliencyFeaturesList", typeof(string)));
+			string jsonResiliencyReport = JsonConvert.SerializeObject(resiliencyReportData, Formatting.Indented);			
+			string jsonResiliencyResourceList = JsonConvert.SerializeObject(resiliencyReportData.GetResiliencyResourceList(), Formatting.Indented);			
+			string jsonResiliencyFeaturesList;
+			for (int siteNum = 0; siteNum < resiliencyReportData.GetResiliencyResourceList().GetLength(0); siteNum++)
+			{
+				jsonResiliencyFeaturesList = JsonConvert.SerializeObject(resiliencyReportData.GetResiliencyResourceList()[siteNum].GetResiliencyFeaturesList(), Formatting.Indented);
+				table.Rows.Add(new object[] { jsonResiliencyReport, jsonResiliencyResourceList, jsonResiliencyFeaturesList });
+			}
 
 			var diagnosticData = new DiagnosticData()
 			{
 				Table = table,
 				RenderingProperties = new Rendering(RenderingType.Report)
 			};
-						response.Dataset.Add(diagnosticData);
+		   response.Dataset.Add(diagnosticData);
 			return diagnosticData;
 		}
 	}
