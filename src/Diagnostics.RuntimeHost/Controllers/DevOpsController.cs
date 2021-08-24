@@ -20,82 +20,39 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.DevOps)]
     public class DevOpsController : Controller
     {
-        IConfiguration _config;
         IDevOpsClient _devOpsClient;
-
-        private static string _accessToken;
 
         public DevOpsController(IConfiguration configuration, IDevOpsClient devOpsClient)
         {
-            _config = configuration;
             _devOpsClient = devOpsClient;
-            LoadConfigurations();
-            _devOpsClient.setAccessToken(_accessToken);
-        }
-
-        private void LoadConfigurations()
-        {
-            _accessToken = _config[$"DevOps:PersonalAccessToken"];
-        }
-
-        [HttpGet(UriElements.DevOpsPRComments)]
-        public Task<HttpResponseMessage> getPullRequestCommentsAsync(string organization, string project, string repositoryId, string pullRequestId)
-        {
-            return _devOpsClient.getPullRequestCommentsAsync(organization, project, repositoryId, pullRequestId);
-        }
-
-        [HttpGet(UriElements.DevOpsOrgMembers)]
-        public Task<HttpResponseMessage> getOrgMembersAsync(string organization)
-        {
-            return _devOpsClient.getOrgMembersAsync(organization);
         }
 
         [HttpGet(UriElements.DevOpsMakePR)]
-        public Task<HttpResponseMessage> makePullRequestAsync(string organization, string project, string repositoryId, string sourceBranch, string targetBranch, string title, string description, string reviewers)
+        public async Task<IActionResult> makePullRequestAsync(string sourceBranch, string targetBranch, string title)
         {
-            return _devOpsClient.makePullRequestAsync(organization, project, repositoryId, sourceBranch, targetBranch, title, description, reviewers);
+            DevOpsResponse response = await _devOpsClient.makePullRequestAsync(sourceBranch, targetBranch, title);
+            return StatusCode((int)response.responseCode, response.result);
         }
 
         [HttpGet(UriElements.DevOpsPush)]
-        public Task<HttpResponseMessage> pushChangesAsync(string organization, string project, string repositoryId, string branch, string localPath, string repoPath, string comment, string changeType)
+        public async Task<IActionResult> pushChangesAsync(string branch, string file, string repoPath, string comment, string changeType)
         {
-            return _devOpsClient.pushChangesAsync(organization, project, repositoryId, branch, localPath, repoPath, comment, changeType);
-        }
-
-        [HttpGet(UriElements.DevOpsGetCommits)]
-        public Task<HttpResponseMessage> getCommitsAsync(string organization, string project, string repositoryId, string branch, int maxResults = 100)
-        {
-            return _devOpsClient.getCommitsAsync(organization, project, repositoryId, branch, maxResults);
-        }
-
-        [HttpGet(UriElements.DevOpsGetCommits)]
-        public Task<HttpResponseMessage> getCommitsAsync(string organization, string project, string repositoryId, int maxResults = 100)
-        {
-            return _devOpsClient.getCommitsAsync(organization, project, repositoryId, maxResults);
+            DevOpsResponse response = await _devOpsClient.pushChangesAsync(branch, file, repoPath, comment, changeType);
+            return StatusCode((int)response.responseCode, response.result);
         }
 
         [HttpGet(UriElements.DevOpsGetCode)]
-        public async Task<HttpResponseMessage> getDetectorCodeAsync(string organization, string project, string repositoryId, string detectorPath)
+        public async Task<IActionResult> getDetectorCodeAsync(string detectorPath)
         {
-            return await _devOpsClient.getDetectorCodeAsync(organization, project, repositoryId, detectorPath);
+            DevOpsResponse response = await _devOpsClient.getDetectorCodeAsync(detectorPath);
+            return StatusCode((int)response.responseCode, response.result);
         }
 
-        [HttpGet(UriElements.DevOpsGetPRs)]
-        public Task<HttpResponseMessage> getPullRequestsAsync(string organization, string project, string repositoryId)
+        [HttpGet(UriElements.DevOpsGetBranches)]
+        public async Task<IActionResult> getBranchesAsync()
         {
-            return _devOpsClient.getPullRequestsAsync(organization, project, repositoryId);
-        }
-
-        [HttpGet(UriElements.DevOpsGetPR)]
-        public Task<HttpResponseMessage> getPullRequestAsync(string organization, string project, string repositoryId, string pullRequestId)
-        {
-            return _devOpsClient.getPullRequestAsync(organization, project, repositoryId, pullRequestId);
-        }
-
-        [HttpGet(UriElements.DevOpsGetRepo)]
-        public Task<HttpResponseMessage> getRepositoriesAsync(string organization)
-        {
-            return _devOpsClient.getRepositoriesAsync(organization);
+            DevOpsResponse response = await _devOpsClient.getBranchesAsync();
+            return StatusCode((int)response.responseCode, response.result);
         }
     }
 }

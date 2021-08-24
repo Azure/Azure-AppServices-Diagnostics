@@ -68,15 +68,10 @@
         #region DevOps Urls
 
         public const string DevOps = "devops";
-        public const string DevOpsPRComments = "prComments";
-        public const string DevOpsOrgMembers = "orgMembers";
         public const string DevOpsMakePR = "makePR";
         public const string DevOpsPush = "push";
-        public const string DevOpsGetCommits = "getCommits";
         public const string DevOpsGetCode = "getCode";
-        public const string DevOpsGetPR = "getPR";
-        public const string DevOpsGetPRs = "getPRs";
-        public const string DevOpsGetRepo = "getRepo";
+        public const string DevOpsGetBranches = "getBranches";
 
         #endregion
     }

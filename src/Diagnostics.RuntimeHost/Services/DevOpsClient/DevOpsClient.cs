@@ -2,6 +2,9 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.TeamFoundation.SourceControl.WebApi;
+using Microsoft.VisualStudio.Services.Common;
+using Microsoft.VisualStudio.Services.WebApi;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -19,8 +22,9 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
     public interface IDevOpsClient : IDisposable, IRepoClient
     {
         string AccessToken { get; }
-
-        void setAccessToken(string token);
+        string Organization { get; }
+        string RepositoryID { get; }
+        string Project { get; }
     }
 
 
@@ -36,392 +40,209 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         }
     }
 
+    public class DevOpsResponse
+    {
+        public object result;
+        public HttpStatusCode responseCode;
+    }
+
     class DevOpsClient : IDevOpsClient
     {
         private DevOpsRequestBodyAssistant devOpsRBA = new DevOpsRequestBodyAssistant();
-        private string _accessToken;
+        private static string _accessToken;
+        private static string _organization;
+        private static string _repoID;
+        private static string _project;
+        private static IConfiguration _config;
+        private static VssCredentials credentials;
+        private static VssConnection connection;
+        private GitHttpClient gitClient;
+
+        public DevOpsClient(IConfiguration config)
+        {
+            _config = config;
+            LoadConfigurations(config);
+            credentials = (VssCredentials)(FederatedCredential)new VssBasicCredential("pat", _accessToken);
+            connection = new VssConnection(new Uri($"https://dev.azure.com/{_organization}"), credentials);
+            gitClient = connection.GetClient<GitHttpClient>();
+        }
 
         public string AccessToken => _accessToken;
+        public string Organization => _organization;
+        public string RepositoryID => _repoID;
+        public string Project => _project;
 
-        private async Task<string> getLastObjectIdAsync(string organization, string project, string repositoryId, string branch)
+        private static HttpClient client = new HttpClient();
+        
+
+        private void LoadConfigurations(IConfiguration config)
         {
-            HttpResponseMessage catchResponse = null;
+            _accessToken = config[$"DevOps:PersonalAccessToken"];
+            _organization = config[$"DevOps:Organization"];
+            _project = config[$"DevOps:Project"];
+            _repoID = config[$"DevOps:RepoID"];
+        }
+
+        private VersionControlChangeType getChangeType(string changeType)
+        {
+            switch (changeType.ToLower())
+            {
+                case "add":
+                    return VersionControlChangeType.Add;
+                case "edit":
+                    return VersionControlChangeType.Edit;
+                default:
+                    throw (new InvalidOperationException($"ChangeType: \"{changeType}\" not Supported"));
+            }
+        }
+
+        private async Task<string> getLastObjectIdAsync(string branch)
+        {
+            GitQueryCommitsCriteria query = new GitQueryCommitsCriteria()
+            {
+                ItemVersion = new GitVersionDescriptor()
+                {
+                    Version = branch,
+                },
+                Top = 1,
+            };
+
             try
             {
-                using (HttpClient client = new HttpClient())
-                {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"https://dev.azure.com/{organization}/{project}/_apis/git/repositories/{repositoryId}/commits?searchCriteria.$top=1&searchCriteria.itemVersion.version={branch}&api-version=6.1-preview.1");
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                        Convert.ToBase64String(
-                        System.Text.ASCIIEncoding.ASCII.GetBytes(
-                            string.Format("{0}:{1}", "", _accessToken))));
-
-                    using (HttpResponseMessage response = await client.SendAsync(request))
-                    {
-                        response.EnsureSuccessStatusCode();
-
-                        JObject parsedResponse = JObject.Parse(await response.Content.ReadAsStringAsync());
-                        var valueObject = parsedResponse.SelectToken("$.value");
-                        var id = valueObject[0].SelectToken("$.commitId");
-                        return id.ToString();
-                    }
-                }
+                List<GitCommitRef> commits = await gitClient.GetCommitsAsync(_project, _repoID, query);
+                return commits[0].CommitId;
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
                 return null;
             }
         }
 
-        private async Task<List<string>> getUserIdsAsync(string organization, IList<string> aliases)
+        public async Task<DevOpsResponse> getBranchesAsync()
         {
-            HttpResponseMessage catchResponse = null;
+            DevOpsResponse response = new DevOpsResponse();
+            object result = null;
+
             try
             {
-                using (HttpClient client = new HttpClient())
-                {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"https://vsaex.dev.azure.com/{organization}/_apis/userentitlements?api-version=6.1-preview.3");
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                        Convert.ToBase64String(
-                        System.Text.ASCIIEncoding.ASCII.GetBytes(
-                            string.Format("{0}:{1}", "", _accessToken))));
-
-                    using (HttpResponseMessage response = await client.SendAsync(request))
-                    {
-                        response.EnsureSuccessStatusCode();
-
-                        JObject parsedResponse = JObject.Parse(await response.Content.ReadAsStringAsync());
-                        var members = parsedResponse.SelectToken("$.members");
-                        List<userIdPair> userIdPairs = new List<userIdPair>();
-                        foreach (var member in members)
-                        {
-                            var id = member.SelectToken("$.id");
-                            var user = member.SelectToken("$.user").SelectToken("$.directoryAlias");
-                            userIdPairs.Add(new userIdPair(user.ToString(), id.ToString()));
-                        }
-
-                        List<string> Ids = new List<string>();
-                        foreach (var user in userIdPairs)
-                        {
-                            if (aliases.Contains(user.userName))
-                            {
-                                Ids.Add(user.userId);
-                            }
-                        }
-
-                        return Ids;
-                    }
-                }
+                List<GitBranchStats> branches = await gitClient.GetBranchesAsync(_project, _repoID);
+                result = branches.Select(x => x.Name).ToList();
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
-                return null;
+                result = ex.ToString();
             }
-        }
+            finally
+            {
+                response.responseCode = gitClient.LastResponseContext.HttpStatusCode;
+                response.result = result;
+            }
 
-        public void setAccessToken(string token)
-        {
-            _accessToken = token;
+            return response;
         }
-
-        public async Task<HttpResponseMessage> getOrgMembersAsync(string organization)
+        
+        public async Task<DevOpsResponse> getDetectorCodeAsync(string detectorPath)
         {
-            HttpResponseMessage catchResponse = null;
+            DevOpsResponse response = new DevOpsResponse();
+            object result = null;
+
             try
             {
-                using (HttpClient client = new HttpClient())
-                {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"https://vsaex.dev.azure.com/{organization}/_apis/userentitlements?api-version=6.1-preview.3");
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                        Convert.ToBase64String(
-                        System.Text.ASCIIEncoding.ASCII.GetBytes(
-                            string.Format("{0}:{1}", "", _accessToken))));
-
-                    using (HttpResponseMessage response = await client.SendAsync(request))
-                    {
-                        catchResponse = response;
-                        response.EnsureSuccessStatusCode();
-                        return response;
-                    }
-                }
+                GitItem item = await gitClient.GetItemAsync(_project, _repoID, path: detectorPath, includeContent: true);
+                result = item.Content;
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
-                return catchResponse;
+                result = ex.ToString();
             }
+            finally
+            {
+                response.responseCode = gitClient.LastResponseContext.HttpStatusCode;
+                response.result = result;
+            }
+
+            return response;
         }
 
-        public async Task<HttpResponseMessage> getCommitsAsync(string organization, string project, string repositoryId, string branch, int maxResults = 100)
+        public async Task<DevOpsResponse> makePullRequestAsync(string sourceBranch, string targetBranch, string title)
         {
-            HttpResponseMessage catchResponse = null;
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"https://dev.azure.com/{organization}/{project}/_apis/git/repositories/{repositoryId}/commits?searchCriteria.$top={maxResults}&searchCriteria.itemVersion.version={branch}&api-version=6.1-preview.1");
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                        Convert.ToBase64String(
-                        System.Text.ASCIIEncoding.ASCII.GetBytes(
-                            string.Format("{0}:{1}", "", _accessToken))));
-
-                    using (HttpResponseMessage response = await client.SendAsync(request))
-                    {
-                        catchResponse = response;
-                        response.EnsureSuccessStatusCode();
-                        return response;
-                    }
-
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                return catchResponse;
-            }
-        }
-
-        public async Task<HttpResponseMessage> getCommitsAsync(string organization, string project, string repositoryId, int maxResults = 100)
-        {
-            HttpResponseMessage catchResponse = null;
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"https://dev.azure.com/{organization}/{project}/_apis/git/repositories/{repositoryId}/commits?searchCriteria.$top={maxResults}&api-version=6.1-preview.1");
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                        Convert.ToBase64String(
-                        System.Text.ASCIIEncoding.ASCII.GetBytes(
-                            string.Format("{0}:{1}", "", _accessToken))));
-
-                    using (HttpResponseMessage response = await client.SendAsync(request))
-                    {
-                        catchResponse = response;
-                        response.EnsureSuccessStatusCode();
-                        return response;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                return catchResponse;
-            }
-        }
-
-        public async Task<HttpResponseMessage> getDetectorCodeAsync(string organization, string project, string repositoryId, string detectorPath)
-        {
-            HttpResponseMessage catchResponse = null;
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"https://dev.azure.com/{organization}/{project}/_apis/git/repositories/{repositoryId}/items?path={WebUtility.UrlEncode(detectorPath)}&api-version=6.1-preview.1");
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                        Convert.ToBase64String(
-                        System.Text.ASCIIEncoding.ASCII.GetBytes(
-                            string.Format("{0}:{1}", "", _accessToken))));
-
-                    using (HttpResponseMessage response = await client.SendAsync(request))
-                    {
-                        catchResponse = response;
-                        response.EnsureSuccessStatusCode();
-                        return response;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                return catchResponse;
-            }
-
-
-        }
-
-        public async Task<HttpResponseMessage> getPullRequestAsync(string organization, string project, string repositoryId, string pullRequestId)
-        {
-            HttpResponseMessage catchResponse = null;
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"https://dev.azure.com/{organization}/{project}/_apis/git/repositories/{repositoryId}/pullrequests/{pullRequestId}?api-version=6.1-preview.1");
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                        Convert.ToBase64String(
-                        System.Text.ASCIIEncoding.ASCII.GetBytes(
-                            string.Format("{0}:{1}", "", _accessToken))));
-
-                    using (HttpResponseMessage response = await client.SendAsync(request))
-                    {
-                        catchResponse = response;
-                        response.EnsureSuccessStatusCode();
-                        return response;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                return catchResponse;
-            }
-        }
-
-        public async Task<HttpResponseMessage> getPullRequestsAsync(string organization, string project, string repositoryId)
-        {
-            HttpResponseMessage catchResponse = null;
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"https://dev.azure.com/{organization}/{project}/_apis/git/repositories/{repositoryId}/pullrequests?api-version=6.1-preview.1");
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                        Convert.ToBase64String(
-                        System.Text.ASCIIEncoding.ASCII.GetBytes(
-                            string.Format("{0}:{1}", "", _accessToken))));
-
-                    using (HttpResponseMessage response = await client.SendAsync(request))
-                    {
-                        catchResponse = response;
-                        response.EnsureSuccessStatusCode();
-                        return response;
-                    }
-
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                return catchResponse;
-            }
-        }
-
-        public async Task<HttpResponseMessage> makePullRequestAsync(string organization, string project, string repositoryId, string sourceBranch, string targetBranch, string title, string description, string reviewersString)
-        {
-            List<string> reviewers = reviewersString.Split(',').Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+            GitPullRequest pr = new GitPullRequest();
+            object result = null;
+            DevOpsResponse response = new DevOpsResponse();
             string source = $"refs/heads/{sourceBranch}";
             string target = $"refs/heads/{targetBranch}";
+            pr.SourceRefName = source;
+            pr.TargetRefName = target;
+            pr.Title = title;
 
-            List<string> reviewerIds = await getUserIdsAsync(organization, reviewers);
-
-            HttpResponseMessage catchResponse = null;
             try
             {
-                using (HttpClient client = new HttpClient())
-                {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"https://dev.azure.com/{organization}/{project}/_apis/git/repositories/{repositoryId}/pullrequests?api-version=6.1-preview.1");
-                    request.Headers.Add("Authorization", $"Bearer {_accessToken}");
-                    var requestBody = devOpsRBA.generatePRRequestBody(source, target, title, description, reviewerIds);
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                        Convert.ToBase64String(
-                        System.Text.ASCIIEncoding.ASCII.GetBytes(
-                            string.Format("{0}:{1}", "", _accessToken))));
-
-                    using (HttpResponseMessage response = await client.SendAsync(request))
-                    {
-                        catchResponse = response;
-                        response.EnsureSuccessStatusCode();
-                        return response;
-                    }
-
-                }
+                result = await gitClient.CreatePullRequestAsync(pr, _project, _repoID);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
-                return catchResponse;
+                result = ex.ToString();
             }
+            finally
+            {
+                response.responseCode = gitClient.LastResponseContext.HttpStatusCode;
+                response.result = result;
+            }
+
+            return response;
         }
 
-        public async Task<HttpResponseMessage> pushChangesAsync(string organization, string project, string repositoryId, string branch, string localPath, string repoPath, string comment, string changeType)
+        public async Task<DevOpsResponse> pushChangesAsync(string branch, string file, string repoPath, string comment, string changeType)
         {
             string name = $"refs/heads/{branch}";
-            string oldObjectId = await getLastObjectIdAsync(organization, project, repositoryId, branch);
+            object result = null;
+            DevOpsResponse response = new DevOpsResponse();
 
-            HttpResponseMessage catchResponse = null;
             try
             {
-                using (HttpClient client = new HttpClient())
+                GitRefUpdate newBranch = new GitRefUpdate()
                 {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, $"https://dev.azure.com/{organization}/{project}/_apis/git/repositories/{repositoryId}/pushes?api-version=6.1-preview.2");
-                    request.Headers.Add("Authorization", $"Bearer {_accessToken}");
-                    var requestBody = devOpsRBA.generatePushRequestBody(name, oldObjectId, repoPath, localPath, changeType, comment);
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                        Convert.ToBase64String(
-                        System.Text.ASCIIEncoding.ASCII.GetBytes(
-                            string.Format("{0}:{1}", "", _accessToken))));
+                    Name = name,
+                    OldObjectId = await getLastObjectIdAsync(branch),
+                };
 
-                    using (HttpResponseMessage response = await client.SendAsync(request))
+                GitCommitRef newCommit = new GitCommitRef()
+                {
+                    Comment = comment,
+                    Changes = new GitChange[]
                     {
-                        response.EnsureSuccessStatusCode();
-                        return response;
+                    new GitChange()
+                    {
+                        ChangeType = getChangeType(changeType),
+                        Item = new GitItem() { Path = repoPath },
+                        NewContent = new ItemContent()
+                        {
+                            Content = file,
+                            ContentType = ItemContentType.RawText,
+                        },
                     }
+                    },
+                };
 
-                }
+                GitPush push = new GitPush()
+                {
+                    RefUpdates = new GitRefUpdate[] { newBranch },
+                    Commits = new GitCommitRef[] { newCommit },
+                };
+
+                result = await gitClient.CreatePushAsync(push, _project, _repoID);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
-                return catchResponse;
+                result = ex.ToString();
             }
-        }
-
-        public async Task<HttpResponseMessage> getRepositoriesAsync(string organization)
-        {
-            HttpResponseMessage catchResponse = null;
-            try
+            finally
             {
-                using (HttpClient client = new HttpClient())
-                {
-                    HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, $"https://dev.azure.com/{organization}/_apis/git/repositories?api-version=6.1-preview.1");
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                        Convert.ToBase64String(
-                        System.Text.ASCIIEncoding.ASCII.GetBytes(
-                            string.Format("{0}:{1}", "", _accessToken))));
+                response.responseCode = gitClient.LastResponseContext.HttpStatusCode;
+                response.result = result;
+            }
 
-                    using (HttpResponseMessage response = await client.SendAsync(requestMessage))
-                    {
-                        catchResponse = response;
-                        response.EnsureSuccessStatusCode();
-                        return response;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                return catchResponse;
-            }
-        }
-
-        public async Task<HttpResponseMessage> getPullRequestCommentsAsync(string organization, string project, string repositoryId, string pullRequestId)
-        {
-            HttpResponseMessage catchResponse = null;
-            try
-            {
-                using (HttpClient client = new HttpClient())
-                {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"https://dev.azure.com/{organization}/{project}/_apis/git/repositories/{repositoryId}/pullRequests/{pullRequestId}/threads?api-version=6.1-preview.1");
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
-                        Convert.ToBase64String(
-                        System.Text.ASCIIEncoding.ASCII.GetBytes(
-                            string.Format("{0}:{1}", "", _accessToken))));
-
-                    using (HttpResponseMessage response = await client.SendAsync(request))
-                    {
-                        catchResponse = response;
-                        response.EnsureSuccessStatusCode();
-                        return response;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                return catchResponse;
-            }
+            return response;
         }
 
         public void Dispose()
