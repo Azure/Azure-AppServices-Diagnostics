@@ -48,7 +48,6 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 
     class DevOpsClient : IDevOpsClient
     {
-        private DevOpsRequestBodyAssistant devOpsRBA = new DevOpsRequestBodyAssistant();
         private static string _accessToken;
         private static string _organization;
         private static string _repoID;
