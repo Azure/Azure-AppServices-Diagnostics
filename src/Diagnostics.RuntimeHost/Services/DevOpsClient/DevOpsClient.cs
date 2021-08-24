@@ -39,14 +39,12 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         private static string _organization;
         private static string _repoID;
         private static string _project;
-        private static IConfiguration _config;
         private static VssCredentials credentials;
         private static VssConnection connection;
         private GitHttpClient gitClient;
 
         public DevOpsClient(IConfiguration config)
         {
-            _config = config;
             LoadConfigurations(config);
             credentials = (VssCredentials)(FederatedCredential)new VssBasicCredential("pat", _accessToken);
             connection = new VssConnection(new Uri($"https://dev.azure.com/{_organization}"), credentials);
