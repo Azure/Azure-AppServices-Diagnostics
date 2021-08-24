@@ -27,19 +27,6 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         string Project { get; }
     }
 
-
-    class userIdPair
-    {
-        public string userName;
-        public string userId;
-
-        public userIdPair(string name, string Id)
-        {
-            userName = name;
-            userId = Id;
-        }
-    }
-
     public class DevOpsResponse
     {
         public object result;
