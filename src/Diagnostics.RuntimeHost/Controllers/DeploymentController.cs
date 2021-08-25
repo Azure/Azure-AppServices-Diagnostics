@@ -30,7 +30,6 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected ICompilerHostClient _compilerHostClient;
         protected IStorageService storageService;
         private IInvokerCacheService detectorCache;
-        protected IGistScriptCache gistCache;
 
         public DeploymentController(IServiceProvider services, IConfiguration configuration, IInvokerCacheService invokerCache)
         {
@@ -39,7 +38,6 @@ namespace Diagnostics.RuntimeHost.Controllers
             this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));
             
             this.detectorCache = invokerCache;
-            gistCache = (IGistScriptCache)services.GetService(typeof(IGistScriptCache));
         }
 
         [HttpPost("commit")]
@@ -51,14 +49,18 @@ namespace Diagnostics.RuntimeHost.Controllers
                 && string.IsNullOrWhiteSpace(deploymentParameters.EndDate)) {
                 return BadRequest("The given deployment parameters are invalid");
             }
+           
+            if(!Enum.IsDefined(typeof(DetectorEnvironment), deploymentParameters.DeployEnv))
+            {
+                return BadRequest("Deployment environment is not valid. ");
+            }
+            
             DeploymentResponse response = new DeploymentResponse();
             response.DeploymentGuid = Guid.NewGuid().ToString();
             response.DeployedDetectors = new List<string>();
             response.FailedDetectors = new Dictionary<string, string>();
 
             var commitId = deploymentParameters.CommitId;
-
-           
 
             // 3. Get files to compile 
             var filesToCompile = string.IsNullOrWhiteSpace(commitId) ? 
@@ -89,7 +91,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 if (file.MarkAsDisabled)
                 {                 
                     diagEntity.IsDisabled = true;
-                    await storageService.LoadDataToTable(diagEntity);
+                    await storageService.LoadDataToTable(diagEntity, deploymentParameters.DeployEnv);
                     if (response.DeletedDetectors == null)
                     {
                         response.DeletedDetectors = new List<string>();
@@ -100,18 +102,11 @@ namespace Diagnostics.RuntimeHost.Controllers
 
                 List<string> gistReferences = DetectorParser.GetLoadDirectiveNames(file.Content);
                 
+                // Get the latest version of gist from the repo.
                 foreach(string gist in gistReferences)
-                {
-                    if(!gistCache.ContainsKey(gist))
-                    {
-                        var gistContent = await devopsService.GetFileFromBranch($"{gist}/{gist}.csx");
-                        gistCache.AddOrUpdate(gist, gistContent);
-                        references.Add(gist, gistContent);
-                    } else
-                    {
-                        gistCache.TryGetValue(gist, out string gistContent);
-                        references.Add(gist, gistContent);
-                    }                                     
+                {                   
+                    var gistContent = await devopsService.GetFileFromBranch($"{gist}/{gist}.csx");
+                    references.Add(gist, gistContent);                                                  
                 }
 
                 // 3. Otherwise, compile the detector to generate dll.
@@ -122,7 +117,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 {                                     
                     var blobName = $"{detectorId.ToLower()}/{detectorId.ToLower()}.dll";
                     // 5. Save blob to storage account
-                    var etag = await storageService.LoadBlobToContainer(blobName, queryRes.CompilationOutput.AssemblyBytes);                
+                    var etag = await storageService.LoadBlobToContainer(blobName, queryRes.CompilationOutput.AssemblyBytes, deploymentParameters.DeployEnv);                
                     if (string.IsNullOrWhiteSpace(etag))
                     {
                         throw new Exception("Could not save changes");
@@ -135,15 +130,19 @@ namespace Diagnostics.RuntimeHost.Controllers
                     byte[] asmData = Convert.FromBase64String(queryRes.CompilationOutput.AssemblyBytes);
                     byte[] pdbData = Convert.FromBase64String(queryRes.CompilationOutput.PdbBytes);
                     diagEntity = DiagEntityHelper.PrepareEntityForLoad(asmData, file.Content, diagEntity);
-                    await storageService.LoadDataToTable(diagEntity);
+                    await storageService.LoadDataToTable(diagEntity, deploymentParameters.DeployEnv);
 
-                    // 7. update invoker cache
-                    Assembly tempAsm = Assembly.Load(asmData, pdbData);
-                    EntityType entityType = EntityType.Detector;
-                    EntityMetadata metaData = new EntityMetadata(file.Content, entityType, null);
-                    var newInvoker = new EntityInvoker(metaData);
-                    newInvoker.InitializeEntryPoint(tempAsm);                   
-                    detectorCache.AddOrUpdate(detectorId, newInvoker);
+                    // 7. update invoker cache for detector. For gists, we dont need to update invoker cache as we pull latest code each time.
+                    if(diagEntity.PartitionKey.Equals("Detector"))
+                    {
+                        Assembly tempAsm = Assembly.Load(asmData, pdbData);
+                        EntityType entityType = EntityType.Detector;
+                        EntityMetadata metaData = new EntityMetadata(file.Content, entityType, null);
+                        var newInvoker = new EntityInvoker(metaData);
+                        newInvoker.InitializeEntryPoint(tempAsm);
+                        detectorCache.AddOrUpdate(detectorId, newInvoker);
+                    }
+                   
                 } else
                 {
                     // If compilation fails, add failure reason to the response

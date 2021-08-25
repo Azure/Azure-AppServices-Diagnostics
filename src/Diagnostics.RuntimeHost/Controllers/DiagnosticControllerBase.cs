@@ -54,7 +54,6 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected ISupportTopicService _supportTopicService;
         protected IKustoMappingsCacheService _kustoMappingCacheService;
         protected IRuntimeLoggerProvider _loggerProvider;
-        protected IGistScriptCache gistScriptCache;
         protected IDevopsService devopsService;
         private InternalAPIHelper _internalApiHelper;
         private IDiagEntityTableCacheService tableCacheService;
@@ -85,7 +84,6 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
-            gistScriptCache = (IGistScriptCache)services.GetService(typeof(IGistScriptCache));
             if(bool.TryParse(config["LoadGistFromRepo"], out bool retVal))
             {
                 loadGistFromRepo = retVal;
@@ -295,16 +293,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 {
                     if(!jsonBody.References.ContainsKey(gist))
                     {
-                        string gistContent = string.Empty;
-                        if (!gistScriptCache.ContainsKey(gist))
-                        {
-                            gistContent = await devopsService.GetFileFromBranch($"{gist}/{gist}.csx");
-                            gistScriptCache.AddOrUpdate(gist, gistContent);                   
-                        }
-                        else
-                        {
-                            gistScriptCache.TryGetValue(gist, out gistContent);                            
-                        }
+                        string gistContent = await devopsService.GetFileFromBranch($"{gist}/{gist}.csx");
                         jsonBody.References.Add(gist, gistContent);
                     }                   
                 }
@@ -1064,6 +1053,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             if (tableCacheService.IsStorageAsSourceEnabled())
             {
+                
                 var allDetectorsFromStorage = await tableCacheService.GetEntityListByType<TResource>(context);
                 if (allDetectorsFromStorage.Count == 0)
                 {

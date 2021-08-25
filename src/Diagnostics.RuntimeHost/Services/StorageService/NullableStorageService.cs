@@ -23,12 +23,12 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             return false;
         }
 
-        public Task<string> LoadBlobToContainer(string blobname, string contents)
+        public Task<string> LoadBlobToContainer(string blobname, string contents, DetectorEnvironment environment = DetectorEnvironment.Prod)
         {
             return Task.FromResult(string.Empty);
         }
 
-        public Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity)
+        public Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity, DetectorEnvironment environment = DetectorEnvironment.Prod)
         {
             return Task.FromResult(new DiagEntity());
         }
@@ -46,11 +46,6 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         public Task<List<DetectorRuntimeConfiguration>> GetKustoConfiguration()
         {
             return Task.FromResult(new List<DetectorRuntimeConfiguration>());
-        }
-
-        Task<List<PartnerConfig>> IStorageService.GetPartnerConfigsAsync()
-        {
-            throw new NotImplementedException();
         }
     }
 }

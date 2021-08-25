@@ -15,7 +15,6 @@ using System.IO;
 using System.Linq;
 using Diagnostics.RuntimeHost.Services.SourceWatcher;
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
-using Newtonsoft.Json;
 
 namespace Diagnostics.RuntimeHost.Services.StorageService
 {
@@ -23,15 +22,12 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
     {
         bool GetStorageFlag();
         Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null, DateTime? startTime = null);
-        Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity);
-        Task<string> LoadBlobToContainer(string blobname, string contents);
+        Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity, DetectorEnvironment environment = DetectorEnvironment.Prod);
+        Task<string> LoadBlobToContainer(string blobname, string contents, DetectorEnvironment environment = DetectorEnvironment.Prod);
         Task<byte[]> GetBlobByName(string name);
-
         Task<int> ListBlobsInContainer();
         Task<DetectorRuntimeConfiguration> LoadConfiguration(DetectorRuntimeConfiguration configuration);
         Task<List<DetectorRuntimeConfiguration>> GetKustoConfiguration();
-
-        Task<List<PartnerConfig>> GetPartnerConfigsAsync();
     }
     public class StorageService : IStorageService
     {
@@ -39,15 +35,17 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         public static readonly string RowKey = "RowKey";
 
         private static CloudTableClient tableClient;
-        private static CloudBlobContainer containerClient;
+        private static CloudBlobClient containerClient;
         private static CloudBlobContainer partnerConfigContainerClient;
         private string tableName;
         private string container;
         private string partnerConfigContainer;
         private bool loadOnlyPublicDetectors;
         private bool isStorageEnabled;
-        private CloudTable cloudTable;
         private string detectorRuntimeConfigTable;
+        private string preprodTableName;
+        private string preprodContainer;
+        private DetectorEnvironment readEnvironment;
 
         public StorageService(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
@@ -55,10 +53,12 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             container = configuration["SourceWatcher:BlobContainerName"];
             detectorRuntimeConfigTable = configuration["SourceWatcher:DetectorRuntimeConfigTable"];
             partnerConfigContainer = configuration["SourceWatcher:PartnerConfigContainer"];
+            preprodContainer = configuration["SourceWatcher:PreprodBlobContainerName"];
+            preprodTableName = configuration["SourceWatcher:PreprodTableName"];
             if (hostingEnvironment != null && hostingEnvironment.EnvironmentName.Equals("UnitTest", StringComparison.CurrentCultureIgnoreCase))
             {
                 tableClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudTableClient();
-                containerClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudBlobClient().GetContainerReference(container);
+                containerClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudBlobClient();
                 partnerConfigContainerClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudBlobClient().GetContainerReference(partnerConfigContainer);
             }
             else
@@ -72,7 +72,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 }
                 var storageAccount = new CloudStorageAccount(new StorageCredentials(accountname, key), accountname, dnsSuffix, true);
                 tableClient = storageAccount.CreateCloudTableClient();
-                containerClient = storageAccount.CreateCloudBlobClient().GetContainerReference(container);
+                containerClient = storageAccount.CreateCloudBlobClient();
                 partnerConfigContainerClient = storageAccount.CreateCloudBlobClient().GetContainerReference(partnerConfigContainer);
             }
 
@@ -85,7 +85,14 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             {
                 isStorageEnabled = true;
             }
-            cloudTable = tableClient.GetTableReference(tableName);
+            // Based on readenvironment set, load data.
+           if(Enum.TryParse(typeof(DetectorEnvironment), configuration["ReadEnvironment"], out object res))
+            {
+                readEnvironment = (DetectorEnvironment)res;
+            } else
+            {
+                readEnvironment = DetectorEnvironment.Prod;
+            }
         }
 
         public async Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null, DateTime? startTime = null)
@@ -98,7 +105,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 var clientRequestId = Guid.NewGuid().ToString();
                 try
                 {
-                    CloudTable table = tableClient.GetTableReference(tableName);
+                    CloudTable table = readEnvironment == DetectorEnvironment.Prod ? tableClient.GetTableReference(tableName)
+                        : tableClient.GetTableReference(preprodTableName);
                     var timeTakenStopWatch = new Stopwatch();
                     if (string.IsNullOrWhiteSpace(partitionKey))
                     {
@@ -155,13 +163,14 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             return isStorageEnabled;
         }
 
-        public async Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity)
+        public async Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity, DetectorEnvironment environment = DetectorEnvironment.Prod)
         {
             var clientRequestId = Guid.NewGuid().ToString();
             try
             {
                 // Create a table client for interacting with the table service 
-                CloudTable table = tableClient.GetTableReference(tableName);
+                CloudTable table = environment == DetectorEnvironment.Prod ? tableClient.GetTableReference(tableName) :
+                    tableClient.GetTableReference(preprodTableName);
                 if (detectorEntity == null || detectorEntity.PartitionKey == null || detectorEntity.RowKey == null)
                 {
                     throw new ArgumentNullException(nameof(detectorEntity));
@@ -194,14 +203,16 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             }
         }
 
-        public async Task<string> LoadBlobToContainer(string blobname, string contents)
+        public async Task<string> LoadBlobToContainer(string blobname, string contents, DetectorEnvironment environment = DetectorEnvironment.Prod)
         {
             var clientRequestId = Guid.NewGuid().ToString();
             try
             {
                 var timeTakenStopWatch = new Stopwatch();
                 timeTakenStopWatch.Start();
-                var cloudBlob = containerClient.GetBlockBlobReference(blobname);
+                var containerReference = environment == DetectorEnvironment.Prod ? containerClient.GetContainerReference(container) :
+                    containerClient.GetContainerReference(preprodContainer);
+                var cloudBlob = containerReference.GetBlockBlobReference(blobname);
                 BlobRequestOptions blobRequestOptions = new BlobRequestOptions();
                 blobRequestOptions.LocationMode = LocationMode.PrimaryOnly;
                 blobRequestOptions.MaximumExecutionTime = TimeSpan.FromSeconds(60);
@@ -248,7 +259,9 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     OperationContext oc = new OperationContext();
                     oc.ClientRequestID = clientRequestId;
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Fetching blob {name} with ClientRequestid {clientRequestId}");
-                    var cloudBlob = containerClient.GetBlockBlobReference(name);
+                    var containerReference = readEnvironment == DetectorEnvironment.Prod ? containerClient.GetContainerReference(container) :
+                    containerClient.GetContainerReference(preprodContainer);
+                    var cloudBlob = containerReference.GetBlockBlobReference(name);
                     using (MemoryStream ms = new MemoryStream())
                     {
                         await cloudBlob.DownloadToStreamAsync(ms, null, options, oc);
@@ -370,58 +383,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), $"ClientRequestId {clientRequestId} {ex.Message}", ex.GetType().ToString(), ex.ToString());
                 return null;
             }
-        }
-
-        public async Task<List<PartnerConfig>> GetPartnerConfigsAsync()
-        {
-            int retryThreshold = 2;
-            int attempt = 0;
-            var partnerConfigList = new List<PartnerConfig>();
-            do
-            {
-                var clientRequestId = Guid.NewGuid().ToString();
-                try
-                {
-
-                    BlobRequestOptions options = new BlobRequestOptions();
-                    options.LocationMode = LocationMode.PrimaryThenSecondary;
-                    options.MaximumExecutionTime = TimeSpan.FromSeconds(30);
-                    if (attempt == retryThreshold)
-                    {
-                        options.LocationMode = LocationMode.SecondaryOnly;
-                        DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Retrying blob against secondary account after {attempt} attempts");
-                    }
-                    var timeTakenStopWatch = new Stopwatch();
-                    timeTakenStopWatch.Start();
-                    var cloudBlob = partnerConfigContainerClient.GetBlockBlobReference("repoconfig.json");
-                    OperationContext oc = new OperationContext();
-                    oc.ClientRequestID = clientRequestId;
-                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Fetching partner repo config with ClientRequestid {clientRequestId}");
-                    var jsonString = await cloudBlob.DownloadTextAsync();
-                    timeTakenStopWatch.Stop();
-                    DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Downloaded partner repo config to memory stream, time taken {timeTakenStopWatch.ElapsedMilliseconds} ClientRequestid {clientRequestId}");
-                    if (jsonString != null)
-                    {
-                        partnerConfigList = JsonConvert.DeserializeObject<List<PartnerConfig>>(jsonString);
-                        return partnerConfigList;
-                    }
-                    else
-                    {
-                        return null;
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), $"ClientRequestId {clientRequestId} {ex.Message}", ex.GetType().ToString(), ex.ToString());
-                }
-                finally
-                {
-                    attempt++;
-                }
-            } while (attempt <= retryThreshold);
-            return null;
-        }
+        }        
     }
 }
 
