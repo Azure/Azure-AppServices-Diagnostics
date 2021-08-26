@@ -19,21 +19,13 @@ using System.Web;
 
 namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 {
-    public interface IDevOpsClient : IDisposable, IRepoClient
-    {
-        string AccessToken { get; }
-        string Organization { get; }
-        string RepositoryID { get; }
-        string Project { get; }
-    }
-
-    public class DevOpsResponse
+        public class DevOpsResponse
     {
         public object result;
         public HttpStatusCode responseCode;
     }
 
-    class DevOpsClient : IDevOpsClient
+    class DevOpsClient : IRepoClient
     {
         private static string _accessToken;
         private static string _organization;
@@ -50,11 +42,6 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             connection = new VssConnection(new Uri($"https://dev.azure.com/{_organization}"), credentials);
             gitClient = connection.GetClient<GitHttpClient>();
         }
-
-        public string AccessToken => _accessToken;
-        public string Organization => _organization;
-        public string RepositoryID => _repoID;
-        public string Project => _project;
 
         private static HttpClient client = new HttpClient();
         

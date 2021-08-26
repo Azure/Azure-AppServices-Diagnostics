@@ -161,7 +161,7 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<IGithubClient, GithubClient>();
             }
-            services.AddSingleton<IDevOpsClient, DevOpsClient>();
+            services.AddSingleton<IRepoClient, DevOpsClient>();
             services.AddSingleton<ISourceWatcherService, SourceWatcherService>();
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
             services.AddSingleton<IGistCacheService, GistCacheService>();
