@@ -28,30 +28,30 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpGet(UriElements.DevOpsMakePR)]
-        public async Task<IActionResult> makePullRequestAsync(string sourceBranch, string targetBranch, string title, Uri resourceURI)
+        public async Task<IActionResult> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceURI)
         {
-            DevOpsResponse response = await _devOpsClient.makePullRequestAsync(sourceBranch, targetBranch, title);
+            DevOpsResponse response = await _devOpsClient.MakePullRequestAsync(sourceBranch, targetBranch, title);
             return StatusCode((int)response.responseCode, response.result);
         }
 
         [HttpGet(UriElements.DevOpsPush)]
-        public async Task<IActionResult> pushChangesAsync(string branch, string file, string repoPath, string comment, string changeType, Uri resourceURI)
+        public async Task<IActionResult> PushChangesAsync(string branch, string file, string repoPath, string comment, string changeType, string resourceURI)
         {
-            DevOpsResponse response = await _devOpsClient.pushChangesAsync(branch, file, repoPath, comment, changeType);
+            DevOpsResponse response = await _devOpsClient.PushChangesAsync(branch, file, repoPath, comment, changeType);
             return StatusCode((int)response.responseCode, response.result);
         }
 
         [HttpGet(UriElements.DevOpsGetCode)]
-        public async Task<IActionResult> getDetectorCodeAsync(string detectorPath, Uri resourceURI)
+        public async Task<IActionResult> GetDetectorCodeAsync(string detectorPath, string resourceURI)
         {
-            DevOpsResponse response = await _devOpsClient.getDetectorCodeAsync(detectorPath);
+            DevOpsResponse response = await _devOpsClient.GetDetectorCodeAsync(detectorPath);
             return StatusCode((int)response.responseCode, response.result);
         }
 
         [HttpGet(UriElements.DevOpsGetBranches)]
-        public async Task<IActionResult> getBranchesAsync(Uri resourceURI)
+        public async Task<IActionResult> GetBranchesAsync(string resourceURI)
         {
-            DevOpsResponse response = await _devOpsClient.getBranchesAsync();
+            DevOpsResponse response = await _devOpsClient.GetBranchesAsync();
             return StatusCode((int)response.responseCode, response.result);
         }
     }

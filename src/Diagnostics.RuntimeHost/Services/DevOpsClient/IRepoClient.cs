@@ -16,7 +16,8 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// <param name="targetBranch"></param>
         /// <param name="title"></param>
         /// <returns></returns>
-        Task<DevOpsResponse> makePullRequestAsync(string sourceBranch, string targetBranch, string title);
+        Task<DevOpsResponse> MakePullRequestAsync(string sourceBranch, string targetBranch, string title);
+
         /// <summary>
         /// makes a commit with your changes
         /// </summary>
@@ -26,18 +27,20 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// <param name="comment"></param>
         /// <param name="changeType"></param>
         /// <returns></returns>
-        Task<DevOpsResponse> pushChangesAsync(string branch, string file, string repoPath, string comment, string changeType);
+        Task<DevOpsResponse> PushChangesAsync(string branch, string file, string repoPath, string comment, string changeType);
+
         /// <summary>
         /// will retrieve and display the given file from the repository
         /// </summary>
         /// <param name="detectorPath"></param>
         /// <returns></returns>
-        Task<DevOpsResponse> getDetectorCodeAsync(string detectorPath);
+        Task<DevOpsResponse> GetDetectorCodeAsync(string detectorPath);
+
         /// <summary>
         /// gets all of the branches in the repo
         /// </summary>
         /// 
         /// <returns></returns>
-        Task<DevOpsResponse> getBranchesAsync();
+        Task<DevOpsResponse> GetBranchesAsync();
     }
 }

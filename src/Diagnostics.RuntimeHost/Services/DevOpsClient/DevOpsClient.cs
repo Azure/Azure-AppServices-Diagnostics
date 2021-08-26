@@ -19,13 +19,13 @@ using System.Web;
 
 namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 {
-        public class DevOpsResponse
+    public class DevOpsResponse
     {
         public object result;
         public HttpStatusCode responseCode;
     }
 
-    class DevOpsClient : IRepoClient
+    public class DevOpsClient : IRepoClient
     {
         private static string _accessToken;
         private static string _organization;
@@ -33,7 +33,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         private static string _project;
         private static VssCredentials credentials;
         private static VssConnection connection;
-        private GitHttpClient gitClient;
+        private static GitHttpClient gitClient;
 
         public DevOpsClient(IConfiguration config)
         {
@@ -42,9 +42,6 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             connection = new VssConnection(new Uri($"https://dev.azure.com/{_organization}"), credentials);
             gitClient = connection.GetClient<GitHttpClient>();
         }
-
-        private static HttpClient client = new HttpClient();
-        
 
         private void LoadConfigurations(IConfiguration config)
         {
@@ -89,7 +86,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             }
         }
 
-        public async Task<DevOpsResponse> getBranchesAsync()
+        public async Task<DevOpsResponse> GetBranchesAsync()
         {
             DevOpsResponse response = new DevOpsResponse();
             object result = null;
@@ -112,7 +109,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return response;
         }
         
-        public async Task<DevOpsResponse> getDetectorCodeAsync(string detectorPath)
+        public async Task<DevOpsResponse> GetDetectorCodeAsync(string detectorPath)
         {
             DevOpsResponse response = new DevOpsResponse();
             object result = null;
@@ -135,7 +132,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return response;
         }
 
-        public async Task<DevOpsResponse> makePullRequestAsync(string sourceBranch, string targetBranch, string title)
+        public async Task<DevOpsResponse> MakePullRequestAsync(string sourceBranch, string targetBranch, string title)
         {
             GitPullRequest pr = new GitPullRequest();
             object result = null;
@@ -163,7 +160,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return response;
         }
 
-        public async Task<DevOpsResponse> pushChangesAsync(string branch, string file, string repoPath, string comment, string changeType)
+        public async Task<DevOpsResponse> PushChangesAsync(string branch, string file, string repoPath, string comment, string changeType)
         {
             string name = $"refs/heads/{branch}";
             object result = null;
