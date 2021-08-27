@@ -32,9 +32,10 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// <summary>
         /// will retrieve and display the given file from the repository
         /// </summary>
-        /// <param name="detectorPath"></param>
+        /// <param name="filePathInRepo"></param>
+        /// <param name="branch"></param>
         /// <returns></returns>
-        Task<DevOpsResponse> GetDetectorCodeAsync(string detectorPath);
+        Task<DevOpsResponse> GetFileContentAsync(string filePathInRepo, string branch = null);
 
         /// <summary>
         /// gets all of the branches in the repo

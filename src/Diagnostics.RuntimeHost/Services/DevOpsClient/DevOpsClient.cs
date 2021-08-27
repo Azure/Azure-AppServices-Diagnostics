@@ -27,13 +27,13 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 
     public class DevOpsClient : IRepoClient
     {
-        private static string _accessToken;
-        private static string _organization;
-        private static string _repoID;
-        private static string _project;
-        private static VssCredentials credentials;
-        private static VssConnection connection;
-        private static GitHttpClient gitClient;
+        private string _accessToken;
+        private string _organization;
+        private string _repoID;
+        private string _project;
+        private VssCredentials credentials;
+        private VssConnection connection;
+        private GitHttpClient gitClient;
 
         public DevOpsClient(IConfiguration config)
         {
@@ -109,14 +109,24 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return response;
         }
         
-        public async Task<DevOpsResponse> GetDetectorCodeAsync(string detectorPath)
+        public async Task<DevOpsResponse> GetFileContentAsync(string filePathInRepo, string branch = null)
         {
             DevOpsResponse response = new DevOpsResponse();
             object result = null;
+            GitVersionDescriptor version = null;
+
+            if (!string.IsNullOrWhiteSpace(branch))
+            {
+                version = new GitVersionDescriptor()
+                {
+                    Version = branch,
+                    VersionType = GitVersionType.Branch
+                };
+            }
 
             try
             {
-                GitItem item = await gitClient.GetItemAsync(_project, _repoID, path: detectorPath, includeContent: true);
+                GitItem item = await gitClient.GetItemAsync(_project, _repoID, path: filePathInRepo, includeContent: true, versionDescriptor: version);
                 result = item.Content;
             }
             catch (Exception ex)
