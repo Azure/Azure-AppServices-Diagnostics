@@ -186,6 +186,20 @@ namespace Diagnostics.DataProviders
         [ConfigurationName("Retry:ExceptionsToRetryFor")]
         public string ExceptionsToRetryFor { get; set; }
 
+        /// <summary>
+        /// List of , separated clusters which requests will be shadowed from
+        /// </summary>
+        [ConfigurationName("QueryShadowingClusterMaping:ClusterNameGroupings")]
+        public string QueryShadowingClusterNameGroupings { get; set; }
+
+        /// <summary>
+        /// List of , separated cluster lists seprated by : which requests will be shadowed to
+        /// </summary>
+        [ConfigurationName("QueryShadowingClusterMaping:TestingClusterNamesGroupings")]
+        public string QueryShadowingTestClustersGroupings { get; set; }
+
+        public ConcurrentDictionary<string, string[]> QueryShadowingClusterMapping;
+
         public List<ITuple> OverridableExceptionsToRetryAgainstLeaderCluster { get; set; }
 
         public IConfiguration config { private get; set; }
@@ -244,6 +258,18 @@ namespace Diagnostics.DataProviders
                     {
                         OverridableExceptionsToRetryAgainstLeaderCluster.Add((ExceptionString, MaxFailureResponseTimeInSeconds));
                     }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(QueryShadowingClusterNameGroupings) && !string.IsNullOrWhiteSpace(QueryShadowingTestClustersGroupings))
+            {
+                var clusterNamesSplited = QueryShadowingClusterNameGroupings.Split(',');
+                var testClusterGroupSplit = QueryShadowingTestClustersGroupings.Split(',');
+                if (clusterNamesSplited.Length == testClusterGroupSplit.Length)
+                {
+                    QueryShadowingClusterMapping = new ConcurrentDictionary<string, string[]>(
+                        Enumerable.Zip(clusterNamesSplited, testClusterGroupSplit)
+                            .Select(p => KeyValuePair.Create(p.First, p.Second.Split(':'))));
                 }
             }
         }

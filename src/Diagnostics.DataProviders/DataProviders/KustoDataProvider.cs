@@ -27,8 +27,10 @@ namespace Diagnostics.DataProviders
         private string _requestId;
         private IKustoHeartBeatService _kustoHeartBeatService;
         private IKustoMap _kustoMap;
+        private DateTime _queryStartTime;
+        private DateTime _queryEndTime;
 
-        public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration, string requestId, IKustoHeartBeatService kustoHeartBeat) : base(cache, configuration)
+        public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration, string requestId, IKustoHeartBeatService kustoHeartBeat, DateTime? startTime = null, DateTime? endTime = null) : base(cache, configuration)
         {
             var publicClouds = new string[] { DataProviderConstants.AzureCloud, DataProviderConstants.AzureCloudAlternativeName };
             _configuration = configuration;
@@ -91,14 +93,14 @@ namespace Diagnostics.DataProviders
         public async Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId, string operationName)
         {
             await AddQueryInformationToMetadata(query, cluster, operationName);
-            return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(databaseName) ?? databaseName, requestId, operationName);
+            return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(databaseName) ?? databaseName, requestId, operationName, _queryStartTime, _queryEndTime);
         }
 
         public async Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
         {
             var cluster = await GetClusterNameFromStamp(stampName);
             await AddQueryInformationToMetadata(query, cluster, operationName);
-            return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName);
+            return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName, _queryStartTime, _queryEndTime);
         }
 
         public async Task<DataTable> ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName)
@@ -164,7 +166,7 @@ namespace Diagnostics.DataProviders
 
         internal async Task<DataTable> ExecuteQueryForHeartbeat(string query, string cluster, int timeoutSeconds, string requestId = null, string operationName = null)
         {
-            return await _kustoClient.ExecuteQueryAsync(query, cluster, _configuration.DBName, timeoutSeconds, requestId, operationName);
+            return await _kustoClient.ExecuteQueryAsync(query, cluster, _configuration.DBName, timeoutSeconds, requestId, operationName, _queryStartTime, _queryEndTime);
         }
 
         public DataProviderMetadata GetMetadata()
