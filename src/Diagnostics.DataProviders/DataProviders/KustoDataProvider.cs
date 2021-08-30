@@ -27,8 +27,8 @@ namespace Diagnostics.DataProviders
         private string _requestId;
         private IKustoHeartBeatService _kustoHeartBeatService;
         private IKustoMap _kustoMap;
-        private DateTime _queryStartTime;
-        private DateTime _queryEndTime;
+        private DateTime? _queryStartTime;
+        private DateTime? _queryEndTime;
 
         public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration, string requestId, IKustoHeartBeatService kustoHeartBeat, DateTime? startTime = null, DateTime? endTime = null) : base(cache, configuration)
         {
@@ -38,6 +38,8 @@ namespace Diagnostics.DataProviders
             _requestId = requestId;
             _kustoHeartBeatService = kustoHeartBeat;
             _kustoMap = new NullableKustoMap();
+            _queryStartTime = startTime;
+            _queryEndTime = endTime;
 
             if (publicClouds.Any(s => configuration.CloudDomain.Equals(s, StringComparison.CurrentCultureIgnoreCase)))
             {
