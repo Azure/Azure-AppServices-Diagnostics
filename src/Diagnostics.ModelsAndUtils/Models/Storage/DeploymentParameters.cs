@@ -34,23 +34,9 @@ namespace Diagnostics.ModelsAndUtils.Models.Storage
         public string EndDate;
 
         /// <summary>
-        /// Environment to deploy the detectors to. Can be <see cref="DetectorEnvironment.Preprod"/> or <see cref="DetectorEnvironment.Prod"/>.
-        /// </summary>
-        public DetectorEnvironment DeployEnv;
-
-        /// <summary>
         /// Resource type of the caller. eg. Microsoft.Web/sites.
         /// </summary>
         public string ResourceType;
-    }
-
-    /// <summary>
-    /// Detector environment to deploy to.
-    /// </summary>
-    public enum DetectorEnvironment
-    {
-        Preprod = 1,
-        Prod = 2
     }
 
     /// <summary>

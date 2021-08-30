@@ -23,12 +23,12 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             return false;
         }
 
-        public Task<string> LoadBlobToContainer(string blobname, string contents, DetectorEnvironment environment = DetectorEnvironment.Prod)
+        public Task<string> LoadBlobToContainer(string blobname, string contents)
         {
             return Task.FromResult(string.Empty);
         }
 
-        public Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity, DetectorEnvironment environment = DetectorEnvironment.Prod)
+        public Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity)
         {
             return Task.FromResult(new DiagEntity());
         }

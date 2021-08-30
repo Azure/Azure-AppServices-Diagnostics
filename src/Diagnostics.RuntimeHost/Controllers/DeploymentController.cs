@@ -1,28 +1,27 @@
-﻿using Diagnostics.RuntimeHost.Services.CacheService;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using Diagnostics.RuntimeHost.Services;
-using Microsoft.Extensions.Configuration;
-using Diagnostics.ModelsAndUtils.Models;
-using System.Reflection;
-using Diagnostics.RuntimeHost.Services.StorageService;
-using System.Threading.Tasks;
-using System.Linq;
+﻿using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.ModelsAndUtils.Models.Storage;
-using System.Collections.Generic;
-using Diagnostics.Scripts.Models;
-using Diagnostics.Scripts;
-using Newtonsoft.Json;
+using Diagnostics.RuntimeHost.Services;
+using Diagnostics.RuntimeHost.Services.CacheService;
+using Diagnostics.RuntimeHost.Services.StorageService;
 using Diagnostics.RuntimeHost.Utilities;
-using Microsoft.AspNetCore.Authorization;
+using Diagnostics.Scripts;
 using Diagnostics.Scripts.CompilationService.Utilities;
-using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
+using Diagnostics.Scripts.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
     [Authorize]
     [Produces("application/json")]
-    [Route("deploy")]
+    [Route("api/deploy")]
     public class DeploymentController : Controller
     {
 
@@ -35,13 +34,12 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             this.storageService = (IStorageService)services.GetService(typeof(IStorageService));
             this.devopsService = new DevopsService(configuration);
-            this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));
-            
+            this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));           
             this.detectorCache = invokerCache;
         }
 
-        [HttpPost("commit")]
-        public async Task<IActionResult> Commit([FromBody] DeploymentParameters deploymentParameters)
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] DeploymentParameters deploymentParameters)
         {
             // If all required parameters are empty, reject the request.
             if(string.IsNullOrWhiteSpace(deploymentParameters.CommitId) && string.IsNullOrWhiteSpace(deploymentParameters.FromCommitId)
@@ -49,12 +47,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 && string.IsNullOrWhiteSpace(deploymentParameters.EndDate)) {
                 return BadRequest("The given deployment parameters are invalid");
             }
-           
-            if(!Enum.IsDefined(typeof(DetectorEnvironment), deploymentParameters.DeployEnv))
-            {
-                return BadRequest("Deployment environment is not valid. ");
-            }
-            
+                     
             DeploymentResponse response = new DeploymentResponse();
             response.DeploymentGuid = Guid.NewGuid().ToString();
             response.DeployedDetectors = new List<string>();
@@ -62,7 +55,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             var commitId = deploymentParameters.CommitId;
 
-            // 3. Get files to compile 
+            //  Get files to compile 
             var filesToCompile = string.IsNullOrWhiteSpace(commitId) ? 
                 await this.devopsService.GetFilesBetweenCommits(deploymentParameters)
               : await this.devopsService.GetFilesInCommit(commitId);
@@ -76,7 +69,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
            
 
-            // 4. Compile files
+            //  Compile files
             foreach( var file in filesToCompile)
             {
                 // For each of the files to compile:
@@ -91,7 +84,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 if (file.MarkAsDisabled)
                 {                 
                     diagEntity.IsDisabled = true;
-                    await storageService.LoadDataToTable(diagEntity, deploymentParameters.DeployEnv);
+                    await storageService.LoadDataToTable(diagEntity);
                     if (response.DeletedDetectors == null)
                     {
                         response.DeletedDetectors = new List<string>();
@@ -109,30 +102,30 @@ namespace Diagnostics.RuntimeHost.Controllers
                     references.Add(gist, gistContent);                                                  
                 }
 
-                // 3. Otherwise, compile the detector to generate dll.
+                // Otherwise, compile the detector to generate dll.
                 queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(file.Content, diagEntity.EntityType, references);  
                 
-                // 4. If compilation success, save dll to storage container.
+                //  If compilation success, save dll to storage container.
                 if (queryRes.CompilationOutput.CompilationSucceeded)
                 {                                     
                     var blobName = $"{detectorId.ToLower()}/{detectorId.ToLower()}.dll";
-                    // 5. Save blob to storage account
-                    var etag = await storageService.LoadBlobToContainer(blobName, queryRes.CompilationOutput.AssemblyBytes, deploymentParameters.DeployEnv);                
+                    //  Save blob to storage account
+                    var etag = await storageService.LoadBlobToContainer(blobName, queryRes.CompilationOutput.AssemblyBytes);                
                     if (string.IsNullOrWhiteSpace(etag))
                     {
                         throw new Exception("Could not save changes");
                     }
                     response.DeployedDetectors.Add(detectorId);
 
-                    // 6. Save entity to table
+                    // Save entity to table
                     diagEntity.Metadata = file.Metadata;
                     diagEntity.GitHubSha = file.CommitId;
                     byte[] asmData = Convert.FromBase64String(queryRes.CompilationOutput.AssemblyBytes);
                     byte[] pdbData = Convert.FromBase64String(queryRes.CompilationOutput.PdbBytes);
                     diagEntity = DiagEntityHelper.PrepareEntityForLoad(asmData, file.Content, diagEntity);
-                    await storageService.LoadDataToTable(diagEntity, deploymentParameters.DeployEnv);
+                    await storageService.LoadDataToTable(diagEntity);
 
-                    // 7. update invoker cache for detector. For gists, we dont need to update invoker cache as we pull latest code each time.
+                    // update invoker cache for detector. For gists, we dont need to update invoker cache as we pull latest code each time.
                     if(diagEntity.PartitionKey.Equals("Detector"))
                     {
                         Assembly tempAsm = Assembly.Load(asmData, pdbData);

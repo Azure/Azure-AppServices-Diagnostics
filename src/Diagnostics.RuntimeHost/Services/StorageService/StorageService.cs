@@ -22,8 +22,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
     {
         bool GetStorageFlag();
         Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null, DateTime? startTime = null);
-        Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity, DetectorEnvironment environment = DetectorEnvironment.Prod);
-        Task<string> LoadBlobToContainer(string blobname, string contents, DetectorEnvironment environment = DetectorEnvironment.Prod);
+        Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity);
+        Task<string> LoadBlobToContainer(string blobname, string contents);
         Task<byte[]> GetBlobByName(string name);
         Task<int> ListBlobsInContainer();
         Task<DetectorRuntimeConfiguration> LoadConfiguration(DetectorRuntimeConfiguration configuration);
@@ -43,9 +43,6 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         private bool loadOnlyPublicDetectors;
         private bool isStorageEnabled;
         private string detectorRuntimeConfigTable;
-        private string preprodTableName;
-        private string preprodContainer;
-        private DetectorEnvironment readEnvironment;
 
         public StorageService(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
@@ -53,8 +50,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             container = configuration["SourceWatcher:BlobContainerName"];
             detectorRuntimeConfigTable = configuration["SourceWatcher:DetectorRuntimeConfigTable"];
             partnerConfigContainer = configuration["SourceWatcher:PartnerConfigContainer"];
-            preprodContainer = configuration["SourceWatcher:PreprodBlobContainerName"];
-            preprodTableName = configuration["SourceWatcher:PreprodTableName"];
+           
             if (hostingEnvironment != null && hostingEnvironment.EnvironmentName.Equals("UnitTest", StringComparison.CurrentCultureIgnoreCase))
             {
                 tableClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudTableClient();
@@ -85,14 +81,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             {
                 isStorageEnabled = true;
             }
-            // Based on readenvironment set, load data.
-           if(Enum.TryParse(typeof(DetectorEnvironment), configuration["ReadEnvironment"], out object res))
-            {
-                readEnvironment = (DetectorEnvironment)res;
-            } else
-            {
-                readEnvironment = DetectorEnvironment.Prod;
-            }
+
         }
 
         public async Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null, DateTime? startTime = null)
@@ -105,8 +94,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 var clientRequestId = Guid.NewGuid().ToString();
                 try
                 {
-                    CloudTable table = readEnvironment == DetectorEnvironment.Prod ? tableClient.GetTableReference(tableName)
-                        : tableClient.GetTableReference(preprodTableName);
+                    CloudTable table = tableClient.GetTableReference(tableName);
                     var timeTakenStopWatch = new Stopwatch();
                     if (string.IsNullOrWhiteSpace(partitionKey))
                     {
@@ -163,14 +151,13 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             return isStorageEnabled;
         }
 
-        public async Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity, DetectorEnvironment environment = DetectorEnvironment.Prod)
+        public async Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity)
         {
             var clientRequestId = Guid.NewGuid().ToString();
             try
             {
                 // Create a table client for interacting with the table service 
-                CloudTable table = environment == DetectorEnvironment.Prod ? tableClient.GetTableReference(tableName) :
-                    tableClient.GetTableReference(preprodTableName);
+                CloudTable table =  tableClient.GetTableReference(tableName);
                 if (detectorEntity == null || detectorEntity.PartitionKey == null || detectorEntity.RowKey == null)
                 {
                     throw new ArgumentNullException(nameof(detectorEntity));
@@ -203,15 +190,14 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             }
         }
 
-        public async Task<string> LoadBlobToContainer(string blobname, string contents, DetectorEnvironment environment = DetectorEnvironment.Prod)
+        public async Task<string> LoadBlobToContainer(string blobname, string contents)
         {
             var clientRequestId = Guid.NewGuid().ToString();
             try
             {
                 var timeTakenStopWatch = new Stopwatch();
                 timeTakenStopWatch.Start();
-                var containerReference = environment == DetectorEnvironment.Prod ? containerClient.GetContainerReference(container) :
-                    containerClient.GetContainerReference(preprodContainer);
+                var containerReference = containerClient.GetContainerReference(container);
                 var cloudBlob = containerReference.GetBlockBlobReference(blobname);
                 BlobRequestOptions blobRequestOptions = new BlobRequestOptions();
                 blobRequestOptions.LocationMode = LocationMode.PrimaryOnly;
@@ -259,8 +245,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     OperationContext oc = new OperationContext();
                     oc.ClientRequestID = clientRequestId;
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Fetching blob {name} with ClientRequestid {clientRequestId}");
-                    var containerReference = readEnvironment == DetectorEnvironment.Prod ? containerClient.GetContainerReference(container) :
-                    containerClient.GetContainerReference(preprodContainer);
+                    var containerReference = containerClient.GetContainerReference(container);
                     var cloudBlob = containerReference.GetBlockBlobReference(name);
                     using (MemoryStream ms = new MemoryStream())
                     {
