@@ -188,12 +188,14 @@ namespace Diagnostics.DataProviders
 
         /// <summary>
         /// List of , separated clusters which requests will be shadowed from
+        /// e.g. "wawswusfollower,wawseusfollower"
         /// </summary>
         [ConfigurationName("QueryShadowingClusterMaping:ClusterNameGroupings")]
         public string QueryShadowingClusterNameGroupings { get; set; }
 
         /// <summary>
         /// List of , separated cluster lists seprated by : which requests will be shadowed to
+        /// e.g. "wustestcluster1:wustestcluster2,eustestcluster1"
         /// </summary>
         [ConfigurationName("QueryShadowingClusterMaping:TestingClusterNamesGroupings")]
         public string QueryShadowingTestClustersGroupings { get; set; }
