@@ -187,18 +187,11 @@ namespace Diagnostics.DataProviders
         public string ExceptionsToRetryFor { get; set; }
 
         /// <summary>
-        /// List of , separated clusters which requests will be shadowed from
-        /// e.g. "wawswusfollower,wawseusfollower"
+        /// List of , separated sourceCluster|testCluster1:testCluster2:... and requests will be shadowed from sourceCluster to all the following testClusters
+        /// e.g. "wawswusfollower|wawswus:wawswus,wawseusfollower|wawseus"
         /// </summary>
-        [ConfigurationName("QueryShadowingClusterMaping:ClusterNameGroupings")]
-        public string QueryShadowingClusterNameGroupings { get; set; }
-
-        /// <summary>
-        /// List of , separated cluster lists seprated by : which requests will be shadowed to
-        /// e.g. "wustestcluster1:wustestcluster2,eustestcluster1"
-        /// </summary>
-        [ConfigurationName("QueryShadowingClusterMaping:TestingClusterNamesGroupings")]
-        public string QueryShadowingTestClustersGroupings { get; set; }
+        [ConfigurationName("QueryShadowingClusterMapping")]
+        public string QueryShadowingClusterMappingString { get; set; }
 
         public ConcurrentDictionary<string, string[]> QueryShadowingClusterMapping;
 
@@ -263,15 +256,22 @@ namespace Diagnostics.DataProviders
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(QueryShadowingClusterNameGroupings) && !string.IsNullOrWhiteSpace(QueryShadowingTestClustersGroupings))
+            if (!string.IsNullOrWhiteSpace(QueryShadowingClusterMappingString))
             {
-                var clusterNamesSplited = QueryShadowingClusterNameGroupings.Split(',');
-                var testClusterGroupSplit = QueryShadowingTestClustersGroupings.Split(',');
-                if (clusterNamesSplited.Length == testClusterGroupSplit.Length)
+                try
                 {
                     QueryShadowingClusterMapping = new ConcurrentDictionary<string, string[]>(
-                        Enumerable.Zip(clusterNamesSplited, testClusterGroupSplit)
-                            .Select(p => KeyValuePair.Create(p.First, p.Second.Split(':'))));
+                           QueryShadowingClusterMappingString
+                               .Split(',')
+                               .Select(e =>
+                               {
+                                   var splitted = e.Split('|');
+                                   return new KeyValuePair<string, string[]>(splitted[0], splitted[1].Split(':'));
+                               }));
+                }
+                catch (Exception)
+                {
+                    // swallow the exception
                 }
             }
         }
