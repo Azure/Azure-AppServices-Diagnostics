@@ -188,7 +188,7 @@ namespace Diagnostics.DataProviders
 
         /// <summary>
         /// List of , separated sourceCluster|testCluster1:testCluster2:... and requests will be shadowed from sourceCluster to all the following testClusters
-        /// e.g. "wawswusfollower|wawswus:wawswus,wawseusfollower|wawseus"
+        /// e.g. "wawswusfollower|testwuscluster1:testwuscluster2,wawseusfollower|testeuscluster1"
         /// </summary>
         [ConfigurationName("QueryShadowingClusterMapping")]
         public string QueryShadowingClusterMappingString { get; set; }
