@@ -100,8 +100,15 @@ namespace Diagnostics.DataProviders
                 {
                     foreach (string shadowCluster in shadowClusters)
                     {
-                        var shadowKustoClient = Client(shadowCluster, database);
-                        shadowKustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
+                        try
+                        {
+                            var shadowKustoClient = Client(shadowCluster, database);
+                            shadowKustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
+                        }
+                        catch (Exception)
+                        {
+                            // swallow this exception
+                        }
                     }
                 }
                 var result = await kustoTask;
