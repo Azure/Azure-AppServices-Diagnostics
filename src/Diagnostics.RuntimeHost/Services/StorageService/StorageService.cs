@@ -36,10 +36,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
 
         private static CloudTableClient tableClient;
         private static CloudBlobClient containerClient;
-        private static CloudBlobContainer partnerConfigContainerClient;
         private string tableName;
         private string container;
-        private string partnerConfigContainer;
         private bool loadOnlyPublicDetectors;
         private bool isStorageEnabled;
         private string detectorRuntimeConfigTable;
@@ -49,13 +47,12 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             tableName = configuration["SourceWatcher:TableName"];
             container = configuration["SourceWatcher:BlobContainerName"];
             detectorRuntimeConfigTable = configuration["SourceWatcher:DetectorRuntimeConfigTable"];
-            partnerConfigContainer = configuration["SourceWatcher:PartnerConfigContainer"];
+            
            
             if (hostingEnvironment != null && hostingEnvironment.EnvironmentName.Equals("UnitTest", StringComparison.CurrentCultureIgnoreCase))
             {
                 tableClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudTableClient();
-                containerClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudBlobClient();
-                partnerConfigContainerClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudBlobClient().GetContainerReference(partnerConfigContainer);
+                containerClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudBlobClient();             
             }
             else
             {
@@ -68,8 +65,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 }
                 var storageAccount = new CloudStorageAccount(new StorageCredentials(accountname, key), accountname, dnsSuffix, true);
                 tableClient = storageAccount.CreateCloudTableClient();
-                containerClient = storageAccount.CreateCloudBlobClient();
-                partnerConfigContainerClient = storageAccount.CreateCloudBlobClient().GetContainerReference(partnerConfigContainer);
+                containerClient = storageAccount.CreateCloudBlobClient();             
             }
 
             if (!bool.TryParse((configuration[$"SourceWatcher:{RegistryConstants.LoadOnlyPublicDetectorsKey}"]), out loadOnlyPublicDetectors))

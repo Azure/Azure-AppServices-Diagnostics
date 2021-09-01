@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models.Storage;
 using Diagnostics.RuntimeHost.Services.StorageService;
-using Diagnostics.Logger;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Linq;
@@ -66,66 +65,59 @@ namespace Diagnostics.RuntimeHost.Services
             GitRepository repositoryAsync = await gitHttpClient.GetRepositoryAsync(partnerconfig.Project, partnerconfig.Repository, (object)null, new CancellationToken());
             GitCommitChanges changesAsync = await gitHttpClient.GetChangesAsync(commitId, repositoryAsync.Id);
             List<DevopsFileChange> stringList = new List<DevopsFileChange>();
-            try
+            foreach (GitChange change in changesAsync.Changes)
             {
-                foreach (GitChange change in changesAsync.Changes)
+                var gitversion = new GitVersionDescriptor
                 {
-                    var gitversion = new GitVersionDescriptor
-                    {
-                        Version = commitId,
-                        VersionType = GitVersionType.Commit,
-                        VersionOptions = GitVersionOptions.None
-                    };
-                    if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Add || change.ChangeType == VersionControlChangeType.Edit))
-                    {
-                        // hack right now, ideally get from config
-                        var detectorId = String.Join(";", Regex.Matches(change.Item.Path, @"\/(.+?)\/")
-                                            .Cast<Match>()
-                                            .Select(m => m.Groups[1].Value));
+                    Version = commitId,
+                    VersionType = GitVersionType.Commit,
+                    VersionOptions = GitVersionOptions.None
+                };
+                if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Add || change.ChangeType == VersionControlChangeType.Edit))
+                {
+                    // hack right now, ideally get from config
+                    var detectorId = String.Join(";", Regex.Matches(change.Item.Path, @"\/(.+?)\/")
+                                        .Cast<Match>()
+                                        .Select(m => m.Groups[1].Value));
 
                       
-                        var detectorScriptContent = await GetFileContent(repositoryAsync.Id, change.Item.Path, gitversion);
-                        var packageContent = await GetFileContent(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
-                        var metadataContent = await GetFileContent(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);
-                        stringList.Add(new DevopsFileChange
-                        {
-                            CommitId = commitId,
-                            Content = detectorScriptContent,
-                            Path = change.Item.Path,
-                            PackageConfig = packageContent,
-                            Metadata = metadataContent
-                        });
-                    } else if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Delete))
+                    var detectorScriptContent = await GetFileContent(repositoryAsync.Id, change.Item.Path, gitversion);
+                    var packageContent = await GetFileContent(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
+                    var metadataContent = await GetFileContent(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);
+                    stringList.Add(new DevopsFileChange
                     {
-                        var detectorId = String.Join(";", Regex.Matches(change.Item.Path, @"\/(.+?)\/")
-                                           .Cast<Match>()
-                                           .Select(m => m.Groups[1].Value));
+                        CommitId = commitId,
+                        Content = detectorScriptContent,
+                        Path = change.Item.Path,
+                        PackageConfig = packageContent,
+                        Metadata = metadataContent
+                    });
+                } else if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Delete))
+                {
+                    var detectorId = String.Join(";", Regex.Matches(change.Item.Path, @"\/(.+?)\/")
+                                        .Cast<Match>()
+                                        .Select(m => m.Groups[1].Value));
                         
-                        GitCommit gitCommitDetails = await gitHttpClient.GetCommitAsync(commitId, repositoryAsync.Id);
-                        // Get the package.json from the parent commit since at this commit, the file doesn't exist.
-                        var packageContent = await GetFileContent(repositoryAsync.Id, $"/{detectorId}/package.json", new GitVersionDescriptor
-                        {
-                            Version = gitCommitDetails.Parents.FirstOrDefault(),
-                            VersionType = GitVersionType.Commit,
-                            VersionOptions = GitVersionOptions.None
-                        });
-                        // Mark this detector as disabled. 
-                        stringList.Add(new DevopsFileChange
-                        {
-                            CommitId = commitId,
-                            Content= "",
-                            PackageConfig = packageContent,
-                            Path = change.Item.Path,
-                            Metadata = "",
-                            MarkAsDisabled = true
-                        });
-                    }
+                    GitCommit gitCommitDetails = await gitHttpClient.GetCommitAsync(commitId, repositoryAsync.Id);
+                    // Get the package.json from the parent commit since at this commit, the file doesn't exist.
+                    var packageContent = await GetFileContent(repositoryAsync.Id, $"/{detectorId}/package.json", new GitVersionDescriptor
+                    {
+                        Version = gitCommitDetails.Parents.FirstOrDefault(),
+                        VersionType = GitVersionType.Commit,
+                        VersionOptions = GitVersionOptions.None
+                    });
+                    // Mark this detector as disabled. 
+                    stringList.Add(new DevopsFileChange
+                    {
+                        CommitId = commitId,
+                        Content= "",
+                        PackageConfig = packageContent,
+                        Path = change.Item.Path,
+                        Metadata = "",
+                        MarkAsDisabled = true
+                    });
                 }
-            } catch (Exception ex)
-            {
-                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Failed to get files in commit {ex.ToString()}");
-            }
-  
+            }            
             return stringList;
         }
 
