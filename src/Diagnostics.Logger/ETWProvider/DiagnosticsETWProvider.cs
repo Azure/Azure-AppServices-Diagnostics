@@ -282,6 +282,17 @@ namespace Diagnostics.Logger
                 WebsiteHostName);
         }
 
+        public void LogDevOpsApiException(string ResourceUri, string Message, string Details, string DiagEnvironment = null, string DiagWebsiteHostName = null)
+        {
+            WriteDiagnosticsEvent(
+                2009,
+                ResourceUri,
+                Message,
+                Details,
+                EnvironmentName,
+                WebsiteHostName);
+        }
+
         #endregion Runtime Host Events (ID Range : 2000 - 2499)
 
         #region SourceWatcher Events (ID Range : 2500 - 2599)

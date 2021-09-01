@@ -1,4 +1,5 @@
-﻿using Diagnostics.RuntimeHost.Utilities;
+﻿using Diagnostics.Logger;
+using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -19,12 +20,6 @@ using System.Web;
 
 namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 {
-    public class DevOpsResponse
-    {
-        public object result;
-        public HttpStatusCode responseCode;
-    }
-
     public class DevOpsClient : IRepoClient
     {
         private string _accessToken;
@@ -33,7 +28,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         private string _project;
         private VssCredentials credentials;
         private VssConnection connection;
-        private GitHttpClient gitClient;
+        private static GitHttpClient gitClient;
 
         public DevOpsClient(IConfiguration config)
         {
@@ -60,7 +55,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 case "edit":
                     return VersionControlChangeType.Edit;
                 default:
-                    throw (new InvalidOperationException($"ChangeType: \"{changeType}\" not Supported"));
+                    throw new InvalidOperationException($"ChangeType: \"{changeType}\" not Supported");
             }
         }
 
@@ -86,9 +81,8 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             }
         }
 
-        public async Task<DevOpsResponse> GetBranchesAsync()
+        public async Task<object> GetBranchesAsync(string resourceUri)
         {
-            DevOpsResponse response = new DevOpsResponse();
             object result = null;
 
             try
@@ -96,57 +90,55 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 List<GitBranchStats> branches = await gitClient.GetBranchesAsync(_project, _repoID);
                 result = branches.Select(x => x.Name).ToList();
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
-                result = ex.ToString();
-            }
-            finally
-            {
-                response.responseCode = gitClient.LastResponseContext.HttpStatusCode;
-                response.result = result;
+                DiagnosticsETWProvider.Instance.LogDevOpsApiException(
+                    resourceUri,
+                    ex.Message,
+                    ex.StackTrace
+                    );
+                throw new VssServiceException();
             }
 
-            return response;
+            return result;
         }
         
-        public async Task<DevOpsResponse> GetFileContentAsync(string filePathInRepo, string branch = null)
+        public async Task<object> GetFileContentAsync(string filePathInRepo, string resourceUri, string branch = null)
         {
-            DevOpsResponse response = new DevOpsResponse();
             object result = null;
             GitVersionDescriptor version = null;
 
-            if (!string.IsNullOrWhiteSpace(branch))
-            {
-                version = new GitVersionDescriptor()
-                {
-                    Version = branch,
-                    VersionType = GitVersionType.Branch
-                };
-            }
-
             try
             {
+                if (!string.IsNullOrWhiteSpace(branch))
+                {
+                    version = new GitVersionDescriptor()
+                    {
+                        Version = branch,
+                        VersionType = GitVersionType.Branch
+                    };
+                }
+
                 GitItem item = await gitClient.GetItemAsync(_project, _repoID, path: filePathInRepo, includeContent: true, versionDescriptor: version);
                 result = item.Content;
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
-                result = ex.ToString();
-            }
-            finally
-            {
-                response.responseCode = gitClient.LastResponseContext.HttpStatusCode;
-                response.result = result;
+                DiagnosticsETWProvider.Instance.LogDevOpsApiException(
+                    resourceUri,
+                    ex.Message,
+                    ex.StackTrace
+                    );
+                throw new VssServiceException();
             }
 
-            return response;
+            return result;
         }
 
-        public async Task<DevOpsResponse> MakePullRequestAsync(string sourceBranch, string targetBranch, string title)
+        public async Task<object> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri)
         {
             GitPullRequest pr = new GitPullRequest();
             object result = null;
-            DevOpsResponse response = new DevOpsResponse();
             string source = $"refs/heads/{sourceBranch}";
             string target = $"refs/heads/{targetBranch}";
             pr.SourceRefName = source;
@@ -159,36 +151,33 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             }
             catch (Exception ex)
             {
-                result = ex.ToString();
-            }
-            finally
-            {
-                response.responseCode = gitClient.LastResponseContext.HttpStatusCode;
-                response.result = result;
+                DiagnosticsETWProvider.Instance.LogDevOpsApiException(
+                    resourceUri,
+                    ex.Message,
+                    ex.StackTrace
+                    );
+                throw new VssServiceException();
             }
 
-            return response;
+            return result;
         }
 
-        public async Task<DevOpsResponse> PushChangesAsync(string branch, string file, string repoPath, string comment, string changeType)
+        public async Task<object> PushChangesAsync(string branch, string file, string repoPath, string comment, string changeType, string resourceUri)
         {
             string name = $"refs/heads/{branch}";
             object result = null;
-            DevOpsResponse response = new DevOpsResponse();
 
-            try
+            GitRefUpdate newBranch = new GitRefUpdate()
             {
-                GitRefUpdate newBranch = new GitRefUpdate()
-                {
-                    Name = name,
-                    OldObjectId = await getLastObjectIdAsync(branch),
-                };
+                Name = name,
+                OldObjectId = await getLastObjectIdAsync(branch),
+            };
 
-                GitCommitRef newCommit = new GitCommitRef()
+            GitCommitRef newCommit = new GitCommitRef()
+            {
+                Comment = comment,
+                Changes = new GitChange[]
                 {
-                    Comment = comment,
-                    Changes = new GitChange[]
-                    {
                     new GitChange()
                     {
                         ChangeType = getChangeType(changeType),
@@ -199,28 +188,29 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                             ContentType = ItemContentType.RawText,
                         },
                     }
-                    },
-                };
+                },
+            };
 
-                GitPush push = new GitPush()
-                {
-                    RefUpdates = new GitRefUpdate[] { newBranch },
-                    Commits = new GitCommitRef[] { newCommit },
-                };
-
+            GitPush push = new GitPush()
+            {
+                RefUpdates = new GitRefUpdate[] { newBranch },
+                Commits = new GitCommitRef[] { newCommit },
+            };
+            try
+            {
                 result = await gitClient.CreatePushAsync(push, _project, _repoID);
             }
             catch (Exception ex)
             {
-                result = ex.ToString();
-            }
-            finally
-            {
-                response.responseCode = gitClient.LastResponseContext.HttpStatusCode;
-                response.result = result;
+                DiagnosticsETWProvider.Instance.LogDevOpsApiException(
+                    resourceUri,
+                    ex.Message,
+                    ex.StackTrace
+                    );
+                throw new VssServiceException();
             }
 
-            return response;
+            return result;
         }
 
         public void Dispose()

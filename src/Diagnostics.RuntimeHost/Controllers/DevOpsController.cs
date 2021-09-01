@@ -29,65 +29,67 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.DevOpsMakePR)]
-        public async Task<IActionResult> MakePullRequestAsync(string resourceURI, [FromBody]JToken jsonBody)
+        public async Task<IActionResult> MakePullRequestAsync([FromBody]JToken jsonBody)
         {
+            string[] fieldNames =
+            {
+                "sourceBranch",
+                "targetBranch",
+                "title",
+                "resourceUri"
+            };
+
+            if (!RequestBodyValidator.ValidateRequestBody(jsonBody, fieldNames, out string validationMessage))
+                return BadRequest(validationMessage);
+
             string sourceBranch = jsonBody[$"sourceBranch"].ToString();
             string targetBranch = jsonBody[$"targetBranch"].ToString();
             string title = jsonBody[$"title"].ToString();
+            string resourceUri = jsonBody[$"resourceUri"].ToString();
 
-            if (string.IsNullOrWhiteSpace(sourceBranch))
-                return BadRequest("Missing sourceBranch from body");
-
-            if (string.IsNullOrWhiteSpace(targetBranch))
-                return BadRequest("Missing targetBranch  from body");
-
-            if (string.IsNullOrWhiteSpace(title))
-                return BadRequest("Missing title from body");
-
-            DevOpsResponse response = await _devOpsClient.MakePullRequestAsync(sourceBranch, targetBranch, title);
-            return StatusCode((int)response.responseCode, response.result);
+            object response = await _devOpsClient.MakePullRequestAsync(sourceBranch, targetBranch, title, resourceUri);
+            return Ok(response);
         }
 
         [HttpPut(UriElements.DevOpsPush)]
-        public async Task<IActionResult> PushChangesAsync(string resourceURI, [FromBody]JToken jsonBody)
+        public async Task<IActionResult> PushChangesAsync([FromBody]JToken jsonBody)
         {
+            string[] fieldNames =
+            {
+                "branch",
+                "file",
+                "repoPath",
+                "comment",
+                "changeType",
+                "resourceUri"
+            };
+
+            if (!RequestBodyValidator.ValidateRequestBody(jsonBody, fieldNames, out string validationMessage))
+                return BadRequest(validationMessage);
+
             string branch = jsonBody[$"branch"].ToString();
             string file = jsonBody[$"file"].ToString();
             string repoPath = jsonBody[$"repoPath"].ToString();
             string comment = jsonBody[$"comment"].ToString();
             string changeType = jsonBody[$"changeType"].ToString();
+            string resourceUri = jsonBody[$"resourceUri"].ToString();
 
-            if (string.IsNullOrWhiteSpace(branch))
-                return BadRequest("Missing branch from body");
-
-            if (string.IsNullOrWhiteSpace(file))
-                return BadRequest("Missing file  from body");
-
-            if (string.IsNullOrWhiteSpace(repoPath))
-                return BadRequest("Missing repoPath from body");
-
-            if (string.IsNullOrWhiteSpace(comment))
-                return BadRequest("Missing comment from body");
-
-            if (string.IsNullOrWhiteSpace(changeType))
-                return BadRequest("Missing changeType from body");
-
-            DevOpsResponse response = await _devOpsClient.PushChangesAsync(branch, file, repoPath, comment, changeType);
-            return StatusCode((int)response.responseCode, response.result);
+            object response = await _devOpsClient.PushChangesAsync(branch, file, repoPath, comment, changeType, resourceUri);
+            return Ok(response);
         }
 
         [HttpGet(UriElements.DevOpsGetCode)]
-        public async Task<IActionResult> GetFileContentAsync(string filePathInRepo, string branch, string resourceURI)
+        public async Task<IActionResult> GetFileContentAsync(string filePathInRepo, string branch, string resourceUri)
         {
-            DevOpsResponse response = await _devOpsClient.GetFileContentAsync(filePathInRepo, branch);
-            return StatusCode((int)response.responseCode, response.result);
+            object response = await _devOpsClient.GetFileContentAsync(filePathInRepo, branch, resourceUri);
+            return Ok(response);
         }
 
         [HttpGet(UriElements.DevOpsGetBranches)]
-        public async Task<IActionResult> GetBranchesAsync(string resourceURI)
+        public async Task<IActionResult> GetBranchesAsync(string resourceUri)
         {
-            DevOpsResponse response = await _devOpsClient.GetBranchesAsync();
-            return StatusCode((int)response.responseCode, response.result);
+            object response = await _devOpsClient.GetBranchesAsync(resourceUri);
+            return Ok(response);
         }
     }
 }
