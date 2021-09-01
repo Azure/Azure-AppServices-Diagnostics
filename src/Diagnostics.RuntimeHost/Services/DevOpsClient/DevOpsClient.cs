@@ -97,7 +97,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                     ex.Message,
                     ex.StackTrace
                     );
-                throw new VssServiceException();
+                throw;
             }
 
             return result;
@@ -129,7 +129,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                     ex.Message,
                     ex.StackTrace
                     );
-                throw new VssServiceException();
+                throw;
             }
 
             return result;
@@ -156,7 +156,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                     ex.Message,
                     ex.StackTrace
                     );
-                throw new VssServiceException();
+                throw;
             }
 
             return result;
@@ -207,7 +207,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                     ex.Message,
                     ex.StackTrace
                     );
-                throw new VssServiceException();
+                throw;
             }
 
             return result;

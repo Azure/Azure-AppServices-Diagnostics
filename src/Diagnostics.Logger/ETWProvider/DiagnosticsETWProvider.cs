@@ -282,6 +282,7 @@ namespace Diagnostics.Logger
                 WebsiteHostName);
         }
 
+        [Event(2009, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDevOpsApiException)]
         public void LogDevOpsApiException(string ResourceUri, string Message, string Details, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
             WriteDiagnosticsEvent(
