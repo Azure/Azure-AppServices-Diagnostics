@@ -81,7 +81,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             }
         }
 
-        public async Task<object> GetBranchesAsync(string resourceUri)
+        public async Task<object> GetBranchesAsync(string resourceUri, string requestId)
         {
             object result = null;
 
@@ -93,8 +93,10 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             catch(Exception ex)
             {
                 DiagnosticsETWProvider.Instance.LogDevOpsApiException(
+                    requestId,
                     resourceUri,
                     ex.Message,
+                    ex.GetType().ToString(),
                     ex.StackTrace
                     );
                 throw;
@@ -103,7 +105,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return result;
         }
         
-        public async Task<object> GetFileContentAsync(string filePathInRepo, string resourceUri, string branch = null)
+        public async Task<object> GetFileContentAsync(string filePathInRepo, string resourceUri, string requestId, string branch = null)
         {
             object result = null;
             GitVersionDescriptor version = null;
@@ -125,8 +127,10 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             catch(Exception ex)
             {
                 DiagnosticsETWProvider.Instance.LogDevOpsApiException(
+                    requestId,
                     resourceUri,
                     ex.Message,
+                    ex.GetType().ToString(),
                     ex.StackTrace
                     );
                 throw;
@@ -135,7 +139,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return result;
         }
 
-        public async Task<object> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri)
+        public async Task<object> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId)
         {
             GitPullRequest pr = new GitPullRequest();
             object result = null;
@@ -152,8 +156,10 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             catch (Exception ex)
             {
                 DiagnosticsETWProvider.Instance.LogDevOpsApiException(
+                    requestId,
                     resourceUri,
                     ex.Message,
+                    ex.GetType().ToString(),
                     ex.StackTrace
                     );
                 throw;
@@ -162,7 +168,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return result;
         }
 
-        public async Task<object> PushChangesAsync(string branch, string file, string repoPath, string comment, string changeType, string resourceUri)
+        public async Task<object> PushChangesAsync(string branch, string file, string repoPath, string comment, string changeType, string resourceUri, string requestId)
         {
             string name = $"refs/heads/{branch}";
             object result = null;
@@ -203,8 +209,10 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             catch (Exception ex)
             {
                 DiagnosticsETWProvider.Instance.LogDevOpsApiException(
+                    requestId,
                     resourceUri,
                     ex.Message,
+                    ex.GetType().ToString(),
                     ex.StackTrace
                     );
                 throw;

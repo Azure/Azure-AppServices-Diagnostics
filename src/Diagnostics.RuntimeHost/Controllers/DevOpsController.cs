@@ -13,6 +13,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Web;
+using static Diagnostics.Logger.HeaderConstants;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -47,7 +48,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             string title = jsonBody[$"title"].ToString();
             string resourceUri = jsonBody[$"resourceUri"].ToString();
 
-            object response = await _devOpsClient.MakePullRequestAsync(sourceBranch, targetBranch, title, resourceUri);
+            object response = await _devOpsClient.MakePullRequestAsync(sourceBranch, targetBranch, title, resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
             return Ok(response);
         }
 
@@ -74,21 +75,21 @@ namespace Diagnostics.RuntimeHost.Controllers
             string changeType = jsonBody[$"changeType"].ToString();
             string resourceUri = jsonBody[$"resourceUri"].ToString();
 
-            object response = await _devOpsClient.PushChangesAsync(branch, file, repoPath, comment, changeType, resourceUri);
+            object response = await _devOpsClient.PushChangesAsync(branch, file, repoPath, comment, changeType, resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
             return Ok(response);
         }
 
         [HttpGet(UriElements.DevOpsGetCode)]
-        public async Task<IActionResult> GetFileContentAsync(string filePathInRepo, string branch, string resourceUri)
+        public async Task<IActionResult> GetFileContentAsync(string filePathInRepo, string resourceUri, string branch)
         {
-            object response = await _devOpsClient.GetFileContentAsync(filePathInRepo, branch, resourceUri);
+            object response = await _devOpsClient.GetFileContentAsync(filePathInRepo, resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName], branch);
             return Ok(response);
         }
 
         [HttpGet(UriElements.DevOpsGetBranches)]
         public async Task<IActionResult> GetBranchesAsync(string resourceUri)
         {
-            object response = await _devOpsClient.GetBranchesAsync(resourceUri);
+            object response = await _devOpsClient.GetBranchesAsync(resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
             return Ok(response);
         }
     }
