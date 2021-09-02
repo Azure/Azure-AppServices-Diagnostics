@@ -19,10 +19,6 @@ using Diagnostics.Scripts;
 using System.Reflection;
 using System.Diagnostics;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
-using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.Metadata;
-using Diagnostics.Scripts.CompilationService.Utilities;
 
 namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
 {
