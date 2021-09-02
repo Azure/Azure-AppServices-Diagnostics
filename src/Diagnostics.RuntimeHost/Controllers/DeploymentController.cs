@@ -4,6 +4,7 @@ using Diagnostics.ModelsAndUtils.Models.Storage;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.StorageService;
+using Diagnostics.RuntimeHost.Services.DevOpsClient;
 using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.CompilationService.Utilities;
@@ -27,7 +28,7 @@ namespace Diagnostics.RuntimeHost.Controllers
     public class DeploymentController : Controller
     {
 
-        private DevopsService devopsService;
+        private IRepoClient devopsClient;
         protected ICompilerHostClient _compilerHostClient;
         protected IStorageService storageService;
         private IInvokerCacheService detectorCache;
@@ -35,7 +36,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         public DeploymentController(IServiceProvider services, IConfiguration configuration, IInvokerCacheService invokerCache)
         {
             this.storageService = (IStorageService)services.GetService(typeof(IStorageService));
-            this.devopsService = new DevopsService(configuration);
+            this.devopsClient = (IRepoClient)services.GetService(typeof(IRepoClient));
             this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));           
             this.detectorCache = invokerCache;
         }
@@ -61,8 +62,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Starting deployment operation for {response.DeploymentGuid}");
             //  Get files to compile 
             var filesToCompile = string.IsNullOrWhiteSpace(commitId) ? 
-                await this.devopsService.GetFilesBetweenCommits(deploymentParameters)
-              : await this.devopsService.GetFilesInCommit(commitId);
+                await this.devopsClient.GetFilesBetweenCommits(deploymentParameters)
+              : await this.devopsClient.GetFilesInCommit(commitId);
 
             QueryResponse<DiagnosticApiResponse> queryRes = new QueryResponse<DiagnosticApiResponse>
             {
@@ -103,8 +104,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 // Get the latest version of gist from the repo.
                 foreach(string gist in gistReferences)
                 {                   
-                    var gistContent = await devopsService.GetFileFromBranch($"{gist}/{gist}.csx");
-                    references.Add(gist, gistContent);                                                  
+                    var gistContent = await devopsClient.GetFileContentAsync($"{gist}/{gist}.csx", deploymentParameters.ResourceType, HttpContext.Request.Headers[HeaderConstants.RequestIdHeaderName]);
+                    references.Add(gist, gistContent.ToString());                                                  
                 }
 
                 // Otherwise, compile the detector to generate dll.

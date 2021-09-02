@@ -20,6 +20,7 @@ using Diagnostics.ModelsAndUtils.Utilities;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Models.Exceptions;
 using Diagnostics.RuntimeHost.Services;
+using Diagnostics.RuntimeHost.Services.DevOpsClient;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.DiagnosticsTranslator;
@@ -36,6 +37,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
+using Diagnostics.Logger;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -54,7 +56,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected ISupportTopicService _supportTopicService;
         protected IKustoMappingsCacheService _kustoMappingCacheService;
         protected IRuntimeLoggerProvider _loggerProvider;
-        protected IDevopsService devopsService;
+        protected IRepoClient devopsClient;
         private InternalAPIHelper _internalApiHelper;
         private IDiagEntityTableCacheService tableCacheService;
         private ISourceWatcher storageWatcher;
@@ -91,7 +93,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 loadGistFromRepo = false;
             }
-            devopsService = new DevopsService(config);
+            devopsClient = (IRepoClient)services.GetService(typeof(IRepoClient));
         }
 
         #region API Response Methods
@@ -293,8 +295,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 {
                     if(!jsonBody.References.ContainsKey(gist))
                     {
-                        string gistContent = await devopsService.GetFileFromBranch($"{gist}/{gist}.csx");
-                        jsonBody.References.Add(gist, gistContent);
+                        object gistContent = await devopsClient.GetFileContentAsync($"{gist}/{gist}.csx", resource.ResourceUri, HttpContext.Request.Headers[HeaderConstants.RequestIdHeaderName]);
+                        jsonBody.References.Add(gist, gistContent.ToString());
                     }                   
                 }
             } else
