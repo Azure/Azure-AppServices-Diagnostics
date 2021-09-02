@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -25,6 +25,11 @@ namespace Diagnostics.DataProviders
             var section = _configuration.GetSection(prefix);
             var appSettingStringValue = section[name];
             return appSettingStringValue;
+        }
+
+        protected override IConfiguration GetConfiguration()
+        {
+            return _configuration;
         }
 
         private string GetAppSettingName(string prefix, string name)
@@ -120,6 +125,10 @@ namespace Diagnostics.DataProviders
 
             return string.Empty;
         }
+        protected override IConfiguration GetConfiguration()
+        {
+            return null;
+        }
     }
 
     public abstract class DataProviderConfigurationFactory : IConfigurationFactory
@@ -138,7 +147,7 @@ namespace Diagnostics.DataProviders
                 var instance = Activator.CreateInstance(configProperty.PropertyType) as IDataProviderConfiguration;
                 LoadConfigurationValues(instance);
                 instance.Validate();
-                instance.PostInitialize();            
+                instance.PostInitialize();
                 configProperty.SetValue(dataSourcesConfiguration, instance, null);
             }
 
@@ -147,6 +156,10 @@ namespace Diagnostics.DataProviders
 
         private void LoadConfigurationValues(object dataProviderConfiguration)
         {
+            if (dataProviderConfiguration != null && dataProviderConfiguration is KustoDataProviderConfiguration)
+            {
+                (dataProviderConfiguration as KustoDataProviderConfiguration).config = GetConfiguration();
+            }
             string prefix = null;
             DataSourceConfigurationAttribute configurationAttribute = dataProviderConfiguration.GetType()
                 .GetCustomAttribute(typeof(DataSourceConfigurationAttribute)) as DataSourceConfigurationAttribute;
@@ -185,6 +198,8 @@ namespace Diagnostics.DataProviders
         }
 
         protected abstract string GetValue(string prefix, string name);
+
+        protected abstract IConfiguration GetConfiguration();
 
         protected void SetValue(object target, PropertyInfo property, string stringValue, object defaultValue)
         {

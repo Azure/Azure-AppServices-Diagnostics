@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using System.Data;
 using System.Threading.Tasks;
@@ -79,12 +79,12 @@ namespace Diagnostics.DataProviders
             return QueryProviderMapping[key];
         }
 
-        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, int timeoutSeconds, string requestId = null, string operationName = null)
+        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, int timeoutSeconds, string requestId = null, string operationName = null, DateTime? startTime = null, DateTime? endTime = null)
         {
             var timeTakenStopWatch = new Stopwatch();
             DataSet dataSet = null;
             ClientRequestProperties clientRequestProperties = new ClientRequestProperties();
-            var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId}##{0}_{Guid.NewGuid().ToString()}";
+            var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId};{startTime?.ToString() ?? "UnknownStartTime"};{endTime?.ToString() ?? "UnknownEndTime"}##{0}_{Guid.NewGuid().ToString()}";
             clientRequestProperties.ClientRequestId = kustoClientId;
             clientRequestProperties.SetOption("servertimeout", new TimeSpan(0,0,timeoutSeconds));
             if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase))
@@ -95,7 +95,23 @@ namespace Diagnostics.DataProviders
             {
                 timeTakenStopWatch.Start();
                 var kustoClient = Client(cluster, database);
-                var result = await kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
+                var kustoTask = kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
+                if (_config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters))
+                {
+                    foreach (string shadowCluster in shadowClusters)
+                    {
+                        try
+                        {
+                            var shadowKustoClient = Client(shadowCluster, database);
+                            shadowKustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
+                        }
+                        catch (Exception)
+                        {
+                            // swallow this exception
+                        }
+                    }
+                }
+                var result = await kustoTask;
                 dataSet = result.ToDataSet();
             }
             catch (Exception ex)
@@ -127,23 +143,25 @@ namespace Diagnostics.DataProviders
             return datatable;
         }
 
-        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
+        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null, DateTime? startTime = null, DateTime? endTime = null)
         {
             int attempt = 0;
             string source = string.IsNullOrWhiteSpace(operationName) ? "KustoSDKClient_ExecuteQueryAsync" : operationName;
-            
+
             DateTime invocationStartTime = default;
             DateTime invocationEndTime = default;
             Task<DataTable> executeQueryTask = default;
             DataTable dtResult = default;
             Exception attemptException = default;
             var exceptions = new List<Exception>();
+            bool isConditionMetForRetryAgainstLeaderCluster = false;
 
             do
             {
                 try
                 {
-                    if(attempt == _config.MaxRetryCount && _config.MaxRetryCount != 0 && _config.UseBackupClusterForLastRetryAttempt)
+                    //figure out how to use the new config settings here
+                    if (attempt == _config.MaxRetryCount && _config.MaxRetryCount != 0 && _config.UseBackupClusterForLastRetryAttempt || isConditionMetForRetryAgainstLeaderCluster)
                     {
                         // Last Retry Attempt
                         // Switch to backup cluster since useBackupClusterForLastAttempt is set to true.
@@ -158,7 +176,7 @@ namespace Diagnostics.DataProviders
 
                     invocationStartTime = DateTime.UtcNow;
                     attemptException = null;
-                    executeQueryTask = ExecuteQueryAsync(query, cluster, database, DataProviderConstants.DefaultTimeoutInSeconds, requestId, operationName);
+                    executeQueryTask = ExecuteQueryAsync(query, cluster, database, DataProviderConstants.DefaultTimeoutInSeconds, requestId, operationName, startTime, endTime);
                     dtResult = await executeQueryTask;
                 }
                 catch (Exception ex)
@@ -185,8 +203,13 @@ namespace Diagnostics.DataProviders
                             exceptionDetails
                             );
 
+                    if (attemptException != null && IsOverridableExceptionsToRetryAgainstLeaderCluster(attemptException) && totalResponseTime.TotalSeconds <= (double)_config.OverridableExceptionsToRetryAgainstLeaderCluster.Single(x => attemptException.Message.ToLower().Contains(x[0].ToString().ToLower()))[1])
+
+                    {
+                        isConditionMetForRetryAgainstLeaderCluster = true;
+                    }
                     // Logic to check if retry needs to continue
-                    if(totalResponseTime.TotalSeconds > _config.MaxFailureResponseTimeInSecondsForRetry || !IsExceptionRetryable(attemptException))
+                    else if (totalResponseTime.TotalSeconds > _config.MaxFailureResponseTimeInSecondsForRetry || !IsExceptionRetryable(attemptException))
                     {
                         DiagnosticsETWProvider.Instance.LogRetryAttemptMessage(
                         requestId ?? string.Empty,
@@ -200,11 +223,12 @@ namespace Diagnostics.DataProviders
                     attempt++;
                 }
 
-                if (attempt <= _config.MaxRetryCount) await Task.Delay(_config.RetryDelayInSeconds * 1000);
+                if (attempt > 1 && isConditionMetForRetryAgainstLeaderCluster) break;
+                else if (attempt <= _config.MaxRetryCount && !isConditionMetForRetryAgainstLeaderCluster) await Task.Delay(_config.RetryDelayInSeconds * 1000);
 
             } while (attempt <= _config.MaxRetryCount);
 
-            if(executeQueryTask.IsCompletedSuccessfully && dtResult!= default)
+            if (executeQueryTask.IsCompletedSuccessfully && dtResult != default)
             {
                 return dtResult;
             }
@@ -332,6 +356,16 @@ namespace Diagnostics.DataProviders
             }
 
             return exceptionsToRetryFor.Exists(item => ex.ToString().ToLower().Contains(item.ToLower()));
+        }
+
+        private bool IsOverridableExceptionsToRetryAgainstLeaderCluster(Exception ex)
+        {
+            if (ex is null)
+            {
+                return false;
+            }
+
+            return _config.OverridableExceptionsToRetryAgainstLeaderCluster.Exists(item => ex.ToString().ToLower().Contains(item[0].ToString().ToLower()));
         }
     }
 }
