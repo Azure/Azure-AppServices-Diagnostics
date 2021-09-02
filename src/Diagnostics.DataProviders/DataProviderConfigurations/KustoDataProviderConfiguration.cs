@@ -186,6 +186,15 @@ namespace Diagnostics.DataProviders
         [ConfigurationName("Retry:ExceptionsToRetryFor")]
         public string ExceptionsToRetryFor { get; set; }
 
+        /// <summary>
+        /// List of , separated sourceCluster|testCluster1:testCluster2:... and requests will be shadowed from sourceCluster to all the following testClusters
+        /// e.g. "wawswusfollower|testwuscluster1:testwuscluster2,wawseusfollower|testeuscluster1"
+        /// </summary>
+        [ConfigurationName("QueryShadowingClusterMapping")]
+        public string QueryShadowingClusterMappingString { get; set; }
+
+        public ConcurrentDictionary<string, string[]> QueryShadowingClusterMapping;
+
         public List<ITuple> OverridableExceptionsToRetryAgainstLeaderCluster { get; set; }
 
         public IConfiguration config { private get; set; }
@@ -244,6 +253,25 @@ namespace Diagnostics.DataProviders
                     {
                         OverridableExceptionsToRetryAgainstLeaderCluster.Add((ExceptionString, MaxFailureResponseTimeInSeconds));
                     }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(QueryShadowingClusterMappingString))
+            {
+                try
+                {
+                    QueryShadowingClusterMapping = new ConcurrentDictionary<string, string[]>(
+                           QueryShadowingClusterMappingString
+                               .Split(',')
+                               .Select(e =>
+                               {
+                                   var splitted = e.Split('|');
+                                   return new KeyValuePair<string, string[]>(splitted[0], splitted[1].Split(':'));
+                               }));
+                }
+                catch (Exception)
+                {
+                    // swallow the exception
                 }
             }
         }

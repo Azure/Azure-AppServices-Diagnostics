@@ -65,6 +65,16 @@
         public const string ObserverGetHostingEnvironment = "hostingEnvironments/{hostingEnvironmentName}";
 
         #endregion Observer Urls
+
+        #region DevOps Urls
+
+        public const string DevOps = "devops";
+        public const string DevOpsMakePR = "makePR";
+        public const string DevOpsPush = "push";
+        public const string DevOpsGetCode = "getCode";
+        public const string DevOpsGetBranches = "getBranches";
+
+        #endregion
     }
 
     /// <summary>

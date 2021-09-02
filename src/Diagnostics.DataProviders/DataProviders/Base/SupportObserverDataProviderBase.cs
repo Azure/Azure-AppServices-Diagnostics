@@ -36,6 +36,7 @@ namespace Diagnostics.DataProviders
             // --------------------------------------------------------------------------
             var client = new HttpClient(handler);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Add(HeaderConstants.UserAgentHeaderName, "appservice-diagnostics");
             return client;
         });
 

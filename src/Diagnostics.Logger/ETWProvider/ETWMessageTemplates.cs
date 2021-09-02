@@ -35,6 +35,7 @@ namespace Diagnostics.Logger
         public const string LogRuntimeHostDetectorAscInsight = "ASC Insight Detail for Detector";
         public const string LogRuntimeHostSupportTopicAscInsight = "ASC Insight Detail for Detector";
         public const string LogRuntimeMessage = "Runtime Log from Detector";
+        public const string LogDevOpsApiException = "DevOps API Exception";
 
         #endregion Runtime Host Event Message Templates
 

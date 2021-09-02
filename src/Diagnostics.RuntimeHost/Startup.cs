@@ -31,6 +31,7 @@ using Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers;
 using Diagnostics.Logger;
 using Microsoft.Extensions.Hosting;
 using Diagnostics.RuntimeHost.Services.DiagnosticsTranslator;
+using Diagnostics.RuntimeHost.Services.DevOpsClient;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -160,6 +161,7 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<IGithubClient, GithubClient>();
             }
+            services.AddSingleton<IRepoClient, DevOpsClient>();
             services.AddSingleton<ISourceWatcherService, SourceWatcherService>();
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
             services.AddSingleton<IGistCacheService, GistCacheService>();
