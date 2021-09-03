@@ -484,9 +484,9 @@ namespace Diagnostics.RuntimeHost.Controllers
             return ex;
         }
 
-        protected async Task<IActionResult> GetDiagnosticReport(TResource resource, DiagnosticReportQuery queryBody, DateTime startTime, DateTime endTime, TimeSpan timeGrain, string correlationId = null)
+        protected async Task<IActionResult> GetDiagnosticReport(TResource resource, DiagnosticReportQuery queryBody, DateTime startTime, DateTime endTime, TimeSpan timeGrain, Form form = null, string correlationId = null)
         {
-            RuntimeContext<TResource> cxt = PrepareContext(resource, startTime, endTime);
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTime, endTime, Form: form);
             if (correlationId == null)
             {
                 if (cxt.OperationContext.RequestId != null)
@@ -636,7 +636,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                                     DetectorId = detector.Metadata.Id,
                                     Title = renderingProperties.Title,
                                     Description = renderingProperties.Description,
-                                    DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime),
+                                    DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime, context.OperationContext.QueryParams),
                                     Table = set.Table
                                 };
                             }
@@ -676,7 +676,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                                             Title = insightMessage,
                                             Description = insightDescription,
                                             Solutions = allSolutions,
-                                            DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime)
+                                            DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime, context.OperationContext.QueryParams)
                                         };
                                         break;
                                     }
