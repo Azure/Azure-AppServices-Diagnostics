@@ -484,9 +484,9 @@ namespace Diagnostics.RuntimeHost.Controllers
             return ex;
         }
 
-        protected async Task<IActionResult> GetDiagnosticReport(TResource resource, DiagnosticReportQuery queryBody, DateTime startTime, DateTime endTime, TimeSpan timeGrain, string correlationId = null)
+        protected async Task<IActionResult> GetDiagnosticReport(TResource resource, DiagnosticReportQuery queryBody, DateTime startTime, DateTime endTime, TimeSpan timeGrain, Form form = null, string correlationId = null)
         {
-            RuntimeContext<TResource> cxt = PrepareContext(resource, startTime, endTime);
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTime, endTime, Form: form);
             if (correlationId == null)
             {
                 if (cxt.OperationContext.RequestId != null)
@@ -530,7 +530,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             if (filteredDetectorsToRun.Count > 0)
             {
-                var insightGroups = await Task.WhenAll(filteredDetectorsToRun.Select(detector => GetDiagnosticInsightsFromDetector(cxt, detector, filteredDetectorsToRun, true)));
+                var insightGroups = await Task.WhenAll(filteredDetectorsToRun.Select(detector => GetDiagnosticInsightsFromDetector(cxt, detector, filteredDetectorsToRun, true, form)));
                 foreach (var insightList in insightGroups)
                 {
                     if (insightList.Count() > 0 && detectorInsights.Where(x => x.DetectorId == insightList.First().DetectorId).Count() > 0)
@@ -594,7 +594,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
 
 
-        private async Task<IEnumerable<DiagnosticReportInsight>> GetDiagnosticInsightsFromDetector(RuntimeContext<TResource> context, DiagnosticApiResponse detector, List<DiagnosticApiResponse> detectorsRunning, bool runChildren = false)
+        private async Task<IEnumerable<DiagnosticReportInsight>> GetDiagnosticInsightsFromDetector(RuntimeContext<TResource> context, DiagnosticApiResponse detector, List<DiagnosticApiResponse> detectorsRunning, bool runChildren = false, Form form = null)
         {
             Response response = null;
             List<DiagnosticReportInsight> resultInsights = new List<DiagnosticReportInsight>();
@@ -636,7 +636,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                                     DetectorId = detector.Metadata.Id,
                                     Title = renderingProperties.Title,
                                     Description = renderingProperties.Description,
-                                    DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime),
+                                    DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime, context.OperationContext.Form, context.OperationContext.QueryParams),
                                     Table = set.Table
                                 };
                             }
@@ -676,7 +676,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                                             Title = insightMessage,
                                             Description = insightDescription,
                                             Solutions = allSolutions,
-                                            DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime)
+                                            DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime, context.OperationContext.Form, context.OperationContext.QueryParams)
                                         };
                                         break;
                                     }
