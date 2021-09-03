@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Web;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Diagnostics.RuntimeHost.Models;
 using Newtonsoft.Json;
 
@@ -45,12 +48,23 @@ namespace Diagnostics.RuntimeHost.Utilities
             return allDetectors.Where(detector => detector.Metadata.AnalysisTypes != null && detector.Metadata.AnalysisTypes.Contains(analysisId));
         }
 
-        public static Link GetDetectorLink(DiagnosticApiResponse detector, string resourceUri, string startTime, string endTime)
+        public static Link GetDetectorLink(DiagnosticApiResponse detector, string resourceUri, string startTime, string endTime, Dictionary<string, string> queryParams = null)
         {
             var baseUrl = resourceUri;
+            string queryParamsStr = "";
+            if (queryParams != null)
+            {
+                try
+                {
+                    queryParams.Remove("startTime");
+                    queryParams.Remove("endTime");
+                    queryParamsStr = "&" + string.Join('&', queryParams.Keys.Select(k => k + "=" + HttpUtility.UrlEncode(queryParams.GetValueOrDefault(k))).ToArray());
+                }
+                catch (Exception ex) { }
+            }
             return new Link()
             {
-                Uri = $"{baseUrl}/{(detector.Metadata.Type == DetectorType.Analysis ? "analysis" : "detectors")}/{detector.Metadata.Id}?startTime={startTime}&endTime={endTime}",
+                Uri = $"{baseUrl}/{(detector.Metadata.Type == DetectorType.Analysis ? "analysis" : "detectors")}/{detector.Metadata.Id}?startTime={startTime}&endTime={endTime}{queryParamsStr}",
                 Text = $"{detector.Metadata.Name}"
             };
         }
