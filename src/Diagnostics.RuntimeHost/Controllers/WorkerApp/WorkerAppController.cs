@@ -155,7 +155,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 postBody = await GetWorkerAppPostBody(subscriptionId, resourceGroup, resourceName);
             }
-            return new WorkerApp(subscriptionId, resourceGroup, resourceName, postBody!=null? postBody.KubeEnvironmentName: null, postBody!=null?postBody.GeoMasterInstance:null);
+            return new WorkerApp(subscriptionId, resourceGroup, resourceName, postBody!=null? postBody.KubeEnvironmentName: null, postBody!=null?postBody.GeoMasterName:null);
         }
     }
 }

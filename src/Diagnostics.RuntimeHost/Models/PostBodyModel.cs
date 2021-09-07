@@ -81,6 +81,8 @@ namespace Diagnostics.RuntimeHost.Models
         public string ResourceGroupName { get; set; }
         public string SubscriptionName { get; set; }
         public string KubeEnvironmentName { get; set; }
-        public string GeoMasterInstance { get; set; }
+        public string GeoMasterName { get; set; }
+        public string ServiceAddress { get; set; }
+        public string Kind { get; set; }
     }
 }
