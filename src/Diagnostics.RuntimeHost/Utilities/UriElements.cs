@@ -63,6 +63,7 @@
         public const string ObserverGetSites = "sites/{siteName}";
         public const string ObserverGetSiteWithStamp = "stamps/{stampName}/sites/{siteName}";
         public const string ObserverGetHostingEnvironment = "hostingEnvironments/{hostingEnvironmentName}";
+        public const string ObserverGetWorkerApp = "partner/workerapp/{workerAppName}";
 
         #endregion Observer Urls
 
