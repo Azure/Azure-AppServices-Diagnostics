@@ -282,6 +282,20 @@ namespace Diagnostics.Logger
                 WebsiteHostName);
         }
 
+        [Event(2009, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDevOpsApiException)]
+        public void LogDevOpsApiException(string RequestId, string Source, string Message, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
+        {
+            WriteDiagnosticsEvent(
+                2009,
+                RequestId,
+                Source,
+                Message,
+                ExceptionType,
+                ExceptionDetails,
+                EnvironmentName,
+                WebsiteHostName);
+        }
+
         #endregion Runtime Host Events (ID Range : 2000 - 2499)
 
         #region SourceWatcher Events (ID Range : 2500 - 2599)

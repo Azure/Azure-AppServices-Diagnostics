@@ -79,12 +79,12 @@ namespace Diagnostics.DataProviders
             return QueryProviderMapping[key];
         }
 
-        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, int timeoutSeconds, string requestId = null, string operationName = null)
+        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, int timeoutSeconds, string requestId = null, string operationName = null, DateTime? startTime = null, DateTime? endTime = null)
         {
             var timeTakenStopWatch = new Stopwatch();
             DataSet dataSet = null;
             ClientRequestProperties clientRequestProperties = new ClientRequestProperties();
-            var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId}##{0}_{Guid.NewGuid().ToString()}";
+            var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId};{startTime?.ToString() ?? "UnknownStartTime"};{endTime?.ToString() ?? "UnknownEndTime"}##{0}_{Guid.NewGuid().ToString()}";
             clientRequestProperties.ClientRequestId = kustoClientId;
             clientRequestProperties.SetOption("servertimeout", new TimeSpan(0,0,timeoutSeconds));
             if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase))
@@ -95,7 +95,23 @@ namespace Diagnostics.DataProviders
             {
                 timeTakenStopWatch.Start();
                 var kustoClient = Client(cluster, database);
-                var result = await kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
+                var kustoTask = kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
+                if (_config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters))
+                {
+                    foreach (string shadowCluster in shadowClusters)
+                    {
+                        try
+                        {
+                            var shadowKustoClient = Client(shadowCluster, database);
+                            shadowKustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
+                        }
+                        catch (Exception)
+                        {
+                            // swallow this exception
+                        }
+                    }
+                }
+                var result = await kustoTask;
                 dataSet = result.ToDataSet();
             }
             catch (Exception ex)
@@ -127,7 +143,7 @@ namespace Diagnostics.DataProviders
             return datatable;
         }
 
-        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
+        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null, DateTime? startTime = null, DateTime? endTime = null)
         {
             int attempt = 0;
             string source = string.IsNullOrWhiteSpace(operationName) ? "KustoSDKClient_ExecuteQueryAsync" : operationName;
@@ -160,7 +176,7 @@ namespace Diagnostics.DataProviders
 
                     invocationStartTime = DateTime.UtcNow;
                     attemptException = null;
-                    executeQueryTask = ExecuteQueryAsync(query, cluster, database, DataProviderConstants.DefaultTimeoutInSeconds, requestId, operationName);
+                    executeQueryTask = ExecuteQueryAsync(query, cluster, database, DataProviderConstants.DefaultTimeoutInSeconds, requestId, operationName, startTime, endTime);
                     dtResult = await executeQueryTask;
                 }
                 catch (Exception ex)
