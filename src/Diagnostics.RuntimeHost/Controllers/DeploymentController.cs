@@ -33,11 +33,11 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected IStorageService storageService;
         private IInvokerCacheService detectorCache;
 
-        public DeploymentController(IServiceProvider services, IConfiguration configuration, IInvokerCacheService invokerCache)
+        public DeploymentController(IStorageService storage, IRepoClient repo, ICompilerHostClient compilerHost, IInvokerCacheService invokerCache)
         {
-            this.storageService = (IStorageService)services.GetService(typeof(IStorageService));
-            this.devopsClient = (IRepoClient)services.GetService(typeof(IRepoClient));
-            this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));           
+            this.storageService = storage;
+            this.devopsClient = repo;
+            this._compilerHostClient = compilerHost;
             this.detectorCache = invokerCache;
         }
 
@@ -55,11 +55,13 @@ namespace Diagnostics.RuntimeHost.Controllers
             response.DeploymentGuid = Guid.NewGuid().ToString();
             response.DeployedDetectors = new List<string>();
             response.FailedDetectors = new Dictionary<string, string>();
-
+           
             var commitId = deploymentParameters.CommitId;
             var timeTakenStopWatch = new Stopwatch();
             timeTakenStopWatch.Start();
-            DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Starting deployment operation for {response.DeploymentGuid}");
+
+            string requestId = HttpContext.Request.Headers[HeaderConstants.RequestIdHeaderName].FirstOrDefault();
+            DiagnosticsETWProvider.Instance.LogDeploymentOperationMessage(requestId, response.DeploymentGuid, $"Starting deployment operation");
             //  Get files to compile 
             var filesToCompile = string.IsNullOrWhiteSpace(commitId) ? 
                 await this.devopsClient.GetFilesBetweenCommits(deploymentParameters)
@@ -73,7 +75,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             IDictionary<string, string> references = new Dictionary<string, string>();
 
 
-            DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Deployment id {response.DeploymentGuid}: {filesToCompile.Count} to compile");
+            DiagnosticsETWProvider.Instance.LogDeploymentOperationMessage(requestId, response.DeploymentGuid, $"{filesToCompile.Count} to compile");
             //  Compile files
             foreach( var file in filesToCompile)
             {
@@ -89,7 +91,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 if (file.MarkAsDisabled)
                 {                 
                     diagEntity.IsDisabled = true;
-                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Making {detectorId} as disabled, deployment operation id: {response.DeploymentGuid}");
+                    DiagnosticsETWProvider.Instance.LogDeploymentOperationMessage(requestId, response.DeploymentGuid, $"Making {detectorId} as disabled");
                     await storageService.LoadDataToTable(diagEntity);
                     if (response.DeletedDetectors == null)
                     {
@@ -109,15 +111,15 @@ namespace Diagnostics.RuntimeHost.Controllers
                 }
 
                 // Otherwise, compile the detector to generate dll.
-                queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(file.Content, diagEntity.EntityType, references);  
-                
+                queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(file.Content, diagEntity.EntityType, references);
+
                 //  If compilation success, save dll to storage container.
                 if (queryRes.CompilationOutput.CompilationSucceeded)
-                {                                     
+                {
                     var blobName = $"{detectorId.ToLower()}/{detectorId.ToLower()}.dll";
-                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Deployment id {response.DeploymentGuid}, saving {blobName} to storage container");
+                    DiagnosticsETWProvider.Instance.LogDeploymentOperationMessage(requestId, response.DeploymentGuid, $"Saving {blobName} to storage container");
                     //  Save blob to storage account
-                    var etag = await storageService.LoadBlobToContainer(blobName, queryRes.CompilationOutput.AssemblyBytes);                
+                    var etag = await storageService.LoadBlobToContainer(blobName, queryRes.CompilationOutput.AssemblyBytes);
                     if (string.IsNullOrWhiteSpace(etag))
                     {
                         throw new Exception($"Could not save changes {blobName} to storage");
@@ -131,12 +133,12 @@ namespace Diagnostics.RuntimeHost.Controllers
                     byte[] pdbData = Convert.FromBase64String(queryRes.CompilationOutput.PdbBytes);
                     diagEntity = DiagEntityHelper.PrepareEntityForLoad(asmData, file.Content, diagEntity);
 
-                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Deployment id {response.DeploymentGuid}, saving {diagEntity.RowKey} to storage table");
+                    DiagnosticsETWProvider.Instance.LogDeploymentOperationMessage(requestId, response.DeploymentGuid, $"Saving {diagEntity.RowKey} to storage table");
                     await storageService.LoadDataToTable(diagEntity);
 
-                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Deployment id {response.DeploymentGuid}, updating invoker cache for {diagEntity.RowKey}");
+                    DiagnosticsETWProvider.Instance.LogDeploymentOperationMessage(requestId, response.DeploymentGuid, $"Updating invoker cache for {diagEntity.RowKey}");
                     // update invoker cache for detector. For gists, we dont need to update invoker cache as we pull latest code each time.
-                    if(diagEntity.PartitionKey.Equals("Detector"))
+                    if (diagEntity.PartitionKey.Equals("Detector"))
                     {
                         Assembly tempAsm = Assembly.Load(asmData, pdbData);
                         EntityType entityType = EntityType.Detector;
@@ -145,17 +147,17 @@ namespace Diagnostics.RuntimeHost.Controllers
                         newInvoker.InitializeEntryPoint(tempAsm);
                         detectorCache.AddOrUpdate(detectorId, newInvoker);
                     }
-                   
+
                 } else
                 {
-                    DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Deployment id {response.DeploymentGuid}, compilation failed for {detectorId}");
+                    DiagnosticsETWProvider.Instance.LogDeploymentOperationMessage(requestId, response.DeploymentGuid, $"Compilation failed for {detectorId}, Reason: {queryRes.CompilationOutput.CompilationTraces.FirstOrDefault()} ");
                     // If compilation fails, add failure reason to the response
                     response.FailedDetectors.Add(detectorId, queryRes.CompilationOutput.CompilationTraces.FirstOrDefault());
                 }
             }
 
             timeTakenStopWatch.Stop();
-            DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"Deployment completed for {response.DeploymentGuid}, time elapsed {timeTakenStopWatch.ElapsedMilliseconds}");
+            DiagnosticsETWProvider.Instance.LogDeploymentOperationMessage(requestId, response.DeploymentGuid, $"Deployment completed for {response.DeploymentGuid}, time elapsed {timeTakenStopWatch.ElapsedMilliseconds}");
             return Ok(response);
         }
     }

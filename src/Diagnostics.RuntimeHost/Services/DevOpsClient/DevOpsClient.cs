@@ -116,14 +116,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 
             try
             {
-                GitRepository repositoryAsync = await gitClient.GetRepositoryAsync(_project, _repoID, (object)null, new CancellationToken());
-                // If branch is not given, use the default of the repo.
-                if (string.IsNullOrWhiteSpace(branch))
-                {
-                    branch = repositoryAsync.DefaultBranch.Replace("refs/heads/", "");
-                }
-
-                if (!string.IsNullOrWhiteSpace(branch))
+               if (!string.IsNullOrWhiteSpace(branch))
                 {
                     version = new GitVersionDescriptor()
                     {
@@ -259,9 +252,13 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                                         .Select(m => m.Groups[1].Value));
 
 
-                    var detectorScriptContent = await GetFileContentInCommit(repositoryAsync.Id, change.Item.Path, gitversion);
-                    var packageContent = await GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
-                    var metadataContent = await GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);
+                    Task<string> detectorScriptTask =  GetFileContentInCommit(repositoryAsync.Id, change.Item.Path, gitversion);
+                    Task<string> packageContentTask =  GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
+                    Task<string> metadataContentTask =  GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);            
+                    await Task.WhenAll( new Task[] { detectorScriptTask, packageContentTask, metadataContentTask });
+                    string detectorScriptContent = await detectorScriptTask;
+                    string packageContent = await packageContentTask;
+                    string metadataContent = await metadataContentTask;
                     stringList.Add(new DevopsFileChange
                     {
                         CommitId = commitId,
