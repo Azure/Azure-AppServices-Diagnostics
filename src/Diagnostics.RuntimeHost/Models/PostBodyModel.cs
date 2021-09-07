@@ -73,4 +73,14 @@ namespace Diagnostics.RuntimeHost.Models
         public bool Status { get; set; }
         public string Message { get; set; }
     }
+
+    public class DiagnosticWorkerAppData
+    {
+        public string WorkerAppName { get; set; }
+        public string Tags { get; set; }
+        public string ResourceGroupName { get; set; }
+        public string SubscriptionName { get; set; }
+        public string KubeEnvironmentName { get; set; }
+        public string GeoMasterInstance { get; set; }
+    }
 }

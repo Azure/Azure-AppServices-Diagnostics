@@ -43,6 +43,8 @@ namespace Diagnostics.DataProviders
 
         Task<dynamic> GetSitePostBody(string stampName, string siteName);
 
+        Task<dynamic> GetWorkerAppPostBody(string workerAppName);
+
         Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName);
 
         Task<Dictionary<string, List<RuntimeSitenameTimeRange>>> GetRuntimeSiteSlotMap(string stampName, string siteName, string slotName);
