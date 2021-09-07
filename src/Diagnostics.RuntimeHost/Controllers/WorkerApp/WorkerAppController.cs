@@ -145,7 +145,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
             dynamic postBody = await dataProviders.Observer.GetWorkerAppPostBody(workerAppName);
             List<DiagnosticWorkerAppData> objectList = JsonConvert.DeserializeObject<List<DiagnosticWorkerAppData>>(JsonConvert.SerializeObject(postBody));
-            var appBody = objectList.Find(obj => (obj.SubscriptionName == subscriptionId) && (obj.ResourceGroupName == resourceGroupName));
+            var appBody = objectList.Find(obj => (obj.SubscriptionName.ToLower() == subscriptionId.ToLower()) && (obj.ResourceGroupName.ToLower() == resourceGroupName.ToLower()));
             return appBody;
         }
 
