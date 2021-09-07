@@ -44,11 +44,10 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] DeploymentParameters deploymentParameters)
         {
-            // If all required parameters are empty, reject the request.
-            if(string.IsNullOrWhiteSpace(deploymentParameters.CommitId) && string.IsNullOrWhiteSpace(deploymentParameters.FromCommitId)
-                && string.IsNullOrWhiteSpace(deploymentParameters.ToCommitId) && string.IsNullOrWhiteSpace(deploymentParameters.StartDate)
-                && string.IsNullOrWhiteSpace(deploymentParameters.EndDate)) {
-                return BadRequest("The given deployment parameters are invalid");
+           string validationError = ValidateDeploymentParameters(deploymentParameters);
+           if(!string.IsNullOrEmpty(validationError))
+            {
+                return BadRequest(validationError);
             }
                      
             DeploymentResponse response = new DeploymentResponse();
@@ -178,5 +177,50 @@ namespace Diagnostics.RuntimeHost.Controllers
             DiagnosticsETWProvider.Instance.LogDeploymentOperationMessage(requestId, response.DeploymentGuid, $"Deployment completed for {response.DeploymentGuid}, time elapsed {timeTakenStopWatch.ElapsedMilliseconds}");
             return Ok(response);
         }     
+   
+        private string ValidateDeploymentParameters(DeploymentParameters deploymentParameters)
+        {
+            string errorMessage = string.Empty;
+
+            // If all required parameters are empty, reject the request.
+            if (string.IsNullOrWhiteSpace(deploymentParameters.CommitId) && string.IsNullOrWhiteSpace(deploymentParameters.FromCommitId)
+                && string.IsNullOrWhiteSpace(deploymentParameters.ToCommitId) && string.IsNullOrWhiteSpace(deploymentParameters.StartDate)
+                && string.IsNullOrWhiteSpace(deploymentParameters.EndDate))
+            {
+                errorMessage =  "The given deployment parameters are invalid. Please provide commit id/commit range/date range";
+                return errorMessage;
+            }
+
+            if(string.IsNullOrWhiteSpace(deploymentParameters.CommitId))
+            {
+                // validate other parameters
+                // Caller has not provided any of the parameters, throw validation error.
+                if (string.IsNullOrWhiteSpace(deploymentParameters.StartDate) && string.IsNullOrWhiteSpace(deploymentParameters.EndDate)
+                   && string.IsNullOrWhiteSpace(deploymentParameters.FromCommitId) && string.IsNullOrWhiteSpace(deploymentParameters.ToCommitId))
+                {
+                    errorMessage = "The given deployment parameters are invalid. Please provide both StartDate & EndDate or FromCommit & ToCommit";
+                }
+                // If both start date & End date are not given, throw validation error.
+                if ((string.IsNullOrWhiteSpace(deploymentParameters.StartDate) && !string.IsNullOrWhiteSpace(deploymentParameters.EndDate))
+                    || (string.IsNullOrWhiteSpace(deploymentParameters.EndDate) && !string.IsNullOrWhiteSpace(deploymentParameters.StartDate)))
+                {
+                    errorMessage = "The given deployment parameters are invalid. Please provide both StartDate & EndDate";
+                }
+                // If both start and end date are present but start date is greater than end date, throw validation error.
+                if (!string.IsNullOrWhiteSpace(deploymentParameters.StartDate) && !string.IsNullOrWhiteSpace(deploymentParameters.EndDate)
+                    && ((DateTime.Parse(deploymentParameters.StartDate) > DateTime.Parse(deploymentParameters.EndDate))))
+                {
+                    errorMessage = "Start date cannot be greater than end date";
+                }
+
+                // If both FromCommit & ToCommit are not given, throw validation error.
+                if ((string.IsNullOrWhiteSpace(deploymentParameters.FromCommitId) && !string.IsNullOrWhiteSpace(deploymentParameters.ToCommitId))
+                    || (string.IsNullOrWhiteSpace(deploymentParameters.ToCommitId) && !string.IsNullOrWhiteSpace(deploymentParameters.FromCommitId)))
+                {
+                    errorMessage = "The given deployment parameters are invalid. Please provide both FromCommitId & ToCommitId";
+                } 
+            }
+            return errorMessage;
+        }
     }
 }

@@ -315,24 +315,6 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         {
             var result = new List<DevopsFileChange>();
 
-            // Caller has not provided any of the parameters, throw validation error.
-            if (string.IsNullOrWhiteSpace(parameters.StartDate) && string.IsNullOrWhiteSpace(parameters.EndDate)
-               && string.IsNullOrWhiteSpace(parameters.FromCommitId) && string.IsNullOrWhiteSpace(parameters.ToCommitId))
-            {
-                throw new ArgumentException("The given deployment parameters are invalid. Please provide both StartDate & EndDate or FromCommit & ToCommit");
-            }
-            // If both start date & End date are not given, throw validation error
-            if ((string.IsNullOrWhiteSpace(parameters.StartDate) && !string.IsNullOrWhiteSpace(parameters.EndDate))
-                || (string.IsNullOrWhiteSpace(parameters.EndDate) && !string.IsNullOrWhiteSpace(parameters.StartDate)))
-            {
-                throw new ArgumentException("The given deployment parameters are invalid. Please provide both StartDate & EndDate");
-            }
-            // If both FromCommit & ToCommit are not given, throw validation error.
-            if ((string.IsNullOrWhiteSpace(parameters.FromCommitId) && !string.IsNullOrWhiteSpace(parameters.ToCommitId))
-                || (string.IsNullOrWhiteSpace(parameters.ToCommitId) && !string.IsNullOrWhiteSpace(parameters.FromCommitId)))
-            {
-                throw new ArgumentException("The given deployment parameters are invalid. Please provide both FromCommitId & ToCommitId");
-            }
             string gitFromdate;
             string gitToDate;
             CancellationTokenSource tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
@@ -349,10 +331,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 gitFromdate = parameters.StartDate;
                 gitToDate = parameters.EndDate;
             }
-            if(DateTime.Parse(gitFromdate) > DateTime.Parse(gitToDate))
-            {
-                throw new ArgumentException("Start date cannot be greater than end date");
-            }
+            
             var defaultBranch = repositoryAsync.DefaultBranch.Replace("refs/heads/", "");
             GitVersionDescriptor gitVersionDescriptor = new GitVersionDescriptor
             {
