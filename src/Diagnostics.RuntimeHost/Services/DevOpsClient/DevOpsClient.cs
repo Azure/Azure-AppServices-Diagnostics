@@ -1,26 +1,17 @@
-﻿using Diagnostics.Logger;
+﻿using Diagnostics.DataProviders;
+using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models.Storage;
-using Diagnostics.RuntimeHost.Utilities;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web;
 
 namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 {
@@ -233,8 +224,9 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         {
             if (string.IsNullOrWhiteSpace(commitId))
                 throw new ArgumentNullException("commit id cannot be null");
-            GitRepository repositoryAsync = await gitClient.GetRepositoryAsync(_project, _repoID, (object)null, new CancellationToken());
-            GitCommitChanges changesAsync = await gitClient.GetChangesAsync(commitId, repositoryAsync.Id);
+            CancellationTokenSource tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
+            GitRepository repositoryAsync = await gitClient.GetRepositoryAsync(_project, _repoID, (object)null, tokenSource.Token);
+            GitCommitChanges changesAsync = await gitClient.GetChangesAsync(commitId, repositoryAsync.Id, null, null, null, tokenSource.Token);
             List<DevopsFileChange> stringList = new List<DevopsFileChange>();
             foreach (GitChange change in changesAsync.Changes)
             {
@@ -274,7 +266,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                                         .Cast<Match>()
                                         .Select(m => m.Groups[1].Value));
 
-                    GitCommit gitCommitDetails = await gitClient.GetCommitAsync(commitId, repositoryAsync.Id);
+                    GitCommit gitCommitDetails = await gitClient.GetCommitAsync(commitId, repositoryAsync.Id, null, null, tokenSource.Token);
                     // Get the package.json from the parent commit since at this commit, the file doesn't exist.
                     var packageContent = await GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/package.json", new GitVersionDescriptor
                     {
@@ -343,7 +335,8 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             }
             string gitFromdate;
             string gitToDate;
-            GitRepository repositoryAsync = await gitClient.GetRepositoryAsync(_project, _repoID, (object)null, new CancellationToken());
+            CancellationTokenSource tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
+            GitRepository repositoryAsync = await gitClient.GetRepositoryAsync(_project, _repoID, (object)null, tokenSource.Token);
             if (!string.IsNullOrWhiteSpace(parameters.FromCommitId) && !string.IsNullOrWhiteSpace(parameters.ToCommitId))
             {
                 GitCommit fromCommitDetails = await gitClient.GetCommitAsync(parameters.FromCommitId, repositoryAsync.Id);
@@ -355,6 +348,10 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             {
                 gitFromdate = parameters.StartDate;
                 gitToDate = parameters.EndDate;
+            }
+            if(DateTime.Parse(gitFromdate) > DateTime.Parse(gitToDate))
+            {
+                throw new ArgumentException("Start date cannot be greater than end date");
             }
             var defaultBranch = repositoryAsync.DefaultBranch.Replace("refs/heads/", "");
             GitVersionDescriptor gitVersionDescriptor = new GitVersionDescriptor
@@ -368,7 +365,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 FromDate = gitFromdate,
                 ToDate = gitToDate,
                 ItemVersion = gitVersionDescriptor
-            });
+            }, null, null, null, tokenSource.Token);
             foreach (var commit in commitsToProcess)
             {
                 var filesinCommit = await GetFilesInCommit(commit.CommitId);

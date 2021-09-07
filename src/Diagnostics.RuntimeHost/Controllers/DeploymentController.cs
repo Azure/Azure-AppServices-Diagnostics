@@ -76,8 +76,40 @@ namespace Diagnostics.RuntimeHost.Controllers
 
 
             DiagnosticsETWProvider.Instance.LogDeploymentOperationMessage(requestId, response.DeploymentGuid, $"{filesToCompile.Count} to compile");
-            //  Compile files
-            foreach( var file in filesToCompile)
+          
+            // Batch update files to be deleted.
+
+            var filesTobeDeleted = filesToCompile.Where(file => file.MarkAsDisabled);
+            List<DiagEntity> batchDetectors = new List<DiagEntity>();
+            List<DiagEntity> batchGists = new List<DiagEntity>();
+            foreach (var file in filesTobeDeleted)
+            {
+                var diagEntity = JsonConvert.DeserializeObject<DiagEntity>(file.PackageConfig);
+                diagEntity.GithubLastModified = DateTime.UtcNow;
+                diagEntity.PartitionKey = diagEntity.EntityType;
+                diagEntity.RowKey = diagEntity.DetectorId;
+                var detectorId = diagEntity.DetectorId;
+                DiagnosticsETWProvider.Instance.LogDeploymentOperationMessage(requestId, response.DeploymentGuid, $"Making {detectorId} as disabled");
+                diagEntity.IsDisabled = true;
+                if (response.DeletedDetectors == null)
+                {
+                    response.DeletedDetectors = new List<string>();
+                }
+                response.DeletedDetectors.Add(diagEntity.RowKey);
+                if(diagEntity.PartitionKey.Equals("Detector"))
+                {
+                    batchDetectors.Add(diagEntity);
+                } else if (diagEntity.PartitionKey.Equals("Gist"))
+                {
+                    batchGists.Add(diagEntity);
+                }
+            }
+            // Batch update must share the same partition key, so two separate tasks.
+            Task batchDeleteDetectors = batchDetectors.Count > 0 ? storageService.LoadBatchDataToTable(batchDetectors) : Task.CompletedTask;
+            Task batchDeleteGists = batchGists.Count > 0 ? storageService.LoadBatchDataToTable(batchGists) : Task.CompletedTask;
+            await Task.WhenAll(new Task[] { batchDeleteDetectors, batchDeleteGists });
+
+            foreach ( var file in filesToCompile.Where(file => !file.MarkAsDisabled))
             {
                 // For each of the files to compile:
                 // 1. Create the diag entity object.
@@ -86,21 +118,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 diagEntity.PartitionKey = diagEntity.EntityType;
                 diagEntity.RowKey = diagEntity.DetectorId;
                 var detectorId = diagEntity.DetectorId;
-
-                // 2. If file was deleted in git, mark as disabled in storage account.
-                if (file.MarkAsDisabled)
-                {                 
-                    diagEntity.IsDisabled = true;
-                    DiagnosticsETWProvider.Instance.LogDeploymentOperationMessage(requestId, response.DeploymentGuid, $"Making {detectorId} as disabled");
-                    await storageService.LoadDataToTable(diagEntity);
-                    if (response.DeletedDetectors == null)
-                    {
-                        response.DeletedDetectors = new List<string>();
-                    }
-                    response.DeletedDetectors.Add(diagEntity.RowKey);
-                    continue;
-                }
-
+          
                 List<string> gistReferences = DetectorParser.GetLoadDirectiveNames(file.Content);
                 
                 // Get the latest version of gist from the repo.
@@ -159,6 +177,6 @@ namespace Diagnostics.RuntimeHost.Controllers
             timeTakenStopWatch.Stop();
             DiagnosticsETWProvider.Instance.LogDeploymentOperationMessage(requestId, response.DeploymentGuid, $"Deployment completed for {response.DeploymentGuid}, time elapsed {timeTakenStopWatch.ElapsedMilliseconds}");
             return Ok(response);
-        }
+        }     
     }
 }

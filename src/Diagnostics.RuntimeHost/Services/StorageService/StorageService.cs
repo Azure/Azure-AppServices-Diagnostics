@@ -28,6 +28,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         Task<int> ListBlobsInContainer();
         Task<DetectorRuntimeConfiguration> LoadConfiguration(DetectorRuntimeConfiguration configuration);
         Task<List<DetectorRuntimeConfiguration>> GetKustoConfiguration();
+
+        Task LoadBatchDataToTable(List<DiagEntity> diagEntities);
     }
     public class StorageService : IStorageService
     {
@@ -35,7 +37,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         public static readonly string RowKey = "RowKey";
 
         private static CloudTableClient tableClient;
-        private static CloudBlobClient containerClient;
+        private static CloudBlobClient cloudBlobClient;
         private string tableName;
         private string container;
         private bool loadOnlyPublicDetectors;
@@ -52,7 +54,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             if (hostingEnvironment != null && hostingEnvironment.EnvironmentName.Equals("UnitTest", StringComparison.CurrentCultureIgnoreCase))
             {
                 tableClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudTableClient();
-                containerClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudBlobClient();             
+                cloudBlobClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudBlobClient();             
             }
             else
             {
@@ -65,7 +67,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 }
                 var storageAccount = new CloudStorageAccount(new StorageCredentials(accountname, key), accountname, dnsSuffix, true);
                 tableClient = storageAccount.CreateCloudTableClient();
-                containerClient = storageAccount.CreateCloudBlobClient();             
+                cloudBlobClient = storageAccount.CreateCloudBlobClient();             
             }
 
             if (!bool.TryParse((configuration[$"SourceWatcher:{RegistryConstants.LoadOnlyPublicDetectorsKey}"]), out loadOnlyPublicDetectors))
@@ -164,7 +166,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
 
                 // Create the InsertOrReplace table operation
                 TableOperation insertOrReplaceOperation = TableOperation.InsertOrReplace(detectorEntity);
-
+             
                 TableRequestOptions tableRequestOptions = new TableRequestOptions();
                 tableRequestOptions.LocationMode = LocationMode.PrimaryOnly;
                 tableRequestOptions.MaximumExecutionTime = TimeSpan.FromSeconds(60);
@@ -193,7 +195,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             {
                 var timeTakenStopWatch = new Stopwatch();
                 timeTakenStopWatch.Start();
-                var containerReference = containerClient.GetContainerReference(container);
+                var containerReference = cloudBlobClient.GetContainerReference(container);
                 var cloudBlob = containerReference.GetBlockBlobReference(blobname);
                 BlobRequestOptions blobRequestOptions = new BlobRequestOptions();
                 blobRequestOptions.LocationMode = LocationMode.PrimaryOnly;
@@ -241,7 +243,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     OperationContext oc = new OperationContext();
                     oc.ClientRequestID = clientRequestId;
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Fetching blob {name} with ClientRequestid {clientRequestId}");
-                    var containerReference = containerClient.GetContainerReference(container);
+                    var containerReference = cloudBlobClient.GetContainerReference(container);
                     var cloudBlob = containerReference.GetBlockBlobReference(name);
                     using (MemoryStream ms = new MemoryStream())
                     {
@@ -276,7 +278,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 options.MaximumExecutionTime = TimeSpan.FromSeconds(60);
                 OperationContext oc = new OperationContext();
                 oc.ClientRequestID = clientRequestId;
-                var blobsResult = await containerClient.ListBlobsSegmentedAsync(null, true, BlobListingDetails.All, 1000, null, options, oc);
+                var blobsResult = await cloudBlobClient.ListBlobsSegmentedAsync(null, true, BlobListingDetails.All, 1000, null, options, oc);
                 timeTakenStopWatch.Stop();
                 DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Number of blobs stored in container {container} is {blobsResult.Results.Count()}, time taken {timeTakenStopWatch.ElapsedMilliseconds} milliseconds, ClientRequestId {clientRequestId}");
                 return blobsResult.Results != null ? blobsResult.Results.Count() : 0;
@@ -364,7 +366,49 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), $"ClientRequestId {clientRequestId} {ex.Message}", ex.GetType().ToString(), ex.ToString());
                 return null;
             }
-        }        
+        }
+
+        public async Task LoadBatchDataToTable(List<DiagEntity> diagEntities)
+        {
+            var clientRequestId = Guid.NewGuid().ToString();
+            try
+            {
+                // Create a table reference for interacting with the table service 
+                CloudTable table = tableClient.GetTableReference(tableName);
+                if (diagEntities == null || diagEntities.Count == 0)
+                {
+                    throw new ArgumentNullException("List is empty");
+                }
+
+                var timeTakenStopWatch = new Stopwatch();
+                timeTakenStopWatch.Start();
+
+                TableBatchOperation batchOperation = new TableBatchOperation();
+                
+                foreach (var entity in diagEntities)
+                {
+                    batchOperation.InsertOrReplace(entity);
+                }
+                
+                TableRequestOptions tableRequestOptions = new TableRequestOptions();
+                tableRequestOptions.LocationMode = LocationMode.PrimaryOnly;
+                tableRequestOptions.MaximumExecutionTime = TimeSpan.FromSeconds(60);
+                OperationContext oc = new OperationContext();
+                oc.ClientRequestID = clientRequestId;
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Insert or Replace batch diag entities into {tableName} ClientRequestId {clientRequestId}");
+                //Execute batch operation
+                IList<TableResult> result = await table.ExecuteBatchAsync(batchOperation, tableRequestOptions, oc);            
+                timeTakenStopWatch.Stop();
+                DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"InsertOrReplace batch time taken {timeTakenStopWatch.ElapsedMilliseconds}, ClientRequestId {clientRequestId}");
+                
+            }
+            catch (Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogAzureStorageException(nameof(StorageService), $"ClientRequestId {clientRequestId} {ex.Message}", ex.GetType().ToString(), ex.ToString());
+                throw;
+            }
+          
+        }
     }
 }
 
