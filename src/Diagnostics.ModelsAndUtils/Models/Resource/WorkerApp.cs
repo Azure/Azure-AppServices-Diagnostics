@@ -25,6 +25,16 @@ namespace Diagnostics.ModelsAndUtils.Models
         public string ResourceGroup { get; set; }
 
         /// <summary>
+        /// Kube Environment Name
+        /// </summary>
+        public string KubeEnvironmentName { get; set; }
+
+        /// <summary>
+        /// Geo Master Instance Name
+        /// </summary>
+        public string GeoMasterName { get; set; }
+
+        /// <summary>
         /// Resource URI
         /// </summary>
         public string ResourceUri
@@ -62,11 +72,13 @@ namespace Diagnostics.ModelsAndUtils.Models
             get; set;
         }
 
-        public WorkerApp(string subscriptionId, string resourceGroup, string resourceName, string subLocationPlacementId = null) : base()
+        public WorkerApp(string subscriptionId, string resourceGroup, string resourceName, string kubeEnvironmentName=null, string geoMasterName=null, string subLocationPlacementId = null) : base()
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
             this.Name = resourceName;
+            this.KubeEnvironmentName = kubeEnvironmentName;
+            this.GeoMasterName = geoMasterName;
             SubscriptionLocationPlacementId = subLocationPlacementId;
         }
 

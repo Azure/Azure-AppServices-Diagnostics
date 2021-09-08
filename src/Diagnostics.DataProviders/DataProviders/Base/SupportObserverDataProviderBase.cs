@@ -262,6 +262,8 @@ namespace Diagnostics.DataProviders
         public abstract Task<dynamic> GetHostNames(string stampName, string siteName);
 
         public abstract Task<dynamic> GetSitePostBody(string stampName, string siteName);
+        
+        public abstract Task<dynamic> GetWorkerAppPostBody(string workerAppName);
 
         public abstract Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName);
 
