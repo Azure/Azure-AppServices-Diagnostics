@@ -306,7 +306,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         StepViews,
 
         /// <summary>
-        /// Data Rendered as AppInsights enablement in detector
+        /// Used for retrieving data to generate a downloadable PDF file
         /// </summary>
         Report
     }

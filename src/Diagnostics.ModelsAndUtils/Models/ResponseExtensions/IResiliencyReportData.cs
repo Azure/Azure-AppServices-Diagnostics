@@ -21,7 +21,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         void SetResiliencyResourceList(ResiliencyResource[] value);
 
-        //      public JObject JSONObject();        
+             
     }
 
     /// <summary>
