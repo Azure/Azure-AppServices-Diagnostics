@@ -36,7 +36,7 @@
     <None Update="TestData\TestDetectorWithSupportTopic.csx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="TestData\AutoHeal.csx">
+    <None Update="TestData\TestDetectorWithGist.csx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -13,7 +13,7 @@ namespace Diagnostics.Tests.ScriptsTests
 
         public async void TestParserForGistClass()
         {
-            string code = await File.ReadAllTextAsync(@"TestData/AutoHeal.csx");
+            string code = await File.ReadAllTextAsync(@"TestData/TestDetectorWithGist.csx");
             var gistClass = DetectorParser.GetLoadDirectiveNames(code);
             Assert.NotEmpty(gistClass);
             Assert.Equal(2, gistClass.Count);
