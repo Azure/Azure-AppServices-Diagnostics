@@ -63,8 +63,19 @@
         public const string ObserverGetSites = "sites/{siteName}";
         public const string ObserverGetSiteWithStamp = "stamps/{stampName}/sites/{siteName}";
         public const string ObserverGetHostingEnvironment = "hostingEnvironments/{hostingEnvironmentName}";
+        public const string ObserverGetWorkerApp = "partner/workerapp/{workerAppName}";
 
         #endregion Observer Urls
+
+        #region DevOps Urls
+
+        public const string DevOps = "devops";
+        public const string DevOpsMakePR = "makePR";
+        public const string DevOpsPush = "push";
+        public const string DevOpsGetCode = "getCode";
+        public const string DevOpsGetBranches = "getBranches";
+
+        #endregion
     }
 
     /// <summary>

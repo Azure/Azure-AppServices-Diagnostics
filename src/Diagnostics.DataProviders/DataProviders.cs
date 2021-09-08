@@ -29,7 +29,9 @@ namespace Diagnostics.DataProviders
             Kusto = GetOrAddDataProvider(new KustoLogDecorator(context, new KustoDataProvider(_cache,
                      context.Configuration.KustoConfiguration,
                      context.RequestId,
-                     context.KustoHeartBeatService)));
+                     context.KustoHeartBeatService,
+                     context.QueryStartTime, 
+                     context.QueryEndTime)));
 
             Observer = GetOrAddDataProvider(new ObserverLogDecorator(context, SupportObserverDataProviderFactory.GetDataProvider(_cache, context.Configuration, context)));
 

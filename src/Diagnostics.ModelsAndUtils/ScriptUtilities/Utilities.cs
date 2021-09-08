@@ -6,6 +6,7 @@ using Diagnostics.ModelsAndUtils.Models;
 
 using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 {
