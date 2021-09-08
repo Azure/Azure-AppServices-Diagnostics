@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.Extensions.Configuration;
 using Diagnostics.DataProviders;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
@@ -19,8 +20,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.WorkerAppResource)]
     public class WorkerAppController : DiagnosticControllerBase<WorkerApp>
     {
-        public WorkerAppController(IServiceProvider services, IRuntimeContext<WorkerApp> runtimeContext)
-            : base(services, runtimeContext)
+        public WorkerAppController(IServiceProvider services, IRuntimeContext<WorkerApp> runtimeContext, IConfiguration config)
+            : base(services, runtimeContext, config)
         {
         }
 
