@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -16,8 +17,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.AppServiceCertResource)]
     public sealed class AppServiceCertificateController : DiagnosticControllerBase<AppServiceCertificate>
     {
-        public AppServiceCertificateController(IServiceProvider services, IRuntimeContext<AppServiceCertificate> runtimeContext)
-            : base(services, runtimeContext)
+        public AppServiceCertificateController(IServiceProvider services, IRuntimeContext<AppServiceCertificate> runtimeContext, IConfiguration config)
+            : base(services, runtimeContext, config)
         {
         }
 

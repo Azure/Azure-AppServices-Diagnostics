@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.CSharp.RuntimeBinder;
 using Diagnostics.ModelsAndUtils.Utilities;
+using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -19,8 +20,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.HostingEnvironmentResource)]
     public sealed class HostingEnvironmentController : DiagnosticControllerBase<HostingEnvironment>
     {
-        public HostingEnvironmentController(IServiceProvider services, IRuntimeContext<HostingEnvironment> runtimeContext)
-            : base(services, runtimeContext)
+        public HostingEnvironmentController(IServiceProvider services, IRuntimeContext<HostingEnvironment> runtimeContext, IConfiguration config)
+            : base(services, runtimeContext, config)
         {
         }
 

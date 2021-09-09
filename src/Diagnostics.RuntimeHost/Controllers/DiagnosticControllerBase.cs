@@ -9,6 +9,7 @@ using System.Web;
 using Diagnostics.DataProviders;
 using Diagnostics.DataProviders.Exceptions;
 using Diagnostics.DataProviders.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
@@ -19,6 +20,7 @@ using Diagnostics.ModelsAndUtils.Utilities;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Models.Exceptions;
 using Diagnostics.RuntimeHost.Services;
+using Diagnostics.RuntimeHost.Services.DevOpsClient;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.DiagnosticsTranslator;
@@ -29,11 +31,13 @@ using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Scripts.Utilities;
+using Diagnostics.Scripts.CompilationService.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
+using Diagnostics.Logger;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -52,12 +56,15 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected ISupportTopicService _supportTopicService;
         protected IKustoMappingsCacheService _kustoMappingCacheService;
         protected IRuntimeLoggerProvider _loggerProvider;
+        protected IRepoClient devopsClient;
         private InternalAPIHelper _internalApiHelper;
         private IDiagEntityTableCacheService tableCacheService;
         private ISourceWatcher storageWatcher;
         private IDiagnosticTranslatorService _diagnosticTranslator;
+        private bool loadGistFromRepo;
 
-        public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext)
+
+        public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext, IConfiguration config)
         {
             this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));
             this._sourceWatcherService = (ISourceWatcherService)services.GetService(typeof(ISourceWatcherService));
@@ -79,6 +86,14 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
+            if(bool.TryParse(config["LoadGistFromRepo"], out bool retVal))
+            {
+                loadGistFromRepo = retVal;
+            } else
+            {
+                loadGistFromRepo = false;
+            }
+            devopsClient = (IRepoClient)services.GetService(typeof(IRepoClient));
         }
 
         #region API Response Methods
@@ -273,14 +288,29 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
 
-            foreach (var p in _gistCache.GetAllReferences(runtimeContext))
+            if(loadGistFromRepo)
             {
-                if (!jsonBody.References.ContainsKey(p.Key))
+                List<string> gistReferences = DetectorParser.GetLoadDirectiveNames(jsonBody.Script);
+                foreach (string gist in gistReferences)
                 {
-                    // Add latest version to references
-                    jsonBody.References.Add(p);
+                    if(!jsonBody.References.ContainsKey(gist))
+                    {
+                        object gistContent = await devopsClient.GetFileContentAsync($"{gist}/{gist}.csx", resource.ResourceUri, HttpContext.Request.Headers[HeaderConstants.RequestIdHeaderName]);
+                        jsonBody.References.Add(gist, gistContent.ToString());
+                    }                   
+                }
+            } else
+            {
+                foreach (var p in _gistCache.GetAllReferences(runtimeContext))
+                {
+                    if (!jsonBody.References.ContainsKey(p.Key))
+                    {
+                        // Add latest version to references
+                        jsonBody.References.Add(p);
+                    }
                 }
             }
+           
 
             if (!Enum.TryParse(jsonBody.EntityType, true, out EntityType entityType))
             {
@@ -1025,6 +1055,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             if (tableCacheService.IsStorageAsSourceEnabled())
             {
+                
                 var allDetectorsFromStorage = await tableCacheService.GetEntityListByType<TResource>(context);
                 if (allDetectorsFromStorage.Count == 0)
                 {
