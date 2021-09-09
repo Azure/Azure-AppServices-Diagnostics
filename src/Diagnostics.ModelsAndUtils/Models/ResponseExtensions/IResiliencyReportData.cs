@@ -43,13 +43,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
 
         /// <summary>
-        /// List of Resiliency Features
+        /// Retrieve the list of Resiliency Features
         /// </summary>
         ResiliencyFeature[] GetResiliencyFeaturesList();
 
 
         /// <summary>
-        /// List of Resiliency Features
+        /// Set the list of Resiliency Features
         /// </summary>
         void SetResiliencyFeaturesList(ResiliencyFeature[] value);
     }
@@ -92,6 +92,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         string SolutionComments { get; set; }
     }
 
+    /// <summary>
+    /// Used to describe the weight of each feature:
+    /// * NotCounted: A feature that could help improve resiliency but its use depends on whether customer's resource can use it or not.
+    /// * GoodToHave: Features that are recommended to have and that it will improve resiliency but are not critical.
+    /// * Important: Used for features that will provide resiliency in case of specific situations that won't happen as often.    
+    /// * Mandatory: Without implementing this feature, the resource most likely will have downtime.* Used to describe the weight of each feature:    /// 
+    /// </summary>
     public enum Weight
     {
         NotCounted = 0,

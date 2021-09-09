@@ -201,19 +201,19 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             {
                 return null;
             }
+            string jsonResiliencyReport = JsonConvert.SerializeObject(resiliencyReportData, Formatting.Indented);
+            string jsonResiliencyResourceList = JsonConvert.SerializeObject(resiliencyReportData.GetResiliencyResourceList(), Formatting.Indented);
+            string jsonResiliencyFeaturesList = "";
+            for (int siteNum = 0; siteNum < resiliencyReportData.GetResiliencyResourceList().GetLength(0); siteNum++)
+            {
+                jsonResiliencyFeaturesList = jsonResiliencyFeaturesList + JsonConvert.SerializeObject(resiliencyReportData.GetResiliencyResourceList()[siteNum].GetResiliencyFeaturesList(), Formatting.Indented);
+                
+            }
             var table = new DataTable();
             table.Columns.Add(new DataColumn("ResiliencyReport", typeof(string)));
             table.Columns.Add(new DataColumn("ResiliencyResourceList", typeof(string)));
             table.Columns.Add(new DataColumn("ResiliencyFeaturesList", typeof(string)));
-            string jsonResiliencyReport = JsonConvert.SerializeObject(resiliencyReportData, Formatting.Indented);
-            string jsonResiliencyResourceList = JsonConvert.SerializeObject(resiliencyReportData.GetResiliencyResourceList(), Formatting.Indented);
-            string jsonResiliencyFeaturesList;
-            for (int siteNum = 0; siteNum < resiliencyReportData.GetResiliencyResourceList().GetLength(0); siteNum++)
-            {
-                jsonResiliencyFeaturesList = JsonConvert.SerializeObject(resiliencyReportData.GetResiliencyResourceList()[siteNum].GetResiliencyFeaturesList(), Formatting.Indented);
-                table.Rows.Add(new object[] { jsonResiliencyReport, jsonResiliencyResourceList, jsonResiliencyFeaturesList });
-            }
-
+            table.Rows.Add(new object[] { jsonResiliencyReport, jsonResiliencyResourceList, jsonResiliencyFeaturesList });
             var diagnosticData = new DiagnosticData()
             {
                 Table = table,
