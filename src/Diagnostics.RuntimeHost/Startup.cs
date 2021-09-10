@@ -242,7 +242,6 @@ namespace Diagnostics.RuntimeHost
             services.AddDiagEntitiesTableCacheService(Configuration);
 
             InjectSourceWatcher(services);
-
             services.AddLogging(loggingConfig =>
             {
                 loggingConfig.ClearProviders();

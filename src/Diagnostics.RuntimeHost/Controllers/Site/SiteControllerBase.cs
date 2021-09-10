@@ -9,6 +9,7 @@ using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Services;
 using Diagnostics.RuntimeHost.Utilities;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 
 namespace Diagnostics.RuntimeHost.Controllers
@@ -17,8 +18,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     {
         protected ISiteService _siteService;
 
-        public SiteControllerBase(IServiceProvider services, IRuntimeContext<App> runtimeContext)
-            : base(services, runtimeContext)
+        public SiteControllerBase(IServiceProvider services, IRuntimeContext<App> runtimeContext, IConfiguration config)
+            : base(services, runtimeContext, config)
         {
             this._siteService = (ISiteService)services.GetService(typeof(ISiteService));
         }

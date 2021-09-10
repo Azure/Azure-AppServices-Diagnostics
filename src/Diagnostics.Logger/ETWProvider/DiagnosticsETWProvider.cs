@@ -834,5 +834,21 @@ namespace Diagnostics.Logger
         }
 
         #endregion
+
+        #region Detector Deployment Events (ID: 5700 - 5709)
+
+        [Event(5700, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDeploymentOperationMessage)]
+        public void LogDeploymentOperationMessage(string RequestId, string DeploymentId, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
+        {
+            WriteDiagnosticsEvent(
+                5700,
+                RequestId,
+                DeploymentId,
+                Message,
+                DiagEnvironment,
+                DiagWebsiteHostName);
+        }
+
+        #endregion
     }
 }

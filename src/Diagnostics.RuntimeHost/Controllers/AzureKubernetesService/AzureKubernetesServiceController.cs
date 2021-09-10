@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -16,8 +17,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.AzureKubernetesServiceResource)]
     public class AzureKubernetesServiceController : DiagnosticControllerBase<AzureKubernetesService>
     {
-        public AzureKubernetesServiceController(IServiceProvider services, IRuntimeContext<AzureKubernetesService> runtimeContext)
-            : base(services, runtimeContext)
+        public AzureKubernetesServiceController(IServiceProvider services, IRuntimeContext<AzureKubernetesService> runtimeContext, IConfiguration config)
+            : base(services, runtimeContext, config)
         {
         }
 
