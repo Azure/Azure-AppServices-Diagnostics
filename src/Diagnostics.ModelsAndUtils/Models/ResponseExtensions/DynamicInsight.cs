@@ -75,9 +75,9 @@
         /// public async static Task<![CDATA[<Response>]]> Run(DataProviders dp, OperationContext cxt, Response res)
         /// {
         ///     var diagnosticData = new DiagnosticData {
-        ///         Table = table //This is where you would execute kusto query
+        ///         Table = table, //This is where you would execute kusto query
         ///         RenderingProperties = new TimeSeriesRendering()
-        ///     }
+        ///     };
         ///
         ///     DynamicInsight insight = new DynamicInsight(InsightStatus.Critical, "This insight will expand to show a graph", diagnosticData);
         ///
