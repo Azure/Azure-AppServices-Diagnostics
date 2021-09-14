@@ -278,7 +278,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 options.MaximumExecutionTime = TimeSpan.FromSeconds(60);
                 OperationContext oc = new OperationContext();
                 oc.ClientRequestID = clientRequestId;
-                var blobsResult = await cloudBlobClient.ListBlobsSegmentedAsync(null, true, BlobListingDetails.All, 1000, null, options, oc);
+                var containerReference = cloudBlobClient.GetContainerReference(container);
+                var blobsResult = await containerReference.ListBlobsSegmentedAsync(null, true, BlobListingDetails.All, 1000, null, options, oc);
                 timeTakenStopWatch.Stop();
                 DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Number of blobs stored in container {container} is {blobsResult.Results.Count()}, time taken {timeTakenStopWatch.ElapsedMilliseconds} milliseconds, ClientRequestId {clientRequestId}");
                 return blobsResult.Results != null ? blobsResult.Results.Count() : 0;
