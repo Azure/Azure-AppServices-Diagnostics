@@ -17,10 +17,17 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public ResiliencyReportData(string customerName, ResiliencyResource[] resiliencyResourceList)
         {
-            this.CustomerName = customerName;
-            if (resiliencyResourceList == null)
+            if (string.IsNullOrEmpty(customerName)) 
             {
-                throw new ArgumentNullException(nameof(resiliencyResourceList), $"{nameof(resiliencyResourceList)} cannot be null");
+                throw new ArgumentNullException(nameof(customerName), $"{nameof(customerName)} cannot be null or empty");
+            }
+            else
+            {
+                this.CustomerName = customerName;
+            }
+            if (resiliencyResourceList == null ||  resiliencyResourceList.Length == 0)
+            {
+                throw new ArgumentNullException(nameof(resiliencyResourceList), $"{nameof(resiliencyResourceList)} cannot be null or empty");
             }
             else
             {
@@ -44,9 +51,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
         public void SetResiliencyResourceList(ResiliencyResource[] value)
         {
-            if (value == null)
+            if (value == null || value.Length == 0 )
             {
-                throw new ArgumentNullException(nameof(value), $"{nameof(value)} cannot be null");
+                throw new ArgumentNullException(nameof(value), $"{nameof(value)} cannot be null or empty");
             }
             else
             {
@@ -126,7 +133,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
         public ResiliencyFeature[] GetResiliencyFeaturesList()
         {
-            return this.resiliencyFeaturesList;
+            return (ResiliencyFeature[])this.resiliencyFeaturesList.Clone();
         }
 
         public void SetResiliencyFeaturesList(ResiliencyFeature[] value)

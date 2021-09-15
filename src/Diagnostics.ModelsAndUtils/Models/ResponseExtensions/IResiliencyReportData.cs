@@ -12,16 +12,17 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         string CustomerName { get; set; }
 
         /// <summary>
-        /// Array containing a list of all the resources to be included in the report along with their 
+        /// Array containing a list of all the resources to be included in the report along with the individual features checked and their scores.
         /// </summary>
         ResiliencyResource[] GetResiliencyResourceList();
 
         /// <summary>
-        /// Array containing a list of all the resources to be included in the report along with their 
+        /// Array containing a list of all the resources to be included in the report along with the individual features checked and their scores.
         /// </summary>
         void SetResiliencyResourceList(ResiliencyResource[] value);
 
-             
+
+
     }
 
     /// <summary>
