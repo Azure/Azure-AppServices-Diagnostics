@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Diagnostics.ModelsAndUtils.Models.Storage;
 
 namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 {
@@ -43,5 +44,17 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// 
         /// <returns></returns>
         Task<object> GetBranchesAsync(string resourceUri, string requestId);
+
+        /// <summary>
+        /// Gets file changed in a given commit id
+        /// </summary>
+        /// <param name="commitId">Commit id</param>
+        Task<List<DevopsFileChange>> GetFilesInCommit(string commitId);
+
+        /// <summary>
+        /// Gets file changed between two commits or date range
+        /// </summary>
+        /// <param name="parameters">Deployment parameters provided by caller</param>
+        Task<List<DevopsFileChange>> GetFilesBetweenCommits(DeploymentParameters parameters);
     }
 }
