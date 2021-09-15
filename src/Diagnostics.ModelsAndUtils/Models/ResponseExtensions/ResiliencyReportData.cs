@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,8 +10,9 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
     public class ResiliencyReportData : IResiliencyReportData
     {
+        private string _customerName = string.Empty;
         [JsonConverter(typeof(ResiliencyResource))]
-        ResiliencyResource[] resiliencyResourceList;
+        ResiliencyResource[] _resiliencyResourceList;
 
         /// <summary>
         /// Creates an instance of ResiliencyReportData
@@ -23,7 +25,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             }
             else
             {
-                this.CustomerName = customerName;
+                this._customerName = customerName;
             }
             if (resiliencyResourceList == null ||  resiliencyResourceList.Length == 0)
             {
@@ -31,22 +33,36 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             }
             else
             {
-                this.resiliencyResourceList = resiliencyResourceList;
+                this._resiliencyResourceList = resiliencyResourceList;
             }
         }
         /// <summary>
         /// Customer's name used for the report's cover. This will normally be either customer's Company or simply Customer's name obtained from the subscription.
         /// </summary>
-        public string CustomerName { get; set; }
+        public string CustomerName 
+        { 
+            get {
+                return this._customerName;
+            }
+            set
+            {
+                if (string.IsNullOrEmpty(value))
+                {
+                    throw new ArgumentNullException(nameof(CustomerName), $"{nameof(CustomerName)} cannot be null or empty");
+                }
+                else
+                {
+                    this._customerName = value;
+                }
+            }
+        }
 
         /// <summary>
-        /// Array containing a list of all the resources to be included in the report along with their 
+        /// Array containing a list of all the resources to be included in the report along with the individual features checked and their scores.
         /// </summary>
-
-
         public ResiliencyResource[] GetResiliencyResourceList()
         {
-            return this.resiliencyResourceList;
+            return this._resiliencyResourceList;
         }
 
         public void SetResiliencyResourceList(ResiliencyResource[] value)
@@ -57,7 +73,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             }
             else
             {
-                this.resiliencyResourceList = value;
+                this._resiliencyResourceList = value;
             }
 
         }
@@ -70,7 +86,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     /// </summary>
     public class ResiliencyResource : IResiliencyResource
     {
-        double _overallScore;
+        string _name = string.Empty;
+        double _overallScore = 0;
         ResiliencyFeature[] resiliencyFeaturesList;
         IDictionary<string, Weight> _featuresDictionary;
 
@@ -79,9 +96,20 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public ResiliencyResource(string name, IDictionary<string, Weight> featuresDictionary)
         {
-            this.Name = name;
-            _overallScore = 0;
-            if (featuresDictionary != null)
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentNullException(nameof(name), $"{nameof(name)} cannot be null or empty");
+            }
+            else
+            {
+                this._name = name;
+            }            
+
+            if (featuresDictionary == null || featuresDictionary.Count == 0)
+            {
+                throw new ArgumentNullException(nameof(featuresDictionary), $"{nameof(featuresDictionary)} cannot be null or empty");
+            }
+            else
             {
                 _featuresDictionary = featuresDictionary;
                 this.resiliencyFeaturesList = new ResiliencyFeature[_featuresDictionary.Count];
@@ -95,10 +123,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                     i++;
                 }
                 this.resiliencyFeaturesList = resiliencyFeaturesList;
-            }
-            else
-            {
-                throw new ArgumentNullException(nameof(featuresDictionary), $"{nameof(featuresDictionary)} cannot be null");
             }
         }
 
