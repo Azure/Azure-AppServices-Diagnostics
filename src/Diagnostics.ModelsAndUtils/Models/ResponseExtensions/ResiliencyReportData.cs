@@ -135,30 +135,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public string Name { get; set; }
 
-        /// <summary>
-        /// Overall Score for the Resource is calculated based on the grade of each feature.
-        /// </summary>
-        public double CalculateOverallScore()
-        {
-            _overallScore = 0;
-            double _overallScoreSum = 0;
-            double _featureWeightsSum = 0;
-            foreach (ResiliencyFeature rf in resiliencyFeaturesList)
-            {
-                Weight _weight;
-                Grade _grade;
-                bool weightParsingResult = Enum.TryParse<Weight>(rf.FeatureWeight.ToString(), out _weight);
-                bool gradeParsingResult = Enum.TryParse<Grade>(rf.ImplementationGrade.ToString(), out _grade);
-                if (weightParsingResult && gradeParsingResult)
-                {
-                    _overallScoreSum += (int)rf.FeatureWeight * (int)rf.ImplementationGrade;
-                    _featureWeightsSum += (int)rf.FeatureWeight;
-                }
-            }
-            _overallScore = Math.Round((_overallScoreSum * 100) / (_featureWeightsSum * 2), 1);
-            return Math.Round(_overallScore, 2);
-        }
-
         public ResiliencyFeature[] GetResiliencyFeaturesList()
         {
             return (ResiliencyFeature[])this.resiliencyFeaturesList.Clone();
@@ -170,9 +146,28 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         }
 
         /// <summary>
-        /// Call CalculatedOverallScore to recalculate the OverallScore to make sure it calculates with latest changes.
+        /// Overall Score for the Resource is calculated based on the grade of each feature.
         /// </summary>
-        public double OverallScore { get => CalculateOverallScore(); }
+        public double OverallScore {
+            get {
+                _overallScore = 0;
+                double _overallScoreSum = 0;
+                double _featureWeightsSum = 0;
+                foreach (ResiliencyFeature rf in resiliencyFeaturesList)
+                {
+                    Weight _weight;
+                    Grade _grade;
+                    bool weightParsingResult = Enum.TryParse<Weight>(rf.FeatureWeight.ToString(), out _weight);
+                    bool gradeParsingResult = Enum.TryParse<Grade>(rf.ImplementationGrade.ToString(), out _grade);
+                    if (weightParsingResult && gradeParsingResult)
+                    {
+                        _overallScoreSum += (int)rf.FeatureWeight * (int)rf.ImplementationGrade;
+                        _featureWeightsSum += (int)rf.FeatureWeight;
+                    }
+                }
+                _overallScore = Math.Round((_overallScoreSum * 100) / (_featureWeightsSum * 2), 1);
+                return Math.Round(_overallScore, 2);
+            }
 
 
     }
