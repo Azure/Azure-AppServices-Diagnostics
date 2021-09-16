@@ -62,7 +62,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public ResiliencyResource[] GetResiliencyResourceList()
         {
-            return this._resiliencyResourceList;
+            return (ResiliencyResource[])this._resiliencyResourceList.Clone();            
         }
 
         public void SetResiliencyResourceList(ResiliencyResource[] value)
@@ -183,10 +183,20 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         /// <param name="name">Name of the Resiliency Feature evaluated.</param>
         /// <param name="featureWeight">Enum representing the Feature Weight.</param>
+        string _name = string.Empty;
+        
+
         public ResiliencyFeature(string name, Weight featureWeight)
         {
-            Name = name;
-            FeatureWeight = featureWeight;
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentNullException(nameof(name), $"{nameof(name)} cannot be null or empty");
+            }
+            else
+            {
+                this.Name = name;
+            }
+            this.FeatureWeight = featureWeight;                   
             ImplementationGrade = 0;
             GradeComments = "";
             SolutionComments = "";
@@ -195,7 +205,21 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Name of the Resiliency Feature evaluated.
         /// </summary>
-        public string Name { get; set; }
+        public string Name
+        {
+            get { return this.Name; }
+            set
+            {
+                if (string.IsNullOrEmpty(value))
+                {
+                    throw new ArgumentNullException(nameof(value), $"{nameof(value)} cannot be null or empty");
+                }
+                else
+                {
+                    this.Name = value;
+                }
+            }
+        }
 
         /// <summary>
         /// Feature Weight explanation:
