@@ -38,8 +38,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Overall Score for the Resource is calculated based on the grade of each feature
         /// </summary>
-        double CalculateOverallScore();
-
         double OverallScore { get; }
 
 
