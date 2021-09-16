@@ -17,6 +17,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Creates an instance of ResiliencyReportData
         /// </summary>
+        /// <param name="customername">Customer's name used for the report's cover. This will normally be either customer's Company or simply Customer's name obtained from the subscription.</param>
+        /// <param name="resiliencyResourceList">Array containing the list of resources being evaluated of type ResiliencyResource.</param>        
         public ResiliencyReportData(string customerName, ResiliencyResource[] resiliencyResourceList)
         {
             if (string.IsNullOrEmpty(customerName)) 
@@ -25,7 +27,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             }
             else
             {
-                this._customerName = customerName;
+                this.CustomerName = customerName;
             }
             if (resiliencyResourceList == null ||  resiliencyResourceList.Length == 0)
             {
@@ -42,7 +44,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public string CustomerName 
         { 
             get {
-                return this._customerName;
+                return this.CustomerName;
             }
             set
             {
@@ -52,7 +54,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 }
                 else
                 {
-                    this._customerName = value;
+                    this.CustomerName = value;
                 }
             }
         }
@@ -92,8 +94,10 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         IDictionary<string, Weight> _featuresDictionary;
 
         /// <summary>
-        /// Constructor
+        /// Constructor - Creates an instance of the ResiliencyResource class
         /// </summary>
+        /// <param name="name">Name of the Resource (Web App name for example) being evaluated.</param>
+        /// <param name="featuresDictionary"> Key pair values containing the name of the features evaluated and their Weight (Enum representing the Feature Weight).</param>        
         public ResiliencyResource(string name, IDictionary<string, Weight> featuresDictionary)
         {
             if (string.IsNullOrEmpty(name))
