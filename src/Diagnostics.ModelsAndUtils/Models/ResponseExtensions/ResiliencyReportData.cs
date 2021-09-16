@@ -21,7 +21,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="resiliencyResourceList">Array containing the list of resources being evaluated of type ResiliencyResource.</param>        
         public ResiliencyReportData(string customerName, ResiliencyResource[] resiliencyResourceList)
         {
-            if (string.IsNullOrEmpty(customerName)) 
+            if (string.IsNullOrEmpty(customerName))
             {
                 throw new ArgumentNullException(nameof(customerName), $"{nameof(customerName)} cannot be null or empty");
             }
@@ -29,7 +29,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             {
                 this.CustomerName = customerName;
             }
-            if (resiliencyResourceList == null ||  resiliencyResourceList.Length == 0)
+            if (resiliencyResourceList == null || resiliencyResourceList.Length == 0)
             {
                 throw new ArgumentNullException(nameof(resiliencyResourceList), $"{nameof(resiliencyResourceList)} cannot be null or empty");
             }
@@ -41,9 +41,10 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Customer's name used for the report's cover. This will normally be either customer's Company or simply Customer's name obtained from the subscription.
         /// </summary>
-        public string CustomerName 
-        { 
-            get {
+        public string CustomerName
+        {
+            get
+            {
                 return this.CustomerName;
             }
             set
@@ -64,12 +65,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public ResiliencyResource[] GetResiliencyResourceList()
         {
-            return (ResiliencyResource[])this._resiliencyResourceList.Clone();            
+            return (ResiliencyResource[])this._resiliencyResourceList.Clone();
         }
 
         public void SetResiliencyResourceList(ResiliencyResource[] value)
         {
-            if (value == null || value.Length == 0 )
+            if (value == null || value.Length == 0)
             {
                 throw new ArgumentNullException(nameof(value), $"{nameof(value)} cannot be null or empty");
             }
@@ -107,7 +108,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             else
             {
                 this._name = name;
-            }            
+            }
 
             if (featuresDictionary == null || featuresDictionary.Count == 0)
             {
@@ -148,8 +149,10 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Overall Score for the Resource is calculated based on the grade of each feature.
         /// </summary>
-        public double OverallScore {
-            get {
+        public double OverallScore
+        {
+            get
+            {
                 _overallScore = 0;
                 double _overallScoreSum = 0;
                 double _featureWeightsSum = 0;
@@ -170,8 +173,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             }
 
 
+        }
     }
-
     /// <summary>
     /// ResiliencyFeature is the object that will contain the data for the check done on a particular detector
     /// </summary>
@@ -183,7 +186,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="name">Name of the Resiliency Feature evaluated.</param>
         /// <param name="featureWeight">Enum representing the Feature Weight.</param>
         string _name = string.Empty;
-        
+
 
         public ResiliencyFeature(string name, Weight featureWeight)
         {
@@ -195,7 +198,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             {
                 this.Name = name;
             }
-            this.FeatureWeight = featureWeight;                   
+            this.FeatureWeight = featureWeight;
             ImplementationGrade = 0;
             GradeComments = "";
             SolutionComments = "";
@@ -247,8 +250,14 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         public string SolutionComments { get; set; }
     }
 
+    /// <summary>
+    /// Extension used by the Resiliency Report to generate the response with the data used to generate the PDF report
+    /// </summary>
     public static class ResponseResiliencyReportExtension
     {
+        /// <summary>
+        /// It adds the serialized ResiliencyReportData object into the response table.
+        /// </summary>
         public static DiagnosticData AddResiliencyReportData(this Response response, ResiliencyReportData resiliencyReportData)
         {
             if (response == null || resiliencyReportData == null)
@@ -261,7 +270,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             for (int siteNum = 0; siteNum < resiliencyReportData.GetResiliencyResourceList().GetLength(0); siteNum++)
             {
                 jsonResiliencyFeaturesList = jsonResiliencyFeaturesList + JsonConvert.SerializeObject(resiliencyReportData.GetResiliencyResourceList()[siteNum].GetResiliencyFeaturesList(), Formatting.Indented);
-                
+
             }
             var table = new DataTable();
             table.Columns.Add(new DataColumn("ResiliencyReport", typeof(string)));
