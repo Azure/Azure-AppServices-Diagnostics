@@ -15,7 +15,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         ResiliencyResource[] _resiliencyResourceList;
 
         /// <summary>
-        /// Creates an instance of ResiliencyReportData
+        /// Constructor. Creates an instance of ResiliencyReportData
         /// </summary>
         /// <param name="customername">Customer's name used for the report's cover. This will normally be either customer's Company or simply Customer's name obtained from the subscription.</param>
         /// <param name="resiliencyResourceList">Array containing the list of resources being evaluated of type ResiliencyResource.</param>        
@@ -88,8 +88,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     /// ResiliencyResources supported can be Web App or ASE
     /// </summary>
     public class ResiliencyResource : IResiliencyResource
-    {
-        string _name = string.Empty;
+    {        
         double _overallScore = 0;
         ResiliencyFeature[] resiliencyFeaturesList;
         IDictionary<string, Weight> _featuresDictionary;
@@ -107,7 +106,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             }
             else
             {
-                this._name = name;
+                this.Name = name;
             }
 
             if (featuresDictionary == null || featuresDictionary.Count == 0)
