@@ -21,7 +21,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="resiliencyResourceList">Array containing the list of resources being evaluated of type ResiliencyResource.</param>        
         public ResiliencyReportData(string customerName, ResiliencyResource[] resiliencyResourceList)
         {
-            if (string.IsNullOrEmpty(customerName))
+            if (string.IsNullOrWhiteSpace(customerName))
             {
                 throw new ArgumentNullException(nameof(customerName), $"{nameof(customerName)} cannot be null or empty");
             }
@@ -49,7 +49,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             }
             set
             {
-                if (string.IsNullOrEmpty(value))
+                if (string.IsNullOrWhiteSpace(value))
                 {
                     throw new ArgumentNullException(nameof(CustomerName), $"{nameof(CustomerName)} cannot be null or empty");
                 }
@@ -100,7 +100,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="featuresDictionary"> Key pair values containing the name of the features evaluated and their Weight (Enum representing the Feature Weight).</param>        
         public ResiliencyResource(string name, IDictionary<string, Weight> featuresDictionary)
         {
-            if (string.IsNullOrEmpty(name))
+            if (string.IsNullOrWhiteSpace(name))
             {
                 throw new ArgumentNullException(nameof(name), $"{nameof(name)} cannot be null or empty");
             }
@@ -189,7 +189,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
         public ResiliencyFeature(string name, Weight featureWeight)
         {
-            if (string.IsNullOrEmpty(name))
+            if (string.IsNullOrWhiteSpace(name))
             {
                 throw new ArgumentNullException(nameof(name), $"{nameof(name)} cannot be null or empty");
             }
@@ -211,7 +211,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             get { return this.Name; }
             set
             {
-                if (string.IsNullOrEmpty(value))
+                if (string.IsNullOrWhiteSpace(value))
                 {
                     throw new ArgumentNullException(nameof(value), $"{nameof(value)} cannot be null or empty");
                 }
