@@ -303,7 +303,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// StepViews component of Network Troubleshooter
         /// </summary>
-        StepViews
+        StepViews,
+
+        /// <summary>
+        /// Used for retrieving data to generate a downloadable PDF file
+        /// </summary>
+        Report
     }
 
     /// <summary>
