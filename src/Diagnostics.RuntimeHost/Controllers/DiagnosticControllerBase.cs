@@ -1320,7 +1320,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                 queryRes.CompilationOutput.CompilationSucceeded = false;
                 queryRes.CompilationOutput.AssemblyBytes = string.Empty;
                 queryRes.CompilationOutput.PdbBytes = string.Empty;
-                var detectorType = invoker.EntityMetadata.Type > EntityType.Signal ? invoker.EntityMetadata.Type : EntityType.Detector;
                 queryRes.CompilationOutput.CompilationTraces = queryRes.CompilationOutput.CompilationTraces.Concat(new List<string>()
                     {
                         $"Error : Modification to the resource filter is not supported. If you want a detector to target a different resource type, launch the editor in the context of the desired resource type."
