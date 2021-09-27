@@ -1322,7 +1322,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 queryRes.CompilationOutput.PdbBytes = string.Empty;
                 queryRes.CompilationOutput.CompilationTraces = queryRes.CompilationOutput.CompilationTraces.Concat(new List<string>()
                     {
-                        $"Error : Modification to the resource filter is not supported. If you want a detector to target a different resource type, launch the editor in the context of the desired resource type."
+                        $"Error : Modification to the resource filter is not supported. If you want the code to target a different resource type, launch the editor in the context of the desired resource type."
                     });
 
                 return false;
