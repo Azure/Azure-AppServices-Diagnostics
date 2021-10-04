@@ -418,7 +418,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     {
                         if (detectorId == null)
                         {
-                            if (!VerifyEntity(invoker, ref queryRes, publishingDetectorId)) return Ok(queryRes);
+                            if (!VerifyEntity(resource, invoker, ref queryRes, publishingDetectorId)) return Ok(queryRes);
                             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
 
                             var responseInput = new Response()
@@ -1310,9 +1310,23 @@ namespace Diagnostics.RuntimeHost.Controllers
             return dataProviders.GetMetadata();
         }
 
-        private bool VerifyEntity(EntityInvoker invoker, ref QueryResponse<DiagnosticApiResponse> queryRes, string publishingDetectorId)
+        private bool VerifyEntity(TResource resource, EntityInvoker invoker, ref QueryResponse<DiagnosticApiResponse> queryRes, string publishingDetectorId)
         {
             List<EntityInvoker> allDetectors = this._invokerCache.GetAll().ToList();
+
+            if(!resource.IsApplicable(invoker.ResourceFilter))
+            {
+                //An attempt to modify the resource filter so that it targets a resource type which is different from the one under which the current edit view was opened is being made.
+                queryRes.CompilationOutput.CompilationSucceeded = false;
+                queryRes.CompilationOutput.AssemblyBytes = string.Empty;
+                queryRes.CompilationOutput.PdbBytes = string.Empty;
+                queryRes.CompilationOutput.CompilationTraces = queryRes.CompilationOutput.CompilationTraces.Concat(new List<string>()
+                    {
+                        $"Error : Modification to the resource filter is not supported. If you want the code to target a different resource type, launch the editor in the context of the desired resource type."
+                    });
+
+                return false;
+            }
 
             var detectorWithSameId = allDetectors.FirstOrDefault(d => d.EntryPointDefinitionAttribute.Id.Equals(invoker.EntryPointDefinitionAttribute.Id, StringComparison.OrdinalIgnoreCase));
             if (detectorWithSameId != default(EntityInvoker) && publishingDetectorId == HostConstants.NewDetectorId)

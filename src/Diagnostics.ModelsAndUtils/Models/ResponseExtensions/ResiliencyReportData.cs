@@ -190,7 +190,6 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 
         }
     }
-
     /// <summary>
     /// ResiliencyFeature is the object that will contain the data for the check done on a particular detector
     /// </summary>
@@ -226,7 +225,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public string Name
         {
-            get { return this._name; }
+            get =>_name;
             set
             {
                 if (string.IsNullOrWhiteSpace(value))
