@@ -10,7 +10,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
     public class ResiliencyReportData : IResiliencyReportData
     {
-        private string _customerName = string.Empty;
+        private string _customerName;
         [JsonConverter(typeof(ResiliencyResource))]
         ResiliencyResource[] _resiliencyResourceList;
 
@@ -21,6 +21,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="resiliencyResourceList">Array containing the list of resources being evaluated of type ResiliencyResource.</param>        
         public ResiliencyReportData(string customerName, ResiliencyResource[] resiliencyResourceList)
         {
+            _customerName = string.Empty;
             if (string.IsNullOrWhiteSpace(customerName))
             {
                 throw new ArgumentNullException(nameof(customerName), $"{nameof(customerName)} cannot be null or empty");
@@ -45,7 +46,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         {
             get
             {
-                return this.CustomerName;
+                return this._customerName;
             }
             set
             {
@@ -55,7 +56,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 }
                 else
                 {
-                    this.CustomerName = value;
+                    this._customerName = value;
                 }
             }
         }
@@ -88,9 +89,10 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     /// ResiliencyResources supported can be Web App or ASE
     /// </summary>
     public class ResiliencyResource : IResiliencyResource
-    {        
+    {
+        string _name;
         double _overallScore = 0;
-        ResiliencyFeature[] resiliencyFeaturesList;
+        ResiliencyFeature[] _resiliencyFeaturesList;
         IDictionary<string, Weight> _featuresDictionary;
 
         /// <summary>
@@ -100,13 +102,14 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="featuresDictionary"> Key pair values containing the name of the features evaluated and their Weight (Enum representing the Feature Weight).</param>        
         public ResiliencyResource(string name, IDictionary<string, Weight> featuresDictionary)
         {
+            _name = string.Empty;
             if (string.IsNullOrWhiteSpace(name))
             {
                 throw new ArgumentNullException(nameof(name), $"{nameof(name)} cannot be null or empty");
             }
             else
             {
-                this.Name = name;
+                this._name = name;
             }
 
             if (featuresDictionary == null || featuresDictionary.Count == 0)
@@ -116,7 +119,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             else
             {
                 _featuresDictionary = featuresDictionary;
-                this.resiliencyFeaturesList = new ResiliencyFeature[_featuresDictionary.Count];
+                this._resiliencyFeaturesList = new ResiliencyFeature[_featuresDictionary.Count];
                 ResiliencyFeature[] resiliencyFeaturesList = new ResiliencyFeature[_featuresDictionary.Count];
 
                 var i = 0;
@@ -126,23 +129,36 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                     resiliencyFeaturesList[i] = feature;
                     i++;
                 }
-                this.resiliencyFeaturesList = resiliencyFeaturesList;
+                this._resiliencyFeaturesList = resiliencyFeaturesList;
             }
         }
 
         /// <summary>
         /// Name of the resource
         /// </summary>
-        public string Name { get; set; }
-
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    throw new ArgumentNullException(nameof(Name), $"{nameof(Name)} cannot be null or empty");
+                }
+                else
+                {
+                    this._name = value;
+                }
+            }
+        }
         public ResiliencyFeature[] GetResiliencyFeaturesList()
         {
-            return (ResiliencyFeature[])this.resiliencyFeaturesList.Clone();
+            return (ResiliencyFeature[])this._resiliencyFeaturesList.Clone();
         }
 
         public void SetResiliencyFeaturesList(ResiliencyFeature[] value)
         {
-            this.resiliencyFeaturesList = value;
+            this._resiliencyFeaturesList = value;
         }
 
         /// <summary>
@@ -155,7 +171,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 _overallScore = 0;
                 double _overallScoreSum = 0;
                 double _featureWeightsSum = 0;
-                foreach (ResiliencyFeature rf in resiliencyFeaturesList)
+                foreach (ResiliencyFeature rf in this._resiliencyFeaturesList)
                 {
                     Weight _weight;
                     Grade _grade;
@@ -184,20 +200,21 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         /// <param name="name">Name of the Resiliency Feature evaluated.</param>
         /// <param name="featureWeight">Enum representing the Feature Weight.</param>
-        string _name = string.Empty;
+        string _name;
 
 
-        public ResiliencyFeature(string name, Weight featureWeight)
+        public ResiliencyFeature(string Name, Weight FeatureWeight)
         {
-            if (string.IsNullOrWhiteSpace(name))
+            _name = string.Empty;
+            if (string.IsNullOrWhiteSpace(Name))
             {
-                throw new ArgumentNullException(nameof(name), $"{nameof(name)} cannot be null or empty");
+                throw new ArgumentNullException(nameof(Name), $"{nameof(Name)} cannot be null or empty");
             }
             else
             {
-                this.Name = name;
+                _name = Name;
             }
-            this.FeatureWeight = featureWeight;
+            this.FeatureWeight = FeatureWeight;
             ImplementationGrade = 0;
             GradeComments = "";
             SolutionComments = "";
@@ -208,7 +225,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public string Name
         {
-            get { return this.Name; }
+            get =>_name;
             set
             {
                 if (string.IsNullOrWhiteSpace(value))
@@ -217,7 +234,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 }
                 else
                 {
-                    this.Name = value;
+                    this._name = value;
                 }
             }
         }
