@@ -1,5 +1,5 @@
 ﻿using System.Collections.Immutable;
-using Diagnostics.Scripts.CompilationService.Analysis.CustomCodeAnalyzers;
+using Diagnostics.Scripts.CompilationService.CustomCodeAnalyzers;
 using Diagnostics.Scripts.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
