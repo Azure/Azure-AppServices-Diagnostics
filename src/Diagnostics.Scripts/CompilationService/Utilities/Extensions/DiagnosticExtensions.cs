@@ -1,4 +1,6 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.ModelsAndUtils.Models.ResponseExtensions;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -11,6 +13,42 @@ namespace Diagnostics.Scripts.CompilationService.Utilities.Extensions
 #nullable enable
     internal static class DiagnosticExtensions
     {
+
+        public static CompilationTraceOutputDetails GetCompilationTraceOutputDetails(this Diagnostic d)
+        {
+            if (d == null) return null;
+            CompilationTraceOutputDetails traceDetail = new CompilationTraceOutputDetails();
+
+            if (d.Severity == DiagnosticSeverity.Error) traceDetail.Severity = InsightStatus.Critical;
+            if (d.Severity == DiagnosticSeverity.Warning) traceDetail.Severity = InsightStatus.Warning;
+            if (d.Severity == DiagnosticSeverity.Info) traceDetail.Severity = InsightStatus.Info;
+            if (d.Severity == DiagnosticSeverity.Hidden) traceDetail.Severity = InsightStatus.None;
+
+            traceDetail.Message = d.ToString();
+
+            traceDetail.Location = new LocationSpan();
+            if (d.Location != null)
+            {
+                traceDetail.Location.Start = new Position()
+                {
+                    LinePos = d.Location.GetLineSpan().StartLinePosition.Line,
+                    ColPos = d.Location.GetLineSpan().StartLinePosition.Character
+                };
+
+                traceDetail.Location.End = new Position()
+                {
+                    LinePos = d.Location.GetLineSpan().EndLinePosition.Line,
+                    ColPos = d.Location.GetLineSpan().EndLinePosition.Character
+                };
+            }
+            else
+            {
+                traceDetail.Location.Start = new Position() { LinePos = 0, ColPos = 0 };
+                traceDetail.Location.End = new Position() { LinePos = 0, ColPos = 0 };
+            }
+            return traceDetail;
+        }
+
         public static int CompareTo(this Diagnostic x, Diagnostic? y)
         {
             if (y == null) return -1;
