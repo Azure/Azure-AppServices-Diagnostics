@@ -19,13 +19,11 @@ namespace Diagnostics.Scripts.CompilationService.Utilities
                 {
                     lock (_lock)
                     {
-                        //if (_blockConfig == null && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("APPSETTINGS_APIBLOCKCONFIG_LOCATION")))
-                        if (_blockConfig == null)
+                        if (_blockConfig == null && !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("APPSETTINGS_APIBLOCKCONFIG_LOCATION")))
                         {
                             try
                             {
-                                //string fileContent = System.IO.File.ReadAllText(Environment.GetEnvironmentVariable("APPSETTINGS_APIBLOCKCONFIG_LOCATION"));
-                                string fileContent = System.IO.File.ReadAllText(@"C:\\Source\\AppLens\\Azure-AppServices-Diagnostics\\src\\Diagnostics.Scripts\\ApiBlockConfig.json");
+                                string fileContent = System.IO.File.ReadAllText(Environment.GetEnvironmentVariable("APPSETTINGS_APIBLOCKCONFIG_LOCATION"));
                                 _blockConfig = JsonConvert.DeserializeObject<BlockConfig>(fileContent);
                             }
                             catch (Exception)
