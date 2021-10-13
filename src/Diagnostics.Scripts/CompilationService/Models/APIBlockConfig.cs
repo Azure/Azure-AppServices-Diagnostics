@@ -56,11 +56,51 @@ namespace Diagnostics.Scripts.CompilationService.Models
         public static List<string> GetMatchingBlockMessageList(List<EntityBlockConfig> config, string stringToMatch)
             => config?.Where(eConf => eConf?.BlockingRegEx?.IsMatch(stringToMatch) == true).Select(s => s.MessageToShowWhenBlocked).ToList<string>();
 
-        public List<ContainerBlockConfig> GetMatchingPInvokeConfig(string dllName) => (pInvokeBlockConfig != null) ? pInvokeBlockConfig.Where(pConfig => pConfig?.BlockingRegEx?.IsMatch(dllName) == true).ToList<ContainerBlockConfig>() : null;
+        public List<ContainerBlockConfig> GetMatchingPInvokeConfig(string dllName)
+        {
+            if (pInvokeBlockConfig != null)
+            {
+                return pInvokeBlockConfig.Where(pConfig => {
+                    try
+                    {
+                        return pConfig?.BlockingRegEx?.IsMatch(dllName) == true;
+                    }
+                    catch (Exception)
+                    {
+                        //An exception occurred while comparing the regex, assume the regex matched.
+                        return true;
+                    }
+                }).ToList<ContainerBlockConfig>();
+            }
+            else
+            {
+                return null;
+            }            
+        }
 
         public bool MatchesPInvokeToBlock(string dllName) => GetMatchingPInvokeConfig(dllName)?.Any() == true;
 
-        public List<ClassBlockConfig> GetMatchingClassConfig(string classTypeName) => (classBlockConfig != null) ? classBlockConfig.Where(cConfig => cConfig?.BlockingRegEx?.IsMatch(classTypeName) == true).ToList<ClassBlockConfig>() : null;
+        public List<ClassBlockConfig> GetMatchingClassConfig(string classTypeName)
+        {
+            if (classBlockConfig != null)
+            {
+                return classBlockConfig.Where(cConfig => {
+                    try 
+                    {
+                        return cConfig?.BlockingRegEx?.IsMatch(classTypeName) == true;
+                    }
+                    catch(Exception)
+                    {
+                        //An exception occurred while comparing the regex, assume the regex matched.
+                        return true;
+                    }
+                }).ToList<ClassBlockConfig>();
+            }
+            else
+            {
+                return null;
+            }
+        }// => (classBlockConfig != null) ?  : null;
 
         public bool MatchesClassToBlock(string classTypeName) => GetMatchingClassConfig(classTypeName)?.Any() == true;
     }

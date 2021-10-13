@@ -68,7 +68,7 @@ namespace Diagnostics.Scripts.CompilationService.CustomCodeAnalyzers
                 string containingType = memberReference.Member.ContainingType.ToString();
                 if (!string.IsNullOrWhiteSpace(containingType) && _blockConfig.MatchesClassToBlock(containingType))
                 {
-                    _blockConfig.GetMatchingClassConfig(containingType).ForEach(cConfig => {
+                    _blockConfig.GetMatchingClassConfig(containingType)?.ForEach(cConfig => {
                         if (cConfig.MethodsToBlock?.Count > 0)
                         {
                             BlockConfig.GetMatchingBlockMessageList(cConfig.PropertiesToBlock, memberReference.Member.Name)?.ForEach(strMessage =>
@@ -107,7 +107,7 @@ namespace Diagnostics.Scripts.CompilationService.CustomCodeAnalyzers
                         //Current DLL name is in the list of PInvoke DLL's that should be blocked.
                         //Evaluate if the specific call is blocked
 
-                        _blockConfig.GetMatchingPInvokeConfig(targetPInvokeDll).ForEach(piConfig => {
+                        _blockConfig.GetMatchingPInvokeConfig(targetPInvokeDll)?.ForEach(piConfig => {
                             if (piConfig.MethodsToBlock?.Count > 0)
                             {
                                 BlockConfig.GetMatchingBlockMessageList(piConfig.MethodsToBlock, invocation.TargetMethod.Name)?.ForEach(strMessage =>
@@ -133,7 +133,7 @@ namespace Diagnostics.Scripts.CompilationService.CustomCodeAnalyzers
                 string containingType = invocation.TargetMethod.ContainingType.ToString();
                 if (!string.IsNullOrWhiteSpace(containingType) && _blockConfig.MatchesClassToBlock(containingType))
                 {
-                    _blockConfig.GetMatchingClassConfig(containingType).ForEach(cConfig => {
+                    _blockConfig.GetMatchingClassConfig(containingType)?.ForEach(cConfig => {
                         if (cConfig.MethodsToBlock?.Count > 0)
                         {
                             BlockConfig.GetMatchingBlockMessageList(cConfig.MethodsToBlock, invocation.TargetMethod.Name)?.ForEach(strMessage => 
@@ -165,7 +165,7 @@ namespace Diagnostics.Scripts.CompilationService.CustomCodeAnalyzers
                 string typeBeingInstantiated = objectCreation.Type.ToString();
                 if (!string.IsNullOrWhiteSpace(typeBeingInstantiated) && _blockConfig.MatchesClassToBlock(typeBeingInstantiated))
                 {
-                    foreach (ClassBlockConfig classConfig in _blockConfig.GetMatchingClassConfig(typeBeingInstantiated).Where(cConfig => cConfig?.IsObjectCreationBlocked == true))
+                    foreach (ClassBlockConfig classConfig in _blockConfig.GetMatchingClassConfig(typeBeingInstantiated)?.Where(cConfig => cConfig?.IsObjectCreationBlocked == true))
                     {
                         operationContext.ReportDiagnostic(objectCreation.CreateDiagnostic(blockCallsDiagnosticDescriptor,
                             string.IsNullOrWhiteSpace(classConfig.MessageToShowWhenBlocked)? new string[] { string.Format(DEFAULT_INSTANTIATION_BLOCK_MESSAGE_FORMAT, typeBeingInstantiated) } : new string[] { classConfig.MessageToShowWhenBlocked }
