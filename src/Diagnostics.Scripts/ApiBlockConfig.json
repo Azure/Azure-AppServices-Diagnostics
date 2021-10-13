@@ -39,41 +39,41 @@
     {
       "BlockMatchingRegExPattern": "System.IO.Directory(.*)",
       "IsObjectCreationBlocked": true,
-      "MessageToShowWhenBlocked": "Creating an instance of this class is prohibited.",
+      "MessageToShowWhenBlocked": "Creating an instance of any class in the System.IO.Directory* namespace is prohibited.",
       "PropertiesToBlock": [
         {
           "BlockMatchingRegExPattern": "(.*)",
-          "MessageToShowWhenBlocked": "Access to properties of this class is prohibited."
+          "MessageToShowWhenBlocked": "Access to properties of any class in the System.IO.Directory* namespace is prohibited."
         }
       ],
       "MethodsToBlock": [
         {
           "BlockMatchingRegExPattern": "(.*)",
-          "MessageToShowWhenBlocked": "Access to methods of this class is prohibited."
+          "MessageToShowWhenBlocked": "Access to methods of any class in the System.IO.Directory* namespace is prohibited."
         }
       ]
     },
     {
       "BlockMatchingRegExPattern": "System.IO.File(.*)",
       "IsObjectCreationBlocked": true,
-      "MessageToShowWhenBlocked": "Creating an instance of this class is prohibited.",
+      "MessageToShowWhenBlocked": "Creating an instance of any class in the System.IO.File* namespace is prohibited.",
       "PropertiesToBlock": [
         {
           "BlockMatchingRegExPattern": "(.*)",
-          "MessageToShowWhenBlocked": "Access to properties of this class is prohibited."
+          "MessageToShowWhenBlocked": "Access to properties of any class in the System.IO.File* namespace is prohibited."
         }
       ],
       "MethodsToBlock": [
         {
           "BlockMatchingRegExPattern": "(.*)",
-          "MessageToShowWhenBlocked": "Access to methods of this class is prohibited."
+          "MessageToShowWhenBlocked": "Access to methods of any class in the System.IO.File* namespace is prohibited."
         }
       ]
     },
     {
       "BlockMatchingRegExPattern": "System.Diagnostics.(.*)",
       "IsObjectCreationBlocked": true,
-      "MessageToShowWhenBlocked": "Creating an instance of this class is prohibited.",
+      "MessageToShowWhenBlocked": "Creating an instance of a class in the System.Diagnostics namespace is prohibited.",
       "PropertiesToBlock": [
         {
           "BlockMatchingRegExPattern": "(.*)",
@@ -90,17 +90,17 @@
     {
       "BlockMatchingRegExPattern": "System.Reflection.(.*)",
       "IsObjectCreationBlocked": true,
-      "MessageToShowWhenBlocked": "Creating an instance of this class is prohibited.",
+      "MessageToShowWhenBlocked": "Creating an instance of a class in the System.Reflection namepsace is prohibited.",
       "PropertiesToBlock": [
         {
           "BlockMatchingRegExPattern": "(.*)",
-          "MessageToShowWhenBlocked": "Access to properties of this class is prohibited."
+          "MessageToShowWhenBlocked": "Access to properties of any class in the System.Reflection namespace is prohibited."
         }
       ],
       "MethodsToBlock": [
         {
           "BlockMatchingRegExPattern": "(.*)",
-          "MessageToShowWhenBlocked": "Access to methods of this class is prohibited."
+          "MessageToShowWhenBlocked": "Access to methods of any class in the System.Reflection namespace is prohibited."
         }
       ]
     }
