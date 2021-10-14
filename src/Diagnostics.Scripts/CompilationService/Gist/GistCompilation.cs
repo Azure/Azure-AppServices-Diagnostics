@@ -8,6 +8,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Diagnostics.Scripts.CompilationService.CustomCodeAnalyzers;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
@@ -71,7 +72,7 @@ namespace Diagnostics.Scripts.CompilationService.Gist
         /// <returns>Diagnostic analyzers.</returns>
         protected override ImmutableArray<DiagnosticAnalyzer> GetCodeAnalyzers()
         {
-            return ImmutableArray.Create<DiagnosticAnalyzer>();
+            return ImmutableArray.Create<DiagnosticAnalyzer>(new BlockCallsAnalyzer());
         }
     }
 }
