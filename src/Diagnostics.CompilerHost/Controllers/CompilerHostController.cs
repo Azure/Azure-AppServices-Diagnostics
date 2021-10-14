@@ -70,6 +70,7 @@ namespace Diagnostics.CompilerHost.Controllers
             {
                 await invoker.InitializeEntryPointAsync();
                 compilerResponse.CompilationTraces = invoker.CompilationOutput;
+                compilerResponse.DetailedCompilationTraces = invoker.DetailedCompilationTraces;
                 compilerResponse.CompilationSucceeded = invoker.IsCompilationSuccessful;
                 compilerResponse.References = invoker.References;
 
