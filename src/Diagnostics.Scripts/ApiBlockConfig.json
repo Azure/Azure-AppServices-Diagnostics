@@ -1,12 +1,12 @@
 {
   "PInvokeBlockConfig": [
     {
-      "BlockMatchingRegExPattern": "kernel32.dll",
+      "BlockMatchingRegExPattern": "dnsapi.dll",
       "MessageToShowWhenBlocked": "",
       "MethodsToBlock": [
         {
           "BlockMatchingRegExPattern": "(.*)",
-          "MessageToShowWhenBlocked": "PInvoke calls on kernel32 module are prohibited."
+          "MessageToShowWhenBlocked": "PInvoke calls are prohibited."
         }
       ]
     }
@@ -31,8 +31,8 @@
       ],
       "MethodsToBlock": [
         {
-            "BlockMatchingRegExPattern": "(.*)",
-            "MessageToShowWhenBlocked": "Access to methods of System.Environment is prohibited."
+          "BlockMatchingRegExPattern": "(.*)",
+          "MessageToShowWhenBlocked": "Access to methods of System.Environment is prohibited."
         }
       ]
     },
@@ -101,6 +101,57 @@
         {
           "BlockMatchingRegExPattern": "(.*)",
           "MessageToShowWhenBlocked": "Access to methods of any class in the System.Reflection namespace is prohibited."
+        }
+      ]
+    },
+    {
+      "BlockMatchingRegExPattern": "System.Runtime.InteropServices.(.*)",
+      "IsObjectCreationBlocked": true,
+      "MessageToShowWhenBlocked": "Creating an instance of a class in the System.Runtime.InteropServices namepsace is prohibited.",
+      "PropertiesToBlock": [
+        {
+          "BlockMatchingRegExPattern": "(.*)",
+          "MessageToShowWhenBlocked": "Access to properties of any class in the System.Runtime.InteropServices namespace is prohibited."
+        }
+      ],
+      "MethodsToBlock": [
+        {
+          "BlockMatchingRegExPattern": "(.*)",
+          "MessageToShowWhenBlocked": "Access to methods of any class in the System.Runtime.InteropServices namespace is prohibited."
+        }
+      ]
+    },
+    {
+      "BlockMatchingRegExPattern": "Diagnostics.DataProviders.(.*)CertLoader(.*)",
+      "IsObjectCreationBlocked": true,
+      "MessageToShowWhenBlocked": "Creating an instance of the built-in data provider certificate loader class is prohibited.",
+      "PropertiesToBlock": [
+        {
+          "BlockMatchingRegExPattern": "(.*)",
+          "MessageToShowWhenBlocked": "Access to properties of any class related to built-in data provider certificate loader is prohibited."
+        }
+      ],
+      "MethodsToBlock": [
+        {
+          "BlockMatchingRegExPattern": "(.*)",
+          "MessageToShowWhenBlocked": "Access to methods of any class related to built-in data provider certificate loader is prohibited."
+        }
+      ]
+    },
+    {
+      "BlockMatchingRegExPattern": "Diagnostics.DataProviders.TokenService.(.*)TokenService(.*)",
+      "IsObjectCreationBlocked": true,
+      "MessageToShowWhenBlocked": "Creating an instance of the built-in token creator class is prohibited.",
+      "PropertiesToBlock": [
+        {
+          "BlockMatchingRegExPattern": "(.*)",
+          "MessageToShowWhenBlocked": "Access to properties of any class related to built-in data provider token creator is prohibited."
+        }
+      ],
+      "MethodsToBlock": [
+        {
+          "BlockMatchingRegExPattern": "(.*)",
+          "MessageToShowWhenBlocked": "Access to methods of any class related to built-in data provider token creator is prohibited."
         }
       ]
     }
