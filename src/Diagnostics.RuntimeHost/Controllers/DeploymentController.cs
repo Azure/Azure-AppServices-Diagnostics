@@ -42,8 +42,10 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "DetectorDeployRole")]
         public async Task<IActionResult> Post([FromBody] DeploymentParameters deploymentParameters)
         {
+           
            string validationError = ValidateDeploymentParameters(deploymentParameters);
            if(!string.IsNullOrEmpty(validationError))
             {
