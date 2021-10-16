@@ -63,8 +63,8 @@ namespace Diagnostics.RuntimeHost
             var issuer = config.Issuer;
             var signingKeys = config.SigningKeys;
             // Adding both custom cert auth handler and Azure AAD JWT token handler to support multiple forms of auth.
-            if (Environment.IsProduction() || Environment.IsStaging() )
-            {         
+            if (Environment.IsProduction() || Environment.IsStaging())
+            {
                 services.AddAuthentication().AddCertificateAuth(CertificateAuthDefaults.AuthenticationScheme,
                     options =>
                     {
@@ -91,6 +91,14 @@ namespace Diagnostics.RuntimeHost
                             {
                                 context.Fail("Unauthorized Request");
                                 DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"AAD Authentication failed because incoming app id was not allowed");
+                            }
+                            var allowedDeploymentIds = Configuration["SecuritySettings:AllowedDeploymentIds"].Split(",").Select(p => p.Trim()).ToList();
+                            var path = context.Request.Path;
+                            if (incomingAppId != null && allowedDeploymentIds.Exists(p => p.Equals(incomingAppId.Value, StringComparison.OrdinalIgnoreCase))
+                             && !path.Value.EndsWith("api/deploy", StringComparison.CurrentCultureIgnoreCase))
+                            {
+                                context.Fail("Unauthorized Request");
+                                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"The app id {incomingAppId} does not have permission to this API {path}");
                             }
                             return Task.CompletedTask;
                         },
@@ -130,7 +138,7 @@ namespace Diagnostics.RuntimeHost
             services.AddApplicationInsightsTelemetry();
             services.AddAppServiceApplicationLogging();
 
-            if(Environment.IsDevelopment())
+            if (Environment.IsDevelopment())
             {
                 services.AddControllers(options =>
                 {
