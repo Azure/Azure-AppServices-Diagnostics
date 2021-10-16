@@ -16,6 +16,7 @@ using Diagnostics.RuntimeHost.Models.Exceptions;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Octokit;
+using System.IO;
 
 namespace Diagnostics.RuntimeHost.Middleware
 {
@@ -37,6 +38,14 @@ namespace Diagnostics.RuntimeHost.Middleware
             string responseMessage = null;
             GenerateMissingRequestHeaders(httpContext);
             BeginRequestHandle(httpContext);
+
+            //// 
+            //using var buffer = new MemoryStream();
+            //var request = httpContext.Request;
+            //var response = httpContext.Response;
+
+            //var stream = response.Body;
+            //response.Body = buffer;
 
             try
             {
@@ -71,6 +80,35 @@ namespace Diagnostics.RuntimeHost.Middleware
                     }
                     LogException(httpContext, exception);
                 }
+
+                //Console.WriteLine($"Request content type:  {httpContext.Request.Headers["Accept"]} {System.Environment.NewLine} Request path: {request.Path} {System.Environment.NewLine} Response type: {response.ContentType} {System.Environment.NewLine} Response length: {response.ContentLength ?? buffer.Length}");
+                //buffer.Position = 0;
+
+                ////   await buffer.CopyToAsync(stream);
+
+                //if (request.Path.ToString().Contains("/detectors/"))
+                //{
+                //    buffer.Position = 0;
+                //    StreamReader sr = new StreamReader(buffer);
+                //    string a = sr.ReadToEnd();
+
+                //    Console.WriteLine($"Original response:  {a}");
+
+
+
+                //    buffer.Position = 0;
+                //    StreamWriter sw = new StreamWriter(buffer);
+                //    sw.Write("{");
+                //    sw.Flush();
+
+                //    buffer.Position = 0;
+                //    StreamReader sr1 = new StreamReader(buffer);
+
+                //    a = sr1.ReadToEnd();
+
+                //    Console.WriteLine($"Modified response:  {a}");
+                //}
+                
 
                 EndRequestHandle(httpContext);
             }
@@ -146,6 +184,26 @@ namespace Diagnostics.RuntimeHost.Middleware
         private void EndRequestHandle(HttpContext httpContext)
         {
             var logger = (ApiMetricsLogger)httpContext.Items[HostConstants.ApiLoggerKey] ?? new ApiMetricsLogger(httpContext);
+            string responseMessage = String.Empty;
+             httpContext.Response.WriteAsync(responseMessage).Wait();
+
+            //Console.WriteLine($"result: {0}", responseMessage);
+
+            //using (var sr = new StreamReader(httpContext.Response.Body))
+            //{
+            //    string content = sr.ReadToEnd();
+            //    //     this.coreResponse.Body.Seek(0, SeekOrigin.Begin);
+            //    Console.WriteLine(content);
+            //}
+
+         
+
+            //HttpResponseBase response = context.Response;
+
+            //if (this.responseContentBytes != null && this.responseContentBytes.Count > 0)
+            //{
+            //    return Encoding.UTF8.GetString(this.responseContentBytes.Array);
+            //}
 
             logger.LogRuntimeHostAPIMetrics(httpContext);
         }

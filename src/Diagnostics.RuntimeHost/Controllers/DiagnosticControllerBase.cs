@@ -442,6 +442,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                         }
 
                         ValidateForms(invocationResponse.Dataset);
+                        DataRedact(invocationResponse.Dataset);
                         if (isInternalCall)
                         {
                             dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
@@ -1063,9 +1064,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                 }
                 if (searchResults != null)
                 {
-                    // Return those detectors that have positive search score and present in searchResult.
-                    List<string> potentialDetectors = searchResults.Results.Where(s => s.Score > 0).Select(x => x.Detector).ToList();
-
                     // Assign the score to detector if it exists in search results, else default to 0
                     allDetectorsFromStorage.ForEach(entity =>
                     {
@@ -1185,6 +1183,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
                 response.UpdateDetectorStatusFromInsights();
+                DataRedact(response.Dataset);
 
                 //
                 // update the dataProvidersMetdata after detector execution to update data source
@@ -1441,6 +1440,84 @@ namespace Diagnostics.RuntimeHost.Controllers
                     }
                 }
             }
+        }
+
+        /// <inheritdoc/>
+        public string RemovePIIFromDataString(string content)
+        {
+            string currContent = content;
+
+            //currContent = MaskEmails(currContent);
+            //currContent = MaskPassword(currContent);
+            //currContent = MaskQueryString(currContent);
+            //currContent = MaskPhone(currContent);
+            //currContent = MaskIPV4Address(currContent);
+
+            return currContent;
+        }
+
+        /// <summary>
+        /// Validation to check if Form ID is unique and if a form contains a button
+        /// </summary>
+        private void DataRedact(List<DiagnosticData> diagnosticDataSet)
+        {
+            HashSet<int> formIds = new HashSet<int>();
+            diagnosticDataSet.ForEach(dataset =>
+            {
+                DataTable dt = dataset.Table;
+                
+                if (dataset.RenderingProperties.Type== RenderingType.Markdown)
+                {
+                    foreach (DataRow dr in dt.Rows)
+                    {
+                        foreach (DataColumn dc in dt.Columns)
+                        {
+                            string a = dr[dc].ToString();
+                            string b = RemovePIIFromDataString(a);
+                            dr[dc] = "modified";
+
+                        }
+                    }
+                }
+
+
+            if (dataset.RenderingProperties.Type == RenderingType.Markdown)
+            {
+                foreach (DataRow dr in dt.Rows)
+                {
+                    foreach (DataColumn dc in dt.Columns)
+                    {
+                        Console.WriteLine($"value in datatable, {dr[dc].ToString()}");
+
+                    }
+                }
+                }
+            });
+
+            var markdownDataSet= diagnosticDataSet.Where(dataset => dataset.RenderingProperties.Type == RenderingType.Markdown).Select(d => d.Table);
+            //foreach (DataTable table in detectorForms)
+            //{
+            //    // Each row has FormID and FormInputs
+            //    foreach (DataRow row in table.Rows)
+            //    {
+            //        var formId = (int)row[0];
+            //        if (!formIds.Add(formId))
+            //        {
+            //            throw new Exception($"Form ID {formId} already exists. Please give a unique Form ID.");
+            //        }
+
+            //        var formInputs = row[2].CastTo<List<FormInputBase>>();
+            //        if (!formInputs.Any(input => input.InputType == FormInputTypes.Button))
+            //        {
+            //            throw new Exception($"There must at least one button for form id {formId}.");
+            //        }
+
+            //        if (formInputs.Where(input => input.InputType != FormInputTypes.Button && input.IsVisible).Count() > 5)
+            //        {
+            //            throw new Exception("Total number of inputs for a form cannot exceed 5.");
+            //        }
+            //    }
+            //}
         }
     }
 }
