@@ -442,7 +442,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                         }
 
                         ValidateForms(invocationResponse.Dataset);
-                        DataRedact(invocationResponse.Dataset);
+                        invocationResponse = RedactDataResponse(invocationResponse);
+
                         if (isInternalCall)
                         {
                             dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
@@ -1183,7 +1184,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
                 response.UpdateDetectorStatusFromInsights();
-                DataRedact(response.Dataset);
+                response = RedactDataResponse(response);
 
                 //
                 // update the dataProvidersMetdata after detector execution to update data source
@@ -1442,82 +1443,38 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
         }
 
-        /// <inheritdoc/>
-        public string RemovePIIFromDataString(string content)
+        public Response RedactDataResponse(Response response)
         {
-            string currContent = content;
+            if (response == null || response.Dataset == null || response.Dataset.Count == 0)
+            {
+                return response;
+            }
 
-            //currContent = MaskEmails(currContent);
-            //currContent = MaskPassword(currContent);
-            //currContent = MaskQueryString(currContent);
-            //currContent = MaskPhone(currContent);
-            //currContent = MaskIPV4Address(currContent);
+            for (int i = 0; i < response.Dataset.Count(); i++)
+            {
+                if (response.Dataset[i] != null && response.Dataset[i].Table != null)
+                {
+                    response.Dataset[i].Table = RedactDataTable(response.Dataset[i].Table);
+                }
+            }
 
-            return currContent;
+            return response;
         }
 
-        /// <summary>
-        /// Validation to check if Form ID is unique and if a form contains a button
-        /// </summary>
-        private void DataRedact(List<DiagnosticData> diagnosticDataSet)
+        public DataTable RedactDataTable(DataTable dataTable)
         {
-            HashSet<int> formIds = new HashSet<int>();
-            diagnosticDataSet.ForEach(dataset =>
+            if (dataTable == null)
+                return dataTable;
+
+            foreach (DataRow dr in dataTable.Rows)
             {
-                DataTable dt = dataset.Table;
-                
-                if (dataset.RenderingProperties.Type== RenderingType.Markdown)
+                foreach (DataColumn dc in dataTable.Columns)
                 {
-                    foreach (DataRow dr in dt.Rows)
-                    {
-                        foreach (DataColumn dc in dt.Columns)
-                        {
-                            string a = dr[dc].ToString();
-                            string b = RemovePIIFromDataString(a);
-                            dr[dc] = "modified";
-
-                        }
-                    }
+                    dr[dc] = dc.DataType == typeof(String) ? DataAnonymizer.AnonymizeContent(dr[dc].ToString()) : dr[dc];
                 }
+            }
 
-
-            if (dataset.RenderingProperties.Type == RenderingType.Markdown)
-            {
-                foreach (DataRow dr in dt.Rows)
-                {
-                    foreach (DataColumn dc in dt.Columns)
-                    {
-                        Console.WriteLine($"value in datatable, {dr[dc].ToString()}");
-
-                    }
-                }
-                }
-            });
-
-            var markdownDataSet= diagnosticDataSet.Where(dataset => dataset.RenderingProperties.Type == RenderingType.Markdown).Select(d => d.Table);
-            //foreach (DataTable table in detectorForms)
-            //{
-            //    // Each row has FormID and FormInputs
-            //    foreach (DataRow row in table.Rows)
-            //    {
-            //        var formId = (int)row[0];
-            //        if (!formIds.Add(formId))
-            //        {
-            //            throw new Exception($"Form ID {formId} already exists. Please give a unique Form ID.");
-            //        }
-
-            //        var formInputs = row[2].CastTo<List<FormInputBase>>();
-            //        if (!formInputs.Any(input => input.InputType == FormInputTypes.Button))
-            //        {
-            //            throw new Exception($"There must at least one button for form id {formId}.");
-            //        }
-
-            //        if (formInputs.Where(input => input.InputType != FormInputTypes.Button && input.IsVisible).Count() > 5)
-            //        {
-            //            throw new Exception("Total number of inputs for a form cannot exceed 5.");
-            //        }
-            //    }
-            //}
+            return dataTable;
         }
     }
 }
