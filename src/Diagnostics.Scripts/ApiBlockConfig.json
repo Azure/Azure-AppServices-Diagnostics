@@ -71,7 +71,7 @@
       ]
     },
     {
-      "BlockMatchingRegExPattern": "System.Diagnostics.(.*)",
+      "BlockMatchingRegExPattern": "^System.Diagnostics.(?!Stopwatch\\b).*",
       "IsObjectCreationBlocked": true,
       "MessageToShowWhenBlocked": "Creating an instance of a class in the System.Diagnostics namespace is prohibited.",
       "PropertiesToBlock": [
