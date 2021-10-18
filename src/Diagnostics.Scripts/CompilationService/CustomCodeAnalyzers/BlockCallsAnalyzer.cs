@@ -47,12 +47,8 @@ namespace Diagnostics.Scripts.CompilationService.CustomCodeAnalyzers
                         OperationKind.MethodReference,
                         OperationKind.PropertyReference));
 
-                    context.RegisterOperationAction(HandleInvocation, ImmutableArray.Create<OperationKind>(OperationKind.Invocation, OperationKind.DynamicInvocation));
-                    context.RegisterOperationAction(HandleObjectCreation, ImmutableArray.Create<OperationKind>(
-                        OperationKind.ObjectCreation,
-                        OperationKind.TypeParameterObjectCreation,
-                        OperationKind.DynamicObjectCreation,
-                        OperationKind.AnonymousObjectCreation));
+                    context.RegisterOperationAction(HandleInvocation, ImmutableArray.Create<OperationKind>(OperationKind.Invocation));
+                    context.RegisterOperationAction(HandleObjectCreation, ImmutableArray.Create<OperationKind>(OperationKind.ObjectCreation));
                 });
             }
         }
@@ -152,6 +148,41 @@ namespace Diagnostics.Scripts.CompilationService.CustomCodeAnalyzers
                         }
                     });
                 }
+
+                containingType = invocation.Type.ToString(); //This is required to evaluate expressions where invocations take a generic Type as a parameter
+                if (!string.IsNullOrWhiteSpace(containingType) && _blockConfig.MatchesClassToBlock(containingType))
+                {
+                    bool blockedObjectCreation = false;
+                    foreach (ClassBlockConfig classConfig in _blockConfig.GetMatchingClassConfig(containingType)?.Where(cConfig => cConfig?.IsObjectCreationBlocked == true))
+                    {
+                        blockedObjectCreation = true;
+                        operationContext.ReportDiagnostic(invocation.CreateDiagnostic(blockCallsDiagnosticDescriptor,
+                            string.IsNullOrWhiteSpace(classConfig.MessageToShowWhenBlocked) ? new string[] { string.Format(DEFAULT_INSTANTIATION_BLOCK_MESSAGE_FORMAT, containingType) } : new string[] { classConfig.MessageToShowWhenBlocked }
+                            ));
+                    }
+                    if(!blockedObjectCreation)
+                    {
+                        _blockConfig.GetMatchingClassConfig(containingType)?.ForEach(cConfig => {
+                            if (cConfig.MethodsToBlock?.Count > 0)
+                            {
+                                BlockConfig.GetMatchingBlockMessageList(cConfig.MethodsToBlock, invocation.TargetMethod.Name)?.ForEach(strMessage =>
+                                {
+                                    operationContext.ReportDiagnostic(invocation.CreateDiagnostic(blockCallsDiagnosticDescriptor,
+                                            string.IsNullOrWhiteSpace(strMessage) ? new string[] { string.Format(DEFAULT_INVOCATION_BLOCK_MESSAGE_FORMAT, invocation.TargetMethod.Name, containingType) } : new string[] { strMessage }
+                                            ));
+                                });
+                            }
+                            else
+                            {
+                                //No specific methods to block was indicated, however the type name did match the config, so the default action is to block all methods from this type
+                                operationContext.ReportDiagnostic(invocation.CreateDiagnostic(blockCallsDiagnosticDescriptor,
+                                    new string[] { string.Format(DEFAULT_INVOCATION_BLOCK_MESSAGE_FORMAT, "any method", containingType) }
+                                    ));
+                            }
+                        });
+                    }
+                }
+
                 #endregion 
             }
         }
