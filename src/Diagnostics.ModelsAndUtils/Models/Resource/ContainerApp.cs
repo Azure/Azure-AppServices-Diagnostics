@@ -5,12 +5,12 @@ using Diagnostics.ModelsAndUtils.ScriptUtilities;
 namespace Diagnostics.ModelsAndUtils.Models
 {
     /// <summary>
-    /// Resource representing Worker App
+    /// Resource representing Container App
     /// </summary>
-    public class WorkerApp : WorkerAppFilter, IResource
+    public class ContainerApp : ContainerAppFilter, IResource
     {
         /// <summary>
-        /// Name of the Worker App
+        /// Name of the Container App
         /// </summary>
         public string Name { get; set; }
 
@@ -60,7 +60,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         {
             get
             {
-                return "workerApps";
+                return "containerApps";
             }
         }
 
@@ -72,7 +72,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             get; set;
         }
 
-        public WorkerApp(string subscriptionId, string resourceGroup, string resourceName, string kubeEnvironmentName=null, string geoMasterName=null, string subLocationPlacementId = null) : base()
+        public ContainerApp(string subscriptionId, string resourceGroup, string resourceName, string kubeEnvironmentName=null, string geoMasterName=null, string subLocationPlacementId = null) : base()
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
@@ -83,13 +83,13 @@ namespace Diagnostics.ModelsAndUtils.Models
         }
 
         /// <summary>
-        /// Determines whether the Worker App resource is applicable after filtering.
+        /// Determines whether the Container App resource is applicable after filtering.
         /// </summary>
         /// <param name="filter">Resource Filter</param>
         /// <returns>True, if resource passes the filter. False otherwise</returns>
         public bool IsApplicable(IResourceFilter filter)
         {
-            return base.IsApplicable<WorkerAppFilter>(filter, this.Provider, this.ResourceTypeName);
+            return base.IsApplicable<ContainerAppFilter>(filter, this.Provider, this.ResourceTypeName);
         }
 
         /// <summary>

@@ -1,4 +1,4 @@
-private static string GetQuery(OperationContext<WorkerApp> cxt)
+private static string GetQuery(OperationContext<ContainerApp> cxt)
 {
     return
     $@"
@@ -11,7 +11,7 @@ private static string GetQuery(OperationContext<WorkerApp> cxt)
 
 [WorkerAppFilter]
 [Definition(Id = "<YOUR_DETECTOR_ID>", Name = "", Author = "<YOUR_ALIAS>", Description = "")]
-public async static Task<Response> Run(DataProviders dp, OperationContext<WorkerApp> cxt, Response res)
+public async static Task<Response> Run(DataProviders dp, OperationContext<ContainerApp> cxt, Response res)
 {
     res.Dataset.Add(new DiagnosticData()
     {

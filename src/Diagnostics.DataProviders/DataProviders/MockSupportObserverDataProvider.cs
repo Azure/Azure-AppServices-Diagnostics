@@ -94,7 +94,7 @@ namespace Diagnostics.DataProviders
             throw new NotImplementedException();
         }
 
-        public override Task<dynamic> GetWorkerAppPostBody(string workerAppName)
+        public override Task<dynamic> GetContainerAppPostBody(string containerAppName)
         {
             throw new NotImplementedException();
         }
