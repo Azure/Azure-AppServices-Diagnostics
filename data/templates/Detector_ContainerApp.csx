@@ -9,7 +9,7 @@ private static string GetQuery(OperationContext<ContainerApp> cxt)
         | <YOUR_QUERY>";
 }
 
-[WorkerAppFilter]
+[ContainerAppFilter]
 [Definition(Id = "<YOUR_DETECTOR_ID>", Name = "", Author = "<YOUR_ALIAS>", Description = "")]
 public async static Task<Response> Run(DataProviders dp, OperationContext<ContainerApp> cxt, Response res)
 {
