@@ -77,7 +77,7 @@ namespace Diagnostics.ModelsAndUtils.Models
             return dataTable;
         }
 
-        public static DataTable ToAppInsightsDataTable(this AppInsightsDataTableResponseObject appInsightsDataTableResponse, bool isInternalClient)
+        public static DataTable ToAppInsightsDataTable(this AppInsightsDataTableResponseObject appInsightsDataTableResponse)
         {
             if (appInsightsDataTableResponse == null)
             {
@@ -92,7 +92,7 @@ namespace Diagnostics.ModelsAndUtils.Models
                 var row = dataTable.NewRow();
                 for (int j = 0; j < dataTable.Columns.Count; j++)
                 {
-                    row[j] = MaskPII(appInsightsDataTableResponse.Rows[i, j], isInternalClient) ?? DBNull.Value;
+                    row[j] = MaskPII(appInsightsDataTableResponse.Rows[i, j]) ?? DBNull.Value;
                 }
 
                 dataTable.Rows.Add(row);
@@ -101,16 +101,12 @@ namespace Diagnostics.ModelsAndUtils.Models
             return dataTable;
         }
 
-        private static dynamic MaskPII(dynamic columnValue, bool isInternalClient)
+        // MaskPII for both internal and external users
+        private static dynamic MaskPII(dynamic columnValue)
         {
-            if (!isInternalClient)
-            {
-                return columnValue;
-            }
-
             if (columnValue is string)
             {
-                return ScriptUtilities.Anonymizer.AnonymizeMessage(columnValue);
+                return ScriptUtilities.DataAnonymizer.AnonymizeContent(columnValue);
             }
 
             return columnValue;
