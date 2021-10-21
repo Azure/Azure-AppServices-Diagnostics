@@ -96,7 +96,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
             // Matches aar9_onb@dev.com, m@text.com.in, me@t_o.dom, user@gmail, again@gmail.
             // Does not match someone@, @someone
             string pattern = @"(?<=[\w]{1})[\w-\._\+%]*(?=@([\w-_]+)[\.]{0})";
-            return Regex.Replace(content, pattern, "[PIIEmail]");
+            return Regex.Replace(content, pattern, "***");
         }
 
         public static string RedactPII(string content)
