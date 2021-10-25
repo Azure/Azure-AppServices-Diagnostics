@@ -105,11 +105,11 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 
             currContent = RedactEmails(currContent);
             currContent = RedactPassword(currContent);
-            currContent = RedactQueryString(currContent);
-
-            // Disable GUID redact for now
-            // currContent = RedactGuid(currContent);
             currContent = RedactPhone(currContent);
+
+            // Disable GUID and query string redaction for now
+            // currContent = RedactQueryString(currContent);
+            // currContent = RedactGuid(currContent);
 
             //TODO: Check if we want to redact IP addresses for now
 
