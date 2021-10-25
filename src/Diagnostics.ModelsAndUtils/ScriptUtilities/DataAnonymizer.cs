@@ -96,7 +96,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
             // Matches aar9_onb@dev.com, m@text.com.in, me@t_o.dom, user@gmail, again@gmail.
             // Does not match someone@, @someone
             string pattern = @"(?<=[\w]{1})[\w-\._\+%]*(?=@([\w-_]+)[\.]{0})";
-            return Regex.Replace(content, pattern, "[PIIEmail]");
+            return Regex.Replace(content, pattern, "***");
         }
 
         public static string RedactPII(string content)
@@ -105,9 +105,11 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 
             currContent = RedactEmails(currContent);
             currContent = RedactPassword(currContent);
-            currContent = RedactQueryString(currContent);
-            currContent = RedactGuid(currContent);
             currContent = RedactPhone(currContent);
+
+            // Disable GUID and query string redaction for now
+            // currContent = RedactQueryString(currContent);
+            // currContent = RedactGuid(currContent);
 
             //TODO: Check if we want to redact IP addresses for now
 
@@ -124,14 +126,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
                 return content;
             }
 
-            var array = content.Split(' ');
-            for (int i = 0; i < array.Length; i++)
-            {
-                var item = array[i];
-                array[i] = RedactPII(item);
-            }
-
-            return string.Join(" ", array);
+            return RedactPII(content);
         }
     }
 }
