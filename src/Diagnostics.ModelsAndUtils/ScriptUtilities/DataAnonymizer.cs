@@ -124,14 +124,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
                 return content;
             }
 
-            var array = content.Split(' ');
-            for (int i = 0; i < array.Length; i++)
-            {
-                var item = array[i];
-                array[i] = RedactPII(item);
-            }
-
-            return string.Join(" ", array);
+            return RedactPII(content);
         }
     }
 }
