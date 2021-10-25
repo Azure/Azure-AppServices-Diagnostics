@@ -46,9 +46,9 @@
         ArmResource = 128,
 
         /// <summary>
-        /// Worker App Resource
+        /// Container App Resource
         /// </summary>
-        WorkerApp = 256
+        ContainerApp = 256
     }
 
     /// <summary>

@@ -418,7 +418,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     {
                         if (detectorId == null)
                         {
-                            if (!VerifyEntity(invoker, ref queryRes, publishingDetectorId)) return Ok(queryRes);
+                            if (!VerifyEntity(resource, invoker, ref queryRes, publishingDetectorId)) return Ok(queryRes);
                             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
 
                             var responseInput = new Response()
@@ -442,6 +442,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                         }
 
                         ValidateForms(invocationResponse.Dataset);
+                        invocationResponse = RedactDataResponse(invocationResponse);
+
                         if (isInternalCall)
                         {
                             dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
@@ -1063,9 +1065,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                 }
                 if (searchResults != null)
                 {
-                    // Return those detectors that have positive search score and present in searchResult.
-                    List<string> potentialDetectors = searchResults.Results.Where(s => s.Score > 0).Select(x => x.Detector).ToList();
-
                     // Assign the score to detector if it exists in search results, else default to 0
                     allDetectorsFromStorage.ForEach(entity =>
                     {
@@ -1185,6 +1184,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
                 response.UpdateDetectorStatusFromInsights();
+                response = RedactDataResponse(response);
 
                 //
                 // update the dataProvidersMetdata after detector execution to update data source
@@ -1310,9 +1310,23 @@ namespace Diagnostics.RuntimeHost.Controllers
             return dataProviders.GetMetadata();
         }
 
-        private bool VerifyEntity(EntityInvoker invoker, ref QueryResponse<DiagnosticApiResponse> queryRes, string publishingDetectorId)
+        private bool VerifyEntity(TResource resource, EntityInvoker invoker, ref QueryResponse<DiagnosticApiResponse> queryRes, string publishingDetectorId)
         {
             List<EntityInvoker> allDetectors = this._invokerCache.GetAll().ToList();
+
+            if(!resource.IsApplicable(invoker.ResourceFilter))
+            {
+                //An attempt to modify the resource filter so that it targets a resource type which is different from the one under which the current edit view was opened is being made.
+                queryRes.CompilationOutput.CompilationSucceeded = false;
+                queryRes.CompilationOutput.AssemblyBytes = string.Empty;
+                queryRes.CompilationOutput.PdbBytes = string.Empty;
+                queryRes.CompilationOutput.CompilationTraces = queryRes.CompilationOutput.CompilationTraces.Concat(new List<string>()
+                    {
+                        $"Error : Modification to the resource filter is not supported. If you want the code to target a different resource type, launch the editor in the context of the desired resource type."
+                    });
+
+                return false;
+            }
 
             var detectorWithSameId = allDetectors.FirstOrDefault(d => d.EntryPointDefinitionAttribute.Id.Equals(invoker.EntryPointDefinitionAttribute.Id, StringComparison.OrdinalIgnoreCase));
             if (detectorWithSameId != default(EntityInvoker) && publishingDetectorId == HostConstants.NewDetectorId)
@@ -1427,6 +1441,40 @@ namespace Diagnostics.RuntimeHost.Controllers
                     }
                 }
             }
+        }
+
+        public Response RedactDataResponse(Response response)
+        {
+            if (response == null || response.Dataset == null || response.Dataset.Count == 0)
+            {
+                return response;
+            }
+
+            for (int i = 0; i < response.Dataset.Count(); i++)
+            {
+                if (response.Dataset[i] != null && response.Dataset[i].Table != null)
+                {
+                    response.Dataset[i].Table = RedactDataTable(response.Dataset[i].Table);
+                }
+            }
+
+            return response;
+        }
+
+        public DataTable RedactDataTable(DataTable dataTable)
+        {
+            if (dataTable == null)
+                return dataTable;
+
+            foreach (DataRow dr in dataTable.Rows)
+            {
+                foreach (DataColumn dc in dataTable.Columns)
+                {
+                    dr[dc] = dc.DataType == typeof(String) ? DataAnonymizer.AnonymizeContent(dr[dc].ToString()) : dr[dc];
+                }
+            }
+
+            return dataTable;
         }
     }
 }
