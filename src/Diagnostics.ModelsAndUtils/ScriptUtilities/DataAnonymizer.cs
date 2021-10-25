@@ -106,7 +106,9 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
             currContent = RedactEmails(currContent);
             currContent = RedactPassword(currContent);
             currContent = RedactQueryString(currContent);
-            currContent = RedactGuid(currContent);
+
+            // Disable GUID redact for now
+            // currContent = RedactGuid(currContent);
             currContent = RedactPhone(currContent);
 
             //TODO: Check if we want to redact IP addresses for now
