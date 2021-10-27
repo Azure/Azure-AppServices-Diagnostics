@@ -72,10 +72,10 @@ namespace Diagnostics.RuntimeHost.Utilities
                         detectorPackage.ResourceProvider = "Microsoft.ContainerService";
                         detectorPackage.ResourceType = "managedClusters";
                     }
-                    else if (invoker.ResourceFilter is WorkerAppFilter)
+                    else if (invoker.ResourceFilter is ContainerAppFilter)
                     {
                         detectorPackage.ResourceProvider = "Microsoft.Web";
-                        detectorPackage.ResourceType = "workerApps";
+                        detectorPackage.ResourceType = "containerApps";
                     }
                     else if (invoker.ResourceFilter is LogicAppFilter)
                     {

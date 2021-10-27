@@ -9,6 +9,7 @@ using System.Web;
 using Diagnostics.DataProviders;
 using Diagnostics.DataProviders.Exceptions;
 using Diagnostics.DataProviders.Interfaces;
+using Microsoft.Extensions.Configuration;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Attributes;
 using Diagnostics.ModelsAndUtils.Models;
@@ -19,6 +20,7 @@ using Diagnostics.ModelsAndUtils.Utilities;
 using Diagnostics.RuntimeHost.Models;
 using Diagnostics.RuntimeHost.Models.Exceptions;
 using Diagnostics.RuntimeHost.Services;
+using Diagnostics.RuntimeHost.Services.DevOpsClient;
 using Diagnostics.RuntimeHost.Services.CacheService;
 using Diagnostics.RuntimeHost.Services.CacheService.Interfaces;
 using Diagnostics.RuntimeHost.Services.DiagnosticsTranslator;
@@ -29,11 +31,13 @@ using Diagnostics.RuntimeHost.Utilities;
 using Diagnostics.Scripts;
 using Diagnostics.Scripts.Models;
 using Diagnostics.Scripts.Utilities;
+using Diagnostics.Scripts.CompilationService.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
+using Diagnostics.Logger;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -52,12 +56,15 @@ namespace Diagnostics.RuntimeHost.Controllers
         protected ISupportTopicService _supportTopicService;
         protected IKustoMappingsCacheService _kustoMappingCacheService;
         protected IRuntimeLoggerProvider _loggerProvider;
+        protected IRepoClient devopsClient;
         private InternalAPIHelper _internalApiHelper;
         private IDiagEntityTableCacheService tableCacheService;
         private ISourceWatcher storageWatcher;
         private IDiagnosticTranslatorService _diagnosticTranslator;
+        private bool loadGistFromRepo;
 
-        public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext)
+
+        public DiagnosticControllerBase(IServiceProvider services, IRuntimeContext<TResource> runtimeContext, IConfiguration config)
         {
             this._compilerHostClient = (ICompilerHostClient)services.GetService(typeof(ICompilerHostClient));
             this._sourceWatcherService = (ISourceWatcherService)services.GetService(typeof(ISourceWatcherService));
@@ -79,6 +86,14 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
+            if(bool.TryParse(config["LoadGistFromRepo"], out bool retVal))
+            {
+                loadGistFromRepo = retVal;
+            } else
+            {
+                loadGistFromRepo = false;
+            }
+            devopsClient = (IRepoClient)services.GetService(typeof(IRepoClient));
         }
 
         #region API Response Methods
@@ -273,14 +288,29 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
 
-            foreach (var p in _gistCache.GetAllReferences(runtimeContext))
+            if(loadGistFromRepo)
             {
-                if (!jsonBody.References.ContainsKey(p.Key))
+                List<string> gistReferences = DetectorParser.GetLoadDirectiveNames(jsonBody.Script);
+                foreach (string gist in gistReferences)
                 {
-                    // Add latest version to references
-                    jsonBody.References.Add(p);
+                    if(!jsonBody.References.ContainsKey(gist))
+                    {
+                        object gistContent = await devopsClient.GetFileContentAsync($"{gist}/{gist}.csx", resource.ResourceUri, HttpContext.Request.Headers[HeaderConstants.RequestIdHeaderName]);
+                        jsonBody.References.Add(gist, gistContent.ToString());
+                    }                   
+                }
+            } else
+            {
+                foreach (var p in _gistCache.GetAllReferences(runtimeContext))
+                {
+                    if (!jsonBody.References.ContainsKey(p.Key))
+                    {
+                        // Add latest version to references
+                        jsonBody.References.Add(p);
+                    }
                 }
             }
+           
 
             if (!Enum.TryParse(jsonBody.EntityType, true, out EntityType entityType))
             {
@@ -388,7 +418,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     {
                         if (detectorId == null)
                         {
-                            if (!VerifyEntity(invoker, ref queryRes, publishingDetectorId)) return Ok(queryRes);
+                            if (!VerifyEntity(resource, invoker, ref queryRes, publishingDetectorId)) return Ok(queryRes);
                             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, Form: Form);
 
                             var responseInput = new Response()
@@ -412,6 +442,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                         }
 
                         ValidateForms(invocationResponse.Dataset);
+                        invocationResponse = RedactDataResponse(invocationResponse);
+
                         if (isInternalCall)
                         {
                             dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
@@ -484,9 +516,9 @@ namespace Diagnostics.RuntimeHost.Controllers
             return ex;
         }
 
-        protected async Task<IActionResult> GetDiagnosticReport(TResource resource, DiagnosticReportQuery queryBody, DateTime startTime, DateTime endTime, TimeSpan timeGrain, string correlationId = null)
+        protected async Task<IActionResult> GetDiagnosticReport(TResource resource, DiagnosticReportQuery queryBody, DateTime startTime, DateTime endTime, TimeSpan timeGrain, Form form = null, string correlationId = null)
         {
-            RuntimeContext<TResource> cxt = PrepareContext(resource, startTime, endTime);
+            RuntimeContext<TResource> cxt = PrepareContext(resource, startTime, endTime, Form: form);
             if (correlationId == null)
             {
                 if (cxt.OperationContext.RequestId != null)
@@ -636,7 +668,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                                     DetectorId = detector.Metadata.Id,
                                     Title = renderingProperties.Title,
                                     Description = renderingProperties.Description,
-                                    DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime),
+                                    DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime, context.OperationContext.QueryParams),
                                     Table = set.Table
                                 };
                             }
@@ -676,7 +708,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                                             Title = insightMessage,
                                             Description = insightDescription,
                                             Solutions = allSolutions,
-                                            DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime)
+                                            DetailsLink = InsightsAPIHelpers.GetDetectorLink(detector, context.OperationContext.Resource.ResourceUri, context.OperationContext.StartTime, context.OperationContext.EndTime, context.OperationContext.QueryParams)
                                         };
                                         break;
                                     }
@@ -1025,6 +1057,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             if (tableCacheService.IsStorageAsSourceEnabled())
             {
+                
                 var allDetectorsFromStorage = await tableCacheService.GetEntityListByType<TResource>(context);
                 if (allDetectorsFromStorage.Count == 0)
                 {
@@ -1032,9 +1065,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                 }
                 if (searchResults != null)
                 {
-                    // Return those detectors that have positive search score and present in searchResult.
-                    List<string> potentialDetectors = searchResults.Results.Where(s => s.Score > 0).Select(x => x.Detector).ToList();
-
                     // Assign the score to detector if it exists in search results, else default to 0
                     allDetectorsFromStorage.ForEach(entity =>
                     {
@@ -1154,6 +1184,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
                 response.UpdateDetectorStatusFromInsights();
+                response = RedactDataResponse(response);
 
                 //
                 // update the dataProvidersMetdata after detector execution to update data source
@@ -1279,9 +1310,23 @@ namespace Diagnostics.RuntimeHost.Controllers
             return dataProviders.GetMetadata();
         }
 
-        private bool VerifyEntity(EntityInvoker invoker, ref QueryResponse<DiagnosticApiResponse> queryRes, string publishingDetectorId)
+        private bool VerifyEntity(TResource resource, EntityInvoker invoker, ref QueryResponse<DiagnosticApiResponse> queryRes, string publishingDetectorId)
         {
             List<EntityInvoker> allDetectors = this._invokerCache.GetAll().ToList();
+
+            if(!resource.IsApplicable(invoker.ResourceFilter))
+            {
+                //An attempt to modify the resource filter so that it targets a resource type which is different from the one under which the current edit view was opened is being made.
+                queryRes.CompilationOutput.CompilationSucceeded = false;
+                queryRes.CompilationOutput.AssemblyBytes = string.Empty;
+                queryRes.CompilationOutput.PdbBytes = string.Empty;
+                queryRes.CompilationOutput.CompilationTraces = queryRes.CompilationOutput.CompilationTraces.Concat(new List<string>()
+                    {
+                        $"Error : Modification to the resource filter is not supported. If you want the code to target a different resource type, launch the editor in the context of the desired resource type."
+                    });
+
+                return false;
+            }
 
             var detectorWithSameId = allDetectors.FirstOrDefault(d => d.EntryPointDefinitionAttribute.Id.Equals(invoker.EntryPointDefinitionAttribute.Id, StringComparison.OrdinalIgnoreCase));
             if (detectorWithSameId != default(EntityInvoker) && publishingDetectorId == HostConstants.NewDetectorId)
@@ -1396,6 +1441,40 @@ namespace Diagnostics.RuntimeHost.Controllers
                     }
                 }
             }
+        }
+
+        public Response RedactDataResponse(Response response)
+        {
+            if (response == null || response.Dataset == null || response.Dataset.Count == 0)
+            {
+                return response;
+            }
+
+            for (int i = 0; i < response.Dataset.Count(); i++)
+            {
+                if (response.Dataset[i] != null && response.Dataset[i].Table != null)
+                {
+                    response.Dataset[i].Table = RedactDataTable(response.Dataset[i].Table);
+                }
+            }
+
+            return response;
+        }
+
+        public DataTable RedactDataTable(DataTable dataTable)
+        {
+            if (dataTable == null)
+                return dataTable;
+
+            foreach (DataRow dr in dataTable.Rows)
+            {
+                foreach (DataColumn dc in dataTable.Columns)
+                {
+                    dr[dc] = dc.DataType == typeof(String) ? DataAnonymizer.AnonymizeContent(dr[dc].ToString()) : dr[dc];
+                }
+            }
+
+            return dataTable;
         }
     }
 }

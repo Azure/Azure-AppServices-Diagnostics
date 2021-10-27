@@ -22,6 +22,9 @@ using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Extensions.Configuration.AzureKeyVault;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
+using Diagnostics.CompilerHost.Security.CertificateAuth;
+using Diagnostics.Logger;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Diagnostics.CompilerHost
 {
@@ -86,8 +89,15 @@ namespace Diagnostics.CompilerHost
             var config = configManager.GetConfigurationAsync().Result;
             var issuer = config.Issuer;
             var signingKeys = config.SigningKeys;
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
+
+            services.AddAuthentication().AddCertificateAuth(CertificateAuthDefaults.AuthenticationScheme,
+                options =>
+                {
+                    options.AllowedIssuers = Configuration["SecuritySettings:AllowedCertIssuers"].Split("|").Select(p => p.Trim()).ToList();
+                    var allowedSubjectNames = Configuration["SecuritySettings:AllowedCertSubjectNames"].Split(",").Select(p => p.Trim()).ToList();
+                    options.AllowedSubjectNames = allowedSubjectNames;
+                }).AddJwtBearer("AzureAd",
+                options =>
                 {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
@@ -110,12 +120,36 @@ namespace Diagnostics.CompilerHost
                             if (appId == null || !allowedAppIds.Exists(p => p.Equals(appId.Value, StringComparison.OrdinalIgnoreCase)))
                             {
                                 context.Fail("Unauthorized Request");
+                                DiagnosticsETWProvider.Instance.LogCompilerHostMessage($"AAD Authentication failed because incoming app id was not allowed");
+                            }
+                            return Task.CompletedTask;
+                        },
+                        OnAuthenticationFailed = context =>
+                        {
+                            DiagnosticsETWProvider.Instance.LogCompilerHostMessage($"AAD Authentication failure reason: {context.Exception.ToString()}");
+                            return Task.CompletedTask;
+                        },
+                        OnMessageReceived = context =>
+                        {
+
+                            context.Request.Headers.TryGetValue("Authorization", out var BearerToken);
+                            if (BearerToken.Count == 0)
+                            {
+                                DiagnosticsETWProvider.Instance.LogCompilerHostMessage("No bearer token was sent");
                             }
                             return Task.CompletedTask;
                         }
                     };
+                }
+            );
 
-                });
+            services.AddAuthorization(options =>
+            {
+                options.DefaultPolicy = new AuthorizationPolicyBuilder().
+                                        RequireAuthenticatedUser().
+                                        AddAuthenticationSchemes(CertificateAuthDefaults.AuthenticationScheme, "AzureAd")
+                                        .Build();
+            });
             // Enable app insights telemetry
             services.AddApplicationInsightsTelemetry();
             services.AddControllers().AddNewtonsoftJson();

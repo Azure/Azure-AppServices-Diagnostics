@@ -14,6 +14,7 @@ using Diagnostics.Logger;
 using Microsoft.Extensions.Primitives;
 using System.Linq;
 using Diagnostics.ModelsAndUtils.Utilities;
+using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -25,8 +26,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.SitesResource)]
     public sealed class SitesController : SiteControllerBase
     {
-        public SitesController(IServiceProvider services, IRuntimeContext<App> runtimeContext)
-            : base(services, runtimeContext)
+        public SitesController(IServiceProvider services, IRuntimeContext<App> runtimeContext, IConfiguration config)
+            : base(services, runtimeContext, config)
         {
         }
 
@@ -93,7 +94,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="postBody">Request json body.</param>
         /// <returns>Task for showing diagnostic report.</returns>
         [HttpPost(UriElements.DiagnosticReport)]
-        public async Task<IActionResult> DiagnosticReport(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticReportQuery queryBody, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> DiagnosticReport(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticReportQuery queryBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null)
         {
             var validateBody = InsightsAPIHelpers.ValidateQueryBody(queryBody);
             if (!validateBody.Status)
@@ -106,7 +107,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest(errorMessage);
             }
             App app = await GetAppResource(subscriptionId, resourceGroupName, siteName, postBody, startTimeUtc, endTimeUtc);
-            return await base.GetDiagnosticReport(app, queryBody, startTimeUtc, endTimeUtc, timeGrainTimeSpan);
+            return await base.GetDiagnosticReport(app, queryBody, startTimeUtc, endTimeUtc, timeGrainTimeSpan, form:form);
         }
 
         /// <summary>

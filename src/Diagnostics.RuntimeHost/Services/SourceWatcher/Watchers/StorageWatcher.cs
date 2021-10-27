@@ -41,6 +41,21 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
         private Task kustoConfigDownloadTask;
         private IDiagEntityTableCacheService diagEntityTableCacheService;
 
+        /// <summary>
+        /// Using a flag incase anything goes wrong.
+        /// </summary>
+        private bool LoadGistFromRepo
+        {
+            get
+            {
+                if (bool.TryParse(configuration["LoadGistFromRepo"], out bool retval))
+                {
+                    return retval;
+                }
+                return false;
+            }
+        }
+
         private bool LoadOnlyPublicDetectors
         {
             get
@@ -296,9 +311,9 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
             }
 
             var script = string.Empty;
-            if (partitionkey.Equals("Gist"))
-            {
-                script = await gitHubClient.GetFileContent($"{rowkey.ToLower()}/{rowkey.ToLower()}.csx");
+            if (partitionkey.Equals("Gist") && !LoadGistFromRepo)
+            {           
+               script = await gitHubClient.GetFileContent($"{rowkey.ToLower()}/{rowkey.ToLower()}.csx"); 
             }
             EntityMetadata metaData = new EntityMetadata(script, entityType, metadata);
             var newInvoker = new EntityInvoker(metaData);

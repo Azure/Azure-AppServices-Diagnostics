@@ -293,6 +293,15 @@ namespace Diagnostics.DataProviders
             return sitePostBody;
         }
 
+        public override async Task<dynamic> GetContainerAppPostBody(string containerAppName)
+        {
+            if (string.IsNullOrWhiteSpace(containerAppName))
+                throw new ArgumentNullException(nameof(containerAppName));
+            var response = await GetObserverResource($"partner/containerapp/{containerAppName}");
+            dynamic containerAppPostBody = JsonConvert.DeserializeObject(response);
+            return containerAppPostBody;
+        }
+
         public override async Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName)
         {
             if (string.IsNullOrWhiteSpace(hostingEnvironmentName))

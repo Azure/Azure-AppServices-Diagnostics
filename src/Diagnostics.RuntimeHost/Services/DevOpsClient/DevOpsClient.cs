@@ -1,7 +1,9 @@
-﻿using Diagnostics.Logger;
+﻿using Diagnostics.DataProviders;
+using Diagnostics.Logger;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using Diagnostics.ModelsAndUtils.Models.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using Microsoft.VisualStudio.Services.Common;
@@ -10,7 +12,10 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -112,7 +117,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 
             try
             {
-                if (!string.IsNullOrWhiteSpace(branch))
+               if (!string.IsNullOrWhiteSpace(branch))
                 {
                     version = new GitVersionDescriptor()
                     {
@@ -220,6 +225,149 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 
             return result;
         }
+
+        /// <summary>
+        /// Gets file change in the given commit.
+        /// </summary>
+        /// <param name="commitId">Commit id to process.</param>
+        public async Task<List<DevopsFileChange>> GetFilesInCommit(string commitId)
+        {
+            if (string.IsNullOrWhiteSpace(commitId))
+                throw new ArgumentNullException("commit id cannot be null");
+            CancellationTokenSource tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
+            GitRepository repositoryAsync = await gitClient.GetRepositoryAsync(_project, _repoID, (object)null, tokenSource.Token);
+            GitCommitChanges changesAsync = await gitClient.GetChangesAsync(commitId, repositoryAsync.Id, null, null, null, tokenSource.Token);
+            List<DevopsFileChange> stringList = new List<DevopsFileChange>();
+            foreach (GitChange change in changesAsync.Changes)
+            {
+                var gitversion = new GitVersionDescriptor
+                {
+                    Version = commitId,
+                    VersionType = GitVersionType.Commit,
+                    VersionOptions = GitVersionOptions.None
+                };
+                if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Add || change.ChangeType == VersionControlChangeType.Edit))
+                {
+                    // hack right now, ideally get from config
+                    var detectorId = String.Join(";", Regex.Matches(change.Item.Path, @"\/(.+?)\/")
+                                        .Cast<Match>()
+                                        .Select(m => m.Groups[1].Value));
+
+
+                    Task<string> detectorScriptTask =  GetFileContentInCommit(repositoryAsync.Id, change.Item.Path, gitversion);
+                    Task<string> packageContentTask =  GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
+                    Task<string> metadataContentTask =  GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);            
+                    await Task.WhenAll( new Task[] { detectorScriptTask, packageContentTask, metadataContentTask });
+                    string detectorScriptContent = await detectorScriptTask;
+                    string packageContent = await packageContentTask;
+                    string metadataContent = await metadataContentTask;
+                    stringList.Add(new DevopsFileChange
+                    {
+                        CommitId = commitId,
+                        Content = detectorScriptContent,
+                        Path = change.Item.Path,
+                        PackageConfig = packageContent,
+                        Metadata = metadataContent
+                    });
+                }
+                else if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Delete))
+                {
+                    var detectorId = String.Join(";", Regex.Matches(change.Item.Path, @"\/(.+?)\/")
+                                        .Cast<Match>()
+                                        .Select(m => m.Groups[1].Value));
+
+                    GitCommit gitCommitDetails = await gitClient.GetCommitAsync(commitId, repositoryAsync.Id, null, null, tokenSource.Token);
+                    // Get the package.json from the parent commit since at this commit, the file doesn't exist.
+                    var packageContent = await GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/package.json", new GitVersionDescriptor
+                    {
+                        Version = gitCommitDetails.Parents.FirstOrDefault(),
+                        VersionType = GitVersionType.Commit,
+                        VersionOptions = GitVersionOptions.None
+                    });
+                    // Mark this detector as disabled. 
+                    stringList.Add(new DevopsFileChange
+                    {
+                        CommitId = commitId,
+                        Content = "",
+                        PackageConfig = packageContent,
+                        Path = change.Item.Path,
+                        Metadata = "",
+                        MarkAsDisabled = true
+                    });
+                }
+            }
+            return stringList;
+        }
+
+        /// <summary>
+        /// Gets the file content as string for the given path and repo at a specific commit.
+        /// </summary>
+        /// <param name="repoId">Repo guid</param>
+        /// <param name="ItemPath">Path of the item</param>
+        /// <param name="gitVersionDescriptor">Git version descriptior</param>
+        private async Task<string> GetFileContentInCommit(Guid repoId, string ItemPath, GitVersionDescriptor gitVersionDescriptor)
+        {
+            string content = string.Empty;
+            var streamResult = await gitClient.GetItemContentAsync(repoId, ItemPath, null, VersionControlRecursionType.None, null,
+                       null, null, gitVersionDescriptor);
+            using (var reader = new StreamReader(streamResult))
+            {
+                content = reader.ReadToEnd();
+            }
+            return content;
+        }
+
+        /// <summary>
+        /// Gets file changes to deploy between commits based on date range or commit range.
+        /// </summary>
+        /// <param name="parameters">The given deployment parameters</param>
+        public async Task<List<DevopsFileChange>> GetFilesBetweenCommits(DeploymentParameters parameters)
+        {
+            var result = new List<DevopsFileChange>();
+
+            string gitFromdate;
+            string gitToDate;
+            CancellationTokenSource tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
+            GitRepository repositoryAsync = await gitClient.GetRepositoryAsync(_project, _repoID, (object)null, tokenSource.Token);
+            if (!string.IsNullOrWhiteSpace(parameters.FromCommitId) && !string.IsNullOrWhiteSpace(parameters.ToCommitId))
+            {
+                GitCommit fromCommitDetails = await gitClient.GetCommitAsync(parameters.FromCommitId, repositoryAsync.Id);
+                GitCommit toCommitDetails = await gitClient.GetCommitAsync(parameters.ToCommitId, repositoryAsync.Id);
+                gitFromdate = fromCommitDetails.Committer.Date.ToString();
+                gitToDate = toCommitDetails.Committer.Date.ToString();
+            }
+            else
+            {
+                gitFromdate = parameters.StartDate;
+                gitToDate = parameters.EndDate;
+            }
+            
+            var defaultBranch = repositoryAsync.DefaultBranch.Replace("refs/heads/", "");
+            GitVersionDescriptor gitVersionDescriptor = new GitVersionDescriptor
+            {
+                VersionType = GitVersionType.Branch,
+                Version = defaultBranch,
+                VersionOptions = GitVersionOptions.None
+            };
+            List<GitCommitRef> commitsToProcess = await gitClient.GetCommitsAsync(repositoryAsync.Id, new GitQueryCommitsCriteria
+            {
+                FromDate = gitFromdate,
+                ToDate = gitToDate,
+                ItemVersion = gitVersionDescriptor
+            }, null, null, null, tokenSource.Token);
+            foreach (var commit in commitsToProcess)
+            {
+                var filesinCommit = await GetFilesInCommit(commit.CommitId);
+                // Process only the latest file update. 
+                if (!result.Select(s => s.Path).Contains(filesinCommit.FirstOrDefault().Path))
+                {
+                    result.AddRange(filesinCommit);
+                }
+
+            }
+            return result;
+        }
+
 
         public void Dispose()
         {

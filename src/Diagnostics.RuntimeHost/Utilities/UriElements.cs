@@ -10,7 +10,7 @@
 
         public const string WebResourceRoot = ResourceProvidersRoot + ResourceProviders.Web;
         public const string SitesResource = WebResourceRoot + "/sites/{siteName}";
-        public const string WorkerAppResource = WebResourceRoot + "/workerApps/{siteName}";
+        public const string ContainerAppResource = WebResourceRoot + "/containerApps/{siteName}";
         public const string HostingEnvironmentResource = WebResourceRoot + "/hostingEnvironments/{hostingEnvironmentName}";
 
         #endregion Microsoft.Web Urls
@@ -63,6 +63,7 @@
         public const string ObserverGetSites = "sites/{siteName}";
         public const string ObserverGetSiteWithStamp = "stamps/{stampName}/sites/{siteName}";
         public const string ObserverGetHostingEnvironment = "hostingEnvironments/{hostingEnvironmentName}";
+        public const string ObserverGetContainerApp = "partner/containerapp/{containerAppName}";
 
         #endregion Observer Urls
 

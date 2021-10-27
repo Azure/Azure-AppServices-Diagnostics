@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Diagnostics.Scripts.CompilationService.Interfaces;
+using Diagnostics.Scripts.CompilationService.Utilities.Extensions;
 using Diagnostics.Scripts.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -39,7 +40,7 @@ namespace Diagnostics.Scripts.CompilationService
             _entryPointName = entryPointName;
         }
 
-        public Task<ImmutableArray<Diagnostic>> GetDiagnosticsAsync()
+        public async Task<ImmutableArray<Diagnostic>> GetDiagnosticsAsync()
         {
             if (_compilation == null)
             {
@@ -49,10 +50,28 @@ namespace Diagnostics.Scripts.CompilationService
             ImmutableArray<DiagnosticAnalyzer> analyzers = GetCodeAnalyzers();
             if (analyzers.IsEmpty)
             {
-                return Task.Factory.StartNew(() => _compilation.GetDiagnostics());
+                return await Task.Factory.StartNew(() => _compilation.GetDiagnostics());
             }
 
-            return _compilation.WithAnalyzers(GetCodeAnalyzers()).GetAllDiagnosticsAsync();
+            ImmutableArray<Diagnostic> allDiagnostics = await _compilation.WithAnalyzers(GetCodeAnalyzers()).GetAllDiagnosticsAsync();
+            if (allDiagnostics.Length > 1)
+            {
+                List<Diagnostic> minifiedDiagnostics = new List<Diagnostic>();
+                foreach (Diagnostic currDiag in allDiagnostics)
+                {
+                    if (!minifiedDiagnostics.Where(d => d.ToString() == currDiag.ToString()).Any())
+                    {
+                        minifiedDiagnostics.Add(currDiag);
+                    }
+                }
+                minifiedDiagnostics.Sort((x, y) =>  (x == null) ? 1 : x.CompareTo(y));                
+                return minifiedDiagnostics.ToImmutableArray<Diagnostic>();
+            }
+            else
+            {
+                return allDiagnostics;
+            }
+            
         }
 
         public EntityMethodSignature GetEntryPointSignature()

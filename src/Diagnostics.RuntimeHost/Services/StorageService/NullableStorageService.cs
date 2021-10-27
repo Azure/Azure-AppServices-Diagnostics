@@ -47,5 +47,10 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         {
             return Task.FromResult(new List<DetectorRuntimeConfiguration>());
         }
+
+        public Task LoadBatchDataToTable(List<DiagEntity> diagEntities)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

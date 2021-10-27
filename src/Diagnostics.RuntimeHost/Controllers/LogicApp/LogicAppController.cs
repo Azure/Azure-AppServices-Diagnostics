@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -16,8 +17,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.LogicAppResource)]
     public sealed class LogicAppController : DiagnosticControllerBase<LogicApp>
     {
-        public LogicAppController(IServiceProvider services, IRuntimeContext<LogicApp> runtimeContext)
-            : base(services, runtimeContext)
+        public LogicAppController(IServiceProvider services, IRuntimeContext<LogicApp> runtimeContext, IConfiguration config)
+            : base(services, runtimeContext, config)
         {
         }
 
@@ -40,7 +41,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.DiagnosticReport)]
-        public async Task<IActionResult> DiagnosticReport(string subscriptionId, string resourceGroupName, string logicAppName, [FromBody] DiagnosticReportQuery queryBody, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> DiagnosticReport(string subscriptionId, string resourceGroupName, string logicAppName, [FromBody] DiagnosticReportQuery queryBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null)
         {
             var validateBody = InsightsAPIHelpers.ValidateQueryBody(queryBody);
             if (!validateBody.Status)
@@ -51,7 +52,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 return BadRequest(errorMessage);
             }
-            return await base.GetDiagnosticReport(GetResource(subscriptionId, resourceGroupName, logicAppName), queryBody, startTimeUtc, endTimeUtc, timeGrainTimeSpan);
+            return await base.GetDiagnosticReport(GetResource(subscriptionId, resourceGroupName, logicAppName), queryBody, startTimeUtc, endTimeUtc, timeGrainTimeSpan, form: form);
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]

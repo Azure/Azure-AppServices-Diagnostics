@@ -94,6 +94,11 @@ namespace Diagnostics.DataProviders
             throw new NotImplementedException();
         }
 
+        public override Task<dynamic> GetContainerAppPostBody(string containerAppName)
+        {
+            throw new NotImplementedException();
+        }
+
         public override Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName)
         {
             throw new NotImplementedException();
