@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Diagnostics.ModelsAndUtils.Models.Storage;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,6 +14,16 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         }
 
         public Task<object> GetFileContentAsync(string filePathInRepo, string resourceUri, string requestId, string branch = null)
+        {
+            return null;
+        }
+
+        public Task<List<DevopsFileChange>> GetFilesBetweenCommits(DeploymentParameters parameters)
+        {
+            return null;
+        }
+
+        public Task<List<DevopsFileChange>> GetFilesInCommit(string commitId)
         {
             return null;
         }
