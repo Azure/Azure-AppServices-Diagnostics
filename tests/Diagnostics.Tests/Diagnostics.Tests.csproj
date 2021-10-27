@@ -36,6 +36,9 @@
     <None Update="TestData\TestDetectorWithSupportTopic.csx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="TestData\TestDetectorWithGist.csx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <PropertyGroup>

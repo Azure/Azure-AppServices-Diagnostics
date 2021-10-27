@@ -12,12 +12,12 @@ namespace Diagnostics.DataProviders
         internal static bool ShouldFailoverHeartbeatSucceed = false;
         internal static int HeartBeatRuns = 0;
 
-        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, int timeoutSeconds, string requestId = null, string operationName = null)
+        public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, int timeoutSeconds, string requestId = null, string operationName = null, DateTime? startTime = null, DateTime? endTime = null)
         {
             return await ExecuteQueryAsync(query, cluster, database, requestId, operationName);
         }
 
-            public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null)
+            public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null, DateTime? startTime = null, DateTime? endTime = null)
         {
             if (string.IsNullOrWhiteSpace(cluster))
             {

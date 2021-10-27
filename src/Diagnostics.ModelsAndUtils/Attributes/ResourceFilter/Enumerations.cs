@@ -43,7 +43,12 @@
         /// <summary>
         /// Generic ARM Resource
         /// </summary>
-        ArmResource = 128
+        ArmResource = 128,
+
+        /// <summary>
+        /// Container App Resource
+        /// </summary>
+        ContainerApp = 256
     }
 
     /// <summary>

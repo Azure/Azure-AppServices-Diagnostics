@@ -96,7 +96,7 @@ namespace Diagnostics.RuntimeHost.Middleware
                 out DateTime endTimeUtc,
                 out TimeSpan timeGrainTimeSpan,
                 out string errorMessage);
-            
+
             var dataSourcesConfigurationService = ((IServiceProvider)httpContext.RequestServices).GetService<IDataSourcesConfigurationService>();
             var wawsObserverTokenService = ((IServiceProvider)httpContext.RequestServices).GetService<IWawsObserverTokenService>();
             var supportBayApiObserverTokenService = ((IServiceProvider)httpContext.RequestServices).GetService<ISupportBayApiObserverTokenService>();
@@ -140,7 +140,7 @@ namespace Diagnostics.RuntimeHost.Middleware
                 geomasterName = httpContext.Request.Headers[GeomasterNameHeader];
             }
 
-            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault().Any() ? values.FirstOrDefault().Split(new char[] { ',' })[0] : string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName, kustoHeartBeatService, geomasterHostName, geomasterName, null, httpContext.Request.Headers));
+            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault().Any() ? values.FirstOrDefault().Split(new char[] { ',' })[0] : string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName, kustoHeartBeatService, geomasterHostName, geomasterName, null, httpContext.Request.Headers, isInternalClient: isInternalClient));
         }
 
         private void EndRequestHandle(HttpContext httpContext)

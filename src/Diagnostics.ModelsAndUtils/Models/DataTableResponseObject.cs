@@ -92,13 +92,24 @@ namespace Diagnostics.ModelsAndUtils.Models
                 var row = dataTable.NewRow();
                 for (int j = 0; j < dataTable.Columns.Count; j++)
                 {
-                    row[j] = appInsightsDataTableResponse.Rows[i, j] ?? DBNull.Value;
+                    row[j] = MaskPII(appInsightsDataTableResponse.Rows[i, j]) ?? DBNull.Value;
                 }
 
                 dataTable.Rows.Add(row);
             }
 
             return dataTable;
+        }
+
+        // MaskPII for both internal and external users
+        private static dynamic MaskPII(dynamic columnValue)
+        {
+            if (columnValue is string)
+            {
+                return ScriptUtilities.DataAnonymizer.AnonymizeContent(columnValue);
+            }
+
+            return columnValue;
         }
 
         public static DataTableResponseObject ToDataTableResponseObject(this DataTable table)

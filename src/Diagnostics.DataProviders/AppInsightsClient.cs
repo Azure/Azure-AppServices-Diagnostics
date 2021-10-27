@@ -16,6 +16,7 @@ namespace Diagnostics.DataProviders
     public class AppInsightsClient : IAppInsightsClient
     {
         private AppInsightsDataProviderConfiguration _configuration;
+        private bool _isInternalClient;
 
         /// <summary>
         /// Application ID
@@ -49,9 +50,10 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        public AppInsightsClient(AppInsightsDataProviderConfiguration configuration)
+        public AppInsightsClient(AppInsightsDataProviderConfiguration configuration, bool isInternalClient)
         {
             _configuration = configuration;
+            _isInternalClient = isInternalClient;
         }
 
         public void SetAppInsightsKey(string appId, string apiKey)

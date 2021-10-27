@@ -282,6 +282,20 @@ namespace Diagnostics.Logger
                 WebsiteHostName);
         }
 
+        [Event(2009, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDevOpsApiException)]
+        public void LogDevOpsApiException(string RequestId, string Source, string Message, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
+        {
+            WriteDiagnosticsEvent(
+                2009,
+                RequestId,
+                Source,
+                Message,
+                ExceptionType,
+                ExceptionDetails,
+                EnvironmentName,
+                WebsiteHostName);
+        }
+
         #endregion Runtime Host Events (ID Range : 2000 - 2499)
 
         #region SourceWatcher Events (ID Range : 2500 - 2599)
@@ -817,6 +831,22 @@ namespace Diagnostics.Logger
         public void LogMonitoringEventException(string Source, string Message, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
             WriteDiagnosticsEvent(5602, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
+        }
+
+        #endregion
+
+        #region Detector Deployment Events (ID: 5700 - 5709)
+
+        [Event(5700, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDeploymentOperationMessage)]
+        public void LogDeploymentOperationMessage(string RequestId, string DeploymentId, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
+        {
+            WriteDiagnosticsEvent(
+                5700,
+                RequestId,
+                DeploymentId,
+                Message,
+                DiagEnvironment,
+                DiagWebsiteHostName);
         }
 
         #endregion

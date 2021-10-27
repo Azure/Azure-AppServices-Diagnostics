@@ -29,13 +29,15 @@ namespace Diagnostics.DataProviders
             Kusto = GetOrAddDataProvider(new KustoLogDecorator(context, new KustoDataProvider(_cache,
                      context.Configuration.KustoConfiguration,
                      context.RequestId,
-                     context.KustoHeartBeatService)));
+                     context.KustoHeartBeatService,
+                     context.QueryStartTime, 
+                     context.QueryEndTime)));
 
             Observer = GetOrAddDataProvider(new ObserverLogDecorator(context, SupportObserverDataProviderFactory.GetDataProvider(_cache, context.Configuration, context)));
 
             GeoMaster = GetOrAddDataProvider(new GeoMasterLogDecorator(context, new GeoMasterDataProvider(_cache, context)));
 
-            AppInsights = GetOrAddDataProvider(new AppInsightsLogDecorator(context, new AppInsightsDataProvider(_cache, context.Configuration.AppInsightsConfiguration)));
+            AppInsights = GetOrAddDataProvider(new AppInsightsLogDecorator(context, new AppInsightsDataProvider(_cache, context.Configuration.AppInsightsConfiguration, context.IsInternalClient)));
 
             ChangeAnalysis = GetOrAddDataProvider(new ChangeAnalysisLogDecorator(context, new ChangeAnalysisDataProvider(_cache, context.Configuration.ChangeAnalysisDataProviderConfiguration, context.RequestId, context.clientObjectId, context.clientPrincipalName, Kusto, context.receivedHeaders)));
 

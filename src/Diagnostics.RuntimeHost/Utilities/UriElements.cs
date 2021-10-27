@@ -10,6 +10,7 @@
 
         public const string WebResourceRoot = ResourceProvidersRoot + ResourceProviders.Web;
         public const string SitesResource = WebResourceRoot + "/sites/{siteName}";
+        public const string ContainerAppResource = WebResourceRoot + "/containerApps/{siteName}";
         public const string HostingEnvironmentResource = WebResourceRoot + "/hostingEnvironments/{hostingEnvironmentName}";
 
         #endregion Microsoft.Web Urls
@@ -48,7 +49,7 @@
         public const string DiagnosticReport = "diagnostics";
 
         // Constants for internal api interactions
-        public const string Internal = "/internal";
+        public const string Internal = "internal";
 
         public const string Logger = "logger";
         public const string PublishModel = "publishmodel";
@@ -62,8 +63,19 @@
         public const string ObserverGetSites = "sites/{siteName}";
         public const string ObserverGetSiteWithStamp = "stamps/{stampName}/sites/{siteName}";
         public const string ObserverGetHostingEnvironment = "hostingEnvironments/{hostingEnvironmentName}";
+        public const string ObserverGetContainerApp = "partner/containerapp/{containerAppName}";
 
         #endregion Observer Urls
+
+        #region DevOps Urls
+
+        public const string DevOps = "devops";
+        public const string DevOpsMakePR = "makePR";
+        public const string DevOpsPush = "push";
+        public const string DevOpsGetCode = "getCode";
+        public const string DevOpsGetBranches = "getBranches";
+
+        #endregion
     }
 
     /// <summary>

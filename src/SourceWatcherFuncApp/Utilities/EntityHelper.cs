@@ -73,6 +73,11 @@ namespace SourceWatcherFuncApp.Utilities
                         detectorPackage.ResourceProvider = "Microsoft.ContainerService";
                         detectorPackage.ResourceType = "managedClusters";
                     }
+                    else if (invoker.ResourceFilter is ContainerAppFilter)
+                    {
+                        detectorPackage.ResourceProvider = "Microsoft.Web";
+                        detectorPackage.ResourceType = "containerApps";
+                    }
                     else if (invoker.ResourceFilter is LogicAppFilter)
                     {
                         detectorPackage.ResourceProvider = "Microsoft.Logic";

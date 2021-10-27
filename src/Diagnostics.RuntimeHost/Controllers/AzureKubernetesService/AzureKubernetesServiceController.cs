@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.Extensions.Configuration;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -16,8 +17,8 @@ namespace Diagnostics.RuntimeHost.Controllers
     [Route(UriElements.AzureKubernetesServiceResource)]
     public class AzureKubernetesServiceController : DiagnosticControllerBase<AzureKubernetesService>
     {
-        public AzureKubernetesServiceController(IServiceProvider services, IRuntimeContext<AzureKubernetesService> runtimeContext)
-            : base(services, runtimeContext)
+        public AzureKubernetesServiceController(IServiceProvider services, IRuntimeContext<AzureKubernetesService> runtimeContext, IConfiguration config)
+            : base(services, runtimeContext, config)
         {
         }
 
@@ -40,7 +41,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.DiagnosticReport)]
-        public async Task<IActionResult> DiagnosticReport(string subscriptionId, string resourceGroupName, string clusterName, [FromBody] DiagnosticReportQuery queryBody, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> DiagnosticReport(string subscriptionId, string resourceGroupName, string clusterName, [FromBody] DiagnosticReportQuery queryBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null)
         {
             var validateBody = InsightsAPIHelpers.ValidateQueryBody(queryBody);
             if (!validateBody.Status)
@@ -51,7 +52,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 return BadRequest(errorMessage);
             }
-            return await base.GetDiagnosticReport(GetResource(subscriptionId, resourceGroupName, clusterName), queryBody, startTimeUtc, endTimeUtc, timeGrainTimeSpan);
+            return await base.GetDiagnosticReport(GetResource(subscriptionId, resourceGroupName, clusterName), queryBody, startTimeUtc, endTimeUtc, timeGrainTimeSpan, form: form);
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]

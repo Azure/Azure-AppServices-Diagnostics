@@ -36,6 +36,7 @@ namespace Diagnostics.DataProviders
             // --------------------------------------------------------------------------
             var client = new HttpClient(handler);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Add(HeaderConstants.UserAgentHeaderName, "appservice-diagnostics");
             return client;
         });
 
@@ -261,6 +262,8 @@ namespace Diagnostics.DataProviders
         public abstract Task<dynamic> GetHostNames(string stampName, string siteName);
 
         public abstract Task<dynamic> GetSitePostBody(string stampName, string siteName);
+        
+        public abstract Task<dynamic> GetContainerAppPostBody(string containerAppName);
 
         public abstract Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName);
 
