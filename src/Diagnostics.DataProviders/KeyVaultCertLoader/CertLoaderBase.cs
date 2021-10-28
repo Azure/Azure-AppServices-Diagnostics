@@ -12,7 +12,8 @@ namespace Diagnostics.DataProviders.KeyVaultCertLoader
 
         public void LoadCertFromAppService()
         {
-            X509Store certStore = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+            //X509Store certStore = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+            X509Store certStore = new X509Store(StoreName.My, StoreLocation.LocalMachine);
             certStore.Open(OpenFlags.ReadOnly);
 
             try

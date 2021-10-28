@@ -127,10 +127,14 @@ namespace Diagnostics.RuntimeHost
                                             .Build();
                 });
             }
+            CompilerHostCertLoader.Instance.Initialize(Configuration);
+            SearchAPICertLoader.Instance.Initialize(Configuration);
             if (!Environment.IsDevelopment())
             {
                 GeoCertLoader.Instance.Initialize(Configuration);
                 MdmCertLoader.Instance.Initialize(Configuration);
+                CompilerHostCertLoader.Instance.Initialize(Configuration);
+                SearchAPICertLoader.Instance.Initialize(Configuration);
             }
 
             services.AddMemoryCache();

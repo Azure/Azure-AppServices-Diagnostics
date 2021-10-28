@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using Diagnostics.DataProviders;
 using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.DataProviders.TokenService;
 using Newtonsoft.Json;
@@ -60,7 +62,7 @@ namespace Diagnostics.RuntimeHost.Services
             parameters.Add("text", query);
             parameters.Add("requestId", requestId ?? string.Empty);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryDetectorsUrl);
-            request = await AddAuthorizationHeadersAsync(request);
+            //request = await AddAuthorizationHeadersAsync(request);
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return await Get(request);
         }
@@ -71,7 +73,7 @@ namespace Diagnostics.RuntimeHost.Services
             parameters.Add("detector_utterances", JsonConvert.SerializeObject(detectorUtterances));
             parameters.Add("requestId", requestId);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryUtterancesUrl);
-            request = await AddAuthorizationHeadersAsync(request);
+            //request = await AddAuthorizationHeadersAsync(request);
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return await Get(request);
         }
@@ -81,7 +83,7 @@ namespace Diagnostics.RuntimeHost.Services
             parameters.Add("trainingConfig", trainingConfig);
             parameters.Add("requestId", requestId);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, TriggerTrainingUrl);
-            request = await AddAuthorizationHeadersAsync(request);
+            //request = await AddAuthorizationHeadersAsync(request);
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return await Get(request);
         }
@@ -90,7 +92,7 @@ namespace Diagnostics.RuntimeHost.Services
         {
             parameters.Add("requestId", requestId);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, AppendQueryStringParams(TriggerModelRefreshUrl, parameters));
-            request = await AddAuthorizationHeadersAsync(request);
+            //request = await AddAuthorizationHeadersAsync(request);
             return await Get(request);
         }
 
@@ -111,6 +113,8 @@ namespace Diagnostics.RuntimeHost.Services
             };
 
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            byte[] certContent = SearchAPICertLoader.Instance.Cert.Export(X509ContentType.Cert);
+            _httpClient.DefaultRequestHeaders.Add("x-ms-diagcert", Convert.ToBase64String(certContent));
         }
 
         private string AppendQueryStringParams(string url, Dictionary<string, string> additionalQueryParams)
