@@ -143,11 +143,18 @@ namespace Diagnostics.RuntimeHost.Controllers
 
         private async Task<DiagnosticContainerAppData> GetContainerAppPostBody(string subscriptionId, string resourceGroupName, string ContainerAppName)
         {
-            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
-            dynamic postBody = await dataProviders.Observer.GetContainerAppPostBody(ContainerAppName);
-            List<DiagnosticContainerAppData> objectList = JsonConvert.DeserializeObject<List<DiagnosticContainerAppData>>(JsonConvert.SerializeObject(postBody));
-            var appBody = objectList.Find(obj => (obj.SubscriptionName.ToLower() == subscriptionId.ToLower()) && (obj.ResourceGroupName.ToLower() == resourceGroupName.ToLower()));
-            return appBody;
+            try
+            {
+                var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+                dynamic postBody = await dataProviders.Observer.GetContainerAppPostBody(ContainerAppName);
+                List<DiagnosticContainerAppData> objectList = JsonConvert.DeserializeObject<List<DiagnosticContainerAppData>>(JsonConvert.SerializeObject(postBody));
+                var appBody = objectList.Find(obj => (obj.SubscriptionName.ToLower() == subscriptionId.ToLower()) && (obj.ResourceGroupName.ToLower() == resourceGroupName.ToLower()));
+                return appBody;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         protected async Task<ContainerApp> GetContainerAppResource(string subscriptionId, string resourceGroup, string resourceName, DiagnosticContainerAppData postBody=null)
