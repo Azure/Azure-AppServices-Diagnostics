@@ -163,7 +163,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 postBody = await GetContainerAppPostBody(subscriptionId, resourceGroup, resourceName);
             }
-            return new ContainerApp(subscriptionId, resourceGroup, resourceName, postBody!=null? postBody.KubeEnvironmentName: null, postBody!=null?postBody.GeoMasterName:null);
+            return new ContainerApp(subscriptionId, resourceGroup, resourceName, postBody!=null? postBody.KubeEnvironmentName: null, postBody!=null?postBody.GeoMasterName:null, postBody != null ? postBody.Fqdn : null);
         }
     }
 }
