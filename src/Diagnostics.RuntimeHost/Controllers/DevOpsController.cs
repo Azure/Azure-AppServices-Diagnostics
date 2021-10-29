@@ -52,7 +52,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(response);
         }
 
-        [HttpPut(UriElements.DevOpsPush)]
+        [HttpPost(UriElements.DevOpsPush)]
         public async Task<IActionResult> PushChangesAsync([FromBody]JToken jsonBody)
         {
             string[] fieldNames =
