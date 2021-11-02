@@ -196,7 +196,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return dictionary[requestId + "--result"];
         }
 
-        public async Task<object> PushChangesAsync(string branch, string file, string repoPath, string comment, string changeType, string resourceUri, string requestId)
+        public async Task<object> PushChangesAsync(string branch, List<string> files, List<string> repoPaths, string comment, string changeType, string resourceUri, string requestId)
         {
             
 
@@ -215,22 +215,26 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 dictionary[requestId + "--newBranch"].OldObjectId = await getLastObjectIdAsync(null, requestId);
             }
 
+            dictionary.TryAdd(requestId + "--commitChanges", new GitChange[files.Count]);
+
+            for (int i = 0; i < files.Count; i++)
+            {
+                dictionary[requestId + "--commitChanges"][i] = new GitChange()
+                {
+                    ChangeType = getChangeType(changeType),
+                    Item = new GitItem() { Path = repoPaths[i] },
+                    NewContent = new ItemContent()
+                    {
+                        Content = files[i],
+                        ContentType = ItemContentType.RawText,
+                    },
+                };
+            }
+
             dictionary.TryAdd(requestId + "--newCommit", new GitCommitRef()
             {
                 Comment = comment,
-                Changes = new GitChange[]
-                {
-                    new GitChange()
-                    {
-                        ChangeType = getChangeType(changeType),
-                        Item = new GitItem() { Path = repoPath },
-                        NewContent = new ItemContent()
-                        {
-                            Content = file,
-                            ContentType = ItemContentType.RawText,
-                        },
-                    }
-                },
+                Changes = dictionary[requestId + "--commitChanges"]
             });
 
             dictionary.TryAdd(requestId + "--push", new GitPush()
