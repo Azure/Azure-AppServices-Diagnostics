@@ -58,8 +58,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             string[] fieldNames =
             {
                 "branch",
-                "file",
-                "repoPath",
+                "files",
+                "repoPaths",
                 "comment",
                 "changeType",
                 "resourceUri"
@@ -69,13 +69,13 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest(validationMessage);
 
             string branch = jsonBody[$"branch"].ToString();
-            string file = jsonBody[$"file"].ToString();
-            string repoPath = jsonBody[$"repoPath"].ToString();
+            List<string> files = jsonBody[$"files"].Select(file => file.ToString()).ToList();
+            List<string> repoPaths = jsonBody[$"repoPaths"].Select(path => path.ToString()).ToList();
             string comment = jsonBody[$"comment"].ToString();
             string changeType = jsonBody[$"changeType"].ToString();
             string resourceUri = jsonBody[$"resourceUri"].ToString();
 
-            object response = await _devOpsClient.PushChangesAsync(branch, file, repoPath, comment, changeType, resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
+            object response = await _devOpsClient.PushChangesAsync(branch, files, repoPaths, comment, changeType, resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
             return Ok(response);
         }
 
@@ -90,6 +90,27 @@ namespace Diagnostics.RuntimeHost.Controllers
         public async Task<IActionResult> GetBranchesAsync(string resourceUri)
         {
             object response = await _devOpsClient.GetBranchesAsync(resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
+            return Ok(response);
+        }
+
+        [HttpPost(UriElements.DevOpsMerge)]
+        public async Task<IActionResult> MergeAsync([FromBody] JToken jsonBody)
+        {
+            string[] fieldNames =
+            {
+                "branch",
+                "detectorName",
+                "resourceUri"
+            };
+
+            if (!RequestBodyValidator.ValidateRequestBody(jsonBody, fieldNames, out string validationMessage))
+                return BadRequest(validationMessage);
+
+            string branch = jsonBody[$"branch"].ToString();
+            string detectorName = jsonBody[$"detectorName"].ToString();
+            string resourceUri = jsonBody[$"resourceUri"].ToString();
+
+            object response = await _devOpsClient.MergeAsync(branch, detectorName, resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
             return Ok(response);
         }
     }

@@ -67,6 +67,13 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             }
         }
 
+        private void resetGetObjectId(string requestId)
+        {
+            dictionary.TryRemove(requestId + "--query", out dynamic query);
+            dictionary.TryRemove(requestId + "--repository", out dynamic repository);
+            dictionary.TryRemove(requestId + "--commits", out dynamic commits);
+        }
+
         private async Task<string> getLastObjectIdAsync(string branch, string requestId)
         {
             if (!string.IsNullOrWhiteSpace(branch)) dictionary.TryAdd(requestId + "--query", new GitQueryCommitsCriteria()
@@ -196,7 +203,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return dictionary[requestId + "--result"];
         }
 
-        public async Task<object> PushChangesAsync(string branch, string file, string repoPath, string comment, string changeType, string resourceUri, string requestId)
+        public async Task<object> PushChangesAsync(string branch, List<string> files, List<string> repoPaths, string comment, string changeType, string resourceUri, string requestId)
         {
             
 
@@ -215,22 +222,26 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 dictionary[requestId + "--newBranch"].OldObjectId = await getLastObjectIdAsync(null, requestId);
             }
 
+            dictionary.TryAdd(requestId + "--commitChanges", new GitChange[files.Count]);
+
+            for (int i = 0; i < files.Count; i++)
+            {
+                dictionary[requestId + "--commitChanges"][i] = new GitChange()
+                {
+                    ChangeType = getChangeType(changeType),
+                    Item = new GitItem() { Path = repoPaths[i] },
+                    NewContent = new ItemContent()
+                    {
+                        Content = files[i],
+                        ContentType = ItemContentType.RawText,
+                    },
+                };
+            }
+
             dictionary.TryAdd(requestId + "--newCommit", new GitCommitRef()
             {
                 Comment = comment,
-                Changes = new GitChange[]
-                {
-                    new GitChange()
-                    {
-                        ChangeType = getChangeType(changeType),
-                        Item = new GitItem() { Path = repoPath },
-                        NewContent = new ItemContent()
-                        {
-                            Content = file,
-                            ContentType = ItemContentType.RawText,
-                        },
-                    }
-                },
+                Changes = dictionary[requestId + "--commitChanges"]
             });
 
             dictionary.TryAdd(requestId + "--push", new GitPush()
@@ -256,6 +267,39 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             }
 
             return dictionary[requestId + "--result"];
+        }
+
+        public async Task<object> MergeAsync(string branch, string detectorName, string resourceUri, string requestId)
+        {
+            object result = null;
+            List<string> parents = new List<string>();
+
+            parents.Add(await getLastObjectIdAsync(branch, requestId));
+            resetGetObjectId(requestId);
+            parents.Add(await getLastObjectIdAsync(null, requestId));
+
+            try
+            {
+                GitMergeParameters mergeParameters = new GitMergeParameters()
+                {
+                    Comment = $"Merge for detector: {detectorName}",
+                    Parents = parents
+                };
+
+                result = gitClient.CreateMergeRequestAsync(mergeParameters, _project, _repoID);
+            }
+            catch(Exception ex)
+            {
+                DiagnosticsETWProvider.Instance.LogDevOpsApiException(
+                    requestId,
+                    resourceUri,
+                    ex.Message,
+                    ex.GetType().ToString(),
+                    ex.StackTrace
+                    );
+                throw;
+            }
+            return result;
         }
 
         /// <summary>

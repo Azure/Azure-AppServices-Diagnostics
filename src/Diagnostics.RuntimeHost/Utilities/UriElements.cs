@@ -74,6 +74,7 @@
         public const string DevOpsPush = "push";
         public const string DevOpsGetCode = "getCode";
         public const string DevOpsGetBranches = "getBranches";
+        public const string DevOpsMerge = "merge";
 
         #endregion
     }
