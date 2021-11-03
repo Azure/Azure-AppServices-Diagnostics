@@ -33,7 +33,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return null;
         }
 
-        public Task<object> PushChangesAsync(string branch, string file, string repoPath, string comment, string changeType, string resourceUri, string requestId)
+        public Task<object> PushChangesAsync(string branch, List<string> files, List<string> repoPaths, string comment, string changeType, string resourceUri, string requestId)
         {
             return null;
         }
