@@ -17,7 +17,12 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <summary>
         /// FQDN of the Container App
         /// </summary>
-        public string Fdqn { get; set; }
+        public string Fqdn { get; set; }
+        
+        /// <summary>
+        /// Location of the Container App
+        /// </summary>
+        public string Location { get; set; }
 
         /// <summary>
         /// Subscription Id(Guid)
@@ -77,14 +82,15 @@ namespace Diagnostics.ModelsAndUtils.Models
             get; set;
         }
 
-        public ContainerApp(string subscriptionId, string resourceGroup, string resourceName, string kubeEnvironmentName=null, string geoMasterName=null, string fdqn=null, string subLocationPlacementId = null) : base()
+        public ContainerApp(string subscriptionId, string resourceGroup, string resourceName, string kubeEnvironmentName=null, string geoMasterName=null, string fqdn=null, string location=null, string subLocationPlacementId = null) : base()
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
             this.Name = resourceName;
             this.KubeEnvironmentName = kubeEnvironmentName;
             this.GeoMasterName = geoMasterName;
-            this.Fdqn = fdqn;
+            this.Fqdn = fqdn;
+            this.Location = location;
             SubscriptionLocationPlacementId = subLocationPlacementId;
         }
 
