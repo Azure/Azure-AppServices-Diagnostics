@@ -1,12 +1,22 @@
 {
   "PInvokeBlockConfig": [
     {
-      "BlockMatchingRegExPattern": "dnsapi.dll",
+      "BlockMatchingRegExPattern": "^(?!(dnsapi.dll|dnsapi)\\b).*",
       "MessageToShowWhenBlocked": "",
       "MethodsToBlock": [
         {
           "BlockMatchingRegExPattern": "(.*)",
           "MessageToShowWhenBlocked": "PInvoke calls are prohibited."
+        }
+      ]
+    },
+    {
+      "BlockMatchingRegExPattern": "^(dnsapi.dll|dnsapi)\\b",
+      "MessageToShowWhenBlocked": "",
+      "MethodsToBlock": [
+        {
+          "BlockMatchingRegExPattern": "^(?!(DnsQuery_W|DnsRecordListFree)\\b).*",
+          "MessageToShowWhenBlocked": "PInvoke calls from dnsapi DLL are prohibited."
         }
       ]
     }
@@ -105,12 +115,12 @@
       ]
     },
     {
-      "BlockMatchingRegExPattern": "System.Runtime.InteropServices.(.*)",
+      "BlockMatchingRegExPattern": "^System.Runtime.InteropServices.(?!(DllImportAttribute|Marshal|MarshalAsAttribute)\\b).*",
       "IsObjectCreationBlocked": true,
       "MessageToShowWhenBlocked": "Creating an instance of a class in the System.Runtime.InteropServices namepsace is prohibited.",
       "PropertiesToBlock": [
         {
-          "BlockMatchingRegExPattern": "(.*)",
+          "BlockMatchingRegExPattern": "^(?!(CharSet|UnmanagedType|LayoutKind|)\\b).*",
           "MessageToShowWhenBlocked": "Access to properties of any class in the System.Runtime.InteropServices namespace is prohibited."
         }
       ],
@@ -118,6 +128,57 @@
         {
           "BlockMatchingRegExPattern": "(.*)",
           "MessageToShowWhenBlocked": "Access to methods of any class in the System.Runtime.InteropServices namespace is prohibited."
+        }
+      ]
+    },
+    {
+      "BlockMatchingRegExPattern": "^System.Runtime.InteropServices.DllImportAttribute.*",
+      "IsObjectCreationBlocked": true,
+      "MessageToShowWhenBlocked": "Creating an instance of a class in the System.Runtime.InteropServices.DllImportAttribute namepsace is prohibited.",
+      "PropertiesToBlock": [
+        {
+          "BlockMatchingRegExPattern": "^(?!(EntryPoint|CharSet|SetLastError|ExactSpelling)\\b).*",
+          "MessageToShowWhenBlocked": "Access to properties of System.Runtime.InteropServices.DllImportAttribute class is prohibited."
+        }
+      ],
+      "MethodsToBlock": [
+        {
+          "BlockMatchingRegExPattern": "(.*)",
+          "MessageToShowWhenBlocked": "Access to methods of any class in the System.Runtime.InteropServices.DllImportAttribute namespace is prohibited."
+        }
+      ]
+    },
+    {
+      "BlockMatchingRegExPattern": "^System.Runtime.InteropServices.Marshal.*",
+      "IsObjectCreationBlocked": true,
+      "MessageToShowWhenBlocked": "Creating an instance of a class in the System.Runtime.InteropServices.Marshal namepsace is prohibited.",
+      "PropertiesToBlock": [
+        {
+          "BlockMatchingRegExPattern": "^(?!(SizeConst|ArraySubType)\\b).*",
+          "MessageToShowWhenBlocked": "Access to properties of System.Runtime.InteropServices.Marshal class is prohibited."
+        }
+      ],
+      "MethodsToBlock": [
+        {
+          "BlockMatchingRegExPattern": "^(?!(PtrToStructure|PtrToStringAuto)\\b).*",
+          "MessageToShowWhenBlocked": "Access to methods of any class in the System.Runtime.InteropServices.DllImportAttribute namespace is prohibited."
+        }
+      ]
+    },
+    {
+      "BlockMatchingRegExPattern": "^System.Runtime.InteropServices.MarshalAsAttribute.*",
+      "IsObjectCreationBlocked": true,
+      "MessageToShowWhenBlocked": "Creating an instance of a class in the System.Runtime.InteropServices.MarshalAsAttribute namepsace is prohibited.",
+      "PropertiesToBlock": [
+        {
+          "BlockMatchingRegExPattern": "^(?!(SizeConst|ArraySubType)\\b).*",
+          "MessageToShowWhenBlocked": "Access to properties of System.Runtime.InteropServices.MarshalAsAttribute class is prohibited."
+        }
+      ],
+      "MethodsToBlock": [
+        {
+          "BlockMatchingRegExPattern": "(.*)",
+          "MessageToShowWhenBlocked": "Access to methods of any class in the System.Runtime.InteropServices.DllImportAttribute namespace is prohibited."
         }
       ]
     },
