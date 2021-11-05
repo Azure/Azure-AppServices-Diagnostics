@@ -442,6 +442,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                         }
 
                         ValidateForms(invocationResponse.Dataset);
+                        invocationResponse = RedactDataResponse(invocationResponse);
+
                         if (isInternalCall)
                         {
                             dataProvidersMetadata = GetDataProvidersMetadata(dataProviders);
@@ -1063,9 +1065,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                 }
                 if (searchResults != null)
                 {
-                    // Return those detectors that have positive search score and present in searchResult.
-                    List<string> potentialDetectors = searchResults.Results.Where(s => s.Score > 0).Select(x => x.Detector).ToList();
-
                     // Assign the score to detector if it exists in search results, else default to 0
                     allDetectorsFromStorage.ForEach(entity =>
                     {
@@ -1185,6 +1184,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
                 response.UpdateDetectorStatusFromInsights();
+                response = RedactDataResponse(response);
 
                 //
                 // update the dataProvidersMetdata after detector execution to update data source
@@ -1441,6 +1441,40 @@ namespace Diagnostics.RuntimeHost.Controllers
                     }
                 }
             }
+        }
+
+        public Response RedactDataResponse(Response response)
+        {
+            if (response == null || response.Dataset == null || response.Dataset.Count == 0)
+            {
+                return response;
+            }
+
+            for (int i = 0; i < response.Dataset.Count(); i++)
+            {
+                if (response.Dataset[i] != null && response.Dataset[i].Table != null)
+                {
+                    response.Dataset[i].Table = RedactDataTable(response.Dataset[i].Table);
+                }
+            }
+
+            return response;
+        }
+
+        public DataTable RedactDataTable(DataTable dataTable)
+        {
+            if (dataTable == null)
+                return dataTable;
+
+            foreach (DataRow dr in dataTable.Rows)
+            {
+                foreach (DataColumn dc in dataTable.Columns)
+                {
+                    dr[dc] = dc.DataType == typeof(String) ? DataAnonymizer.AnonymizeContent(dr[dc].ToString()) : dr[dc];
+                }
+            }
+
+            return dataTable;
         }
     }
 }
