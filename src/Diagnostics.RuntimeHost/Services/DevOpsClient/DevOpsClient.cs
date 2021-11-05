@@ -62,6 +62,8 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                     return VersionControlChangeType.Add;
                 case "edit":
                     return VersionControlChangeType.Edit;
+                case "delete":
+                    return VersionControlChangeType.Delete;
                 default:
                     throw new InvalidOperationException($"ChangeType: \"{changeType}\" not Supported");
             }
@@ -173,27 +175,43 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 
             try
             {
-                dictionary[requestId + "--result"] = await gitClient.CreatePullRequestAsync(dictionary[requestId + "--pr"], _project, _repoID);
+                dictionary[requestId + "--prList"] = await GetPRListAsync(dictionary[requestId + "--source"], dictionary[requestId + "--target"], requestId);
+                if (dictionary[requestId + "--prList"].Count == 0)
+                {
+                    dictionary[requestId + "--result"] = await gitClient.CreatePullRequestAsync(dictionary[requestId + "--pr"], _project, _repoID);
+                }
+                else
+                {
+                    dictionary[requestId + "--result"] = dictionary[requestId + "--prList"][0];
+                }
+
+                dictionary.TryAdd(requestId + "--repository", await gitClient.GetRepositoryAsync(_project, _repoID));
             }
             catch (Exception ex)
             {
-                if (ex.Message.Contains("An active pull request for the source and target branch already exists"))
-                {
-                    return new BadRequestObjectResult("An active pull request for the source and target branch already exists");
-                }
-                else {
-                    DiagnosticsETWProvider.Instance.LogDevOpsApiException(
-                    requestId,
-                    resourceUri,
-                    ex.Message,
-                    ex.GetType().ToString(),
-                    ex.StackTrace
-                    );
-                    throw;
-                }
+                DiagnosticsETWProvider.Instance.LogDevOpsApiException(
+                requestId,
+                resourceUri,
+                ex.Message,
+                ex.GetType().ToString(),
+                ex.StackTrace
+                );
+                throw;
             }
 
-            return dictionary[requestId + "--result"];
+            return (dictionary[requestId + "--result"], dictionary[requestId + "--repository"]);
+        }
+
+        private async Task<List<GitPullRequest>> GetPRListAsync(string source, string target, string requestId)
+        {
+            dictionary.TryAdd(requestId + "--searchCriteria", new GitPullRequestSearchCriteria()
+            {
+                TargetRefName = target,
+                SourceRefName = source,
+                IncludeLinks = true
+            });
+
+            return await gitClient.GetPullRequestsAsync(_project, _repoID, dictionary[requestId + "--searchCriteria"]);
         }
 
         public async Task<object> PushChangesAsync(string branch, List<string> files, List<string> repoPaths, string comment, string changeType, string resourceUri, string requestId)
@@ -217,19 +235,35 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 
             dictionary.TryAdd(requestId + "--commitChanges", new GitChange[files.Count]);
 
-            for (int i = 0; i < files.Count; i++)
+            if (getChangeType(changeType) == VersionControlChangeType.Delete)
             {
-                dictionary[requestId + "--commitChanges"][i] = new GitChange()
+                for (int i = 0; i < files.Count; i++)
                 {
-                    ChangeType = getChangeType(changeType),
-                    Item = new GitItem() { Path = repoPaths[i] },
-                    NewContent = new ItemContent()
+                    dictionary[requestId + "--commitChanges"][i] = new GitChange()
                     {
-                        Content = files[i],
-                        ContentType = ItemContentType.RawText,
-                    },
-                };
+                        ChangeType = getChangeType(changeType),
+                        Item = new GitItem() { Path = repoPaths[i] }
+                    };
+                }
             }
+            else
+            {
+                for (int i = 0; i < files.Count; i++)
+                {
+                    dictionary[requestId + "--commitChanges"][i] = new GitChange()
+                    {
+                        ChangeType = getChangeType(changeType),
+                        Item = new GitItem() { Path = repoPaths[i] },
+                        NewContent = new ItemContent()
+                        {
+                            Content = files[i],
+                            ContentType = ItemContentType.RawText,
+                        },
+                    };
+                }
+            }
+
+            
 
             dictionary.TryAdd(requestId + "--newCommit", new GitCommitRef()
             {
@@ -249,14 +283,20 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             }
             catch (Exception ex)
             {
-                DiagnosticsETWProvider.Instance.LogDevOpsApiException(
-                    requestId,
-                    resourceUri,
-                    ex.Message,
-                    ex.GetType().ToString(),
-                    ex.StackTrace
-                    );
-                throw;
+                if (ex.Message.Contains("specified in the add operation already exists. Please specify a new path.")){
+                    return new BadRequestObjectResult("Detector with this ID already exists. Please use a new ID");
+                }
+                else
+                {
+                    DiagnosticsETWProvider.Instance.LogDevOpsApiException(
+                        requestId,
+                        resourceUri,
+                        ex.Message,
+                        ex.GetType().ToString(),
+                        ex.StackTrace
+                        );
+                    throw;
+                }
             }
 
             return dictionary[requestId + "--result"];

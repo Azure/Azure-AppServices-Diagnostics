@@ -76,14 +76,29 @@ namespace Diagnostics.RuntimeHost.Controllers
             string resourceUri = jsonBody[$"resourceUri"].ToString();
 
             object response = await _devOpsClient.PushChangesAsync(branch, files, repoPaths, comment, changeType, resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
-            return Ok(response);
+            if (response.GetType() != typeof(BadRequestObjectResult))
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return (IActionResult)response;
+            }
         }
 
         [HttpGet(UriElements.DevOpsGetCode)]
         public async Task<IActionResult> GetFileContentAsync(string filePathInRepo, string resourceUri, string branch)
         {
             object response = await _devOpsClient.GetFileContentAsync(filePathInRepo, resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName], branch);
-            return Ok(response);
+
+            if (response.GetType() != typeof(BadRequestObjectResult))
+            {
+                return Ok(response);
+            }
+            else
+            {
+                return (IActionResult)response;
+            }
         }
 
         [HttpGet(UriElements.DevOpsGetBranches)]
