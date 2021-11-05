@@ -23,12 +23,12 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// makes a commit with your changes
         /// </summary>
         /// <param name="branch"></param>
-        /// <param name="file"></param>
-        /// <param name="repoPath"></param>
+        /// <param name="files"></param>
+        /// <param name="repoPaths"></param>
         /// <param name="comment"></param>
         /// <param name="changeType"></param>
         /// <returns></returns>
-        Task<object> PushChangesAsync(string branch, string file, string repoPath, string comment, string changeType, string resourceUri, string requestId);
+        Task<object> PushChangesAsync(string branch, List<string> files, List<string> repoPaths, string comment, string changeType, string resourceUri, string requestId);
 
         /// <summary>
         /// will retrieve and display the given file from the repository

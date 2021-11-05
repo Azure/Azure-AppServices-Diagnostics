@@ -52,14 +52,14 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(response);
         }
 
-        [HttpPut(UriElements.DevOpsPush)]
+        [HttpPost(UriElements.DevOpsPush)]
         public async Task<IActionResult> PushChangesAsync([FromBody]JToken jsonBody)
         {
             string[] fieldNames =
             {
                 "branch",
-                "file",
-                "repoPath",
+                "files",
+                "repoPaths",
                 "comment",
                 "changeType",
                 "resourceUri"
@@ -69,13 +69,13 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return BadRequest(validationMessage);
 
             string branch = jsonBody[$"branch"].ToString();
-            string file = jsonBody[$"file"].ToString();
-            string repoPath = jsonBody[$"repoPath"].ToString();
+            List<string> files = jsonBody[$"files"].Select(file => file.ToString()).ToList();
+            List<string> repoPaths = jsonBody[$"repoPaths"].Select(path => path.ToString()).ToList();
             string comment = jsonBody[$"comment"].ToString();
             string changeType = jsonBody[$"changeType"].ToString();
             string resourceUri = jsonBody[$"resourceUri"].ToString();
 
-            object response = await _devOpsClient.PushChangesAsync(branch, file, repoPath, comment, changeType, resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
+            object response = await _devOpsClient.PushChangesAsync(branch, files, repoPaths, comment, changeType, resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
             return Ok(response);
         }
 

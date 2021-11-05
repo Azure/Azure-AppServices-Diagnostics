@@ -96,7 +96,7 @@ namespace Diagnostics.RuntimeHost.Middleware
                 out DateTime endTimeUtc,
                 out TimeSpan timeGrainTimeSpan,
                 out string errorMessage);
-            
+
             var dataSourcesConfigurationService = ((IServiceProvider)httpContext.RequestServices).GetService<IDataSourcesConfigurationService>();
             var wawsObserverTokenService = ((IServiceProvider)httpContext.RequestServices).GetService<IWawsObserverTokenService>();
             var supportBayApiObserverTokenService = ((IServiceProvider)httpContext.RequestServices).GetService<ISupportBayApiObserverTokenService>();

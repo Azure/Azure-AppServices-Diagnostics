@@ -74,9 +74,11 @@ namespace Diagnostics.RuntimeHost.Models
         public string Message { get; set; }
     }
 
-    public class DiagnosticWorkerAppData
+    public class DiagnosticContainerAppData
     {
-        public string WorkerAppName { get; set; }
+        public string ContainerAppName { get; set; }
+        public string Fqdn { get; set; }
+        public string Location { get; set; }
         public string Tags { get; set; }
         public string ResourceGroupName { get; set; }
         public string SubscriptionName { get; set; }
