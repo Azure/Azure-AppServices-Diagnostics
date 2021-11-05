@@ -19,7 +19,6 @@ using Diagnostics.Scripts.CompilationService.ReferenceResolver;
 using Diagnostics.Scripts.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
-using Diagnostics.Scripts.CompilationService.Utilities.Extensions;
 
 namespace Diagnostics.Scripts
 {
@@ -44,7 +43,6 @@ namespace Diagnostics.Scripts
         public bool IsCompilationSuccessful { get; private set; }
 
         public IEnumerable<string> CompilationOutput { get; private set; }
-        public IEnumerable<CompilationTraceOutputDetails> DetailedCompilationTraces { get; private set; }
 
         public EntityMetadata EntityMetadata => _entityMetaData;
 
@@ -61,7 +59,6 @@ namespace Diagnostics.Scripts
             _frameworkImports = ImmutableArray<string>.Empty;
             _frameworkLoads = ImmutableDictionary<string, string>.Empty;
             CompilationOutput = Enumerable.Empty<string>();
-            DetailedCompilationTraces = Enumerable.Empty<CompilationTraceOutputDetails>();
         }
 
         public EntityInvoker(EntityMetadata entityMetadata, ImmutableArray<string> frameworkReferences)
@@ -71,7 +68,6 @@ namespace Diagnostics.Scripts
             _frameworkImports = ImmutableArray<string>.Empty;
             _frameworkLoads = ImmutableDictionary<string, string>.Empty;
             CompilationOutput = Enumerable.Empty<string>();
-            DetailedCompilationTraces = Enumerable.Empty<CompilationTraceOutputDetails>();
         }
 
         public EntityInvoker(EntityMetadata entityMetadata, ImmutableArray<string> frameworkReferences, ImmutableArray<string> frameworkImports)
@@ -81,7 +77,6 @@ namespace Diagnostics.Scripts
             _frameworkReferences = frameworkReferences;
             _frameworkLoads = ImmutableDictionary<string, string>.Empty;
             CompilationOutput = Enumerable.Empty<string>();
-            DetailedCompilationTraces = Enumerable.Empty<CompilationTraceOutputDetails>();
         }
 
         public EntityInvoker(EntityMetadata entityMetadata, ImmutableArray<string> frameworkReferences, ImmutableArray<string> frameworkImports, ImmutableDictionary<string, string> frameworkLoads)
@@ -91,7 +86,6 @@ namespace Diagnostics.Scripts
             _frameworkReferences = frameworkReferences;
             _frameworkLoads = frameworkLoads;
             CompilationOutput = Enumerable.Empty<string>();
-            DetailedCompilationTraces = Enumerable.Empty<CompilationTraceOutputDetails>();
         }
 
         /// <summary>
@@ -108,7 +102,6 @@ namespace Diagnostics.Scripts
 
             IsCompilationSuccessful = !_diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
             CompilationOutput = _diagnostics.Select(m => m.ToString());
-            DetailedCompilationTraces = _diagnostics.Select(m => m.GetCompilationTraceOutputDetails());
 
             if (IsCompilationSuccessful)
             {
@@ -127,7 +120,6 @@ namespace Diagnostics.Scripts
                         if (scriptEx.CompilationOutput.Any())
                         {
                             CompilationOutput = CompilationOutput.Concat(scriptEx.CompilationOutput);
-                            DetailedCompilationTraces = DetailedCompilationTraces.Concat(CompilationTraceOutputDetails.GetCompilationTraceDetailsList(scriptEx.CompilationOutput));
                         }
 
                         return;
@@ -168,7 +160,6 @@ namespace Diagnostics.Scripts
                     if (scriptEx.CompilationOutput.Any())
                     {
                         CompilationOutput = CompilationOutput.Concat(scriptEx.CompilationOutput);
-                        DetailedCompilationTraces = DetailedCompilationTraces.Concat(CompilationTraceOutputDetails.GetCompilationTraceDetailsList(scriptEx.CompilationOutput));
                     }
 
                     return;
@@ -221,7 +212,6 @@ namespace Diagnostics.Scripts
 
             IsCompilationSuccessful = !_diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
             CompilationOutput = _diagnostics.Select(m => m.ToString());
-            DetailedCompilationTraces = _diagnostics.Select(m => m.GetCompilationTraceOutputDetails());
 
             if (!IsCompilationSuccessful)
             {
@@ -241,7 +231,7 @@ namespace Diagnostics.Scripts
 
             IsCompilationSuccessful = !_diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
             CompilationOutput = _diagnostics.Select(m => m.ToString());
-            DetailedCompilationTraces = _diagnostics.Select(m => m.GetCompilationTraceOutputDetails());
+
             if (!IsCompilationSuccessful)
             {
                 throw new ScriptCompilationException(CompilationOutput);
@@ -342,7 +332,6 @@ namespace Diagnostics.Scripts
                     if (this._systemFilter == null && this._resourceFilter.InternalOnly && this._entryPointDefinitionAttribute.SupportTopicList.Any())
                     {
                         this.CompilationOutput = this.CompilationOutput.Concat(new string[] { "WARNING: Detector is marked internal and SupportTopic is specified. This means the detector will be enabled for Azure Support Center but not for case submission flow, until the isInternal flag is set to false." });
-                        this.DetailedCompilationTraces = this.DetailedCompilationTraces.Concat(CompilationTraceOutputDetails.GetCompilationTraceDetailsList(new string[] { "WARNING: Detector is marked internal and SupportTopic is specified. This means the detector will be enabled for Azure Support Center but not for case submission flow, until the isInternal flag is set to false." }));
                     }
 
                     if(this._resourceFilter is ArmResourceFilter armResFilter)
@@ -359,14 +348,6 @@ namespace Diagnostics.Scripts
                                 "- [ArmResourceFilter(provider: \"Microsoft.YourProviderName\", resourceTypeName: \"Microsoft.YourResourceTypeName\")]"
                             });
 
-                            this.DetailedCompilationTraces = this.DetailedCompilationTraces.Concat(CompilationTraceOutputDetails.GetCompilationTraceDetailsList(new string[] {
-                                @"ERROR: Invalid ARM Resource Filter values. Provider cannot be '*' when ResourceTypeName is not '*'
-                                Valid Options:,
-                                - [ArmResourceFilter(provider: ""*"", resourceTypeName: ""*"")],
-                                - [ArmResourceFilter(provider: ""Microsoft.YourProviderName"", resourceTypeName: ""*"")],
-                                - [ArmResourceFilter(provider: ""Microsoft.YourProviderName"", resourceTypeName: ""Microsoft.YourResourceTypeName"")]"
-                            }));
-
                             throw new ScriptCompilationException(string.Empty);
                         }
                         // Sharable detectors are not supported as of now.
@@ -378,12 +359,6 @@ namespace Diagnostics.Scripts
                                 "Valid Options:",
                                 "- [ArmResourceFilter(provider: \"Microsoft.YourProviderName\", resourceTypeName: \"Microsoft.YourResourceTypeName\")]"
                             });
-
-                            this.DetailedCompilationTraces = this.DetailedCompilationTraces.Concat(CompilationTraceOutputDetails.GetCompilationTraceDetailsList(new string[] {
-                                @"ERROR: Invalid character '*' in ARM Resource Filter. Sharable detectors are not supported as of now.
-                                Valid Options:,
-                                - [ArmResourceFilter(provider: ""Microsoft.YourProviderName"", resourceTypeName: ""Microsoft.YourResourceTypeName"")]"
-                            }));
 
                             throw new ScriptCompilationException(string.Empty);
                         }
@@ -407,12 +382,6 @@ namespace Diagnostics.Scripts
                                 "Valid Options:",
                                 "- Use dp.Kusto.ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName) instead."
                            });
-
-                    this.DetailedCompilationTraces = this.DetailedCompilationTraces.Concat(CompilationTraceOutputDetails.GetCompilationTraceDetailsList(new string[] {
-                                @"ERROR: Use of All('TableName') kusto function is not supported.
-                                Valid Options:,
-                                - Use dp.Kusto.ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName) instead."
-                            }));
                     throw new ScriptCompilationException("Use of All('TableName') in kusto query is not allowed. Use dp.Kusto.ExecuteQueryOnAllAppAppServiceClusters instead.");
                 }
             }

@@ -106,7 +106,7 @@ namespace Diagnostics.DataProviders
             }
             else
             {
-                return dataSet.Tables.FirstOrDefault().ToAppInsightsDataTable();
+                return dataSet.Tables.FirstOrDefault().ToAppInsightsDataTable(_isInternalClient);
             }
         }
     }

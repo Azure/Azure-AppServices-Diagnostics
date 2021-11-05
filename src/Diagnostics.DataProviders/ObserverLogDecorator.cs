@@ -82,9 +82,9 @@ namespace Diagnostics.DataProviders
 			return MakeDependencyCall(DataProvider.GetSitePostBody(stampName, siteName));
 		}
 
-		public Task<dynamic> GetContainerAppPostBody(string containerAppName)
+		public Task<dynamic> GetWorkerAppPostBody(string workerAppName)
 		{
-			return MakeDependencyCall(DataProvider.GetContainerAppPostBody(containerAppName));
+			return MakeDependencyCall(DataProvider.GetWorkerAppPostBody(workerAppName));
 		}
 
 		public Task<dynamic> GetHostingEnvironmentPostBody(string hostingEnvironmentName)

@@ -5,7 +5,7 @@ from functools import wraps
 import threading, json, time
 from googletrans import Translator
 
-from AuthModule.authhandler import authProvider
+from AuthModule.azuread import authProvider
 from SearchModule import app
 from SearchModule.TextSearchModule import loadModel, refreshModel, freeModel, loaded_models
 from SearchModule.Utilities import resourceConfig, getProductId, getAllProductIds

@@ -27,10 +27,4 @@
     <ProjectReference Include="..\Diagnostics.ModelsAndUtils\Diagnostics.ModelsAndUtils.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="ApiBlockConfig.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

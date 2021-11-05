@@ -5,24 +5,14 @@ using Diagnostics.ModelsAndUtils.ScriptUtilities;
 namespace Diagnostics.ModelsAndUtils.Models
 {
     /// <summary>
-    /// Resource representing Container App
+    /// Resource representing Worker App
     /// </summary>
-    public class ContainerApp : ContainerAppFilter, IResource
+    public class WorkerApp : WorkerAppFilter, IResource
     {
         /// <summary>
-        /// Name of the Container App
+        /// Name of the Worker App
         /// </summary>
         public string Name { get; set; }
-
-        /// <summary>
-        /// FQDN of the Container App
-        /// </summary>
-        public string Fqdn { get; set; }
-        
-        /// <summary>
-        /// Location of the Container App
-        /// </summary>
-        public string Location { get; set; }
 
         /// <summary>
         /// Subscription Id(Guid)
@@ -70,7 +60,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         {
             get
             {
-                return "containerApps";
+                return "workerApps";
             }
         }
 
@@ -82,26 +72,24 @@ namespace Diagnostics.ModelsAndUtils.Models
             get; set;
         }
 
-        public ContainerApp(string subscriptionId, string resourceGroup, string resourceName, string kubeEnvironmentName=null, string geoMasterName=null, string fqdn=null, string location=null, string subLocationPlacementId = null) : base()
+        public WorkerApp(string subscriptionId, string resourceGroup, string resourceName, string kubeEnvironmentName=null, string geoMasterName=null, string subLocationPlacementId = null) : base()
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
             this.Name = resourceName;
             this.KubeEnvironmentName = kubeEnvironmentName;
             this.GeoMasterName = geoMasterName;
-            this.Fqdn = fqdn;
-            this.Location = location;
             SubscriptionLocationPlacementId = subLocationPlacementId;
         }
 
         /// <summary>
-        /// Determines whether the Container App resource is applicable after filtering.
+        /// Determines whether the Worker App resource is applicable after filtering.
         /// </summary>
         /// <param name="filter">Resource Filter</param>
         /// <returns>True, if resource passes the filter. False otherwise</returns>
         public bool IsApplicable(IResourceFilter filter)
         {
-            return base.IsApplicable<ContainerAppFilter>(filter, this.Provider, this.ResourceTypeName);
+            return base.IsApplicable<WorkerAppFilter>(filter, this.Provider, this.ResourceTypeName);
         }
 
         /// <summary>

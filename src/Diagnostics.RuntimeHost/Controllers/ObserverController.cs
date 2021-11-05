@@ -23,10 +23,10 @@ namespace Diagnostics.RuntimeHost.Controllers
             return await GetResultAsync($"/sites/{siteName}/adminsites");
         }
 
-        [HttpGet(UriElements.ObserverGetContainerApp)]
-        public async Task<IActionResult> GetContainerAppDetails(string containerAppName)
+        [HttpGet(UriElements.ObserverGetWorkerApp)]
+        public async Task<IActionResult> GetWorkerAppDetails(string workerAppName)
         {
-            return await GetResultAsync($"/partner/containerapp/{containerAppName}");
+            return await GetResultAsync($"/partner/workerapp/{workerAppName}");
         }
 
         [HttpGet(UriElements.ObserverGetSiteWithStamp)]

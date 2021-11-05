@@ -17,16 +17,16 @@ namespace Diagnostics.RuntimeHost.Controllers
 {
     [Authorize]
     [Produces("application/json")]
-    [Route(UriElements.ContainerAppResource)]
-    public class ContainerAppController : DiagnosticControllerBase<ContainerApp>
+    [Route(UriElements.WorkerAppResource)]
+    public class WorkerAppController : DiagnosticControllerBase<WorkerApp>
     {
-        public ContainerAppController(IServiceProvider services, IRuntimeContext<ContainerApp> runtimeContext, IConfiguration config)
+        public WorkerAppController(IServiceProvider services, IRuntimeContext<WorkerApp> runtimeContext, IConfiguration config)
             : base(services, runtimeContext, config)
         {
         }
 
         [HttpPost(UriElements.Query)]
-        public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string siteName, [FromBody] CompilationPostBody<DiagnosticContainerAppData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
+        public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string siteName, [FromBody] CompilationPostBody<DiagnosticWorkerAppData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
         {
             if (jsonBody == null)
             {
@@ -37,24 +37,24 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 return BadRequest(errorMessage);
             }
-            ContainerApp app = await GetContainerAppResource(subscriptionId, resourceGroupName, siteName, jsonBody.Resource);
+            WorkerApp app = await GetWorkerAppResource(subscriptionId, resourceGroupName, siteName, jsonBody.Resource);
             return await base.ExecuteQuery(app, jsonBody, startTime, endTime, timeGrain, Form: Form);
         }
 
         [HttpPost(UriElements.Detectors)]
-        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticContainerAppData postBody, [FromQuery(Name = "text")] string text = null, [FromQuery] string l = "")
+        public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticWorkerAppData postBody, [FromQuery(Name = "text")] string text = null, [FromQuery] string l = "")
         {
-            return await base.ListDetectors(new ContainerApp(subscriptionId, resourceGroupName, siteName), text, language: l.ToLower());
+            return await base.ListDetectors(new WorkerApp(subscriptionId, resourceGroupName, siteName), text, language: l.ToLower());
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
-        public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string siteName, string detectorId, [FromBody] DiagnosticContainerAppData postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null, [FromQuery] string l = "")
+        public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string siteName, string detectorId, [FromBody] DiagnosticWorkerAppData postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null, [FromQuery] string l = "")
         {
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
             {
                 return BadRequest(errorMessage);
             }
-            ContainerApp app = await GetContainerAppResource(subscriptionId, resourceGroupName, siteName, postBody);
+            WorkerApp app = await GetWorkerAppResource(subscriptionId, resourceGroupName, siteName, postBody);
             return await base.GetDetector(app, detectorId, startTime, endTime, timeGrain, form: form, language: l.ToLower());
         }
 
@@ -70,20 +70,20 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 return BadRequest(errorMessage);
             }
-            ContainerApp app = await GetContainerAppResource(subscriptionId, resourceGroupName, siteName);
+            WorkerApp app = await GetWorkerAppResource(subscriptionId, resourceGroupName, siteName);
             return await base.GetDiagnosticReport(app, queryBody, startTimeUtc, endTimeUtc, timeGrainTimeSpan, form: form);
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]
-        public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string siteName, [FromBody] CompilationPostBody<DiagnosticContainerAppData> jsonBody, string detectorId, string dataSource = null, string timeRange = null)
+        public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string siteName, [FromBody] CompilationPostBody<DiagnosticWorkerAppData> jsonBody, string detectorId, string dataSource = null, string timeRange = null)
         {
-            return await base.ExecuteQuery(new ContainerApp(subscriptionId, resourceGroupName, siteName), jsonBody, null, null, null, detectorId, dataSource, timeRange);
+            return await base.ExecuteQuery(new WorkerApp(subscriptionId, resourceGroupName, siteName), jsonBody, null, null, null, detectorId, dataSource, timeRange);
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.Statistics + UriElements.StatisticsResource)]
         public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string siteName, string detectorId, string invokerId, string dataSource = null, string timeRange = null)
         {
-            return await base.GetSystemInvoker(new ContainerApp(subscriptionId, resourceGroupName, siteName), detectorId, invokerId, dataSource, timeRange);
+            return await base.GetSystemInvoker(new WorkerApp(subscriptionId, resourceGroupName, siteName), detectorId, invokerId, dataSource, timeRange);
         }
 
         [HttpPost(UriElements.Insights)]
@@ -98,7 +98,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 postBodyString = "";
             }
-            return await base.GetInsights(new ContainerApp(subscriptionId, resourceGroupName, siteName), pesId, supportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
+            return await base.GetInsights(new WorkerApp(subscriptionId, resourceGroupName, siteName), pesId, supportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
         }
 
         /// <summary>
@@ -117,9 +117,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// </summary>
         /// <returns>Task for listing all gists.</returns>
         [HttpPost(UriElements.Gists)]
-        public async Task<IActionResult> ListGistsAsync(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticContainerAppData postBody)
+        public async Task<IActionResult> ListGistsAsync(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticWorkerAppData postBody)
         {
-            return await base.ListGists(new ContainerApp(subscriptionId, resourceGroupName, siteName));
+            return await base.ListGists(new WorkerApp(subscriptionId, resourceGroupName, siteName));
         }
 
         /// <summary>
@@ -131,39 +131,32 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="gistId">Gist id.</param>
         /// <returns>Task for listing the gist.</returns>
         [HttpPost(UriElements.Gists + UriElements.GistResource)]
-        public async Task<IActionResult> GetGistAsync(string subscriptionId, string resourceGroupName, string siteName, string gistId, [FromBody] DiagnosticContainerAppData postBody, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetGistAsync(string subscriptionId, string resourceGroupName, string siteName, string gistId, [FromBody] DiagnosticWorkerAppData postBody, string startTime = null, string endTime = null, string timeGrain = null)
         {
-            return await base.GetGist(new ContainerApp(subscriptionId, resourceGroupName, siteName), gistId, startTime, endTime, timeGrain);
+            return await base.GetGist(new WorkerApp(subscriptionId, resourceGroupName, siteName), gistId, startTime, endTime, timeGrain);
         }
 
-        private static bool IsPostBodyMissing(DiagnosticContainerAppData postBody)
+        private static bool IsPostBodyMissing(DiagnosticWorkerAppData postBody)
         {
-            return postBody == null || string.IsNullOrWhiteSpace(postBody.ContainerAppName);
+            return postBody == null || string.IsNullOrWhiteSpace(postBody.WorkerAppName);
         }
 
-        private async Task<DiagnosticContainerAppData> GetContainerAppPostBody(string subscriptionId, string resourceGroupName, string ContainerAppName)
+        private async Task<DiagnosticWorkerAppData> GetWorkerAppPostBody(string subscriptionId, string resourceGroupName, string workerAppName)
         {
-            try
-            {
-                var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
-                dynamic postBody = await dataProviders.Observer.GetContainerAppPostBody(ContainerAppName);
-                List<DiagnosticContainerAppData> objectList = JsonConvert.DeserializeObject<List<DiagnosticContainerAppData>>(JsonConvert.SerializeObject(postBody));
-                var appBody = objectList.Find(obj => (obj.SubscriptionName.ToLower() == subscriptionId.ToLower()) && (obj.ResourceGroupName.ToLower() == resourceGroupName.ToLower()));
-                return appBody;
-            }
-            catch
-            {
-                return null;
-            }
+            var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
+            dynamic postBody = await dataProviders.Observer.GetWorkerAppPostBody(workerAppName);
+            List<DiagnosticWorkerAppData> objectList = JsonConvert.DeserializeObject<List<DiagnosticWorkerAppData>>(JsonConvert.SerializeObject(postBody));
+            var appBody = objectList.Find(obj => (obj.SubscriptionName.ToLower() == subscriptionId.ToLower()) && (obj.ResourceGroupName.ToLower() == resourceGroupName.ToLower()));
+            return appBody;
         }
 
-        protected async Task<ContainerApp> GetContainerAppResource(string subscriptionId, string resourceGroup, string resourceName, DiagnosticContainerAppData postBody=null)
+        protected async Task<WorkerApp> GetWorkerAppResource(string subscriptionId, string resourceGroup, string resourceName, DiagnosticWorkerAppData postBody=null)
         {
             if (IsPostBodyMissing(postBody))
             {
-                postBody = await GetContainerAppPostBody(subscriptionId, resourceGroup, resourceName);
+                postBody = await GetWorkerAppPostBody(subscriptionId, resourceGroup, resourceName);
             }
-            return new ContainerApp(subscriptionId, resourceGroup, resourceName, postBody!=null? postBody.KubeEnvironmentName: null, postBody!=null?postBody.GeoMasterName:null, postBody != null ? postBody.Fqdn : null, postBody != null ? postBody.Location : null);
+            return new WorkerApp(subscriptionId, resourceGroup, resourceName, postBody!=null? postBody.KubeEnvironmentName: null, postBody!=null?postBody.GeoMasterName:null);
         }
     }
 }

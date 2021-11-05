@@ -1,5 +1,4 @@
 ﻿using System.Collections.Immutable;
-using Diagnostics.Scripts.CompilationService.CustomCodeAnalyzers;
 using Diagnostics.Scripts.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -20,7 +19,7 @@ namespace Diagnostics.Scripts.CompilationService
 
         protected override ImmutableArray<DiagnosticAnalyzer> GetCodeAnalyzers()
         {
-            return ImmutableArray.Create<DiagnosticAnalyzer>(new BlockCallsAnalyzer());
+            return ImmutableArray.Create<DiagnosticAnalyzer>();
         }
     }
 }
