@@ -90,15 +90,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         public async Task<IActionResult> GetFileContentAsync(string filePathInRepo, string resourceUri, string branch)
         {
             object response = await _devOpsClient.GetFileContentAsync(filePathInRepo, resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName], branch);
-
-            if (response.GetType() != typeof(BadRequestObjectResult))
-            {
-                return Ok(response);
-            }
-            else
-            {
-                return (IActionResult)response;
-            }
+            return Ok(response);
         }
 
         [HttpGet(UriElements.DevOpsGetBranches)]
