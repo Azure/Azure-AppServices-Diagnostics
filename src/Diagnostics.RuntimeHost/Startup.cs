@@ -131,6 +131,7 @@ namespace Diagnostics.RuntimeHost
             {
                 GeoCertLoader.Instance.Initialize(Configuration);
                 MdmCertLoader.Instance.Initialize(Configuration);
+                GenericCertLoader.Instance.Initialize();
             }
 
             services.AddMemoryCache();
