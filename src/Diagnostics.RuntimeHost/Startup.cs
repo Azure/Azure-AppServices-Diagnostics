@@ -171,7 +171,15 @@ namespace Diagnostics.RuntimeHost
             {
                 services.AddSingleton<IGithubClient, GithubClient>();
             }
-            services.AddSingleton<IRepoClient, DevOpsClient>();
+
+            if (Configuration.IsAirGappedCloud() || Configuration.IsAzureUSGovernment() || Configuration.IsAzureChinaCloud())
+            {
+                services.AddSingleton<IRepoClient, NationalCloudDevOpsClient>();
+            }
+            else
+            {
+                services.AddSingleton<IRepoClient, DevOpsClient>();
+            }
             services.AddSingleton<ISourceWatcherService, SourceWatcherService>();
             services.AddSingleton<IInvokerCacheService, InvokerCacheService>();
             services.AddSingleton<IGistCacheService, GistCacheService>();
