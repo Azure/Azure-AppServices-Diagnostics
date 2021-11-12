@@ -52,8 +52,11 @@ namespace Diagnostics.RuntimeHost.Services
 
         private async Task<HttpRequestMessage> AddAuthorizationHeadersAsync(HttpRequestMessage request)
         {
-            string authToken = await SearchServiceTokenService.Instance.GetAuthorizationTokenAsync();
-            request.Headers.Add("Authorization", authToken);
+            if (!configuration.UseCertAuth)
+            {
+                string authToken = await SearchServiceTokenService.Instance.GetAuthorizationTokenAsync();
+                request.Headers.Add("Authorization", authToken);
+            }
             return request;
         }
 
@@ -62,9 +65,7 @@ namespace Diagnostics.RuntimeHost.Services
             parameters.Add("text", query);
             parameters.Add("requestId", requestId ?? string.Empty);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryDetectorsUrl);
-            if (!configuration.UseCertAuth) {
-                request = await AddAuthorizationHeadersAsync(request);
-            }
+            request = await AddAuthorizationHeadersAsync(request);
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return await Get(request);
         }
@@ -75,10 +76,7 @@ namespace Diagnostics.RuntimeHost.Services
             parameters.Add("detector_utterances", JsonConvert.SerializeObject(detectorUtterances));
             parameters.Add("requestId", requestId);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryUtterancesUrl);
-            if (!configuration.UseCertAuth)
-            {
-                request = await AddAuthorizationHeadersAsync(request);
-            }
+            request = await AddAuthorizationHeadersAsync(request);
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return await Get(request);
         }
@@ -88,10 +86,7 @@ namespace Diagnostics.RuntimeHost.Services
             parameters.Add("trainingConfig", trainingConfig);
             parameters.Add("requestId", requestId);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, TriggerTrainingUrl);
-            if (!configuration.UseCertAuth)
-            {
-                request = await AddAuthorizationHeadersAsync(request);
-            }
+            request = await AddAuthorizationHeadersAsync(request);
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return await Get(request);
         }
@@ -100,10 +95,7 @@ namespace Diagnostics.RuntimeHost.Services
         {
             parameters.Add("requestId", requestId);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, AppendQueryStringParams(TriggerModelRefreshUrl, parameters));
-            if (!configuration.UseCertAuth)
-            {
-                request = await AddAuthorizationHeadersAsync(request);
-            }
+            request = await AddAuthorizationHeadersAsync(request);
             return await Get(request);
         }
 
@@ -124,8 +116,11 @@ namespace Diagnostics.RuntimeHost.Services
             };
 
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            byte[] certContent = SearchAPICertLoader.Instance.Cert.Export(X509ContentType.Cert);
-            _httpClient.DefaultRequestHeaders.Add("x-ms-diagcert", Convert.ToBase64String(certContent));
+            if (configuration.UseCertAuth)
+            {
+                byte[] certContent = SearchAPICertLoader.Instance.Cert.Export(X509ContentType.Cert);
+                _httpClient.DefaultRequestHeaders.Add("x-ms-diagcert", Convert.ToBase64String(certContent));
+            }
         }
 
         private string AppendQueryStringParams(string url, Dictionary<string, string> additionalQueryParams)
