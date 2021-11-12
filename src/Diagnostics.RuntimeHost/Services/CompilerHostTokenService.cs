@@ -18,11 +18,14 @@ namespace Diagnostics.RuntimeHost.Services
 
         public void Initialize(IConfiguration configuration)
         {
-            Resource = configuration["CompilerHost:AADResource"];
-            AuthenticationContext = new AuthenticationContext(configuration["CompilerHost:AADAuthority"]);
-            ClientCredential = new ClientCredential(configuration["CompilerHost:ClientId"], configuration["CompilerHost:AppKey"]);
-            TokenServiceName = "CompilerHostTokenService";
-            StartTokenRefresh();
+            if (!configuration.GetValue("CompilerHost:UseCertAuth", false))
+            {
+                Resource = configuration["CompilerHost:AADResource"];
+                AuthenticationContext = new AuthenticationContext(configuration["CompilerHost:AADAuthority"]);
+                ClientCredential = new ClientCredential(configuration["CompilerHost:ClientId"], configuration["CompilerHost:AppKey"]);
+                TokenServiceName = "CompilerHostTokenService";
+                StartTokenRefresh();
+            }
         }
     }
 }
