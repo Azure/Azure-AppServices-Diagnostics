@@ -62,7 +62,9 @@ namespace Diagnostics.RuntimeHost.Services
             parameters.Add("text", query);
             parameters.Add("requestId", requestId ?? string.Empty);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryDetectorsUrl);
-            //request = await AddAuthorizationHeadersAsync(request);
+            if (!configuration.UseCertAuth) {
+                request = await AddAuthorizationHeadersAsync(request);
+            }
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return await Get(request);
         }
@@ -73,7 +75,10 @@ namespace Diagnostics.RuntimeHost.Services
             parameters.Add("detector_utterances", JsonConvert.SerializeObject(detectorUtterances));
             parameters.Add("requestId", requestId);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, QueryUtterancesUrl);
-            //request = await AddAuthorizationHeadersAsync(request);
+            if (!configuration.UseCertAuth)
+            {
+                request = await AddAuthorizationHeadersAsync(request);
+            }
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return await Get(request);
         }
@@ -83,7 +88,10 @@ namespace Diagnostics.RuntimeHost.Services
             parameters.Add("trainingConfig", trainingConfig);
             parameters.Add("requestId", requestId);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, TriggerTrainingUrl);
-            //request = await AddAuthorizationHeadersAsync(request);
+            if (!configuration.UseCertAuth)
+            {
+                request = await AddAuthorizationHeadersAsync(request);
+            }
             request.Content = new StringContent(JsonConvert.SerializeObject(parameters), Encoding.UTF8, "application/json");
             return await Get(request);
         }
@@ -92,7 +100,10 @@ namespace Diagnostics.RuntimeHost.Services
         {
             parameters.Add("requestId", requestId);
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, AppendQueryStringParams(TriggerModelRefreshUrl, parameters));
-            //request = await AddAuthorizationHeadersAsync(request);
+            if (!configuration.UseCertAuth)
+            {
+                request = await AddAuthorizationHeadersAsync(request);
+            }
             return await Get(request);
         }
 

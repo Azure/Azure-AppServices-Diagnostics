@@ -15,9 +15,12 @@ namespace Diagnostics.DataProviders
 
         public void Initialize(IConfiguration configuration)
         {
-            Thumbprint = configuration["CompilerHost:CertThumbprint"];
-            SubjectName = configuration["CompilerHost:CertSubjectName"];
-            LoadCertFromAppService();
+            if (configuration.GetValue("CompilerHost:UseCertAuth", false))
+            {
+                Thumbprint = configuration["CompilerHost:CertThumbprint"];
+                SubjectName = configuration["CompilerHost:CertSubjectName"];
+                LoadCertFromAppService();
+            }
         }
       
     }

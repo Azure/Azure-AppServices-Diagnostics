@@ -15,9 +15,12 @@ namespace Diagnostics.DataProviders
 
         public void Initialize(IConfiguration configuration)
         {
-            Thumbprint = configuration["SearchAPI:CertThumbprint"];
-            SubjectName = configuration["SearchAPI:CertSubjectName"];
-            LoadCertFromAppService();
+            if (configuration.GetValue("SearchAPI:UseCertAuth", false))
+            {
+                Thumbprint = configuration["SearchAPI:CertThumbprint"];
+                SubjectName = configuration["SearchAPI:CertSubjectName"];
+                LoadCertFromAppService();
+            }
         }
       
     }
