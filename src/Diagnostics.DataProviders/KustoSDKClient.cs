@@ -87,7 +87,7 @@ namespace Diagnostics.DataProviders
             var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId};{startTime?.ToString() ?? "UnknownStartTime"};{endTime?.ToString() ?? "UnknownEndTime"}##{0}_{Guid.NewGuid().ToString()}";
             clientRequestProperties.ClientRequestId = kustoClientId;
             clientRequestProperties.SetOption("servertimeout", new TimeSpan(0,0,timeoutSeconds));
-            if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase) && cluster != "wawscusdiagleadertest1.centralus")
+            if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase) && cluster != "wawscusdiagleadertest1.centralus" && cluster != "wawscusdiagleader.centralus" )
             {
                 clientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Weak);
             }
