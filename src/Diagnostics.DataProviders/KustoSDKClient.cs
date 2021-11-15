@@ -87,7 +87,7 @@ namespace Diagnostics.DataProviders
             var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId};{startTime?.ToString() ?? "UnknownStartTime"};{endTime?.ToString() ?? "UnknownEndTime"}##{0}_{Guid.NewGuid().ToString()}";
             clientRequestProperties.ClientRequestId = kustoClientId;
             clientRequestProperties.SetOption("servertimeout", new TimeSpan(0,0,timeoutSeconds));
-            if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase) && cluster != "wawscusdiagleadertest1.centralus")
+            if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase) && cluster != "wawscusdiagleadertest1.centralus" && cluster != "wawscusdiagleader.centralus" )
             {
                 clientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Weak);
             }
@@ -96,7 +96,7 @@ namespace Diagnostics.DataProviders
                 timeTakenStopWatch.Start();
                 var kustoClient = Client(cluster, database);
                 var kustoTask = kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
-                if (_config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters))
+                if (_config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters) && startTime > DateTime.Parse("2021-11-12 23:59:59"))
                 {
                     foreach (string shadowCluster in shadowClusters)
                     {

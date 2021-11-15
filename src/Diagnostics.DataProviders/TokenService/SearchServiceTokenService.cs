@@ -16,12 +16,15 @@ namespace Diagnostics.DataProviders.TokenService
 
         public void Initialize(SearchServiceProviderConfiguration searchServiceProviderConfiguration)
         {
-            Resource = searchServiceProviderConfiguration.AADResource;
-            AuthenticationContext = new AuthenticationContext(searchServiceProviderConfiguration.AADAuthority);
-            ClientCredential = new ClientCredential(searchServiceProviderConfiguration.ClientId,
-                                                    searchServiceProviderConfiguration.AppKey);
-            TokenServiceName = "SearchServiceTokenRefresh";
-            StartTokenRefresh();
+            if (!searchServiceProviderConfiguration.UseCertAuth)
+            {
+                Resource = searchServiceProviderConfiguration.AADResource;
+                AuthenticationContext = new AuthenticationContext(searchServiceProviderConfiguration.AADAuthority);
+                ClientCredential = new ClientCredential(searchServiceProviderConfiguration.ClientId,
+                                                        searchServiceProviderConfiguration.AppKey);
+                TokenServiceName = "SearchServiceTokenRefresh";
+                StartTokenRefresh();
+            }
         }
     }
 }
