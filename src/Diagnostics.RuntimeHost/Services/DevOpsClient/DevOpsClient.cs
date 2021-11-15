@@ -276,6 +276,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             List<DevopsFileChange> stringList = new List<DevopsFileChange>();
             foreach (GitChange change in changesAsync.Changes)
             {
+                var diagEntity = new DiagEntity();
                 var gitversion = new GitVersionDescriptor
                 {
                     Version = commitId,
@@ -290,20 +291,28 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                                         .Select(m => m.Groups[1].Value));
 
 
-                    Task<string> detectorScriptTask =  GetFileContentInCommit(repositoryAsync.Id, change.Item.Path, gitversion);
-                    Task<string> packageContentTask =  GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
-                    Task<string> metadataContentTask =  GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);            
-                    await Task.WhenAll( new Task[] { detectorScriptTask, packageContentTask, metadataContentTask });
+                    Task<string> detectorScriptTask = GetFileContentInCommit(repositoryAsync.Id, change.Item.Path, gitversion);
+                    Task<string> packageContentTask = GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
+                    Task<string> metadataContentTask = GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);
+                    await Task.WhenAll(new Task[] { detectorScriptTask, packageContentTask, metadataContentTask });
                     string detectorScriptContent = await detectorScriptTask;
                     string packageContent = await packageContentTask;
                     string metadataContent = await metadataContentTask;
+                    if (packageContent != null)
+                    {
+                        diagEntity = JsonConvert.DeserializeObject<DiagEntity>(packageContent);
+                    } else
+                    {
+                        throw new Exception("Package.json cannot be empty or null");
+                    }
                     stringList.Add(new DevopsFileChange
                     {
                         CommitId = commitId,
                         Content = detectorScriptContent,
                         Path = change.Item.Path,
                         PackageConfig = packageContent,
-                        Metadata = metadataContent
+                        Metadata = metadataContent,
+                        Id = diagEntity.DetectorId
                     });
                 }
                 else if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Delete))
@@ -320,6 +329,15 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                         VersionType = GitVersionType.Commit,
                         VersionOptions = GitVersionOptions.None
                     });
+                    
+                    if (packageContent != null)
+                    {
+                        diagEntity = JsonConvert.DeserializeObject<DiagEntity>(packageContent);
+                    }
+                    else
+                    {
+                        throw new Exception("Package.json cannot be empty or null");
+                    }
                     // Mark this detector as disabled. 
                     stringList.Add(new DevopsFileChange
                     {
@@ -328,7 +346,8 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                         PackageConfig = packageContent,
                         Path = change.Item.Path,
                         Metadata = "",
-                        MarkAsDisabled = true
+                        MarkAsDisabled = true,
+                        Id = diagEntity.DetectorId
                     });
                 }
             }
@@ -395,7 +414,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             {
                 var filesinCommit = await GetFilesInCommit(commit.CommitId);
                 // Process only the latest file update. 
-                if (!result.Select(s => s.Path).Contains(filesinCommit.FirstOrDefault().Path))
+                if (!result.Select(s => s.Id).Contains(filesinCommit.FirstOrDefault().Id))
                 {
                     result.AddRange(filesinCommit);
                 }
