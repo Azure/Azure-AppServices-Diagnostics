@@ -87,7 +87,7 @@ namespace Diagnostics.DataProviders
             var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId};{startTime?.ToString() ?? "UnknownStartTime"};{endTime?.ToString() ?? "UnknownEndTime"}##{0}_{Guid.NewGuid().ToString()}";
             clientRequestProperties.ClientRequestId = kustoClientId;
             clientRequestProperties.SetOption("servertimeout", new TimeSpan(0,0,timeoutSeconds));
-            if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase) && cluster != "wawscusdiagleadertest1.centralus" && cluster != "wawscusdiagleader.centralus" )
+            if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase) && cluster != "wawscusdiagleadertest1.centralus")
             {
                 clientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Weak);
             }
@@ -102,8 +102,14 @@ namespace Diagnostics.DataProviders
                     {
                         try
                         {
+                            var shadowClientRequestProperties = clientRequestProperties;
+                            if (shadowCluster == "wawscusdiagleader.centralus")
+                            {
+                                shadowClientRequestProperties = clientRequestProperties.Clone();
+                                shadowClientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Strong);
+                            }
                             var shadowKustoClient = Client(shadowCluster, database);
-                            shadowKustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
+                            shadowKustoClient.ExecuteQueryAsync(database, query, shadowClientRequestProperties);
                         }
                         catch (Exception)
                         {
