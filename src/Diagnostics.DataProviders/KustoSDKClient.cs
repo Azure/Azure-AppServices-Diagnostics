@@ -96,7 +96,7 @@ namespace Diagnostics.DataProviders
                 timeTakenStopWatch.Start();
                 var kustoClient = Client(cluster, database);
                 var kustoTask = kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
-                if (_config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters) && startTime > DateTime.Parse("2021-11-12 23:59:59"))
+                if (_config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters) && (startTime == null || startTime > DateTime.Parse("2021-11-12 23:59:59")))
                 {
                     foreach (string shadowCluster in shadowClusters)
                     {
