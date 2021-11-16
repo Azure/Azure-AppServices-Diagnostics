@@ -96,24 +96,27 @@ namespace Diagnostics.DataProviders
                 timeTakenStopWatch.Start();
                 var kustoClient = Client(cluster, database);
                 var kustoTask = kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
-                if (_config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters) && startTime > DateTime.Parse("2021-11-12 23:59:59"))
+                if (_config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters))
                 {
-                    foreach (string shadowCluster in shadowClusters)
+                    if (startTime > DateTime.Parse("2021-11-12 23:59:59") || (startTime == null && query == _config.HeartBeatQuery))
                     {
-                        try
+                        foreach (string shadowCluster in shadowClusters)
                         {
-                            var shadowClientRequestProperties = clientRequestProperties;
-                            if (shadowCluster == "wawscusdiagleader.centralus")
+                            try
                             {
-                                shadowClientRequestProperties = clientRequestProperties.Clone();
-                                shadowClientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Strong);
+                                var shadowClientRequestProperties = clientRequestProperties;
+                                if (shadowCluster == "wawscusdiagleader.centralus")
+                                {
+                                    shadowClientRequestProperties = clientRequestProperties.Clone();
+                                    shadowClientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Strong);
+                                }
+                                var shadowKustoClient = Client(shadowCluster, database);
+                                shadowKustoClient.ExecuteQueryAsync(database, query, shadowClientRequestProperties);
                             }
-                            var shadowKustoClient = Client(shadowCluster, database);
-                            shadowKustoClient.ExecuteQueryAsync(database, query, shadowClientRequestProperties);
-                        }
-                        catch (Exception)
-                        {
-                            // swallow this exception
+                            catch (Exception)
+                            {
+                                // swallow this exception
+                            }
                         }
                     }
                 }
