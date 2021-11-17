@@ -38,6 +38,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Diagnostics.Logger;
+using System.Diagnostics;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -86,10 +87,11 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             this._internalApiHelper = new InternalAPIHelper();
             _runtimeContext = runtimeContext;
-            if(bool.TryParse(config["LoadGistFromRepo"], out bool retVal))
+            if (bool.TryParse(config["LoadGistFromRepo"], out bool retVal))
             {
                 loadGistFromRepo = retVal;
-            } else
+            }
+            else
             {
                 loadGistFromRepo = false;
             }
@@ -288,18 +290,19 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             var dataProviders = new DataProviders.DataProviders((DataProviderContext)HttpContext.Items[HostConstants.DataProviderContextKey]);
 
-            if(loadGistFromRepo)
+            if (loadGistFromRepo)
             {
                 List<string> gistReferences = DetectorParser.GetLoadDirectiveNames(jsonBody.Script);
                 foreach (string gist in gistReferences)
                 {
-                    if(!jsonBody.References.ContainsKey(gist))
+                    if (!jsonBody.References.ContainsKey(gist))
                     {
                         object gistContent = await devopsClient.GetFileContentAsync($"{gist}/{gist}.csx", resource.ResourceUri, HttpContext.Request.Headers[HeaderConstants.RequestIdHeaderName]);
                         jsonBody.References.Add(gist, gistContent.ToString());
-                    }                   
+                    }
                 }
-            } else
+            }
+            else
             {
                 foreach (var p in _gistCache.GetAllReferences(runtimeContext))
                 {
@@ -310,7 +313,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                     }
                 }
             }
-           
+
 
             if (!Enum.TryParse(jsonBody.EntityType, true, out EntityType entityType))
             {
@@ -1057,7 +1060,7 @@ namespace Diagnostics.RuntimeHost.Controllers
 
             if (tableCacheService.IsStorageAsSourceEnabled())
             {
-                
+
                 var allDetectorsFromStorage = await tableCacheService.GetEntityListByType<TResource>(context);
                 if (allDetectorsFromStorage.Count == 0)
                 {
@@ -1314,7 +1317,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             List<EntityInvoker> allDetectors = this._invokerCache.GetAll().ToList();
 
-            if(!resource.IsApplicable(invoker.ResourceFilter))
+            if (!resource.IsApplicable(invoker.ResourceFilter))
             {
                 //An attempt to modify the resource filter so that it targets a resource type which is different from the one under which the current edit view was opened is being made.
                 queryRes.CompilationOutput.CompilationSucceeded = false;
@@ -1450,12 +1453,22 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return response;
             }
 
+            var watch = new Stopwatch();
+            watch.Start();
+            int cellCount = 0;
             for (int i = 0; i < response.Dataset.Count(); i++)
             {
                 if (response.Dataset[i] != null && response.Dataset[i].Table != null)
                 {
                     response.Dataset[i].Table = RedactDataTable(response.Dataset[i].Table);
+                    cellCount++;
                 }
+            }
+
+            watch.Stop();
+            if (watch.Elapsed.TotalSeconds > 5)
+            {
+                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"CPU CHECK: RedactDataResponse took {watch.Elapsed.TotalSeconds} seconds for dataset with {cellCount} cells.");
             }
 
             return response;
