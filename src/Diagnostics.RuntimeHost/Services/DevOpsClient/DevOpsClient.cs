@@ -1,17 +1,29 @@
 ﻿using Diagnostics.DataProviders;
 using Diagnostics.Logger;
+using Diagnostics.RuntimeHost.Utilities;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Diagnostics.ModelsAndUtils.Models.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
 using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.WebApi;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 {
@@ -24,6 +36,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         private VssCredentials credentials;
         private VssConnection connection;
         private static GitHttpClient gitClient;
+        private ConcurrentDictionary<string, dynamic> dictionary = new ConcurrentDictionary<string, dynamic>();
 
         public DevOpsClient(IConfiguration config)
         {
@@ -49,26 +62,41 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                     return VersionControlChangeType.Add;
                 case "edit":
                     return VersionControlChangeType.Edit;
+                case "delete":
+                    return VersionControlChangeType.Delete;
                 default:
                     throw new InvalidOperationException($"ChangeType: \"{changeType}\" not Supported");
             }
         }
 
-        private async Task<string> getLastObjectIdAsync(string branch)
+        private async Task<string> getLastObjectIdAsync(string branch, string requestId)
         {
-            GitQueryCommitsCriteria query = new GitQueryCommitsCriteria()
+            if (!string.IsNullOrWhiteSpace(branch)) dictionary.TryAdd(requestId + "--query", new GitQueryCommitsCriteria()
             {
                 ItemVersion = new GitVersionDescriptor()
                 {
                     Version = branch,
                 },
                 Top = 1,
-            };
+            });
+
+            else 
+            {
+                dictionary.TryAdd(requestId + "--repository", await gitClient.GetRepositoryAsync(_project, _repoID));
+                dictionary[requestId + "--query"] = new GitQueryCommitsCriteria()
+                {
+                    ItemVersion = new GitVersionDescriptor()
+                    {
+                        Version = dictionary[requestId + "--repository"].DefaultBranch.Replace("refs/heads/", ""),
+                    },
+                Top = 1,
+                };
+            }
 
             try
             {
-                List<GitCommitRef> commits = await gitClient.GetCommitsAsync(_project, _repoID, query);
-                return commits[0].CommitId;
+                dictionary.TryAdd(requestId + "--commits", await gitClient.GetCommitsAsync(_project, _repoID, dictionary[requestId + "--query"]));
+                return dictionary[requestId + "--commits"][0].CommitId;
             }
             catch (Exception ex)
             {
@@ -78,12 +106,12 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 
         public async Task<object> GetBranchesAsync(string resourceUri, string requestId)
         {
-            object result = null;
+            dictionary.TryAdd(requestId + "--result", null); 
 
             try
             {
-                List<GitBranchStats> branches = await gitClient.GetBranchesAsync(_project, _repoID);
-                result = branches.Select(x => x.Name).ToList();
+                dictionary.TryAdd(requestId + "--branches", await gitClient.GetBranchesAsync(_project, _repoID));
+                dictionary[requestId + "--result"] = ((List<GitBranchStats>) dictionary[requestId + "--branches"]).Select(x => (x.Name, x.IsBaseVersion)).ToList();
             }
             catch(Exception ex)
             {
@@ -97,27 +125,27 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 throw;
             }
 
-            return result;
+            return dictionary[requestId + "--result"];
         }
         
         public async Task<object> GetFileContentAsync(string filePathInRepo, string resourceUri, string requestId, string branch = null)
         {
-            object result = null;
-            GitVersionDescriptor version = null;
+            dictionary.TryAdd(requestId + "--result", null);
+            dictionary.TryAdd(requestId + "--version", null);
 
             try
             {
                if (!string.IsNullOrWhiteSpace(branch))
                 {
-                    version = new GitVersionDescriptor()
+                    dictionary[requestId + "--version"] = new GitVersionDescriptor()
                     {
                         Version = branch,
                         VersionType = GitVersionType.Branch
                     };
                 }
 
-                GitItem item = await gitClient.GetItemAsync(_project, _repoID, path: filePathInRepo, includeContent: true, versionDescriptor: version);
-                result = item.Content;
+                dictionary.TryAdd(requestId + "--item", await gitClient.GetItemAsync(_project, _repoID, path: filePathInRepo, includeContent: true, versionDescriptor: dictionary[requestId + "--version"]));
+                dictionary[requestId + "--result"] = dictionary[requestId + "--item"].Content;
             }
             catch(Exception ex)
             {
@@ -131,89 +159,147 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 throw;
             }
 
-            return result;
+            return dictionary[requestId + "--result"];
         }
 
         public async Task<object> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId)
         {
-            GitPullRequest pr = new GitPullRequest();
-            object result = null;
-            string source = $"refs/heads/{sourceBranch}";
-            string target = $"refs/heads/{targetBranch}";
-            pr.SourceRefName = source;
-            pr.TargetRefName = target;
-            pr.Title = title;
+            dictionary.TryAdd(requestId + "--pr", new GitPullRequest());
+            dictionary.TryAdd(requestId + "--result", null);
+            dictionary.TryAdd(requestId + "--source", $"refs/heads/{sourceBranch}");
+            dictionary.TryAdd(requestId + "--target", $"refs/heads/{targetBranch}");
+
+            dictionary[requestId + "--pr"].SourceRefName = dictionary[requestId + "--source"];
+            dictionary[requestId + "--pr"].TargetRefName = dictionary[requestId + "--target"];
+            dictionary[requestId + "--pr"].Title = title;
 
             try
             {
-                result = await gitClient.CreatePullRequestAsync(pr, _project, _repoID);
+                dictionary[requestId + "--prList"] = await GetPRListAsync(dictionary[requestId + "--source"], dictionary[requestId + "--target"], requestId);
+                if (dictionary[requestId + "--prList"].Count == 0)
+                {
+                    dictionary[requestId + "--result"] = await gitClient.CreatePullRequestAsync(dictionary[requestId + "--pr"], _project, _repoID);
+                }
+                else
+                {
+                    dictionary[requestId + "--result"] = dictionary[requestId + "--prList"][0];
+                }
+
+                dictionary.TryAdd(requestId + "--repository", await gitClient.GetRepositoryAsync(_project, _repoID));
             }
             catch (Exception ex)
             {
                 DiagnosticsETWProvider.Instance.LogDevOpsApiException(
-                    requestId,
-                    resourceUri,
-                    ex.Message,
-                    ex.GetType().ToString(),
-                    ex.StackTrace
-                    );
+                requestId,
+                resourceUri,
+                ex.Message,
+                ex.GetType().ToString(),
+                ex.StackTrace
+                );
                 throw;
             }
 
-            return result;
+            return (dictionary[requestId + "--result"], dictionary[requestId + "--repository"]);
         }
 
-        public async Task<object> PushChangesAsync(string branch, string file, string repoPath, string comment, string changeType, string resourceUri, string requestId)
+        private async Task<List<GitPullRequest>> GetPRListAsync(string source, string target, string requestId)
         {
-            string name = $"refs/heads/{branch}";
-            object result = null;
-
-            GitRefUpdate newBranch = new GitRefUpdate()
+            dictionary.TryAdd(requestId + "--searchCriteria", new GitPullRequestSearchCriteria()
             {
-                Name = name,
-                OldObjectId = await getLastObjectIdAsync(branch),
-            };
+                TargetRefName = target,
+                SourceRefName = source,
+                IncludeLinks = true
+            });
 
-            GitCommitRef newCommit = new GitCommitRef()
+            return await gitClient.GetPullRequestsAsync(_project, _repoID, dictionary[requestId + "--searchCriteria"]);
+        }
+
+        public async Task<object> PushChangesAsync(string branch, List<string> files, List<string> repoPaths, string comment, string changeType, string resourceUri, string requestId)
+        {
+            
+
+            dictionary.TryAdd(requestId + "--name", $"refs/heads/{branch}");
+            dictionary.TryAdd(requestId + "--result", null);
+
+            dictionary.TryAdd(requestId + "--newBranch", new GitRefUpdate()
             {
-                Comment = comment,
-                Changes = new GitChange[]
+                Name = dictionary[requestId + "--name"],
+                OldObjectId = await getLastObjectIdAsync(branch, requestId),
+            });
+            
+            //if getting OldObjectId fails with branch try again from default branch
+            if (dictionary[requestId + "--newBranch"].OldObjectId == null)
+            {
+                dictionary[requestId + "--newBranch"].OldObjectId = await getLastObjectIdAsync(null, requestId);
+            }
+
+            dictionary.TryAdd(requestId + "--commitChanges", new GitChange[files.Count]);
+
+            if (getChangeType(changeType) == VersionControlChangeType.Delete)
+            {
+                for (int i = 0; i < files.Count; i++)
                 {
-                    new GitChange()
+                    dictionary[requestId + "--commitChanges"][i] = new GitChange()
                     {
                         ChangeType = getChangeType(changeType),
-                        Item = new GitItem() { Path = repoPath },
+                        Item = new GitItem() { Path = repoPaths[i] }
+                    };
+                }
+            }
+            else
+            {
+                for (int i = 0; i < files.Count; i++)
+                {
+                    dictionary[requestId + "--commitChanges"][i] = new GitChange()
+                    {
+                        ChangeType = getChangeType(changeType),
+                        Item = new GitItem() { Path = repoPaths[i] },
                         NewContent = new ItemContent()
                         {
-                            Content = file,
+                            Content = files[i],
                             ContentType = ItemContentType.RawText,
                         },
-                    }
-                },
-            };
+                    };
+                }
+            }
 
-            GitPush push = new GitPush()
+            
+
+            dictionary.TryAdd(requestId + "--newCommit", new GitCommitRef()
             {
-                RefUpdates = new GitRefUpdate[] { newBranch },
-                Commits = new GitCommitRef[] { newCommit },
-            };
+                Comment = comment,
+                Changes = dictionary[requestId + "--commitChanges"]
+            });
+
+            dictionary.TryAdd(requestId + "--push", new GitPush()
+            {
+                RefUpdates = new GitRefUpdate[] { dictionary[requestId+"--newBranch"] },
+                Commits = new GitCommitRef[] { dictionary[requestId + "--newCommit"] },
+            });
+
             try
             {
-                result = await gitClient.CreatePushAsync(push, _project, _repoID);
+                dictionary[requestId + "--result"] = await gitClient.CreatePushAsync(dictionary[requestId + "--push"], _project, _repoID);
             }
             catch (Exception ex)
             {
-                DiagnosticsETWProvider.Instance.LogDevOpsApiException(
-                    requestId,
-                    resourceUri,
-                    ex.Message,
-                    ex.GetType().ToString(),
-                    ex.StackTrace
-                    );
-                throw;
+                if (ex.Message.Contains("specified in the add operation already exists. Please specify a new path.")){
+                    return new BadRequestObjectResult("Detector with this ID already exists. Please use a new ID");
+                }
+                else
+                {
+                    DiagnosticsETWProvider.Instance.LogDevOpsApiException(
+                        requestId,
+                        resourceUri,
+                        ex.Message,
+                        ex.GetType().ToString(),
+                        ex.StackTrace
+                        );
+                    throw;
+                }
             }
 
-            return result;
+            return dictionary[requestId + "--result"];
         }
 
         /// <summary>
@@ -230,6 +316,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             List<DevopsFileChange> stringList = new List<DevopsFileChange>();
             foreach (GitChange change in changesAsync.Changes)
             {
+                var diagEntity = new DiagEntity();
                 var gitversion = new GitVersionDescriptor
                 {
                     Version = commitId,
@@ -244,20 +331,28 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                                         .Select(m => m.Groups[1].Value));
 
 
-                    Task<string> detectorScriptTask =  GetFileContentInCommit(repositoryAsync.Id, change.Item.Path, gitversion);
-                    Task<string> packageContentTask =  GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
-                    Task<string> metadataContentTask =  GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);            
-                    await Task.WhenAll( new Task[] { detectorScriptTask, packageContentTask, metadataContentTask });
+                    Task<string> detectorScriptTask = GetFileContentInCommit(repositoryAsync.Id, change.Item.Path, gitversion);
+                    Task<string> packageContentTask = GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
+                    Task<string> metadataContentTask = GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);
+                    await Task.WhenAll(new Task[] { detectorScriptTask, packageContentTask, metadataContentTask });
                     string detectorScriptContent = await detectorScriptTask;
                     string packageContent = await packageContentTask;
                     string metadataContent = await metadataContentTask;
+                    if (packageContent != null)
+                    {
+                        diagEntity = JsonConvert.DeserializeObject<DiagEntity>(packageContent);
+                    } else
+                    {
+                        throw new Exception("Package.json cannot be empty or null");
+                    }
                     stringList.Add(new DevopsFileChange
                     {
                         CommitId = commitId,
                         Content = detectorScriptContent,
                         Path = change.Item.Path,
                         PackageConfig = packageContent,
-                        Metadata = metadataContent
+                        Metadata = metadataContent,
+                        Id = diagEntity.DetectorId
                     });
                 }
                 else if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Delete))
@@ -274,6 +369,15 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                         VersionType = GitVersionType.Commit,
                         VersionOptions = GitVersionOptions.None
                     });
+                    
+                    if (packageContent != null)
+                    {
+                        diagEntity = JsonConvert.DeserializeObject<DiagEntity>(packageContent);
+                    }
+                    else
+                    {
+                        throw new Exception("Package.json cannot be empty or null");
+                    }
                     // Mark this detector as disabled. 
                     stringList.Add(new DevopsFileChange
                     {
@@ -282,7 +386,8 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                         PackageConfig = packageContent,
                         Path = change.Item.Path,
                         Metadata = "",
-                        MarkAsDisabled = true
+                        MarkAsDisabled = true,
+                        Id = diagEntity.DetectorId
                     });
                 }
             }
@@ -349,7 +454,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             {
                 var filesinCommit = await GetFilesInCommit(commit.CommitId);
                 // Process only the latest file update. 
-                if (!result.Select(s => s.Path).Contains(filesinCommit.FirstOrDefault().Path))
+                if (!result.Select(s => s.Id).Contains(filesinCommit.FirstOrDefault().Id))
                 {
                     result.AddRange(filesinCommit);
                 }

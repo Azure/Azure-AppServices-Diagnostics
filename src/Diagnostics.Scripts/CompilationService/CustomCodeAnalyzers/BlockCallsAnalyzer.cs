@@ -106,7 +106,9 @@ namespace Diagnostics.Scripts.CompilationService.CustomCodeAnalyzers
                         _blockConfig.GetMatchingPInvokeConfig(targetPInvokeDll)?.ForEach(piConfig => {
                             if (piConfig.MethodsToBlock?.Count > 0)
                             {
-                                BlockConfig.GetMatchingBlockMessageList(piConfig.MethodsToBlock, invocation.TargetMethod.Name)?.ForEach(strMessage =>
+                                string pInvokeFunctionName = !string.IsNullOrWhiteSpace(invocation.TargetMethod.GetDllImportData().EntryPointName)? invocation.TargetMethod.GetDllImportData().EntryPointName : invocation.TargetMethod.Name;
+
+                                BlockConfig.GetMatchingBlockMessageList(piConfig.MethodsToBlock, pInvokeFunctionName)?.ForEach(strMessage =>
                                 {
                                     operationContext.ReportDiagnostic(invocation.CreateDiagnostic(blockCallsDiagnosticDescriptor,
                                         string.IsNullOrWhiteSpace(strMessage) ? new string[] { string.Format(DEFAULT_INVOCATION_BLOCK_MESSAGE_FORMAT, invocation.TargetMethod.Name, targetPInvokeDll) } : new string[] { strMessage }

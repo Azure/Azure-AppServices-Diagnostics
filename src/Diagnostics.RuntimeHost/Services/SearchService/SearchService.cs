@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
+using Diagnostics.DataProviders;
 using Diagnostics.DataProviders.DataProviderConfigurations;
 using Diagnostics.DataProviders.TokenService;
 using Newtonsoft.Json;
@@ -50,8 +52,11 @@ namespace Diagnostics.RuntimeHost.Services
 
         private async Task<HttpRequestMessage> AddAuthorizationHeadersAsync(HttpRequestMessage request)
         {
-            string authToken = await SearchServiceTokenService.Instance.GetAuthorizationTokenAsync();
-            request.Headers.Add("Authorization", authToken);
+            if (!configuration.UseCertAuth)
+            {
+                string authToken = await SearchServiceTokenService.Instance.GetAuthorizationTokenAsync();
+                request.Headers.Add("Authorization", authToken);
+            }
             return request;
         }
 
@@ -111,6 +116,11 @@ namespace Diagnostics.RuntimeHost.Services
             };
 
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            if (configuration.UseCertAuth)
+            {
+                byte[] certContent = SearchAPICertLoader.Instance.Cert.Export(X509ContentType.Cert);
+                _httpClient.DefaultRequestHeaders.Add("x-ms-diagcert", Convert.ToBase64String(certContent));
+            }
         }
 
         private string AppendQueryStringParams(string url, Dictionary<string, string> additionalQueryParams)

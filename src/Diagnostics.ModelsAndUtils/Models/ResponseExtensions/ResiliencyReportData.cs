@@ -280,19 +280,22 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             {
                 return null;
             }
+            var table = new DataTable();
+
+            table.Columns.Add(new DataColumn("ResiliencyReport", typeof(string)));
             string jsonResiliencyReport = JsonConvert.SerializeObject(resiliencyReportData, Formatting.Indented);
+            table.Rows.Add(jsonResiliencyReport);
+
             string jsonResiliencyResourceList = JsonConvert.SerializeObject(resiliencyReportData.GetResiliencyResourceList(), Formatting.Indented);
-            string jsonResiliencyFeaturesList = "";
+            table.Rows.Add(jsonResiliencyResourceList);
+
             for (int siteNum = 0; siteNum < resiliencyReportData.GetResiliencyResourceList().GetLength(0); siteNum++)
             {
-                jsonResiliencyFeaturesList = jsonResiliencyFeaturesList + JsonConvert.SerializeObject(resiliencyReportData.GetResiliencyResourceList()[siteNum].GetResiliencyFeaturesList(), Formatting.Indented);
+                string jsonResiliencyFeaturesList = JsonConvert.SerializeObject(resiliencyReportData.GetResiliencyResourceList()[siteNum].GetResiliencyFeaturesList(), Formatting.Indented);
+                table.Rows.Add(jsonResiliencyFeaturesList);
 
             }
-            var table = new DataTable();
-            table.Columns.Add(new DataColumn("ResiliencyReport", typeof(string)));
-            table.Columns.Add(new DataColumn("ResiliencyResourceList", typeof(string)));
-            table.Columns.Add(new DataColumn("ResiliencyFeaturesList", typeof(string)));
-            table.Rows.Add(new object[] { jsonResiliencyReport, jsonResiliencyResourceList, jsonResiliencyFeaturesList });
+
             var diagnosticData = new DiagnosticData()
             {
                 Table = table,
