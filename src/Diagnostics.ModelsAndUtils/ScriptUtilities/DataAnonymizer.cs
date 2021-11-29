@@ -123,7 +123,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 
         public static string AnonymizeContent(string content)
         {
-            if (string.IsNullOrWhiteSpace(content) || !string.IsNullOrWhiteSpace(content) && content.Length > 500)
+            if (string.IsNullOrWhiteSpace(content))
             {
                 return content;
             }
