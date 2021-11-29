@@ -121,7 +121,7 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
 
         public static string AnonymizeContent(string content)
         {
-            if (string.IsNullOrWhiteSpace(content))
+            if (string.IsNullOrWhiteSpace(content) || !string.IsNullOrWhiteSpace(content) && content.Length > 800)
             {
                 return content;
             }
