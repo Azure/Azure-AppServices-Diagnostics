@@ -70,7 +70,7 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// </summary>
         [DataMember]
         [JsonPropertyName("supportTopicList")]
-        public IEnumerable<SupportTopicJson> SupportTopicListSTJCompat
+        public IEnumerable<SupportTopicSTJCompat> SupportTopicListSTJCompat
         {
             get
             {
@@ -81,7 +81,7 @@ namespace Diagnostics.ModelsAndUtils.Attributes
                 
                 return SupportTopicList
                     .Where(st => st != null)
-                    .Select(x => new SupportTopicJson(x));
+                    .Select(x => new SupportTopicSTJCompat(x));
             }
         }
 

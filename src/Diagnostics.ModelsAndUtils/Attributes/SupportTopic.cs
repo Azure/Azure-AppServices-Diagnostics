@@ -30,7 +30,7 @@ namespace Diagnostics.ModelsAndUtils.Attributes
     /// are not serialized properly to Json using System.Text.Json
     /// https://github.com/dotnet/runtime/issues/58947
     /// </summary>
-    public class SupportTopicJson
+    public class SupportTopicSTJCompat
     {
         /// <summary>
         /// Support Topic Id
@@ -43,7 +43,7 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// </summary>
         public string PesId { get; set; }
 
-        public SupportTopicJson(SupportTopic st)
+        public SupportTopicSTJCompat(SupportTopic st)
         {
             if (st == null)
             {
