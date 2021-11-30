@@ -70,7 +70,7 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// </summary>
         [DataMember]
         [JsonPropertyName("supportTopicList")]
-        public IEnumerable<SupportTopicJson> SupportTopicListJson
+        public IEnumerable<SupportTopicJson> SupportTopicListSTJCompat
         {
             get
             {
