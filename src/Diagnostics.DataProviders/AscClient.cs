@@ -46,7 +46,7 @@ namespace Diagnostics.DataProviders
         /// </summary>
         private readonly DiagnosticsETWProvider logger;
 
-        private readonly Lazy<HttpClient> client = new Lazy<HttpClient>(() =>
+        private static readonly Lazy<HttpClient> client = new Lazy<HttpClient>(() =>
         {
             var client = new HttpClient();
             client.DefaultRequestHeaders.Clear();
@@ -75,6 +75,11 @@ namespace Diagnostics.DataProviders
         /// </summary>
         private string DiagAscHeaderValue;
 
+        private string _clientId = string.Empty;
+        private Uri _aadAuthorityUri;
+        private string _tokenAudience = string.Empty;
+        private string _tokenRequestorCertSubjectName = string.Empty;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="AscClient"/> class.
         /// <param name="config">Config for Asc Data Provider.</param>
@@ -82,6 +87,9 @@ namespace Diagnostics.DataProviders
         /// </summary>
         public AscClient(AscDataProviderConfiguration config, string appLensRequestId, IHeaderDictionary incomingRequestHeaders)
         {
+            _clientId = config.ClientId;
+            _aadAuthorityUri = new Uri(config.AADAuthority);
+            _tokenAudience = config.TokenResource;
             baseUri = config.BaseUri;
             apiUri = config.ApiUri;
             apiVersion = config.ApiVersion;
@@ -125,7 +133,7 @@ namespace Diagnostics.DataProviders
 
                 using (HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri))
                 {
-                    requestMessage.Headers.Add("Authorization", await AscTokenService.Instance.GetAuthorizationTokenAsync());
+                    requestMessage.Headers.Add("Authorization", await TokenRequestorFromPFXService.Instance.GetAuthorizationToken(_clientId, _aadAuthorityUri, _tokenAudience, _tokenRequestorCertSubjectName, true));
                     requestMessage.Content = new StringContent(jsonPostBody, Encoding.UTF8, "application/json");
                     return await GetAscResponse<T>(requestMessage, false, cancellationToken);
                 }
@@ -171,7 +179,7 @@ namespace Diagnostics.DataProviders
 
                 using (HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri))
                 {
-                    requestMessage.Headers.Add("Authorization", await AscTokenService.Instance.GetAuthorizationTokenAsync());
+                    requestMessage.Headers.Add("Authorization", await TokenRequestorFromPFXService.Instance.GetAuthorizationToken(_clientId, _aadAuthorityUri, _tokenAudience, _tokenRequestorCertSubjectName, true));
                     return await GetAscResponse<T>(requestMessage, false, cancellationToken);
                 }
             }
