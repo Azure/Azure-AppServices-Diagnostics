@@ -18,6 +18,7 @@ namespace Diagnostics.DataProviders
     public class GeoMasterDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IGeoMasterDataProvider
     {
         const string SiteExtensionResource = "/extensions/{*extensionApiMethod}";
+        const string ContainerAppApiServerNameKnownPrefix = "capps";
 
         private readonly IGeoMasterClient _geoMasterClient;
         private GeoMasterDataProviderConfiguration _configuration;
@@ -682,8 +683,12 @@ namespace Diagnostics.DataProviders
             {
                 geoMasterName = geomasterHostNameUri.Host.Split(new char[] { '.' }).First();
 
-                //Need to modify this to work with national cloud environments as gm-prod-sn1 does not exist in other clouds.
-                geoMasterName = geoMasterName.Equals("geomaster", StringComparison.CurrentCultureIgnoreCase) ? "gm-prod-sn1" : $"rgm-prod-{geoMasterName}";
+                // Hack: infer a good geoMasterName unless it is a container apps API server name.
+                if (!geoMasterName.StartsWith(ContainerAppApiServerNameKnownPrefix, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    //Need to modify this to work with national cloud environments as gm-prod-sn1 does not exist in other clouds.
+                    geoMasterName = geoMasterName.Equals("geomaster", StringComparison.CurrentCultureIgnoreCase) ? "gm-prod-sn1" : $"rgm-prod-{geoMasterName}";
+                }
             }
 
             return geoMasterName;
