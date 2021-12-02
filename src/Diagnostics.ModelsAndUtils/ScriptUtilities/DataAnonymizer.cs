@@ -104,8 +104,10 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
             string currContent = content;
 
             currContent = RedactEmails(currContent);
-            currContent = RedactPassword(currContent);
             currContent = RedactPhone(currContent);
+
+            // Disable password regex matching to avoid high cpu issue
+            //  currContent = RedactPassword(currContent);
 
             // Disable GUID and query string redaction for now
             // currContent = RedactQueryString(currContent);
@@ -126,7 +128,38 @@ namespace Diagnostics.ModelsAndUtils.ScriptUtilities
                 return content;
             }
 
-            return RedactPII(content);
+            var contentArray = content.Split(' ');
+
+            for (int i = 0; i < contentArray.Length; i++)
+            {
+                var item = contentArray[i];
+
+                // Skip data redact if string content is too long
+                if (item.Length >= 500)
+                    continue;
+
+                // For now use this logic to simpily redact password to prevent high cpu issue caused by regex matching.
+                if ((string.Equals(item, "pass", StringComparison.CurrentCultureIgnoreCase) || string.Equals(item, "pass:", StringComparison.CurrentCultureIgnoreCase)
+                    || string.Equals(item, "password", StringComparison.CurrentCultureIgnoreCase) || string.Equals(item, "password:", StringComparison.CurrentCultureIgnoreCase)
+                    || string.Equals(item, "userpass", StringComparison.CurrentCultureIgnoreCase) || string.Equals(item, "userpass:", StringComparison.CurrentCultureIgnoreCase)
+                    || string.Equals(item, "pwd", StringComparison.CurrentCultureIgnoreCase) || string.Equals(item, "pwd:", StringComparison.CurrentCultureIgnoreCase))
+                    && i + 1 < contentArray.Length)
+                {
+                    contentArray[i + 1] = ":[PASSWORD]";
+                    i++;
+                }
+                else
+                {
+                    if (item.Contains("@") && item.Contains("."))
+                    {
+                        item = RedactEmails(item);
+                    }
+
+                    contentArray[i] = RedactPhone(item);
+                }
+            }
+
+            return string.Join(" ", contentArray);
         }
     }
 }
