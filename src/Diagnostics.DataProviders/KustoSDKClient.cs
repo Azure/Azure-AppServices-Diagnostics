@@ -308,9 +308,9 @@ namespace Diagnostics.DataProviders
             if (dataSet != null && dataSet.Tables != null && dataSet.Tables.Count >= 4)
             {
                 var statisticsTable = dataSet.Tables[dataSet.Tables.Count - 2].ToDataTableResponseObject();
-                if (statisticsTable.Rows.GetLength(0) >= 2 && statisticsTable.Rows.GetLength(1) >= 5)
+                if (statisticsTable.Rows.Length >= 2 && statisticsTable.Rows[1].Length >= 5)
                 {
-                    stats = statisticsTable.Rows[1, 4];
+                    stats = statisticsTable.Rows[1][4];
                 }
             }
 

@@ -42,8 +42,8 @@ namespace Diagnostics.RuntimeHost.Services.CacheService
                 DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(DiagEntityTableCacheService), "Start polling Azure Storage for refreshing cache");
                 try
                 {
-                    var detectorTask = storageService.GetEntitiesByPartitionkey("Detector", startUp ? DateTime.MinValue : DateTime.UtcNow.AddMinutes(-5));
-                    var gistTask = storageService.GetEntitiesByPartitionkey("Gist", startUp ? DateTime.MinValue : DateTime.UtcNow.AddMinutes(-5));
+                    var detectorTask = storageService.GetEntitiesByPartitionkey("Detector", startUp ? DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc) : DateTime.UtcNow.AddMinutes(-5));
+                    var gistTask = storageService.GetEntitiesByPartitionkey("Gist", startUp ? DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc) : DateTime.UtcNow.AddMinutes(-5));
                     await Task.WhenAll(new Task[] { detectorTask, gistTask });
                     var detectorResult = await detectorTask;
                     if (startUp)
