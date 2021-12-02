@@ -4,7 +4,7 @@ namespace Diagnostics.ModelsAndUtils.Models
 {
     public class DataProviderMetadata
     {
-        public string ProviderName;
+        public string ProviderName { get; set; }
         public List<KeyValuePair<string, object>> PropertyBag { get; }
 
         public DataProviderMetadata()

@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
@@ -44,7 +43,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Spicfy the status(Critical,Warning,Info,Success,None) shown as icon in middle left card
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public SummaryCardStatus Status { set; get; }
 
         /// <summary>
@@ -55,7 +54,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Spicfy the Action Type(Detector,Tool)
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public SummaryCardActionType OnClickActionType { set; get; }
 
         /// <summary>
