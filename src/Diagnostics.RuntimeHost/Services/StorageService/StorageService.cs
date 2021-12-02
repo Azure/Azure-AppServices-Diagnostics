@@ -24,12 +24,12 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null, DateTime? startTime = null);
         Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity);
         Task<string> LoadBlobToContainer(string blobname, string contents);
-        Task<byte[]> GetBlobByName(string name);
+        Task<byte[]> GetBlobByName(string name, string containerName);
         Task<int> ListBlobsInContainer();
         Task<DetectorRuntimeConfiguration> LoadConfiguration(DetectorRuntimeConfiguration configuration);
         Task<List<DetectorRuntimeConfiguration>> GetKustoConfiguration();
-
         Task LoadBatchDataToTable(List<DiagEntity> diagEntities);
+        Task<byte[]> GetPartnerConfig();
     }
     public class StorageService : IStorageService
     {
@@ -43,13 +43,14 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         private bool loadOnlyPublicDetectors;
         private bool isStorageEnabled;
         private string detectorRuntimeConfigTable;
+        private string partnerConfigContainer;
 
         public StorageService(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
             tableName = configuration["SourceWatcher:TableName"];
             container = configuration["SourceWatcher:BlobContainerName"];
             detectorRuntimeConfigTable = configuration["SourceWatcher:DetectorRuntimeConfigTable"];
-            
+            partnerConfigContainer = configuration["SourceWatcher:PartnerConfigContainer"];
            
             if (hostingEnvironment != null && hostingEnvironment.EnvironmentName.Equals("UnitTest", StringComparison.CurrentCultureIgnoreCase))
             {
@@ -220,7 +221,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             }
         }
 
-        public async Task<byte[]> GetBlobByName(string name)
+        public async Task<byte[]> GetBlobByName(string name, string containerName = null)
         {
             int retryThreshold = 2;
             int attempt = 0;
@@ -243,7 +244,8 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     OperationContext oc = new OperationContext();
                     oc.ClientRequestID = clientRequestId;
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"Fetching blob {name} with ClientRequestid {clientRequestId}");
-                    var containerReference = cloudBlobClient.GetContainerReference(container);
+                    var containerReference = string.IsNullOrWhiteSpace(containerName) ? cloudBlobClient.GetContainerReference(container) :
+                        cloudBlobClient.GetContainerReference(containerName);
                     var cloudBlob = containerReference.GetBlockBlobReference(name);
                     using (MemoryStream ms = new MemoryStream())
                     {
@@ -409,6 +411,11 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                 throw;
             }
           
+        }
+
+        public async Task<byte[]> GetPartnerConfig()
+        {
+            return await GetBlobByName("repoconfig.json", partnerConfigContainer);
         }
     }
 }
