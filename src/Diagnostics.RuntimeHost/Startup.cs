@@ -33,6 +33,7 @@ using Microsoft.Extensions.Hosting;
 using Diagnostics.RuntimeHost.Services.DiagnosticsTranslator;
 using Diagnostics.RuntimeHost.Services.DevOpsClient;
 using System.Text.Json.Serialization;
+using Diagnostics.ModelsAndUtils.Models;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -149,6 +150,7 @@ namespace Diagnostics.RuntimeHost
                 }).AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.WriteIndented = true;
+                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
                 });
             }
             else
@@ -159,6 +161,7 @@ namespace Diagnostics.RuntimeHost
                 }).AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.WriteIndented = true;
+                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
                 });
             }
 
