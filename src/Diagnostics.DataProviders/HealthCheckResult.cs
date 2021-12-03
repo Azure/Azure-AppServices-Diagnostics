@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Diagnostics.DataProviders
 {
@@ -14,7 +15,7 @@ namespace Diagnostics.DataProviders
     /// </summary>
     public sealed class HealthCheckResult
     {
-        [JsonConverter(typeof(JsonStringEnumConverter))]
+        [JsonConverter(typeof(StringEnumConverter))]
         public HealthStatus Status { get; private set; }
         public string Name { get; private set; }
         public string Description { get; private set; }

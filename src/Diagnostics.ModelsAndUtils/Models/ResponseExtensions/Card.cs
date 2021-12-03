@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Data;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
@@ -16,12 +16,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Title of the Card
         /// </summary>
-        public string Title { get; set; }
+        public string Title;
 
         /// <summary>
         /// A list of descriptions for this card
         /// </summary>
-        public List<string> Descriptions { get; set; }
+        public List<string> Descriptions;
 
         /// <summary>
         /// Specify and icon from the font-awesome collection (for e.g. fa-circle)
@@ -31,13 +31,13 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Specify the action type for this card
         /// </summary>
-        [JsonConverter(typeof(JsonStringEnumConverter))]
-        public CardActionType ActionType { get; set; }
+        [JsonConverter(typeof(StringEnumConverter))]
+        public CardActionType ActionType;
 
         /// <summary>
         /// Specify the action value for the card (will be detectorId for detectors)
         /// </summary>
-        public string ActionValue { get; set; }
+        public string ActionValue;
 
         /// <summary>
         /// Creates an instance of Card class.
@@ -105,8 +105,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                 table.Rows.Add(new object[] {
                     card.Title,
                     card.Icon,
-                    JsonSerializer.Serialize(card.Descriptions),
-                    JsonSerializer.Serialize(card.ActionType),
+                    JsonConvert.SerializeObject(card.Descriptions),
+                    JsonConvert.SerializeObject(card.ActionType),
                     card.ActionValue
               });
             });

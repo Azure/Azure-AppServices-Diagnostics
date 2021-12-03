@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
@@ -25,7 +25,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Insight Level for the Guage. Decides the color of the Guage. Red for Critical, Orange for Warning, Green for Success and Blue for Info & None.
         /// </summary>
-        [JsonConverter(typeof(JsonStringEnumConverter))]
+        [JsonConverter(typeof(StringEnumConverter))]
         public InsightStatus Status { get; set; }
 
         private double _percentFilled;
@@ -61,7 +61,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Size of the Guage. Can be either Small, Medium or Large
         /// </summary>
-        [JsonConverter(typeof(JsonStringEnumConverter))]
+        [JsonConverter(typeof(StringEnumConverter))]
         public GuageSize Size { get; set; }
 
         /// <summary>
@@ -159,8 +159,8 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             foreach (Guage g in guages)
             {
                 table.Rows.Add(
-                    JsonSerializer.Serialize(renderDirection),
-                    JsonSerializer.Serialize(g.Size),
+                    JsonConvert.SerializeObject(renderDirection),
+                    JsonConvert.SerializeObject(g.Size),
                     g.Status,
                     g.PercentFilled,
                     g.DisplayValue,

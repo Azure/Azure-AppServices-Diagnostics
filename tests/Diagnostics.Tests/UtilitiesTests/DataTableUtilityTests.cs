@@ -30,8 +30,8 @@ namespace Diagnostics.Tests
             Assert.Equal("DateTime", columns[1].DataType);
             Assert.Equal("Int32", columns[2].DataType);
 
-            Assert.Single(convertedTable.Rows);
-            Assert.Equal<int>(3, convertedTable.Rows[0].Length);
+            Assert.Equal<int>(1, convertedTable.Rows.GetLength(0));
+            Assert.Equal<int>(3, convertedTable.Rows.GetLength(1));
         }
 
         [Fact]
