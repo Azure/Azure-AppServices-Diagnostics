@@ -18,7 +18,20 @@ namespace Diagnostics.RuntimeHost
 
         public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
         {
-            JsonSerializer.Serialize(writer, value, value?.GetType() ?? typeof(object), options);
+            if (value.GetType() != typeof(T))
+            {
+                JsonSerializer.Serialize(writer, value, value?.GetType() ?? typeof(object), options);
+            }
+            else
+            {
+                var serializeOptions = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    WriteIndented = true
+                };
+
+                JsonSerializer.Serialize(writer, value, serializeOptions);
+            }
         }
     }
 }
