@@ -99,9 +99,9 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                         partitionKey = "Detector";
                     }
                     var filterPartitionKey = TableQuery.GenerateFilterCondition(PartitionKey, QueryComparisons.Equal, partitionKey);
-                    DateTime timeFilter = startTime ?? DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc);
+                    DateTime timeFilter = startTime ?? DateTime.MinValue;
                     string timestampFilter = TableQuery.GenerateFilterConditionForDate("Timestamp", QueryComparisons.GreaterThanOrEqual, new DateTimeOffset(timeFilter));
-                    string finalFilter = timeFilter.Equals(DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc)) ? filterPartitionKey : TableQuery.CombineFilters(filterPartitionKey, TableOperators.And, timestampFilter);
+                    string finalFilter = timeFilter.Equals(DateTime.MinValue) ? filterPartitionKey : TableQuery.CombineFilters(filterPartitionKey, TableOperators.And, timestampFilter);
                     var tableQuery = new TableQuery<DiagEntity>();
                     tableQuery.Where(finalFilter);
                     TableContinuationToken tableContinuationToken = null;
@@ -129,7 +129,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
                     } while (tableContinuationToken != null);
                     timeTakenStopWatch.Stop();
                     DiagnosticsETWProvider.Instance.LogAzureStorageMessage(nameof(StorageService), $"GetEntities by Partition key {partitionKey} took {timeTakenStopWatch.ElapsedMilliseconds}, Total rows = {detectorsResult.Count}, ClientRequestId = {clientRequestId} ");
-                     return startTime == DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc) ? detectorsResult.Where(result => !result.IsDisabled).ToList() :
+                     return startTime == DateTime.MinValue ? detectorsResult.Where(result => !result.IsDisabled).ToList() :
                         detectorsResult.ToList();
                 }
                 catch (Exception ex)

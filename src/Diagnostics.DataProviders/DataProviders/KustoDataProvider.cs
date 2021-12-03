@@ -14,10 +14,10 @@ namespace Diagnostics.DataProviders
 {
     public class KustoQuery
     {
-        public string Text { get; set; }
-        public string Url { get; set; }
-        public string KustoDesktopUrl { get; set; }
-        public string OperationName { get; set; }
+        public string Text;
+        public string Url;
+        public string KustoDesktopUrl;
+        public string OperationName;
     }
 
     public class KustoDataProvider : DiagnosticDataProvider, IKustoDataProvider

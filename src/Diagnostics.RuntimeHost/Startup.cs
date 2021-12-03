@@ -32,7 +32,6 @@ using Diagnostics.Logger;
 using Microsoft.Extensions.Hosting;
 using Diagnostics.RuntimeHost.Services.DiagnosticsTranslator;
 using Diagnostics.RuntimeHost.Services.DevOpsClient;
-using System.Text.Json.Serialization;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -146,9 +145,9 @@ namespace Diagnostics.RuntimeHost
                 services.AddControllers(options =>
                 {
                     options.Filters.Add<AllowAnonymousFilter>();
-                }).AddJsonOptions(options =>
+                }).AddNewtonsoftJson(options =>
                 {
-                    options.JsonSerializerOptions.WriteIndented = true;
+                    options.SerializerSettings.Formatting = Formatting.Indented;
                 });
             }
             else
@@ -156,10 +155,10 @@ namespace Diagnostics.RuntimeHost
                 services.AddControllers().AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.WriteIndented = true;
-                }).AddJsonOptions(options =>
+                }).AddNewtonsoftJson(options =>
                 {
-                    options.JsonSerializerOptions.WriteIndented = true;
-                });
+                    options.SerializerSettings.Formatting = Formatting.Indented;
+                }); ;
             }
 
             services.AddSingleton<IDataSourcesConfigurationService, DataSourcesConfigurationService>();
