@@ -29,6 +29,10 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 services.AddSingleton<IStorageService, NullableStorageService>();
             }
+            else
+            {
+                services.AddSingleton<IStorageService, NullableStorageService>();
+            }
 
             return services;
         }
