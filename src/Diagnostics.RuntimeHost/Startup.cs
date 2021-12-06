@@ -134,11 +134,11 @@ namespace Diagnostics.RuntimeHost
                 MdmCertLoader.Instance.Initialize(Configuration);
                 CompilerHostCertLoader.Instance.Initialize(Configuration);
                 SearchAPICertLoader.Instance.Initialize(Configuration);
+                // Enable App Insights telemetry
+                services.AddApplicationInsightsTelemetry();
             }
 
             services.AddMemoryCache();
-            // Enable App Insights telemetry
-            services.AddApplicationInsightsTelemetry();
             services.AddAppServiceApplicationLogging();
 
             if (Environment.IsDevelopment())
@@ -149,7 +149,9 @@ namespace Diagnostics.RuntimeHost
                 }).AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.WriteIndented = true;
+                    options.JsonSerializerOptions.IncludeFields = true;
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
+                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<QueryResponse<DiagnosticApiResponse>>());
                 });
             }
             else
@@ -157,10 +159,9 @@ namespace Diagnostics.RuntimeHost
                 services.AddControllers().AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.WriteIndented = true;
-                }).AddJsonOptions(options =>
-                {
-                    options.JsonSerializerOptions.WriteIndented = true;
+                    options.JsonSerializerOptions.IncludeFields = true;
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
+                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<QueryResponse<DiagnosticApiResponse>>());
                 });
             }
 

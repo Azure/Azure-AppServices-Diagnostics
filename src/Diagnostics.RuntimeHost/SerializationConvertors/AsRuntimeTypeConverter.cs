@@ -27,6 +27,7 @@ namespace Diagnostics.RuntimeHost
                 var serializeOptions = new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    IncludeFields = true,
                     WriteIndented = true
                 };
 
