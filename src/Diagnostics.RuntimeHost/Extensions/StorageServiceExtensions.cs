@@ -25,8 +25,14 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 services.AddSingleton<IStorageService, StorageService>();
             }
-            if (configuration.IsAzureChinaCloud() || configuration.IsAzureUSGovernment())
+            else if (configuration.IsAzureChinaCloud() || configuration.IsAzureUSGovernment())
             {
+                // Sovereign clouds cannot access our StorageService
+                services.AddSingleton<IStorageService, NullableStorageService>();
+            }
+            else
+            {
+                // IStorageService dependency needs to be initialized for any other cloud including UnitTest
                 services.AddSingleton<IStorageService, NullableStorageService>();
             }
 

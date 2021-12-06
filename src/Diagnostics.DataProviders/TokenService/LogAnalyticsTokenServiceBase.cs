@@ -84,7 +84,7 @@ namespace Diagnostics.DataProviders.TokenService
                 ValidateAuthority = true
             };
 
-            creds = await ApplicationTokenProvider.LoginSilentAsync(domain, clientId, clientSecret, adSettings);
+            creds = await ApplicationTokenProvider.LoginSilentAsync(domain, clientId, clientSecret, adSettings).ConfigureAwait(false);
         }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using Diagnostics.ModelsAndUtils.ScriptUtilities;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 
 namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
 {
@@ -25,7 +24,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Denotes which action will be performed, such as calling an ARM API or navigating to a Portal Blade.
         /// </summary>
-        [JsonConverter(typeof(StringEnumConverter))]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public ActionType Action { get; set; }
 
         /// <summary>
@@ -122,10 +121,10 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     {
         public string Label { get; set; }
 
-        [JsonConverter(typeof(StringEnumConverter))]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public SolutionButtonType Type { get; set; } = SolutionButtonType.Button;
 
-        [JsonConverter(typeof(StringEnumConverter))]
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public SolutionButtonPosition Position { get; set; } = SolutionButtonPosition.Bottom;
 
         public SolutionButtonOption(string label, SolutionButtonType type = SolutionButtonType.Button, SolutionButtonPosition position = SolutionButtonPosition.Bottom)
