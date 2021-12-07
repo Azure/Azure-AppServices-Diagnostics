@@ -20,19 +20,12 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns></returns>
         public static IServiceCollection AddDiagEntitiesStorageService(this IServiceCollection services, IConfiguration configuration)
         {
-
-            if (configuration.IsPublicAzure() || configuration.IsAirGappedCloud())
+            if (Enum.Parse<SourceWatcherType>(configuration[$"SourceWatcher:{RegistryConstants.WatcherTypeKey}"]) == SourceWatcherType.AzureStorage)
             {
                 services.AddSingleton<IStorageService, StorageService>();
             }
-            else if (configuration.IsAzureChinaCloud() || configuration.IsAzureUSGovernment())
-            {
-                // Sovereign clouds cannot access our StorageService
-                services.AddSingleton<IStorageService, NullableStorageService>();
-            }
             else
             {
-                // IStorageService dependency needs to be initialized for any other cloud including UnitTest
                 services.AddSingleton<IStorageService, NullableStorageService>();
             }
 
