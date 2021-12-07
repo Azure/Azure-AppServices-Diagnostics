@@ -24,7 +24,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         Task<List<DiagEntity>> GetEntitiesByPartitionkey(string partitionKey = null, DateTime? startTime = null);
         Task<DiagEntity> LoadDataToTable(DiagEntity detectorEntity);
         Task<string> LoadBlobToContainer(string blobname, string contents);
-        Task<byte[]> GetBlobByName(string name, string containerName);
+        Task<byte[]> GetBlobByName(string name, string containerName = null);
         Task<int> ListBlobsInContainer();
         Task<DetectorRuntimeConfiguration> LoadConfiguration(DetectorRuntimeConfiguration configuration);
         Task<List<DetectorRuntimeConfiguration>> GetKustoConfiguration();

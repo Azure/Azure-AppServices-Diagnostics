@@ -66,7 +66,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             //  Get files to compile 
             var filesToCompile = string.IsNullOrWhiteSpace(commitId) ? 
                 await this.devopsClient.GetFilesBetweenCommits(deploymentParameters)
-              : await this.devopsClient.GetFilesInCommit(commitId);
+              : await this.devopsClient.GetFilesInCommit(commitId, deploymentParameters.ResourceType);
 
             QueryResponse<DiagnosticApiResponse> queryRes = new QueryResponse<DiagnosticApiResponse>
             {

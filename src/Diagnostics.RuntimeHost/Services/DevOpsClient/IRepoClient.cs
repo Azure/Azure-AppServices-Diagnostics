@@ -49,7 +49,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// Gets file changed in a given commit id
         /// </summary>
         /// <param name="commitId">Commit id</param>
-        Task<List<DevopsFileChange>> GetFilesInCommit(string commitId);
+        Task<List<DevopsFileChange>> GetFilesInCommit(string commitId, string resourceProvider);
 
         /// <summary>
         /// Gets file changed between two commits or date range
