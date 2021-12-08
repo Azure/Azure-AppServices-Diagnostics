@@ -27,9 +27,9 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_dataProvider.SendGetRequestAadAuthDefaultAsync<T>(requestUri, audienceWithScope, additionalHeaders, operationName, cancellationToken));
         }
 
-        Task<T> IHttpDataProvider.SendGetRequestAnonyousAsync<T>(Uri requestUri, Dictionary<string, string> additionalHeaders, string operationName, CancellationToken cancellationToken)
+        Task<T> IHttpDataProvider.SendGetRequestAnonymousAsync<T>(Uri requestUri, Dictionary<string, string> additionalHeaders, string operationName, CancellationToken cancellationToken)
         {
-            return MakeDependencyCall(_dataProvider.SendGetRequestAnonyousAsync<T>(requestUri, additionalHeaders, operationName, cancellationToken));
+            return MakeDependencyCall(_dataProvider.SendGetRequestAnonymousAsync<T>(requestUri, additionalHeaders, operationName, cancellationToken));
         }
 
         Task<T> IHttpDataProvider.SendGetRequestAsync<T>(Uri requestUri, Dictionary<string, string> additionalHeaders, HttpProviderAuthenticationOption authOptions, string operationName, CancellationToken cancellationToken)
@@ -57,9 +57,9 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(_dataProvider.SendPostRequestAadAuthDefaultAsync<T>(requestUri, jsonPostBody, audienceWithScope, additionalHeaders, operationName, cancellationToken));
         }
 
-        Task<T> IHttpDataProvider.SendPostRequestAnonyousAsync<T>(Uri requestUri, string jsonPostBody, Dictionary<string, string> additionalHeaders, string operationName, CancellationToken cancellationToken)
+        Task<T> IHttpDataProvider.SendPostRequestAnonymousAsync<T>(Uri requestUri, string jsonPostBody, Dictionary<string, string> additionalHeaders, string operationName, CancellationToken cancellationToken)
         {
-            return MakeDependencyCall(_dataProvider.SendPostRequestAnonyousAsync<T>(requestUri, jsonPostBody, additionalHeaders, operationName, cancellationToken));
+            return MakeDependencyCall(_dataProvider.SendPostRequestAnonymousAsync<T>(requestUri, jsonPostBody, additionalHeaders, operationName, cancellationToken));
         }
 
         Task<T> IHttpDataProvider.SendPostRequestAsync<T>(Uri requestUri, string jsonPostBody, Dictionary<string, string> additionalHeaders, HttpProviderAuthenticationOption authOptions, string operationName, CancellationToken cancellationToken)

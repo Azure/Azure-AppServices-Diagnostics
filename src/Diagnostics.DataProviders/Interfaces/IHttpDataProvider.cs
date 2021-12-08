@@ -18,7 +18,7 @@ namespace Diagnostics.DataProviders.Interfaces
         /// <param name="operationName">Name identifying this call.</param>
         /// <param name="cancellationToken">Cancellation token for this operation.</param>        
         /// <returns>Result of the HTTP GET request casted into specified type.</returns>
-        Task<T> SendGetRequestAnonyousAsync<T>(Uri requestUri, Dictionary<string, string> additionalHeaders  = null, string operationName = "", CancellationToken cancellationToken = default(CancellationToken));
+        Task<T> SendGetRequestAnonymousAsync<T>(Uri requestUri, Dictionary<string, string> additionalHeaders  = null, string operationName = "", CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Make HTTP GET request, sending the default AppLens certificate as client certificate along with the request.
@@ -103,7 +103,7 @@ namespace Diagnostics.DataProviders.Interfaces
         /// <param name="operationName">Name identifying this call.</param>
         /// <param name="cancellationToken">Cancellation token for this operation.</param>
         /// <returns>Result of the HTTP POST request casted into specified type.</returns>
-        Task<T> SendPostRequestAnonyousAsync<T>(Uri requestUri, string jsonPostBody, Dictionary<string, string> additionalHeaders = null, string operationName = "", CancellationToken cancellationToken = default(CancellationToken));
+        Task<T> SendPostRequestAnonymousAsync<T>(Uri requestUri, string jsonPostBody, Dictionary<string, string> additionalHeaders = null, string operationName = "", CancellationToken cancellationToken = default(CancellationToken));
 
         /// <summary>
         /// Make HTTP POST request, sending the default AppLens certificate as client certificate along with the request.

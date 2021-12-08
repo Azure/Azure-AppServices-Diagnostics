@@ -48,7 +48,7 @@ namespace Diagnostics.DataProviders
 
         #region Anonymous GET request
         /// <inheritdoc/>
-        public async Task<T> SendGetRequestAnonyousAsync<T>(Uri requestUri, Dictionary<string, string> additionalHeaders = null, string operationName = "", CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<T> SendGetRequestAnonymousAsync<T>(Uri requestUri, Dictionary<string, string> additionalHeaders = null, string operationName = "", CancellationToken cancellationToken = default(CancellationToken))
         {            
             return await SendGetRequestAsync<T>(requestUri, additionalHeaders, authOptions:null, operationName, cancellationToken).ConfigureAwait(true);
         }
@@ -131,7 +131,7 @@ namespace Diagnostics.DataProviders
 
         #region Anonymous POST request
         /// <inheritdoc/>
-        public async Task<T> SendPostRequestAnonyousAsync<T>(Uri requestUri, string jsonPostBody, Dictionary<string, string> additionalHeaders = null, string operationName = "", CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<T> SendPostRequestAnonymousAsync<T>(Uri requestUri, string jsonPostBody, Dictionary<string, string> additionalHeaders = null, string operationName = "", CancellationToken cancellationToken = default(CancellationToken))
         {
             return await SendPostRequestAsync<T>(requestUri, jsonPostBody, additionalHeaders, authOptions: null, operationName, cancellationToken).ConfigureAwait(true);
         }
