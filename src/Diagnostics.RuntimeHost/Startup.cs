@@ -150,6 +150,7 @@ namespace Diagnostics.RuntimeHost
                 {
                     options.JsonSerializerOptions.WriteIndented = true;
                     options.JsonSerializerOptions.IncludeFields = true;
+                    options.JsonSerializerOptions.Converters.Add(new AsNonGenericTypeConverter<Exception>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<QueryResponse<DiagnosticApiResponse>>());
                 });
@@ -160,6 +161,7 @@ namespace Diagnostics.RuntimeHost
                 {
                     options.JsonSerializerOptions.WriteIndented = true;
                     options.JsonSerializerOptions.IncludeFields = true;
+                    options.JsonSerializerOptions.Converters.Add(new AsNonGenericTypeConverter<Exception>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<QueryResponse<DiagnosticApiResponse>>());
                 });

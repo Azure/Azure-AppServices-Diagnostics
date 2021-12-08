@@ -11,6 +11,20 @@ namespace Diagnostics.RuntimeHost
     /// <typeparam name="T"></typeparam>
     public class AsRuntimeTypeConverter<T> : JsonConverter<T>
     {
+        private static Lazy<JsonSerializerOptions> _options = new Lazy<JsonSerializerOptions>(() =>
+        {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                IncludeFields = true,
+                WriteIndented = true
+            };
+
+            options.Converters.Add(new AsNonGenericTypeConverter<Exception>());
+
+            return options;
+        });
+
         public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             return JsonSerializer.Deserialize<T>(ref reader, options);
@@ -24,15 +38,27 @@ namespace Diagnostics.RuntimeHost
             }
             else
             {
-                var serializeOptions = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    IncludeFields = true,
-                    WriteIndented = true
-                };
-
-                JsonSerializer.Serialize(writer, value, serializeOptions);
+                JsonSerializer.Serialize(writer, value, _options.Value);
             }
+        }
+    }
+
+    public class AsNonGenericTypeConverter<T> : JsonConverter<T>
+    {
+        private static JsonSerializerOptions _serializeWithoutFieldOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        };
+
+        public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return JsonSerializer.Deserialize<T>(ref reader, options);
+        }
+
+        public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+        {
+            JsonSerializer.Serialize(writer, value.ToString(), _serializeWithoutFieldOptions);
         }
     }
 }
