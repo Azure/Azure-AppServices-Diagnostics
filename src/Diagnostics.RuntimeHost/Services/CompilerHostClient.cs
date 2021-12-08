@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Diagnostics.DataProviders;
 using Diagnostics.Logger;
 using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.RuntimeHost.Utilities;
@@ -27,6 +29,7 @@ namespace Diagnostics.RuntimeHost.Services
         private string _compilerHostUrl;
         private static HttpClient _httpClient;
         private string _eventSource;
+        private bool useCertAuth = false;
 
         public CompilerHostClient(IHostingEnvironment env, IConfiguration configuration)
         {
@@ -39,7 +42,12 @@ namespace Diagnostics.RuntimeHost.Services
                 MaxResponseContentBufferSize = Int32.MaxValue
             };
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
+            useCertAuth = configuration.GetValue("CompilerHost:UseCertAuth", false);
+            if (useCertAuth)
+            {
+                byte[] certContent = CompilerHostCertLoader.Instance.Cert.Export(X509ContentType.Cert);
+                _httpClient.DefaultRequestHeaders.Add("x-ms-diagcert", Convert.ToBase64String(certContent));
+            }
             _eventSource = "CompilerHostClient";
 
             LoadConfigurations();
@@ -69,8 +77,11 @@ namespace Diagnostics.RuntimeHost.Services
                     requestMessage.Headers.Add(HeaderConstants.RequestIdHeaderName, requestId);
                 }
 
-                string authToken = await CompilerHostTokenService.Instance.GetAuthorizationTokenAsync();
-                requestMessage.Headers.Add("Authorization", authToken);
+                if (!useCertAuth)
+                {
+                    string authToken = await CompilerHostTokenService.Instance.GetAuthorizationTokenAsync();
+                    requestMessage.Headers.Add("Authorization", authToken);
+                }
                 HttpResponseMessage responseMessage = await _httpClient.SendAsync(requestMessage);
 
                 if (!responseMessage.IsSuccessStatusCode)

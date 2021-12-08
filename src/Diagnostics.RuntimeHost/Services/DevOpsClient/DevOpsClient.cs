@@ -62,6 +62,8 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                     return VersionControlChangeType.Add;
                 case "edit":
                     return VersionControlChangeType.Edit;
+                case "delete":
+                    return VersionControlChangeType.Delete;
                 default:
                     throw new InvalidOperationException($"ChangeType: \"{changeType}\" not Supported");
             }
@@ -173,27 +175,43 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 
             try
             {
-                dictionary[requestId + "--result"] = await gitClient.CreatePullRequestAsync(dictionary[requestId + "--pr"], _project, _repoID);
+                dictionary[requestId + "--prList"] = await GetPRListAsync(dictionary[requestId + "--source"], dictionary[requestId + "--target"], requestId);
+                if (dictionary[requestId + "--prList"].Count == 0)
+                {
+                    dictionary[requestId + "--result"] = await gitClient.CreatePullRequestAsync(dictionary[requestId + "--pr"], _project, _repoID);
+                }
+                else
+                {
+                    dictionary[requestId + "--result"] = dictionary[requestId + "--prList"][0];
+                }
+
+                dictionary.TryAdd(requestId + "--repository", await gitClient.GetRepositoryAsync(_project, _repoID));
             }
             catch (Exception ex)
             {
-                if (ex.Message.Contains("An active pull request for the source and target branch already exists"))
-                {
-                    return new BadRequestObjectResult("An active pull request for the source and target branch already exists");
-                }
-                else {
-                    DiagnosticsETWProvider.Instance.LogDevOpsApiException(
-                    requestId,
-                    resourceUri,
-                    ex.Message,
-                    ex.GetType().ToString(),
-                    ex.StackTrace
-                    );
-                    throw;
-                }
+                DiagnosticsETWProvider.Instance.LogDevOpsApiException(
+                requestId,
+                resourceUri,
+                ex.Message,
+                ex.GetType().ToString(),
+                ex.StackTrace
+                );
+                throw;
             }
 
-            return dictionary[requestId + "--result"];
+            return (dictionary[requestId + "--result"], dictionary[requestId + "--repository"]);
+        }
+
+        private async Task<List<GitPullRequest>> GetPRListAsync(string source, string target, string requestId)
+        {
+            dictionary.TryAdd(requestId + "--searchCriteria", new GitPullRequestSearchCriteria()
+            {
+                TargetRefName = target,
+                SourceRefName = source,
+                IncludeLinks = true
+            });
+
+            return await gitClient.GetPullRequestsAsync(_project, _repoID, dictionary[requestId + "--searchCriteria"]);
         }
 
         public async Task<object> PushChangesAsync(string branch, List<string> files, List<string> repoPaths, string comment, string changeType, string resourceUri, string requestId)
@@ -217,19 +235,35 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 
             dictionary.TryAdd(requestId + "--commitChanges", new GitChange[files.Count]);
 
-            for (int i = 0; i < files.Count; i++)
+            if (getChangeType(changeType) == VersionControlChangeType.Delete)
             {
-                dictionary[requestId + "--commitChanges"][i] = new GitChange()
+                for (int i = 0; i < files.Count; i++)
                 {
-                    ChangeType = getChangeType(changeType),
-                    Item = new GitItem() { Path = repoPaths[i] },
-                    NewContent = new ItemContent()
+                    dictionary[requestId + "--commitChanges"][i] = new GitChange()
                     {
-                        Content = files[i],
-                        ContentType = ItemContentType.RawText,
-                    },
-                };
+                        ChangeType = getChangeType(changeType),
+                        Item = new GitItem() { Path = repoPaths[i] }
+                    };
+                }
             }
+            else
+            {
+                for (int i = 0; i < files.Count; i++)
+                {
+                    dictionary[requestId + "--commitChanges"][i] = new GitChange()
+                    {
+                        ChangeType = getChangeType(changeType),
+                        Item = new GitItem() { Path = repoPaths[i] },
+                        NewContent = new ItemContent()
+                        {
+                            Content = files[i],
+                            ContentType = ItemContentType.RawText,
+                        },
+                    };
+                }
+            }
+
+            
 
             dictionary.TryAdd(requestId + "--newCommit", new GitCommitRef()
             {
@@ -249,14 +283,20 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             }
             catch (Exception ex)
             {
-                DiagnosticsETWProvider.Instance.LogDevOpsApiException(
-                    requestId,
-                    resourceUri,
-                    ex.Message,
-                    ex.GetType().ToString(),
-                    ex.StackTrace
-                    );
-                throw;
+                if (ex.Message.Contains("specified in the add operation already exists. Please specify a new path.")){
+                    return new BadRequestObjectResult("Detector with this ID already exists. Please use a new ID");
+                }
+                else
+                {
+                    DiagnosticsETWProvider.Instance.LogDevOpsApiException(
+                        requestId,
+                        resourceUri,
+                        ex.Message,
+                        ex.GetType().ToString(),
+                        ex.StackTrace
+                        );
+                    throw;
+                }
             }
 
             return dictionary[requestId + "--result"];
@@ -276,6 +316,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             List<DevopsFileChange> stringList = new List<DevopsFileChange>();
             foreach (GitChange change in changesAsync.Changes)
             {
+                var diagEntity = new DiagEntity();
                 var gitversion = new GitVersionDescriptor
                 {
                     Version = commitId,
@@ -290,20 +331,28 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                                         .Select(m => m.Groups[1].Value));
 
 
-                    Task<string> detectorScriptTask =  GetFileContentInCommit(repositoryAsync.Id, change.Item.Path, gitversion);
-                    Task<string> packageContentTask =  GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
-                    Task<string> metadataContentTask =  GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);            
-                    await Task.WhenAll( new Task[] { detectorScriptTask, packageContentTask, metadataContentTask });
+                    Task<string> detectorScriptTask = GetFileContentInCommit(repositoryAsync.Id, change.Item.Path, gitversion);
+                    Task<string> packageContentTask = GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
+                    Task<string> metadataContentTask = GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);
+                    await Task.WhenAll(new Task[] { detectorScriptTask, packageContentTask, metadataContentTask });
                     string detectorScriptContent = await detectorScriptTask;
                     string packageContent = await packageContentTask;
                     string metadataContent = await metadataContentTask;
+                    if (packageContent != null)
+                    {
+                        diagEntity = JsonConvert.DeserializeObject<DiagEntity>(packageContent);
+                    } else
+                    {
+                        throw new Exception("Package.json cannot be empty or null");
+                    }
                     stringList.Add(new DevopsFileChange
                     {
                         CommitId = commitId,
                         Content = detectorScriptContent,
                         Path = change.Item.Path,
                         PackageConfig = packageContent,
-                        Metadata = metadataContent
+                        Metadata = metadataContent,
+                        Id = diagEntity.DetectorId
                     });
                 }
                 else if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Delete))
@@ -320,6 +369,15 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                         VersionType = GitVersionType.Commit,
                         VersionOptions = GitVersionOptions.None
                     });
+                    
+                    if (packageContent != null)
+                    {
+                        diagEntity = JsonConvert.DeserializeObject<DiagEntity>(packageContent);
+                    }
+                    else
+                    {
+                        throw new Exception("Package.json cannot be empty or null");
+                    }
                     // Mark this detector as disabled. 
                     stringList.Add(new DevopsFileChange
                     {
@@ -328,7 +386,8 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                         PackageConfig = packageContent,
                         Path = change.Item.Path,
                         Metadata = "",
-                        MarkAsDisabled = true
+                        MarkAsDisabled = true,
+                        Id = diagEntity.DetectorId
                     });
                 }
             }
@@ -395,7 +454,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             {
                 var filesinCommit = await GetFilesInCommit(commit.CommitId);
                 // Process only the latest file update. 
-                if (!result.Select(s => s.Path).Contains(filesinCommit.FirstOrDefault().Path))
+                if (!result.Select(s => s.Id).Contains(filesinCommit.FirstOrDefault().Id))
                 {
                     result.AddRange(filesinCommit);
                 }

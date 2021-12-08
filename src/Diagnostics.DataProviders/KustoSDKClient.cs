@@ -105,16 +105,25 @@ namespace Diagnostics.DataProviders
                 var kustoTask = kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
                 if (_config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters))
                 {
-                    foreach (string shadowCluster in shadowClusters)
+                    if (startTime > DateTime.Parse("2021-11-12 23:59:59") || (startTime == null && query == _config.HeartBeatQuery))
                     {
-                        try
+                        foreach (string shadowCluster in shadowClusters)
                         {
-                            var shadowKustoClient = Client(shadowCluster, database);
-                            shadowKustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
-                        }
-                        catch (Exception)
-                        {
-                            // swallow this exception
+                            try
+                            {
+                                var shadowClientRequestProperties = clientRequestProperties;
+                                if (shadowCluster == "wawscusdiagleader.centralus")
+                                {
+                                    shadowClientRequestProperties = clientRequestProperties.Clone();
+                                    shadowClientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Strong);
+                                }
+                                var shadowKustoClient = Client(shadowCluster, database);
+                                shadowKustoClient.ExecuteQueryAsync(database, query, shadowClientRequestProperties);
+                            }
+                            catch (Exception)
+                            {
+                                // swallow this exception
+                            }
                         }
                     }
                 }
@@ -306,9 +315,9 @@ namespace Diagnostics.DataProviders
             if (dataSet != null && dataSet.Tables != null && dataSet.Tables.Count >= 4)
             {
                 var statisticsTable = dataSet.Tables[dataSet.Tables.Count - 2].ToDataTableResponseObject();
-                if (statisticsTable.Rows.GetLength(0) >= 2 && statisticsTable.Rows.GetLength(1) >= 5)
+                if (statisticsTable.Rows.Length >= 2 && statisticsTable.Rows[1].Length >= 5)
                 {
-                    stats = statisticsTable.Rows[1, 4];
+                    stats = statisticsTable.Rows[1][4];
                 }
             }
 

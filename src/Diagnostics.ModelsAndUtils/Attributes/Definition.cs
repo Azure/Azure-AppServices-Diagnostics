@@ -2,12 +2,13 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 using Diagnostics.ModelsAndUtils.Models;
-using Newtonsoft.Json;
 
 namespace Diagnostics.ModelsAndUtils.Attributes
 {
@@ -56,17 +57,38 @@ namespace Diagnostics.ModelsAndUtils.Attributes
 
         /// <summary>
         /// List of Support Topics for which this detector is enabled.
+        /// Mark it as JsonIgnore because the SupportTopic class is deriving
+        /// from Attribute and attributes are not serialized by System.Text.Json
         /// </summary>
-        [DataMember]
+        [JsonIgnore]
         public IEnumerable<SupportTopic> SupportTopicList { get; set; }
 
-        [JsonIgnore]
+        /// <summary>
+        /// Property created only for Json Serialization as Attributes
+        /// are not serialized today properly by System.Text.Json
+        /// https://github.com/dotnet/runtime/issues/58947
+        /// </summary>
+        [DataMember]
+        [JsonPropertyName("supportTopicList")]
+        public IEnumerable<SupportTopicSTJCompat> SupportTopicListSTJCompat
+        {
+            get
+            {
+                if (SupportTopicList == null)
+                {
+                    return null;
+                }
+                
+                return SupportTopicList
+                    .Where(st => st != null)
+                    .Select(x => new SupportTopicSTJCompat(x));
+            }
+        }
+
         public string AnalysisType { get; set; } = string.Empty;
 
-        [JsonIgnore]
         private Guid instanceGUID;
 
-        [JsonIgnore]
         public override object TypeId { get { return (object)instanceGUID; } }
 
         /// <summary>

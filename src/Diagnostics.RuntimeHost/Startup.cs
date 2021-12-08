@@ -32,6 +32,8 @@ using Diagnostics.Logger;
 using Microsoft.Extensions.Hosting;
 using Diagnostics.RuntimeHost.Services.DiagnosticsTranslator;
 using Diagnostics.RuntimeHost.Services.DevOpsClient;
+using System.Text.Json.Serialization;
+using Diagnostics.ModelsAndUtils.Models;
 using Diagnostics.DataProviders.KeyVaultCertLoader;
 
 namespace Diagnostics.RuntimeHost
@@ -71,7 +73,6 @@ namespace Diagnostics.RuntimeHost
                     {
                         options.AllowedIssuers = Configuration["SecuritySettings:AllowedCertIssuers"].Split("|").Select(p => p.Trim()).ToList();
                         var allowedSubjectNames = Configuration["SecuritySettings:AllowedCertSubjectNames"].Split(",").Select(p => p.Trim()).ToList();
-                        allowedSubjectNames.AddRange(Configuration["SecuritySettings:AdditionalAllowedCertSubjectNames"].Split(",").Select(p => p.Trim()).ToList());
                         options.AllowedSubjectNames = allowedSubjectNames;
                     }).AddJwtBearer("AzureAd", options => {
                     options.TokenValidationParameters = new TokenValidationParameters
@@ -128,11 +129,18 @@ namespace Diagnostics.RuntimeHost
                                             .Build();
                 });
             }
+            if (!Environment.IsDevelopment())
+            {
+                GeoCertLoader.Instance.Initialize(Configuration);
+                MdmCertLoader.Instance.Initialize(Configuration);
+                CompilerHostCertLoader.Instance.Initialize(Configuration);
+                SearchAPICertLoader.Instance.Initialize(Configuration);
+                // Enable App Insights telemetry
+                services.AddApplicationInsightsTelemetry();
+            }
 
             GenericCertLoader.Instance.Initialize();
             services.AddMemoryCache();
-            // Enable App Insights telemetry
-            services.AddApplicationInsightsTelemetry();
             services.AddAppServiceApplicationLogging();
 
             if (Environment.IsDevelopment())
@@ -140,9 +148,12 @@ namespace Diagnostics.RuntimeHost
                 services.AddControllers(options =>
                 {
                     options.Filters.Add<AllowAnonymousFilter>();
-                }).AddNewtonsoftJson(options =>
+                }).AddJsonOptions(options =>
                 {
-                    options.SerializerSettings.Formatting = Formatting.Indented;
+                    options.JsonSerializerOptions.WriteIndented = true;
+                    options.JsonSerializerOptions.IncludeFields = true;
+                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
+                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<QueryResponse<DiagnosticApiResponse>>());
                 });
             }
             else
@@ -150,10 +161,10 @@ namespace Diagnostics.RuntimeHost
                 services.AddControllers().AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.WriteIndented = true;
-                }).AddNewtonsoftJson(options =>
-                {
-                    options.SerializerSettings.Formatting = Formatting.Indented;
-                }); ;
+                    options.JsonSerializerOptions.IncludeFields = true;
+                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
+                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<QueryResponse<DiagnosticApiResponse>>());
+                });
             }
 
             services.AddSingleton<IDataSourcesConfigurationService, DataSourcesConfigurationService>();
@@ -231,7 +242,7 @@ namespace Diagnostics.RuntimeHost
             if (Configuration.GetValue("ChangeAnalysis:Enabled", true))
             {
                 ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
-            }           
+            }
 
             if (Configuration.GetValue("CompilerHost:Enabled", true))
             {

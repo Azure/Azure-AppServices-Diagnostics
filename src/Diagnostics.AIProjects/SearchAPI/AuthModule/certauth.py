@@ -31,7 +31,7 @@ def readAppConfig():
     try:
         ALLOWED_ISSUERS = app.config["ALLOWED_ISSUERS"]
         if ALLOWED_ISSUERS and len(ALLOWED_ISSUERS)>1:
-            ALLOWED_ISSUERS = ALLOWED_ISSUERS.strip().split(",")
+            ALLOWED_ISSUERS = [x.lower() if x else x for x in ALLOWED_ISSUERS.strip().split(",")]
         else:
             ALLOWED_ISSUERS = []
     except Exception as e:
@@ -39,7 +39,7 @@ def readAppConfig():
     try:
         ALLOWED_SUBJECTNAMES = app.config["ALLOWED_SUBJECTNAMES"]
         if ALLOWED_SUBJECTNAMES and len(ALLOWED_SUBJECTNAMES)>1:
-            ALLOWED_SUBJECTNAMES = ALLOWED_SUBJECTNAMES.strip().split(",")
+            ALLOWED_SUBJECTNAMES = [x.lower() if x else x for x in ALLOWED_SUBJECTNAMES.strip().split(",")]
         else:
             ALLOWED_SUBJECTNAMES = []
     except Exception as e:
@@ -52,6 +52,6 @@ def readCertificateInfo(certBytes):
         issuer_name = cert.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
         subject_name = cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
         expiry_date = cert.not_valid_after
-        return {"issuer": issuer_name, "subject_name": subject_name, "expiry_date": expiry_date}
+        return {"issuer": issuer_name.lower() if issuer_name else issuer_name, "subject_name": subject_name.lower() if subject_name else subject_name, "expiry_date": expiry_date}
     except Exception as e:
         return None

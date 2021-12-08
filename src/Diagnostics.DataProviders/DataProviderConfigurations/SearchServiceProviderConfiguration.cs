@@ -45,5 +45,23 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
         /// </summary>
         [ConfigurationName("TrainingEndpoint")]
         public string TrainingEndpoint { get; set; }
+
+        /// <summary>
+        /// UseCertAuth.
+        /// </summary>
+        [ConfigurationName("UseCertAuth")]
+        public bool UseCertAuth { get; set; }
+
+        /// <summary>
+        /// CertThumbprint.
+        /// </summary>
+        [ConfigurationName("CertThumbprint")]
+        public string CertThumbprint { get; set; }
+
+        /// <summary>
+        /// CertSubjectName.
+        /// </summary>
+        [ConfigurationName("CertSubjectName")]
+        public string CertSubjectName { get; set; }
     }
 }

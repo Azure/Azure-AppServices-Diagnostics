@@ -22,7 +22,7 @@ namespace Diagnostics.ModelsAndUtils.Models
 
         public IEnumerable<DataTableResponseColumn> Columns { get; set; }
 
-        public dynamic[,] Rows { get; set; }
+        public dynamic[][] Rows { get; set; }
     }
 
     public class DataTableResponseColumn
@@ -41,7 +41,7 @@ namespace Diagnostics.ModelsAndUtils.Models
     {
         public string Name { get; set; }
         public IEnumerable<AppInsightsDataTableResponseColumn> Columns { get; set; }
-        public dynamic[,] Rows { get; set; }
+        public dynamic[][] Rows { get; set; }
     }
 
     public class AppInsightsDataTableResponseColumn
@@ -68,7 +68,7 @@ namespace Diagnostics.ModelsAndUtils.Models
                 var row = dataTable.NewRow();
                 for (int j = 0; j < dataTable.Columns.Count; j++)
                 {
-                    row[j] = dataTableResponse.Rows[i, j] ?? DBNull.Value;
+                    row[j] = dataTableResponse.Rows[i][j] ?? DBNull.Value;
                 }
 
                 dataTable.Rows.Add(row);
@@ -92,7 +92,7 @@ namespace Diagnostics.ModelsAndUtils.Models
                 var row = dataTable.NewRow();
                 for (int j = 0; j < dataTable.Columns.Count; j++)
                 {
-                    row[j] = MaskPII(appInsightsDataTableResponse.Rows[i, j]) ?? DBNull.Value;
+                    row[j] = MaskPII(appInsightsDataTableResponse.Rows[i][j]) ?? DBNull.Value;
                 }
 
                 dataTable.Rows.Add(row);
@@ -125,14 +125,11 @@ namespace Diagnostics.ModelsAndUtils.Models
                 columns.Add(new DataTableResponseColumn() { ColumnName = col.ColumnName, DataType = col.DataType.ToString().Replace("System.", "") });
             }
 
-            var rows = new dynamic[table.Rows.Count, table.Columns.Count];
+            var rows = new dynamic[table.Rows.Count][];
 
             for (int i = 0; i < table.Rows.Count; i++)
             {
-                for (int j = 0; j < table.Columns.Count; j++)
-                {
-                    rows[i, j] = table.Rows[i][j] == DBNull.Value ? null : table.Rows[i][j];
-                }
+                rows[i] = table.Rows[i].ItemArray;
             }
 
             dataTableResponseObject.Columns = columns;

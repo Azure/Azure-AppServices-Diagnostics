@@ -3,15 +3,15 @@
 // Licensed under the MIT License. See LICENSE in the project root for license information.
 // </copyright>
 
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+
+using System.Text.Json.Serialization;
 
 namespace Diagnostics.ModelsAndUtils.Models
 {
     /// <summary>
     /// Defines whether the Detector is of type Analysis or not.
     /// </summary>
-    [JsonConverter(typeof(StringEnumConverter))]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum DetectorType
     {
         /// <summary>
