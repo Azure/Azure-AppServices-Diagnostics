@@ -113,7 +113,7 @@ namespace Diagnostics.RuntimeHost.Services
                 if (dataProviderField.FieldType.IsInterface)
                 {
                     DiagnosticDataProvider dp = ((LogDecoratorBase)dataProviderField.GetValue(dataProviders)).DataProvider;
-                    if (dp != null && ((dp.DataProviderConfiguration?.Enabled).HasValue && dp.DataProviderConfiguration.Enabled))
+                    if (dp != null && (dp.IsEnabled))
                         healthCheckResultsTasks.Add(dp.GetType().Name, dp.CheckHealthAsync());
                 }
             }
