@@ -152,6 +152,7 @@ namespace Diagnostics.RuntimeHost
                     options.JsonSerializerOptions.IncludeFields = true;
                     options.JsonSerializerOptions.Converters.Add(new AsNonGenericTypeConverter<Exception>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
+                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<ModelsAndUtils.Models.ResponseExtensions.FormInputBase>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<QueryResponse<DiagnosticApiResponse>>());
                 });
             }
@@ -163,6 +164,7 @@ namespace Diagnostics.RuntimeHost
                     options.JsonSerializerOptions.IncludeFields = true;
                     options.JsonSerializerOptions.Converters.Add(new AsNonGenericTypeConverter<Exception>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
+                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<ModelsAndUtils.Models.ResponseExtensions.FormInputBase>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<QueryResponse<DiagnosticApiResponse>>());
                 });
             }
