@@ -33,6 +33,8 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         private static Dictionary<string, Tuple<GitHttpClient, PartnerRepoConfig>> partnerRepoMapping = new Dictionary<string, Tuple<GitHttpClient, PartnerRepoConfig>>();
         private ConcurrentDictionary<string, dynamic> dictionary = new ConcurrentDictionary<string, dynamic>();
         private IStorageService storageService;
+        private Task configDownloadTask;
+        private readonly string defaultPath = "/";
 
         public DevOpsClient(IConfiguration config, IStorageService storageServiceRef)
         {
@@ -50,6 +52,11 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             _organization = config[$"DevOps:Organization"];
             _project = config[$"DevOps:Project"];
             _repoID = config[$"DevOps:RepoID"];
+            configDownloadTask = LoadPartnerConfigFromStorage();      
+        }
+
+        private async Task LoadPartnerConfigFromStorage()
+        {
             byte[] repoConfigBuffer = await storageService.GetPartnerConfig();
             string repoConfig = Encoding.UTF8.GetString(repoConfigBuffer, 0, repoConfigBuffer.Length);
             var partnerRepoConfigs = JsonConvert.DeserializeObject<List<PartnerRepoConfig>>(repoConfig);
@@ -64,7 +71,6 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                     partnerRepoMapping.Add(resourceProvider.ToLower(), Tuple.Create(gitClient, partnerRepoConfig));
                 }
             }
-        
         }
 
         private Tuple<GitHttpClient, PartnerRepoConfig> GetClientByResourceProvider(string armUri)
@@ -84,7 +90,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 Organization = _organization,
                 Project = _project,
                 Repository = _repoID,
-                FolderPath = "/",
+                FolderPath = defaultPath,
                 ResourceProvider = "",
                 AutoMerge = false
             });
@@ -107,6 +113,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 
         private async Task<string> getLastObjectIdAsync(string branch, string requestId, string resourceUri)
         {
+            await configDownloadTask;
             Tuple<GitHttpClient, PartnerRepoConfig> mapping = GetClientByResourceProvider(resourceUri);
             GitHttpClient gitClient = mapping.Item1;
             PartnerRepoConfig partnerRepoConfig = mapping.Item2;
@@ -145,6 +152,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         public async Task<object> GetBranchesAsync(string resourceUri, string requestId)
         {
             dictionary.TryAdd(requestId + "--result", null);
+            await configDownloadTask;
             Tuple<GitHttpClient, PartnerRepoConfig> mapping = GetClientByResourceProvider(resourceUri);
             GitHttpClient gitClient = mapping.Item1;
             PartnerRepoConfig partnerRepoConfig = mapping.Item2;
@@ -172,6 +180,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         {
             dictionary.TryAdd(requestId + "--result", null);
             dictionary.TryAdd(requestId + "--version", null);
+            await configDownloadTask;
             Tuple<GitHttpClient, PartnerRepoConfig> mapping = GetClientByResourceProvider(resourceUri);
             GitHttpClient gitClient = mapping.Item1;
             PartnerRepoConfig partnerRepoConfig = mapping.Item2;
@@ -185,7 +194,10 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                         VersionType = GitVersionType.Branch
                     };
                 }
-
+                if (!partnerRepoConfig.FolderPath.Equals(defaultPath))
+                {
+                    filePathInRepo = $"{partnerRepoConfig.FolderPath}/{filePathInRepo}"; 
+                }
                 dictionary.TryAdd(requestId + "--item", await gitClient.GetItemAsync(partnerRepoConfig.Project, partnerRepoConfig.Repository, path: filePathInRepo, includeContent: true, versionDescriptor: dictionary[requestId + "--version"]));
                 dictionary[requestId + "--result"] = dictionary[requestId + "--item"].Content;
             }
@@ -214,6 +226,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             dictionary[requestId + "--pr"].SourceRefName = dictionary[requestId + "--source"];
             dictionary[requestId + "--pr"].TargetRefName = dictionary[requestId + "--target"];
             dictionary[requestId + "--pr"].Title = title;
+            await configDownloadTask;
             Tuple<GitHttpClient, PartnerRepoConfig> mapping = GetClientByResourceProvider(resourceUri);
             GitHttpClient gitClient = mapping.Item1;
             PartnerRepoConfig partnerRepoConfig = mapping.Item2;
@@ -254,6 +267,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 SourceRefName = source,
                 IncludeLinks = true
             });
+            await configDownloadTask;
             Tuple<GitHttpClient, PartnerRepoConfig> mapping = GetClientByResourceProvider(resourceUri);
             GitHttpClient gitClient = mapping.Item1;
             PartnerRepoConfig partnerRepoConfig = mapping.Item2;
@@ -263,7 +277,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 
         public async Task<object> PushChangesAsync(string branch, List<string> files, List<string> repoPaths, string comment, string changeType, string resourceUri, string requestId)
         {
-
+            await configDownloadTask;
             Tuple<GitHttpClient, PartnerRepoConfig> mapping = GetClientByResourceProvider(resourceUri);
             GitHttpClient gitClient = mapping.Item1;
             PartnerRepoConfig partnerRepoConfig = mapping.Item2;
@@ -284,7 +298,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             }
 
             dictionary.TryAdd(requestId + "--commitChanges", new GitChange[files.Count]);
-
+            bool isDefaultPath = partnerRepoConfig.FolderPath.Equals(defaultPath);
             if (getChangeType(changeType) == VersionControlChangeType.Delete)
             {
                 for (int i = 0; i < files.Count; i++)
@@ -292,7 +306,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                     dictionary[requestId + "--commitChanges"][i] = new GitChange()
                     {
                         ChangeType = getChangeType(changeType),
-                        Item = new GitItem() { Path = repoPaths[i] }
+                        Item = new GitItem() { Path = isDefaultPath ? repoPaths[i] : $"{partnerRepoConfig.FolderPath}/{repoPaths[i]}" }
                     };
                 }
             }
@@ -303,7 +317,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                     dictionary[requestId + "--commitChanges"][i] = new GitChange()
                     {
                         ChangeType = getChangeType(changeType),
-                        Item = new GitItem() { Path = repoPaths[i] },
+                        Item = new GitItem() { Path = isDefaultPath ? repoPaths[i] : $"{partnerRepoConfig.FolderPath}/{repoPaths[i]}" },
                         NewContent = new ItemContent()
                         {
                             Content = files[i],
@@ -360,7 +374,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         {
             if (string.IsNullOrWhiteSpace(commitId))
                 throw new ArgumentNullException("commit id cannot be null");
-
+            await configDownloadTask;
             Tuple<GitHttpClient, PartnerRepoConfig> mapping = GetClientFromMap(resourceProvider);
             GitHttpClient gitClient = mapping.Item1;
             PartnerRepoConfig partnerRepoConfig = mapping.Item2;
@@ -380,15 +394,11 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 };
                 if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Add || change.ChangeType == VersionControlChangeType.Edit))
                 {
-                    // hack right now, ideally get from config
-                    var detectorId = String.Join(";", Regex.Matches(change.Item.Path, @"\/(.+?)\/")
-                                        .Cast<Match>()
-                                        .Select(m => m.Groups[1].Value));
+                    string detectorId = Path.GetFileNameWithoutExtension(change.Item.Path);
 
-
-                    Task<string> detectorScriptTask = GetFileContentInCommit(repositoryAsync.Id, change.Item.Path, gitversion);
-                    Task<string> packageContentTask = GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/package.json", gitversion);
-                    Task<string> metadataContentTask = GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/metadata.json", gitversion);
+                    Task<string> detectorScriptTask = GetFileContentInCommit(repositoryAsync.Id, change.Item.Path, gitversion, resourceProvider);
+                    Task<string> packageContentTask = GetFileContentInCommit(repositoryAsync.Id, $"{partnerRepoConfig.FolderPath}/{detectorId}/package.json", gitversion, resourceProvider);
+                    Task<string> metadataContentTask = GetFileContentInCommit(repositoryAsync.Id, $"{partnerRepoConfig.FolderPath}/{detectorId}/metadata.json", gitversion, resourceProvider);
                     await Task.WhenAll(new Task[] { detectorScriptTask, packageContentTask, metadataContentTask });
                     string detectorScriptContent = await detectorScriptTask;
                     string packageContent = await packageContentTask;
@@ -418,12 +428,12 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 
                     GitCommit gitCommitDetails = await defaultClient.GetCommitAsync(commitId, repositoryAsync.Id, null, null, tokenSource.Token);
                     // Get the package.json from the parent commit since at this commit, the file doesn't exist.
-                    var packageContent = await GetFileContentInCommit(repositoryAsync.Id, $"/{detectorId}/package.json", new GitVersionDescriptor
+                    var packageContent = await GetFileContentInCommit(repositoryAsync.Id, $"{partnerRepoConfig.FolderPath}/{detectorId}/package.json", new GitVersionDescriptor
                     {
                         Version = gitCommitDetails.Parents.FirstOrDefault(),
                         VersionType = GitVersionType.Commit,
                         VersionOptions = GitVersionOptions.None
-                    });
+                    }, resourceProvider);
                     
                     if (packageContent != null)
                     {
@@ -455,10 +465,13 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// <param name="repoId">Repo guid</param>
         /// <param name="ItemPath">Path of the item</param>
         /// <param name="gitVersionDescriptor">Git version descriptior</param>
-        private async Task<string> GetFileContentInCommit(Guid repoId, string ItemPath, GitVersionDescriptor gitVersionDescriptor)
+        private async Task<string> GetFileContentInCommit(Guid repoId, string ItemPath, GitVersionDescriptor gitVersionDescriptor, string resourceProviderType)
         {
             string content = string.Empty;
-            var streamResult = await defaultClient.GetItemContentAsync(repoId, ItemPath, null, VersionControlRecursionType.None, null,
+            await configDownloadTask;
+            Tuple<GitHttpClient, PartnerRepoConfig> mapping = GetClientFromMap(resourceProviderType);
+            GitHttpClient gitClient = mapping.Item1;
+            var streamResult = await gitClient.GetItemContentAsync(repoId, ItemPath, null, VersionControlRecursionType.None, null,
                        null, null, gitVersionDescriptor);
             using (var reader = new StreamReader(streamResult))
             {
@@ -475,14 +488,19 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         {
             var result = new List<DevopsFileChange>();
 
+            await configDownloadTask;
+            Tuple<GitHttpClient, PartnerRepoConfig> mapping = GetClientFromMap(parameters.ResourceType);
+            GitHttpClient gitClient = mapping.Item1;
+            PartnerRepoConfig partnerRepoConfig = mapping.Item2;
+
             string gitFromdate;
             string gitToDate;
             CancellationTokenSource tokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(DataProviderConstants.DefaultTimeoutInSeconds));
-            GitRepository repositoryAsync = await defaultClient.GetRepositoryAsync(_project, _repoID, (object)null, tokenSource.Token);
+            GitRepository repositoryAsync = await gitClient.GetRepositoryAsync(partnerRepoConfig.Project, partnerRepoConfig.Repository, (object)null, tokenSource.Token);
             if (!string.IsNullOrWhiteSpace(parameters.FromCommitId) && !string.IsNullOrWhiteSpace(parameters.ToCommitId))
             {
-                GitCommit fromCommitDetails = await defaultClient.GetCommitAsync(parameters.FromCommitId, repositoryAsync.Id);
-                GitCommit toCommitDetails = await defaultClient.GetCommitAsync(parameters.ToCommitId, repositoryAsync.Id);
+                GitCommit fromCommitDetails = await gitClient.GetCommitAsync(parameters.FromCommitId, repositoryAsync.Id);
+                GitCommit toCommitDetails = await gitClient.GetCommitAsync(parameters.ToCommitId, repositoryAsync.Id);
                 gitFromdate = fromCommitDetails.Committer.Date.ToString();
                 gitToDate = toCommitDetails.Committer.Date.ToString();
             }
@@ -499,7 +517,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 Version = defaultBranch,
                 VersionOptions = GitVersionOptions.None
             };
-            List<GitCommitRef> commitsToProcess = await defaultClient.GetCommitsAsync(repositoryAsync.Id, new GitQueryCommitsCriteria
+            List<GitCommitRef> commitsToProcess = await gitClient.GetCommitsAsync(repositoryAsync.Id, new GitQueryCommitsCriteria
             {
                 FromDate = gitFromdate,
                 ToDate = gitToDate,

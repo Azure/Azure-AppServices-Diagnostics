@@ -184,6 +184,12 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             string errorMessage = string.Empty;
 
+
+            if(string.IsNullOrWhiteSpace(deploymentParameters.ResourceType))
+            {
+                errorMessage = "Resource Provider Type is invalid. Please provider a valid Resource Provider Type";
+            }
+
             // If all required parameters are empty, reject the request.
             if (string.IsNullOrWhiteSpace(deploymentParameters.CommitId) && string.IsNullOrWhiteSpace(deploymentParameters.FromCommitId)
                 && string.IsNullOrWhiteSpace(deploymentParameters.ToCommitId) && string.IsNullOrWhiteSpace(deploymentParameters.StartDate)
