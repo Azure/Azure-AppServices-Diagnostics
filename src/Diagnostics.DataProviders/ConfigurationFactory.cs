@@ -122,6 +122,32 @@ namespace Diagnostics.DataProviders
                         return string.Empty;
                 }
             }
+            else if (prefix == "AzureSupportCenter")
+            {
+                switch (name)
+                {
+                    case "BaseUri":
+                        return "https://api.diagnostics.msftcloudes.com";
+                        break;
+                    case "ApiUri":
+                        return "/api/diagnosis/";
+                        break;
+                    case "ApiVersion":
+                        return "2018-02-01";
+                        break;
+                    case "UserAgent":
+                        return "AppLensClient";
+                        break;
+                    case "AADAuthority":
+                        return "https://login.microsoftonline.com/MSAzureCloud.onmicrosoft.com";
+                        break;
+                    case "TokenResource":
+                        return "https://msazurecloud.onmicrosoft.com/azurediagnostic";
+                        break;
+                    default:
+                        return string.Empty;
+                }
+            }
 
             return string.Empty;
         }
