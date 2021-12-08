@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using Diagnostics.DataProviders.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
+using Diagnostics.DataProviders.KeyVaultCertLoader;
 
 namespace Diagnostics.DataProviders
 {
@@ -24,7 +25,7 @@ namespace Diagnostics.DataProviders
         private readonly KustoDataProviderConfiguration _config;
         private string _requestId;
         private string _kustoApiQueryEndpoint;
-        private string _appKey;
+        private string _tokenRequestorCertSubjectName;
         private string _clientId;
         private string _aadAuthority;
         private static ConcurrentDictionary<Tuple<string, string>, ICslQueryProvider> QueryProviderMapping;
@@ -35,17 +36,21 @@ namespace Diagnostics.DataProviders
         /// </summary>
         private ConcurrentDictionary<string, string> FailoverClusterMapping { get; set; }
 
+        private string GetClientIdentifyingName()
+        {
+            return $"{System.Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") ?? "LocalMachine"}|{System.Environment.GetEnvironmentVariable("COMPUTERNAME") ?? System.Environment.MachineName}";
+        }        
+
         public KustoSDKClient(KustoDataProviderConfiguration config, string requestId)
         {
             if (QueryProviderMapping == null)
             {
                 QueryProviderMapping = new ConcurrentDictionary<Tuple<string, string>, ICslQueryProvider>();
             }
-
             _config = config;
             _requestId = requestId;
             _kustoApiQueryEndpoint = config.KustoApiEndpoint + ":443";
-            _appKey = config.AppKey;
+            _tokenRequestorCertSubjectName = config.TokenRequestorCertSubjectName;
             _clientId = config.ClientId;
             _aadAuthority = config.AADAuthority;
             FailoverClusterMapping = config.FailoverClusterNameCollection;
@@ -61,13 +66,15 @@ namespace Diagnostics.DataProviders
             var key = Tuple.Create(cluster, database);
             if (!QueryProviderMapping.ContainsKey(key))
             {
-                KustoConnectionStringBuilder connectionStringBuilder = new KustoConnectionStringBuilder(_kustoApiQueryEndpoint.Replace("{cluster}", cluster), database)
+
+                KustoConnectionStringBuilder connectionStringBuilder;
+
+                connectionStringBuilder = new KustoConnectionStringBuilder(_kustoApiQueryEndpoint.Replace("{cluster}", cluster), database)
                 {
-                    FederatedSecurity = true,
+                    Authority = _aadAuthority,
                     ApplicationClientId = _clientId,
-                    ApplicationKey = _appKey,
-                    Authority = _aadAuthority
-                };
+                    ApplicationNameForTracing = GetClientIdentifyingName()
+                }.WithAadApplicationSubjectAndIssuerAuthentication(_clientId, GenericCertLoader.Instance.GetCertBySubjectName(_tokenRequestorCertSubjectName).Subject, GenericCertLoader.Instance.GetCertBySubjectName(_tokenRequestorCertSubjectName).IssuerName.Name, _aadAuthority);
 
                 var queryProvider = Kusto.Data.Net.Client.KustoClientFactory.CreateCslQueryProvider(connectionStringBuilder);
                 if(!QueryProviderMapping.TryAdd(key, queryProvider))
