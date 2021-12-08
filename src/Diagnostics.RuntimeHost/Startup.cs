@@ -131,7 +131,6 @@ namespace Diagnostics.RuntimeHost
             }
             if (!Environment.IsDevelopment())
             {
-                GeoCertLoader.Instance.Initialize(Configuration);
                 MdmCertLoader.Instance.Initialize(Configuration);
                 CompilerHostCertLoader.Instance.Initialize(Configuration);
                 SearchAPICertLoader.Instance.Initialize(Configuration);
