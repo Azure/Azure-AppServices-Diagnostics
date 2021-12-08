@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
@@ -64,7 +63,8 @@ namespace Diagnostics.RuntimeHost
                             .AddAzureKeyVault(
                                 keyVaultUri,
                                 keyVaultClient,
-                                new DefaultKeyVaultSecretManager());
+                                new DefaultKeyVaultSecretManager())
+                            .AddAndInstallAzureKeyVaultCertificates(keyVaultUri, keyVaultClient);
                     }
                     if (IsDecryptionRequired(context.HostingEnvironment, builtConfig.GetValue<string>("CloudDomain")))
                     {
