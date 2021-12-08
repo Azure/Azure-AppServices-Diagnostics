@@ -29,7 +29,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         Task<DetectorRuntimeConfiguration> LoadConfiguration(DetectorRuntimeConfiguration configuration);
         Task<List<DetectorRuntimeConfiguration>> GetKustoConfiguration();
         Task LoadBatchDataToTable(List<DiagEntity> diagEntities);
-        Task<byte[]> GetPartnerConfig();
+        Task<byte[]> GetResourceProviderConfig();
     }
     public class StorageService : IStorageService
     {
@@ -43,15 +43,16 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         private bool loadOnlyPublicDetectors;
         private bool isStorageEnabled;
         private string detectorRuntimeConfigTable;
-        private string partnerConfigContainer;
+        private string devopsConfigContainer;
+        private string devopsConfigFile;
 
         public StorageService(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
             tableName = configuration["SourceWatcher:TableName"];
             container = configuration["SourceWatcher:BlobContainerName"];
             detectorRuntimeConfigTable = configuration["SourceWatcher:DetectorRuntimeConfigTable"];
-            partnerConfigContainer = configuration["SourceWatcher:PartnerConfigContainer"];
-           
+            devopsConfigContainer = configuration["SourceWatcher:DevOpsConfigContainer"];
+            devopsConfigFile = configuration["SourceWatcher:DevOpsConfigFile"];
             if (hostingEnvironment != null && hostingEnvironment.EnvironmentName.Equals("UnitTest", StringComparison.CurrentCultureIgnoreCase))
             {
                 tableClient = CloudStorageAccount.DevelopmentStorageAccount.CreateCloudTableClient();
@@ -413,9 +414,9 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
           
         }
 
-        public async Task<byte[]> GetPartnerConfig()
+        public async Task<byte[]> GetResourceProviderConfig()
         {
-            return await GetBlobByName("repoconfig.json", partnerConfigContainer);
+            return await GetBlobByName(devopsConfigFile, devopsConfigContainer);
         }
     }
 }

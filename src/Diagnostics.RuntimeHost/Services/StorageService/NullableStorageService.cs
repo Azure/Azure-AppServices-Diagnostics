@@ -53,7 +53,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
             return Task.CompletedTask;
         }
 
-        public Task<byte[]> GetPartnerConfig()
+        public Task<byte[]> GetResourceProviderConfig()
         {
             throw new NotImplementedException();
         }
