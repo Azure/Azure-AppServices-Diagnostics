@@ -32,6 +32,7 @@ using Diagnostics.Logger;
 using Microsoft.Extensions.Hosting;
 using Diagnostics.RuntimeHost.Services.DiagnosticsTranslator;
 using Diagnostics.RuntimeHost.Services.DevOpsClient;
+using Diagnostics.DataProviders.KeyVaultCertLoader;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -127,13 +128,8 @@ namespace Diagnostics.RuntimeHost
                                             .Build();
                 });
             }
-            if (!Environment.IsDevelopment())
-            {
-                GeoCertLoader.Instance.Initialize(Configuration);
-                MdmCertLoader.Instance.Initialize(Configuration);
-                GenericCertLoader.Instance.Initialize();
-            }
 
+            GenericCertLoader.Instance.Initialize();
             services.AddMemoryCache();
             // Enable App Insights telemetry
             services.AddApplicationInsightsTelemetry();
@@ -225,6 +221,8 @@ namespace Diagnostics.RuntimeHost
             var observerServicePoint = ServicePointManager.FindServicePoint(new Uri(dataSourcesConfigService.Config.SupportObserverConfiguration.Endpoint));
             observerServicePoint.ConnectionLeaseTimeout = 60 * 1000;
 
+            TokenRequestorFromPFXService.Instance.Initialize(dataSourcesConfigService.Config);
+
             if (Configuration.GetValue("K8SELogAnalytics:Enabled", true))
             {
                 K8SELogAnalyticsTokenService.Instance.Initialize(dataSourcesConfigService.Config.K8SELogAnalyticsConfiguration);
@@ -233,12 +231,7 @@ namespace Diagnostics.RuntimeHost
             if (Configuration.GetValue("ChangeAnalysis:Enabled", true))
             {
                 ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
-            }
-
-            if (Configuration.GetValue("AzureSupportCenter:Enabled", true))
-            {
-                AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
-            }
+            }           
 
             if (Configuration.GetValue("CompilerHost:Enabled", true))
             {
