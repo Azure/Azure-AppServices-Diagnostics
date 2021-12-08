@@ -104,6 +104,7 @@ namespace Diagnostics.DataProviders
                 SubscriptionLocationPlacementId = string.Empty;
             }
             DiagAscHeaderValue = config.DiagAscHeader;
+            _tokenRequestorCertSubjectName = config.TokenRequestorCertSubjectName;
         }
 
         private HttpClient httpClient
@@ -133,7 +134,7 @@ namespace Diagnostics.DataProviders
 
                 using (HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri))
                 {
-                    requestMessage.Headers.Add("Authorization", await TokenRequestorFromPFXService.Instance.GetAuthorizationToken(_clientId, _aadAuthorityUri, _tokenAudience, _tokenRequestorCertSubjectName, true));
+                    requestMessage.Headers.Add("Authorization", await TokenRequestorFromPFXService.Instance.GetAuthorizationTokenAsync(_clientId, _aadAuthorityUri, _tokenAudience, _tokenRequestorCertSubjectName, true));
                     requestMessage.Content = new StringContent(jsonPostBody, Encoding.UTF8, "application/json");
                     return await GetAscResponse<T>(requestMessage, false, cancellationToken);
                 }
@@ -179,7 +180,7 @@ namespace Diagnostics.DataProviders
 
                 using (HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, requestUri))
                 {
-                    requestMessage.Headers.Add("Authorization", await TokenRequestorFromPFXService.Instance.GetAuthorizationToken(_clientId, _aadAuthorityUri, _tokenAudience, _tokenRequestorCertSubjectName, true));
+                    requestMessage.Headers.Add("Authorization", await TokenRequestorFromPFXService.Instance.GetAuthorizationTokenAsync(_clientId, _aadAuthorityUri, _tokenAudience, _tokenRequestorCertSubjectName, true));
                     return await GetAscResponse<T>(requestMessage, false, cancellationToken);
                 }
             }
