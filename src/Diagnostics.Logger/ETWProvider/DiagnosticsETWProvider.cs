@@ -15,14 +15,12 @@ namespace Diagnostics.Logger
     [EventSource(Name = "Microsoft-Azure-AppService-Diagnostics")]
     public sealed class DiagnosticsETWProvider : DiagnosticsEventSourceBase
     {
-        private static readonly string EnvironmentName;
         private static readonly string WebsiteHostName;
         private static readonly Lazy<DiagnosticsETWProvider> _instance = new Lazy<DiagnosticsETWProvider>(() => new DiagnosticsETWProvider());
 
         static DiagnosticsETWProvider()
         {
-            EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            WebsiteHostName = Environment.GetEnvironmentVariable("DIAG_HOST");
+            WebsiteHostName = Environment.GetEnvironmentVariable("DIAG_HOST") ?? Environment.MachineName;
         }
 
         /// <summary>
