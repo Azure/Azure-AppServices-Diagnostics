@@ -1,6 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Models.Storage;
 using Diagnostics.RuntimeHost.Services.DevOpsClient;
-using Diagnostics.RuntimeHost.Services.StorageService;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -103,7 +102,10 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 return NotFound($"{resourceProviderType} does not have a devops configuration");
             }
-            return Ok(resourceProviderRepoConfig);
+            JObject response = new JObject();
+            response["GraduationEnabled"] = true;
+            response["AutoMerge"] = resourceProviderRepoConfig.AutoMerge;
+            return Ok(response);
         }
 
     }

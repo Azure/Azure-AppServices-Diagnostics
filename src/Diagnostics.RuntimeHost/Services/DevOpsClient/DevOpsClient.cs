@@ -63,7 +63,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             foreach (var resourceProviderRepoConfig in resourceProviderRepoConfigs)
             {
                 string resourceProvider = resourceProviderRepoConfig.ResourceProvider.ToLower();
-                if (!string.IsNullOrEmpty(resourceProvider) && !resourceProviderMapping.ContainsKey(resourceProvider))
+                if (!string.IsNullOrWhiteSpace(resourceProvider) && !resourceProviderMapping.ContainsKey(resourceProvider))
                 {
                     var creds = (VssCredentials)(FederatedCredential)new VssBasicCredential("pat", _accessToken);
                     var connection = new VssConnection(new Uri($"https://dev.azure.com/{resourceProviderRepoConfig.Organization}"), creds);
