@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,10 +15,45 @@ namespace Diagnostics.DataProviders
 {
     public class KustoQuery
     {
-        public string Text { get; set; }
-        public string Url { get; set; }
-        public string KustoDesktopUrl { get; set; }
-        public string OperationName { get; set; }
+        public string Text;
+        public string Url;
+        public string KustoDesktopUrl;
+        public string OperationName;
+
+        [JsonPropertyName("text")]
+        public string TextProperty { 
+            get
+            {
+                return Text;
+            }
+        }
+
+        [JsonPropertyName("url")]
+        public string UrlProperty
+        {
+            get
+            {
+                return Url;
+            }
+        }
+
+        [JsonPropertyName("kustoDesktopUrl")]
+        public string KustoDesktopUrlProperty
+        {
+            get
+            {
+                return KustoDesktopUrl;
+            }
+        }
+
+        [JsonPropertyName("operationName")]
+        public string OperationNameProperty
+        {
+            get
+            {
+                return OperationName;
+            }
+        }
     }
 
     public class KustoDataProvider : DiagnosticDataProvider, IKustoDataProvider
