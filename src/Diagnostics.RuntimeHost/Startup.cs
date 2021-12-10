@@ -149,11 +149,9 @@ namespace Diagnostics.RuntimeHost
                 }).AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.WriteIndented = true;
-                    options.JsonSerializerOptions.IncludeFields = true;
-                    options.JsonSerializerOptions.Converters.Add(new AsNonGenericTypeConverter<Exception>());
+                    options.JsonSerializerOptions.Converters.Add(new AsPrintableTypeConverter<Exception>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<ModelsAndUtils.Models.ResponseExtensions.FormInputBase>());
-                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<QueryResponse<DiagnosticApiResponse>>());
                 });
             }
             else
@@ -161,11 +159,9 @@ namespace Diagnostics.RuntimeHost
                 services.AddControllers().AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.WriteIndented = true;
-                    options.JsonSerializerOptions.IncludeFields = true;
-                    options.JsonSerializerOptions.Converters.Add(new AsNonGenericTypeConverter<Exception>());
+                    options.JsonSerializerOptions.Converters.Add(new AsPrintableTypeConverter<Exception>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<ModelsAndUtils.Models.ResponseExtensions.FormInputBase>());
-                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<QueryResponse<DiagnosticApiResponse>>());
                 });
             }
 

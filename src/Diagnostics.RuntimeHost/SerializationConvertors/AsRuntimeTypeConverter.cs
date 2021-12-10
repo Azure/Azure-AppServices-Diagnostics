@@ -16,11 +16,10 @@ namespace Diagnostics.RuntimeHost
             var options = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                IncludeFields = true,
                 WriteIndented = true
             };
 
-            options.Converters.Add(new AsNonGenericTypeConverter<Exception>());
+            options.Converters.Add(new AsPrintableTypeConverter<Exception>());
 
             return options;
         });
@@ -43,7 +42,7 @@ namespace Diagnostics.RuntimeHost
         }
     }
 
-    public class AsNonGenericTypeConverter<T> : JsonConverter<T>
+    public class AsPrintableTypeConverter<T> : JsonConverter<T>
     {
         private static JsonSerializerOptions _serializeWithoutFieldOptions = new JsonSerializerOptions
         {
