@@ -18,12 +18,10 @@ namespace Diagnostics.RuntimeHost.Controllers
     public class DevOpsController : Controller
     {
         IRepoClient _devOpsClient;
-        IStorageService _storageService;
 
-        public DevOpsController(IRepoClient devOpsClient, IStorageService storage)
+        public DevOpsController(IRepoClient devOpsClient)
         {
             _devOpsClient = devOpsClient;
-            _storageService = storage;
         }
 
         [HttpPost(UriElements.DevOpsMakePR)]
