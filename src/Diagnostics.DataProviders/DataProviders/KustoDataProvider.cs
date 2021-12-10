@@ -21,7 +21,8 @@ namespace Diagnostics.DataProviders
         public string OperationName;
 
         [JsonPropertyName("text")]
-        public string TextProperty { 
+        public string TextSTJCompat
+        { 
             get
             {
                 return Text;
@@ -29,7 +30,7 @@ namespace Diagnostics.DataProviders
         }
 
         [JsonPropertyName("url")]
-        public string UrlProperty
+        public string UrlSTJCompat
         {
             get
             {
@@ -38,7 +39,7 @@ namespace Diagnostics.DataProviders
         }
 
         [JsonPropertyName("kustoDesktopUrl")]
-        public string KustoDesktopUrlProperty
+        public string KustoDesktopUrlSTJCompat
         {
             get
             {
@@ -47,7 +48,7 @@ namespace Diagnostics.DataProviders
         }
 
         [JsonPropertyName("operationName")]
-        public string OperationNameProperty
+        public string OperationNameSTJCompat
         {
             get
             {
