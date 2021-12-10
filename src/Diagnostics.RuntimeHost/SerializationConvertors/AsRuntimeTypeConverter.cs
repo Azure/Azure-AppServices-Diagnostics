@@ -19,7 +19,7 @@ namespace Diagnostics.RuntimeHost
                 WriteIndented = true
             };
 
-            options.Converters.Add(new AsPrintableTypeConverter<Exception>());
+            options.Converters.Add(new ExceptionConverter());
 
             return options;
         });
@@ -42,22 +42,23 @@ namespace Diagnostics.RuntimeHost
         }
     }
 
-    public class AsPrintableTypeConverter<T> : JsonConverter<T>
+    public class ExceptionConverter : JsonConverter<Exception>
     {
-        private static JsonSerializerOptions _serializeWithoutFieldOptions = new JsonSerializerOptions
+        public override Exception Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
-        };
-
-        public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            return JsonSerializer.Deserialize<T>(ref reader, options);
+            return JsonSerializer.Deserialize<Exception>(ref reader, options);
         }
 
-        public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, Exception value, JsonSerializerOptions options)
         {
-            JsonSerializer.Serialize(writer, value.ToString(), _serializeWithoutFieldOptions);
+            writer.WriteStartObject();
+
+            writer.WriteString("ClassName", value?.GetType()?.FullName);
+            writer.WriteString("Message", value?.Message);
+            writer.WriteString("Source", value?.Source);
+            writer.WriteString("StackTraceString", value?.StackTrace);
+
+            writer.WriteEndObject();
         }
     }
 }
