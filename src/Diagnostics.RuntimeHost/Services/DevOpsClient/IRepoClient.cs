@@ -56,5 +56,12 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// </summary>
         /// <param name="parameters">Deployment parameters provided by caller</param>
         Task<List<DevopsFileChange>> GetFilesBetweenCommits(DeploymentParameters parameters);
+
+        /// <summary>
+        /// Gets the Devops config for the given Resource Provider type, eg; Microsoft.Web/sites
+        /// </summary>
+        /// <param name="resourceProviderType">Azure Resource Provider type, eg: Microsoft.Web/sites</param>
+        /// <returns>Devops config object</returns>
+        Task<ResourceProviderRepoConfig> GetRepoConfigsAsync(string resourceProviderType);
     }
 }

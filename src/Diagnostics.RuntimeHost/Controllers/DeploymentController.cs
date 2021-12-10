@@ -11,7 +11,6 @@ using Diagnostics.Scripts.CompilationService.Utilities;
 using Diagnostics.Scripts.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -42,7 +41,6 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "DetectorDeployRole")]
         public async Task<IActionResult> Post([FromBody] DeploymentParameters deploymentParameters)
         {
            
@@ -183,8 +181,6 @@ namespace Diagnostics.RuntimeHost.Controllers
         private string ValidateDeploymentParameters(DeploymentParameters deploymentParameters)
         {
             string errorMessage = string.Empty;
-
-
             if(string.IsNullOrWhiteSpace(deploymentParameters.ResourceType))
             {
                 errorMessage = "Resource Provider Type is invalid. Please provider a valid Resource Provider Type";

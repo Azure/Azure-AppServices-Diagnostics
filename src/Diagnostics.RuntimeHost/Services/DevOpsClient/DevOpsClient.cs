@@ -537,6 +537,16 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return result;
         }
 
+        public async Task<ResourceProviderRepoConfig> GetRepoConfigsAsync(string resourceProviderType)
+        {
+            await configDownloadTask;
+            if (resourceProviderMapping.ContainsKey(resourceProviderType.ToLower()))
+            {
+                var resourceProviderMap = resourceProviderMapping[resourceProviderType.ToLower()];
+                return resourceProviderMap.Item2;
+            }
+            return null;
+        }
 
         public void Dispose()
         {

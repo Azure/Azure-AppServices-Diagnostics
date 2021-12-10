@@ -1,18 +1,13 @@
-﻿using Diagnostics.RuntimeHost.Services.DevOpsClient;
+﻿using Diagnostics.ModelsAndUtils.Models.Storage;
+using Diagnostics.RuntimeHost.Services.DevOpsClient;
+using Diagnostics.RuntimeHost.Services.StorageService;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using System.Web;
 using static Diagnostics.Logger.HeaderConstants;
 
 namespace Diagnostics.RuntimeHost.Controllers
@@ -23,10 +18,12 @@ namespace Diagnostics.RuntimeHost.Controllers
     public class DevOpsController : Controller
     {
         IRepoClient _devOpsClient;
+        IStorageService _storageService;
 
-        public DevOpsController(IRepoClient devOpsClient)
+        public DevOpsController(IRepoClient devOpsClient, IStorageService storage)
         {
             _devOpsClient = devOpsClient;
+            _storageService = storage;
         }
 
         [HttpPost(UriElements.DevOpsMakePR)]
@@ -99,5 +96,17 @@ namespace Diagnostics.RuntimeHost.Controllers
             object response = await _devOpsClient.GetBranchesAsync(resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
             return Ok(response);
         }
+
+        [HttpGet(UriElements.DevOpsConfig)]
+        public async Task<IActionResult> GetResourceProviderConfig(string resourceProviderType)
+        {
+            ResourceProviderRepoConfig resourceProviderRepoConfig = await _devOpsClient.GetRepoConfigsAsync(resourceProviderType);
+            if (resourceProviderRepoConfig == null)
+            {
+                return NotFound($"{resourceProviderType} does not have a devops configuration");
+            }
+            return Ok(resourceProviderRepoConfig);
+        }
+
     }
 }

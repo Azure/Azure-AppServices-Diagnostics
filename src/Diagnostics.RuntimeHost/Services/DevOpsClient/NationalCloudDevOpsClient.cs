@@ -28,6 +28,11 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return null;
         }
 
+        public Task<ResourceProviderRepoConfig> GetRepoConfigsAsync(string resourceProviderType)
+        {
+            return null;
+        }
+
         public Task<object> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId)
         {
             return null;
