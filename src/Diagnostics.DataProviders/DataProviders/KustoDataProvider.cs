@@ -221,5 +221,26 @@ namespace Diagnostics.DataProviders
 
             return result;
         }
+
+        public async Task<string> GetAggHiPerfClusterNameByStampAsync(string stampName)
+        {
+            try
+            {
+                var dict = _configuration.HiPerfAggClusterMapping;
+                string cluster = await GetClusterNameFromStamp(stampName);
+                if (dict.TryGetValue(cluster, out string clusterName) && !string.IsNullOrEmpty(clusterName))
+                {
+                    return clusterName;                    
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
     }
 }

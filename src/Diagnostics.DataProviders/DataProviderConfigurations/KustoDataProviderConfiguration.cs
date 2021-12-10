@@ -53,6 +53,12 @@ namespace Diagnostics.DataProviders
         public string KustoClusterFailoverGroupings { get; set; }
 
         /// <summary>
+        /// DB Name mappings like clusterName|aggClusterName, where clusterName should be the values in KustoClusterNameGroupings
+        /// </summary>
+        [ConfigurationName("KustoAggClusterNameGroupMappings")]
+        public string KustoAggClusterNameGroupMappings { get; set; }
+
+        /// <summary>
         /// Tenant to authenticate with
         /// </summary>
         [ConfigurationName("AADAuthority")]
@@ -195,6 +201,8 @@ namespace Diagnostics.DataProviders
 
         public ConcurrentDictionary<string, string[]> QueryShadowingClusterMapping;
 
+        public ConcurrentDictionary<string, string> HiPerfAggClusterMapping;
+
         public List<ITuple> OverridableExceptionsToRetryAgainstLeaderCluster { get; set; }
 
         public IConfiguration config { private get; set; }
@@ -267,6 +275,25 @@ namespace Diagnostics.DataProviders
                                {
                                    var splitted = e.Split('|');
                                    return new KeyValuePair<string, string[]>(splitted[0], splitted[1].Split(':'));
+                               }));
+                }
+                catch (Exception)
+                {
+                    // swallow the exception
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(KustoAggClusterNameGroupMappings))
+            {
+                try
+                {
+                    HiPerfAggClusterMapping = new ConcurrentDictionary<string, string>(
+                           KustoAggClusterNameGroupMappings
+                               .Split(',')
+                               .Select(e =>
+                               {
+                                   var splitted = e.Split('|');
+                                   return new KeyValuePair<string, string>(splitted[0], splitted[1]);
                                }));
                 }
                 catch (Exception)
