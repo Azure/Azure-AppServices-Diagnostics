@@ -58,6 +58,17 @@ namespace Diagnostics.RuntimeHost
             writer.WriteString("Source", value?.Source);
             writer.WriteString("StackTraceString", value?.StackTrace);
 
+            if (value?.InnerException != null)
+            {
+                writer.WriteStartObject("InnerException");
+                JsonSerializer.Serialize<Exception>(writer, value?.InnerException, options);
+                writer.WriteEndObject();
+            }
+            else
+            {
+                writer.WriteNull("InnerException");
+            }
+
             writer.WriteEndObject();
         }
     }
