@@ -41,5 +41,10 @@ namespace Diagnostics.DataProviders
         {
             return MakeDependencyCall(DataProvider.GetKustoClusterQuery(query));
         }
+
+        public Task<string> GetAggHiPerfClusterNameByStampAsync(string stampName)
+        {
+            return MakeDependencyCall(DataProvider.GetAggHiPerfClusterNameByStampAsync(stampName));
+        }
     }
 }
