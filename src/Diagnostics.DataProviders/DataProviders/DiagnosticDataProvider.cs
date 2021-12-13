@@ -20,7 +20,9 @@ namespace Diagnostics.DataProviders
 
         public DataProviderMetadata Metadata { get; set; }
 
-        public IDataProviderConfiguration DataProviderConfiguration => _configuration;
+        private IDataProviderConfiguration DataProviderConfiguration => _configuration;
+
+        public bool IsEnabled => _configuration?.Enabled == true;
 
         protected Task<T> GetOrAddFromCache<T>(string key, Func<string, CacheMember> addFunction)
         {

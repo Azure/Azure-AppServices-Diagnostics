@@ -11,6 +11,19 @@ namespace Diagnostics.RuntimeHost
     /// <typeparam name="T"></typeparam>
     public class AsRuntimeTypeConverter<T> : JsonConverter<T>
     {
+        private static Lazy<JsonSerializerOptions> _options = new Lazy<JsonSerializerOptions>(() =>
+        {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            };
+
+            options.Converters.Add(new ExceptionConverter());
+
+            return options;
+        });
+
         public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             return JsonSerializer.Deserialize<T>(ref reader, options);
@@ -24,15 +37,39 @@ namespace Diagnostics.RuntimeHost
             }
             else
             {
-                var serializeOptions = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    IncludeFields = true,
-                    WriteIndented = true
-                };
-
-                JsonSerializer.Serialize(writer, value, serializeOptions);
+                JsonSerializer.Serialize(writer, value, _options.Value);
             }
+        }
+    }
+
+    public class ExceptionConverter : JsonConverter<Exception>
+    {
+        public override Exception Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return JsonSerializer.Deserialize<Exception>(ref reader, options);
+        }
+
+        public override void Write(Utf8JsonWriter writer, Exception value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+
+            writer.WriteString("ClassName", value?.GetType()?.FullName);
+            writer.WriteString("Message", value?.Message);
+            writer.WriteString("Source", value?.Source);
+            writer.WriteString("StackTraceString", value?.StackTrace);
+
+            if (value?.InnerException != null)
+            {
+                writer.WriteStartObject("InnerException");
+                JsonSerializer.Serialize<Exception>(writer, value?.InnerException, options);
+                writer.WriteEndObject();
+            }
+            else
+            {
+                writer.WriteNull("InnerException");
+            }
+
+            writer.WriteEndObject();
         }
     }
 }

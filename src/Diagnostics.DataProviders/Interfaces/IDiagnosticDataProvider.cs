@@ -2,6 +2,6 @@
 {
     public interface IDiagnosticDataProvider
     {
-        IDataProviderConfiguration DataProviderConfiguration { get; }
+        bool IsEnabled { get; }
     }
 }
