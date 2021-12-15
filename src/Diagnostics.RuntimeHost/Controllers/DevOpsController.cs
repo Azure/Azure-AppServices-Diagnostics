@@ -33,10 +33,8 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpPost(UriElements.DevOpsMakePR)]
         public async Task<IActionResult> MakePullRequestAsync([FromBody] DevOpsPullRequest pullRequest)
         {
-            if (pullRequest == null)
-            {
-                return BadRequest();
-            }
+            if (!RequestBodyValidator.ValidateRequestBody(pullRequest, out string validationMessage))
+                return BadRequest(validationMessage);
 
             object response = await _devOpsClient.MakePullRequestAsync(
                 pullRequest.SourceBranch,
@@ -53,6 +51,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         {
             List<string> files = pushChangeRequest.Files.ToList();
             List<string> repoPaths = pushChangeRequest.RepoPaths.ToList();
+
+            if (!RequestBodyValidator.ValidateRequestBody(pushChangeRequest, out string validationMessage))
+                return BadRequest(validationMessage);
 
             object response = await _devOpsClient.PushChangesAsync(
                 pushChangeRequest.Branch,
