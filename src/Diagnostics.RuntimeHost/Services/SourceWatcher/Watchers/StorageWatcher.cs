@@ -206,12 +206,12 @@ namespace Diagnostics.RuntimeHost.Services.SourceWatcher.Watchers
                 var timeRange = DateTime.UtcNow.AddMinutes(-5);
                 if(!diagEntityTableCacheService.TryGetValue("Detector", out List<DiagEntity> detectorsList) || detectorsList == null || detectorsList.Count < 1)
                 {
-                    detectorsList = await storageService.GetEntitiesByPartitionkey("Detector", startup ? DateTime.MinValue : timeRange);
+                    detectorsList = await storageService.GetEntitiesByPartitionkey("Detector", startup ? DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc) : timeRange);
                 }
                 var gists = new List<DiagEntity>();
                 if (!LoadOnlyPublicDetectors && (!diagEntityTableCacheService.TryGetValue("Gist", out gists) || gists == null || gists.Count <1))
                 {
-                    gists = await storageService.GetEntitiesByPartitionkey("Gist", startup ? DateTime.MinValue : timeRange);
+                    gists = await storageService.GetEntitiesByPartitionkey("Gist", startup ? DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc) : timeRange);
                 } 
                 var filteredDetectors = LoadOnlyPublicDetectors ? detectorsList.Where(row => !row.IsInternal).ToList() : detectorsList;
                 if(startup)

@@ -2,6 +2,7 @@
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
 using Diagnostics.Logger;
 using Microsoft.Extensions.Configuration;
 
@@ -30,8 +31,13 @@ namespace Diagnostics.DataProviders
             var geoEndpoint = new UriBuilder(geoMasterHostName)
             {
                 Scheme = "https",
-                Port = GeoMasterCsmApiPort
             };
+
+            // Use the default CSM port if a port number isn't specified at the end
+            if (!Regex.IsMatch(geoMasterHostName, @":\d+/?$"))
+            {
+                geoEndpoint.Port = GeoMasterCsmApiPort;
+            }
 
             BaseUri = geoEndpoint.Uri;
         }

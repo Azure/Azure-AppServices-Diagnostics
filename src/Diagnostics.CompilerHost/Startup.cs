@@ -150,8 +150,12 @@ namespace Diagnostics.CompilerHost
                                         AddAuthenticationSchemes(CertificateAuthDefaults.AuthenticationScheme, "AzureAd")
                                         .Build();
             });
-            // Enable app insights telemetry
-            services.AddApplicationInsightsTelemetry();
+
+            if (!Environment.IsDevelopment())
+            {
+                // Enable app insights telemetry
+                services.AddApplicationInsightsTelemetry();
+            }
             services.AddControllers().AddNewtonsoftJson();
             CustomStartup();
 
