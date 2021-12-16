@@ -10,32 +10,32 @@ namespace Diagnostics.ModelsAndUtils.Models.Storage
         /// <summary>
         /// Single commit id to deploy. Not applicable if <see cref="FromCommitId"/> and <see cref="ToCommitId"/> is given.
         /// </summary>
-        public string CommitId;
+        public string CommitId { get; set; }
 
         /// <summary>
         /// Start commit to deploy. Not applicable if <see cref="CommitId"/> is given.
         /// </summary>
-        public string FromCommitId;
+        public string FromCommitId { get; set; }
 
         /// <summary>
         /// End commit to deploy. Not applicable if <see cref="CommitId"/> is given.
         /// </summary>
-        public string ToCommitId;
+        public string ToCommitId { get; set; }
 
         /// <summary>
         /// If provided, includes detectors modified after this date. Cannot be combined with <see cref="FromCommitId"/> and <see cref="ToCommitId"/>.
         /// </summary>
-        public string StartDate;
+        public string StartDate { get; set; }
 
         /// <summary>
         /// If provided, includes detectors modified before this date. Cannot be combined with <see cref="FromCommitId"/> and <see cref="ToCommitId"/>.
         /// </summary>
-        public string EndDate;
+        public string EndDate { get; set; }
 
         /// <summary>
         /// Resource type of the caller. eg. Microsoft.Web/sites.
         /// </summary>
-        public string ResourceType;
+        public string ResourceType { get; set; }
     }
 
     /// <summary>
@@ -46,21 +46,21 @@ namespace Diagnostics.ModelsAndUtils.Models.Storage
         /// <summary>
         /// List of detectors that got updated/added/edited;
         /// </summary>
-        public List<string> DeployedDetectors;
+        public List<string> DeployedDetectors { get; set; }
 
         /// <summary>
         /// List of detectors that failed deployment along with the reason of failure;
         /// </summary>
-        public Dictionary<string, string> FailedDetectors;
+        public Dictionary<string, string> FailedDetectors { get; set; }
 
         /// <summary>
         /// List of detectors that were marked for deletion;
         /// </summary>
-        public List<string> DeletedDetectors;
+        public List<string> DeletedDetectors { get; set; }
 
         /// <summary>
         /// Unique Guid to track the deployment;
         /// </summary>
-        public string DeploymentGuid;
+        public string DeploymentGuid { get; set; }
     }
 }

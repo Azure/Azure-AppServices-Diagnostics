@@ -348,7 +348,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             bool isCompilationNeeded = !ScriptCompilation.IsSameScript(jsonBody.Script, scriptETag) || !_assemblyCacheService.IsAssemblyLoaded(assemblyFullName);
             if (isCompilationNeeded)
             {
-                queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, jsonBody.EntityType, jsonBody.References, runtimeContext.OperationContext.RequestId);
+                queryRes.CompilationOutput = await _compilerHostClient.GetCompilationResponse(jsonBody.Script, jsonBody.EntityType, jsonBody.References, runtimeContext.OperationContext.RequestId).ConfigureAwait(false);
             }
             else
             {
@@ -1187,7 +1187,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 var response = (Response)await invoker.Invoke(new object[] { dataProviders, context.OperationContext, res });
                 response.UpdateDetectorStatusFromInsights();
-                response = RedactDataResponse(response);
+                response = RedactDataResponse(response, context.OperationContext.RequestId);
 
                 //
                 // update the dataProvidersMetdata after detector execution to update data source
@@ -1446,7 +1446,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
         }
 
-        public Response RedactDataResponse(Response response)
+        public Response RedactDataResponse(Response response, string requestId = "")
         {
             if (response == null || response.Dataset == null || response.Dataset.Count == 0)
             {
@@ -1468,7 +1468,13 @@ namespace Diagnostics.RuntimeHost.Controllers
             watch.Stop();
             if (watch.Elapsed.TotalSeconds > 5)
             {
-                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"CPU CHECK: RedactDataResponse took {watch.Elapsed.TotalSeconds} seconds for dataset with {cellCount} cells.");
+                string logMessage = $"CPU CHECK: RedactDataResponse took {watch.Elapsed.TotalSeconds} seconds for dataset with {cellCount} cells";
+                if (!string.IsNullOrWhiteSpace(requestId))
+                {
+                    logMessage += $" RequestId = {requestId}";
+                }
+
+                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage(logMessage);
             }
 
             return response;

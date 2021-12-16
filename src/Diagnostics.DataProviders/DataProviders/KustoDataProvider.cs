@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +19,42 @@ namespace Diagnostics.DataProviders
         public string Url;
         public string KustoDesktopUrl;
         public string OperationName;
+
+        [JsonPropertyName("text")]
+        public string TextSTJCompat
+        { 
+            get
+            {
+                return Text;
+            }
+        }
+
+        [JsonPropertyName("url")]
+        public string UrlSTJCompat
+        {
+            get
+            {
+                return Url;
+            }
+        }
+
+        [JsonPropertyName("kustoDesktopUrl")]
+        public string KustoDesktopUrlSTJCompat
+        {
+            get
+            {
+                return KustoDesktopUrl;
+            }
+        }
+
+        [JsonPropertyName("operationName")]
+        public string OperationNameSTJCompat
+        {
+            get
+            {
+                return OperationName;
+            }
+        }
     }
 
     public class KustoDataProvider : DiagnosticDataProvider, IKustoDataProvider
@@ -220,6 +257,27 @@ namespace Diagnostics.DataProviders
             }
 
             return result;
+        }
+
+        public async Task<string> GetAggHiPerfClusterNameByStampAsync(string stampName)
+        {
+            try
+            {
+                var dict = _configuration.HiPerfAggClusterMapping;
+                string cluster = await GetClusterNameFromStamp(stampName);
+                if (dict.TryGetValue(cluster, out string clusterName) && !string.IsNullOrEmpty(clusterName))
+                {
+                    return clusterName;                    
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
     }
 }
