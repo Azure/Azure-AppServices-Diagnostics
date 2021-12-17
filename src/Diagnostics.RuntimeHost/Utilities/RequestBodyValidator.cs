@@ -33,15 +33,22 @@ namespace Diagnostics.RuntimeHost.Utilities
                 return false;
             }
 
+            List<string> missingProperties = new List<string>();
+
             foreach (var property in body.GetType().GetProperties())
             {
                 if (property.GetValue(body) == null)
                 {
-                    outputMessage = $"Missing {outputMessage += property.Name} from request body. ";
+                    missingProperties.Add(property.Name);
                 }
             }
 
-            return (String.IsNullOrWhiteSpace(outputMessage));
+
+            var message = "The following fields are missing from the request body: ";
+            foreach (var x in missingProperties) message += x + ", ";
+            outputMessage = message.Remove(message.Length - 2);
+
+            return !(missingProperties.Count > 0);
         }
     }
 }
