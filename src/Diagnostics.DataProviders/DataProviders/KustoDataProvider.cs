@@ -200,7 +200,7 @@ namespace Diagnostics.DataProviders
         {
             if (string.IsNullOrWhiteSpace(databaseName))
             {
-                databaseName = !string.IsNullOrWhiteSpace(_kustoMap.MapDatabase(_configuration.DBName)) ? _configuration.DBName : string.Empty;
+                databaseName = !string.IsNullOrWhiteSpace(_kustoMap.MapDatabase(_configuration.DBName)) ? _configuration.DBName : "wawsprod";
             }
             var kustoQuery = await _kustoClient.GetKustoQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(clusterName) ?? clusterName, databaseName, operationName);
             return kustoQuery;
