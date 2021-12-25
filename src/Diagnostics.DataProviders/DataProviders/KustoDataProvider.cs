@@ -110,25 +110,19 @@ namespace Diagnostics.DataProviders
             {
                 //Allow partner KQL queries to proxy through us
                 var matches = Regex.Matches(query, @"cluster\((?<cluster>([^\)]+))\).database\((?<database>([^\)]+))\)\.");
-                string targetCluster = string.Empty;
-                string targetDatabase = string.Empty;
                 if (matches.Any())
                 {
                     foreach (Match element in matches)
                     {
-                        targetCluster = element.Groups["cluster"].Value.Trim(new char[] { '\'', '\"' });
-                        targetDatabase = element.Groups["database"].Value.Trim(new char[] { '\'', '\"' });
+                        string targetCluster = element.Groups["cluster"].Value.Trim(new char[] { '\'', '\"' });
+                        string targetDatabase = element.Groups["database"].Value.Trim(new char[] { '\'', '\"' });
 
                         if (!string.IsNullOrWhiteSpace(targetCluster) && !string.IsNullOrWhiteSpace(targetDatabase))
                         {
                             targetCluster = targetCluster.Replace(".kusto.windows.net", string.Empty, StringComparison.OrdinalIgnoreCase);
-                            break;
+                            return await ExecuteClusterQuery(query, targetCluster, targetDatabase, requestId, operationName);
                         }
                     }
-                }
-                if (!string.IsNullOrWhiteSpace(targetCluster) && !string.IsNullOrWhiteSpace(targetDatabase))
-                {
-                    return await ExecuteClusterQuery(query, targetCluster, targetDatabase, requestId, operationName).ConfigureAwait(true);
                 }
             }
 
