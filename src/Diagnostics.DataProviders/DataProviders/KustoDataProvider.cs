@@ -69,7 +69,7 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null)
         {
-            if(!query.Contains("geneva_metrics_request"))
+            if(!query.Contains("geneva_metrics_request", StringComparison.InvariantCultureIgnoreCase))
             {
                 //Allow partner KQL queries to proxy through us
                 var matches = Regex.Matches(query, @"cluster\((?<cluster>([^\)]+))\).database\((?<database>([^\)]+))\)\.");
@@ -87,21 +87,21 @@ namespace Diagnostics.DataProviders
                         }
                     }
                 }
-            }            
+            }
 
             return await ExecuteQuery(query, DataProviderConstants.FakeStampForAnalyticsCluster, requestId, operationName);
         }
 
         public async Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId, string operationName)
         {
-            await AddQueryInformationToMetadata(query, cluster, operationName);
+            await AddQueryInformationToMetadata(query: query, cluster: cluster, databaseName:databaseName, operationName:operationName);
             return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(databaseName) ?? databaseName, requestId, operationName, _queryStartTime, _queryEndTime);
         }
 
         public async Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
         {
             var cluster = await GetClusterNameFromStamp(stampName);
-            await AddQueryInformationToMetadata(query, cluster, operationName);
+            await AddQueryInformationToMetadata(query:query, cluster:cluster, operationName:operationName);
             return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName, _queryStartTime, _queryEndTime);
         }
 
@@ -159,11 +159,20 @@ namespace Diagnostics.DataProviders
             return GetKustoQuery(query, stampName, null);
         }
 
+        public async Task<KustoQuery> GetKustoQuery(string query, string clusterName, string databaseName = null, string operationName = null)
+        {
+            if (string.IsNullOrWhiteSpace(databaseName))
+            {
+                databaseName = !string.IsNullOrWhiteSpace(_kustoMap.MapDatabase(_configuration.DBName)) ? _configuration.DBName : "wawsprod";
+            }
+            var kustoQuery = await _kustoClient.GetKustoQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(clusterName) ?? clusterName, databaseName, operationName);
+            return kustoQuery;
+        }
+
         public async Task<KustoQuery> GetKustoQuery(string query, string stampName, string operationName)
         {
             var cluster = await GetClusterNameFromStamp(stampName);
-            var kustoQuery = await _kustoClient.GetKustoQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, operationName);
-            return kustoQuery;
+            return await GetKustoQuery(query, cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, operationName);
         }
 
         internal async Task<DataTable> ExecuteQueryForHeartbeat(string query, string cluster, int timeoutSeconds, string requestId = null, string operationName = null)
@@ -176,9 +185,9 @@ namespace Diagnostics.DataProviders
             return Metadata;
         }
 
-        private async Task AddQueryInformationToMetadata(string query, string cluster, string operationName = null)
+        private async Task AddQueryInformationToMetadata(string query, string cluster, string databaseName = null, string operationName = null)
         {
-            var kustoQuery = await _kustoClient.GetKustoQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, operationName);
+            var kustoQuery = await GetKustoQuery(query: query, clusterName: cluster, databaseName: databaseName, operationName: operationName);
             bool queryExists = false;
 
             queryExists = Metadata.PropertyBag.Any(x => x.Key == "Query" &&
