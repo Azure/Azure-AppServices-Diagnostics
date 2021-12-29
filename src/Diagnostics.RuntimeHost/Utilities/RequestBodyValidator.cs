@@ -43,10 +43,12 @@ namespace Diagnostics.RuntimeHost.Utilities
                 }
             }
 
+            if (!(missingProperties.Count() > 0))
+                return true;
+
 
             var message = "The following fields are missing from the request body: ";
-            foreach (var x in missingProperties) message += x + ", ";
-            outputMessage = message.Remove(message.Length - 2);
+            outputMessage = message + String.Join(", ", missingProperties);
 
             return !(missingProperties.Count > 0);
         }
