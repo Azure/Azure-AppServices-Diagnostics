@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Diagnostics.ModelsAndUtils.Models;
 
 namespace Diagnostics.ModelsAndUtils.Models.Storage
 {
@@ -40,7 +41,7 @@ namespace Diagnostics.ModelsAndUtils.Models.Storage
         public bool MarkAsDisabled { get; set; }
     }
 
-    public class DevOpsPullRequest
+    public class DevOpsPullRequest : IRequestBodyBase
     {
         public string SourceBranch { get; set; }
         public string TargetBranch { get; set; }
@@ -48,7 +49,7 @@ namespace Diagnostics.ModelsAndUtils.Models.Storage
         public string ResourceUri { get; set; }
     }
 
-    public class DevOpsPushChangeRequest
+    public class DevOpsPushChangeRequest : IRequestBodyBase
     {
         public string Branch { get; set; }
         public IEnumerable<string> Files { get; set; }
