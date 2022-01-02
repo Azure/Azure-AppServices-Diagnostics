@@ -1,5 +1,12 @@
-trigger:
-- main
+# to create dependency on backend code build pipeline
+resources:
+  pipelines:
+  - pipeline: backendbuild
+    source: 'Backend PR Build'
+    trigger:
+      branches:
+        include: 
+        - main
 
 jobs:
 
