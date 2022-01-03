@@ -28,11 +28,11 @@ jobs:
   - task: ExtractFiles@1
     inputs:
       archiveFilePatterns: '$(Agent.BuildDirectory)/backend-drop1/Diagnostics.RuntimeHost.zip'
-      destinationFolder: '$(Agent.BuildDirectory)/applensdlls'
+      destinationFolder: '$(Agent.BuildDirectory)/runtimehostdlls'
 
   - task: CopyFiles@2
     inputs:
-      SourceFolder: '$(Agent.BuildDirectory)/applensdlls'
+      SourceFolder: '$(Agent.BuildDirectory)/runtimehostdlls'
       Contents: |
         Diagnostics.DataProviders.dll
         Diagnostics.Logger.dll
