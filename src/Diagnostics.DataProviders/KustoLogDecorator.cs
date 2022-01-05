@@ -51,5 +51,10 @@ namespace Diagnostics.DataProviders
         {
             return MakeDependencyCall(DataProvider.GetAggHiPerfClusterNameByStampAsync(stampName));
         }
+
+        public Task<DataTable> ExecuteQueryOnHiPerfClusterWithBackup(string aggQuery, string backupQuery, string stampName, string requestId = null, string operationName = null)
+        {
+            return MakeDependencyCall(DataProvider.ExecuteQueryOnHiPerfClusterWithBackup(aggQuery, backupQuery, stampName, requestId, operationName));
+        }
     }
 }

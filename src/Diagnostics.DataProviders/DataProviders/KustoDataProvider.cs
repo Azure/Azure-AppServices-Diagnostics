@@ -288,5 +288,18 @@ namespace Diagnostics.DataProviders
                 return null;
             }
         }
+
+        public async Task<DataTable> ExecuteQueryOnHiPerfClusterWithBackup(string aggQuery, string backupQuery, string stampName, string requestId = null, string operationName = null) 
+        {
+            string cluster = await GetAggHiPerfClusterNameByStampAsync(stampName);
+            if (cluster == null)
+            {
+                return await ExecuteQuery(backupQuery, stampName, requestId, operationName);
+            }
+            else
+            {
+                return await ExecuteClusterQuery(aggQuery, cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName);
+            }
+        }
     }
 }

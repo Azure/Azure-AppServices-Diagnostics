@@ -20,5 +20,8 @@ namespace Diagnostics.DataProviders
         Task<KustoQuery> GetKustoClusterQuery(string query);
 
         Task<string> GetAggHiPerfClusterNameByStampAsync(string stampName);
+
+        Task<DataTable> ExecuteQueryOnHiPerfClusterWithBackup(string aggQuery, string backupQuery, string stampName, string requestId = null, string operationName = null);
+
     }
 }
