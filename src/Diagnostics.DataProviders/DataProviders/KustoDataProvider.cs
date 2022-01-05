@@ -268,7 +268,7 @@ namespace Diagnostics.DataProviders
             return result;
         }
 
-        public async Task<string> GetAggHiPerfClusterNameByStampAsync(string stampName)
+        public async Task<string> GetAggHighPerfClusterNameByStampAsync(string stampName)
         {
             try
             {
@@ -286,6 +286,19 @@ namespace Diagnostics.DataProviders
             catch (Exception)
             {
                 return null;
+            }
+        }
+
+        public async Task<DataTable> ExecuteQueryOnHighPerfClusterWithFallback(string aggQuery, string fallbackQuery, string stampName, string requestId = null, string operationName = null) 
+        {
+            string cluster = await GetAggHighPerfClusterNameByStampAsync(stampName);
+            if (string.IsNullOrWhiteSpace(cluster))
+            {
+                return await ExecuteQuery(fallbackQuery, stampName, requestId, operationName);
+            }
+            else
+            {
+                return await ExecuteClusterQuery(aggQuery, cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName);
             }
         }
     }
