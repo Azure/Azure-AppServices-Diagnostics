@@ -268,7 +268,7 @@ namespace Diagnostics.DataProviders
             return result;
         }
 
-        public async Task<string> GetAggHiPerfClusterNameByStampAsync(string stampName)
+        public async Task<string> GetAggHighPerfClusterNameByStampAsync(string stampName)
         {
             try
             {
@@ -289,12 +289,12 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        public async Task<DataTable> ExecuteQueryOnHiPerfClusterWithBackup(string aggQuery, string backupQuery, string stampName, string requestId = null, string operationName = null) 
+        public async Task<DataTable> ExecuteQueryOnHighPerfClusterWithFallback(string aggQuery, string fallbackQuery, string stampName, string requestId = null, string operationName = null) 
         {
-            string cluster = await GetAggHiPerfClusterNameByStampAsync(stampName);
-            if (cluster == null)
+            string cluster = await GetAggHighPerfClusterNameByStampAsync(stampName);
+            if (string.IsNullOrWhiteSpace(cluster))
             {
-                return await ExecuteQuery(backupQuery, stampName, requestId, operationName);
+                return await ExecuteQuery(fallbackQuery, stampName, requestId, operationName);
             }
             else
             {
