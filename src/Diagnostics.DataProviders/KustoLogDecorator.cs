@@ -32,6 +32,11 @@ namespace Diagnostics.DataProviders
             return MakeDependencyCall(DataProvider.ExecuteClusterQuery(query, cluster, databaseName, _requestId, operationName));
         }
 
+        public Task<KustoQuery> GetKustoQuery(string query, string clusterName, string databaseName = null, string operationName = null)
+        {
+            return MakeDependencyCall(DataProvider.GetKustoQuery(query, clusterName, databaseName, operationName));
+        }
+
         public Task<KustoQuery> GetKustoQuery(string query, string stampName)
         {
             return MakeDependencyCall(DataProvider.GetKustoQuery(query, stampName));
@@ -40,6 +45,16 @@ namespace Diagnostics.DataProviders
         public Task<KustoQuery> GetKustoClusterQuery(string query)
         {
             return MakeDependencyCall(DataProvider.GetKustoClusterQuery(query));
+        }
+
+        public Task<string> GetAggHighPerfClusterNameByStampAsync(string stampName)
+        {
+            return MakeDependencyCall(DataProvider.GetAggHighPerfClusterNameByStampAsync(stampName));
+        }
+
+        public Task<DataTable> ExecuteQueryOnHighPerfClusterWithFallback(string aggQuery, string backupQuery, string stampName, string requestId = null, string operationName = null)
+        {
+            return MakeDependencyCall(DataProvider.ExecuteQueryOnHighPerfClusterWithFallback(aggQuery, backupQuery, stampName, requestId, operationName));
         }
     }
 }

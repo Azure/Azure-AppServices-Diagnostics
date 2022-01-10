@@ -10,12 +10,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Represents the start time for the downtime period
         /// </summary>
-        public DateTime StartTime { get; set; } = DateTime.MinValue;
+        public DateTime StartTime { get; set; } = DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc);
 
         /// <summary>
         /// The end time for the downtime period
         /// </summary>
-        public DateTime EndTime { get; set; } = DateTime.MinValue;
+        public DateTime EndTime { get; set; } = DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc);
 
         /// <summary>
         /// A optional label that if specified can be used to render a label or span in downtime analysis

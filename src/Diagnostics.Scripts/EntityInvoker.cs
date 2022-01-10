@@ -20,6 +20,7 @@ using Diagnostics.Scripts.Models;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
 using Diagnostics.Scripts.CompilationService.Utilities.Extensions;
+using System.Text.RegularExpressions;
 
 namespace Diagnostics.Scripts
 {
@@ -107,7 +108,7 @@ namespace Diagnostics.Scripts
             References = referenceResolver.Used.ToImmutableArray();
 
             IsCompilationSuccessful = !_diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
-            CompilationOutput = _diagnostics.Select(m => m.ToString());
+            CompilationOutput = _diagnostics.Select(m => m.ToString().Replace("ApBlkP", "AppBlkP0", StringComparison.Ordinal));
             DetailedCompilationTraces = _diagnostics.Select(m => m.GetCompilationTraceOutputDetails());
 
             if (IsCompilationSuccessful)
@@ -220,7 +221,7 @@ namespace Diagnostics.Scripts
             References = referenceResolver.Used.ToImmutableArray();
 
             IsCompilationSuccessful = !_diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
-            CompilationOutput = _diagnostics.Select(m => m.ToString());
+            CompilationOutput = _diagnostics.Select(m => m.ToString().Replace("ApBlkP", "AppBlkP0", StringComparison.Ordinal));
             DetailedCompilationTraces = _diagnostics.Select(m => m.GetCompilationTraceOutputDetails());
 
             if (!IsCompilationSuccessful)
@@ -240,7 +241,7 @@ namespace Diagnostics.Scripts
             References = referenceResolver.Used.ToImmutableArray();
 
             IsCompilationSuccessful = !_diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error);
-            CompilationOutput = _diagnostics.Select(m => m.ToString());
+            CompilationOutput = _diagnostics.Select(m => m.ToString().Replace("ApBlkP", "AppBlkP0", StringComparison.Ordinal));
             DetailedCompilationTraces = _diagnostics.Select(m => m.GetCompilationTraceOutputDetails());
             if (!IsCompilationSuccessful)
             {
@@ -395,25 +396,37 @@ namespace Diagnostics.Scripts
                     throw new ScriptCompilationException("Detector is marked with both SystemFilter and ResourceFilter. System Invoker should not include any ResourceFilter attribute.");
                 }
 
-                if((this._entityMetaData.ScriptText.Contains("All('") || this._entityMetaData.ScriptText.Contains("All(\"")) && 
+                if (this._entityMetaData.ScriptText.Contains("SuppressMessage(", StringComparison.OrdinalIgnoreCase))
+                {
+                    Regex suppressMessageRegex = new Regex(@"\[(.*)SuppressMessage\((.*)\)\]", RegexOptions.IgnoreCase);
+                    if (suppressMessageRegex.Match(this._entityMetaData.ScriptText).Success)
+                    {
+                        throw new ScriptCompilationException("ERROR : Use of System.Diagnostics.CodeAnalysis.SuppressMessage attribute is prohibited.");
+                    }
+                }
+
+                if (this._entityMetaData.ScriptText.Contains("pragma", StringComparison.OrdinalIgnoreCase))
+                {
+                    Regex pragmaRegex = new Regex(@"\#\s*pragma\s+", RegexOptions.IgnoreCase);
+                    if (pragmaRegex.Match(this._entityMetaData.ScriptText).Success)
+                    {
+                        throw new ScriptCompilationException("ERROR : Use of #pragma is prohibited.");
+                    }
+                }
+
+                if ((this._entityMetaData.ScriptText.Contains("All('") || this._entityMetaData.ScriptText.Contains("All(\"")) && 
                     (this._resourceFilter.ResourceType == ResourceType.App 
                     || this._resourceFilter.ResourceType == ResourceType.HostingEnvironment 
                     || this._resourceFilter.ResourceType == ResourceType.AppServiceCertificate
-                    || this._resourceFilter.ResourceType == ResourceType.AppServiceDomain))
+                    || this._resourceFilter.ResourceType == ResourceType.AppServiceDomain
+                    || (
+                        this._resourceFilter.ResourceType == ResourceType.ArmResource 
+                        && (this._resourceFilter as ArmResourceFilter)?.Provider.Equals("Microsoft.Web", StringComparison.OrdinalIgnoreCase) == true
+                        )
+                    ))
                 {
-                    this.CompilationOutput = this.CompilationOutput.Concat(new string[]
-                           {
-                                "ERROR : Use of All('TableName') kusto function is not supported.",
-                                "Valid Options:",
-                                "- Use dp.Kusto.ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName) instead."
-                           });
-
-                    this.DetailedCompilationTraces = this.DetailedCompilationTraces.Concat(CompilationTraceOutputDetails.GetCompilationTraceDetailsList(new string[] {
-                                @"ERROR: Use of All('TableName') kusto function is not supported.
-                                Valid Options:,
-                                - Use dp.Kusto.ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName) instead."
-                            }));
-                    throw new ScriptCompilationException("Use of All('TableName') in kusto query is not allowed. Use dp.Kusto.ExecuteQueryOnAllAppAppServiceClusters instead.");
+                    
+                    throw new ScriptCompilationException("Use of All('TableName') in kusto query is not allowed. Use dp.Kusto.ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName) instead.");
                 }
             }
         }

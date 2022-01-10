@@ -57,15 +57,6 @@
         public const string RefreshModel = "refreshmodel";
         public const string UpdateResourceConfig = "updateResourceConfig";
         public const string PassThroughAPIRoute = "/api/invoke";
-        #region Observer Urls
-
-        public const string Observer = "observer";
-        public const string ObserverGetSites = "sites/{siteName}";
-        public const string ObserverGetSiteWithStamp = "stamps/{stampName}/sites/{siteName}";
-        public const string ObserverGetHostingEnvironment = "hostingEnvironments/{hostingEnvironmentName}";
-        public const string ObserverGetContainerApp = "partner/containerapp/{containerAppName}";
-
-        #endregion Observer Urls
 
         #region DevOps Urls
 

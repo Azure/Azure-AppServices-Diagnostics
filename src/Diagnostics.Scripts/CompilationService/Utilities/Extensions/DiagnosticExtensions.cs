@@ -24,7 +24,7 @@ namespace Diagnostics.Scripts.CompilationService.Utilities.Extensions
             if (d.Severity == DiagnosticSeverity.Info) traceDetail.Severity = InsightStatus.Info;
             if (d.Severity == DiagnosticSeverity.Hidden) traceDetail.Severity = InsightStatus.None;
 
-            traceDetail.Message = d.ToString();
+            traceDetail.Message = d.ToString().Replace("ApBlkP", "AppBlkP0", StringComparison.Ordinal);
 
             traceDetail.Location = new LocationSpan();
             if (d.Location != null)
