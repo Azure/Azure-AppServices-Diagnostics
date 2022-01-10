@@ -102,9 +102,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 return NotFound($"{resourceProviderType} does not have a devops configuration");
             }
-            JObject response = new JObject();
-            response["GraduationEnabled"] = true;
-            response["AutoMerge"] = resourceProviderRepoConfig.AutoMerge;
+            var response = new { GraduationEnabled = true, AutoMerge = resourceProviderRepoConfig.AutoMerge };
             return Ok(response);
         }
 
