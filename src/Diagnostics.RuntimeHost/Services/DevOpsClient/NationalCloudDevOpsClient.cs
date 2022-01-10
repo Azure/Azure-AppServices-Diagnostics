@@ -23,7 +23,12 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return null;
         }
 
-        public Task<List<DevopsFileChange>> GetFilesInCommit(string commitId)
+        public Task<List<DevopsFileChange>> GetFilesInCommit(string commitId, string resourceType)
+        {
+            return null;
+        }
+
+        public Task<ResourceProviderRepoConfig> GetRepoConfigsAsync(string resourceProviderType)
         {
             return null;
         }
