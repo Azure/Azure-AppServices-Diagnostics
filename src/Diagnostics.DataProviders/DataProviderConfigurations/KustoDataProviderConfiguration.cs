@@ -193,7 +193,8 @@ namespace Diagnostics.DataProviders
         public string ExceptionsToRetryFor { get; set; }
 
         /// <summary>
-        /// List of , separated sourceCluster|testCluster1:testCluster2:... and requests will be shadowed from sourceCluster to all the following testClusters
+        /// List of , separated sourceCluster|testCluster1:testCluster2:... and requests will be intercepted from sourceCluster to all the following testClusters.
+        /// Will fallback to sourceCluster on any exception
         /// e.g. "wawswusfollower|testwuscluster1:testwuscluster2,wawseusfollower|testeuscluster1"
         /// </summary>
         [ConfigurationName("QueryShadowingClusterMapping")]

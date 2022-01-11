@@ -87,7 +87,8 @@ namespace Diagnostics.DataProviders
             var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId};{startTime?.ToString() ?? "UnknownStartTime"};{endTime?.ToString() ?? "UnknownEndTime"}##{0}_{Guid.NewGuid().ToString()}";
             clientRequestProperties.ClientRequestId = kustoClientId;
             clientRequestProperties.SetOption("servertimeout", new TimeSpan(0,0,timeoutSeconds));
-            if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase) && cluster != "wawscusdiagleadertest1.centralus")
+            if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase) && cluster != "wawscusdiagleadertest1.centralus" 
+                && !cluster.Equals("wawscusaggdiagleader.centralus", StringComparison.OrdinalIgnoreCase))
             {
                 clientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Weak);
             }
@@ -99,24 +100,21 @@ namespace Diagnostics.DataProviders
 
                 if (_config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters))
                 {
-                    if (startTime > DateTime.Parse("2021-11-12 23:59:59") && query != _config.HeartBeatQuery)
+                    if (query != _config.HeartBeatQuery)
                     {
                         foreach (string shadowCluster in shadowClusters)
                         {
                             try
                             {
                                 var shadowClientRequestProperties = clientRequestProperties;
-                                if (shadowCluster == "wawscusdiagleader.centralus")
-                                {
-                                    shadowClientRequestProperties = clientRequestProperties.Clone();
-                                    shadowClientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Strong);
-                                }
                                 var shadowKustoClient = Client(shadowCluster, database);
                                 kustoTask = shadowKustoClient.ExecuteQueryAsync(database, query, shadowClientRequestProperties)
                                     .ContinueWith(t =>
                                     {
                                         if (t.IsFaulted)
                                         {
+                                            // generate a new client id and retry
+                                            kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId};{startTime?.ToString() ?? "UnknownStartTime"};{endTime?.ToString() ?? "UnknownEndTime"}##{0}_{Guid.NewGuid().ToString()}";
                                             LogKustoQuery(query, shadowCluster, operationName, timeTakenStopWatch, kustoClientId, t.Exception, null);
                                             return kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
                                         }
