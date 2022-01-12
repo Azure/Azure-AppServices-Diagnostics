@@ -1,0 +1,13 @@
+{
+  "dotnet": {
+    "enabled": true,
+    "enablePackageRestore": true
+  },
+  "script": {
+  	"enabled": true,
+  	"enableScriptNuGetReferences": true
+  },
+  "RoslynExtensionsOptions": {
+  	"enableImportCompletion": true
+  }
+}

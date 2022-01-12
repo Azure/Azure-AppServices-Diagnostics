@@ -49,12 +49,19 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// Gets file changed in a given commit id
         /// </summary>
         /// <param name="commitId">Commit id</param>
-        Task<List<DevopsFileChange>> GetFilesInCommit(string commitId);
+        Task<List<DevopsFileChange>> GetFilesInCommit(string commitId, string resourceProvider);
 
         /// <summary>
         /// Gets file changed between two commits or date range
         /// </summary>
         /// <param name="parameters">Deployment parameters provided by caller</param>
         Task<List<DevopsFileChange>> GetFilesBetweenCommits(DeploymentParameters parameters);
+
+        /// <summary>
+        /// Gets the Devops config for the given Resource Provider type, eg; Microsoft.Web/sites
+        /// </summary>
+        /// <param name="resourceProviderType">Azure Resource Provider type, eg: Microsoft.Web/sites</param>
+        /// <returns>Devops config object</returns>
+        Task<ResourceProviderRepoConfig> GetRepoConfigsAsync(string resourceProviderType);
     }
 }
