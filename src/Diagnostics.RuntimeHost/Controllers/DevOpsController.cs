@@ -87,7 +87,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             ResourceProviderRepoConfig resourceProviderRepoConfig = await _devOpsClient.GetRepoConfigsAsync(resourceProviderType);
             if (resourceProviderRepoConfig == null)
             {
-                return NotFound($"{resourceProviderType} does not have a devops configuration");
+                var noConfigResponse = new { GraduationEnabled = false, AutoMerge = false };
+                return Ok(noConfigResponse);
             }
             var response = new { GraduationEnabled = true, AutoMerge = resourceProviderRepoConfig.AutoMerge };
             return Ok(response);
