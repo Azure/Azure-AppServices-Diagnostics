@@ -3,7 +3,8 @@
     "Diagnostics.RuntimeHost": {
       "commandName": "Project",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "AzureServicesAuthConnectionString": "RunAs=Developer; DeveloperTool=VisualStudio"
       },
       "applicationUrl": "http://localhost:1743"
     }
