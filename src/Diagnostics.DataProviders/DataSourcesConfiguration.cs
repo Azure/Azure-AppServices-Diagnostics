@@ -20,6 +20,8 @@ namespace Diagnostics.DataProviders
 
         public AntaresMdmDataProviderConfiguration AntaresMdmConfiguration { get; set; }
 
+        public ContainerAppsMdmDataProviderConfiguration ContainerAppsMdmConfiguration { get; set; }
+
         public NetworkingMdmDataProviderConfiguration NetworkingMdmConfiguration { get; set; }
 
         public SearchServiceProviderConfiguration SearchServiceProviderConfiguration { get; set; }
