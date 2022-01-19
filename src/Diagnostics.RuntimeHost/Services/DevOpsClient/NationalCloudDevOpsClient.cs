@@ -8,7 +8,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 {
     public class NationalCloudDevOpsClient : IRepoClient
     {
-        public Task<object> GetBranchesAsync(string resourceUri, string requestId)
+        public Task<List<(string, bool)>> GetBranchesAsync(string resourceUri, string requestId)
         {
             return null;
         }

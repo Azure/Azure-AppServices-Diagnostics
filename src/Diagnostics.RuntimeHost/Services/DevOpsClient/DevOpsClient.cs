@@ -150,7 +150,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             }
         }
 
-        public async Task<object> GetBranchesAsync(string resourceUri, string requestId)
+        public async Task<List<(string, bool)>> GetBranchesAsync(string resourceUri, string requestId)
         {
             dictionary.TryAdd(requestId + "--result", null);
             await configDownloadTask;

@@ -153,6 +153,7 @@ namespace Diagnostics.RuntimeHost
                     options.JsonSerializerOptions.Converters.Add(new ExceptionConverter());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<ModelsAndUtils.Models.ResponseExtensions.FormInputBase>());
+                    options.JsonSerializerOptions.Converters.Add(new DevOpsGetBranchesConverter());
                 });
             }
             else
@@ -163,6 +164,7 @@ namespace Diagnostics.RuntimeHost
                     options.JsonSerializerOptions.Converters.Add(new ExceptionConverter());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<ModelsAndUtils.Models.ResponseExtensions.FormInputBase>());
+                    options.JsonSerializerOptions.Converters.Add(new DevOpsGetBranchesConverter());
                 });
             }
 

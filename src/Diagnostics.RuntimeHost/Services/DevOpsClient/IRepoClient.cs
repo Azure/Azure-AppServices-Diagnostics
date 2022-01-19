@@ -43,7 +43,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// </summary>
         /// 
         /// <returns></returns>
-        Task<object> GetBranchesAsync(string resourceUri, string requestId);
+        Task<List<(string, bool)>> GetBranchesAsync(string resourceUri, string requestId);
 
         /// <summary>
         /// Gets file changed in a given commit id

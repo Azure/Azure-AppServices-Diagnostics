@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -20,6 +21,7 @@ namespace Diagnostics.RuntimeHost
             };
 
             options.Converters.Add(new ExceptionConverter());
+            options.Converters.Add(new DevOpsGetBranchesConverter());
 
             return options;
         });
@@ -33,10 +35,12 @@ namespace Diagnostics.RuntimeHost
         {
             if (value.GetType() != typeof(T))
             {
+                JsonSerializer.Serialize(Console.OpenStandardOutput(), value, options);
                 JsonSerializer.Serialize(writer, value, value?.GetType() ?? typeof(object), options);
             }
             else
             {
+                JsonSerializer.Serialize(Console.OpenStandardOutput(), value, options);
                 JsonSerializer.Serialize(writer, value, _options.Value);
             }
         }
@@ -70,6 +74,31 @@ namespace Diagnostics.RuntimeHost
             }
 
             writer.WriteEndObject();
+        }
+    }
+
+    public class DevOpsGetBranchesConverter : JsonConverter<List<(string, bool)>>
+    {
+        public override List<(string, bool)> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return JsonSerializer.Deserialize<List<(string, bool)>>(ref reader, options);
+        }
+
+        public override void Write(Utf8JsonWriter writer, List<(string, bool)> value, JsonSerializerOptions options)
+        {
+            writer.WriteStartArray();
+
+            foreach ((string, bool) i in value)
+            {
+                writer.WriteStartObject();
+
+                writer.WriteString("branchName", i.Item1);
+                writer.WriteString("isMainBranch", i.Item2.ToString());
+
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
         }
     }
 }
