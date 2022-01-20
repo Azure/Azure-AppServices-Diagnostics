@@ -22,8 +22,6 @@ namespace Diagnostics.RuntimeHost
             };
 
             options.Converters.Add(new ExceptionConverter());
-            options.Converters.Add(new DevOpsGetBranchesConverter());
-            options.Converters.Add(new DevOpsMakePRConverter());
 
             return options;
         });
