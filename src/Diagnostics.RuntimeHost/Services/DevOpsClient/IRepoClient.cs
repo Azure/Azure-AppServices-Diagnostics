@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models.Storage;
+using Microsoft.TeamFoundation.SourceControl.WebApi;
 
 namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 {
@@ -17,7 +18,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// <param name="targetBranch"></param>
         /// <param name="title"></param>
         /// <returns></returns>
-        Task<object> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId);
+        Task<(GitPullRequest, GitRepository)> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId);
 
         /// <summary>
         /// makes a commit with your changes
@@ -43,7 +44,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// </summary>
         /// 
         /// <returns></returns>
-        Task<object> GetBranchesAsync(string resourceUri, string requestId);
+        Task<List<(string, bool)>> GetBranchesAsync(string resourceUri, string requestId);
 
         /// <summary>
         /// Gets file changed in a given commit id

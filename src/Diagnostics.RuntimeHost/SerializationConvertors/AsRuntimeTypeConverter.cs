@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.TeamFoundation.SourceControl.WebApi;
+using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -68,6 +70,49 @@ namespace Diagnostics.RuntimeHost
             {
                 writer.WriteNull("InnerException");
             }
+
+            writer.WriteEndObject();
+        }
+    }
+
+    public class DevOpsGetBranchesConverter : JsonConverter<List<(string, bool)>>
+    {
+        public override List<(string, bool)> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return JsonSerializer.Deserialize<List<(string, bool)>>(ref reader, options);
+        }
+
+        public override void Write(Utf8JsonWriter writer, List<(string, bool)> value, JsonSerializerOptions options)
+        {
+            writer.WriteStartArray();
+
+            foreach ((string, bool) i in value)
+            {
+                writer.WriteStartObject();
+
+                writer.WriteString("branchName", i.Item1);
+                writer.WriteString("isMainBranch", i.Item2.ToString());
+
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+        }
+    }
+
+    public class DevOpsMakePRConverter : JsonConverter<(GitPullRequest, GitRepository)>
+    {
+        public override (GitPullRequest, GitRepository) Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return JsonSerializer.Deserialize<(GitPullRequest, GitRepository)>(ref reader, options);
+        }
+
+        public override void Write(Utf8JsonWriter writer, (GitPullRequest, GitRepository) value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+
+            writer.WriteString("prId", value.Item1.PullRequestId.ToString());
+            writer.WriteString("webUrl", value.Item2.WebUrl);
 
             writer.WriteEndObject();
         }
