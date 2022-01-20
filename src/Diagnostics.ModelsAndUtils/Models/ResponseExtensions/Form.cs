@@ -77,32 +77,32 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Represents Input ID
         /// </summary>
-        public int InputId;
+        public int InputId { get; set; }
 
         /// <summary>
         /// Represents the Input Type
         /// </summary>
-        public FormInputTypes InputType;
+        public FormInputTypes InputType { get; set; }
 
         /// <summary>
         /// Represents whether this is a required input
         /// </summary>
-        public bool IsRequired;
+        public bool IsRequired { get; set; }
 
         /// <summary>
         /// Represents the label of the input
         /// </summary>
-        public string Label;
+        public string Label { get; set; }
 
         /// <summary>
         /// Tooltip for the label of the input
         /// </summary>
-        public string ToolTip;
+        public string ToolTip { get; set; }
 
         /// <summary>
         /// Tooltip icon
         /// </summary>
-        public string TooltipIcon;
+        public string TooltipIcon { get; set; }
 
         /// <summary>
         /// Sets the default visibility of the forminput
