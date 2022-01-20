@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.TeamFoundation.SourceControl.WebApi;
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -22,6 +23,7 @@ namespace Diagnostics.RuntimeHost
 
             options.Converters.Add(new ExceptionConverter());
             options.Converters.Add(new DevOpsGetBranchesConverter());
+            options.Converters.Add(new DevOpsMakePRConverter());
 
             return options;
         });
@@ -35,12 +37,10 @@ namespace Diagnostics.RuntimeHost
         {
             if (value.GetType() != typeof(T))
             {
-                JsonSerializer.Serialize(Console.OpenStandardOutput(), value, options);
                 JsonSerializer.Serialize(writer, value, value?.GetType() ?? typeof(object), options);
             }
             else
             {
-                JsonSerializer.Serialize(Console.OpenStandardOutput(), value, options);
                 JsonSerializer.Serialize(writer, value, _options.Value);
             }
         }
@@ -99,6 +99,24 @@ namespace Diagnostics.RuntimeHost
             }
 
             writer.WriteEndArray();
+        }
+    }
+
+    public class DevOpsMakePRConverter : JsonConverter<(GitPullRequest, GitRepository)>
+    {
+        public override (GitPullRequest, GitRepository) Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return JsonSerializer.Deserialize<(GitPullRequest, GitRepository)>(ref reader, options);
+        }
+
+        public override void Write(Utf8JsonWriter writer, (GitPullRequest, GitRepository) value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+
+            writer.WriteString("prId", value.Item1.PullRequestId.ToString());
+            writer.WriteString("webUrl", value.Item2.WebUrl);
+
+            writer.WriteEndObject();
         }
     }
 }
