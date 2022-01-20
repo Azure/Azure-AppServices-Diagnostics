@@ -77,7 +77,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpGet(UriElements.DevOpsGetBranches)]
         public async Task<IActionResult> GetBranchesAsync(string resourceUri)
         {
-            object response = await _devOpsClient.GetBranchesAsync(resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
+            List<(string, bool)> response = await _devOpsClient.GetBranchesAsync(resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
             return Ok(response);
         }
 

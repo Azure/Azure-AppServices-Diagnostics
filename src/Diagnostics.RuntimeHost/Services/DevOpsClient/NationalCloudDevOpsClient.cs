@@ -1,4 +1,5 @@
 ﻿using Diagnostics.ModelsAndUtils.Models.Storage;
+using Microsoft.TeamFoundation.SourceControl.WebApi;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 {
     public class NationalCloudDevOpsClient : IRepoClient
     {
-        public Task<object> GetBranchesAsync(string resourceUri, string requestId)
+        public Task<List<(string, bool)>> GetBranchesAsync(string resourceUri, string requestId)
         {
             return null;
         }
@@ -33,7 +34,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return null;
         }
 
-        public Task<object> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId)
+        public Task<(GitPullRequest, GitRepository)> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId)
         {
             return null;
         }

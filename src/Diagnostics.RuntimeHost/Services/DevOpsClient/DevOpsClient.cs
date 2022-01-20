@@ -150,7 +150,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             }
         }
 
-        public async Task<object> GetBranchesAsync(string resourceUri, string requestId)
+        public async Task<List<(string, bool)>> GetBranchesAsync(string resourceUri, string requestId)
         {
             dictionary.TryAdd(requestId + "--result", null);
             await configDownloadTask;
@@ -217,7 +217,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return dictionary[requestId + "--result"];
         }
 
-        public async Task<object> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId)
+        public async Task<(GitPullRequest, GitRepository)> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId)
         {
             dictionary.TryAdd(requestId + "--pr", new GitPullRequest());
             dictionary.TryAdd(requestId + "--result", null);
