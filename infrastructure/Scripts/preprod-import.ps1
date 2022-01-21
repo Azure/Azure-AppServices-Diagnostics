@@ -65,36 +65,47 @@ Write-Host "Executing query with filter $customFilter"
 
 $result = Get-AzTableRow -table $cloudTable -customFilter $customFilter
 
-  foreach ($tablerow in $result)
+foreach ($tablerow in $result)
  {
 
- $partitionKey = $tableRow.PartitionKey
- $rowKey = $tableRow.RowKey
- $Entity = New-Object "Microsoft.Azure.Cosmos.Table.DynamicTableEntity" "$partitionKey", "$rowKey"
-
+  try {
+  $partitionKey = $tableRow.PartitionKey
+  $rowKey = $tableRow.RowKey
+  $Entity = New-Object "Microsoft.Azure.Cosmos.Table.DynamicTableEntity" "$partitionKey", "$rowKey"
+  #Create entity object with properties
   foreach($object_properties in $tablerow.PsObject.Properties)
   {
     $Entity.Properties.Add( $object_properties.Name,  $object_properties.Value)
   }
 
- $Entity.Timestamp = [DateTime]::UtcNow | get-date
- $destinationCloudTable = (Get-AzureStorageTable -Name $destinationTable -Context $ctx ).CloudTable
- [Microsoft.Azure.Cosmos.Table.TableOperation]$tableOperation=[Microsoft.Azure.Cosmos.Table.TableOperation]::InsertOrMerge($Entity)
+  $Entity.Timestamp = [DateTime]::UtcNow | get-date
+  $destinationCloudTable = (Get-AzureStorageTable -Name $destinationTable -Context $ctx ).CloudTable
+  [Microsoft.Azure.Cosmos.Table.TableOperation]$tableOperation=[Microsoft.Azure.Cosmos.Table.TableOperation]::InsertOrMerge($Entity)
 
- Write-Host "Inserting $tablerow.DetectorId into $destinationTable"
+  Write-Host "Inserting $tablerow.DetectorId into $destinationTable"
+   
+  $insertResult = $destinationCloudTable.Execute($tableOperation)
+  } catch {
+    $message = $_ 
+    Write-Warning "Exception occured while importing rows $message"
+  }
 
- $insertResult = $destinationCloudTable.Execute($tableOperation)
-
- }
+}
 
  Write-Host "Finished inserting entities into table $destinationTable"
  Write-Host "Starting blob copy..."
 
  foreach ($tablerow in $result) {
+  try {
   $result = $tablerow.DetectorId;
   $filename = "$result\$result.dll".ToLower();
   Write-Host "File to import is $filename"
   az storage blob copy start --account-name $storageAccountName --destination-blob $filename --destination-container $destinationContainer --subscription $subscriptionId --source-blob $filename --source-container $sourceContainer 
+  } catch {
+      $message = $_ 
+      Write-Warning "Exception occured while importing blob $message"
+    }
+ 
 }
 
 Write-Host "Finished blob copy into $destinationContainer"
