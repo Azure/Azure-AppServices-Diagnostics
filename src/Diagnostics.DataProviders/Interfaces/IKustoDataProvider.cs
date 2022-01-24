@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
 
 namespace Diagnostics.DataProviders
@@ -12,6 +13,8 @@ namespace Diagnostics.DataProviders
         Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null);
 
         Task<DataTable> ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName);
+
+        Task<DataTable> ExecuteQueryOnFewAppAppServiceClusters(List<string> appServiceClusterNames, string query, string operationName);
 
         Task<KustoQuery> GetKustoQuery(string query, string stampName);
 
