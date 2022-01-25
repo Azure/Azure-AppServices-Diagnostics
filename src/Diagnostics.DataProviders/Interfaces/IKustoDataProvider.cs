@@ -14,7 +14,7 @@ namespace Diagnostics.DataProviders
 
         Task<DataTable> ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName);
 
-        Task<DataTable> ExecuteQueryOnFewAppAppServiceClusters(List<string> appServiceClusterNames, string query, string operationName);
+        Task<DataTable> ExecuteQueryOnFewAppServiceClusters(List<string> appServiceClusterNames, string query, string operationName);
 
         Task<KustoQuery> GetKustoQuery(string query, string stampName);
 

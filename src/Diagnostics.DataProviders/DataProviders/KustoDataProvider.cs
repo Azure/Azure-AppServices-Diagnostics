@@ -153,7 +153,7 @@ namespace Diagnostics.DataProviders
             {"wawseas", new Tuple<string, string>("waws-prod-hk1-029", "EastAsia") }
         };
 
-        public async Task<DataTable> ExecuteQueryOnFewAppAppServiceClusters(List<string> appServiceClusterNames, string query, string operationName)
+        public async Task<DataTable> ExecuteQueryOnFewAppServiceClusters(List<string> appServiceClusterNames, string query, string operationName)
         {
             if (string.IsNullOrWhiteSpace(operationName))
             {
