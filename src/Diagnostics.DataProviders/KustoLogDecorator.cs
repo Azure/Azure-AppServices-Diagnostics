@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
 
 namespace Diagnostics.DataProviders
@@ -20,6 +21,11 @@ namespace Diagnostics.DataProviders
         public Task<DataTable> ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName)
         {
             return MakeDependencyCall(DataProvider.ExecuteQueryOnAllAppAppServiceClusters(query, operationName));
+        }
+
+        public Task<DataTable> ExecuteQueryOnFewAppServiceClusters(List<string> appServiceClusterNames, string query, string operationName)
+        {
+            return MakeDependencyCall(DataProvider.ExecuteQueryOnFewAppServiceClusters(appServiceClusterNames, query, operationName));
         }
 
         public Task<DataTable> ExecuteClusterQuery(string query, string requestId = null, string operationName = null)
