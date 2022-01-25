@@ -18,6 +18,12 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
         public string Endpoint { get; set; }
 
         /// <summary>
+        /// Gets or sets the name of certificate in keyvault.
+        /// </summary>
+        [ConfigurationName("CertificateName")]
+        public string CertificateName { get; set; }
+
+        /// <summary>
         /// Gets or sets monitoring account.
         /// </summary>
         [ConfigurationName("MdmShoeboxAccount")]
