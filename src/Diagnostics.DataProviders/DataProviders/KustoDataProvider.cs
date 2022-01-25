@@ -167,7 +167,7 @@ namespace Diagnostics.DataProviders
 
             if (appServiceClusterNames?.Count < 1)
             {
-                throw new ArgumentNullException(nameof(appServiceClusterNames), "App service kust cluster names list cannot be empty. Please supply at least one kusto cluster name where the query should be executed.");
+                throw new ArgumentNullException(nameof(appServiceClusterNames), "App service kusto cluster names list cannot be empty. Please supply at least one kusto cluster name where the query should be executed.");
             }
 
             List<Task<DataTable>> queryTask = new List<Task<DataTable>>();
