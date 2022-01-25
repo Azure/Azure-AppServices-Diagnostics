@@ -25,7 +25,7 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
         /// <summary>
         /// Gets or sets certificate name.
         /// </summary>
-        public string CertificateSubjectName { get; set; }
+        public string CertificateName { get; set; }
 
         /// <summary>
         /// Post initialize.
