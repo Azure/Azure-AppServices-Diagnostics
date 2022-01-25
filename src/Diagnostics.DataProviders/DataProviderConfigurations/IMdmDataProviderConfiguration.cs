@@ -16,11 +16,6 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
         string Endpoint { get; set; }
 
         /// <summary>
-        /// Gets or sets the certificate name in key vault.
-        /// </summary>
-        string CertificateName { get; set; }
-
-        /// <summary>
         /// Gets or sets monitoring account.
         /// </summary>
         string MonitoringAccount { get; set; }

@@ -132,6 +132,7 @@ namespace Diagnostics.RuntimeHost
             {
                 GeoCertLoader.Instance.Initialize(Configuration);
                 MdmCertLoader.Instance.Initialize(Configuration);
+                ContainerAppsMdmCertLoader.Instance.Initialize(Configuration);
                 CompilerHostCertLoader.Instance.Initialize(Configuration);
                 SearchAPICertLoader.Instance.Initialize(Configuration);
                 // Enable App Insights telemetry
@@ -152,6 +153,8 @@ namespace Diagnostics.RuntimeHost
                     options.JsonSerializerOptions.Converters.Add(new ExceptionConverter());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<ModelsAndUtils.Models.ResponseExtensions.FormInputBase>());
+                    options.JsonSerializerOptions.Converters.Add(new DevOpsGetBranchesConverter());
+                    options.JsonSerializerOptions.Converters.Add(new DevOpsMakePRConverter());
                 });
             }
             else
@@ -162,6 +165,8 @@ namespace Diagnostics.RuntimeHost
                     options.JsonSerializerOptions.Converters.Add(new ExceptionConverter());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<ModelsAndUtils.Models.ResponseExtensions.FormInputBase>());
+                    options.JsonSerializerOptions.Converters.Add(new DevOpsGetBranchesConverter());
+                    options.JsonSerializerOptions.Converters.Add(new DevOpsMakePRConverter());
                 });
             }
 

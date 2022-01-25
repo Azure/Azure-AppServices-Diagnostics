@@ -1,4 +1,7 @@
-﻿namespace Diagnostics.ModelsAndUtils.Models.Storage
+﻿using System.Collections.Generic;
+using Diagnostics.ModelsAndUtils.Models;
+
+namespace Diagnostics.ModelsAndUtils.Models.Storage
 {
     public class DevopsFileChange
     {
@@ -36,5 +39,23 @@
         /// Checks if the detector should be marked as disabled.
         /// </summary>
         public bool MarkAsDisabled { get; set; }
+    }
+
+    public class DevOpsPullRequest : IRequestBodyBase
+    {
+        public string SourceBranch { get; set; }
+        public string TargetBranch { get; set; }
+        public string Title { get; set; }
+        public string ResourceUri { get; set; }
+    }
+
+    public class DevOpsPushChangeRequest : IRequestBodyBase
+    {
+        public string Branch { get; set; }
+        public IEnumerable<string> Files { get; set; }
+        public IEnumerable<string> RepoPaths { get; set; }
+        public string Comment { get; set; }
+        public string ChangeType { get; set; }
+        public string ResourceUri { get; set; }
     }
 }

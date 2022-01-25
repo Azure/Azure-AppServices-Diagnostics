@@ -142,6 +142,68 @@ namespace Diagnostics.DataProviders
             return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName, _queryStartTime, _queryEndTime);
         }
 
+        private Dictionary<string, Tuple<string, string>> clusterStampNameMapping = new Dictionary<string, Tuple<string, string>>() 
+        {
+            //One random stamp name per region.
+            {"wawswus", new Tuple<string, string>("waws-prod-bay-153", "WestUS") },
+            {"wawseus", new Tuple<string, string>("waws-prod-blu-189", "EastUS") },
+            {"wawscus", new Tuple<string, string>("waws-prod-dm1-187", "CentralUS") },
+            {"wawsweu", new Tuple<string, string>("waws-prod-am2-329", "WestEurope") },
+            {"wawsneu", new Tuple<string, string>("waws-prod-db3-169", "NorthEurope") },
+            {"wawseas", new Tuple<string, string>("waws-prod-hk1-029", "EastAsia") }
+        };
+
+        public async Task<DataTable> ExecuteQueryOnFewAppServiceClusters(List<string> appServiceClusterNames, string query, string operationName)
+        {
+            if (string.IsNullOrWhiteSpace(operationName))
+            {
+                throw new ArgumentNullException(nameof(operationName), "OperationName cannot be empty. Please supply a name to identify the query.");
+            }
+
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                throw new ArgumentNullException(nameof(query), "Query cannot be empty. Please supply a query to execute.");
+            }
+
+            if (appServiceClusterNames?.Count < 1)
+            {
+                throw new ArgumentNullException(nameof(appServiceClusterNames), "App service kusto cluster names list cannot be empty. Please supply at least one kusto cluster name where the query should be executed.");
+            }
+
+            List<Task<DataTable>> queryTask = new List<Task<DataTable>>();
+
+            if (IsPublicCloud)
+            {
+                foreach (string targetClusterName in appServiceClusterNames)
+                {
+                    if (clusterStampNameMapping.TryGetValue(targetClusterName, out Tuple<string, string> stampDetails))
+                    {
+                        queryTask.Add(ExecuteQuery(query, stampDetails.Item1, null, $"{operationName}-{stampDetails.Item2}"));
+                    }
+                }
+            }
+            else
+            {
+                queryTask.Add(ExecuteQuery(query, Diagnostics.DataProviders.DataProviderConstants.FakeStampForAnalyticsCluster, null, operationName));
+            }
+
+            var queryResult = await Task.WhenAll(queryTask.ToArray());
+            DataTable mergedTable = new DataTable();
+            foreach (DataTable dt in queryResult)
+            {
+                if (dt.Rows.Count > 0)
+                {
+                    if (dt.Rows.Count > 3000)
+                    {
+                        throw new Exception($"Query {operationName} returned more than 3000 rows. Please modify the query to fetch fewer rows while running across all app service clusters.");
+                    }
+                    mergedTable.Merge(dt, false, MissingSchemaAction.Add);
+                }
+            }
+            return mergedTable;
+
+        }
+
         public async Task<DataTable> ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName)
         {
             if (string.IsNullOrWhiteSpace(operationName))
@@ -157,12 +219,10 @@ namespace Diagnostics.DataProviders
 
             if(IsPublicCloud)
             {
-                queryTask.Add(ExecuteQuery(query, "waws-prod-bay-153", null, operationName));
-                queryTask.Add(ExecuteQuery(query, "waws-prod-blu-189", null, operationName));
-                queryTask.Add(ExecuteQuery(query, "waws-prod-dm1-187", null, operationName));
-                queryTask.Add(ExecuteQuery(query, "waws-prod-am2-329", null, operationName));
-                queryTask.Add(ExecuteQuery(query, "waws-prod-db3-169", null, operationName));
-                queryTask.Add(ExecuteQuery(query, "waws-prod-hk1-029", null, operationName));
+                foreach (var stampDetails in clusterStampNameMapping)
+                {
+                    queryTask.Add(ExecuteQuery(query, stampDetails.Value.Item1, null, $"{operationName}-{stampDetails.Value.Item2}"));
+                }
             }
             else
             {
@@ -268,7 +328,7 @@ namespace Diagnostics.DataProviders
             return result;
         }
 
-        public async Task<string> GetAggHiPerfClusterNameByStampAsync(string stampName)
+        public async Task<string> GetAggHighPerfClusterNameByStampAsync(string stampName)
         {
             try
             {
@@ -286,6 +346,19 @@ namespace Diagnostics.DataProviders
             catch (Exception)
             {
                 return null;
+            }
+        }
+
+        public async Task<DataTable> ExecuteQueryOnHighPerfClusterWithFallback(string aggQuery, string fallbackQuery, string stampName, string requestId = null, string operationName = null) 
+        {
+            string cluster = await GetAggHighPerfClusterNameByStampAsync(stampName);
+            if (string.IsNullOrWhiteSpace(cluster))
+            {
+                return await ExecuteQuery(fallbackQuery, stampName, requestId, operationName);
+            }
+            else
+            {
+                return await ExecuteClusterQuery(aggQuery, cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName);
             }
         }
     }

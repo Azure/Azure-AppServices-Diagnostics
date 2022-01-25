@@ -8,7 +8,7 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
 {
     public class NullableStorageService : IStorageService
     {
-        public Task<byte[]> GetBlobByName(string name)
+        public Task<byte[]> GetBlobByName(string name, string containername)
         {
             return Task.FromResult(new byte[1]);
         }
@@ -51,6 +51,11 @@ namespace Diagnostics.RuntimeHost.Services.StorageService
         public Task LoadBatchDataToTable(List<DiagEntity> diagEntities)
         {
             return Task.CompletedTask;
+        }
+
+        public Task<byte[]> GetResourceProviderConfig()
+        {
+            throw new NotImplementedException();
         }
     }
 }

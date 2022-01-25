@@ -1,0 +1,53 @@
+# to create dependency on backend code build pipeline
+resources:
+  pipelines:
+  - pipeline: backendbuild
+    source: 'Backend PR Build'
+    trigger:
+      branches:
+        include: 
+        - main
+
+jobs:
+
+- job: 'BuildLanguageServer'
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - task: DownloadBuildArtifacts@1
+    inputs:
+      buildType: 'specific'
+      project: 'd760220e-01cd-406f-b520-62a6e0779471'
+      pipeline: '12'
+      buildVersionToDownload: 'latest'
+      downloadType: 'single'
+      artifactName: 'backend-drop1'
+      downloadPath: '$(Agent.BuildDirectory)'
+
+  - task: ExtractFiles@1
+    inputs:
+      archiveFilePatterns: '$(Agent.BuildDirectory)/backend-drop1/Diagnostics.RuntimeHost.zip'
+      destinationFolder: '$(Agent.BuildDirectory)/runtimehostdlls'
+
+  - task: CopyFiles@2
+    inputs:
+      SourceFolder: '$(Agent.BuildDirectory)/runtimehostdlls'
+      Contents: |
+        Diagnostics.DataProviders.dll
+        Diagnostics.Logger.dll
+        Diagnostics.ModelsAndUtils.dll
+        Diagnostics.Scripts.dll
+        Kusto.Data.dll
+      TargetFolder: '$(Build.Repository.LocalPath)/src/LanguageServer/workspace/customdlls'
+      OverWrite: true
+      cleanDestinationFolder: true
+      overwriteExistingFiles: false
+  
+  - task: Docker@2
+    inputs:
+      containerRegistry: 'LanguageServerRegistry'
+      repository: 'langserv'
+      command: 'buildAndPush'
+      Dockerfile: '$(Build.Repository.LocalPath)/**/Dockerfile'
+      buildContext: '$(Build.Repository.LocalPath)/src/LanguageServer'
