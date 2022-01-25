@@ -132,11 +132,15 @@ namespace Diagnostics.RuntimeHost
             {
                 GeoCertLoader.Instance.Initialize(Configuration);
                 MdmCertLoader.Instance.Initialize(Configuration);
-                ContainerAppsMdmCertLoader.Instance.Initialize(Configuration);
                 CompilerHostCertLoader.Instance.Initialize(Configuration);
                 SearchAPICertLoader.Instance.Initialize(Configuration);
                 // Enable App Insights telemetry
                 services.AddApplicationInsightsTelemetry();
+            }
+
+            if (Configuration.GetValue("ContainerAppsMdm:Enabled", true))
+            {
+                ContainerAppsMdmCertLoader.Instance.Initialize(Configuration);
             }
 
             services.AddMemoryCache();
