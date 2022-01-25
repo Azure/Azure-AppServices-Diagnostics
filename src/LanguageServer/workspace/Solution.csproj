@@ -1,0 +1,21 @@
+<Project>
+  <Sdk Name="Microsoft.NET.Sdk" />
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Diagnostics.DataProviders">
+      <HintPath>customdlls\Diagnostics.DataProviders.dll</HintPath>
+    </Reference>
+    <Reference Include="Diagnostics.ModelsAndUtils">
+      <HintPath>customdlls\Diagnostics.ModelsAndUtils.dll</HintPath>
+    </Reference>
+    <Reference Include="Diagnostics.Scripts">
+      <HintPath>customdlls\Diagnostics.Scripts.dll</HintPath>
+    </Reference>
+    <Reference Include="Kusto.Data">
+      <HintPath>customdlls\Kusto.Data.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

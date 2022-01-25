@@ -47,14 +47,14 @@ namespace Diagnostics.DataProviders
         /// Initializes a new instance of the <see cref="MdmClient" /> class.
         /// </summary>
         /// <param name="requestId">Request id.</param>
-        public MdmClient(IMdmDataProviderConfiguration configuration, string requestId)
+        public MdmClient(string endpoint, X509Certificate2 certificate, string requestId)
         {
             try
             {
-                Endpoint = new Uri(configuration.Endpoint);
-                HttpClient = CreateHttpClient();
+                Endpoint = new Uri(endpoint);
+                HttpClient = CreateHttpClient(certificate);
                 RequestId = requestId;
-                MetricReader = CreateMetricReader();
+                MetricReader = CreateMetricReader(certificate);
             }
             catch (Exception ex)
             {
@@ -70,9 +70,8 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        private MetricReader CreateMetricReader()
+        private MetricReader CreateMetricReader(X509Certificate2 certificate)
         {
-            var certificate = MdmCertLoader.Instance.Cert;
             var connectionInfo = new ConnectionInfo(Endpoint, certificate);
             return new MetricReader(connectionInfo);
         }
@@ -360,11 +359,9 @@ namespace Diagnostics.DataProviders
         /// <returns>
         /// An instance of <see cref="HttpClient" />
         /// </returns>
-        private static HttpClient CreateHttpClient()
+        private static HttpClient CreateHttpClient(X509Certificate2 certificate)
         {
             var handler = new HttpClientHandler();
-
-            var certificate = MdmCertLoader.Instance.Cert;
 
             if (certificate != null)
             {

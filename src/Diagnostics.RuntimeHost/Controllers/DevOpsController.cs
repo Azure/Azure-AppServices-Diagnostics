@@ -1,18 +1,12 @@
-﻿using Diagnostics.RuntimeHost.Services.DevOpsClient;
+﻿using Diagnostics.ModelsAndUtils.Models.Storage;
+using Diagnostics.RuntimeHost.Services.DevOpsClient;
 using Diagnostics.RuntimeHost.Utilities;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using System.Web;
 using static Diagnostics.Logger.HeaderConstants;
 
 namespace Diagnostics.RuntimeHost.Controllers
@@ -30,52 +24,39 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.DevOpsMakePR)]
-        public async Task<IActionResult> MakePullRequestAsync([FromBody]JToken jsonBody)
+        public async Task<IActionResult> MakePullRequestAsync([FromBody] DevOpsPullRequest pullRequest)
         {
-            string[] fieldNames =
-            {
-                "sourceBranch",
-                "targetBranch",
-                "title",
-                "resourceUri"
-            };
-
-            if (!RequestBodyValidator.ValidateRequestBody(jsonBody, fieldNames, out string validationMessage))
+            if (!RequestBodyValidator.ValidateRequestBody(pullRequest, out string validationMessage))
                 return BadRequest(validationMessage);
 
-            string sourceBranch = jsonBody[$"sourceBranch"].ToString();
-            string targetBranch = jsonBody[$"targetBranch"].ToString();
-            string title = jsonBody[$"title"].ToString();
-            string resourceUri = jsonBody[$"resourceUri"].ToString();
+            object response = await _devOpsClient.MakePullRequestAsync(
+                pullRequest.SourceBranch,
+                pullRequest.TargetBranch,
+                pullRequest.Title,
+                pullRequest.ResourceUri,
+                this.HttpContext.Request.Headers[RequestIdHeaderName]).ConfigureAwait(false);
 
-            object response = await _devOpsClient.MakePullRequestAsync(sourceBranch, targetBranch, title, resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
             return Ok(response);
         }
 
         [HttpPost(UriElements.DevOpsPush)]
-        public async Task<IActionResult> PushChangesAsync([FromBody]JToken jsonBody)
+        public async Task<IActionResult> PushChangesAsync([FromBody] DevOpsPushChangeRequest pushChangeRequest)
         {
-            string[] fieldNames =
-            {
-                "branch",
-                "files",
-                "repoPaths",
-                "comment",
-                "changeType",
-                "resourceUri"
-            };
+            List<string> files = pushChangeRequest.Files.ToList();
+            List<string> repoPaths = pushChangeRequest.RepoPaths.ToList();
 
-            if (!RequestBodyValidator.ValidateRequestBody(jsonBody, fieldNames, out string validationMessage))
+            if (!RequestBodyValidator.ValidateRequestBody(pushChangeRequest, out string validationMessage))
                 return BadRequest(validationMessage);
 
-            string branch = jsonBody[$"branch"].ToString();
-            List<string> files = jsonBody[$"files"].Select(file => file.ToString()).ToList();
-            List<string> repoPaths = jsonBody[$"repoPaths"].Select(path => path.ToString()).ToList();
-            string comment = jsonBody[$"comment"].ToString();
-            string changeType = jsonBody[$"changeType"].ToString();
-            string resourceUri = jsonBody[$"resourceUri"].ToString();
+            object response = await _devOpsClient.PushChangesAsync(
+                pushChangeRequest.Branch,
+                files,
+                repoPaths,
+                pushChangeRequest.Comment,
+                pushChangeRequest.ChangeType,
+                pushChangeRequest.ResourceUri,
+                this.HttpContext.Request.Headers[RequestIdHeaderName]).ConfigureAwait(false);
 
-            object response = await _devOpsClient.PushChangesAsync(branch, files, repoPaths, comment, changeType, resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
             if (response.GetType() != typeof(BadRequestObjectResult))
             {
                 return Ok(response);
@@ -96,8 +77,22 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpGet(UriElements.DevOpsGetBranches)]
         public async Task<IActionResult> GetBranchesAsync(string resourceUri)
         {
-            object response = await _devOpsClient.GetBranchesAsync(resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
+            List<(string, bool)> response = await _devOpsClient.GetBranchesAsync(resourceUri, this.HttpContext.Request.Headers[RequestIdHeaderName]);
             return Ok(response);
         }
+
+        [HttpGet(UriElements.DevOpsConfig)]
+        public async Task<IActionResult> GetResourceProviderConfig(string resourceProviderType)
+        {
+            ResourceProviderRepoConfig resourceProviderRepoConfig = await _devOpsClient.GetRepoConfigsAsync(resourceProviderType);
+            if (resourceProviderRepoConfig == null)
+            {
+                var noConfigResponse = new { GraduationEnabled = false, AutoMerge = false };
+                return Ok(noConfigResponse);
+            }
+            var response = new { GraduationEnabled = true, AutoMerge = resourceProviderRepoConfig.AutoMerge };
+            return Ok(response);
+        }
+
     }
 }

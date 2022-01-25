@@ -53,6 +53,8 @@ namespace Diagnostics.DataProviders
                         return GetOrAddDataProvider(new MdmLogDecorator(context, new MdmDataProvider(_cache, context.Configuration.AntaresMdmConfiguration, context.RequestId)));
                     case MdmDataSource.Networking:
                         return GetOrAddDataProvider(new MdmLogDecorator(context, new MdmDataProvider(_cache, context.Configuration.NetworkingMdmConfiguration, context.RequestId)));
+                    case MdmDataSource.ContainerApps:
+                        return GetOrAddDataProvider(new MdmLogDecorator(context, new ContainerAppsMdmDataProvider(_cache, context.Configuration.ContainerAppsMdmConfiguration, context.RequestId)));
                     default:
                         throw new NotSupportedException($"{ds} is not supported.");
                 }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Diagnostics.ModelsAndUtils.Models.Storage;
+using Microsoft.TeamFoundation.SourceControl.WebApi;
 
 namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 {
@@ -17,7 +18,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// <param name="targetBranch"></param>
         /// <param name="title"></param>
         /// <returns></returns>
-        Task<object> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId);
+        Task<(GitPullRequest, GitRepository)> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId);
 
         /// <summary>
         /// makes a commit with your changes
@@ -43,18 +44,25 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// </summary>
         /// 
         /// <returns></returns>
-        Task<object> GetBranchesAsync(string resourceUri, string requestId);
+        Task<List<(string, bool)>> GetBranchesAsync(string resourceUri, string requestId);
 
         /// <summary>
         /// Gets file changed in a given commit id
         /// </summary>
         /// <param name="commitId">Commit id</param>
-        Task<List<DevopsFileChange>> GetFilesInCommit(string commitId);
+        Task<List<DevopsFileChange>> GetFilesInCommit(string commitId, string resourceProvider);
 
         /// <summary>
         /// Gets file changed between two commits or date range
         /// </summary>
         /// <param name="parameters">Deployment parameters provided by caller</param>
         Task<List<DevopsFileChange>> GetFilesBetweenCommits(DeploymentParameters parameters);
+
+        /// <summary>
+        /// Gets the Devops config for the given Resource Provider type, eg; Microsoft.Web/sites
+        /// </summary>
+        /// <param name="resourceProviderType">Azure Resource Provider type, eg: Microsoft.Web/sites</param>
+        /// <returns>Devops config object</returns>
+        Task<ResourceProviderRepoConfig> GetRepoConfigsAsync(string resourceProviderType);
     }
 }
