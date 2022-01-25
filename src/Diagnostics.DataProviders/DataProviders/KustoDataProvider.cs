@@ -144,6 +144,7 @@ namespace Diagnostics.DataProviders
 
         private Dictionary<string, Tuple<string, string>> clusterStampNameMapping = new Dictionary<string, Tuple<string, string>>() 
         {
+            //One random stamp name per region.
             {"wawswus", new Tuple<string, string>("waws-prod-bay-153", "WestUS") },
             {"wawseus", new Tuple<string, string>("waws-prod-blu-189", "EastUS") },
             {"wawscus", new Tuple<string, string>("waws-prod-dm1-187", "CentralUS") },
