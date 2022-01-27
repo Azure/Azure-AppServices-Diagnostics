@@ -55,6 +55,10 @@ namespace Diagnostics.RuntimeHost
                 webbuilder.ConfigureAppConfiguration((context, config) =>
                 {
                     var builtConfig = config.Build();
+                    config.AddEnvironmentVariables()
+                        .AddCommandLine(args)
+                        .Build();
+
                     // For production and staging, skip outbound call to keyvault for AppSettings
                     if (builtConfig.GetValue<bool>("Secrets:KeyVaultEnabled", true) || context.HostingEnvironment.IsDevelopment())
                     {
@@ -76,10 +80,6 @@ namespace Diagnostics.RuntimeHost
                     {
                         config.AddJsonFile("supportTopicMap.json", true, false);
                     }
-
-                    config.AddEnvironmentVariables()
-                        .AddCommandLine(args)
-                        .Build();
                 });
                 webbuilder.UseStartup<Startup>();
             });       
