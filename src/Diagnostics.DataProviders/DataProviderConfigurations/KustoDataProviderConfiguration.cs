@@ -59,6 +59,12 @@ namespace Diagnostics.DataProviders
         public string KustoAggClusterNameGroupMappings { get; set; }
 
         /// <summary>
+        /// DB Name mappings like WawsPrimaryClusterName:DiagLeaderClusterName, where WawsPrimaryClusterName should be one of wawswus,wawseus,wawscus,wawsweu,wawsneu,wawseas
+        /// </summary>
+        [ConfigurationName("KustoWawsPrimaryToDiagLeaderMappings")]
+        public string KustoWawsPrimaryToDiagLeaderMappings { get; set; }
+
+        /// <summary>
         /// Tenant to authenticate with
         /// </summary>
         [ConfigurationName("AADAuthority")]
@@ -204,6 +210,8 @@ namespace Diagnostics.DataProviders
 
         public ConcurrentDictionary<string, string> HiPerfAggClusterMapping;
 
+        public ConcurrentDictionary<string, string> WawsPrimaryToDiagLeaderClusterMapping;
+
         public List<ITuple> OverridableExceptionsToRetryAgainstLeaderCluster { get; set; }
 
         public IConfiguration config { private get; set; }
@@ -290,6 +298,25 @@ namespace Diagnostics.DataProviders
                 {
                     HiPerfAggClusterMapping = new ConcurrentDictionary<string, string>(
                            KustoAggClusterNameGroupMappings
+                               .Split(',')
+                               .Select(e =>
+                               {
+                                   var splitted = e.Split('|');
+                                   return new KeyValuePair<string, string>(splitted[0], splitted[1]);
+                               }));
+                }
+                catch (Exception)
+                {
+                    // swallow the exception
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(KustoWawsPrimaryToDiagLeaderMappings))
+            {
+                try 
+                {
+                    WawsPrimaryToDiagLeaderClusterMapping = new ConcurrentDictionary<string, string>(
+                           KustoWawsPrimaryToDiagLeaderMappings
                                .Split(',')
                                .Select(e =>
                                {

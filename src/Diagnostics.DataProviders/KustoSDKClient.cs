@@ -87,8 +87,7 @@ namespace Diagnostics.DataProviders
             var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId};{startTime?.ToString() ?? "UnknownStartTime"};{endTime?.ToString() ?? "UnknownEndTime"}##{0}_{Guid.NewGuid().ToString()}";
             clientRequestProperties.ClientRequestId = kustoClientId;
             clientRequestProperties.SetOption("servertimeout", new TimeSpan(0,0,timeoutSeconds));
-            if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase) && cluster != "wawscusdiagleadertest1.centralus" 
-                && !cluster.Equals("wawscusaggdiagleader.centralus", StringComparison.OrdinalIgnoreCase))
+            if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase) && !cluster.Contains("diagleader", StringComparison.OrdinalIgnoreCase))
             {
                 clientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Weak);
             }
@@ -371,6 +370,10 @@ namespace Diagnostics.DataProviders
             else if (FailoverClusterMapping.Keys.Contains(cluster))
             {
                 backupCluster = FailoverClusterMapping[cluster];
+            }
+            else if (_config.WawsPrimaryToDiagLeaderClusterMapping != null && _config.WawsPrimaryToDiagLeaderClusterMapping.ContainsKey(cluster))
+            {
+                backupCluster = _config.WawsPrimaryToDiagLeaderClusterMapping[cluster];
             }
 
             return backupCluster;

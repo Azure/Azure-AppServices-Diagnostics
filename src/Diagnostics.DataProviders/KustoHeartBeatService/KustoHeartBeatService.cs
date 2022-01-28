@@ -87,8 +87,17 @@ namespace Diagnostics.DataProviders
                             {
                                 var regionName = ((string)dr["Region"]).ToLower();
                                 var clusterName = (string)dr["ClusterName"];
-                                _configuration.RegionSpecificClusterNameCollection.TryAdd(regionName, clusterName + "follower");
-                                _configuration.FailoverClusterNameCollection.TryAdd(regionName, clusterName);
+                                if (_configuration.WawsPrimaryToDiagLeaderClusterMapping != null && _configuration.WawsPrimaryToDiagLeaderClusterMapping.ContainsKey(clusterName))
+                                {
+                                    string diagLeaderCluster = _configuration.WawsPrimaryToDiagLeaderClusterMapping[clusterName];
+                                    _configuration.RegionSpecificClusterNameCollection.TryAdd(regionName, diagLeaderCluster);
+                                    _configuration.FailoverClusterNameCollection.TryAdd(diagLeaderCluster, clusterName);
+                                }
+                                else 
+                                {
+                                    _configuration.RegionSpecificClusterNameCollection.TryAdd(regionName, clusterName + "follower");
+                                    _configuration.FailoverClusterNameCollection.TryAdd(clusterName + "follower", clusterName);
+                                }
                             }
                         }
                     }
