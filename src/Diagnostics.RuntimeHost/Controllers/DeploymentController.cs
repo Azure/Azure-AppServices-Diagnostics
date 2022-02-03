@@ -49,6 +49,14 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 return BadRequest(validationError);
             }
+
+            // Additional validation to make sure Resource Provider is onboarded before the API is called.
+            var resourceProviderMapping = await this.devopsClient.GetRepoConfigsAsync(deploymentParameters.ResourceType);
+            if (resourceProviderMapping == null )
+            {
+                validationError = $"Resource Provider {deploymentParameters.ResourceType} is not onboarded";
+                return BadRequest(validationError);
+            }
                      
             DeploymentResponse response = new DeploymentResponse();
             response.DeploymentGuid = Guid.NewGuid().ToString();
