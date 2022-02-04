@@ -570,5 +570,21 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         {
             throw new NotImplementedException();
         }
+
+        public async Task<List<GitPullRequest>> GetPRListAsync(string requestId, string resourceProviderType)
+        {
+            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = await GetClientFromMap(resourceProviderType);
+            GitHttpClient gitClient = mapping.Item1;
+            ResourceProviderRepoConfig resourceProviderRepoConfig = mapping.Item2;
+            GitRepository repositoryAsync = await gitClient.GetRepositoryAsync(resourceProviderRepoConfig.Project, resourceProviderRepoConfig.Repository, (object)null);
+
+            GitPullRequestSearchCriteria gitPullRequestSearchCriteria = new GitPullRequestSearchCriteria();
+            gitPullRequestSearchCriteria.IncludeLinks = true;
+            gitPullRequestSearchCriteria.RepositoryId = repositoryAsync.Id;
+
+            List<GitPullRequest> gitPullRequests =  await gitClient.GetPullRequestsAsync(resourceProviderRepoConfig.Project, resourceProviderRepoConfig.Repository, gitPullRequestSearchCriteria );
+            gitPullRequests.ForEach(element => element.RemoteUrl = $"{repositoryAsync.WebUrl}/pullrequest/{element.PullRequestId}");
+            return gitPullRequests;
+        }
     }
 }
