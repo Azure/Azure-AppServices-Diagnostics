@@ -73,19 +73,38 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             }
         }
 
-        private Tuple<GitHttpClient, ResourceProviderRepoConfig> GetClientByResourceProvider(string armUri)
+        private async Task<Tuple<GitHttpClient, ResourceProviderRepoConfig>> GetClientByResourceProvider(string armUri)
         {
             string resourceProvider = UriUtilities.GetResourceProviderFromUri(armUri);
-            return GetClientFromMap(resourceProvider);
+            return await GetClientFromMap(resourceProvider);
         }
 
-        private Tuple<GitHttpClient, ResourceProviderRepoConfig> GetClientFromMap(string resourceProvider)
+        private async Task<Tuple<GitHttpClient, ResourceProviderRepoConfig>> GetClientFromMap(string resourceProvider)
         {
-            // If the config in storage does not have a resource provider type, return the default one.
+            // Check the cache if resource provider is present
             if(resourceProviderMapping.ContainsKey(resourceProvider.ToLower()))
             {
                 return resourceProviderMapping[resourceProvider.ToLower()];
+            } else // Attempt to check if storage has the config for this resource provider type.
+            {
+                byte[] repoConfigBuffer = await storageService.GetResourceProviderConfig();
+                string repoConfig = Encoding.UTF8.GetString(repoConfigBuffer, 0, repoConfigBuffer.Length);
+                var resourceProviderRepoConfigs = JsonConvert.DeserializeObject<List<ResourceProviderRepoConfig>>(repoConfig);
+                foreach (var resourceProviderRepoConfig in resourceProviderRepoConfigs)
+                {
+                    string currentResourceProvider = resourceProviderRepoConfig.ResourceProvider.ToLower();
+                    if (!string.IsNullOrWhiteSpace(currentResourceProvider) && currentResourceProvider.Equals(resourceProvider.ToLower(), StringComparison.CurrentCultureIgnoreCase)
+                        && !resourceProviderMapping.ContainsKey(currentResourceProvider.ToLower()))
+                    {
+                        var creds = (VssCredentials)(FederatedCredential)new VssBasicCredential("pat", _accessToken);
+                        var connection = new VssConnection(new Uri($"https://dev.azure.com/{resourceProviderRepoConfig.Organization}"), creds);
+                        var gitClient = connection.GetClient<GitHttpClient>();
+                        resourceProviderMapping.Add(currentResourceProvider.ToLower(), Tuple.Create(gitClient, resourceProviderRepoConfig));
+                        return resourceProviderMapping[currentResourceProvider.ToLower()];
+                    }
+                }
             }
+
             return Tuple.Create(defaultClient, new ResourceProviderRepoConfig
             {
                 Organization = _organization,
@@ -115,7 +134,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         private async Task<string> getLastObjectIdAsync(string branch, string requestId, string resourceUri)
         {
             await configDownloadTask;
-            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = GetClientByResourceProvider(resourceUri);
+            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = await GetClientByResourceProvider(resourceUri);
             GitHttpClient gitClient = mapping.Item1;
             ResourceProviderRepoConfig resourceProviderRepoConfig = mapping.Item2;
             if (!string.IsNullOrWhiteSpace(branch)) dictionary.TryAdd(requestId + "--query", new GitQueryCommitsCriteria()
@@ -154,7 +173,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         {
             dictionary.TryAdd(requestId + "--result", null);
             await configDownloadTask;
-            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = GetClientByResourceProvider(resourceUri);
+            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = await GetClientByResourceProvider(resourceUri);
             GitHttpClient gitClient = mapping.Item1;
             ResourceProviderRepoConfig resourceProviderRepoConfig = mapping.Item2;
             try
@@ -182,7 +201,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             dictionary.TryAdd(requestId + "--result", null);
             dictionary.TryAdd(requestId + "--version", null);
             await configDownloadTask;
-            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = GetClientByResourceProvider(resourceUri);
+            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = await GetClientByResourceProvider(resourceUri);
             GitHttpClient gitClient = mapping.Item1;
             ResourceProviderRepoConfig resourceProviderRepoConfig = mapping.Item2;
             try
@@ -228,7 +247,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             dictionary[requestId + "--pr"].TargetRefName = dictionary[requestId + "--target"];
             dictionary[requestId + "--pr"].Title = title;
             await configDownloadTask;
-            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = GetClientByResourceProvider(resourceUri);
+            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = await GetClientByResourceProvider(resourceUri);
             GitHttpClient gitClient = mapping.Item1;
             ResourceProviderRepoConfig resourceProviderRepoConfig = mapping.Item2;
             try
@@ -269,7 +288,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 IncludeLinks = true
             });
             await configDownloadTask;
-            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = GetClientByResourceProvider(resourceUri);
+            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = await GetClientByResourceProvider(resourceUri);
             GitHttpClient gitClient = mapping.Item1;
             ResourceProviderRepoConfig resourceProviderRepoConfig = mapping.Item2;
 
@@ -279,7 +298,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         public async Task<object> PushChangesAsync(string branch, List<string> files, List<string> repoPaths, string comment, string changeType, string resourceUri, string requestId)
         {
             await configDownloadTask;
-            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = GetClientByResourceProvider(resourceUri);
+            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = await GetClientByResourceProvider(resourceUri);
             GitHttpClient gitClient = mapping.Item1;
             ResourceProviderRepoConfig resourceProviderRepoConfig = mapping.Item2;
 
@@ -376,7 +395,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             if (string.IsNullOrWhiteSpace(commitId))
                 throw new ArgumentNullException("commit id cannot be null");
             await configDownloadTask;
-            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = GetClientFromMap(resourceProvider);
+            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = await GetClientFromMap(resourceProvider);
             GitHttpClient gitClient = mapping.Item1;
             ResourceProviderRepoConfig resourceProviderRepoConfig = mapping.Item2;
 
@@ -470,7 +489,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         {
             string content = string.Empty;
             await configDownloadTask;
-            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = GetClientFromMap(resourceProviderType);
+            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = await GetClientFromMap(resourceProviderType);
             GitHttpClient gitClient = mapping.Item1;
             var streamResult = await gitClient.GetItemContentAsync(repoId, ItemPath, null, VersionControlRecursionType.None, null,
                        null, null, gitVersionDescriptor);
@@ -490,7 +509,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             var result = new List<DevopsFileChange>();
 
             await configDownloadTask;
-            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = GetClientFromMap(parameters.ResourceType);
+            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = await GetClientFromMap(parameters.ResourceType);
             GitHttpClient gitClient = mapping.Item1;
             ResourceProviderRepoConfig resourceProviderRepoConfig = mapping.Item2;
 
@@ -539,12 +558,11 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
 
         public async Task<ResourceProviderRepoConfig> GetRepoConfigsAsync(string resourceProviderType)
         {
-            await configDownloadTask;
-            if (resourceProviderMapping.ContainsKey(resourceProviderType.ToLower()))
-            {
-                var resourceProviderMap = resourceProviderMapping[resourceProviderType.ToLower()];
-                return resourceProviderMap.Item2;
-            }
+           Tuple<GitHttpClient, ResourceProviderRepoConfig> resourceMapping = await GetClientFromMap(resourceProviderType);
+           if(resourceMapping.Item2.ResourceProvider.Equals(resourceProviderType, StringComparison.CurrentCultureIgnoreCase))
+           {
+               return resourceMapping.Item2;
+           }
             return null;
         }
 
