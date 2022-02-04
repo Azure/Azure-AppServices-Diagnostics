@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -77,32 +78,32 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <summary>
         /// Represents Input ID
         /// </summary>
-        public int InputId;
+        public int InputId { get; set; }
 
         /// <summary>
         /// Represents the Input Type
         /// </summary>
-        public FormInputTypes InputType;
+        public FormInputTypes InputType { get; set; }
 
         /// <summary>
         /// Represents whether this is a required input
         /// </summary>
-        public bool IsRequired;
+        public bool IsRequired { get; set; }
 
         /// <summary>
         /// Represents the label of the input
         /// </summary>
-        public string Label;
+        public string Label { get; set; }
 
         /// <summary>
         /// Tooltip for the label of the input
         /// </summary>
-        public string ToolTip;
+        public string ToolTip { get; set; }
 
         /// <summary>
         /// Tooltip icon
         /// </summary>
-        public string TooltipIcon;
+        public string TooltipIcon { get; set; }
 
         /// <summary>
         /// Sets the default visibility of the forminput
@@ -116,12 +117,12 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// <param name="inputType">Input type for the input</param>
         /// <param name="label">The label of the input</param>
         /// <param name="isRequired">Indicates whether this is a required input</param>
-        public FormInputBase(int id, FormInputTypes inputType, string label, bool isRequired = false): this(id, inputType, label, string.Empty, string.Empty, isRequired)
+        public FormInputBase(int id, FormInputTypes inputType, string label, bool isRequired = false) : this(id, inputType, label, string.Empty, string.Empty, isRequired)
         {
-            
+
         }
 
-        public FormInputBase(int id, FormInputTypes inputType, string label, string tooltip, string tooltipIcon ="", bool isRequired = false)
+        public FormInputBase(int id, FormInputTypes inputType, string label, string tooltip, string tooltipIcon = "", bool isRequired = false)
         {
             InputId = id;
             InputType = inputType;
@@ -158,7 +159,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         {
         }
 
-        public Textbox(int id, string label, string tooltip, string tooltipIcon = "", bool isRequired = false): base(id, FormInputTypes.TextBox, label, tooltip, tooltipIcon, isRequired)
+        public Textbox(int id, string label, string tooltip, string tooltipIcon = "", bool isRequired = false) : base(id, FormInputTypes.TextBox, label, tooltip, tooltipIcon, isRequired)
         {
 
         }
@@ -193,11 +194,11 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
     /// </example>
     public class RadioButtonList : FormInputBase
     {
-        
+
         /// <summary>
         /// The selected value from the radio button list
         /// </summary>
-        public string SelectedValue{ get; set; }
+        public string SelectedValue { get; set; }
 
         /// <summary>
         /// List of items for this RadioButtonList
@@ -215,7 +216,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
             Items = items;
         }
 
-        public RadioButtonList(int id, string label, List<ListItem> items, string tooltip ="", string tooltipIcon = "") : base(id, FormInputTypes.RadioButton, label, tooltip, tooltipIcon, false)
+        public RadioButtonList(int id, string label, List<ListItem> items, string tooltip = "", string tooltipIcon = "") : base(id, FormInputTypes.RadioButton, label, tooltip, tooltipIcon, false)
         {
             Items = items;
         }
@@ -254,13 +255,59 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// </summary>
         public string TooltipIcon;
 
+
+        [JsonPropertyName("text")]
+        public string TextSTJCompat
+        {
+            get
+            {
+                return Text;
+            }
+        }
+
+        [JsonPropertyName("value")]
+        public string ValueSTJCompat
+        {
+            get
+            {
+                return Value;
+            }
+        }
+
+        [JsonPropertyName("isSelected")]
+        public bool IsSelectedSTJCompat
+        {
+            get
+            {
+                return IsSelected;
+            }
+        }
+
+        [JsonPropertyName("toolTip")]
+        public string ToolTipSTJCompat
+        {
+            get
+            {
+                return Tooltip;
+            }
+        }
+
+        [JsonPropertyName("toolTipIcon")]
+        public string ToolTipIconSTJCompat
+        {
+            get
+            {
+                return TooltipIcon;
+            }
+        }
+
         /// <summary>
         /// Creates an instance of a new ListItem class
         /// </summary>
         /// <param name="text">Text for the list item</param>
         /// <param name="value">HTML value for the list item</param>
         /// <param name="isSelected">whether the list item is auto selected or not</param>
-        public ListItem(string text, string value, bool isSelected = false): this(text, value, string.Empty, string.Empty, isSelected)
+        public ListItem(string text, string value, bool isSelected = false) : this(text, value, string.Empty, string.Empty, isSelected)
         {
         }
 
@@ -324,27 +371,27 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         Link
     }
 
-    public class FormDropdown: FormInputBase
+    public class FormDropdown : FormInputBase
     {
         /// <summary>
         /// Set of options for this dropdown
         /// </summary>
-       public List<DropdownOption> DropdownOptions { get; set; }
+        public List<DropdownOption> DropdownOptions { get; set; }
 
         /// <summary>
         /// Flag to indicate if multi select is allowed
         /// </summary>
-       public bool IsMultiSelect { get; set; }
+        public bool IsMultiSelect { get; set; }
 
         /// <summary>
         /// Default selected key. 
         /// </summary>
-       public string DefaultSelectedKey { get; set; }
+        public string DefaultSelectedKey { get; set; }
 
         /// <summary>
         /// Default selected keys in case of MultiSelect
         /// </summary>
-       public List<string> DefaultSelectedKeys { get; set; }
+        public List<string> DefaultSelectedKeys { get; set; }
 
         /// <summary>
         /// Values selected by the user
@@ -355,19 +402,19 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
         /// List of all children belonging to dropdown
         /// </summary>
         public List<string> Children { get; set; }
-        
-       public FormDropdown(int id, string label, List<DropdownOption> options, string defaultKey = "", bool multiSelect = false, List<string> defaultKeys = null, string tooltip = "", string tooltipIcon =""): base(id, FormInputTypes.DropDown, label, tooltip, tooltipIcon)
-       {
+
+        public FormDropdown(int id, string label, List<DropdownOption> options, string defaultKey = "", bool multiSelect = false, List<string> defaultKeys = null, string tooltip = "", string tooltipIcon = "") : base(id, FormInputTypes.DropDown, label, tooltip, tooltipIcon)
+        {
             DropdownOptions = options;
             IsMultiSelect = multiSelect;
             DefaultSelectedKey = defaultKey;
             DefaultSelectedKeys = new List<string>();
-            if(defaultKeys != null)
+            if (defaultKeys != null)
             {
                 DefaultSelectedKeys.AddRange(defaultKeys);
             }
             Children = new List<string>();
-            if(options != null)
+            if (options != null)
             {
                 options.ForEach(op =>
                 {
@@ -377,7 +424,7 @@ namespace Diagnostics.ModelsAndUtils.Models.ResponseExtensions
                     }
                 });
             }
-       }
+        }
     }
 
     public class DropdownOption

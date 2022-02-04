@@ -90,6 +90,21 @@ namespace Diagnostics.DataProviders
                         return string.Empty;
                 }
             }
+            else if (prefix == "ContainerAppsMdm")
+            {
+                switch (name)
+                {
+                    case "MdmShoeboxEndpoint":
+                        return "https://az-int.metrics.nsatc.net";
+                    case "MdmRegistrationCertThumbprint":
+                        // Replace the thumbprint with the certificate installed in your machine.
+                        return "";
+                    case "MdmShoeboxAccount":
+                        return "Mock";
+                    default:
+                        return string.Empty;
+                }
+            }
             else if (prefix == "GeoMaster")
             {
                 switch (name)

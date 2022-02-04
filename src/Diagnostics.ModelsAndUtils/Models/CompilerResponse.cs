@@ -5,18 +5,18 @@ namespace Diagnostics.ModelsAndUtils.Models
 {
     public class CompilerResponse
     {
-        public bool CompilationSucceeded;
+        public bool CompilationSucceeded { get; set; }
 
-        public IEnumerable<string> CompilationTraces;
-        public IEnumerable<CompilationTraceOutputDetails> DetailedCompilationTraces;
+        public IEnumerable<string> CompilationTraces { get; set; }
+        public IEnumerable<CompilationTraceOutputDetails> DetailedCompilationTraces { get; set; }
 
-        public IEnumerable<string> References;
+        public IEnumerable<string> References { get; set; }
 
-        public string AssemblyBytes;
+        public string AssemblyBytes { get; set; }
 
-        public string PdbBytes;
+        public string PdbBytes { get; set; }
 
-        public string AssemblyName;
+        public string AssemblyName { get; set; }
     }
 
     public class CompilationTraceOutputDetails

@@ -15,17 +15,10 @@ using Serialization = Microsoft.Online.Metrics.Serialization;
 
 namespace Diagnostics.DataProviders
 {
-    public class MdmQueryParameters
-    {
-        public string query { get; set; }
-        public string key { get; set; } = "value";
-        public string replacement { get; set; }
-    }
-
     /// <summary>
     /// Mdm data provider
     /// </summary>
-    public class MdmDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IMdmDataProvider
+    public class ContainerAppsMdmDataProvider : DiagnosticDataProvider, IDiagnosticDataProvider, IMdmDataProvider
     {
         private IMdmDataProviderConfiguration _configuration;
         private IMdmClient _mdmClient;
@@ -37,14 +30,14 @@ namespace Diagnostics.DataProviders
         /// <param name="configuration">Data provider configuration.</param>
         /// <param name="requestId">Request id.</param>
         /// <param name="generalDataProviderConfiguration">Generic data provider configuration.</param>
-        public MdmDataProvider(OperationDataCache cache, IMdmDataProviderConfiguration configuration, string requestId, IHeaderDictionary headers = null)
+        public ContainerAppsMdmDataProvider(OperationDataCache cache, IMdmDataProviderConfiguration configuration, string requestId, IHeaderDictionary headers = null)
             : base(cache, configuration)
         {
             _configuration = configuration;
-            _mdmClient = MdmClientFactory.GetMdmClient(configuration, MdmCertLoader.Instance.Cert, requestId);
+            _mdmClient = MdmClientFactory.GetMdmClient(configuration, ContainerAppsMdmCertLoader.Instance.Cert, requestId);
             Metadata = new DataProviderMetadata
             {
-                ProviderName = "MDM"
+                ProviderName = "ContainerAppsMDM"
             };
         }
 
@@ -276,7 +269,8 @@ namespace Diagnostics.DataProviders
                 _configuration.HealthCheckInputs.TryGetValue("namespace", out string mdmNamespace);
                 _configuration.HealthCheckInputs.TryGetValue("sampling", out string mdmSamplingString);
                 _configuration.HealthCheckInputs.TryGetValue("metric", out string mdmMetric);
-                _configuration.HealthCheckInputs.TryGetValue("resourceId", out string resourceId);
+                _configuration.HealthCheckInputs.TryGetValue("subscriptionId", out string subscriptionId);
+                _configuration.HealthCheckInputs.TryGetValue("containerAppName", out string containerAppName);
 
                 var parameters = new string[] { mdmNamespace, mdmSamplingString, mdmMetric };
 
@@ -292,7 +286,8 @@ namespace Diagnostics.DataProviders
                     {
                         var resp = await this.GetTimeSeriesAsync(DateTime.UtcNow - TimeSpan.FromMinutes(45), DateTime.UtcNow, mdmSampling, mdmNamespace, mdmMetric, new Dictionary<string, string>
                         {
-                            { "ResourceId", resourceId }
+                            { "subscriptionId", subscriptionId },
+                            { "containerAppName", containerAppName }
                         });
                     }
                     catch (Exception ex)
@@ -303,7 +298,7 @@ namespace Diagnostics.DataProviders
                     {
                         result = new HealthCheckResult(
                             exception == null ? HealthStatus.Healthy : HealthStatus.Unhealthy,
-                            "MDM Data Provider",
+                            "ContainerAppsMDM Data Provider",
                             description: "Get time series data from Mdm",
                             exception);
                     }
@@ -320,34 +315,15 @@ namespace Diagnostics.DataProviders
             int seriesResolutionInMinutes)
         {
             var queryParameters = new List<MdmQueryParameters>();
-            var dashboard = string.Empty;
-            string resourceId = string.Empty;
+            var dashboard = "k4apps-metrics";
 
             foreach (var d in definitions)
             {
                 //Item1 - NameSpace
                 //Item2 - MetricName
 
-                if (string.IsNullOrWhiteSpace(dashboard))
+                foreach (var instanceDimension in d.Item3)
                 {
-                    if (d.Item1 == "Microsoft/Web/AppServicePlans")
-                    {
-                        dashboard = "WAWS Shoebox/App Service Plans/Per Resource Instance";
-                    }
-                    else if (d.Item1 == "Microsoft/Web/WebApps")
-                    {
-                        dashboard = "WAWS Shoebox/Web Apps/Per Resource";
-                    }
-                }
-
-                foreach (var instanceDimension in d.Item3.Where(x => x.Key != "ServerName"))
-                {
-                    if (string.Equals(instanceDimension.Key, "ResourceId", StringComparison.OrdinalIgnoreCase)
-                        && !string.IsNullOrWhiteSpace(instanceDimension.Value))
-                    {
-                        resourceId = instanceDimension.Value;
-                    }
-
                     var queryValue = $"//*[id='{instanceDimension.Key}']";
                     if (!queryParameters.Any(x => x.query == queryValue))
                     {
@@ -361,10 +337,7 @@ namespace Diagnostics.DataProviders
                     }
                 }
 
-                if (dashboard == "WAWS Shoebox/Web Apps/Per Resource")
-                {
-                    AddRemainingParametersForWebApps(queryParameters, resourceId, seriesResolutionInMinutes);
-                }
+                AddRemainingParametersForContainerApps(queryParameters, seriesResolutionInMinutes);
 
             }
 
@@ -386,28 +359,8 @@ namespace Diagnostics.DataProviders
             }
         }
 
-        private void AddRemainingParametersForWebApps(List<MdmQueryParameters> queryParameters, string resourceId, int seriesResolutionInMinutes)
+        private void AddRemainingParametersForContainerApps(List<MdmQueryParameters> queryParameters, int seriesResolutionInMinutes)
         {
-            var hostArray = resourceId.Split(".");
-            if (hostArray.Length < 3)
-            {
-                return;
-            }
-
-            var paramDnsSuffix = new MdmQueryParameters
-            {
-                query = $"//*[id='DNSSuffix']",
-                replacement = $"{hostArray[1]}.{hostArray[2]}"
-            };
-            queryParameters.Add(paramDnsSuffix);
-
-            var paramAppName = new MdmQueryParameters
-            {
-                query = $"//*[id='appName']",
-                replacement = hostArray[0]
-            };
-            queryParameters.Add(paramAppName);
-
             var paramTimeResolution = new MdmQueryParameters
             {
                 query = $"//*[id='timeResolution']",

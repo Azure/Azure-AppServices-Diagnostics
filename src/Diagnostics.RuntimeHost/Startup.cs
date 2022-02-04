@@ -86,13 +86,14 @@ namespace Diagnostics.RuntimeHost
                     {
                         OnTokenValidated = context =>
                         {
+                            context.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out var requestId);
                             var allowedAppIds = Configuration["SecuritySettings:AllowedAppIds"].Split(",").Select(p => p.Trim()).ToList();
                             var claimPrincipal = context.Principal;
                             var incomingAppId = claimPrincipal.Claims.FirstOrDefault(c => c.Type.Equals("appid", StringComparison.CurrentCultureIgnoreCase));
                             if (incomingAppId == null || !allowedAppIds.Exists(p => p.Equals(incomingAppId.Value, StringComparison.OrdinalIgnoreCase)))
                             {
                                 context.Fail("Unauthorized Request");
-                                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"AAD Authentication failed because incoming app id was not allowed");
+                                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"AAD Authentication failed because incoming app id was not allowed, Request id {requestId}");
                             }
                             var allowedDeploymentIds = Configuration["SecuritySettings:AllowedDeploymentIds"].Split(",").Select(p => p.Trim()).ToList();
                             var path = context.Request.Path;
@@ -100,22 +101,24 @@ namespace Diagnostics.RuntimeHost
                              && !path.Value.EndsWith("api/deploy", StringComparison.CurrentCultureIgnoreCase))
                             {
                                 context.Fail("Unauthorized Request");
-                                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"The app id {incomingAppId} does not have permission to this API {path}");
+                                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"The app id {incomingAppId} does not have permission to this API {path}, Request id {requestId}");
                             }
                             return Task.CompletedTask;
                         },
                         OnAuthenticationFailed = context =>
                         {
-                            DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"AAD Authentication failure reason: {context.Exception.ToString()}");
+                            context.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out var requestId);
+                            DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"AAD Authentication failure reason: {context.Exception.ToString()}, Request id {requestId}");
                             return Task.CompletedTask;
                         },
                         OnMessageReceived = context =>
                         {
                            
                             context.Request.Headers.TryGetValue("Authorization", out var BearerToken);
+                            context.Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out var requestId);
                             if (BearerToken.Count == 0)
                             {
-                                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage("No bearer token was sent");
+                                DiagnosticsETWProvider.Instance.LogRuntimeHostMessage($"No bearer token was sent, Request id {requestId}");
                             } 
                             return Task.CompletedTask;
                         }
@@ -129,6 +132,9 @@ namespace Diagnostics.RuntimeHost
                                             .Build();
                 });
             }
+
+            GenericCertLoader.Instance.Initialize();
+
             if (!Environment.IsDevelopment())
             {
                 MdmCertLoader.Instance.Initialize(Configuration);
@@ -138,7 +144,11 @@ namespace Diagnostics.RuntimeHost
                 services.AddApplicationInsightsTelemetry();
             }
 
-            GenericCertLoader.Instance.Initialize();
+            if (Configuration.GetValue("ContainerAppsMdm:Enabled", true))
+            {
+                ContainerAppsMdmCertLoader.Instance.Initialize(Configuration);
+            }
+
             services.AddMemoryCache();
             services.AddAppServiceApplicationLogging();
 
@@ -150,10 +160,11 @@ namespace Diagnostics.RuntimeHost
                 }).AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.WriteIndented = true;
-                    options.JsonSerializerOptions.IncludeFields = true;
-                    options.JsonSerializerOptions.Converters.Add(new AsNonGenericTypeConverter<Exception>());
+                    options.JsonSerializerOptions.Converters.Add(new ExceptionConverter());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
-                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<QueryResponse<DiagnosticApiResponse>>());
+                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<ModelsAndUtils.Models.ResponseExtensions.FormInputBase>());
+                    options.JsonSerializerOptions.Converters.Add(new DevOpsGetBranchesConverter());
+                    options.JsonSerializerOptions.Converters.Add(new DevOpsMakePRConverter());
                 });
             }
             else
@@ -161,10 +172,11 @@ namespace Diagnostics.RuntimeHost
                 services.AddControllers().AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.WriteIndented = true;
-                    options.JsonSerializerOptions.IncludeFields = true;
-                    options.JsonSerializerOptions.Converters.Add(new AsNonGenericTypeConverter<Exception>());
+                    options.JsonSerializerOptions.Converters.Add(new ExceptionConverter());
                     options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
-                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<QueryResponse<DiagnosticApiResponse>>());
+                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<ModelsAndUtils.Models.ResponseExtensions.FormInputBase>());
+                    options.JsonSerializerOptions.Converters.Add(new DevOpsGetBranchesConverter());
+                    options.JsonSerializerOptions.Converters.Add(new DevOpsMakePRConverter());
                 });
             }
 

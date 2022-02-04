@@ -39,7 +39,7 @@ namespace Diagnostics.DataProviders
         private string GetClientIdentifyingName()
         {
             return $"{System.Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") ?? "LocalMachine"}|{System.Environment.GetEnvironmentVariable("COMPUTERNAME") ?? System.Environment.MachineName}";
-        }        
+        }
 
         public KustoSDKClient(KustoDataProviderConfiguration config, string requestId)
         {
@@ -47,6 +47,7 @@ namespace Diagnostics.DataProviders
             {
                 QueryProviderMapping = new ConcurrentDictionary<Tuple<string, string>, ICslQueryProvider>();
             }
+
             _config = config;
             _requestId = requestId;
             _kustoApiQueryEndpoint = config.KustoApiEndpoint + ":443";
@@ -67,17 +68,16 @@ namespace Diagnostics.DataProviders
             if (!QueryProviderMapping.ContainsKey(key))
             {
 
-                KustoConnectionStringBuilder connectionStringBuilder;
-
-                connectionStringBuilder = new KustoConnectionStringBuilder(_kustoApiQueryEndpoint.Replace("{cluster}", cluster), database)
+                KustoConnectionStringBuilder connectionStringBuilder = new KustoConnectionStringBuilder(_kustoApiQueryEndpoint.Replace("{cluster}", cluster), database)
                 {
                     Authority = _aadAuthority,
                     ApplicationClientId = _clientId,
                     ApplicationNameForTracing = GetClientIdentifyingName()
                 }.WithAadApplicationSubjectAndIssuerAuthentication(_clientId, GenericCertLoader.Instance.GetCertBySubjectName(_tokenRequestorCertSubjectName).Subject, GenericCertLoader.Instance.GetCertBySubjectName(_tokenRequestorCertSubjectName).IssuerName.Name, _aadAuthority);
 
+
                 var queryProvider = Kusto.Data.Net.Client.KustoClientFactory.CreateCslQueryProvider(connectionStringBuilder);
-                if(!QueryProviderMapping.TryAdd(key, queryProvider))
+                if (!QueryProviderMapping.TryAdd(key, queryProvider))
                 {
                     queryProvider.Dispose();
                 }
@@ -93,8 +93,8 @@ namespace Diagnostics.DataProviders
             ClientRequestProperties clientRequestProperties = new ClientRequestProperties();
             var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId};{startTime?.ToString() ?? "UnknownStartTime"};{endTime?.ToString() ?? "UnknownEndTime"}##{0}_{Guid.NewGuid().ToString()}";
             clientRequestProperties.ClientRequestId = kustoClientId;
-            clientRequestProperties.SetOption("servertimeout", new TimeSpan(0,0,timeoutSeconds));
-            if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase) && cluster != "wawscusdiagleadertest1.centralus")
+            clientRequestProperties.SetOption("servertimeout", new TimeSpan(0, 0, timeoutSeconds));
+            if (cluster.StartsWith("waws", StringComparison.OrdinalIgnoreCase) && cluster.IndexOf("diagleader", System.StringComparison.OrdinalIgnoreCase) < 0)
             {
                 clientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Weak);
             }
@@ -102,30 +102,53 @@ namespace Diagnostics.DataProviders
             {
                 timeTakenStopWatch.Start();
                 var kustoClient = Client(cluster, database);
-                var kustoTask = kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
+                Task<IDataReader> kustoTask = null;
+
                 if (_config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters))
                 {
-                    if (startTime > DateTime.Parse("2021-11-12 23:59:59") || (startTime == null && query == _config.HeartBeatQuery))
+                    if (query != _config.HeartBeatQuery)
                     {
                         foreach (string shadowCluster in shadowClusters)
                         {
                             try
                             {
                                 var shadowClientRequestProperties = clientRequestProperties;
-                                if (shadowCluster == "wawscusdiagleader.centralus")
-                                {
-                                    shadowClientRequestProperties = clientRequestProperties.Clone();
-                                    shadowClientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Strong);
-                                }
                                 var shadowKustoClient = Client(shadowCluster, database);
-                                shadowKustoClient.ExecuteQueryAsync(database, query, shadowClientRequestProperties);
+                                kustoTask = shadowKustoClient.ExecuteQueryAsync(database, query, shadowClientRequestProperties)
+                                    .ContinueWith(t =>
+                                    {
+                                        if (t.IsFaulted)
+                                        {
+                                            // generate a new client id and retry
+                                            kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId};{startTime?.ToString() ?? "UnknownStartTime"};{endTime?.ToString() ?? "UnknownEndTime"}##{0}_{Guid.NewGuid().ToString()}";
+                                            LogKustoQuery(query, shadowCluster, operationName, timeTakenStopWatch, kustoClientId, t.Exception, null);
+                                            return kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
+                                        }
+                                        else
+                                        {
+                                            cluster = shadowCluster; // for LogKustoQuery
+                                            return t;
+                                        }
+                                    }).Unwrap();
                             }
-                            catch (Exception)
+                            catch (Exception e)
                             {
-                                // swallow this exception
+                                DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(
+                                    requestId ?? string.Empty,
+                                    "ExecuteQueryAsyncOnTestCluster",
+                                    string.Empty,
+                                    string.Empty,
+                                    string.Empty,
+                                    e.GetType().ToString(),
+                                    JsonConvert.SerializeObject(e));
                             }
                         }
                     }
+                }
+
+                if (kustoTask == null)
+                {
+                    kustoTask = kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
                 }
                 var result = await kustoTask;
                 dataSet = result.ToDataSet();
@@ -262,7 +285,7 @@ namespace Diagnostics.DataProviders
             try
             {
                 var encodedQuery = await EncodeQueryAsBase64UrlAsync(query);
-                if(FailoverClusterMapping.ContainsKey(cluster))
+                if (FailoverClusterMapping.ContainsKey(cluster))
                 {
                     cluster = FailoverClusterMapping[cluster];
                 }

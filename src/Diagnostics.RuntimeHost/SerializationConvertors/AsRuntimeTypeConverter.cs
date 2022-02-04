@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.TeamFoundation.SourceControl.WebApi;
+using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -16,11 +18,10 @@ namespace Diagnostics.RuntimeHost
             var options = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                IncludeFields = true,
                 WriteIndented = true
             };
 
-            options.Converters.Add(new AsNonGenericTypeConverter<Exception>());
+            options.Converters.Add(new ExceptionConverter());
 
             return options;
         });
@@ -43,22 +44,77 @@ namespace Diagnostics.RuntimeHost
         }
     }
 
-    public class AsNonGenericTypeConverter<T> : JsonConverter<T>
+    public class ExceptionConverter : JsonConverter<Exception>
     {
-        private static JsonSerializerOptions _serializeWithoutFieldOptions = new JsonSerializerOptions
+        public override Exception Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
-        };
-
-        public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            return JsonSerializer.Deserialize<T>(ref reader, options);
+            return JsonSerializer.Deserialize<Exception>(ref reader, options);
         }
 
-        public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, Exception value, JsonSerializerOptions options)
         {
-            JsonSerializer.Serialize(writer, value.ToString(), _serializeWithoutFieldOptions);
+            writer.WriteStartObject();
+
+            writer.WriteString("ClassName", value?.GetType()?.FullName);
+            writer.WriteString("Message", value?.Message);
+            writer.WriteString("Source", value?.Source);
+            writer.WriteString("StackTraceString", value?.StackTrace);
+
+            if (value?.InnerException != null)
+            {
+                writer.WriteStartObject("InnerException");
+                JsonSerializer.Serialize<Exception>(writer, value?.InnerException, options);
+                writer.WriteEndObject();
+            }
+            else
+            {
+                writer.WriteNull("InnerException");
+            }
+
+            writer.WriteEndObject();
+        }
+    }
+
+    public class DevOpsGetBranchesConverter : JsonConverter<List<(string, bool)>>
+    {
+        public override List<(string, bool)> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return JsonSerializer.Deserialize<List<(string, bool)>>(ref reader, options);
+        }
+
+        public override void Write(Utf8JsonWriter writer, List<(string, bool)> value, JsonSerializerOptions options)
+        {
+            writer.WriteStartArray();
+
+            foreach ((string, bool) i in value)
+            {
+                writer.WriteStartObject();
+
+                writer.WriteString("branchName", i.Item1);
+                writer.WriteString("isMainBranch", i.Item2.ToString());
+
+                writer.WriteEndObject();
+            }
+
+            writer.WriteEndArray();
+        }
+    }
+
+    public class DevOpsMakePRConverter : JsonConverter<(GitPullRequest, GitRepository)>
+    {
+        public override (GitPullRequest, GitRepository) Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return JsonSerializer.Deserialize<(GitPullRequest, GitRepository)>(ref reader, options);
+        }
+
+        public override void Write(Utf8JsonWriter writer, (GitPullRequest, GitRepository) value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+
+            writer.WriteString("prId", value.Item1.PullRequestId.ToString());
+            writer.WriteString("webUrl", value.Item2.WebUrl);
+
+            writer.WriteEndObject();
         }
     }
 }

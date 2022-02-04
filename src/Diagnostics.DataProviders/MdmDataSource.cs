@@ -18,6 +18,11 @@ namespace Diagnostics.DataProviders
         /// <summary>
         /// Azure networking MDM data provider.
         /// </summary>
-        Networking
+        Networking,
+
+        /// <summary>
+        /// Azure Container Apps MDM data provider.
+        /// </summary>
+        ContainerApps,
     }
 }

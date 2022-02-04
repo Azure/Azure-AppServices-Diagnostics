@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System.Collections.Generic;
+using System.Data;
 using System.Threading.Tasks;
 
 namespace Diagnostics.DataProviders
@@ -13,8 +14,17 @@ namespace Diagnostics.DataProviders
 
         Task<DataTable> ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName);
 
+        Task<DataTable> ExecuteQueryOnFewAppServiceClusters(List<string> appServiceClusterNames, string query, string operationName);
+
         Task<KustoQuery> GetKustoQuery(string query, string stampName);
 
+        Task<KustoQuery> GetKustoQuery(string query, string clusterName, string databaseName = null, string operationName = null);
+
         Task<KustoQuery> GetKustoClusterQuery(string query);
+
+        Task<string> GetAggHighPerfClusterNameByStampAsync(string stampName);
+
+        Task<DataTable> ExecuteQueryOnHighPerfClusterWithFallback(string aggQuery, string backupQuery, string stampName, string requestId = null, string operationName = null);
+
     }
 }

@@ -418,7 +418,12 @@ namespace Diagnostics.Scripts
                     (this._resourceFilter.ResourceType == ResourceType.App 
                     || this._resourceFilter.ResourceType == ResourceType.HostingEnvironment 
                     || this._resourceFilter.ResourceType == ResourceType.AppServiceCertificate
-                    || this._resourceFilter.ResourceType == ResourceType.AppServiceDomain))
+                    || this._resourceFilter.ResourceType == ResourceType.AppServiceDomain
+                    || (
+                        this._resourceFilter.ResourceType == ResourceType.ArmResource 
+                        && (this._resourceFilter as ArmResourceFilter)?.Provider.Equals("Microsoft.Web", StringComparison.OrdinalIgnoreCase) == true
+                        )
+                    ))
                 {
                     
                     throw new ScriptCompilationException("Use of All('TableName') in kusto query is not allowed. Use dp.Kusto.ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName) instead.");

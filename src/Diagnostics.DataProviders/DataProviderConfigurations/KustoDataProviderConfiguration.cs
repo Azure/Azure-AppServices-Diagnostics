@@ -53,6 +53,12 @@ namespace Diagnostics.DataProviders
         public string KustoClusterFailoverGroupings { get; set; }
 
         /// <summary>
+        /// DB Name mappings like clusterName|aggClusterName, where clusterName should be the values in KustoClusterNameGroupings
+        /// </summary>
+        [ConfigurationName("KustoAggClusterNameGroupMappings")]
+        public string KustoAggClusterNameGroupMappings { get; set; }
+
+        /// <summary>
         /// Tenant to authenticate with
         /// </summary>
         [ConfigurationName("AADAuthority")]
@@ -187,13 +193,16 @@ namespace Diagnostics.DataProviders
         public string ExceptionsToRetryFor { get; set; }
 
         /// <summary>
-        /// List of , separated sourceCluster|testCluster1:testCluster2:... and requests will be shadowed from sourceCluster to all the following testClusters
+        /// List of , separated sourceCluster|testCluster1:testCluster2:... and requests will be intercepted from sourceCluster to all the following testClusters.
+        /// Will fallback to sourceCluster on any exception
         /// e.g. "wawswusfollower|testwuscluster1:testwuscluster2,wawseusfollower|testeuscluster1"
         /// </summary>
         [ConfigurationName("QueryShadowingClusterMapping")]
         public string QueryShadowingClusterMappingString { get; set; }
 
         public ConcurrentDictionary<string, string[]> QueryShadowingClusterMapping;
+
+        public ConcurrentDictionary<string, string> HiPerfAggClusterMapping;
 
         public List<ITuple> OverridableExceptionsToRetryAgainstLeaderCluster { get; set; }
 
@@ -267,6 +276,25 @@ namespace Diagnostics.DataProviders
                                {
                                    var splitted = e.Split('|');
                                    return new KeyValuePair<string, string[]>(splitted[0], splitted[1].Split(':'));
+                               }));
+                }
+                catch (Exception)
+                {
+                    // swallow the exception
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(KustoAggClusterNameGroupMappings))
+            {
+                try
+                {
+                    HiPerfAggClusterMapping = new ConcurrentDictionary<string, string>(
+                           KustoAggClusterNameGroupMappings
+                               .Split(',')
+                               .Select(e =>
+                               {
+                                   var splitted = e.Split('|');
+                                   return new KeyValuePair<string, string>(splitted[0], splitted[1]);
                                }));
                 }
                 catch (Exception)
