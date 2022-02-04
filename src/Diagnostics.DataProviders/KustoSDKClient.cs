@@ -67,7 +67,6 @@ namespace Diagnostics.DataProviders
             var key = Tuple.Create(cluster, database);
             if (!QueryProviderMapping.ContainsKey(key))
             {
-
                 KustoConnectionStringBuilder connectionStringBuilder = new KustoConnectionStringBuilder(_kustoApiQueryEndpoint.Replace("{cluster}", cluster), database)
                 {
                     Authority = _aadAuthority,
@@ -75,14 +74,12 @@ namespace Diagnostics.DataProviders
                     ApplicationNameForTracing = GetClientIdentifyingName()
                 }.WithAadApplicationSubjectAndIssuerAuthentication(_clientId, GenericCertLoader.Instance.GetCertBySubjectName(_tokenRequestorCertSubjectName).Subject, GenericCertLoader.Instance.GetCertBySubjectName(_tokenRequestorCertSubjectName).IssuerName.Name, _aadAuthority);
 
-
                 var queryProvider = Kusto.Data.Net.Client.KustoClientFactory.CreateCslQueryProvider(connectionStringBuilder);
                 if (!QueryProviderMapping.TryAdd(key, queryProvider))
                 {
                     queryProvider.Dispose();
                 }
             }
-
             return QueryProviderMapping[key];
         }
 
@@ -94,7 +91,7 @@ namespace Diagnostics.DataProviders
             var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId};{startTime?.ToString() ?? "UnknownStartTime"};{endTime?.ToString() ?? "UnknownEndTime"}##{0}_{Guid.NewGuid().ToString()}";
             clientRequestProperties.ClientRequestId = kustoClientId;
             clientRequestProperties.SetOption("servertimeout", new TimeSpan(0, 0, timeoutSeconds));
-            if (cluster.StartsWith("waws", StringComparison.OrdinalIgnoreCase) && cluster.IndexOf("diagleader", System.StringComparison.OrdinalIgnoreCase) < 0)
+            if (cluster.StartsWith("waws", StringComparison.OrdinalIgnoreCase) && !cluster.Contains("diagleader", StringComparison.OrdinalIgnoreCase))
             {
                 clientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Weak);
             }
@@ -378,7 +375,10 @@ namespace Diagnostics.DataProviders
             {
                 backupCluster = FailoverClusterMapping[cluster];
             }
-
+            else if (_config.WawsPrimaryToDiagLeaderClusterMapping != null && _config.WawsPrimaryToDiagLeaderClusterMapping.ContainsKey(cluster))
+            {
+                backupCluster = _config.WawsPrimaryToDiagLeaderClusterMapping[cluster];
+            }
             return backupCluster;
         }
 
