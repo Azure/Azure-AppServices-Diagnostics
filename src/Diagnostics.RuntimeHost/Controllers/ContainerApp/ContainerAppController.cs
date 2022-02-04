@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Diagnostics.DataProviders;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -46,7 +47,8 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.Detectors)]
         public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticContainerAppData postBody, [FromQuery(Name = "text")] string text = null, [FromQuery] string l = "")
         {
-            return await base.ListDetectors(new ContainerApp(subscriptionId, resourceGroupName, siteName), text, language: l.ToLower());
+            var providerName = GetResourceProviderName(subscriptionId, resourceGroupName);
+            return await base.ListDetectors(new ContainerApp(subscriptionId, resourceGroupName, providerName, siteName), text, language: l.ToLower());
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
@@ -82,14 +84,16 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]
         public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string siteName, [FromBody] CompilationPostBody<DiagnosticContainerAppData> jsonBody, string detectorId, string dataSource = null, string timeRange = null)
         {
-            return await base.ExecuteQuery(new ContainerApp(subscriptionId, resourceGroupName, siteName), jsonBody, null, null, null, detectorId, dataSource, timeRange);
+            var providerName = GetResourceProviderName(subscriptionId, resourceGroupName);
+            return await base.ExecuteQuery(new ContainerApp(subscriptionId, resourceGroupName, providerName, siteName), jsonBody, null, null, null, detectorId, dataSource, timeRange);
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.Statistics + UriElements.StatisticsResource)]
         [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery + UriElements.StatisticsResource)]
         public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string siteName, string detectorId, string invokerId, string dataSource = null, string timeRange = null)
         {
-            return await base.GetSystemInvoker(new ContainerApp(subscriptionId, resourceGroupName, siteName), detectorId, invokerId, dataSource, timeRange);
+            var providerName = GetResourceProviderName(subscriptionId, resourceGroupName);
+            return await base.GetSystemInvoker(new ContainerApp(subscriptionId, resourceGroupName, providerName, siteName), detectorId, invokerId, dataSource, timeRange);
         }
 
         [HttpPost(UriElements.Insights)]
@@ -105,7 +109,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 postBodyString = "";
             }
-            return await base.GetInsights(new ContainerApp(subscriptionId, resourceGroupName, siteName), pesId, supportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
+            var providerName = GetResourceProviderName(subscriptionId, resourceGroupName);
+            return await base.GetInsights(new ContainerApp(subscriptionId, resourceGroupName, providerName, siteName), pesId, supportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
         }
 
         /// <summary>
@@ -128,7 +133,8 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.Gists)]
         public async Task<IActionResult> ListGistsAsync(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticContainerAppData postBody)
         {
-            return await base.ListGists(new ContainerApp(subscriptionId, resourceGroupName, siteName));
+            var providerName = GetResourceProviderName(subscriptionId, resourceGroupName);
+            return await base.ListGists(new ContainerApp(subscriptionId, resourceGroupName, providerName, siteName));
         }
 
         /// <summary>
@@ -143,7 +149,8 @@ namespace Diagnostics.RuntimeHost.Controllers
         [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.Gists + UriElements.GistResource)]
         public async Task<IActionResult> GetGistAsync(string subscriptionId, string resourceGroupName, string siteName, string gistId, [FromBody] DiagnosticContainerAppData postBody, string startTime = null, string endTime = null, string timeGrain = null)
         {
-            return await base.GetGist(new ContainerApp(subscriptionId, resourceGroupName, siteName), gistId, startTime, endTime, timeGrain);
+            var providerName = GetResourceProviderName(subscriptionId, resourceGroupName);
+            return await base.GetGist(new ContainerApp(subscriptionId, resourceGroupName, providerName, siteName), gistId, startTime, endTime, timeGrain);
         }
 
         private static bool IsPostBodyMissing(DiagnosticContainerAppData postBody)
@@ -175,6 +182,17 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             var providerName = (postBody != null && postBody.IsInAppNamespace) ? ResourceProviders.App : ResourceProviders.Web;
             return new ContainerApp(subscriptionId, resourceGroup, providerName, resourceName, postBody!=null? postBody.KubeEnvironmentName: null, postBody!=null?postBody.GeoMasterName:null, postBody != null ? postBody.Fqdn : null, postBody != null ? postBody.Location : null);
+        }
+
+        private string GetResourceProviderName(string subscriptionId, string resourceGroup)
+        {
+            var path = HttpContext.Request.Path.Value;
+            var prefix = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/";
+
+            var providerNameLastIndex = path.IndexOf('/', prefix.Length);
+            var providerName = path.Substring(prefix.Length, providerNameLastIndex - prefix.Length);
+
+            return providerName;
         }
     }
 }
