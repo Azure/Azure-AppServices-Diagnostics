@@ -4,6 +4,7 @@
 // </copyright>
 
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 
@@ -17,12 +18,15 @@ namespace Diagnostics.Logger
     {
         private static readonly string EnvironmentName;
         private static readonly string WebsiteHostName;
+        private static readonly bool _traceOutput;
         private static readonly Lazy<DiagnosticsETWProvider> _instance = new Lazy<DiagnosticsETWProvider>(() => new DiagnosticsETWProvider());
 
         static DiagnosticsETWProvider()
         {
             EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
             WebsiteHostName = Environment.GetEnvironmentVariable("DIAG_HOST");
+
+            _traceOutput = EnvironmentName.Equals("Development", StringComparison.InvariantCultureIgnoreCase);
         }
 
         /// <summary>
@@ -39,7 +43,14 @@ namespace Diagnostics.Logger
         [Event(1000, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogCompilerHostMessage)]
         public void LogCompilerHostMessage(string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(1000, Message, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 1000, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(1000, Message, EnvironmentName, WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -52,14 +63,21 @@ namespace Diagnostics.Logger
         [Event(1001, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogCompilerHostUnhandledException)]
         public void LogCompilerHostUnhandledException(string RequestId, string Source, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 1001, Source: {Source}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 1001,
                 RequestId,
                 Source,
                 ExceptionType,
                 ExceptionDetails,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -75,7 +93,13 @@ namespace Diagnostics.Logger
         [Event(1002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogCompilerHostAPISummary)]
         public void LogCompilerHostAPISummary(string RequestId, string Address, string Verb, int StatusCode, long LatencyInMilliseconds, string StartTime, string EndTime, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 1002, RequestId: {RequestId}, Address: {Address}, Verb: {Verb}, StatusCode: {StatusCode}, LatencyInMilliseconds: {LatencyInMilliseconds}, StartTime: {StartTime}, EndTime: {EndTime}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 1002,
                 RequestId,
                 Address,
@@ -84,8 +108,9 @@ namespace Diagnostics.Logger
                 LatencyInMilliseconds,
                 StartTime,
                 EndTime,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         #endregion Compile Host Events (ID Range : 1000 - 1999)
@@ -99,7 +124,14 @@ namespace Diagnostics.Logger
         [Event(2000, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostMessage)]
         public void LogRuntimeHostMessage(string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(2000, Message, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2000, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(2000, Message, EnvironmentName, WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -115,7 +147,13 @@ namespace Diagnostics.Logger
         [Event(2001, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostUnhandledException)]
         public void LogRuntimeHostUnhandledException(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2001, RequestId: {RequestId}, Source: {Source}, SubscriptionId: {SubscriptionId}, ResourceGroup: {ResourceGroup}, Resource: {Resource}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 2001,
                 RequestId,
                 Source,
@@ -124,8 +162,9 @@ namespace Diagnostics.Logger
                 Resource,
                 ExceptionType,
                 ExceptionDetails,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -146,7 +185,13 @@ namespace Diagnostics.Logger
         [Event(2002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostAPISummary)]
         public void LogRuntimeHostAPISummary(string RequestId, string SubscriptionId, string ResourceGroup, string Resource, string Address, string Verb, string OperationName, int StatusCode, long LatencyInMilliseconds, string StartTime, string EndTime, string Content, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2002, RequestId: {RequestId}, SubscriptionId: {SubscriptionId}, ResourceGroup: {ResourceGroup}, Resource: {Resource}, Address: {Address}, Verb: {Verb}, OperationName: {OperationName}, StatusCode: {StatusCode}, LatencyInMilliseconds: {LatencyInMilliseconds}, StartTime: {StartTime}, EndTime: {EndTime}. Content: {Content}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 2002,
                 RequestId,
                 SubscriptionId,
@@ -160,8 +205,9 @@ namespace Diagnostics.Logger
                 StartTime,
                 EndTime,
                 Content,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -173,13 +219,20 @@ namespace Diagnostics.Logger
         [Event(2003, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRetryAttemptMessage)]
         public void LogRetryAttemptMessage(string RequestId, string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2003, RequestId: {RequestId}, Source: {Source}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 2003,
                 RequestId,
                 Source,
                 Message,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -196,7 +249,13 @@ namespace Diagnostics.Logger
         [Event(2004, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRetryAttemptSummary)]
         public void LogRetryAttemptSummary(string RequestId, string Source, string Message, long LatencyInMilliseconds, string StartTime, string EndTime, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2004, RequestId: {RequestId}, Source: {Source}, Message: {Message}, LatencyInMilliseconds: {LatencyInMilliseconds}, StartTime: {StartTime}, EndTime: {EndTime}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 2004,
                 RequestId,
                 Source,
@@ -206,8 +265,9 @@ namespace Diagnostics.Logger
                 EndTime,
                 ExceptionType,
                 ExceptionDetails,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -223,7 +283,13 @@ namespace Diagnostics.Logger
         [Event(2005, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostInsightsCorrelation, Version = 2)]
         public void LogRuntimeHostInsightCorrelation(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string CorrelationId, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2005, RequestId: {RequestId}, Source: {Source}, SubscriptionId: {SubscriptionId}, ResourceGroup: {ResourceGroup}, Resource: {Resource}, CorrelationId: {CorrelationId}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 2005,
                 RequestId,
                 Source,
@@ -232,8 +298,9 @@ namespace Diagnostics.Logger
                 Resource,
                 CorrelationId,
                 Message,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -249,7 +316,13 @@ namespace Diagnostics.Logger
         [Event(2006, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostHandledException)]
         public void LogRuntimeHostHandledException(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2006, RequestId: {RequestId}, Source: {Source}, SubscriptionId: {SubscriptionId}, ResourceGroup: {ResourceGroup}, Resource: {Resource}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 2006,
                 RequestId,
                 Source,
@@ -258,8 +331,9 @@ namespace Diagnostics.Logger
                 Resource,
                 ExceptionType,
                 ExceptionDetails,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -272,20 +346,33 @@ namespace Diagnostics.Logger
         [Event(2008, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeHostSupportTopicAscInsight)]
         public void LogFullAscInsight(string RequestId, string Source, string Message, string Details, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2008, RequestId: {RequestId}, Source: {Source}, Message: {Message}, Details: {Details}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 2008,
                 RequestId,
                 Source,
                 Message,
                 Details,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         [Event(2009, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDevOpsApiException)]
         public void LogDevOpsApiException(string RequestId, string Source, string Message, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2009, RequestId: {RequestId}, Source: {Source}, Message: {Message}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 2009,
                 RequestId,
                 Source,
@@ -294,6 +381,7 @@ namespace Diagnostics.Logger
                 ExceptionDetails,
                 EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         #endregion Runtime Host Events (ID Range : 2000 - 2499)
@@ -308,7 +396,14 @@ namespace Diagnostics.Logger
         [Event(2500, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogSourceWatcherMessage)]
         public void LogSourceWatcherMessage(string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(2500, Source, Message, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2500, Source: {Source}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(2500, Source, Message, EnvironmentName, WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -319,7 +414,14 @@ namespace Diagnostics.Logger
         [Event(2501, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogSourceWatcherWarning)]
         public void LogSourceWatcherWarning(string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(2501, Source, Message, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2500, Source: {Source}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(2501, Source, Message, EnvironmentName, WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -332,7 +434,14 @@ namespace Diagnostics.Logger
         [Event(2502, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogSourceWatcherException)]
         public void LogSourceWatcherException(string Source, string Message, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(2502, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2500, Source: {Source}, Message: {Message}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(2502, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
+            }
         }
 
         #endregion SourceWatcher Events (ID Range : 2500 - 2599)
@@ -348,7 +457,14 @@ namespace Diagnostics.Logger
         [Event(2600, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogCompilerHostClientMessage)]
         public void LogCompilerHostClientMessage(string RequestId, string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(2600, RequestId, Source, Message, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2600, Source: {Source}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(2600, RequestId, Source, Message, EnvironmentName, WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -362,7 +478,14 @@ namespace Diagnostics.Logger
         [Event(2601, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogCompilerHostClientException)]
         public void LogCompilerHostClientException(string RequestId, string Source, string Message, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(2601, RequestId, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2601, Source: {Source}, Message: {Message}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(2601, RequestId, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -376,7 +499,14 @@ namespace Diagnostics.Logger
         [Event(2602, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogCompilerHostClientWarning)]
         public void LogCompilerHostClientWarning(string RequestId, string Source, string Message, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(2602, RequestId, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 2602, Source: {Source}, Message: {Message}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(2602, RequestId, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
+            }
         }
 
         #endregion Compiler Host Client Events (ID Range: 2600 - 2699)
@@ -392,13 +522,20 @@ namespace Diagnostics.Logger
         [Event(3000, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDataProviderMessage)]
         public void LogDataProviderMessage(string RequestId, string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 3000, Source: {Source}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 3000,
                 RequestId,
                 Source,
                 Message,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -414,7 +551,13 @@ namespace Diagnostics.Logger
         [Event(3001, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDataProviderException)]
         public void LogDataProviderException(string RequestId, string Source, string StartTime, string EndTime, long LatencyInMilliseconds, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 3001, RequestId: {RequestId}, Source: {Source}, StartTime: {StartTime}, EndTime: {EndTime}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 3001,
                 RequestId,
                 Source,
@@ -423,8 +566,9 @@ namespace Diagnostics.Logger
                 LatencyInMilliseconds,
                 ExceptionType,
                 ExceptionDetails,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -438,15 +582,22 @@ namespace Diagnostics.Logger
         [Event(3002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDataProviderOperationSummary)]
         public void LogDataProviderOperationSummary(string RequestId, string Source, string StartTime, string EndTime, long LatencyInMilliseconds, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 3002, RequestId: {RequestId}, Source: {Source}, StartTime: {StartTime}, EndTime: {EndTime}, LatencyInMilliseconds: {LatencyInMilliseconds}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 3002,
                 RequestId,
                 Source,
                 StartTime,
                 EndTime,
                 LatencyInMilliseconds,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -462,7 +613,13 @@ namespace Diagnostics.Logger
         [Event(3003, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogTokenRefreshSummary)]
         public void LogTokenRefreshSummary(string Source, string Message, long LatencyInMilliseconds, string StartTime, string EndTime, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 3003, Source: {Source}, Message: {Message}, LatencyInMilliseconds: {LatencyInMilliseconds}, StartTime: {StartTime}, EndTime: {EndTime}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 3003,
                 Source,
                 Message,
@@ -471,8 +628,9 @@ namespace Diagnostics.Logger
                 EndTime,
                 ExceptionType,
                 ExceptionDetails,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -489,7 +647,13 @@ namespace Diagnostics.Logger
         [Event(3004, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogKustoQueryInformation)]
         public void LogKustoQueryInformation(string Source, string RequestId, string Message, long LatencyInMilliseconds, string Details, string Content, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 3004, Source: {Source}, RequestId: {RequestId}, Message: {Message}, LatencyInMilliseconds: {LatencyInMilliseconds}, Details: {Details}, Content: {Content}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 3004,
                 Source,
                 RequestId,
@@ -499,8 +663,9 @@ namespace Diagnostics.Logger
                 Content,
                 ExceptionType,
                 ExceptionDetails,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -513,14 +678,21 @@ namespace Diagnostics.Logger
         [Event(3005, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogKustoHeartbeatInformation)]
         public void LogKustoHeartbeatInformation(string ActivityId, string Message, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 3005, ActivityId: {ActivityId}, Message: {Message}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 3005,
                 ActivityId,
                 Message,
                 ExceptionType,
                 ExceptionDetails,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         #endregion Data Provider Events (ID Range : 3000 - 3999)
@@ -534,7 +706,14 @@ namespace Diagnostics.Logger
         [Event(4000, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPIMessage)]
         public void LogInternalAPIMessage(string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(4000, Message, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 4000, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(4000, Message, EnvironmentName, WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -546,13 +725,20 @@ namespace Diagnostics.Logger
         [Event(4001, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPIUnhandledException)]
         public void LogInternalAPIUnhandledException(string RequestId, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 4001, RequestId: {RequestId}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 4001,
                 RequestId,
                 ExceptionType,
                 ExceptionDetails,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -568,7 +754,13 @@ namespace Diagnostics.Logger
         [Event(4002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPISummary)]
         public void LogInternalAPISummary(string RequestId, string OperationName, int StatusCode, long LatencyInMilliseconds, string StartTime, string EndTime, string Content, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 4002, RequestId: {RequestId}, OperationName: {OperationName}, StatusCode: {StatusCode}, LatencyInMilliseconds: {LatencyInMilliseconds}, StartTime: {StartTime}, EndTime: {EndTime}, Content: {Content}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 4002,
                 RequestId,
                 OperationName,
@@ -577,8 +769,9 @@ namespace Diagnostics.Logger
                 StartTime,
                 EndTime,
                 Content,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -589,12 +782,19 @@ namespace Diagnostics.Logger
         [Event(4005, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPIInsights, Version = 2)]
         public void LogInternalAPIInsights(string RequestId, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 4005, RequestId: {RequestId}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 4005,
                 RequestId,
                 Message,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -606,13 +806,20 @@ namespace Diagnostics.Logger
         [Event(4006, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPIHandledException)]
         public void LogInternalAPIHandledException(string RequestId, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 4006, RequestId: {RequestId}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 4006,
                 RequestId,
                 ExceptionType,
                 ExceptionDetails,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -626,14 +833,21 @@ namespace Diagnostics.Logger
         [Event(4020, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPITrainingException)]
         public void LogInternalAPITrainingException(string RequestId, string TrainingId, string ProductId, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 4020, RequestId: {RequestId}, TrainingId: {TrainingId}, ProductId: {ProductId}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 4020,
                 TrainingId,
                 ProductId,
                 ExceptionType,
                 ExceptionDetails,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -649,7 +863,13 @@ namespace Diagnostics.Logger
         [Event(4021, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogInternalAPITrainingSummary)]
         public void LogInternalAPITrainingSummary(string RequestId, string TrainingId, string ProductId, long LatencyInMilliseconds, string StartTime, string EndTime, string Content, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 4021, RequestId: {RequestId}, TrainingId: {TrainingId}, ProductId: {ProductId}, LatencyInMilliseconds: {LatencyInMilliseconds}, StartTime: {StartTime}, EndTime: {EndTime}, Content: {Content}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 4021,
                 TrainingId,
                 ProductId,
@@ -657,8 +877,9 @@ namespace Diagnostics.Logger
                 StartTime,
                 EndTime,
                 Content,
-                EnvironmentName, 
+                EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         #endregion Internal AI API Events (ID Range : 4000 - 4199)
@@ -679,7 +900,13 @@ namespace Diagnostics.Logger
         [Event(5000, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage, Version = 2)]
         public void LogRuntimeLogError(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 5000, RequestId: {RequestId}, Source: {Source}, SubscriptionId: {SubscriptionId}, ResourceGroup: {ResourceGroup}, Resource: {Resource}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 5000,
                 RequestId,
                 Source,
@@ -691,6 +918,7 @@ namespace Diagnostics.Logger
                 Message,
                 EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -707,7 +935,13 @@ namespace Diagnostics.Logger
         [Event(5001, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage, Version = 2)]
         public void LogRuntimeLogWarning(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 5001, RequestId: {RequestId}, Source: {Source}, SubscriptionId: {SubscriptionId}, ResourceGroup: {ResourceGroup}, Resource: {Resource}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 5001,
                 RequestId,
                 Source,
@@ -719,6 +953,7 @@ namespace Diagnostics.Logger
                 Message,
                 EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -735,7 +970,13 @@ namespace Diagnostics.Logger
         [Event(5002, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogRuntimeMessage, Version = 2)]
         public void LogRuntimeLogInformation(string RequestId, string Source, string SubscriptionId, string ResourceGroup, string Resource, string ExceptionType, string ExceptionDetails, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 5002, RequestId: {RequestId}, Source: {Source}, SubscriptionId: {SubscriptionId}, ResourceGroup: {ResourceGroup}, Resource: {Resource}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 5002,
                 RequestId,
                 Source,
@@ -747,6 +988,7 @@ namespace Diagnostics.Logger
                 Message,
                 EnvironmentName,
                 WebsiteHostName);
+            }
         }
 
         #endregion
@@ -761,7 +1003,14 @@ namespace Diagnostics.Logger
         [Event(5500, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogAzureStorageMessage)]
         public void LogAzureStorageMessage(string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(5500, Source, Message, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 5500, Source: {Source}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(5500, Source, Message, EnvironmentName, WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -772,7 +1021,14 @@ namespace Diagnostics.Logger
         [Event(5501, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogAzureStorageWarning)]
         public void LogAzureStorageWarning(string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(5501, Source, Message, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 5501, Source: {Source}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(5501, Source, Message, EnvironmentName, WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -785,7 +1041,14 @@ namespace Diagnostics.Logger
         [Event(5502, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogAzureStorageException)]
         public void LogAzureStorageException(string Source, string Message, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(5502, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 5502, Source: {Source}, Message: {Message}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(5502, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
+            }
         }
 
         #endregion AzureStorage Events (ID Range : 5500 - 5599)
@@ -802,7 +1065,14 @@ namespace Diagnostics.Logger
         [Event(5600, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogMonitoringEventMessage)]
         public void LogMonitoringEventMessage(string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(5600, Source, Message, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 5600, Source: {Source}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(5600, Source, Message, EnvironmentName, WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -815,7 +1085,14 @@ namespace Diagnostics.Logger
         [Event(5601, Level = EventLevel.Warning, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogMonitoringEventWarning)]
         public void LogMonitoringEventWarning(string Source, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(5601, Source, Message, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 5601, Source: {Source}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(5601, Source, Message, EnvironmentName, WebsiteHostName);
+            }
         }
 
         /// <summary>
@@ -830,7 +1107,14 @@ namespace Diagnostics.Logger
         [Event(5602, Level = EventLevel.Error, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogMonitoringEventException)]
         public void LogMonitoringEventException(string Source, string Message, string ExceptionType, string ExceptionDetails, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(5602, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 5602, Source: {Source}, Message: {Message}, ExceptionType: {ExceptionType}, ExceptionDetails: {ExceptionDetails}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(5602, Source, Message, ExceptionType, ExceptionDetails, EnvironmentName, WebsiteHostName);
+            }
         }
 
         #endregion
@@ -840,13 +1124,20 @@ namespace Diagnostics.Logger
         [Event(5700, Level = EventLevel.Informational, Channel = EventChannel.Admin, Message = ETWMessageTemplates.LogDeploymentOperationMessage)]
         public void LogDeploymentOperationMessage(string RequestId, string DeploymentId, string Message, string DiagEnvironment = null, string DiagWebsiteHostName = null)
         {
-            WriteDiagnosticsEvent(
+            if (_traceOutput)
+            {
+                Trace.WriteLine($"Event: 5700, RequestId: {RequestId}, DeploymentId: {DeploymentId}, Message: {Message}");
+            }
+            else
+            {
+                WriteDiagnosticsEvent(
                 5700,
                 RequestId,
                 DeploymentId,
                 Message,
                 DiagEnvironment,
                 DiagWebsiteHostName);
+            }
         }
 
         #endregion
