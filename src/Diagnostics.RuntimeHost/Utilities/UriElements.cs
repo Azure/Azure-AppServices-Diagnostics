@@ -11,6 +11,7 @@
         public const string WebResourceRoot = ResourceProvidersRoot + ResourceProviders.Web;
         public const string SitesResource = WebResourceRoot + "/sites/{siteName}";
         public const string ContainerAppResource = WebResourceRoot + "/containerApps/{siteName}";
+        public const string MicrosoftAppContainerAppResource = ResourceProvidersRoot + ResourceProviders.App + "/containerApps/{siteName}";
         public const string HostingEnvironmentResource = WebResourceRoot + "/hostingEnvironments/{hostingEnvironmentName}";
 
         #endregion Microsoft.Web Urls
@@ -80,5 +81,6 @@
         public const string LogicApp = "Microsoft.Logic";
         public const string ApiManagement = "Microsoft.ApiManagement";
         public const string AzureKubernetesService = "Microsoft.ContainerService";
+        public const string App = "Microsoft.App";
     }
 }
