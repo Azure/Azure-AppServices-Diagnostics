@@ -442,9 +442,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 }
                 else if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Delete))
                 {
-                    var detectorId = String.Join(";", Regex.Matches(change.Item.Path, @"\/(.+?)\/")
-                                        .Cast<Match>()
-                                        .Select(m => m.Groups[1].Value));
+                    var detectorId = Path.GetFileNameWithoutExtension(change.Item.Path);
 
                     GitCommit gitCommitDetails = await defaultClient.GetCommitAsync(commitId, repositoryAsync.Id, null, null, tokenSource.Token);
                     // Get the package.json from the parent commit since at this commit, the file doesn't exist.
