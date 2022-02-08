@@ -94,5 +94,13 @@ namespace Diagnostics.RuntimeHost.Controllers
             return Ok(response);
         }
 
+        [HttpGet(UriElements.DevopsPullRequest)]
+        public async Task<IActionResult> GetPullRequestsByResourceProvider(string resourceProviderType)
+        {
+            var response = await _devOpsClient.GetPRListAsync(HttpContext.Request.Headers[RequestIdHeaderName], resourceProviderType);
+            return Ok(response);
+        }
+
+
     }
 }
