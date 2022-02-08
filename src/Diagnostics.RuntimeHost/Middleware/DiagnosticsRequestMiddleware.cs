@@ -140,7 +140,13 @@ namespace Diagnostics.RuntimeHost.Middleware
                 geomasterName = httpContext.Request.Headers[GeomasterNameHeader];
             }
 
-            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault().Any() ? values.FirstOrDefault().Split(new char[] { ',' })[0] : string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName, kustoHeartBeatService, geomasterHostName, geomasterName, null, httpContext.Request.Headers, isInternalClient: isInternalClient));
+            bool hasCustomerConsent = false;
+            if (httpContext.Items.TryGetValue("HAS_CUSTOMER_CONSENT", out var val))
+            {
+                bool.TryParse(val.ToString(), out hasCustomerConsent);
+            }
+
+            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault().Any() ? values.FirstOrDefault().Split(new char[] { ',' })[0] : string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName, kustoHeartBeatService, geomasterHostName, geomasterName, null, httpContext.Request.Headers, isInternalClient: isInternalClient, hasCustomerConsent: hasCustomerConsent));
         }
 
         private void EndRequestHandle(HttpContext httpContext)

@@ -24,6 +24,11 @@ namespace Diagnostics.DataProviders
         public bool IsInternalClient { get; private set; }
 
         /// <summary>
+        /// Set depending on whether customer has granted data permission with the case
+        /// </summary>
+        public bool HasCustomerConsent { get; private set; }
+
+        /// <summary>
         /// Value of x-ms-client-object-id header received for requests coming from 'Diagnose and Solve' and Applens AppId for requests from Applens.
         /// </summary>
         public string clientObjectId { get; private set; }
@@ -38,7 +43,7 @@ namespace Diagnostics.DataProviders
         /// </summary>
         public IHeaderDictionary receivedHeaders { get; private set; }
 
-        public DataProviderContext(DataSourcesConfiguration dataSourceConfiguration, string requestId = null, CancellationToken dataSourceCancellationToken = default(CancellationToken), DateTime queryStartTime = default(DateTime), DateTime queryEndTime = default(DateTime), IWawsObserverTokenService wawsObserverTokenService = null, ISupportBayApiObserverTokenService supportBayApiObserverTokenService = null, string objectId = "", string principalName = "", IKustoHeartBeatService kustoHeartBeatService = null, string geoMasterHostName = null, string geomasterName = null, string cloudDomain = null, IHeaderDictionary incomingHeaders = null, bool isInternalClient = false)
+        public DataProviderContext(DataSourcesConfiguration dataSourceConfiguration, string requestId = null, CancellationToken dataSourceCancellationToken = default(CancellationToken), DateTime queryStartTime = default(DateTime), DateTime queryEndTime = default(DateTime), IWawsObserverTokenService wawsObserverTokenService = null, ISupportBayApiObserverTokenService supportBayApiObserverTokenService = null, string objectId = "", string principalName = "", IKustoHeartBeatService kustoHeartBeatService = null, string geoMasterHostName = null, string geomasterName = null, string cloudDomain = null, IHeaderDictionary incomingHeaders = null, bool isInternalClient = false, bool hasCustomerConsent = false)
         {
             Configuration = dataSourceConfiguration;
             RequestId = requestId ?? Guid.NewGuid().ToString();
@@ -55,6 +60,7 @@ namespace Diagnostics.DataProviders
             CloudDomain = cloudDomain;
             receivedHeaders = incomingHeaders;
             IsInternalClient = isInternalClient;
+            HasCustomerConsent = hasCustomerConsent;
         }
     }
 }

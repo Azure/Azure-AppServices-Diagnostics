@@ -32,8 +32,6 @@ using Diagnostics.Logger;
 using Microsoft.Extensions.Hosting;
 using Diagnostics.RuntimeHost.Services.DiagnosticsTranslator;
 using Diagnostics.RuntimeHost.Services.DevOpsClient;
-using System.Text.Json.Serialization;
-using Diagnostics.ModelsAndUtils.Models;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -65,13 +63,14 @@ namespace Diagnostics.RuntimeHost
             var issuer = config.Issuer;
             var signingKeys = config.SigningKeys;
             // Adding both custom cert auth handler and Azure AAD JWT token handler to support multiple forms of auth.
-            if (Environment.IsProduction() || Environment.IsStaging())
+            if (Environment.IsProduction() || Environment.IsStaging() || Environment.IsDevelopment())
             {
                 services.AddAuthentication().AddCertificateAuth(CertificateAuthDefaults.AuthenticationScheme,
                     options =>
                     {
                         options.AllowedIssuers = Configuration["SecuritySettings:AllowedCertIssuers"].Split("|").Select(p => p.Trim()).ToList();
                         var allowedSubjectNames = Configuration["SecuritySettings:AllowedCertSubjectNames"].Split(",").Select(p => p.Trim()).ToList();
+                        allowedSubjectNames.AddRange(Configuration["SecuritySettings:AdditionalAllowedCertSubjectNames"].Split(",").Select(p => p.Trim()).ToList());
                         options.AllowedSubjectNames = allowedSubjectNames;
                     }).AddJwtBearer("AzureAd", options => {
                     options.TokenValidationParameters = new TokenValidationParameters
@@ -134,24 +133,21 @@ namespace Diagnostics.RuntimeHost
                 MdmCertLoader.Instance.Initialize(Configuration);
                 CompilerHostCertLoader.Instance.Initialize(Configuration);
                 SearchAPICertLoader.Instance.Initialize(Configuration);
-                // Enable App Insights telemetry
-                services.AddApplicationInsightsTelemetry();
             }
 
             services.AddMemoryCache();
+            // Enable App Insights telemetry
+            services.AddApplicationInsightsTelemetry();
             services.AddAppServiceApplicationLogging();
 
             if (Environment.IsDevelopment())
             {
                 services.AddControllers(options =>
                 {
-                    options.Filters.Add<AllowAnonymousFilter>();
-                }).AddJsonOptions(options =>
+                    //options.Filters.Add<AllowAnonymousFilter>();
+                }).AddNewtonsoftJson(options =>
                 {
-                    options.JsonSerializerOptions.WriteIndented = true;
-                    options.JsonSerializerOptions.Converters.Add(new ExceptionConverter());
-                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
-                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<ModelsAndUtils.Models.ResponseExtensions.FormInputBase>());
+                    options.SerializerSettings.Formatting = Formatting.Indented;
                 });
             }
             else
@@ -159,10 +155,10 @@ namespace Diagnostics.RuntimeHost
                 services.AddControllers().AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.WriteIndented = true;
-                    options.JsonSerializerOptions.Converters.Add(new ExceptionConverter());
-                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<Rendering>());
-                    options.JsonSerializerOptions.Converters.Add(new AsRuntimeTypeConverter<ModelsAndUtils.Models.ResponseExtensions.FormInputBase>());
-                });
+                }).AddNewtonsoftJson(options =>
+                {
+                    options.SerializerSettings.Formatting = Formatting.Indented;
+                }); ;
             }
 
             services.AddSingleton<IDataSourcesConfigurationService, DataSourcesConfigurationService>();
@@ -250,6 +246,18 @@ namespace Diagnostics.RuntimeHost
                 CompilerHostTokenService.Instance.Initialize(Configuration);
             }
 
+            if (Configuration.GetValue("Durian:IsEnabled", false))
+            {
+                GraphAPITokenService.Instance.Initialize(Configuration);
+                MsaasTokenService.Instance.Initialize(Configuration);
+                services.AddSingleton<IMsaasHandler, MsaasHandler>();
+                services.AddSingleton<IUserAuthHandler, UserAuthHandler>();
+            }
+            else
+            {
+                services.AddSingleton<IUserAuthHandler, DefaultUserAuthHandler>();
+            }
+
             if (searchApiConfiguration.Enabled || searchApiConfiguration.SearchAPIEnabled)
             {
                 services.AddSingleton<ISearchService, SearchService>();
@@ -303,7 +311,7 @@ namespace Diagnostics.RuntimeHost
             {
                 if (env.IsDevelopment())
                 {
-                    endpoints.MapControllers().WithMetadata(new AllowAnonymousAttribute());
+                    endpoints.MapControllers();//.WithMetadata(new AllowAnonymousAttribute());
                 } else
                 {
                     endpoints.MapControllers();

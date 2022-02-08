@@ -37,4 +37,12 @@
         internal const string GithubBranchKey = "Branch";
         internal const string DestinationScriptsPathKey = "DestinationScriptsPath";
     }
+
+    internal class GraphConstants
+    {
+        internal const string MicrosoftTenantAuthorityUrl = "https://login.windows.net/microsoft.com";
+        internal const int TokenRefreshIntervalInMs = 10 * 60 * 1000;   // 10 minutes
+        internal const string DefaultGraphEndpoint = "https://graph.microsoft.com/";
+        internal const string GraphApiCheckMemberGroupsFormat = "https://graph.microsoft.com/v1.0/users/{0}/checkMemberGroups";
+    }
 }

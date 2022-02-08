@@ -11,6 +11,9 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
 using Diagnostics.Logger;
 using System.Text;
+using Diagnostics.RuntimeHost.Services;
+using Diagnostics.RuntimeHost.Models;
+using Newtonsoft.Json;
 
 namespace Diagnostics.RuntimeHost.Security.CertificateAuth
 {
@@ -19,11 +22,14 @@ namespace Diagnostics.RuntimeHost.Security.CertificateAuth
         public CertificateAuthHandler(IOptionsMonitor<CertificateAuthOptions> options,
             ILoggerFactory logger,
             UrlEncoder encoder,
-            ISystemClock clock) : base(options, logger, encoder, clock)
+            ISystemClock clock, IUserAuthHandler userAuthHandler) : base(options, logger, encoder, clock)
         {
+            UserAuthHandler = userAuthHandler;
         }
 
         public IConfiguration Configuration { get; }
+
+        private IUserAuthHandler UserAuthHandler;
 
         public IEnumerable<string> AllowedCertSubjectNames { get; set; }
 
@@ -72,6 +78,27 @@ namespace Diagnostics.RuntimeHost.Security.CertificateAuth
                             ClientCertificate = certificate,
                             Principal = CreatePrincipal(certificate)
                         };
+                        if (UserAuthHandler.IsEnabled())
+                        {
+                            if (UserAuthHandler.ClientHasDurianEnforced(certificate.GetNameInfo(X509NameType.SimpleName, false)))
+                            {
+                                UserAuthResponse response = await UserAuthHandler.HandleRequirementAsync(certificateValidatedContext.HttpContext);
+                                if (!response.IsSuccess)
+                                {
+                                    var httpResponse = certificateValidatedContext.HttpContext.Response;
+                                    string failureMessage = null;
+                                    httpResponse?.OnStarting(async () =>
+                                    {
+                                        if (response.HttpStatus != null && response.HttpStatus > 0) httpResponse.StatusCode = response.HttpStatus;
+                                        byte[] message = Encoding.ASCII.GetBytes(JsonConvert.SerializeObject(response.AccessResponse));
+                                        await httpResponse.Body.WriteAsync(message, 0, message.Length);
+                                    });
+                                    if (response.HttpStatus == 200) { certificateValidatedContext.Success(); }
+                                    else { certificateValidatedContext.Fail(new Exception(response.AccessResponse.DetailText)); }
+                                    return certificateValidatedContext.Result;
+                                }
+                            }
+                        }
                         certificateValidatedContext.Success();
                         return certificateValidatedContext.Result;
                     }

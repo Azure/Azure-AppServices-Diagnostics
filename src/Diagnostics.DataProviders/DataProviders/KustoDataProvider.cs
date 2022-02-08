@@ -67,7 +67,7 @@ namespace Diagnostics.DataProviders
         private DateTime? _queryStartTime;
         private DateTime? _queryEndTime;
 
-        public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration, string requestId, IKustoHeartBeatService kustoHeartBeat, DateTime? startTime = null, DateTime? endTime = null) : base(cache, configuration)
+        public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration, string requestId, IKustoHeartBeatService kustoHeartBeat, DateTime? startTime = null, DateTime? endTime = null, bool HasCustomerConsent = false) : base(cache, configuration, HasCustomerConsent)
         {
             var publicClouds = new string[] { DataProviderConstants.AzureCloud, DataProviderConstants.AzureCloudAlternativeName };
             _configuration = configuration;
@@ -131,6 +131,7 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId, string operationName)
         {
+            base.EnforceCustomerConsent();
             await AddQueryInformationToMetadata(query: query, cluster: cluster, databaseName:databaseName, operationName:operationName);
             return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(databaseName) ?? databaseName, requestId, operationName, _queryStartTime, _queryEndTime);
         }
