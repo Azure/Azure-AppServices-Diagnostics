@@ -611,6 +611,11 @@ namespace Diagnostics.RuntimeHost.Controllers
                 var matchingDetectors = allDetectors.Where(detector => queryBody.Detectors.Any(x => x == detector.Metadata.Id));
                 return matchingDetectors;
             }
+            else if (queryBody.SapSupportTopicId != null && queryBody.SapSupportTopicId.Length > 0)
+            {
+                var matchingDetectors = allDetectors.Where(detector => detector.Metadata.SupportTopicList.Any(x => x.SapSupportTopicId == queryBody.SapSupportTopicId));
+                return matchingDetectors;
+            }
             else if (queryBody.SupportTopicId != null && queryBody.SupportTopicId.Length > 0)
             {
                 var matchingDetectors = allDetectors.Where(detector => detector.Metadata.SupportTopicList.Any(x => x.Id == queryBody.SupportTopicId));
@@ -626,8 +631,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                 return new List<DiagnosticApiResponse>();
             }
         }
-
-
 
         private async Task<IEnumerable<DiagnosticReportInsight>> GetDiagnosticInsightsFromDetector(RuntimeContext<TResource> context, DiagnosticApiResponse detector, List<DiagnosticApiResponse> detectorsRunning, bool runChildren = false)
         {
@@ -733,7 +736,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
         }
 
-        protected async Task<IActionResult> GetInsights(TResource resource, string pesId, string supportTopicId, string startTime, string endTime, string timeGrain, string supportTopicPath = null, string postBody = null)
+        protected async Task<IActionResult> GetInsights(TResource resource, string pesId, string supportTopicId, string sapPesId, string sapSupportTopicId, string startTime, string endTime, string timeGrain, string supportTopicPath = null, string postBody = null)
         {
             if (supportTopicPath != null)
             {
@@ -743,6 +746,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 {
                     pesId = supportTopicMap.ProductId;
                     supportTopicId = supportTopicMap.SupportTopicId;
+                    sapPesId = supportTopicMap.SapProductId;
+                    sapSupportTopicId = supportTopicMap.SapSupportTopicId;
                 }
             }
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage, true))
@@ -758,12 +763,12 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
 
             supportTopicId = ParseCorrectSupportTopicId(supportTopicId);
-            var supportTopic = new SupportTopic() { Id = supportTopicId, PesId = pesId };
+            var supportTopic = new SupportTopic() { Id = supportTopicId, PesId = pesId, SapProductId = sapPesId, SapSupportTopicId = sapSupportTopicId };
             RuntimeContext<TResource> cxt = PrepareContext(resource, startTimeUtc, endTimeUtc, true, supportTopic, null, postBody);
-            if (supportTopicId == null)
+            if (supportTopicId == null && sapSupportTopicId == null)
             {
                 DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(cxt.OperationContext.RequestId, "GetInsights", cxt.OperationContext.Resource.SubscriptionId,
-                    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, "ASCSupportTopicIdNull", $"Support Topic Id is null or there is no mapping for the Support topic path provided - {supportTopicPath}");
+                    cxt.OperationContext.Resource.ResourceGroup, cxt.OperationContext.Resource.Name, "ASCSupportTopicIdNull", $"Support Topic Id or Sap Support Topic Id is null or there is no mapping for the Support topic path provided - {supportTopicPath}");
             }
             DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId, "AzureSupportCenter", "ASCAdditionalParameters", postBody);
 
@@ -775,8 +780,17 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 allDetectors = (await ListDetectorsInternal(cxt)).Select(detectorResponse => detectorResponse.Metadata);
 
-                var applicableDetectors = allDetectors
+                IEnumerable<Definition> applicableDetectors = null;
+
+                if (sapSupportTopicId != null)
+                {
+                    applicableDetectors = allDetectors
+                    .Where(detector => detector.SupportTopicList.FirstOrDefault(st => st.SapSupportTopicId == sapSupportTopicId) != null);
+                } else if (supportTopicId != null)
+                {
+                    applicableDetectors = allDetectors
                     .Where(detector => detector.SupportTopicList.FirstOrDefault(st => st.Id == supportTopicId) != null);
+                }
 
                 var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => GetInsightsFromDetector(cxt, detector, detectorsRun)));
 

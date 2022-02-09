@@ -78,7 +78,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Insights)]
-        public Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string provider, string resourceTypeName, string resourceName, [FromBody] dynamic postBody, string pesId, string supportTopicId = null, string supportTopic = null, string startTime = null, string endTime = null, string timeGrain = null)
+        public Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string provider, string resourceTypeName, string resourceName, [FromBody] dynamic postBody, string pesId, string supportTopicId = null, string sapPesId = null, string sapSupportTopicId = null, string supportTopic = null, string startTime = null, string endTime = null, string timeGrain = null)
         {
             string postBodyString;
             try
@@ -89,7 +89,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 postBodyString = "";
             }
-            return base.GetInsights(new ArmResource(subscriptionId, resourceGroupName, provider, resourceTypeName, resourceName, GetLocation()), pesId, supportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
+            return base.GetInsights(new ArmResource(subscriptionId, resourceGroupName, provider, resourceTypeName, resourceName, GetLocation()), pesId, supportTopicId, sapPesId, sapSupportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
         }
 
         /// <summary>
