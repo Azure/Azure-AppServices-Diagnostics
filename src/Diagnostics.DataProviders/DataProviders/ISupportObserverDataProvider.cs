@@ -15,7 +15,7 @@ namespace Diagnostics.DataProviders
 
         Task<dynamic> GetSite(string stampName, string siteName, string slotName);
 
-        Task<JArray> GetAdminSitesAsync(string siteName);
+        Task<JArray> GetAdminSitesAsync(string siteName, bool refreshCache = false);
 
         Task<JArray> GetAdminSitesAsync(string siteName, string stampName);
 
