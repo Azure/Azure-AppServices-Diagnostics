@@ -55,7 +55,13 @@ namespace Diagnostics.ModelsAndUtils.Models
             }
         }
 
-        public string Provider { get; set; }
+        public string Provider
+        {
+            get
+            {
+                return "Microsoft.Web";
+            }
+        }
 
         /// <summary>
         /// Name of Resource Type as defined by ARM resource id. Examples: 'sites', 'hostingEnvironments'
@@ -76,11 +82,10 @@ namespace Diagnostics.ModelsAndUtils.Models
             get; set;
         }
 
-        public ContainerApp(string subscriptionId, string resourceGroup, string providerName, string resourceName, string kubeEnvironmentName=null, string geoMasterName=null, string fqdn=null, string location=null, string subLocationPlacementId = null) : base()
+        public ContainerApp(string subscriptionId, string resourceGroup, string resourceName, string kubeEnvironmentName=null, string geoMasterName=null, string fqdn=null, string location=null, string subLocationPlacementId = null) : base()
         {
             this.SubscriptionId = subscriptionId;
             this.ResourceGroup = resourceGroup;
-            this.Provider = providerName;
             this.Name = resourceName;
             this.KubeEnvironmentName = kubeEnvironmentName;
             this.GeoMasterName = geoMasterName;
@@ -96,15 +101,7 @@ namespace Diagnostics.ModelsAndUtils.Models
         /// <returns>True, if resource passes the filter. False otherwise</returns>
         public bool IsApplicable(IResourceFilter filter)
         {
-            // NOTE: Will remove the Microsoft.Web portion after the transition is complete.
-            if (this.Provider.Equals("Microsoft.Web", System.StringComparison.InvariantCultureIgnoreCase))
-            {
-                return base.IsApplicable<ContainerAppFilter>(filter, this.Provider, this.ResourceTypeName);
-            }
-            else
-            {
-                return base.IsApplicable<MicrosoftAppContainerAppFilter>(filter, this.Provider, this.ResourceTypeName);
-            }
+            return base.IsApplicable<ContainerAppFilter>(filter, this.Provider, this.ResourceTypeName);
         }
 
         /// <summary>
