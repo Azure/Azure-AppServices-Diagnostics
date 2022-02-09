@@ -38,19 +38,18 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         public DevOpsClient(IConfiguration config, IStorageService storageServiceRef)
         {
             storageService = storageServiceRef;
-            LoadConfigurations(config);
-            credentials = (VssCredentials)(FederatedCredential)new VssBasicCredential("pat", _accessToken);
-            connection = new VssConnection(new Uri($"https://dev.azure.com/{_organization}"), credentials);
-            defaultClient = connection.GetClient<GitHttpClient>();
-          
-        }
-
-        private void LoadConfigurations(IConfiguration config)
-        {
             _accessToken = config[$"DevOps:PersonalAccessToken"];
             _organization = config[$"DevOps:Organization"];
             _project = config[$"DevOps:Project"];
-            _repoID = config[$"DevOps:RepoID"];
+            _repoID = config[$"DevOps:RepoID"];       
+            credentials = (VssCredentials)(FederatedCredential)new VssBasicCredential("pat", _accessToken);
+            connection = new VssConnection(new Uri($"https://dev.azure.com/{_organization}"), credentials);
+            defaultClient = connection.GetClient<GitHttpClient>();
+            LoadConfigurations(config);
+        }
+
+        private void LoadConfigurations(IConfiguration config)
+        {        
             configDownloadTask = LoadResourceProviderConfigStorage();      
         }
 
