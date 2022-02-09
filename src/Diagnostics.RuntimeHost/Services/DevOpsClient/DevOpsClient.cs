@@ -442,9 +442,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
                 }
                 else if (change.Item.Path.EndsWith(".csx") && (change.ChangeType == VersionControlChangeType.Delete))
                 {
-                    var detectorId = String.Join(";", Regex.Matches(change.Item.Path, @"\/(.+?)\/")
-                                        .Cast<Match>()
-                                        .Select(m => m.Groups[1].Value));
+                    var detectorId = Path.GetFileNameWithoutExtension(change.Item.Path);
 
                     GitCommit gitCommitDetails = await defaultClient.GetCommitAsync(commitId, repositoryAsync.Id, null, null, tokenSource.Token);
                     // Get the package.json from the parent commit since at this commit, the file doesn't exist.
@@ -569,6 +567,22 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         public void Dispose()
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<List<GitPullRequest>> GetPRListAsync(string requestId, string resourceProviderType)
+        {
+            Tuple<GitHttpClient, ResourceProviderRepoConfig> mapping = await GetClientFromMap(resourceProviderType);
+            GitHttpClient gitClient = mapping.Item1;
+            ResourceProviderRepoConfig resourceProviderRepoConfig = mapping.Item2;
+            GitRepository repositoryAsync = await gitClient.GetRepositoryAsync(resourceProviderRepoConfig.Project, resourceProviderRepoConfig.Repository, (object)null);
+
+            GitPullRequestSearchCriteria gitPullRequestSearchCriteria = new GitPullRequestSearchCriteria();
+            gitPullRequestSearchCriteria.IncludeLinks = true;
+            gitPullRequestSearchCriteria.RepositoryId = repositoryAsync.Id;
+
+            List<GitPullRequest> gitPullRequests =  await gitClient.GetPullRequestsAsync(resourceProviderRepoConfig.Project, resourceProviderRepoConfig.Repository, gitPullRequestSearchCriteria );
+            gitPullRequests.ForEach(element => element.RemoteUrl = $"{repositoryAsync.WebUrl}/pullrequest/{element.PullRequestId}");
+            return gitPullRequests;
         }
     }
 }

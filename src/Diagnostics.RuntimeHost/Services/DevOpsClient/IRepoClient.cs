@@ -64,5 +64,13 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// <param name="resourceProviderType">Azure Resource Provider type, eg: Microsoft.Web/sites</param>
         /// <returns>Devops config object</returns>
         Task<ResourceProviderRepoConfig> GetRepoConfigsAsync(string resourceProviderType);
+
+        /// <summary>
+        /// Gets all Pull Requests in the repository
+        /// </summary>
+        /// <param name="requestId">Incoming RequestId</param>
+        /// <param name="resourceUri">Azure Resource Provider</param>
+        /// <returns></returns>
+        Task<List<GitPullRequest>> GetPRListAsync(string requestId, string resourceUri);
     }
 }

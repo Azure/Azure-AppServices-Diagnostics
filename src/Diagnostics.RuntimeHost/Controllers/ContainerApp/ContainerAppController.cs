@@ -12,7 +12,6 @@ using Microsoft.Extensions.Configuration;
 using Diagnostics.DataProviders;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
-using Microsoft.AspNetCore.Http;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -27,7 +26,6 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Query)]
-        [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.Query)]
         public async Task<IActionResult> ExecuteQuery(string subscriptionId, string resourceGroupName, string siteName, [FromBody] CompilationPostBody<DiagnosticContainerAppData> jsonBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form Form = null)
         {
             if (jsonBody == null)
@@ -44,15 +42,12 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors)]
-        [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.Detectors)]
         public async Task<IActionResult> ListDetectors(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticContainerAppData postBody, [FromQuery(Name = "text")] string text = null, [FromQuery] string l = "")
         {
-            var providerName = GetResourceProviderName(subscriptionId, resourceGroupName);
-            return await base.ListDetectors(new ContainerApp(subscriptionId, resourceGroupName, providerName, siteName), text, language: l.ToLower());
+            return await base.ListDetectors(new ContainerApp(subscriptionId, resourceGroupName, siteName), text, language: l.ToLower());
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource)]
-        [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.Detectors + UriElements.DetectorResource)]
         public async Task<IActionResult> GetDetector(string subscriptionId, string resourceGroupName, string siteName, string detectorId, [FromBody] DiagnosticContainerAppData postBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null, [FromQuery] string l = "")
         {
             if (!DateTimeHelper.PrepareStartEndTimeWithTimeGrain(startTime, endTime, timeGrain, out DateTime startTimeUtc, out DateTime endTimeUtc, out TimeSpan timeGrainTimeSpan, out string errorMessage))
@@ -64,7 +59,6 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.DiagnosticReport)]
-        [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.DiagnosticReport)]
         public async Task<IActionResult> DiagnosticReport(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticReportQuery queryBody, string startTime = null, string endTime = null, string timeGrain = null, [FromQuery][ModelBinder(typeof(FormModelBinder))] Form form = null)
         {
             var validateBody = InsightsAPIHelpers.ValidateQueryBody(queryBody);
@@ -81,23 +75,18 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]
-        [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery)]
         public async Task<IActionResult> ExecuteSystemQuery(string subscriptionId, string resourceGroupName, string siteName, [FromBody] CompilationPostBody<DiagnosticContainerAppData> jsonBody, string detectorId, string dataSource = null, string timeRange = null)
         {
-            var providerName = GetResourceProviderName(subscriptionId, resourceGroupName);
-            return await base.ExecuteQuery(new ContainerApp(subscriptionId, resourceGroupName, providerName, siteName), jsonBody, null, null, null, detectorId, dataSource, timeRange);
+            return await base.ExecuteQuery(new ContainerApp(subscriptionId, resourceGroupName, siteName), jsonBody, null, null, null, detectorId, dataSource, timeRange);
         }
 
         [HttpPost(UriElements.Detectors + UriElements.DetectorResource + UriElements.Statistics + UriElements.StatisticsResource)]
-        [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.Detectors + UriElements.DetectorResource + UriElements.StatisticsQuery + UriElements.StatisticsResource)]
         public async Task<IActionResult> GetSystemInvoker(string subscriptionId, string resourceGroupName, string siteName, string detectorId, string invokerId, string dataSource = null, string timeRange = null)
         {
-            var providerName = GetResourceProviderName(subscriptionId, resourceGroupName);
-            return await base.GetSystemInvoker(new ContainerApp(subscriptionId, resourceGroupName, providerName, siteName), detectorId, invokerId, dataSource, timeRange);
+            return await base.GetSystemInvoker(new ContainerApp(subscriptionId, resourceGroupName, siteName), detectorId, invokerId, dataSource, timeRange);
         }
 
         [HttpPost(UriElements.Insights)]
-        [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.Insights)]
         public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string siteName, [FromBody] dynamic postBody, string pesId, string supportTopicId = null, string sapPesId = null, string sapSupportTopicId = null, string supportTopic = null, string startTime = null, string endTime = null, string timeGrain = null)
         {
             string postBodyString;
@@ -109,8 +98,8 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 postBodyString = "";
             }
-            var providerName = GetResourceProviderName(subscriptionId, resourceGroupName);
-            return await base.GetInsights(new ContainerApp(subscriptionId, resourceGroupName, providerName, siteName), pesId, supportTopicId, sapPesId, sapSupportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
+
+            return await base.GetInsights(new ContainerApp(subscriptionId, resourceGroupName, siteName), pesId, supportTopicId, sapPesId, sapSupportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
         }
 
         /// <summary>
@@ -119,7 +108,6 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="pkg">The package.</param>
         /// <returns>Task for publishing package.</returns>
         [HttpPost(UriElements.Publish)]
-        [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.Publish)]
         public async Task<IActionResult> PublishPackageAsync([FromBody] Package pkg)
         {
             return await PublishPackage(pkg);
@@ -130,11 +118,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// </summary>
         /// <returns>Task for listing all gists.</returns>
         [HttpPost(UriElements.Gists)]
-        [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.Gists)]
         public async Task<IActionResult> ListGistsAsync(string subscriptionId, string resourceGroupName, string siteName, [FromBody] DiagnosticContainerAppData postBody)
         {
-            var providerName = GetResourceProviderName(subscriptionId, resourceGroupName);
-            return await base.ListGists(new ContainerApp(subscriptionId, resourceGroupName, providerName, siteName));
+            return await base.ListGists(new ContainerApp(subscriptionId, resourceGroupName, siteName));
         }
 
         /// <summary>
@@ -146,11 +132,9 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="gistId">Gist id.</param>
         /// <returns>Task for listing the gist.</returns>
         [HttpPost(UriElements.Gists + UriElements.GistResource)]
-        [HttpPost("~/" + UriElements.MicrosoftAppContainerAppResource + "/" + UriElements.Gists + UriElements.GistResource)]
         public async Task<IActionResult> GetGistAsync(string subscriptionId, string resourceGroupName, string siteName, string gistId, [FromBody] DiagnosticContainerAppData postBody, string startTime = null, string endTime = null, string timeGrain = null)
         {
-            var providerName = GetResourceProviderName(subscriptionId, resourceGroupName);
-            return await base.GetGist(new ContainerApp(subscriptionId, resourceGroupName, providerName, siteName), gistId, startTime, endTime, timeGrain);
+            return await base.GetGist(new ContainerApp(subscriptionId, resourceGroupName, siteName), gistId, startTime, endTime, timeGrain);
         }
 
         private static bool IsPostBodyMissing(DiagnosticContainerAppData postBody)
@@ -180,19 +164,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 postBody = await GetContainerAppPostBody(subscriptionId, resourceGroup, resourceName);
             }
-            var providerName = (postBody != null && postBody.IsInAppNamespace) ? ResourceProviders.App : ResourceProviders.Web;
-            return new ContainerApp(subscriptionId, resourceGroup, providerName, resourceName, postBody!=null? postBody.KubeEnvironmentName: null, postBody!=null?postBody.GeoMasterName:null, postBody != null ? postBody.Fqdn : null, postBody != null ? postBody.Location : null);
-        }
-
-        private string GetResourceProviderName(string subscriptionId, string resourceGroup)
-        {
-            var path = HttpContext.Request.Path.Value;
-            var prefix = $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/";
-
-            var providerNameLastIndex = path.IndexOf('/', prefix.Length);
-            var providerName = path.Substring(prefix.Length, providerNameLastIndex - prefix.Length);
-
-            return providerName;
+            return new ContainerApp(subscriptionId, resourceGroup, resourceName, postBody!=null? postBody.KubeEnvironmentName: null, postBody!=null?postBody.GeoMasterName:null, postBody != null ? postBody.Fqdn : null, postBody != null ? postBody.Location : null);
         }
     }
 }
