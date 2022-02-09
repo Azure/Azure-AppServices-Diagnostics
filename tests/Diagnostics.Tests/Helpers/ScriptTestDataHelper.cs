@@ -94,7 +94,7 @@ namespace Diagnostics.Tests.Helpers
                 .Replace("<YOUR_CLASS_NAME>", "GistClass");
         }
 
-        public static async Task<string> GetDetectorScriptWithMultipleSupportTopics(Definition def, bool isInternal, SupportTopic topic1, SupportTopic topic2)
+        public static async Task<string> GetDetectorScriptWithMultipleSupportTopics(Definition def, bool isInternal, SupportTopic topic1, SupportTopic topic2, SupportTopic topic3)
         {
             string template = await File.ReadAllTextAsync(@"TestData/TestDetectorWithSupportTopic.csx");
 
@@ -103,8 +103,16 @@ namespace Diagnostics.Tests.Helpers
                 .Replace("<YOUR_ALIAS>", def.Author)
                 .Replace("<SUPPORT_TOPIC_ID_1>", topic1.Id.ToString())
                 .Replace("<SUPPORT_TOPIC_ID_2>", topic2.Id.ToString())
+                .Replace("<SUPPORT_TOPIC_ID_3>", topic3.Id.ToString())
+                .Replace("<SAP_SUPPORT_TOPIC_ID_1>", topic1.SapSupportTopicId.ToString())
+                .Replace("<SAP_SUPPORT_TOPIC_ID_2>", topic2.SapSupportTopicId.ToString())
+                .Replace("<SAP_SUPPORT_TOPIC_ID_3>", topic3.SapSupportTopicId.ToString())
+                .Replace("<SAP_PRODUCT_ID_1>", topic1.SapProductId.ToString())
+                .Replace("<SAP_PRODUCT_ID_2>", topic2.SapProductId.ToString())
+                .Replace("<SAP_PRODUCT_ID_3>", topic3.SapProductId.ToString())
                 .Replace("<PES_ID_1>", topic1.PesId.ToString())
                 .Replace("<PES_ID_2>", topic2.PesId.ToString())
+                .Replace("<PES_ID_3>", topic3.PesId.ToString())
                 .Replace("\"<INTERNAL_FLAG>\"", isInternal ? "true" : "false");
         }
 
