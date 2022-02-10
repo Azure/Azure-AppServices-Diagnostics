@@ -183,12 +183,14 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="postBody">Request post body.</param>
         /// <param name="pesId">Pes id.</param>
         /// <param name="supportTopicId">Supported topic id.</param>
+        /// <param name="sapPesId">Pes id.</param>
+        /// <param name="sapSupportTopicId">Supported topic id.</param>
         /// <param name="startTime">Start time.</param>
         /// <param name="endTime">End time.</param>
         /// <param name="timeGrain">Time grain.</param>
         /// <returns>Task for getting insights.</returns>
         [HttpPost(UriElements.Insights)]
-        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string siteName, [FromBody] dynamic postBody, string pesId = null, string supportTopicId = null, string supportTopic = null, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string siteName, [FromBody] dynamic postBody, string pesId = null, string supportTopicId = null, string sapPesId = null, string sapSupportTopicId = null, string supportTopic = null, string startTime = null, string endTime = null, string timeGrain = null)
         {
             var diagnosticSitePostBody = JsonConvert.DeserializeObject<DiagnosticSiteData>(JsonConvert.SerializeObject(postBody));
             if (IsPostBodyMissing(diagnosticSitePostBody))
@@ -258,7 +260,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 postBodyString = "";
             }
-            return await base.GetInsights(app, pesId, supportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
+            return await base.GetInsights(app, pesId, supportTopicId, sapPesId, sapSupportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
         }
 
         /// <summary>

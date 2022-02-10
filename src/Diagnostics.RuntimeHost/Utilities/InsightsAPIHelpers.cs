@@ -28,6 +28,11 @@ namespace Diagnostics.RuntimeHost.Utilities
                 result.Status = true;
                 return result;
             }
+            if (queryBody.SapSupportTopicId != null && queryBody.SapSupportTopicId.Length > 0)
+            {
+                result.Status = true;
+                return result;
+            }
             if (queryBody.SupportTopicId != null && queryBody.SupportTopicId.Length > 0)
             {
                 result.Status = true;

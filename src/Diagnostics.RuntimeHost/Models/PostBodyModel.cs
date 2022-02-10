@@ -66,6 +66,7 @@ namespace Diagnostics.RuntimeHost.Models
         public string Text { get; set; }
         public List<string> Detectors { get; set; }
         public string SupportTopicId { get; set; }
+        public string SapSupportTopicId { get; set; }
     }
 
     public class BodyValidationResult

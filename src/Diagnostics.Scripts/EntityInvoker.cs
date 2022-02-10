@@ -331,7 +331,7 @@ namespace Diagnostics.Scripts
                     {
                         if (string.IsNullOrWhiteSpace(item.Id))
                         {
-                            throw new ScriptCompilationException("Missing Id from Support Topic Attribute");
+                            throw new ScriptCompilationException("Missing SupportTopicId from Support Topic Attribute");
                         }
 
                         if (string.IsNullOrWhiteSpace(item.PesId))
