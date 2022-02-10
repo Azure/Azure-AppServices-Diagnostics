@@ -23,13 +23,18 @@ namespace Diagnostics.RuntimeHost.Services
     public class SupportTopicModel
     {
         public string SupportTopicId { get; set; }
+        public string SapSupportTopicId { get; set; }
         public string ProductId { get; set; }
+        public string SapProductId { get; set; }
+
         public string SupportTopicPath { get; set; }
 
         public SupportTopicModel(DataRow row)
         {
             SupportTopicId = row["SupportTopicId"].ToString();
             ProductId = row["ProductId"].ToString();
+            SapSupportTopicId = row["SapSupportTopicId"].ToString();
+            SapProductId = row["SapProductId"].ToString();
             SupportTopicPath = row["SupportTopicPath"].ToString();
         }
     }
@@ -48,11 +53,12 @@ namespace Diagnostics.RuntimeHost.Services
         private string GetSupportTopicKustoQuery() {
             string query = $@"ActiveSupportTopicTree
                             | where Timestamp > ago(3d)
-                            | extend SupportTopicId = iff(SupportTopicL3Id != '' and SupportTopicL3Id != ' ', SupportTopicL3Id, SupportTopicL2Id) 
+                            | extend SupportTopicId = iff(SupportTopicL3Id != '' and SupportTopicL3Id != ' ', SupportTopicL3Id, SupportTopicL2Id)
                             | where SupportTopicId != ''
-                            | summarize by ProductId, SupportTopicId, ProductName, SupportTopicL2Name, SupportTopicL3Name                            
+                            | extend SapSupportTopicId = iff(isempty( SapSupportTopicL3Id), SapSupportTopicL2Id, SapSupportTopicL3Id)
+                            | summarize by ProductId, SupportTopicId, ProductName, SupportTopicL2Name, SupportTopicL3Name, SapSupportTopicId, SapProductId
                             | extend SupportTopicPath = iff(SupportTopicL3Name != '' and SupportTopicL3Name != ' ', strcat(ProductName, '\\', SupportTopicL2Name,'\\', SupportTopicL3Name), strcat(ProductName, '\\', SupportTopicL2Name))
-                            | project ProductId, SupportTopicId, SupportTopicPath";
+                            | project ProductId, SapProductId, SupportTopicId, SapSupportTopicId, SupportTopicPath";
 
             return query;
         }
@@ -70,7 +76,9 @@ namespace Diagnostics.RuntimeHost.Services
                 supportTopicTable.Columns.Add("SupportTopicId", typeof(string));
                 supportTopicTable.Columns.Add("ProductId", typeof(string));
                 supportTopicTable.Columns.Add("SupportTopicPath", typeof(string));
-                
+                supportTopicTable.Columns.Add("SapProductId", typeof(string));
+                supportTopicTable.Columns.Add("SapSupportTopicId", typeof(string));
+
                 var supportTopicList = _configuration.GetSection("SupportTopicMap").GetChildren();
                 if(supportTopicList.Any() == true)
                 {
@@ -79,9 +87,11 @@ namespace Diagnostics.RuntimeHost.Services
                         string supportTopicId = supportTopicEntry.GetSection("SupportTopicId").Value;
                         string productId = supportTopicEntry.GetSection("ProductId").Value;
                         string supportTopicPath = supportTopicEntry.GetSection("supportTopicPath").Value;
-                        if(!string.IsNullOrWhiteSpace(supportTopicId) && !string.IsNullOrWhiteSpace(productId) && !string.IsNullOrWhiteSpace(supportTopicPath) )
+                        string sapProductId = supportTopicEntry.GetSection("SapProductId").Value;
+                        string sapSupportTopicId = supportTopicEntry.GetSection("SapSupportTopicId").Value;
+                        if (!string.IsNullOrWhiteSpace(supportTopicId) && !string.IsNullOrWhiteSpace(productId) && !string.IsNullOrWhiteSpace(supportTopicPath) && !string.IsNullOrWhiteSpace(sapProductId) && !string.IsNullOrWhiteSpace(sapSupportTopicId))
                         {
-                            supportTopicTable.Rows.Add(supportTopicId, productId, supportTopicPath);
+                            supportTopicTable.Rows.Add(supportTopicId, productId, supportTopicPath, sapProductId, sapSupportTopicId);
                         }
                     }
                 }

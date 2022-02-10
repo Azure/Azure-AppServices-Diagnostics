@@ -15,13 +15,23 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         public string Id;
 
         /// <summary>
+        /// Sap Support Topic Id
+        /// </summary>
+        public string SapSupportTopicId;
+
+        /// <summary>
+        /// Sap product Id
+        /// </summary>
+        public string SapProductId;
+
+        /// <summary>
         /// Unique resource Id.
         /// </summary>
         public string PesId;
 
         public bool Equals(SupportTopic other)
         {
-            return (this.Id == other.Id && this.PesId == other.PesId);
+            return ((this.Id == other.Id && this.PesId == other.PesId) || (this.SapSupportTopicId == other.SapSupportTopicId && this.SapProductId == other.SapProductId));
         }
     }
 
@@ -43,6 +53,16 @@ namespace Diagnostics.ModelsAndUtils.Attributes
         /// </summary>
         public string PesId { get; set; }
 
+        /// <summary>
+        /// Sap Support Topic Id
+        /// </summary>
+        public string SapSupportTopicId { get; set; }
+
+        /// <summary>
+        /// Sap product Id
+        /// </summary>
+        public string SapProductId { get; set; }
+
         public SupportTopicSTJCompat(SupportTopic st)
         {
             if (st == null)
@@ -51,7 +71,9 @@ namespace Diagnostics.ModelsAndUtils.Attributes
             }
 
             this.Id = st.Id;
-            this.PesId = st.Id;
+            this.PesId = st.PesId;
+            this.SapSupportTopicId = st.SapSupportTopicId;
+            this.SapProductId = st.SapProductId;
         }
     }
 }
