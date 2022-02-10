@@ -82,9 +82,11 @@ namespace Diagnostics.Tests.ScriptsTests
 
             SupportTopic topic1 = new SupportTopic() { Id = "1234", PesId = "14878" };
             SupportTopic topic2 = new SupportTopic() { Id = "5678", PesId = "14878" };
+            SupportTopic topic3 = new SupportTopic() { Id = "5678", PesId = "14878", SapSupportTopicId = "22f427b1-2ef1-3b71-0082-e2a6f3805280", SapProductId = "272fd66a-e8b1-260f-0066-01caae8895cf" };
+
 
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
-            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScriptWithMultipleSupportTopics(definitonAttribute, false, topic1, topic2);
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScriptWithMultipleSupportTopics(definitonAttribute, false, topic1, topic2, topic3);
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {
@@ -93,6 +95,7 @@ namespace Diagnostics.Tests.ScriptsTests
                 Assert.True(invoker.IsCompilationSuccessful);
                 Assert.Contains<SupportTopic>(topic1, invoker.EntryPointDefinitionAttribute.SupportTopicList);
                 Assert.Contains<SupportTopic>(topic2, invoker.EntryPointDefinitionAttribute.SupportTopicList);
+                Assert.Contains<SupportTopic>(topic3, invoker.EntryPointDefinitionAttribute.SupportTopicList);
             }
         }
 
@@ -110,9 +113,39 @@ namespace Diagnostics.Tests.ScriptsTests
 
             SupportTopic topic1 = new SupportTopic() { Id = supportTopicId, PesId = pesId };
             SupportTopic topic2 = new SupportTopic() { Id = "5678", PesId = "14878" };
+            SupportTopic topic3 = new SupportTopic() { Id = "1234", PesId = "14878" };
 
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
-            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScriptWithMultipleSupportTopics(definitonAttribute, isInternal, topic1, topic2);
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScriptWithMultipleSupportTopics(definitonAttribute, isInternal, topic1, topic2, topic3);
+
+            using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
+            {
+                await invoker.InitializeEntryPointAsync();
+
+                Assert.False(invoker.IsCompilationSuccessful);
+                Assert.NotEmpty(invoker.CompilationOutput);
+            }
+        }
+
+
+        [Theory]
+        [InlineData("d4e5a23b-45f1-e516-36c7-80ef5201d700", "", false)]
+        [InlineData("", "272fd66a-e8b1-260f-0066-01caae8895cf", false)]
+        public async void EntityInvoker_InvalidSapSupportTopicId(string sapSupportTopicId, string sapProductId, bool isInternal)
+        {
+            Definition definitonAttribute = new Definition()
+            {
+                Id = "TestId",
+                Name = "Test",
+                Author = "User"
+            };
+
+            SupportTopic topic1 = new SupportTopic() { SapSupportTopicId = sapSupportTopicId, SapProductId = sapProductId };
+            SupportTopic topic2 = new SupportTopic() { SapSupportTopicId = "d40f17bb-8b19-117c-f69a-d1be4187f657", SapProductId = "272fd66a-e8b1-260f-0066-01caae8895cf" };
+            SupportTopic topic3 = new SupportTopic() { SapSupportTopicId = "22f427b1-2ef1-3b71-0082-e2a6f3805280", SapProductId = "272fd66a-e8b1-260f-0066-01caae8895cf" };
+
+            EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();
+            metadata.ScriptText = await ScriptTestDataHelper.GetDetectorScriptWithMultipleSupportTopics(definitonAttribute, isInternal, topic1, topic2, topic3);
 
             using (EntityInvoker invoker = new EntityInvoker(metadata, ScriptHelper.GetFrameworkReferences(), ScriptHelper.GetFrameworkImports()))
             {

@@ -66,6 +66,7 @@ namespace Diagnostics.RuntimeHost.Models
         public string Text { get; set; }
         public List<string> Detectors { get; set; }
         public string SupportTopicId { get; set; }
+        public string SapSupportTopicId { get; set; }
     }
 
     public class BodyValidationResult
@@ -86,6 +87,5 @@ namespace Diagnostics.RuntimeHost.Models
         public string GeoMasterName { get; set; }
         public string ServiceAddress { get; set; }
         public string Kind { get; set; }
-        public bool IsInAppNamespace { get; set; }
     }
 }
