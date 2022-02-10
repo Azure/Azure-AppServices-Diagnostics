@@ -183,6 +183,8 @@ namespace Diagnostics.RuntimeHost.Controllers
         /// <param name="postBody">Request post body.</param>
         /// <param name="pesId">Pes id.</param>
         /// <param name="supportTopicId">Supported topic id.</param>
+        /// <param name="sapPesId">Pes id.</param>
+        /// <param name="sapSupportTopicId">Supported topic id.</param>
         /// <param name="startTime">Start time.</param>
         /// <param name="endTime">End time.</param>
         /// <param name="timeGrain">Time grain.</param>

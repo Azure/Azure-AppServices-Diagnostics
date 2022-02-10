@@ -82,7 +82,7 @@ namespace Diagnostics.Tests.ScriptsTests
 
             SupportTopic topic1 = new SupportTopic() { Id = "1234", PesId = "14878" };
             SupportTopic topic2 = new SupportTopic() { Id = "5678", PesId = "14878" };
-            SupportTopic topic3 = new SupportTopic() { SapSupportTopicId = "22f427b1-2ef1-3b71-0082-e2a6f3805280", SapProductId = "272fd66a-e8b1-260f-0066-01caae8895cf" };
+            SupportTopic topic3 = new SupportTopic() { Id = "5678", PesId = "14878", SapSupportTopicId = "22f427b1-2ef1-3b71-0082-e2a6f3805280", SapProductId = "272fd66a-e8b1-260f-0066-01caae8895cf" };
 
 
             EntityMetadata metadata = ScriptTestDataHelper.GetRandomMetadata();

@@ -329,14 +329,14 @@ namespace Diagnostics.Scripts
                 {
                     this._entryPointDefinitionAttribute.SupportTopicList.ToList().ForEach(item =>
                     {
-                        if (string.IsNullOrWhiteSpace(item.Id) || string.IsNullOrWhiteSpace(item.SapSupportTopicId))
+                        if (string.IsNullOrWhiteSpace(item.Id))
                         {
-                            throw new ScriptCompilationException("Missing SupportTopicId or SapSupportTopicId from Support Topic Attribute");
+                            throw new ScriptCompilationException("Missing SupportTopicId from Support Topic Attribute");
                         }
 
-                        if (string.IsNullOrWhiteSpace(item.PesId) || string.IsNullOrWhiteSpace(item.SapProductId))
+                        if (string.IsNullOrWhiteSpace(item.PesId))
                         {
-                            throw new ScriptCompilationException("Missing PesId or SapProductId from Support Topic Attribute");
+                            throw new ScriptCompilationException("Missing PesId from Support Topic Attribute");
                         }
                     });
 

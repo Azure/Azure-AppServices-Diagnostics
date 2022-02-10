@@ -31,7 +31,7 @@ namespace Diagnostics.ModelsAndUtils.Attributes
 
         public bool Equals(SupportTopic other)
         {
-            return (this.Id == other.Id && this.PesId == other.PesId || this.SapSupportTopicId == other.SapSupportTopicId && this.SapProductId == other.SapProductId);
+            return ((this.Id == other.Id && this.PesId == other.PesId) || (this.SapSupportTopicId == other.SapSupportTopicId && this.SapProductId == other.SapProductId));
         }
     }
 
