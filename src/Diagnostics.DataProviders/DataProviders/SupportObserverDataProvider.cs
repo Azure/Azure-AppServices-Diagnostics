@@ -287,8 +287,6 @@ namespace Diagnostics.DataProviders
                         break;
                     }
 
-
-
                     var stampNameObjects = objects.Where(x => x.ContainsKey("StampName") && !string.IsNullOrWhiteSpace(x["StampName"].ToString()));
                     if (stampNameObjects.Any())
                     {
