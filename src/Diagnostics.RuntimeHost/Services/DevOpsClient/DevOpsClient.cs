@@ -102,7 +102,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             }
             return new ResourceProviderRepoConfig
             {
-                ResourceProvider = resourceProvider,
+                ResourceProvider = "",
                 AutoMerge = false,
                 FolderPath = defaultPath,
                 Organization = _organization,
