@@ -87,5 +87,6 @@ namespace Diagnostics.RuntimeHost.Models
         public string GeoMasterName { get; set; }
         public string ServiceAddress { get; set; }
         public string Kind { get; set; }
+        public bool IsInAppNamespace { get; set; }
     }
 }
