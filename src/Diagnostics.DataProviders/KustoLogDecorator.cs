@@ -20,7 +20,12 @@ namespace Diagnostics.DataProviders
 
         public Task<DataTable> ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName)
         {
-            return MakeDependencyCall(DataProvider.ExecuteQueryOnAllAppAppServiceClusters(query, operationName));
+            return MakeDependencyCall(DataProvider.ExecuteQueryOnAllAppServiceClusters(query, operationName));
+        }
+
+        public Task<DataTable> ExecuteQueryOnAllAppServiceClusters(string query, string operationName)
+        {
+            return MakeDependencyCall(DataProvider.ExecuteQueryOnAllAppServiceClusters(query, operationName));
         }
 
         public Task<DataTable> ExecuteQueryOnFewAppServiceClusters(List<string> appServiceClusterNames, string query, string operationName)
