@@ -6,4 +6,11 @@
         {
         }
     }
+
+    public class MicrosoftAppContainerAppFilter : ResourceFilterBase
+    {
+        public MicrosoftAppContainerAppFilter(bool internalOnly = true) : base(ResourceType.ContainerApp, internalOnly)
+        {
+        }
+    }
 }
