@@ -30,12 +30,12 @@ namespace Diagnostics.DataProviders
                 JsonConvert.DeserializeObject<TObject>(response);
         }
 
-        public override async Task<JArray> GetAdminSitesAsync(string siteName)
+        public override async Task<JArray> GetAdminSitesAsync(string siteName, bool refreshCache = false)
         {
             if (string.IsNullOrWhiteSpace(siteName))
                 throw new ArgumentNullException(nameof(siteName));
 
-            var path = $"sites/{siteName}/adminsites";
+            var path = $"sites/{siteName}/adminsites?refreshCache={refreshCache}";
 
             return await DeserializeResponseAsync<JArray>(path);
         }
@@ -236,37 +236,77 @@ namespace Diagnostics.DataProviders
                 throw new ArgumentNullException(nameof(resourceGroupName));
 
             JArray siteObjects = null;
-            try
+            string stampName = null;
+            bool shouldRetry = false;
+            bool retried = false;
+            do
             {
-                siteObjects = await GetAdminSitesAsync(siteName);
-                
-            }
-            catch (HttpRequestException e)
-            {
-                if (!e.Message.Contains("404"))
+                try
                 {
-                    // swallow 404 exception here
-                    throw;
+                    try
+                    {
+                        if (shouldRetry)
+                        {
+                            shouldRetry = false;
+                            retried = true;
+                            siteObjects = await GetAdminSitesAsync(siteName, refreshCache: true);
+                        }
+                        else
+                        {
+                            siteObjects = await GetAdminSitesAsync(siteName);
+                        }
+
+                    }
+                    catch (HttpRequestException e)
+                    {
+                        if (!e.Message.Contains("404"))
+                        {
+                            // swallow 404 exception here
+                            throw;
+                        }
+                    }
+
+                    if (siteObjects == null || !siteObjects.Any())
+                        throw new Exception($"Could not get admin sites for site {siteName}");
+
+                    var icic = StringComparison.InvariantCultureIgnoreCase;
+                    var objects = siteObjects.Select(x => (JObject)x)
+                        .Where(x => x.ContainsKey("Subscription") && x["Subscription"].ToString().Equals(subscriptionId, icic))
+                        .Where(x => x.ContainsKey("ResourceGroupName") && x["ResourceGroupName"].ToString().Equals(resourceGroupName, icic));
+
+                    if (!objects.Any())
+                    {
+                        shouldRetry = !retried;
+                        throw new Exception($"Admin Sites response did not contain the site: {subscriptionId}/{resourceGroupName}/{siteName}. Admin Sites response: {siteObjects}");
+                    }
+
+                    var internalStampObjects = objects.Where(x => x.ContainsKey("InternalStampName") && !string.IsNullOrWhiteSpace(x["InternalStampName"].ToString()));
+                    if (internalStampObjects.Any())
+                    {
+                        stampName = internalStampObjects.First()["InternalStampName"].ToString();
+                        break;
+                    }
+
+                    var stampNameObjects = objects.Where(x => x.ContainsKey("StampName") && !string.IsNullOrWhiteSpace(x["StampName"].ToString()));
+                    if (stampNameObjects.Any())
+                    {
+                        stampName = stampNameObjects.First()["StampName"].ToString();
+                        break;
+                    }
+
+                    throw new Exception($"Admin Sites response did not contain stamp name for site {siteName}. Admin Sites response: {siteObjects}");
+                }
+                catch (Exception)
+                {
+                    if (!shouldRetry)
+                    {
+                        throw;
+                    }
                 }
             }
+            while (shouldRetry);
 
-            if (siteObjects == null || !siteObjects.Any())
-                throw new Exception($"Could not get admin sites for site {siteName}");
-
-            var icic = StringComparison.InvariantCultureIgnoreCase;
-            var objects = siteObjects.Select(x => (JObject)x)
-                .Where(x => x.ContainsKey("Subscription") && x["Subscription"].ToString().Equals(subscriptionId, icic))
-                .Where(x => x.ContainsKey("ResourceGroupName") && x["ResourceGroupName"].ToString().Equals(resourceGroupName, icic));
-
-            var internalStampObjects = objects.Where(x => x.ContainsKey("InternalStampName") && !string.IsNullOrWhiteSpace(x["InternalStampName"].ToString()));
-            if (internalStampObjects.Any())
-                return internalStampObjects.First()["InternalStampName"].ToString();
-
-            var stampNameObjects = objects.Where(x => x.ContainsKey("StampName") && !string.IsNullOrWhiteSpace(x["StampName"].ToString()));
-            if (stampNameObjects.Any())
-                return stampNameObjects.First()["StampName"].ToString();
-
-            throw new Exception($"Admin Sites response did not contain stamp name for site {siteName}. Admin Sites response: {siteObjects}");
+            return stampName;
         }
 
         public override async Task<dynamic> GetHostNames(string stampName, string siteName)
