@@ -173,7 +173,7 @@ namespace Diagnostics.DataProviders
             return new MockHttpClient();
         }
 
-        public override Task<JArray> GetAdminSitesAsync(string siteName)
+        public override Task<JArray> GetAdminSitesAsync(string siteName, bool refreshCache = false)
         {
             throw new NotImplementedException();
         }
