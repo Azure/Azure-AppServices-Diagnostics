@@ -23,8 +23,8 @@ namespace Diagnostics.Logger
 
         static DiagnosticsETWProvider()
         {
-            EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            WebsiteHostName = Environment.GetEnvironmentVariable("DIAG_HOST");
+            EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown";
+            WebsiteHostName = Environment.GetEnvironmentVariable("DIAG_HOST") ?? "Unknown";
 
             _traceOutput = EnvironmentName.Equals("Development", StringComparison.InvariantCultureIgnoreCase);
         }
