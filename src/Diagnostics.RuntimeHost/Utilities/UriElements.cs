@@ -67,6 +67,7 @@
         public const string DevOpsGetCode = "getCode";
         public const string DevOpsGetBranches = "getBranches";
         public const string DevOpsConfig = "devopsConfig";
+        public const string DevopsPullRequest = "devopsPullRequests";
         #endregion
     }
 

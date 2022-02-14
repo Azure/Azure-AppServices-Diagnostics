@@ -29,6 +29,11 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return null;
         }
 
+        public Task<List<GitPullRequest>> GetPRListAsync(string requestId, string resourceUri)
+        {
+            return null;
+        }
+
         public Task<ResourceProviderRepoConfig> GetRepoConfigsAsync(string resourceProviderType)
         {
             return null;

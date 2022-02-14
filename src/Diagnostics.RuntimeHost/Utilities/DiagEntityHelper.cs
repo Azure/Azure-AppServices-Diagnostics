@@ -77,11 +77,6 @@ namespace Diagnostics.RuntimeHost.Utilities
                         detectorPackage.ResourceProvider = "Microsoft.Web";
                         detectorPackage.ResourceType = "containerApps";
                     }
-                    else if (invoker.ResourceFilter is MicrosoftAppContainerAppFilter)
-                    {
-                        detectorPackage.ResourceProvider = "Microsoft.App";
-                        detectorPackage.ResourceType = "containerApps";
-                    }
                     else if (invoker.ResourceFilter is LogicAppFilter)
                     {
                         detectorPackage.ResourceProvider = "Microsoft.Logic";

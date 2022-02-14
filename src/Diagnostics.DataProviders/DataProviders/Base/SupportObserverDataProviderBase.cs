@@ -283,7 +283,7 @@ namespace Diagnostics.DataProviders
 
         public abstract Task<dynamic> GetSitesInServerFarmAsync(string subscriptionId, string serverFarmName);
         
-        public abstract Task<JArray> GetAdminSitesAsync(string siteName);
+        public abstract Task<JArray> GetAdminSitesAsync(string siteName, bool refreshCache = false);
 
         public abstract Task<JArray> GetAdminSitesAsync(string siteName, string stampName);
 

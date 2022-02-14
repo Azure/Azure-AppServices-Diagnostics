@@ -99,7 +99,7 @@ namespace Diagnostics.RuntimeHost.Controllers
         }
 
         [HttpPost(UriElements.Insights)]
-        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, [FromBody] dynamic postBody, string pesId, string supportTopicId = null, string supportTopic = null, string startTime = null, string endTime = null, string timeGrain = null)
+        public async Task<IActionResult> GetInsights(string subscriptionId, string resourceGroupName, string hostingEnvironmentName, [FromBody] dynamic postBody, string pesId, string supportTopicId = null, string sapPesId = null, string sapSupportTopicId = null, string supportTopic = null, string startTime = null, string endTime = null, string timeGrain = null)
         {
             DiagnosticStampData diagnosticPostBody = JsonConvert.DeserializeObject<DiagnosticStampData>(JsonConvert.SerializeObject(postBody));
             if (diagnosticPostBody == null)
@@ -129,7 +129,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 postBodyString = "";
             }
-            return await base.GetInsights(ase, pesId, supportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
+            return await base.GetInsights(ase, pesId, supportTopicId, sapPesId, sapSupportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
         }
 
         /// <summary>
