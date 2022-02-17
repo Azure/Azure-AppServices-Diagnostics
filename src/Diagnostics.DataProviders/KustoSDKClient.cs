@@ -100,8 +100,9 @@ namespace Diagnostics.DataProviders
                 timeTakenStopWatch.Start();
                 var kustoClient = Client(cluster, database);
                 Task<IDataReader> kustoTask = null;
+                var maxOfMinExtentsCreationTime = DateTime.Parse("2022-01-15 05:49:34.2932869Z");
 
-                if (_config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters))
+                if (startTime > maxOfMinExtentsCreationTime && _config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters))
                 {
                     if (query != _config.HeartBeatQuery)
                     {

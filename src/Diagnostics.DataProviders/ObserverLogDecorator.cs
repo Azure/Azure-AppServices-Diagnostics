@@ -122,9 +122,9 @@ namespace Diagnostics.DataProviders
 			return MakeDependencyCall(DataProvider.ExecuteSqlQueryAsync(cloudServiceName, query));
 		}
 
-        public Task<JArray> GetAdminSitesAsync(string siteName)
+        public Task<JArray> GetAdminSitesAsync(string siteName, bool refreshCache = true)
         {
-            return MakeDependencyCall(DataProvider.GetAdminSitesAsync(siteName));
+            return MakeDependencyCall(DataProvider.GetAdminSitesAsync(siteName, refreshCache));
         }
 
         public Task<JArray> GetAdminSitesAsync(string siteName, string stampName)
