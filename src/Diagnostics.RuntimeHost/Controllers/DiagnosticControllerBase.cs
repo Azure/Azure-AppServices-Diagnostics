@@ -772,7 +772,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId, "AzureSupportCenter", "ASCAdditionalParameters", postBody);
 
-            List<AzureSupportCenterInsight> insights = null;
+            List<AzureSupportCenterInsight> insights = new List<AzureSupportCenterInsight>();
             string error = null;
             List<Definition> detectorsRun = new List<Definition>();
             IEnumerable<Definition> allDetectors = null;
@@ -813,13 +813,38 @@ namespace Diagnostics.RuntimeHost.Controllers
                 defaultInsightReturned = true;
                 insights.Add(AzureSupportCenterInsightUtilites.CreateDefaultInsight(cxt.OperationContext, detectorsRun));
             }
+            else
+            {
+                //No detectors run and hence no insights were generated.
+                if (detectorsRun.Any())
+                {
+                    DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId,
+                       "AzureSupportCenter", "GetInsights", $"No detectors executed. No insight generated.");
+                }
+            }
 
             var defaultDetector = allDetectors.FirstOrDefault(detector => detector.Id.StartsWith("default_asc_insights_", StringComparison.InvariantCultureIgnoreCase));
             if (defaultDetector != null)
             {
                 var defaultDetectorInsights = await GetInsightsFromDetector(cxt, defaultDetector, new List<Definition>());
-                defaultInsightReturned = defaultDetectorInsights.Any();
-                insights.AddRange(defaultDetectorInsights);
+                if (defaultDetectorInsights != null)
+                {
+                    defaultInsightReturned = defaultDetectorInsights.Any();
+                    insights.AddRange(defaultDetectorInsights);
+                }
+                else
+                {
+                    DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId, 
+                        "AzureSupportCenter", "DefaultASCDetector", 
+                        $"DefaultDetectorId:{defaultDetector?.Id??"NoDefaultDetector"};DefaultInsightsCount:{defaultDetectorInsights?.Count()??0}");
+                }
+            }
+
+            //There were no insights generated even after trying to execute a default detector
+            if(!insights.Any())
+            {
+                defaultInsightReturned = true;
+                insights.Add(AzureSupportCenterInsightUtilites.CreateDefaultInsight(cxt.OperationContext, detectorsRun));
             }
 
             var insightInfo = new
