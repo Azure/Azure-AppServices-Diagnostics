@@ -47,6 +47,7 @@ namespace Diagnostics.ModelsAndUtils.Models.Storage
         public string TargetBranch { get; set; }
         public string Title { get; set; }
         public string ResourceUri { get; set; }
+        public string Description { get; set; }
     }
 
     public class DevOpsPushChangeRequest : IRequestBodyBase

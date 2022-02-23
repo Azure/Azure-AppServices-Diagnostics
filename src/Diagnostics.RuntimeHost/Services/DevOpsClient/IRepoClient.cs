@@ -17,8 +17,9 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// <param name="sourceBranch"></param>
         /// <param name="targetBranch"></param>
         /// <param name="title"></param>
+        /// <param name="description">Optional PR description</param>
         /// <returns></returns>
-        Task<(GitPullRequest, GitRepository)> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId);
+        Task<(GitPullRequest, GitRepository)> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId, string description = "");
 
         /// <summary>
         /// makes a commit with your changes
