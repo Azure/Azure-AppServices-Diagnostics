@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Primitives;
+using System.Linq;
 
 namespace Diagnostics.RuntimeHost.Controllers
 {
@@ -85,9 +87,23 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 postBodyString = JsonConvert.SerializeObject(postBody.Parameters);
             }
-            catch (RuntimeBinderException)
+            catch (RuntimeBinderException rex)
             {
                 postBodyString = "";
+
+                string requestId = string.Empty;
+                if (Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values) && values != default(StringValues) && values.Count > 0)
+                {
+                    requestId = values.FirstOrDefault().Split(new char[] { ',' })[0] ?? string.Empty;
+                }
+                Logger.DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(
+                            requestId,
+                            $"{nameof(SitesController)}.{nameof(GetInsights)}",
+                            subscriptionId,
+                            resourceGroupName,
+                            resourceName,
+                            "PostBodyEmptyForGetInsightsRequestFromASC",
+                            $"Error trying to serialize post body sent from ASC. Detailed exception message : {rex.Message}");
             }
             return base.GetInsights(new ArmResource(subscriptionId, resourceGroupName, provider, resourceTypeName, resourceName, GetLocation()), pesId, supportTopicId, sapPesId, sapSupportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
         }
