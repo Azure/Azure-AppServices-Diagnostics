@@ -791,10 +791,12 @@ namespace Diagnostics.RuntimeHost.Controllers
                     applicableDetectors = allDetectors
                     .Where(detector => detector.SupportTopicList.FirstOrDefault(st => st.Id == supportTopicId) != null);
                 }
-
-                var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => GetInsightsFromDetector(cxt, detector, detectorsRun)));
-
-                insights = insightGroups.Where(group => group != null).SelectMany(group => group).ToList();
+                if(applicableDetectors != null)
+                {
+                    var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => GetInsightsFromDetector(cxt, detector, detectorsRun)));
+                    insights = insightGroups.Where(group => group != null).SelectMany(group => group).ToList();
+                }
+                
             }
             catch (Exception ex)
             {
