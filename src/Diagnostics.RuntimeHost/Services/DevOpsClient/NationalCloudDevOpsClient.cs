@@ -39,7 +39,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return null;
         }
 
-        public Task<(GitPullRequest, GitRepository)> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId)
+        public Task<(GitPullRequest, GitRepository)> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId, string description = "")
         {
             return null;
         }

@@ -225,7 +225,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return dictionary[requestId + "--result"];
         }
 
-        public async Task<(GitPullRequest, GitRepository)> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId)
+        public async Task<(GitPullRequest, GitRepository)> MakePullRequestAsync(string sourceBranch, string targetBranch, string title, string resourceUri, string requestId, string description = "")
         {
             dictionary.TryAdd(requestId + "--pr", new GitPullRequest());
             dictionary.TryAdd(requestId + "--result", null);
@@ -235,6 +235,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             dictionary[requestId + "--pr"].SourceRefName = dictionary[requestId + "--source"];
             dictionary[requestId + "--pr"].TargetRefName = dictionary[requestId + "--target"];
             dictionary[requestId + "--pr"].Title = title;
+            dictionary[requestId + "--pr"].Description = description;
             await configDownloadTask;
             ResourceProviderRepoConfig resourceProviderRepoConfig = await GetConfigByResourceUri(resourceUri);
             try

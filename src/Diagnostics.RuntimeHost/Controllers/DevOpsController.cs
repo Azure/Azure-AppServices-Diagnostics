@@ -34,7 +34,8 @@ namespace Diagnostics.RuntimeHost.Controllers
                 pullRequest.TargetBranch,
                 pullRequest.Title,
                 pullRequest.ResourceUri,
-                this.HttpContext.Request.Headers[RequestIdHeaderName]).ConfigureAwait(false);
+                this.HttpContext.Request.Headers[RequestIdHeaderName],
+                string.IsNullOrEmpty(pullRequest.Description) ? "" : pullRequest.Description).ConfigureAwait(false);
 
             return Ok(response);
         }
