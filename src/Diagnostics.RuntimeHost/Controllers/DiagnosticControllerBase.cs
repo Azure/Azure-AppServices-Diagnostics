@@ -772,7 +772,7 @@ namespace Diagnostics.RuntimeHost.Controllers
             }
             DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId, "AzureSupportCenter", "ASCAdditionalParameters", postBody);
 
-            List<AzureSupportCenterInsight> insights = null;
+            List<AzureSupportCenterInsight> insights = new List<AzureSupportCenterInsight>();
             string error = null;
             List<Definition> detectorsRun = new List<Definition>();
             IEnumerable<Definition> allDetectors = null;
@@ -791,10 +791,12 @@ namespace Diagnostics.RuntimeHost.Controllers
                     applicableDetectors = allDetectors
                     .Where(detector => detector.SupportTopicList.FirstOrDefault(st => st.Id == supportTopicId) != null);
                 }
-
-                var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => GetInsightsFromDetector(cxt, detector, detectorsRun)));
-
-                insights = insightGroups.Where(group => group != null).SelectMany(group => group).ToList();
+                if(applicableDetectors != null)
+                {
+                    var insightGroups = await Task.WhenAll(applicableDetectors.Select(detector => GetInsightsFromDetector(cxt, detector, detectorsRun)));
+                    insights = insightGroups.Where(group => group != null).SelectMany(group => group).ToList();
+                }
+                
             }
             catch (Exception ex)
             {
@@ -808,18 +810,47 @@ namespace Diagnostics.RuntimeHost.Controllers
             bool defaultInsightReturned = false;
 
             // Detectors Ran but no insights
-            if (!insights.Any() && detectorsRun.Any())
+            if (!insights.Any() && detectorsRun!=null && detectorsRun.Any())
             {
                 defaultInsightReturned = true;
                 insights.Add(AzureSupportCenterInsightUtilites.CreateDefaultInsight(cxt.OperationContext, detectorsRun));
+            }
+            else
+            {
+                //No detectors run and hence no insights were generated.
+                if (detectorsRun == null || detectorsRun.Count() < 0)
+                {
+                    DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId,
+                       "AzureSupportCenter", "GetInsights", $"No detectors executed. No insight generated.");
+                }
             }
 
             var defaultDetector = allDetectors.FirstOrDefault(detector => detector.Id.StartsWith("default_asc_insights_", StringComparison.InvariantCultureIgnoreCase));
             if (defaultDetector != null)
             {
                 var defaultDetectorInsights = await GetInsightsFromDetector(cxt, defaultDetector, new List<Definition>());
-                defaultInsightReturned = defaultDetectorInsights.Any();
-                insights.AddRange(defaultDetectorInsights);
+                if (defaultDetectorInsights != null)
+                {
+                    defaultInsightReturned = defaultDetectorInsights.Any();
+                    insights.AddRange(defaultDetectorInsights);
+                }
+                else
+                {
+                    DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId, 
+                        "AzureSupportCenter", "DefaultASCDetector", 
+                        $"DefaultDetectorId:{defaultDetector?.Id??"NoDefaultDetector"};DefaultInsightsCount:{defaultDetectorInsights?.Count()??0}");
+                }
+            }
+
+            //There were no insights generated even after trying to execute a default detector
+            if (!insights.Any())
+            {
+                defaultInsightReturned = true;
+                insights.Add(AzureSupportCenterInsightUtilites.CreateDefaultInsight(cxt.OperationContext, detectorsRun));
+
+                DiagnosticsETWProvider.Instance.LogFullAscInsight(cxt.OperationContext.RequestId,
+                        "AzureSupportCenter", "DefaultASCDetector",
+                        $"DefaultDetectorId:{defaultDetector?.Id ?? "NoDefaultDetector"};detectorsRun is {(detectorsRun == null ? string.Empty : "not")} null");
             }
 
             var insightInfo = new
@@ -1232,6 +1263,11 @@ namespace Diagnostics.RuntimeHost.Controllers
                 if (fullResponse != null)
                 {
                     response = fullResponse.Item1;
+                }
+                else
+                {
+                    DiagnosticsETWProvider.Instance.LogRuntimeLogWarning(context.OperationContext.RequestId, "GetInsightsFromDetector", context.OperationContext.Resource.SubscriptionId,
+                    context.OperationContext.Resource.ResourceGroup, context.OperationContext.Resource.Name, string.Empty, string.Empty, $"{detector.Id} returned null response.");
                 }
             }
             catch (Exception ex)
