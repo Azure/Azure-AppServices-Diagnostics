@@ -20,6 +20,7 @@ namespace Diagnostics.DataProviders
         public ILogAnalyticsDataProvider K8SELogAnalytics;
         public Func<MdmDataSource, IMdmDataProvider> Mdm;
         public Func<GenericMdmDataProviderConfiguration, IMdmDataProvider> MdmGeneric;
+        public IHttpDataProvider Http;
 
         private readonly List<LogDecoratorBase> _dataProviderList = new List<LogDecoratorBase>();
 
@@ -64,6 +65,8 @@ namespace Diagnostics.DataProviders
             {
                 return GetOrAddDataProvider(new MdmLogDecorator(context, new MdmDataProvider(_cache, new GenericMdmDataProviderConfigurationWrapper(config), context.RequestId, context.receivedHeaders)));
             };
+
+            Http = GetOrAddDataProvider(new HttpDataProviderLogDecorator(context, new HttpDataProvider(_cache, context.Configuration.HttpDataProviderConfiguration, context)));
         }
 
         private T GetOrAddDataProvider<T>(T dataProvider) where T : LogDecoratorBase

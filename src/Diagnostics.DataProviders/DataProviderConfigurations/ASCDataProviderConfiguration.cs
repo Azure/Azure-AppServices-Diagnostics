@@ -63,5 +63,9 @@ namespace Diagnostics.DataProviders.DataProviderConfigurations
         /// </summary>
         [ConfigurationName("DiagAscHeader")]
         public string DiagAscHeader { get; set; }
+
+        [ConfigurationName("TokenRequestorCertSubjectName")]
+        [Required]
+        public string TokenRequestorCertSubjectName { get; set; }
     }
 }

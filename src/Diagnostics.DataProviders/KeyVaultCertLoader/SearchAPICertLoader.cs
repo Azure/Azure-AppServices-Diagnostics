@@ -1,17 +1,19 @@
 ﻿using System;
 using Microsoft.Extensions.Configuration;
 using Diagnostics.DataProviders.KeyVaultCertLoader;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Diagnostics.DataProviders
 {
-    public class SearchAPICertLoader: CertLoaderBase
+    public class SearchAPICertLoader
     {
         private static readonly Lazy<SearchAPICertLoader> _instance = new Lazy<SearchAPICertLoader>(() => new SearchAPICertLoader());
 
         public static SearchAPICertLoader Instance => _instance.Value;
 
-        protected override string Thumbprint { get; set; }
-        protected override string SubjectName { get; set; }
+        protected string Thumbprint { get; set; }
+        protected string SubjectName { get; set; }
+        public X509Certificate2 Cert { get; private set; }
 
         public void Initialize(IConfiguration configuration)
         {
@@ -19,7 +21,7 @@ namespace Diagnostics.DataProviders
             {
                 Thumbprint = configuration["SearchAPI:CertThumbprint"];
                 SubjectName = configuration["SearchAPI:CertSubjectName"];
-                LoadCertFromAppService();
+                Cert = !string.IsNullOrEmpty(SubjectName) ? GenericCertLoader.Instance.GetCertBySubjectName(SubjectName) : GenericCertLoader.Instance.GetCertByThumbprint(Thumbprint);
             }
         }
       

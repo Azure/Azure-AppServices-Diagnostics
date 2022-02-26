@@ -34,6 +34,7 @@ using Diagnostics.RuntimeHost.Services.DiagnosticsTranslator;
 using Diagnostics.RuntimeHost.Services.DevOpsClient;
 using System.Text.Json.Serialization;
 using Diagnostics.ModelsAndUtils.Models;
+using Diagnostics.DataProviders.KeyVaultCertLoader;
 
 namespace Diagnostics.RuntimeHost
 {
@@ -131,9 +132,11 @@ namespace Diagnostics.RuntimeHost
                                             .Build();
                 });
             }
+
+            GenericCertLoader.Instance.Initialize();
+
             if (!Environment.IsDevelopment())
             {
-                GeoCertLoader.Instance.Initialize(Configuration);
                 MdmCertLoader.Instance.Initialize(Configuration);
                 CompilerHostCertLoader.Instance.Initialize(Configuration);
                 SearchAPICertLoader.Instance.Initialize(Configuration);
@@ -242,6 +245,8 @@ namespace Diagnostics.RuntimeHost
             var observerServicePoint = ServicePointManager.FindServicePoint(new Uri(dataSourcesConfigService.Config.SupportObserverConfiguration.Endpoint));
             observerServicePoint.ConnectionLeaseTimeout = 60 * 1000;
 
+            TokenRequestorFromPFXService.Instance.Initialize(dataSourcesConfigService.Config);
+
             if (Configuration.GetValue("K8SELogAnalytics:Enabled", true))
             {
                 K8SELogAnalyticsTokenService.Instance.Initialize(dataSourcesConfigService.Config.K8SELogAnalyticsConfiguration);
@@ -250,11 +255,6 @@ namespace Diagnostics.RuntimeHost
             if (Configuration.GetValue("ChangeAnalysis:Enabled", true))
             {
                 ChangeAnalysisTokenService.Instance.Initialize(dataSourcesConfigService.Config.ChangeAnalysisDataProviderConfiguration);
-            }
-
-            if (Configuration.GetValue("AzureSupportCenter:Enabled", true))
-            {
-                AscTokenService.Instance.Initialize(dataSourcesConfigService.Config.AscDataProviderConfiguration);
             }
 
             if (Configuration.GetValue("CompilerHost:Enabled", true))
