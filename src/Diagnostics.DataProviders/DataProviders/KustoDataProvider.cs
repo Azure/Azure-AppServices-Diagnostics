@@ -66,8 +66,17 @@ namespace Diagnostics.DataProviders
         private IKustoMap _kustoMap;
         private DateTime? _queryStartTime;
         private DateTime? _queryEndTime;
+        private string _detectorId;
+        private int unnamedOperationCount = 0;
 
-        public KustoDataProvider(OperationDataCache cache, KustoDataProviderConfiguration configuration, string requestId, IKustoHeartBeatService kustoHeartBeat, DateTime? startTime = null, DateTime? endTime = null) : base(cache, configuration)
+        public KustoDataProvider(
+            OperationDataCache cache, 
+            KustoDataProviderConfiguration configuration, 
+            string requestId, 
+            IKustoHeartBeatService kustoHeartBeat, 
+            DateTime? startTime = null, 
+            DateTime? endTime = null,
+            string detectorId = null) : base(cache, configuration)
         {
             var publicClouds = new string[] { DataProviderConstants.AzureCloud, DataProviderConstants.AzureCloudAlternativeName };
             _configuration = configuration;
@@ -77,6 +86,7 @@ namespace Diagnostics.DataProviders
             _kustoMap = new NullableKustoMap();
             _queryStartTime = startTime;
             _queryEndTime = endTime;
+            _detectorId = detectorId;
 
             if (publicClouds.Any(s => configuration.CloudDomain.Equals(s, StringComparison.CurrentCultureIgnoreCase)))
             {
@@ -131,14 +141,32 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId, string operationName)
         {
-            await AddQueryInformationToMetadata(query: query, cluster: cluster, databaseName:databaseName, operationName:operationName);
+            return await ExecuteClusterQuery(query, cluster, databaseName, requestId, operationName, true);
+        }
+
+        private async Task<DataTable> ExecuteClusterQuery(string query, string cluster, string databaseName, string requestId, string operationName, bool addMetaData)
+        {
+            operationName = operationName ?? GenerateOperationName();
+            if (addMetaData)
+            {
+                await AddQueryInformationToMetadata(query: query, cluster: cluster, databaseName: databaseName, operationName: operationName);
+            }
             return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(databaseName) ?? databaseName, requestId, operationName, _queryStartTime, _queryEndTime);
         }
 
         public async Task<DataTable> ExecuteQuery(string query, string stampName, string requestId = null, string operationName = null)
         {
+            return await ExecuteQuery(query, stampName, requestId, operationName, true);
+        }
+
+        private async Task<DataTable> ExecuteQuery(string query, string stampName, string requestId, string operationName, bool addMetaData)
+        {
+            operationName = operationName ?? GenerateOperationName();
             var cluster = await GetClusterNameFromStamp(stampName);
-            await AddQueryInformationToMetadata(query:query, cluster:cluster, operationName:operationName);
+            if (addMetaData)
+            {
+                await AddQueryInformationToMetadata(query: query, cluster: cluster, operationName: operationName);
+            }
             return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName, _queryStartTime, _queryEndTime);
         }
 
@@ -352,14 +380,31 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteQueryOnHighPerfClusterWithFallback(string aggQuery, string fallbackQuery, string stampName, string requestId = null, string operationName = null) 
         {
-            string cluster = await GetAggHighPerfClusterNameByStampAsync(stampName);
-            if (string.IsNullOrWhiteSpace(cluster))
+            operationName = operationName ?? GenerateOperationName();
+            string highPerfCluster = await GetAggHighPerfClusterNameByStampAsync(stampName);
+            string cluster = await GetClusterNameFromStamp(stampName);
+            await AddQueryInformationToMetadata(query: fallbackQuery, cluster: cluster, operationName: operationName + " (fallback)");
+
+            if (string.IsNullOrWhiteSpace(highPerfCluster))
             {
-                return await ExecuteQuery(fallbackQuery, stampName, requestId, operationName);
+                return await ExecuteQuery(fallbackQuery, stampName, requestId, operationName, addMetaData: false);
             }
             else
             {
-                return await ExecuteClusterQuery(aggQuery, cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName);
+                return await ExecuteClusterQuery(aggQuery, highPerfCluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName, addMetaData: false);
+            }
+        }
+
+
+        private string GenerateOperationName()
+        {
+            if (_detectorId != null)
+            {
+                return _detectorId + $"_{unnamedOperationCount++}";
+            }
+            else 
+            {
+                return null;
             }
         }
     }
