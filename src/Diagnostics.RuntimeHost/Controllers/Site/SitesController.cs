@@ -256,9 +256,23 @@ namespace Diagnostics.RuntimeHost.Controllers
             {
                 postBodyString = JsonConvert.SerializeObject(postBody.Parameters);
             }
-            catch (RuntimeBinderException)
+            catch (RuntimeBinderException rex)
             {
                 postBodyString = "";
+
+                string requestId = string.Empty;
+                if (Request.Headers.TryGetValue(HeaderConstants.RequestIdHeaderName, out StringValues values) && values != default(StringValues) && values.Count > 0)
+                {
+                    requestId = values.FirstOrDefault().Split(new char[] { ',' })[0] ?? string.Empty;
+                }
+                Logger.DiagnosticsETWProvider.Instance.LogRuntimeHostHandledException(
+                            requestId,
+                            $"{nameof(SitesController)}.{nameof(GetInsights)}",
+                            subscriptionId,
+                            resourceGroupName,
+                            siteName,
+                            "PostBodyEmptyForGetInsightsRequestFromASC",
+                            $"Error trying to serialize post body sent from ASC. Detailed exception message : {rex.Message}");
             }
             return await base.GetInsights(app, pesId, supportTopicId, sapPesId, sapSupportTopicId, startTime, endTime, timeGrain, supportTopic, postBodyString);
         }

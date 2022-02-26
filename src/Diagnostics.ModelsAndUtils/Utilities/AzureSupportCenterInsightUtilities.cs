@@ -85,16 +85,26 @@ namespace Diagnostics.ModelsAndUtils.Utilities
         public static AzureSupportCenterInsight CreateDefaultInsight<TResource>(OperationContext<TResource> context, List<Definition> detectorsRun)
             where TResource : IResource
         {
-            var description = new StringBuilder();
-            description.AppendLine("The following detector(s) were run but no insights were found:");
-            description.AppendLine();
-            foreach (var detector in detectorsRun)
-            {
-                description.AppendLine($"* {detector.Name}");
-            }
-            description.AppendLine();
 
-            var applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/{context.Resource.Provider}/{context.Resource.ResourceTypeName}/{context.Resource.Name}/detectors/{detectorsRun.FirstOrDefault().Id}?startTime={context.StartTime}&endTime={context.EndTime}";
+            string applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/{context.Resource.Provider}/{context.Resource.ResourceTypeName}/{context.Resource.Name}?startTime={context.StartTime}&endTime={context.EndTime}";
+
+            var description = new StringBuilder();
+            if (detectorsRun?.Count > 0)
+            {
+                description.AppendLine("The following detector(s) were run but no insights were found:");
+                description.AppendLine();
+                foreach (var detector in detectorsRun)
+                {
+                    description.AppendLine($"* {detector.Name}");
+                }
+                description.AppendLine();
+
+                applensPath = $"subscriptions/{context.Resource.SubscriptionId}/resourceGroups/{context.Resource.ResourceGroup}/providers/{context.Resource.Provider}/{context.Resource.ResourceTypeName}/{context.Resource.Name}/detectors/{detectorsRun.FirstOrDefault().Id}?startTime={context.StartTime}&endTime={context.EndTime}";
+            }
+            else
+            {
+                description.AppendLine("No matching detector found for this support topic.");
+            }
 
             var supportCenterInsight = new AzureSupportCenterInsight()
             {
