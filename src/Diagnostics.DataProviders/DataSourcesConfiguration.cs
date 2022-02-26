@@ -25,5 +25,7 @@ namespace Diagnostics.DataProviders
         public NetworkingMdmDataProviderConfiguration NetworkingMdmConfiguration { get; set; }
 
         public SearchServiceProviderConfiguration SearchServiceProviderConfiguration { get; set; }
+
+        public HttpDataProviderConfiguration HttpDataProviderConfiguration { get; set; }
     }
 }

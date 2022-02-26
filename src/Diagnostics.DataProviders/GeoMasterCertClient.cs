@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
+using Diagnostics.DataProviders.KeyVaultCertLoader;
 using Diagnostics.Logger;
 using Microsoft.Extensions.Configuration;
 
@@ -48,7 +49,7 @@ namespace Diagnostics.DataProviders
 
             if (_geoMasterCertificate == null)
             {
-                _geoMasterCertificate = GeoCertLoader.Instance.Cert;
+                _geoMasterCertificate = !string.IsNullOrWhiteSpace(configuration.GeoCertSubjectName) ? GenericCertLoader.Instance.GetCertBySubjectName(configuration.GeoCertSubjectName) : null;
             }
 
             if (_geoMasterCertificate != null)

@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using Diagnostics.DataProviders.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
+using Diagnostics.DataProviders.KeyVaultCertLoader;
 
 namespace Diagnostics.DataProviders
 {
@@ -24,7 +25,7 @@ namespace Diagnostics.DataProviders
         private readonly KustoDataProviderConfiguration _config;
         private string _requestId;
         private string _kustoApiQueryEndpoint;
-        private string _appKey;
+        private string _tokenRequestorCertSubjectName;
         private string _clientId;
         private string _aadAuthority;
         private static ConcurrentDictionary<Tuple<string, string>, ICslQueryProvider> QueryProviderMapping;
@@ -34,6 +35,11 @@ namespace Diagnostics.DataProviders
         /// Failover cluster mapping
         /// </summary>
         private ConcurrentDictionary<string, string> FailoverClusterMapping { get; set; }
+
+        private string GetClientIdentifyingName()
+        {
+            return $"{System.Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME") ?? "LocalMachine"}|{System.Environment.GetEnvironmentVariable("COMPUTERNAME") ?? System.Environment.MachineName}";
+        }
 
         public KustoSDKClient(KustoDataProviderConfiguration config, string requestId)
         {
@@ -45,7 +51,7 @@ namespace Diagnostics.DataProviders
             _config = config;
             _requestId = requestId;
             _kustoApiQueryEndpoint = config.KustoApiEndpoint + ":443";
-            _appKey = config.AppKey;
+            _tokenRequestorCertSubjectName = config.TokenRequestorCertSubjectName;
             _clientId = config.ClientId;
             _aadAuthority = config.AADAuthority;
             FailoverClusterMapping = config.FailoverClusterNameCollection;
@@ -63,19 +69,17 @@ namespace Diagnostics.DataProviders
             {
                 KustoConnectionStringBuilder connectionStringBuilder = new KustoConnectionStringBuilder(_kustoApiQueryEndpoint.Replace("{cluster}", cluster), database)
                 {
-                    FederatedSecurity = true,
+                    Authority = _aadAuthority,
                     ApplicationClientId = _clientId,
-                    ApplicationKey = _appKey,
-                    Authority = _aadAuthority
-                };
+                    ApplicationNameForTracing = GetClientIdentifyingName()
+                }.WithAadApplicationSubjectAndIssuerAuthentication(_clientId, GenericCertLoader.Instance.GetCertBySubjectName(_tokenRequestorCertSubjectName).Subject, GenericCertLoader.Instance.GetCertBySubjectName(_tokenRequestorCertSubjectName).IssuerName.Name, _aadAuthority);
 
                 var queryProvider = Kusto.Data.Net.Client.KustoClientFactory.CreateCslQueryProvider(connectionStringBuilder);
-                if(!QueryProviderMapping.TryAdd(key, queryProvider))
+                if (!QueryProviderMapping.TryAdd(key, queryProvider))
                 {
                     queryProvider.Dispose();
                 }
             }
-
             return QueryProviderMapping[key];
         }
 
@@ -86,8 +90,8 @@ namespace Diagnostics.DataProviders
             ClientRequestProperties clientRequestProperties = new ClientRequestProperties();
             var kustoClientId = $"Diagnostics.{operationName ?? "Query"};{_requestId};{startTime?.ToString() ?? "UnknownStartTime"};{endTime?.ToString() ?? "UnknownEndTime"}##{0}_{Guid.NewGuid().ToString()}";
             clientRequestProperties.ClientRequestId = kustoClientId;
-            clientRequestProperties.SetOption("servertimeout", new TimeSpan(0,0,timeoutSeconds));
-            if(cluster.StartsWith("waws",StringComparison.OrdinalIgnoreCase) && !cluster.Contains("diagleader", StringComparison.OrdinalIgnoreCase))
+            clientRequestProperties.SetOption("servertimeout", new TimeSpan(0, 0, timeoutSeconds));
+            if (cluster.StartsWith("waws", StringComparison.OrdinalIgnoreCase) && !cluster.Contains("diagleader", StringComparison.OrdinalIgnoreCase))
             {
                 clientRequestProperties.SetOption(ClientRequestProperties.OptionQueryConsistency, ClientRequestProperties.OptionQueryConsistency_Weak);
             }
@@ -98,10 +102,7 @@ namespace Diagnostics.DataProviders
                 Task<IDataReader> kustoTask = null;
                 var maxOfMinExtentsCreationTime = DateTime.Parse("2022-01-15 05:49:34.2932869Z");
 
-                if (
-                    startTime > maxOfMinExtentsCreationTime && 
-                    _config.QueryShadowingClusterMapping != null && 
-                    _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters))
+                if (startTime > maxOfMinExtentsCreationTime && _config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters))
                 {
                     if (query != _config.HeartBeatQuery)
                     {
@@ -143,7 +144,7 @@ namespace Diagnostics.DataProviders
                     }
                 }
 
-                if(kustoTask == null)
+                if (kustoTask == null)
                 {
                     kustoTask = kustoClient.ExecuteQueryAsync(database, query, clientRequestProperties);
                 }
@@ -282,7 +283,7 @@ namespace Diagnostics.DataProviders
             try
             {
                 var encodedQuery = await EncodeQueryAsBase64UrlAsync(query);
-                if(FailoverClusterMapping.ContainsKey(cluster))
+                if (FailoverClusterMapping.ContainsKey(cluster))
                 {
                     cluster = FailoverClusterMapping[cluster];
                 }
@@ -379,7 +380,6 @@ namespace Diagnostics.DataProviders
             {
                 backupCluster = _config.WawsPrimaryToDiagLeaderClusterMapping[cluster];
             }
-
             return backupCluster;
         }
 

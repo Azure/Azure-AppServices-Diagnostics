@@ -234,6 +234,11 @@ namespace Diagnostics.DataProviders
 
         public async Task<DataTable> ExecuteQueryOnAllAppAppServiceClusters(string query, string operationName)
         {
+            return await ExecuteQueryOnAllAppServiceClusters(query, operationName);
+        }
+
+        public async Task<DataTable> ExecuteQueryOnAllAppServiceClusters(string query, string operationName)
+        {
             if (string.IsNullOrWhiteSpace(operationName))
             {
                 throw new ArgumentNullException(nameof(operationName), "OperationName cannot be empty. Please supply a name to identify the query.");

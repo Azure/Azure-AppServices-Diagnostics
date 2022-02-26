@@ -21,11 +21,11 @@ namespace Diagnostics.DataProviders
         public string ClientId { get; set; }
 
         /// <summary>
-        /// App Key
+        /// Subject name of the certificate that will be sent to AAD for token acquisition.
         /// </summary>
-        [ConfigurationName("AppKey")]
+        [ConfigurationName("TokenRequestorCertSubjectName")]
         [Required]
-        public string AppKey { get; set; }
+        public string TokenRequestorCertSubjectName { get; set; }
 
         /// <summary>
         /// DB Name
