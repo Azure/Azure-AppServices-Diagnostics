@@ -137,9 +137,19 @@ namespace Diagnostics.RuntimeHost
 
             if (!Environment.IsDevelopment())
             {
-                MdmCertLoader.Instance.Initialize(Configuration);
-                CompilerHostCertLoader.Instance.Initialize(Configuration);
-                SearchAPICertLoader.Instance.Initialize(Configuration);
+                if (Configuration.GetValue("Mdm:Enabled", true))
+                {
+                    MdmCertLoader.Instance.Initialize(Configuration);
+                }
+                if (Configuration.GetValue("CompilerHost:Enabled", true))
+                {
+                    CompilerHostCertLoader.Instance.Initialize(Configuration);
+                }
+                if (Configuration.GetValue("SearchAPI:Enabled", true))
+                {
+                    SearchAPICertLoader.Instance.Initialize(Configuration);
+                }
+
                 // Enable App Insights telemetry
                 services.AddApplicationInsightsTelemetry();
             }
