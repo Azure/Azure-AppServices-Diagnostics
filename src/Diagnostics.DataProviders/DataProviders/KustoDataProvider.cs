@@ -405,7 +405,7 @@ namespace Diagnostics.DataProviders
         {
             if (_detectorId != null)
             {
-                return _detectorId + $"_{unnamedOperationCount++}";
+                return _detectorId + $".unnamedQuery{unnamedOperationCount++}";
             }
             else 
             {
