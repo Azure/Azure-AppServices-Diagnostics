@@ -14,7 +14,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return null;
         }
 
-        public Task<object> GetFileContentAsync(string filePathInRepo, string resourceUri, string requestId, string branch = null)
+        public Task<object> GetFileContentAsync(string filePathInRepo, string resourceUri, string requestId, string branch = null, string resourceProviderType = "")
         {
             return null;
         }

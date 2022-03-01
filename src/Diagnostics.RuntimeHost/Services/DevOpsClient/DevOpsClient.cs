@@ -187,12 +187,12 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
             return dictionary[requestId + "--result"];
         }
         
-        public async Task<object> GetFileContentAsync(string filePathInRepo, string resourceUri, string requestId, string branch = null)
+        public async Task<object> GetFileContentAsync(string filePathInRepo, string resourceUri, string requestId, string branch = null, string resourceProviderType = "")
         {
             dictionary.TryAdd(requestId + "--result", null);
             dictionary.TryAdd(requestId + "--version", null);
             await configDownloadTask;
-            ResourceProviderRepoConfig resourceProviderRepoConfig = await GetConfigByResourceUri(resourceUri);
+            ResourceProviderRepoConfig resourceProviderRepoConfig = !string.IsNullOrEmpty(resourceProviderType) ? await GetConfigbyResourceProvider(resourceProviderType) : await GetConfigByResourceUri(resourceUri);
             try
             {
                if (!string.IsNullOrWhiteSpace(branch))
