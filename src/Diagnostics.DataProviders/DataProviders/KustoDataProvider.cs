@@ -86,7 +86,7 @@ namespace Diagnostics.DataProviders
             _kustoMap = new NullableKustoMap();
             _queryStartTime = startTime;
             _queryEndTime = endTime;
-            _detectorId = detectorId;
+            _detectorId = detectorId ?? "unknownDetector";
 
             if (publicClouds.Any(s => configuration.CloudDomain.Equals(s, StringComparison.CurrentCultureIgnoreCase)))
             {
