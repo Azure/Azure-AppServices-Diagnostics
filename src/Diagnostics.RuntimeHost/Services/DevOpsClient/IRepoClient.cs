@@ -38,7 +38,7 @@ namespace Diagnostics.RuntimeHost.Services.DevOpsClient
         /// <param name="filePathInRepo"></param>
         /// <param name="branch"></param>
         /// <returns></returns>
-        Task<object> GetFileContentAsync(string filePathInRepo, string resourceUri, string requestId, string branch = null);
+        Task<object> GetFileContentAsync(string filePathInRepo, string resourceUri, string requestId, string branch = null, string resourceProviderType = "");
 
         /// <summary>
         /// gets all of the branches in the repo
