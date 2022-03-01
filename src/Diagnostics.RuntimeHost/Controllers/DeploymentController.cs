@@ -131,7 +131,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 // Get the latest version of gist from the repo.
                 foreach(string gist in gistReferences)
                 {                   
-                    var gistContent = await devopsClient.GetFileContentAsync($"{gist}/{gist}.csx", deploymentParameters.ResourceType, HttpContext.Request.Headers[HeaderConstants.RequestIdHeaderName], deploymentParameters.ResourceType);
+                    var gistContent = await devopsClient.GetFileContentAsync($"{gist}/{gist}.csx", deploymentParameters.ResourceType, HttpContext.Request.Headers[HeaderConstants.RequestIdHeaderName], null, deploymentParameters.ResourceType);
                     references.Add(gist, gistContent.ToString());                                                  
                 }
 
