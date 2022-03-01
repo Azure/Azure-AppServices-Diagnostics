@@ -17,6 +17,7 @@ namespace Diagnostics.DataProviders
         public string GeomasterHostName { get; private set; }
         public string GeomasterName { get; private set; }
         public string CloudDomain { get; private set; }
+        public string DetectorId { get; private set; }
 
         /// <summary>
         /// True for requests from Applens.
@@ -38,7 +39,22 @@ namespace Diagnostics.DataProviders
         /// </summary>
         public IHeaderDictionary receivedHeaders { get; private set; }
 
-        public DataProviderContext(DataSourcesConfiguration dataSourceConfiguration, string requestId = null, CancellationToken dataSourceCancellationToken = default(CancellationToken), DateTime queryStartTime = default(DateTime), DateTime queryEndTime = default(DateTime), IWawsObserverTokenService wawsObserverTokenService = null, ISupportBayApiObserverTokenService supportBayApiObserverTokenService = null, string objectId = "", string principalName = "", IKustoHeartBeatService kustoHeartBeatService = null, string geoMasterHostName = null, string geomasterName = null, string cloudDomain = null, IHeaderDictionary incomingHeaders = null, bool isInternalClient = false)
+        public DataProviderContext(
+            DataSourcesConfiguration dataSourceConfiguration, 
+            string requestId = null, 
+            CancellationToken dataSourceCancellationToken = default(CancellationToken), 
+            DateTime queryStartTime = default(DateTime), 
+            DateTime queryEndTime = default(DateTime), 
+            IWawsObserverTokenService wawsObserverTokenService = null, 
+            ISupportBayApiObserverTokenService supportBayApiObserverTokenService = null, 
+            string objectId = "", string principalName = "", 
+            IKustoHeartBeatService kustoHeartBeatService = null, 
+            string geoMasterHostName = null, 
+            string geomasterName = null, 
+            string cloudDomain = null, 
+            IHeaderDictionary incomingHeaders = null, 
+            bool isInternalClient = false,
+            string detectorId = null)
         {
             Configuration = dataSourceConfiguration;
             RequestId = requestId ?? Guid.NewGuid().ToString();
@@ -55,6 +71,7 @@ namespace Diagnostics.DataProviders
             CloudDomain = cloudDomain;
             receivedHeaders = incomingHeaders;
             IsInternalClient = isInternalClient;
+            DetectorId = detectorId;
         }
     }
 }

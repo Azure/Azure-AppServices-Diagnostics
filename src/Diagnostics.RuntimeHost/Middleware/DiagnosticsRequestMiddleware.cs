@@ -139,8 +139,34 @@ namespace Diagnostics.RuntimeHost.Middleware
             {
                 geomasterName = httpContext.Request.Headers[GeomasterNameHeader];
             }
-
-            httpContext.Items.Add(HostConstants.DataProviderContextKey, new DataProviderContext(dataSourcesConfigurationService.Config, values.FirstOrDefault().Any() ? values.FirstOrDefault().Split(new char[] { ',' })[0] : string.Empty, cTokenSource.Token, startTimeUtc, endTimeUtc, wawsObserverTokenService, supportBayApiObserverTokenService, clientObjId, clientPrincipalName, kustoHeartBeatService, geomasterHostName, geomasterName, null, httpContext.Request.Headers, isInternalClient: isInternalClient));
+            var splitted = httpContext.Request.Path.Value.Split('/');
+            string detectorId = null;
+            if (splitted.Length >= 2)
+            {
+                if (splitted[splitted.Length - 2].ToLower() == "detectors")
+                {
+                    detectorId = splitted[splitted.Length - 1].ToLower();
+                }
+            }
+            httpContext.Items.Add(
+                HostConstants.DataProviderContextKey, 
+                new DataProviderContext(
+                    dataSourcesConfigurationService.Config, 
+                    values.FirstOrDefault().Any() ? values.FirstOrDefault().Split(new char[] { ',' })[0] : string.Empty, 
+                    cTokenSource.Token, 
+                    startTimeUtc, 
+                    endTimeUtc, 
+                    wawsObserverTokenService, 
+                    supportBayApiObserverTokenService, 
+                    clientObjId, 
+                    clientPrincipalName, 
+                    kustoHeartBeatService, 
+                    geomasterHostName, 
+                    geomasterName, 
+                    null, 
+                    httpContext.Request.Headers, 
+                    isInternalClient: isInternalClient,
+                    detectorId));
         }
 
         private void EndRequestHandle(HttpContext httpContext)

@@ -32,7 +32,8 @@ namespace Diagnostics.DataProviders
                      context.RequestId,
                      context.KustoHeartBeatService,
                      context.QueryStartTime, 
-                     context.QueryEndTime)));
+                     context.QueryEndTime,
+                     context.DetectorId)));
 
             Observer = GetOrAddDataProvider(new ObserverLogDecorator(context, SupportObserverDataProviderFactory.GetDataProvider(_cache, context.Configuration, context)));
 
