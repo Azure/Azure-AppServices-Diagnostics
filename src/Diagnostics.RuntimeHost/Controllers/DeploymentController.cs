@@ -132,7 +132,7 @@ namespace Diagnostics.RuntimeHost.Controllers
                 foreach(string gist in gistReferences)
                 {                   
                     var gistContent = await devopsClient.GetFileContentAsync($"{gist}/{gist}.csx", deploymentParameters.ResourceType, HttpContext.Request.Headers[HeaderConstants.RequestIdHeaderName], null, deploymentParameters.ResourceType);
-                    references.Add(gist, gistContent.ToString());                                                  
+                    references.TryAdd(gist, gistContent.ToString());                                                  
                 }
 
                 // Otherwise, compile the detector to generate dll.
