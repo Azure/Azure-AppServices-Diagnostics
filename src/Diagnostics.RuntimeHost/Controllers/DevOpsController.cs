@@ -88,10 +88,10 @@ namespace Diagnostics.RuntimeHost.Controllers
             ResourceProviderRepoConfig resourceProviderRepoConfig = await _devOpsClient.GetRepoConfigsAsync(resourceProviderType);
             if (resourceProviderRepoConfig == null)
             {
-                var noConfigResponse = new { GraduationEnabled = false, AutoMerge = false, Organization = "", Repository = "", Project = "" };
+                var noConfigResponse = new { GraduationEnabled = false, AutoMerge = false, Organization = "", Repository = "", Project = "", FolderPath = "" };
                 return Ok(noConfigResponse);
             }
-            var response = new { GraduationEnabled = true, AutoMerge = resourceProviderRepoConfig.AutoMerge, Organization = resourceProviderRepoConfig.Organization, Repository = resourceProviderRepoConfig.Repository, Project = resourceProviderRepoConfig.Project };
+            var response = new { GraduationEnabled = true, AutoMerge = resourceProviderRepoConfig.AutoMerge, Organization = resourceProviderRepoConfig.Organization, Repository = resourceProviderRepoConfig.Repository, Project = resourceProviderRepoConfig.Project, FolderPath = resourceProviderRepoConfig.FolderPath };
             return Ok(response);
         }
 
