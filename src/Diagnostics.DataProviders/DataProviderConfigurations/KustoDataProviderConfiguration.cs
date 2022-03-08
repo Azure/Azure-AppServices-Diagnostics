@@ -350,18 +350,19 @@ namespace Diagnostics.DataProviders
             {
                 try
                 {
-                    DataHoleTimeRanges = new ConcurrentBag<(DateTime st, DateTime et)>(DataHoleTimeRangesString
-                        .Split(',')
-                        .Select(s => 
-                        {
-                            var splitted = s.Split('|');
-                            DateTime st, et;
-                            if (splitted.Length != 2 || DateTime.TryParse(splitted[0], out st) || DateTime.TryParse(splitted[1], out et))
+                    DataHoleTimeRanges = new ConcurrentBag<(DateTime st, DateTime et)>(
+                        DataHoleTimeRangesString
+                            .Split(',')
+                            .Select(s => 
                             {
-                                throw new Exception("Malformed time range string pair");
-                            }
-                            return (st, et);
-                        }));
+                                var splitted = s.Split('|');
+                                DateTime st, et;
+                                if (splitted.Length != 2 || !DateTime.TryParse(splitted[0], out st) || !DateTime.TryParse(splitted[1], out et))
+                                {
+                                    throw new Exception("Malformed time range string pair");
+                                }
+                                return (st, et);
+                            }));
                 }
                 catch (Exception)
                 {

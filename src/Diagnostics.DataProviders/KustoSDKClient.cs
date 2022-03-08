@@ -107,6 +107,7 @@ namespace Diagnostics.DataProviders
                     if (_config.DataHoleFallbackClusterMappings.TryGetValue(cluster, out string fallbackCluster))
                     {
                         cluster = fallbackCluster;
+                        kustoClient = Client(cluster, database);
                     }
                 }
                 else if (startTime > maxOfMinExtentsCreationTime && _config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters))
@@ -199,10 +200,10 @@ namespace Diagnostics.DataProviders
             {
                 if (!(et < hole.st || st > hole.et))
                 {
-                    return false;
+                    return true;
                 }
             }
-            return true;
+            return false;
         }
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null, DateTime? startTime = null, DateTime? endTime = null)
