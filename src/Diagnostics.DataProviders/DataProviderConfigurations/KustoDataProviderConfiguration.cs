@@ -206,11 +206,28 @@ namespace Diagnostics.DataProviders
         [ConfigurationName("QueryShadowingClusterMapping")]
         public string QueryShadowingClusterMappingString { get; set; }
 
+        /// <summary>
+        /// cluster mappings for data hole fall back
+        /// </summary>
+        [ConfigurationName("DataHoleFallbackClusterMappings")]
+        public string DataHoleFallbackClusterMappingsString { get; set; }
+
+        /// <summary>
+        /// Time ranges of data holes, e.g. "2022-03-04 01:00|2022-03-09 01:00", separated by comma
+        /// </summary>
+        [ConfigurationName("DataHoleTimeRanges")]
+        public string DataHoleTimeRangesString { get; set; }
+
         public ConcurrentDictionary<string, string[]> QueryShadowingClusterMapping;
 
         public ConcurrentDictionary<string, string> HiPerfAggClusterMapping;
 
         public ConcurrentDictionary<string, string> WawsPrimaryToDiagLeaderClusterMapping;
+
+        public ConcurrentDictionary<string, string> DataHoleFallbackClusterMappings;
+
+        public ConcurrentBag<(DateTime st, DateTime et)> DataHoleTimeRanges;
+
 
         public List<ITuple> OverridableExceptionsToRetryAgainstLeaderCluster { get; set; }
 
@@ -296,14 +313,7 @@ namespace Diagnostics.DataProviders
             {
                 try
                 {
-                    HiPerfAggClusterMapping = new ConcurrentDictionary<string, string>(
-                           KustoAggClusterNameGroupMappings
-                               .Split(',')
-                               .Select(e =>
-                               {
-                                   var splitted = e.Split('|');
-                                   return new KeyValuePair<string, string>(splitted[0], splitted[1]);
-                               }));
+                    HiPerfAggClusterMapping = new ConcurrentDictionary<string, string>(GetClusterMappingFromString(KustoAggClusterNameGroupMappings));
                 }
                 catch (Exception)
                 {
@@ -315,20 +325,77 @@ namespace Diagnostics.DataProviders
             {
                 try 
                 {
-                    WawsPrimaryToDiagLeaderClusterMapping = new ConcurrentDictionary<string, string>(
-                           KustoWawsPrimaryToDiagLeaderMappings
-                               .Split(',')
-                               .Select(e =>
-                               {
-                                   var splitted = e.Split('|');
-                                   return new KeyValuePair<string, string>(splitted[0], splitted[1]);
-                               }));
+                    WawsPrimaryToDiagLeaderClusterMapping =
+                        new ConcurrentDictionary<string, string>(GetClusterMappingFromString(KustoWawsPrimaryToDiagLeaderMappings));
                 }
                 catch (Exception)
                 {
                     // swallow the exception
                 }
             }
+
+            if (!string.IsNullOrWhiteSpace(DataHoleFallbackClusterMappingsString))
+            {
+                try
+                {
+                    DataHoleFallbackClusterMappings = new ConcurrentDictionary<string, string>(GetClusterMappingFromString(DataHoleFallbackClusterMappingsString));
+                }
+                catch (Exception)
+                {
+                    // swallow the exception
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(DataHoleTimeRangesString))
+            {
+                try
+                {
+                    DataHoleTimeRanges = new ConcurrentBag<(DateTime st, DateTime et)>(
+                        DataHoleTimeRangesString
+                            .Split(',')
+                            .Select(s => 
+                            {
+                                var splitted = s.Split('|');
+                                DateTime st, et;
+                                if (splitted.Length != 2 || !DateTime.TryParse(splitted[0], out st) || !DateTime.TryParse(splitted[1], out et))
+                                {
+                                    throw new Exception("Malformed time range string pair");
+                                }
+                                return (st, et);
+                            }));
+                }
+                catch (Exception)
+                {
+                    // swallow the exception
+                }
+            }
+        }
+
+        private IEnumerable<KeyValuePair<string, string>> GetClusterMappingFromString(string s)
+        {
+            return s.Split(',')
+                    .Select(e =>
+                    {
+                        var splitted = e.Split('|');
+                        return new KeyValuePair<string, string>(splitted[0], splitted[1]);
+                    });
+        }
+
+        public bool IsFallInDataHole(DateTime? st, DateTime? et)
+        {
+            if (st == null || et == null)
+            {
+                return false;
+            }
+
+            foreach (var hole in DataHoleTimeRanges)
+            {
+                if (!(et < hole.st || st > hole.et))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }
