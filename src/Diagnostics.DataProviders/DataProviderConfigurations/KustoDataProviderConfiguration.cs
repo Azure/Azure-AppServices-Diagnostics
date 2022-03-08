@@ -380,5 +380,22 @@ namespace Diagnostics.DataProviders
                         return new KeyValuePair<string, string>(splitted[0], splitted[1]);
                     });
         }
+
+        public bool IsFallInDataHole(DateTime? st, DateTime? et)
+        {
+            if (st == null || et == null)
+            {
+                return false;
+            }
+
+            foreach (var hole in DataHoleTimeRanges)
+            {
+                if (!(et < hole.st || st > hole.et))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }

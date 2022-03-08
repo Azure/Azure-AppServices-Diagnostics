@@ -102,7 +102,7 @@ namespace Diagnostics.DataProviders
                 Task<IDataReader> kustoTask = null;
                 var maxOfMinExtentsCreationTime = DateTime.Parse("2022-01-15 05:49:34.2932869Z");
 
-                if (IsFallInDataHole(startTime, endTime))
+                if (_config.IsFallInDataHole(startTime, endTime))
                 {
                     if (_config.DataHoleFallbackClusterMappings.TryGetValue(cluster, out string fallbackCluster))
                     {
@@ -189,22 +189,6 @@ namespace Diagnostics.DataProviders
             return datatable;
         }
 
-        private bool IsFallInDataHole(DateTime? st, DateTime? et)
-        {
-            if (st == null || et == null)
-            {
-                return false;
-            }
-
-            foreach (var hole in _config.DataHoleTimeRanges)
-            {
-                if (!(et < hole.st || st > hole.et))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null, DateTime? startTime = null, DateTime? endTime = null)
         {

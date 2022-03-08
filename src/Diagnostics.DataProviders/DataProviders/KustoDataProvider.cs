@@ -368,6 +368,11 @@ namespace Diagnostics.DataProviders
                 var dict = _configuration.HiPerfAggClusterMapping;
                 string cluster = await GetClusterNameFromStamp(stampName);
                 var maxOfMinExtentsCreationTime = DateTime.Parse("2022-01-22 00:13:20.4081427Z");
+
+                if (_configuration.IsFallInDataHole(_queryStartTime, _queryEndTime))
+                {
+                    return null;
+                }
                 if (_queryStartTime > maxOfMinExtentsCreationTime &&  dict.TryGetValue(cluster, out string clusterName) && !string.IsNullOrEmpty(clusterName))
                 {
                     return clusterName;                    
