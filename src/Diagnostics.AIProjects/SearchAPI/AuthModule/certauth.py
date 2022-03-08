@@ -20,9 +20,9 @@ def validateCertificate(certStr):
         except Exception as e:
             return ("Failed to validate certificate due to system error", False)
         if not certInfo["issuer"] in ALLOWED_ISSUERS:
-            return ("Certificate is unauthorized to access this resource", False)
+            return (f"Certificate is unauthorized to access this resource. Issuer name provided {certInfo['issuer']} is not in the list of allowed issuers.", False)
         if not certInfo["subject_name"] in ALLOWED_SUBJECTNAMES:
-            return ("Certificate is unauthorized to access this resource", False)
+            return ("Certificate is unauthorized to access this resource. Subject name provided is not in the allowed subjects list.", False)
         return (None, True)
     except Exception as e:
         return (str(e), False)
