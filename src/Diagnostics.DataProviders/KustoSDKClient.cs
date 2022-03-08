@@ -102,8 +102,16 @@ namespace Diagnostics.DataProviders
                 Task<IDataReader> kustoTask = null;
                 var maxOfMinExtentsCreationTime = DateTime.Parse("2022-01-15 05:49:34.2932869Z");
 
-                if (startTime > maxOfMinExtentsCreationTime && _config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters))
+                if (IsFallInDataHole(startTime, endTime))
                 {
+                    if (_config.DataHoleFallbackClusterMappings.TryGetValue(cluster, out string fallbackCluster))
+                    {
+                        cluster = fallbackCluster;
+                    }
+                }
+                else if (startTime > maxOfMinExtentsCreationTime && _config.QueryShadowingClusterMapping != null && _config.QueryShadowingClusterMapping.TryGetValue(cluster, out var shadowClusters))
+                {
+                    // no shadowing will be done if timerange fall into data hole
                     if (query != _config.HeartBeatQuery)
                     {
                         foreach (string shadowCluster in shadowClusters)
@@ -178,6 +186,23 @@ namespace Diagnostics.DataProviders
                 datatable = new DataTable();
             }
             return datatable;
+        }
+
+        private bool IsFallInDataHole(DateTime? st, DateTime? et)
+        {
+            if (st == null || et == null)
+            {
+                return false;
+            }
+
+            foreach (var hole in _config.DataHoleTimeRanges)
+            {
+                if (!(et < hole.st || st > hole.et))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         public async Task<DataTable> ExecuteQueryAsync(string query, string cluster, string database, string requestId = null, string operationName = null, DateTime? startTime = null, DateTime? endTime = null)
