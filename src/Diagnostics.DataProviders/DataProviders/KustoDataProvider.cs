@@ -173,12 +173,12 @@ namespace Diagnostics.DataProviders
         private Dictionary<string, Tuple<string, string>> clusterStampNameMapping = new Dictionary<string, Tuple<string, string>>() 
         {
             //One random stamp name per region.
-            {"wawswus", new Tuple<string, string>("waws-prod-bay-153", "WestUS") },
-            {"wawseus", new Tuple<string, string>("waws-prod-blu-189", "EastUS") },
-            {"wawscus", new Tuple<string, string>("waws-prod-dm1-187", "CentralUS") },
-            {"wawsweu", new Tuple<string, string>("waws-prod-am2-329", "WestEurope") },
-            {"wawsneu", new Tuple<string, string>("waws-prod-db3-169", "NorthEurope") },
-            {"wawseas", new Tuple<string, string>("waws-prod-hk1-029", "EastAsia") }
+            {"WAWSWUS", new Tuple<string, string>("waws-prod-bay-153", "WestUS") },
+            {"WAWSEUS", new Tuple<string, string>("waws-prod-blu-189", "EastUS") },
+            {"WAWSCUS", new Tuple<string, string>("waws-prod-dm1-187", "CentralUS") },
+            {"WAWSWEU", new Tuple<string, string>("waws-prod-am2-329", "WestEurope") },
+            {"WAWSNEU", new Tuple<string, string>("waws-prod-db3-169", "NorthEurope") },
+            {"WAWSEAS", new Tuple<string, string>("waws-prod-hk1-029", "EastAsia") }
         };
 
         public async Task<DataTable> ExecuteQueryOnFewAppServiceClusters(List<string> appServiceClusterNames, string query, string operationName)
@@ -204,7 +204,7 @@ namespace Diagnostics.DataProviders
             {
                 foreach (string targetClusterName in appServiceClusterNames)
                 {
-                    if (clusterStampNameMapping.TryGetValue(targetClusterName, out Tuple<string, string> stampDetails))
+                    if (clusterStampNameMapping.TryGetValue(targetClusterName.ToUpperInvariant(), out Tuple<string, string> stampDetails))
                     {
                         queryTask.Add(ExecuteQuery(query, stampDetails.Item1, null, $"{operationName}-{stampDetails.Item2}"));
                     }
@@ -219,7 +219,7 @@ namespace Diagnostics.DataProviders
             DataTable mergedTable = new DataTable();
             foreach (DataTable dt in queryResult)
             {
-                if (dt.Rows.Count > 0)
+                if (dt.Rows.Count > 0 || mergedTable.Rows.Count == 0)
                 {
                     if (dt.Rows.Count > 3000)
                     {
@@ -266,7 +266,7 @@ namespace Diagnostics.DataProviders
             DataTable mergedTable = new DataTable();
             foreach (DataTable dt in queryResult)
             {
-                if (dt.Rows.Count > 0)
+                if (dt.Rows.Count > 0 || mergedTable.Rows.Count == 0)
                 {
                     if(dt.Rows.Count > 3000)
                     {
