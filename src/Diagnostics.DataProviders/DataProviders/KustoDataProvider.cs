@@ -170,7 +170,7 @@ namespace Diagnostics.DataProviders
             return await _kustoClient.ExecuteQueryAsync(Helpers.MakeQueryCloudAgnostic(_kustoMap, query), _kustoMap.MapCluster(cluster) ?? cluster, _kustoMap.MapDatabase(_configuration.DBName) ?? _configuration.DBName, requestId, operationName, _queryStartTime, _queryEndTime);
         }
 
-        private Dictionary<string, Tuple<string, string>> clusterStampNameMapping = new Dictionary<string, Tuple<string, string>>() 
+        private Dictionary<string, Tuple<string, string>> clusterStampNameMapping = new Dictionary<string, Tuple<string, string>>(StringComparer.OrdinalIgnoreCase)
         {
             //One random stamp name per region.
             {"WAWSWUS", new Tuple<string, string>("waws-prod-bay-153", "WestUS") },
@@ -204,7 +204,7 @@ namespace Diagnostics.DataProviders
             {
                 foreach (string targetClusterName in appServiceClusterNames)
                 {
-                    if (clusterStampNameMapping.TryGetValue(targetClusterName.ToUpperInvariant(), out Tuple<string, string> stampDetails))
+                    if (clusterStampNameMapping.TryGetValue(targetClusterName, out Tuple<string, string> stampDetails))
                     {
                         queryTask.Add(ExecuteQuery(query, stampDetails.Item1, null, $"{operationName}-{stampDetails.Item2}"));
                     }
