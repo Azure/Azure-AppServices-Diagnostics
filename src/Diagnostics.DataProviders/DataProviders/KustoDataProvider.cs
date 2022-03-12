@@ -219,7 +219,7 @@ namespace Diagnostics.DataProviders
             DataTable mergedTable = new DataTable();
             foreach (DataTable dt in queryResult)
             {
-                if (dt.Rows.Count > 0)
+                if (dt.Rows.Count > 0 || mergedTable.Rows.Count == 0)
                 {
                     if (dt.Rows.Count > 3000)
                     {
@@ -266,7 +266,7 @@ namespace Diagnostics.DataProviders
             DataTable mergedTable = new DataTable();
             foreach (DataTable dt in queryResult)
             {
-                if (dt.Rows.Count > 0)
+                if (dt.Rows.Count > 0 || mergedTable.Rows.Count == 0)
                 {
                     if(dt.Rows.Count > 3000)
                     {
