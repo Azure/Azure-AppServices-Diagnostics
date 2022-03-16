@@ -584,7 +584,6 @@ namespace Diagnostics.RuntimeHost.Controllers
                     }
                 }
                 response.TotalInsightsFound = detectorInsights.Count;
-                response.ErrorMessage = detectorInsights.Count > 0 ? null : "No issues were detected by the diagnostics system.";
                 response.Insights = detectorInsights;
             }
             else
